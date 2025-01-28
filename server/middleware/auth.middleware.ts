@@ -3,12 +3,19 @@ import { db } from "@db";
 import { collaborators } from "@db/schema";
 import { eq, and } from "drizzle-orm";
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export const requireAuth = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ 
+      message: "Unauthorized",
+      redirectTo: "/auth"
+    });
   }
   next();
-}
+};
 
 export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer") {
   return async (req: Request, res: Response, next: NextFunction) => {
