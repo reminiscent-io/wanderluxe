@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./websocket";
 import { db } from "@db";
-import { trips, messages, files, timelineEntries, collaborators, type User } from "@db/schema";
+import { trips, messages, files, timelineEntries, collaborators, type SelectUser } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -21,7 +21,7 @@ const upload = multer({
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User extends SelectUser {}
   }
 }
 
