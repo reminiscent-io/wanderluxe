@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Plus, Loader2 } from "lucide-react";
+import { TimelineView } from "@/components/timeline/timeline-view";
 
 export default function Home() {
   const { user, logout } = useUser();
@@ -154,6 +155,7 @@ export default function Home() {
           <div className="lg:col-span-2 space-y-6">
             {selectedTrip ? (
               <>
+                <TimelineView tripId={selectedTrip} />
                 <ChatInterface tripId={selectedTrip} userId={user!.id} />
                 <FileUpload
                   tripId={selectedTrip}
