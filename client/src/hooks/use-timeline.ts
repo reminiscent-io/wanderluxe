@@ -29,9 +29,30 @@ export function useTimeline(tripId: number) {
     },
   });
 
+  const updateEntryMutation = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<TimelineEntry> & { id: number }) => {
+      const response = await fetch(`/api/trips/${tripId}/timeline/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/timeline`] });
+    },
+  });
+
   return {
     entries,
     isLoading,
     createEntry: createEntryMutation.mutate,
+    updateEntry: updateEntryMutation.mutate,
   };
 }

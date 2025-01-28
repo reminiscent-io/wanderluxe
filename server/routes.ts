@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./websocket";
 import { db } from "@db";
-import { trips, messages, files, timelineEntries, collaborators } from "@db/schema";
+import { trips, messages, files, timelineEntries, collaborators, type User } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -18,6 +18,12 @@ const upload = multer({
   dest: "uploads/",
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
+
+declare global {
+  namespace Express {
+    interface User extends User {}
+  }
+}
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);

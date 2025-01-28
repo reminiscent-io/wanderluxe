@@ -146,3 +146,7 @@ export type TimelineEntry = typeof timelineEntries.$inferSelect;
 export type Collaborator = typeof collaborators.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type File = typeof files.$inferSelect;
+export type NewTimelineEntry = Omit<
+  TimelineEntry,
+  "id" | "createdAt" | "updatedAt" | "status" | "details" | "endTime"
+>;
