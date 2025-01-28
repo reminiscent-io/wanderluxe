@@ -1,35 +1,30 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useAuth } from "@/context/auth-context";
+import { StrictMode } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { Route, Router } from "wouter";
+import { Toaster } from "@/components/ui/toaster";
+import HomePage from "@/pages/home";
 import AuthPage from "@/pages/auth-page";
-import Home from "@/pages/home";
-import NotFound from "@/pages/not-found";
-
-function Router() {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <Routes>
-      {!user ? (
-        <Route path="*" element={<AuthPage />} />
-      ) : (
-        <>
-          <Route path="/" element={<Home />} />
-          <Route path="*" element={<NotFound />} />
-        </>
-      )}
-    </Routes>
-  );
-}
+import NotFoundPage from "@/pages/not-found";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { AuthProvider } from "@/context/auth-context";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Router />
-    </BrowserRouter>
+    <StrictMode>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Router>
+              <Route path="/" component={HomePage} />
+              <Route path="/auth" component={AuthPage} />
+              <Route component={NotFoundPage} />
+            </Router>
+            <Toaster />
+          </AuthProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </StrictMode>
   );
 }
