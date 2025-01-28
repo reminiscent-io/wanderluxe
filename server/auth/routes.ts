@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { db } from "@db";
 import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
-import { authMiddleware } from '@replit/repl-auth-express';
+import { authMiddleware } from '@replit/auth';
 
 export function setupAuthRoutes(app: Express) {
   app.get("/api/user", authMiddleware, async (req, res) => {
