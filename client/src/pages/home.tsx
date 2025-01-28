@@ -1,0 +1,186 @@
+import { useState } from "react";
+import { useUser } from "@/hooks/use-user";
+import { useTrips } from "@/hooks/use-trips";
+import { TripCard } from "@/components/trip-card";
+import { ChatInterface } from "@/components/chat-interface";
+import { FileUpload } from "@/components/file-upload";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { LogOut, Plus, Loader2 } from "lucide-react";
+
+export default function Home() {
+  const { user, logout } = useUser();
+  const { trips, createTrip, isLoading } = useTrips();
+  const [selectedTrip, setSelectedTrip] = useState<number | null>(null);
+  const [isNewTripOpen, setIsNewTripOpen] = useState(false);
+  const [newTrip, setNewTrip] = useState({
+    title: "",
+    destination: "",
+    budget: "",
+  });
+  const { toast } = useToast();
+
+  const handleCreateTrip = async () => {
+    try {
+      await createTrip({
+        title: newTrip.title,
+        destination: newTrip.destination,
+        budget: parseInt(newTrip.budget),
+        status: "planning",
+      });
+      setIsNewTripOpen(false);
+      setNewTrip({ title: "", destination: "", budget: "" });
+      toast({
+        title: "Success",
+        description: "Trip created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create trip",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Luxury Travel Planner</h1>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">
+              Welcome, {user?.username}
+            </span>
+            <Button variant="ghost" size="icon" onClick={() => logout()}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Your Trips</h2>
+              <Dialog open={isNewTripOpen} onOpenChange={setIsNewTripOpen}>
+                <DialogTrigger asChild>
+                  <Button size="icon">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Trip</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        value={newTrip.title}
+                        onChange={(e) =>
+                          setNewTrip({ ...newTrip, title: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="destination">Destination</Label>
+                      <Input
+                        id="destination"
+                        value={newTrip.destination}
+                        onChange={(e) =>
+                          setNewTrip({ ...newTrip, destination: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="budget">Budget (USD)</Label>
+                      <Input
+                        id="budget"
+                        type="number"
+                        value={newTrip.budget}
+                        onChange={(e) =>
+                          setNewTrip({ ...newTrip, budget: e.target.value })
+                        }
+                      />
+                    </div>
+                    <Button className="w-full" onClick={handleCreateTrip}>
+                      Create Trip
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="flex justify-center p-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-border" />
+                </div>
+              ) : trips?.length === 0 ? (
+                <div className="text-center text-muted-foreground p-4">
+                  No trips yet. Create your first luxury travel experience!
+                </div>
+              ) : (
+                trips?.map((trip) => (
+                  <TripCard
+                    key={trip.id}
+                    trip={trip}
+                    onClick={() => setSelectedTrip(trip.id)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            {selectedTrip ? (
+              <>
+                <ChatInterface tripId={selectedTrip} userId={user!.id} />
+                <FileUpload
+                  tripId={selectedTrip}
+                  onSuccess={() =>
+                    toast({
+                      title: "Success",
+                      description: "File uploaded successfully",
+                    })
+                  }
+                />
+              </>
+            ) : (
+              <div className="h-[600px] flex items-center justify-center text-center text-muted-foreground">
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">
+                    Select a Trip to Start Planning
+                  </h3>
+                  <p>
+                    Chat with our AI travel assistant to plan your perfect luxury
+                    experience
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
