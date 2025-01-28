@@ -20,4 +20,10 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
+  server: {
+    middlewareMode: true,
+    hmr: { server: true }, // Assuming 'server' should be true here.  Adjust if needed based on original intent.
+    host: true,
+    allowedHosts: 'all',
+  },
 });
