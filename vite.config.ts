@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
@@ -7,6 +8,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
 export default defineConfig({
   plugins: [react(), runtimeErrorOverlay(), themePlugin()],
   resolve: {
@@ -21,9 +23,13 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    middlewareMode: true,
-    hmr: { server: true }, // Assuming 'server' should be true here.  Adjust if needed based on original intent.
     host: true,
-    allowedHosts: 'all',
-  },
+    hmr: {
+      clientPort: 443,
+      protocol: 'wss'
+    },
+    watch: {
+      usePolling: true,
+    }
+  }
 });
