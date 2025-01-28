@@ -1,0 +1,89 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { setupAuth } from "./auth";
+import { setupWebSocket } from "./websocket";
+import { db } from "@db";
+import { trips, messages, files } from "@db/schema";
+import { eq, desc } from "drizzle-orm";
+import multer from "multer";
+import path from "path";
+
+const upload = multer({
+  dest: "uploads/",
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
+export function registerRoutes(app: Express): Server {
+  setupAuth(app);
+
+  // Trips
+  app.get("/api/trips", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const userTrips = await db
+      .select()
+      .from(trips)
+      .where(eq(trips.userId, req.user.id))
+      .orderBy(desc(trips.createdAt));
+
+    res.json(userTrips);
+  });
+
+  app.post("/api/trips", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const [trip] = await db
+      .insert(trips)
+      .values({
+        ...req.body,
+        userId: req.user.id,
+      })
+      .returning();
+
+    res.json(trip);
+  });
+
+  // Messages
+  app.get("/api/trips/:tripId/messages", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const tripMessages = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.tripId, parseInt(req.params.tripId)))
+      .orderBy(desc(messages.createdAt));
+
+    res.json(tripMessages);
+  });
+
+  // Files
+  app.post("/api/trips/:tripId/files", upload.single("file"), async (req, res) => {
+    if (!req.user || !req.file) {
+      return res.status(401).send("Not authenticated or no file uploaded");
+    }
+
+    const [file] = await db
+      .insert(files)
+      .values({
+        tripId: parseInt(req.params.tripId),
+        userId: req.user.id,
+        filename: req.file.originalname,
+        path: req.file.path,
+        type: path.extname(req.file.originalname),
+      })
+      .returning();
+
+    res.json(file);
+  });
+
+  const httpServer = createServer(app);
+  setupWebSocket(httpServer);
+
+  return httpServer;
+}
