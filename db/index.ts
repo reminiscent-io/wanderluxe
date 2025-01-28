@@ -1,3 +1,4 @@
+
 import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
 import * as schema from "@db/schema";
@@ -17,6 +18,4 @@ export const db = drizzle({
   connection: dbURL,
   schema,
   ws: ws,
-}).on('error', (err) => {
-  console.error('Database connection error:', err);
 });
