@@ -4,7 +4,7 @@ export default function AuthPage() {
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-4">Welcome</h1>
         <a 
-          href="https://replit.com/auth_with_repl_site" 
+          href="https://replit.com/auth_with_repl_site?domain=replit.com" 
           className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
         >
           Login with Replit
