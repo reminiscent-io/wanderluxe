@@ -23,13 +23,18 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    host: true,
     hmr: {
       clientPort: 443,
       protocol: 'wss'
     },
-    watch: {
-      usePolling: true,
+    host: '0.0.0.0',
+    strictPort: true,
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
     }
   }
 });
