@@ -1,14 +1,82 @@
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/use-user";
+import { useToast } from "@/hooks/use-toast";
+
 export default function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, register } = useUser();
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (isLogin) {
+        await login({ username, password });
+      } else {
+        await register({ username, password });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Welcome</h1>
-        <a 
-          href="https://replit.com/auth_with_repl_site?domain=replit.com" 
-          className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-        >
-          Login with Replit
-        </a>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md px-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
+            <CardDescription>
+              {isLogin
+                ? "Enter your credentials to access your account"
+                : "Sign up to start planning your luxury travel"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <Button type="submit" className="w-full">
+                {isLogin ? "Sign In" : "Sign Up"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setIsLogin(!isLogin)}
+              >
+                {isLogin
+                  ? "Don't have an account? Sign up"
+                  : "Already have an account? Sign in"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
