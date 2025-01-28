@@ -8,8 +8,15 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+const dbURL = process.env.DATABASE_URL;
+if (!dbURL) {
+  throw new Error("DATABASE_URL environment variable is required");
+}
+
 export const db = drizzle({
-  connection: process.env.DATABASE_URL,
+  connection: dbURL,
   schema,
   ws: ws,
+}).on('error', (err) => {
+  console.error('Database connection error:', err);
 });
