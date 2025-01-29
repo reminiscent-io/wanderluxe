@@ -63,16 +63,8 @@ app.use((req, res, next) => {
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client
-  const PORT = process.env.PORT || 5000;
-  const tryListen = (port: number) => {
-    server.listen(port, "0.0.0.0", () => {
-      log(`serving on port ${port}`);
-    }).on('error', (err: any) => {
-      if (err.code === 'EADDRINUSE') {
-        log(`Port ${port} in use, trying ${port + 1}`);
-        tryListen(port + 1);
-      }
-    });
-  };
-  tryListen(Number(PORT));
+  const PORT = 5000;
+  server.listen(PORT, "0.0.0.0", () => {
+    log(`serving on port ${PORT}`);
+  });
 })();
