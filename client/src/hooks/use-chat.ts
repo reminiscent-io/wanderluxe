@@ -55,6 +55,18 @@ export function useChat(tripId: number, userId: number) {
       ]);
     } catch (error) {
       console.error('Chat error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          tripId,
+          userId,
+          content: `Error: ${errorMessage}`,
+          createdAt: new Date(),
+          isAi: true
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }
