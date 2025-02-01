@@ -19,6 +19,15 @@ const app = express();
 // Import security packages
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+
+// Rate limiting configuration
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 requests per window
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Security middleware first
 app.use(helmet({
@@ -55,6 +64,9 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Apply rate limiting to auth routes
+app.use('/api/(login|register)', authLimiter);
 
 // Set up session and authentication
 setupSession(app);
