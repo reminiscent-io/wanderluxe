@@ -16,28 +16,20 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add CORS headers for development
-app.use((req, res, next) => {
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://0.0.0.0:5173',
-    'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-    /https:\/\/([a-z0-9-]+\.)*replit\.dev$/
-  ];
+// Add CORS configuration
+import cors from 'cors';
 
-  const origin = req.headers.origin;
-  if (origin && (allowedOrigins.includes(origin) || allowedOrigins.some(pattern => pattern instanceof RegExp && pattern.test(origin)))) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Sec-WebSocket-Protocol');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
+const allowedOrigins = [
+  'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+  /https:\/\/([a-z0-9-]+\.)*replit\.dev/
+];
 
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -109,7 +101,7 @@ app.get("/health", (req, res) => {
     }
   });
 
-  const PORT = 5000;
+  const PORT = process.env.PORT || 8080;
   server.listen(PORT, "0.0.0.0", () => {
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
