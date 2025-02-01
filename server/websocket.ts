@@ -22,9 +22,7 @@ export function setupWebSocket(server: Server) {
     const { pathname } = parse(request.url || "", true);
 
     // Important: Let Vite handle its own WebSocket connections
-    if (request.headers["sec-websocket-protocol"]?.includes("vite-hmr") || 
-        pathname?.includes("vite") ||
-        pathname?.includes("__vite")) {
+    if (pathname?.includes('@vite') || pathname?.includes('@react-refresh')) {
       return; // Allow Vite to handle its own upgrade
     }
 
