@@ -21,7 +21,7 @@ export function setupPassport(app: Express) {
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.username, username))
+          .where(eq(users.username, username.toLowerCase()))
           .limit(1);
 
         if (!user) {
