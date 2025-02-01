@@ -8,15 +8,12 @@ const router = express.Router();
 
 // Configure CORS for the chat route
 router.use(cors({
-  origin: [
-    'https://*.replit.dev',
-    'http://localhost:5173'
-  ],
+  origin: true,
   credentials: true
 }));
 
-router.get('/', requireAuth, (req, res) => {
-  res.json({ status: 'Chat service is running' });
+router.get('/', (req, res) => {
+  res.json({ status: 'Chat service is running', timestamp: new Date().toISOString() });
 });
 
 router.post('/', requireAuth, requireTripAccess("viewer"), async (req: Request, res: Response) => {
