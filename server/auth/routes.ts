@@ -41,25 +41,30 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
+      const normalizedUsername = username.trim().toLowerCase();
+
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username.trim()))
+        .where(eq(users.username, normalizedUsername))
         .limit(1);
 
       if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(409).json({ message: "Username already exists" });
       }
 
       const hashedPassword = await crypto.hash(password.trim());
-
       const [newUser] = await db
         .insert(users)
         .values({
-          username: username.trim(),
+          username: normalizedUsername,
           password: hashedPassword,
         })
         .returning();
+
+      if (!newUser) {
+        return res.status(500).json({ message: "Failed to create user" });
+      }
 
       req.login(newUser, (err) => {
         if (err) return next(err);
@@ -69,7 +74,8 @@ export function setupAuthRoutes(app: Express) {
         });
       });
     } catch (error) {
-      next(error);
+      console.error('Registration error:', error);
+      return res.status(500).json({ message: "Registration failed" });
     }
   });
 

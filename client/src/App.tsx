@@ -6,6 +6,7 @@ import { Route, Switch } from 'wouter';
 import AuthPage from './pages/auth-page';
 import Home from './pages/home';
 import NotFound from './pages/not-found';
+import Budget from './pages/budget';
 import { useAuth } from './hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 
@@ -39,6 +40,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Route path="/auth" component={AuthPage} />
       <Route path="/" component={(props) => <ProtectedRoute component={Home} {...props} />} />
+      <Route path="/budget" component={(props) => <ProtectedRoute component={Budget} {...props} />} />
       <Route component={NotFound} />
     </QueryClientProvider>
   );

@@ -17,13 +17,35 @@ dns.setDefaultResultOrder('verbatim');
 
 const app = express();
 
+// Trust proxy - required for Replit's environment
+app.set('trust proxy', true);
+
+// Configure WebSocket for database
+import ws from 'ws';
+global.WebSocket = ws;
 
 // Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use X-Replit-User-Id header or fallback to IP
+    return req.headers['x-replit-user-id']?.toString() || req.ip;
+  }
+});
+
+app.use(limiter);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // Limit each IP to 20 requests per window
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use X-Replit-User-Id header or fallback to IP
+    return req.headers['x-replit-user-id']?.toString() || req.ip;
+  }
 });
 
 

@@ -7,6 +7,7 @@ import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import type { User } from "@db/schema";
+import cors from 'cors'; // Added import for cors
 
 // Types
 declare global {
@@ -39,15 +40,20 @@ export const requireTripAccess = async (req: Request, res: Response, next: NextF
 export function setupAuth(app: Express) {
   const isProduction = process.env.NODE_ENV === 'production';
   app.use(
+    cors({
+      origin: true, // Updated CORS configuration
+      credentials: true
+    })
+  ); // Added cors middleware
+  app.use(
     session({
       secret: process.env.SESSION_SECRET || 'your-secret-key',
-      resave: false,
-      saveUninitialized: false,
+      resave: true,
+      saveUninitialized: true,
       name: 'sessionId',
       cookie: {
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        domain: isProduction ? '.replit.dev' : undefined,
+        secure: false,
+        sameSite: 'lax',
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/'
@@ -110,7 +116,7 @@ export function setupAuth(app: Express) {
       done(err);
     }
   });
-  
+
   // Auth routes
   app.post("/api/register", async (req: Request, res: Response, next: NextFunction) => {
     try {

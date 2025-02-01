@@ -4,7 +4,8 @@ const axiosInstance = axios.create({
   baseURL: '/api',
   withCredentials: true,
   headers: {
-    'X-Requested-With': 'XMLHttpRequest'
+    'X-Requested-With': 'XMLHttpRequest',
+    'Content-Type': 'application/json'
   }
 });
 

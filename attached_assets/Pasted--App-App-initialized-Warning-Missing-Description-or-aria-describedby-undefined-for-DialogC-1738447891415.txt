@@ -1,0 +1,34 @@
+[App] App initialized
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Invalid time value
+[App Error] Global error: 
+Object {message: "Uncaught RangeError: Invalid time value", source: "https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/@fs/home/runner/wo…", lineno: 2295, colno: 5, error: RangeError}
+
+Invalid time value
+[App Error] Global error: 
+Object {message: "Uncaught RangeError: Invalid time value", source: "https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/@fs/home/runner/wo…", lineno: 2295, colno: 5, error: RangeError}
+
+The above error occurred in the <TimelineView> component:
+
+    at TimelineView (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/src/components/timeline/timeline-view.tsx:35:32)
+    at div
+    at div
+    at main
+    at div
+    at Home (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/src/pages/home.tsx:39:28)
+    at ProtectedRoute (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/src/App.tsx:29:38)
+    at component
+    at Route (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=80fbb365:323:16)
+    at QueryClientProvider (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=80fbb365:2835:3)
+    at App (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/src/App.tsx:59:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Invalid time value
+[App Error] Global error: 
+Object {message: "Uncaught RangeError: Invalid time value", source: "https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/@fs/home/runner/wo…", lineno: 9129, colno: 15, error: RangeError}
+
+at t.value (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
