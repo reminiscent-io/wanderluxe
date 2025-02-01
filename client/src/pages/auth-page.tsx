@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import {
   Card,
   CardContent,
@@ -8,15 +9,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login, register } = useUser();
+  const { login, register, isLoginLoading, isRegisterLoading, user } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+
+  // Redirect if already logged in
+  if (user) {
+    navigate("/");
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,28 +41,19 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        const result = await login({ username: username.trim(), password });
-        toast({
-          title: "Success",
-          description: "Login successful",
-        });
-        window.location.replace('/');
+        await login({ username: username.trim(), password });
+        navigate("/");
       } else {
-        const result = await register({ username: username.trim(), password });
-        toast({
-          title: "Success",
-          description: "Registration successful",
-        });
-        window.location.replace('/');
+        await register({ username: username.trim(), password });
+        navigate("/");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
+      // Error handling is done in the mutation callbacks
+      console.error("Auth error:", error);
     }
   };
+
+  const isLoading = isLoginLoading || isRegisterLoading;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -73,14 +73,17 @@ export default function AuthPage() {
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={isLoading}
               />
               <Input
                 type="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLogin ? "Sign In" : "Sign Up"}
               </Button>
               <Button
@@ -88,6 +91,7 @@ export default function AuthPage() {
                 variant="ghost"
                 className="w-full"
                 onClick={() => setIsLogin(!isLogin)}
+                disabled={isLoading}
               >
                 {isLogin
                   ? "Don't have an account? Sign up"

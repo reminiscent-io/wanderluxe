@@ -1,10 +1,16 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { db } from "@db";
-import { users } from "@db/schema";
+import { users, type User } from "@db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { Express } from "express";
+
+declare global {
+  namespace Express {
+    interface User extends User {}
+  }
+}
 
 export const crypto = {
   hash: (password: string) => bcrypt.hash(password, 10),
@@ -40,13 +46,8 @@ export function setupPassport(app: Express) {
     })
   );
 
-  passport.serializeUser((user: Express.User, done) => {
+  passport.serializeUser((user, done) => {
     done(null, user.id);
-  });
-
-  app.use((req, res, next) => {
-    res.locals.user = req.user;
-    next();
   });
 
   passport.deserializeUser(async (id: number, done) => {

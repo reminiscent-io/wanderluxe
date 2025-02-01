@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { IVerifyOptions } from "passport-local";
 import passport from "passport";
 import { db } from "@db";
-import { users, insertUserSchema } from "@db/schema";
+import { users, insertUserSchema, type User } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { crypto } from "./passport";
 import { requireAuth } from "../middleware/auth.middleware";
@@ -32,7 +32,7 @@ const createTestUser = async () => {
 export function setupAuthRoutes(app: Express) {
   // Create test user on startup
   createTestUser();
-  
+
   app.post("/api/register", async (req, res, next) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
@@ -59,7 +59,7 @@ export function setupAuthRoutes(app: Express) {
       const [newUser] = await db
         .insert(users)
         .values({
-          ...result.data,
+          username,
           password: hashedPassword,
         })
         .returning();
@@ -68,7 +68,10 @@ export function setupAuthRoutes(app: Express) {
         if (err) {
           return next(err);
         }
-        return res.json(newUser);
+        return res.json({
+          id: newUser.id,
+          username: newUser.username
+        });
       });
     } catch (error) {
       next(error);
@@ -83,17 +86,15 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
-      passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
+      passport.authenticate("local", (err: any, user: User, info: IVerifyOptions) => {
         if (err) return next(err);
         if (!user) return res.status(401).json(info);
 
         req.logIn(user, (err) => {
           if (err) return next(err);
           return res.json({
-            user: {
-              id: user.id,
-              username: user.username
-            }
+            id: user.id,
+            username: user.username
           });
         });
       })(req, res, next);
@@ -112,6 +113,10 @@ export function setupAuthRoutes(app: Express) {
   });
 
   app.get("/api/user", requireAuth, (req, res) => {
-    res.json(req.user);
+    const user = req.user as User;
+    res.json({
+      id: user.id,
+      username: user.username
+    });
   });
 }
