@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
@@ -26,17 +25,13 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    host: '0.0.0.0',
+    host: true,
     strictPort: true,
     port: 5173,
     allowedHosts: [
-      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
       '.replit.dev',
       'localhost',
-      '127.0.0.1',
-      '::1',
-      /\.repl\.co$/,
-      /-\d+\.repl\.dev$/
+      '127.0.0.1'
     ],
     hmr: {
       clientPort: 443,
