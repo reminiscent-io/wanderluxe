@@ -81,6 +81,30 @@ export function setupAuthRoutes(app: Express) {
     });
   });
 
+  // Test login endpoint
+  app.post("/api/test-login", async (req, res) => {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, "test"))
+        .limit(1);
+
+      if (!user) {
+        return res.status(400).json({ error: "Test user not found" });
+      }
+
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Login failed" });
+        }
+        return res.json({ success: true, user });
+      });
+    } catch (error) {
+      return res.status(500).json({ error: "Server error" });
+    }
+  });
+
   app.get("/api/user", requireAuth, (req, res) => {
     res.json(req.user);
   });
