@@ -55,7 +55,10 @@ export function ChatInterface({ tripId, userId }: ChatInterfaceProps) {
             placeholder="Type your message..."
             className="flex-1"
           />
-          <Button type="submit" size="icon">
+          <Button 
+            type="submit" 
+            size="icon"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>
