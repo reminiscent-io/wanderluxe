@@ -79,35 +79,36 @@ export function setupAuth(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
+        domain: '.replit.dev',
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+        maxAge: 7 * 24 * 60 * 60 * 1000
       }
     })
   );
 
-  // Passport setup
   app.use(passport.initialize());
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy({
+      usernameField: 'username',
+      passwordField: 'password',
+      passReqToCallback: false
+    }, async (username, password, done) => {
       try {
+        const normalizedUsername = username.toLowerCase().trim();
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.username, username.toLowerCase().trim()))
+          .where(eq(users.username, normalizedUsername))
           .limit(1);
 
-        if (!user) {
-          return done(null, false, { message: "Invalid username or password" });
-        }
-
-        const isValid = await crypto.compare(password.trim(), user.password);
-        if (!isValid) {
-          return done(null, false, { message: "Invalid username or password" });
-        }
+        if (!user) return done(null, false, { message: "Invalid credentials" });
+        
+        const isValid = await bcrypt.compare(password.trim(), user.password);
+        if (!isValid) return done(null, false, { message: "Invalid credentials" });
 
         return done(null, user);
       } catch (err) {
@@ -120,58 +121,51 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (id: unknown, done) => {
     try {
+      const numericId = Number(id);
+      if (isNaN(numericId)) return done(new Error('Invalid user ID'));
+      
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.id, id))
+        .where(eq(users.id, numericId))
         .limit(1);
 
-      if (!user) {
-        return done(new Error('User not found'));
-      }
-
-      done(null, user);
+      user ? done(null, user) : done(new Error('User not found'));
     } catch (err) {
       done(err);
     }
   });
 
-  // Auth routes
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password } = req.body;
-
-      if (!username?.trim() || !password?.trim()) {
-        return res.status(400).json({ message: "Username and password are required" });
-      }
+      const { username, password } = insertUserSchema.parse(req.body);
+      const normalizedUsername = username.toLowerCase().trim();
 
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username.trim()))
-        .limit(1);
+        .where(eq(users.username, normalizedUsername));
 
       if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(409).json({ message: "Username already exists" });
       }
 
-      const hashedPassword = await crypto.hash(password.trim());
-
+      const hashedPassword = await bcrypt.hash(password.trim(), 12);
       const [newUser] = await db
         .insert(users)
         .values({
-          username: username.trim(),
+          username: normalizedUsername,
           password: hashedPassword,
         })
         .returning();
 
       req.login(newUser, (err) => {
         if (err) return next(err);
-        return res.json({
+        return res.status(201).json({
           id: newUser.id,
-          username: newUser.username,
+          username: newUser.username
         });
       });
     } catch (error) {
@@ -180,17 +174,15 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: User, info: IVerifyOptions) => {
+    passport.authenticate("local", (err: Error, user?: User, info?: { message: string }) => {
       if (err) return next(err);
-      if (!user) {
-        return res.status(401).json({ message: info.message || "Authentication failed" });
-      }
+      if (!user) return res.status(401).json({ message: info?.message || "Authentication failed" });
 
-      req.login(user, (err) => {
+      req.logIn(user, (err) => {
         if (err) return next(err);
         return res.json({
           id: user.id,
-          username: user.username,
+          username: user.username
         });
       });
     })(req, res, next);
