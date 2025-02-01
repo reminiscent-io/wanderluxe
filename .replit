@@ -14,11 +14,14 @@ run = "npm run dev"
 [[ports]]
 localPort = 8080
 externalPort = 80
+protocol = "http"
 exposeLocalhost = true
 
 [[ports]]
-localPort = 5173
+localPort = 5173 
 externalPort = 443
+protocol = "https"
+
 
 [workflows]
 
