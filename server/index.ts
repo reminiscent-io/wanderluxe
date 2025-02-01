@@ -20,7 +20,13 @@ import helmet from 'helmet';
 
 // Security middleware first
 app.use(helmet({
-  contentSecurityPolicy: false // Disable for Replit compatibility
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://*.replit.dev"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
 }));
 
 // Add request logging
