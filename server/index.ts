@@ -11,6 +11,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Health check endpoint
+app.use('/health', (req, res) => {
+  res.json({
+    viteHost: process.env.VITE_HOST,
+    resolvedHost: req.headers.host,
+    allowedHosts: config.server?.allowedHosts
+  });
+});
+
 // Add CORS headers specifically for Replit domains
 app.use((req, res, next) => {
   const allowedOrigins = [
