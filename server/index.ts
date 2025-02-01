@@ -12,11 +12,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Health check endpoint
-app.use('/health', (req, res) => {
+app.use("/health", (req, res) => {
   res.json({
-    viteHost: process.env.VITE_HOST,
     resolvedHost: req.headers.host,
-    allowedHosts: config.server?.allowedHosts
+    allowedHosts: [
+      ".replit.dev",
+      ".repl.co",
+      "localhost",
+      "127.0.0.1",
+      process.env.REPLIT_URL || "",
+    ],
   });
 });
 
