@@ -10,6 +10,11 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import chatRouter from './routes/chat';
+
+
+
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Fix DNS resolution order for Node.js v17+
@@ -119,8 +124,11 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     await setupVite(app, server);
   } else {
     serveStatic(app);
-  }
+  };
 
+  // Add after other middleware
+  app.use('/api/chat', chatRouter);
+  
   // Frontend routes - must be after API routes
   app.get("*", (req, res) => {
     if (app.get("env") === "development") {
