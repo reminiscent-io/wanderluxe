@@ -4,7 +4,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "tsx server/index.ts",
+    "dev": "vite --host 0.0.0.0 --port 5173 --strict-port",
     "start": "node server/index.js",
     "db:push": "drizzle-kit push:pg",
     "check": "tsc"
