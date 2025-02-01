@@ -60,10 +60,6 @@ app.use(express.urlencoded({ extended: false }));
 setupSession(app);
 setupPassport(app);
 
-// Set up session and authentication
-setupSession(app);
-setupPassport();
-
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
