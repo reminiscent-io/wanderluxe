@@ -19,7 +19,10 @@ export function useUser() {
       try {
         const response = await fetch("/api/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Origin": window.location.origin
+          },
           body: JSON.stringify(data),
           credentials: "include",
         });
@@ -48,7 +51,10 @@ export function useUser() {
     mutationFn: async (data: AuthData) => {
       const response = await fetch("/api/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Origin": window.location.origin
+        },
         body: JSON.stringify(data),
         credentials: "include",
       });
