@@ -157,51 +157,68 @@ export function TimelineView({ tripId }: TimelineViewProps) {
             <div className="relative">
               {entries
                 .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                .map((entry) => (
-                  <div
-                    key={entry.id}
-                    className={cn(
-                      "flex gap-4 pb-8 last:pb-0 relative",
-                      entry.suggested && "opacity-70"
-                    )}
-                  >
-                    <div className="absolute top-0 bottom-0 left-[19px] w-px bg-border" />
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center relative z-10">
-                      {entry.suggested ? (
-                        <Sparkles className="h-5 w-5 text-primary" />
-                      ) : (
-                        <Calendar className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium leading-none">{entry.title}</h4>
-                        {entry.suggested && (
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full leading-none">
-                            Suggested
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>
-                          {format(new Date(entry.startTime), "MMM d, yyyy h:mm a")}
-                        </span>
-                      </div>
-                      {entry.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {entry.description}
-                        </p>
-                      )}
-                      {entry.location && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{entry.location}</span>
+                .map((entry, index, array) => {
+                  const isFirstOfDay = index === 0 || 
+                    new Date(entry.startTime).toDateString() !== 
+                    new Date(array[index - 1].startTime).toDateString();
+
+                  return (
+                    <div key={entry.id}>
+                      {isFirstOfDay && (
+                        <div className="font-semibold text-sm text-muted-foreground my-4 first:mt-0">
+                          {format(new Date(entry.startTime), "EEEE, MMMM d, yyyy")}
                         </div>
                       )}
+                      <div
+                        className={cn(
+                          "flex gap-4 pb-8 last:pb-0 relative",
+                          entry.suggested && "opacity-70 hover:opacity-100 transition-opacity"
+                        )}
+                      >
+                        <div className="absolute top-0 bottom-0 left-[19px] w-px bg-border" />
+                        <div 
+                          className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center relative z-10",
+                            entry.suggested ? "bg-primary/10" : "bg-primary/20"
+                          )}
+                        >
+                          {entry.suggested ? (
+                            <Sparkles className="h-5 w-5 text-primary" />
+                          ) : (
+                            <Calendar className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium leading-none">{entry.title}</h4>
+                            {entry.suggested && (
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full leading-none">
+                                Suggested
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>
+                              {format(new Date(entry.startTime), "h:mm a")}
+                            </span>
+                          </div>
+                          {entry.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {entry.description}
+                            </p>
+                          )}
+                          {entry.location && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                              <span>{entry.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           )}
         </div>
