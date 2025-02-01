@@ -4,6 +4,9 @@ import { setupVite, serveStatic, log } from "./vite";
 import dns from "node:dns";
 import net from "node:net";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Fix DNS resolution order for Node.js v17+
 dns.setDefaultResultOrder('verbatim');
