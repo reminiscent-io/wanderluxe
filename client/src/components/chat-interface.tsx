@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -45,9 +45,7 @@ export function ChatInterface({ tripId, userId }: ChatInterfaceProps) {
               key={message.id}
               className={cn(
                 "mb-4 p-3 rounded-lg",
-                message.isAi 
-                  ? "bg-gray-100 ml-auto w-3/4"
-                  : "bg-blue-100 mr-auto w-3/4"
+                message.isAi ? "bg-gray-100 ml-auto w-3/4" : "bg-blue-100 mr-auto w-3/4"
               )}
             >
               <p className="text-sm">{message.content}</p>

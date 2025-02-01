@@ -10,16 +10,19 @@ export function useChat(tripId: number, userId: number) {
       setIsLoading(true);
 
       // Add user message immediately
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        tripId,
-        userId,
-        content,
-        createdAt: new Date(),
-        isAi: false
-      }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          tripId,
+          userId,
+          content,
+          createdAt: new Date(),
+          isAi: false
+        }
+      ]);
 
-      // Get Perplexity API response
+      // Call backend API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -28,21 +31,28 @@ export function useChat(tripId: number, userId: number) {
         body: JSON.stringify({
           tripId,
           message: content,
-          model: "sonar-pro", // Or "sonar"
+          model: "sonar-pro"
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
       const aiResponse = await response.json();
 
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        tripId,
-        userId,
-        content: aiResponse.content,
-        createdAt: new Date(),
-        isAi: true
-      }]);
-
+      // Add AI response to messages
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          tripId,
+          userId,
+          content: aiResponse.content || "AI did not respond.",
+          createdAt: new Date(),
+          isAi: true
+        }
+      ]);
     } catch (error) {
       console.error('Chat error:', error);
     } finally {
