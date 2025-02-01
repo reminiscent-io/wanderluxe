@@ -16,29 +16,50 @@ export function useUser() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: AuthData) => {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Origin": window.location.origin
+          },
+          body: JSON.stringify(data),
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        throw new Error(await response.text());
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Login failed");
+        }
+
+        const responseData = await response.json();
+        if (!responseData.success) {
+          throw new Error(responseData.message || "Login failed");
+        }
+        return responseData;
+      } catch (error) {
+        console.error("Login error:", error);
+        //Improved error handling:  Re-throw the error to be handled by the calling component.
+        throw error; 
       }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
+    onError: (error) => {
+      console.error("Login failed:", error);
+      //Handle error appropriately, e.g., display an error message to the user.
+    }
   });
 
   const registerMutation = useMutation({
     mutationFn: async (data: AuthData) => {
       const response = await fetch("/api/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Origin": window.location.origin
+        },
         body: JSON.stringify(data),
         credentials: "include",
       });

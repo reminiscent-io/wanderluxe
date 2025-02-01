@@ -21,11 +21,30 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!username.trim() || !password.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter both username and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       if (isLogin) {
-        await login({ username, password });
+        const result = await login({ username: username.trim(), password });
+        toast({
+          title: "Success",
+          description: "Login successful",
+        });
+        window.location.replace('/');
       } else {
-        await register({ username, password });
+        const result = await register({ username: username.trim(), password });
+        toast({
+          title: "Success",
+          description: "Registration successful",
+        });
+        window.location.replace('/');
       }
     } catch (error) {
       toast({

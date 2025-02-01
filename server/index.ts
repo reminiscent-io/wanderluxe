@@ -6,6 +6,8 @@ import dns from "node:dns";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { setupSession } from "./auth/session";
+import { setupPassport } from "./auth/passport";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,7 +22,13 @@ import helmet from 'helmet';
 
 // Security middleware first
 app.use(helmet({
-  contentSecurityPolicy: false // Disable for Replit compatibility
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://*.replit.dev"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
 }));
 
 // Add request logging
@@ -35,21 +43,19 @@ app.get("/health", (req, res) => {
 });
 
 // CORS configuration
-const allowedOrigins = [
-  'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-  /https:\/\/([a-z0-9-]+\.)*replit\.dev/
-];
-
 app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Set up session and authentication
+setupSession(app);
+setupPassport(app);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -127,4 +133,15 @@ app.get("/health", (req, res) => {
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
   });
+
+  // Handle graceful shutdown
+  const shutdown = () => {
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 })();

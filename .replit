@@ -12,15 +12,12 @@ build = ["npm", "run", "build"]
 run = "npm run dev"
 
 [[ports]]
-localPort = 8080
-externalPort = 80
-protocol = "http"
-exposeLocalhost = true
+localPort = 5173
+externalPort = 443
 
 [[ports]]
-localPort = 5173 
-externalPort = 443
-protocol = "https"
+localPort = 8080
+externalPort = 80
 
 
 [workflows]

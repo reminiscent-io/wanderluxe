@@ -5,8 +5,34 @@ import { db } from "@db";
 import { users, insertUserSchema } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { crypto } from "./passport";
+import { requireAuth } from "../middleware/auth.middleware";
+
+// Create test user
+const createTestUser = async () => {
+  try {
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, 'test'))
+      .limit(1);
+
+    if (!existingUser) {
+      const hashedPassword = await crypto.hash('test');
+      await db.insert(users).values({
+        username: 'test',
+        password: hashedPassword,
+      });
+      console.log('Test user created successfully');
+    }
+  } catch (error) {
+    console.error('Error creating test user:', error);
+  }
+};
 
 export function setupAuthRoutes(app: Express) {
+  // Create test user on startup
+  createTestUser();
+  
   app.post("/api/register", async (req, res, next) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
@@ -50,26 +76,30 @@ export function setupAuthRoutes(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate(
-      "local",
-      (err: any, user: Express.User, info: IVerifyOptions) => {
-        if (err) {
-          return next(err);
-        }
+    try {
+      const { username, password } = req.body;
 
-        if (!user) {
-          return res.status(400).send(info.message ?? "Login failed");
-        }
+      if (!username?.trim() || !password?.trim()) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
+        if (err) return next(err);
+        if (!user) return res.status(401).json(info);
 
         req.logIn(user, (err) => {
-          if (err) {
-            return next(err);
-          }
-
-          return res.json(user);
+          if (err) return next(err);
+          return res.json({
+            user: {
+              id: user.id,
+              username: user.username
+            }
+          });
         });
-      }
-    )(req, res, next);
+      })(req, res, next);
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.post("/api/logout", (req, res) => {
@@ -81,10 +111,7 @@ export function setupAuthRoutes(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+  app.get("/api/user", requireAuth, (req, res) => {
     res.json(req.user);
   });
 }
