@@ -7,7 +7,32 @@ import { eq } from "drizzle-orm";
 import { crypto } from "./passport";
 import { requireAuth } from "../middleware/auth.middleware";
 
+// Create test user
+const createTestUser = async () => {
+  try {
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, 'test'))
+      .limit(1);
+
+    if (!existingUser) {
+      const hashedPassword = await crypto.hash('test');
+      await db.insert(users).values({
+        username: 'test',
+        password: hashedPassword,
+      });
+      console.log('Test user created successfully');
+    }
+  } catch (error) {
+    console.error('Error creating test user:', error);
+  }
+};
+
 export function setupAuthRoutes(app: Express) {
+  // Create test user on startup
+  createTestUser();
+  
   app.post("/api/register", async (req, res, next) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
