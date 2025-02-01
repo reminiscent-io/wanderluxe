@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,12 +20,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 const authSchema = z.object({
-  username: z.string().min(1, "Username is required").max(50),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(50, "Username must be less than 50 characters")
+    .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and dashes"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
@@ -34,8 +39,6 @@ type AuthFormData = z.infer<typeof authSchema>;
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { login, register, isLoginLoading, isRegisterLoading, user } = useAuth();
-  const { toast } = useToast();
-  const [, navigate] = useLocation();
 
   const form = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
@@ -45,42 +48,31 @@ export default function AuthPage() {
     },
   });
 
-  // Redirect if already logged in
-  if (user) {
-    navigate("/");
-    return null;
-  }
+  // If already logged in, the useAuth hook will handle redirection
+  if (user) return null;
 
   const onSubmit = async (data: AuthFormData) => {
-    try {
-      if (isLogin) {
-        await login(data);
-        navigate("/");
-      } else {
-        await register(data);
-        navigate("/");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Authentication failed",
-        variant: "destructive",
-      });
+    if (isLogin) {
+      login(data);
+    } else {
+      register(data);
     }
   };
 
   const isLoading = isLoginLoading || isRegisterLoading;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/10">
       <div className="w-full max-w-md px-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
-            <CardDescription>
+        <Card className="shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              {isLogin ? "Welcome Back" : "Create Account"}
+            </CardTitle>
+            <CardDescription className="text-center">
               {isLogin
-                ? "Enter your credentials to access your account"
-                : "Sign up to start planning your luxury travel"}
+                ? "Enter your credentials to access your luxury travel plans"
+                : "Sign up to start planning your dream luxury travels"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -93,7 +85,12 @@ export default function AuthPage() {
                     <FormItem>
                       <FormLabel>Username</FormLabel>
                       <FormControl>
-                        <Input {...field} disabled={isLoading} />
+                        <Input
+                          {...field}
+                          disabled={isLoading}
+                          placeholder="Enter your username"
+                          autoComplete="username"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -106,7 +103,13 @@ export default function AuthPage() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} disabled={isLoading} />
+                        <Input
+                          type="password"
+                          {...field}
+                          disabled={isLoading}
+                          placeholder="Enter your password"
+                          autoComplete={isLogin ? "current-password" : "new-password"}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -114,13 +117,16 @@ export default function AuthPage() {
                 />
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isLogin ? "Sign In" : "Sign Up"}
+                  {isLogin ? "Sign In" : "Create Account"}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    form.reset();
+                  }}
                   disabled={isLoading}
                 >
                   {isLogin

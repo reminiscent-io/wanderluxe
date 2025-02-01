@@ -1,11 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "./use-toast";
 import { useLocation } from "wouter";
-
-interface User {
-  id: number;
-  username: string;
-}
+import type { User } from "@db/schema";
 
 interface AuthCredentials {
   username: string;
@@ -20,13 +16,17 @@ export function useAuth() {
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user"],
     retry: false,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: AuthCredentials) => {
       const response = await fetch("/api/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Origin": window.location.origin
+        },
         body: JSON.stringify(credentials),
         credentials: "include",
       });
@@ -40,6 +40,10 @@ export function useAuth() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data);
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
       setLocation("/");
     },
     onError: (error: Error) => {
@@ -55,7 +59,10 @@ export function useAuth() {
     mutationFn: async (credentials: AuthCredentials) => {
       const response = await fetch("/api/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Origin": window.location.origin
+        },
         body: JSON.stringify(credentials),
         credentials: "include",
       });
@@ -69,6 +76,10 @@ export function useAuth() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data);
+      toast({
+        title: "Welcome!",
+        description: "Your account has been created successfully.",
+      });
       setLocation("/");
     },
     onError: (error: Error) => {
@@ -80,12 +91,46 @@ export function useAuth() {
     },
   });
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Logout failed");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.invalidateQueries();
+      toast({
+        title: "Goodbye!",
+        description: "You have been logged out successfully.",
+      });
+      setLocation("/auth");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     user,
     isLoading,
     login: loginMutation.mutate,
     register: registerMutation.mutate,
+    logout: logoutMutation.mutate,
     isLoginLoading: loginMutation.isPending,
     isRegisterLoading: registerMutation.isPending,
+    isLogoutLoading: logoutMutation.isPending,
   };
 }
