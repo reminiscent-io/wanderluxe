@@ -22,9 +22,7 @@ externalPort = 443
 localPort = 8080
 externalPort = 80
 
-
 [workflows]
-runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -47,7 +45,4 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = """
-
-npm run db:push
-"""
+args = "npx drizzle-kit push"

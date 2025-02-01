@@ -11,7 +11,6 @@ import type { User } from "@db/schema";
 // Types
 declare global {
   namespace Express {
-    // Extend User interface without password for security
     interface User extends Omit<User, "password"> {}
   }
 }
@@ -21,9 +20,23 @@ const crypto = {
   compare: (password: string, hash: string) => bcrypt.compare(password, hash),
 };
 
+// Auth middleware
+export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized", redirectTo: "/auth" });
+  }
+  next();
+};
+
+export const requireTripAccess = async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized", redirectTo: "/auth" });
+  }
+  next();
+};
+
 // Setup functions
 export function setupAuth(app: Express) {
-  // Session setup with secure cookie configuration
   const isProduction = process.env.NODE_ENV === 'production';
   app.use(
     session({
@@ -45,7 +58,6 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure Passport Local Strategy
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -65,7 +77,6 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Invalid credentials" });
         }
 
-        // Remove password before sending to client
         const { password: _, ...userWithoutPassword } = user;
         return done(null, userWithoutPassword);
       } catch (err) {
@@ -99,7 +110,7 @@ export function setupAuth(app: Express) {
       done(err);
     }
   });
-
+  
   // Auth routes
   app.post("/api/register", async (req: Request, res: Response, next: NextFunction) => {
     try {
