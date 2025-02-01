@@ -9,7 +9,10 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "cloudrun"
 build = ["npm", "run", "build"]
-run = "npm run dev"
+run = ["sh", "-c", """
+
+npm run db:push
+"""]
 
 [[ports]]
 localPort = 5173
@@ -21,6 +24,7 @@ externalPort = 80
 
 
 [workflows]
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -29,10 +33,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
+args = "Database Setup"
 
 [[workflows.workflow]]
-name = "Start application"
+name = "Database Setup"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -43,4 +47,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run db:push && npm run dev"
+args = """
+
+npm run db:push
+"""
