@@ -42,13 +42,15 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://localhost:5000",
+        target: "http://0.0.0.0:5000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "")
+        router: () => process.env.VITE_PROXY_TARGET || "http://0.0.0.0:5000",
+        rewrite: (path) => path.replace(/^\/api/, '/api')
       },
       "/health": {
-        target: "http://localhost:5000",
-        changeOrigin: true
+        target: "http://0.0.0.0:5000",
+        changeOrigin: true,
+        bypass: (req) => req.url === "/health" ? req.url : null
       }
     },
   },

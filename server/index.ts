@@ -1,8 +1,13 @@
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dns from "node:dns";
 import net from "node:net";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Fix DNS resolution order for Node.js v17+
 dns.setDefaultResultOrder('verbatim');
@@ -11,43 +16,20 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: 'active',
-    host: req.headers.host,
-    allowedHosts: [
-      process.env.VITE_ALLOWED_HOSTS,
-      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev'
-    ]
-  });
-});
+// Add CORS configuration
+import cors from 'cors';
 
-// Handle React routing after API routes
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
-});
+const allowedOrigins = [
+  'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+  /https:\/\/([a-z0-9-]+\.)*replit\.dev/
+];
 
-// Add CORS headers specifically for Replit domains
-app.use((req, res, next) => {
-  const allowedOrigins = [
-    'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-    /\.replit\.dev$/
-  ];
-
-  const origin = req.headers.origin;
-  if (origin && (allowedOrigins.includes(origin) || allowedOrigins.some(pattern => pattern instanceof RegExp && pattern.test(origin)))) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Sec-WebSocket-Protocol');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -80,10 +62,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint before Vite setup
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: 'active',
+    host: req.headers.host,
+    allowedHosts: [
+      process.env.VITE_ALLOWED_HOSTS,
+      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev'
+    ]
+  });
+});
+
 (async () => {
   const server = registerRoutes(app);
 
-  // Error handling middleware
+  // Error handling middleware before Vite setup
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error('Error:', err);
     const status = err.status || err.statusCode || 500;
@@ -91,13 +85,23 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
   });
 
+  // Setup Vite after core routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  const PORT = 5000;
+  // Handle React routing after API routes
+  app.get("*", (req, res) => {
+    if (app.get("env") === "development") {
+      res.sendFile(path.join(__dirname, "../client/index.html"));
+    } else {
+      res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
+    }
+  });
+
+  const PORT = process.env.PORT || 8080;
   server.listen(PORT, "0.0.0.0", () => {
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");

@@ -44,11 +44,17 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use((req, res, next) => {
-    console.log('Incoming Host:', req.headers.host);
+    console.log('Received Host:', req.headers.host);
     next();
   });
 
-  app.use(vite.middlewares);
+  app.use((req, res, next) => {
+    // Bypass Vite for WebSocket connections
+    if (req.headers['sec-websocket-protocol']?.includes('vite-hmr')) {
+      return next();
+    }
+    vite.middlewares(req, res, next);
+  });
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 

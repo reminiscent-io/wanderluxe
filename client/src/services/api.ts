@@ -1,6 +1,7 @@
+
 export const api = {
   get: async (url: string) => {
-    const response = await fetch(url, {
+    const response = await fetch(`http://0.0.0.0:5000${url}`, {
       credentials: "include",
     });
 
@@ -16,7 +17,7 @@ export const api = {
   },
 
   post: async (url: string, data?: any) => {
-    const response = await fetch(url, {
+    const response = await fetch(`http://0.0.0.0:5000${url}`, {
       method: "POST",
       headers: data ? { "Content-Type": "application/json" } : undefined,
       body: data ? JSON.stringify(data) : undefined,
@@ -38,7 +39,7 @@ export const api = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch(url, {
+    const response = await fetch(`http://0.0.0.0:5000${url}`, {
       method: "POST",
       body: formData,
       credentials: "include",

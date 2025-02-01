@@ -12,13 +12,16 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
-localPort = 5173
-externalPort = 443
-exposeLocalhost = true
-
-[[ports]]
 localPort = 5000
 externalPort = 8080
+
+[[ports]]
+localPort = 5173
+externalPort = 443
+
+[[ports]]
+localPort = 8080
+externalPort = 80
 
 [workflows]
 
