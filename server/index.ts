@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dns from "node:dns";
 import net from "node:net";
+import path from "node:path";
 
 // Fix DNS resolution order for Node.js v17+
 dns.setDefaultResultOrder('verbatim');
