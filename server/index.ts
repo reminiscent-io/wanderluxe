@@ -121,10 +121,10 @@ app.get("/health", (req, res) => {
     }
   });
 
-  const PORT = process.env.PORT || 8080;
+  const PORT = 8080;
   server.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
-    log(`Application is ready for connections`, "express");
   });
 })();
