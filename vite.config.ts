@@ -30,13 +30,7 @@ export default defineConfig({
     host: true,
     strictPort: true,
     port: 5173,
-    allowedHosts: [
-      ".replit.dev",
-      ".repl.co",
-      ".janeway.replit.dev",
-      "localhost",
-      "127.0.0.1"
-    ],
+    allowedHosts: true,
     hmr: {
       protocol: "wss",
       clientPort: 443,
