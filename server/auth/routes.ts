@@ -35,42 +35,37 @@ export function setupAuthRoutes(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const result = insertUserSchema.safeParse(req.body);
-      if (!result.success) {
-        return res
-          .status(400)
-          .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
-      }
+      const { username, password } = req.body;
 
-      const { username, password } = result.data;
+      if (!username?.trim() || !password?.trim()) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
 
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username))
+        .where(eq(users.username, username.trim()))
         .limit(1);
 
       if (existingUser) {
-        return res.status(400).send("Username already exists");
+        return res.status(400).json({ message: "Username already exists" });
       }
 
-      const hashedPassword = await crypto.hash(password);
+      const hashedPassword = await crypto.hash(password.trim());
 
       const [newUser] = await db
         .insert(users)
         .values({
-          username,
+          username: username.trim(),
           password: hashedPassword,
         })
         .returning();
 
       req.login(newUser, (err) => {
-        if (err) {
-          return next(err);
-        }
+        if (err) return next(err);
         return res.json({
           id: newUser.id,
-          username: newUser.username
+          username: newUser.username,
         });
       });
     } catch (error) {
@@ -79,34 +74,26 @@ export function setupAuthRoutes(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    try {
-      const { username, password } = req.body;
-
-      if (!username?.trim() || !password?.trim()) {
-        return res.status(400).json({ message: "Username and password are required" });
+    passport.authenticate("local", (err: any, user: User, info: IVerifyOptions) => {
+      if (err) return next(err);
+      if (!user) {
+        return res.status(401).json({ message: info.message || "Authentication failed" });
       }
 
-      passport.authenticate("local", (err: any, user: User, info: IVerifyOptions) => {
+      req.login(user, (err) => {
         if (err) return next(err);
-        if (!user) return res.status(401).json(info);
-
-        req.logIn(user, (err) => {
-          if (err) return next(err);
-          return res.json({
-            id: user.id,
-            username: user.username
-          });
+        return res.json({
+          id: user.id,
+          username: user.username,
         });
-      })(req, res, next);
-    } catch (error) {
-      next(error);
-    }
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
-        return res.status(500).send("Logout failed");
+        return res.status(500).json({ message: "Logout failed" });
       }
       res.json({ message: "Logged out successfully" });
     });
@@ -116,7 +103,7 @@ export function setupAuthRoutes(app: Express) {
     const user = req.user as User;
     res.json({
       id: user.id,
-      username: user.username
+      username: user.username,
     });
   });
 }
