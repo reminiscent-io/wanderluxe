@@ -26,10 +26,15 @@ export const crypto = {
   },
 };
 
-// extend express user object with our schema
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Fix circular reference by explicitly defining the shape
+    interface User {
+      id: number;
+      username: string;
+      password: string;
+      createdAt: Date;
+    }
   }
 }
 

@@ -13,8 +13,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Plus, Calendar, MapPin, Clock, Sparkles } from "lucide-react";
+import { Plus, Calendar, MapPin, Clock, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface TimelineViewProps {
   tripId: number;
@@ -23,6 +24,7 @@ interface TimelineViewProps {
 export function TimelineView({ tripId }: TimelineViewProps) {
   const { entries, isLoading, createEntry } = useTimeline(tripId);
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false);
+  const { toast } = useToast();
   const [newEntry, setNewEntry] = useState({
     title: "",
     description: "",
@@ -46,8 +48,16 @@ export function TimelineView({ tripId }: TimelineViewProps) {
         tripId: tripId,
         suggested: false,
       });
+      toast({
+        title: "Success",
+        description: "Timeline entry created successfully",
+      });
     } catch (error) {
-      console.error("Failed to create entry:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create timeline entry",
+        variant: "destructive",
+      });
     }
   };
 
@@ -107,7 +117,26 @@ export function TimelineView({ tripId }: TimelineViewProps) {
                   }
                 />
               </div>
-              <Button className="w-full" onClick={handleCreateEntry}>
+              <div className="space-y-2">
+                <Label>Entry Type</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="suggested"
+                    checked={newEntry.suggested}
+                    onChange={(e) =>
+                      setNewEntry({ ...newEntry, suggested: e.target.checked })
+                    }
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  <Label htmlFor="suggested">Mark as suggestion</Label>
+                </div>
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={handleCreateEntry}
+                disabled={!newEntry.title || !newEntry.startTime}
+              >
                 Add Entry
               </Button>
             </div>
@@ -117,55 +146,62 @@ export function TimelineView({ tripId }: TimelineViewProps) {
       <CardContent>
         <div className="space-y-6">
           {isLoading ? (
-            <div className="text-center text-muted-foreground">Loading...</div>
+            <div className="flex justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin text-border" />
+            </div>
           ) : !entries || entries.length === 0 ? (
-            <div className="text-center text-muted-foreground">
-              No timeline entries yet
+            <div className="text-center text-muted-foreground p-4">
+              No timeline entries yet. Start by adding your first activity!
             </div>
           ) : (
             <div className="relative">
-              {entries.map((entry) => (
-                <div
-                  key={entry.id}
-                  className={cn(
-                    "flex gap-4 pb-8 last:pb-0 relative",
-                    entry.suggested && "opacity-70"
-                  )}
-                >
-                  <div className="absolute top-0 bottom-0 left-[19px] w-px bg-border" />
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center relative z-10">
-                    {entry.suggested ? (
-                      <Sparkles className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Calendar className="h-5 w-5 text-primary" />
+              {entries
+                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      "flex gap-4 pb-8 last:pb-0 relative",
+                      entry.suggested && "opacity-70"
                     )}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium">{entry.title}</h4>
-                      {entry.suggested && (
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                          Suggested
-                        </span>
+                  >
+                    <div className="absolute top-0 bottom-0 left-[19px] w-px bg-border" />
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center relative z-10">
+                      {entry.suggested ? (
+                        <Sparkles className="h-5 w-5 text-primary" />
+                      ) : (
+                        <Calendar className="h-5 w-5 text-primary" />
                       )}
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(entry.startTime), "MMM d, yyyy h:mm a")}
-                      </span>
                     </div>
-                    {entry.description && (
-                      <p className="text-sm text-muted-foreground">
-                        {entry.description}
-                      </p>
-                    )}
-                    {entry.location && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        {entry.location}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium leading-none">{entry.title}</h4>
+                        {entry.suggested && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full leading-none">
+                            Suggested
+                          </span>
+                        )}
                       </div>
-                    )}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {format(new Date(entry.startTime), "MMM d, yyyy h:mm a")}
+                        </span>
+                      </div>
+                      {entry.description && (
+                        <p className="text-sm text-muted-foreground">
+                          {entry.description}
+                        </p>
+                      )}
+                      {entry.location && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>{entry.location}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>
