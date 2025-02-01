@@ -28,10 +28,7 @@ const authSchema = z.object({
     .max(50, "Username must be less than 50 characters")
     .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and dashes"),
   password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+    .min(4, "Password must be at least 4 characters"),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
