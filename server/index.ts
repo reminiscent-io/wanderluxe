@@ -113,7 +113,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     }
   });
 
-  const PORT = 8080;
+  const PORT = process.env.PORT || 8080;
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     log(`Express server running on port ${PORT}`, "express");
