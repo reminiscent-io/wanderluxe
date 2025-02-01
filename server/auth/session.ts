@@ -12,8 +12,9 @@ export function setupSession(app: Express) {
         secure: true, // Always true for Replit HTTPS
         sameSite: 'none', // Required for cross-origin
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        domain: '.replit.dev' // Allow all subdomains
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        domain: '.replit.dev', // Allow all subdomains
+        path: '/'
       }
     })
   );
