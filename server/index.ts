@@ -133,4 +133,15 @@ app.get("/health", (req, res) => {
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
   });
+
+  // Handle graceful shutdown
+  const shutdown = () => {
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 })();
