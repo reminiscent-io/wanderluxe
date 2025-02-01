@@ -50,56 +50,27 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  app.post("/api/login", async (req, res, next) => {
-    try {
-      const { username, password } = req.body;
+  app.post("/api/login", (req, res, next) => {
+    const { username, password } = req.body;
       
-      if (!username?.trim() || !password?.trim()) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Username and password are required" 
+    if (!username?.trim() || !password?.trim()) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+
+    passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
+      if (err) return next(err);
+      if (!user) return res.status(401).json(info);
+      
+      req.logIn(user, (err) => {
+        if (err) return next(err);
+        return res.json({
+          user: {
+            id: user.id,
+            username: user.username
+          }
         });
-      }
-
-      passport.authenticate(
-        "local",
-        async (err: any, user: Express.User, info: IVerifyOptions) => {
-          if (err) {
-            console.error("Login error:", err);
-            return res.status(500).json({ 
-              success: false, 
-              message: "Internal server error" 
-            });
-          }
-
-          if (!user) {
-            return res.status(401).json({ 
-              success: false, 
-              message: info?.message ?? "Invalid credentials" 
-            });
-          }
-
-          return new Promise<void>((resolve) => {
-            req.logIn(user, (err) => {
-              if (err) {
-                console.error("Session error:", err);
-                res.status(500).json({ 
-                  success: false, 
-                  message: "Failed to create session" 
-                });
-                return resolve();
-              }
-
-              res.json({ 
-                success: true, 
-                user,
-                message: "Login successful" 
-              });
-              resolve();
-            });
-          });
-        }
-      )(req, res, next);
+      });
+    })(req, res, next);
     } catch (error) {
       console.error("Unexpected error:", error);
       next(error);
