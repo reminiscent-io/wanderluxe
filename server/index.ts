@@ -10,6 +10,11 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import chatRouter from './routes/chat';
+
+
+
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Fix DNS resolution order for Node.js v17+
@@ -68,10 +73,7 @@ app.use(cors({
     'https://*.replit.dev',
     'http://localhost:5173'
   ],
-  methods: ['GET', 'POST'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['set-cookie']
+  credentials: true
 }));
 
 
@@ -112,13 +114,22 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 (async () => {
   const server = registerRoutes(app);
 
+  // API routes
+  app.use('/api', (req, res, next) => {
+    console.log(`[API] ${req.method} ${req.path}`);
+    next();
+  });
+
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
-  }
+  };
 
-  // Handle React routing after API routes
+  // Add after other middleware
+  app.use('/api/chat', chatRouter);
+  
+  // Frontend routes - must be after API routes
   app.get("*", (req, res) => {
     if (app.get("env") === "development") {
       res.sendFile(path.join(__dirname, "../client/index.html"));

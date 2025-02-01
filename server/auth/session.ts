@@ -9,10 +9,11 @@ export function setupSession(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "none",
+        secure: true,
+        sameSite: 'none',
+        domain: '.replit.dev',
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
       }
     })
   );

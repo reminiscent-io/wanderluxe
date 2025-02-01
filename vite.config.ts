@@ -39,13 +39,12 @@ export default defineConfig({
       "/api": {
         target: "http://0.0.0.0:8080",
         changeOrigin: true,
-        router: () => process.env.VITE_PROXY_TARGET || "http://0.0.0.0:8080",
-        rewrite: (path) => path.replace(/^\/api/, '/api')
-      },
-      "/health": {
-        target: "http://0.0.0.0:8080",
-        changeOrigin: true,
-        bypass: (req) => req.url === "/health" ? req.url : null
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'http://0.0.0.0:5173');
+          });
+        }
       }
     },
   },
