@@ -9,12 +9,11 @@ export function setupSession(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: true, // Always true for Replit HTTPS
-        sameSite: 'none', // Required for cross-origin
+        secure: true, // Required for Replit HTTPS
+        sameSite: 'none', // Allow cross-origin
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        domain: '.replit.dev', // Allow all subdomains
-        path: '/'
+        domain: '.replit.dev', // Allow subdomains
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
       }
     })
   );
