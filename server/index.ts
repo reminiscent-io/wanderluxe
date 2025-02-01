@@ -5,8 +5,7 @@ import dns from "node:dns";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupSession } from "./auth/session";
-import { setupPassport } from "./auth/passport";
+import { setupAuth } from "./auth/combined-auth";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,7 +32,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://*.replit.dev"]
+      connectSrc: ["'self'", "https://*.replit.dev"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
     }
   },
   crossOriginEmbedderPolicy: false
@@ -45,18 +45,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint before other routes
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
 // CORS configuration
 app.use(cors({
   origin: [
     'https://*.replit.dev',
-    'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-    'http://localhost:5173'
-  ],
+    process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : undefined
+  ].filter(Boolean),
   credentials: true,
   exposedHeaders: ['set-cookie']
 }));
@@ -68,69 +62,36 @@ app.use(express.urlencoded({ extended: false }));
 // Apply rate limiting to auth routes
 app.use('/api/(login|register)', authLimiter);
 
-// Set up session and authentication
-setupSession(app);
-setupPassport(app);
+// Set up authentication
+setupAuth(app);
 
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine, "express");
+    if (req.path.startsWith("/api")) {
+      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`, "express");
     }
   });
-
   next();
 });
 
-// Health check endpoint before Vite setup
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: 'active',
-    host: req.headers.host,
-    allowedHosts: [
-      process.env.VITE_ALLOWED_HOSTS,
-      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev'
-    ]
+// Error handling middleware
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    status: err.status || err.statusCode || 500
   });
+  const status = err.status || err.statusCode || 500;
+  const message = process.env.NODE_ENV === 'development' ? err.message : "Internal Server Error";
+  res.status(status).json({ message });
 });
 
 (async () => {
   const server = registerRoutes(app);
 
-  // Error handling middleware before Vite setup
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('Error details:', {
-      message: err.message,
-      stack: err.stack,
-      status: err.status || err.statusCode || 500
-    });
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-  });
-
-  // Setup Vite after core routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
@@ -149,13 +110,7 @@ app.get("/health", (req, res) => {
   const PORT = 8080;
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
-    console.log('CORS origins:', [
-      'https://*.replit.dev',
-      'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-      'http://localhost:5173'
-    ]);
     log(`Express server running on port ${PORT}`, "express");
-    log(`Vite dev server running on port 5173`, "express");
   });
 
   // Handle graceful shutdown

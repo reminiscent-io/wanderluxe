@@ -6,7 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const trips = pgTable("trips", {
@@ -19,8 +19,8 @@ export const trips = pgTable("trips", {
   budget: integer("budget"),
   status: text("status").default("planning"),
   details: json("details").$type<Record<string, any>>(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const timelineEntries = pgTable("timeline_entries", {
@@ -35,8 +35,8 @@ export const timelineEntries = pgTable("timeline_entries", {
   status: text("status").default("planned"),
   suggested: boolean("suggested").default(false),
   details: json("details").$type<Record<string, any>>(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const collaborators = pgTable("collaborators", {
@@ -45,7 +45,7 @@ export const collaborators = pgTable("collaborators", {
   userId: integer("user_id").references(() => users.id),
   role: text("role").default("viewer"), // 'owner', 'editor', 'viewer'
   inviteStatus: text("invite_status").default("pending"), // 'pending', 'accepted', 'declined'
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const messages = pgTable("messages", {

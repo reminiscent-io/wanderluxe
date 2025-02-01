@@ -6,6 +6,12 @@ interface AuthData {
   password: string;
 }
 
+interface AuthResponse {
+  id: number;
+  username: string;
+  message?: string;
+}
+
 export function useUser() {
   const queryClient = useQueryClient();
 
@@ -16,39 +22,29 @@ export function useUser() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: AuthData) => {
-      try {
-        const response = await fetch("/api/login", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Origin": window.location.origin
-          },
-          body: JSON.stringify(data),
-          credentials: "include",
-        });
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Origin": window.location.origin
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Login failed");
-        }
-
-        const responseData = await response.json();
-        if (!responseData.success) {
-          throw new Error(responseData.message || "Login failed");
-        }
-        return responseData;
-      } catch (error) {
-        console.error("Login error:", error);
-        //Improved error handling:  Re-throw the error to be handled by the calling component.
-        throw error; 
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || "Login failed");
       }
+
+      const responseData = await response.json();
+      return responseData as AuthResponse;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
-    onError: (error) => {
-      console.error("Login failed:", error);
-      //Handle error appropriately, e.g., display an error message to the user.
+    onError: (error: Error) => {
+      console.error("Login error:", error.message);
     }
   });
 
@@ -65,14 +61,19 @@ export function useUser() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorData = await response.text();
+        throw new Error(errorData || "Registration failed");
       }
 
-      return response.json();
+      const responseData = await response.json();
+      return responseData as AuthResponse;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
+    onError: (error: Error) => {
+      console.error("Registration error:", error.message);
+    }
   });
 
   const logoutMutation = useMutation({
@@ -83,7 +84,8 @@ export function useUser() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorData = await response.text();
+        throw new Error(errorData || "Logout failed");
       }
 
       return response.json();
@@ -91,6 +93,9 @@ export function useUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
+    onError: (error: Error) => {
+      console.error("Logout error:", error.message);
+    }
   });
 
   return {
