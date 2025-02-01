@@ -1,27 +1,29 @@
-
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import { Express, Request, Response, NextFunction } from "express";
 import { db } from "@db";
-import { users, type User, insertUserSchema } from "@db/schema";
+import { users, collaborators, type User } from "@db/schema";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 // Types
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User {
+      id: number;
+      username: string;
+      password: string;
+      createdAt: Date;
+    }
   }
 }
 
-// Crypto helpers
 const crypto = {
   hash: (password: string) => bcrypt.hash(password, 10),
   compare: (password: string, hash: string) => bcrypt.compare(password, hash),
 };
 
-// Middleware
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ 
@@ -81,9 +83,9 @@ export function setupAuth(app: Express) {
       store: new session.MemoryStore(),
       name: 'sessionId',
       cookie: {
-        secure: true,
-        sameSite: 'none',
-        domain: '.replit.dev',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? '.replit.dev' : undefined,
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000
       }
@@ -108,7 +110,7 @@ export function setupAuth(app: Express) {
           .limit(1);
 
         if (!user) return done(null, false, { message: "Invalid credentials" });
-        
+
         const isValid = await bcrypt.compare(password.trim(), user.password);
         if (!isValid) return done(null, false, { message: "Invalid credentials" });
 
@@ -127,22 +129,27 @@ export function setupAuth(app: Express) {
     try {
       const numericId = Number(id);
       if (isNaN(numericId)) return done(new Error('Invalid user ID'));
-      
+
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, numericId))
         .limit(1);
 
-      user ? done(null, user) : done(new Error('User not found'));
+      if (!user) {
+        return done(new Error('User not found'));
+      }
+
+      done(null, user);
     } catch (err) {
       done(err);
     }
   });
 
+  // Auth routes
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password } = insertUserSchema.parse(req.body);
+      const { username, password } = req.body;
       const normalizedUsername = username.toLowerCase().trim();
 
       const [existingUser] = await db
@@ -176,7 +183,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error, user?: User, info?: { message: string }) => {
+    passport.authenticate("local", (err: Error, user?: Express.User, info?: { message: string }) => {
       if (err) return next(err);
       if (!user) return res.status(401).json({ message: info?.message || "Authentication failed" });
 
@@ -200,7 +207,7 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", requireAuth, (req, res) => {
-    const user = req.user as User;
+    const user = req.user as Express.User;
     res.json({
       id: user.id,
       username: user.username,
