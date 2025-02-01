@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 const axiosInstance = axios.create({
@@ -17,7 +16,10 @@ export const api = {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          window.location.href = '/auth';
+          const authUrl = '/auth';
+          if (window.location.pathname !== authUrl) {
+            window.location.assign(authUrl);
+          }
           throw new Error('Unauthorized');
         }
         if (error.response?.status && error.response.status >= 500) {
@@ -37,7 +39,10 @@ export const api = {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          window.location.href = '/auth';
+          const authUrl = '/auth';
+          if (window.location.pathname !== authUrl) {
+            window.location.assign(authUrl);
+          }
           throw new Error('Unauthorized');
         }
         if (error.response?.status && error.response.status >= 500) {
@@ -64,7 +69,10 @@ export const api = {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          window.location.href = '/auth';
+          const authUrl = '/auth';
+          if (window.location.pathname !== authUrl) {
+            window.location.assign(authUrl);
+          }
           throw new Error('Unauthorized');
         }
         if (error.response?.status && error.response.status >= 500) {

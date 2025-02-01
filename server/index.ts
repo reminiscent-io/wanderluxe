@@ -29,15 +29,7 @@ const authLimiter = rateLimit({
 
 // Security middleware first
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://*.replit.dev"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    }
-  },
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 
@@ -50,10 +42,7 @@ app.use((req, res, next) => {
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    'https://*.replit.dev',
-    process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : undefined
-  ].filter(Boolean),
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
