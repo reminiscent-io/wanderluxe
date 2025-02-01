@@ -14,14 +14,6 @@ run = ["sh", "-c", """
 npm run db:push
 """]
 
-[[ports]]
-localPort = 5173
-externalPort = 443
-
-[[ports]]
-localPort = 8080
-externalPort = 80
-
 [workflows]
 
 [[workflows.workflow]]
@@ -46,3 +38,11 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx drizzle-kit push"
+
+[[ports]]
+localPort = 5173
+externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
