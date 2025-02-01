@@ -78,6 +78,8 @@ export function setupAuth(app: Express) {
       secret: process.env.SESSION_SECRET || 'your-secret-key',
       resave: false,
       saveUninitialized: false,
+      store: new session.MemoryStore(),
+      name: 'sessionId',
       cookie: {
         secure: true,
         sameSite: 'none',

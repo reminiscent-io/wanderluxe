@@ -74,10 +74,15 @@ export function setupAuthRoutes(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: User, info: IVerifyOptions) => {
-      if (err) return next(err);
+    console.log("Login attempt:", { username: req.body.username });
+    passport.authenticate("local", (err: Error, user?: User, info?: { message: string }) => {
+      if (err) {
+        console.error("Login error:", err);
+        return next(err);
+      }
       if (!user) {
-        return res.status(401).json({ message: info.message || "Authentication failed" });
+        console.log("Login failed:", { message: info?.message });
+        return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
 
       req.login(user, (err) => {
