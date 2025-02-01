@@ -1,24 +1,30 @@
 
+import axios from 'axios';
+
+const axiosInstance = axios.create({
+  baseURL: 'http://0.0.0.0:8080/api',
+  withCredentials: true,
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest'
+  }
+});
+
 export const api = {
   get: async (url: string) => {
     try {
-      const response = await fetch(`http://0.0.0.0:8080${url}`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
+      const response = await axiosInstance.get(url);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
           window.location.href = '/auth';
           throw new Error('Unauthorized');
         }
-        if (response.status >= 500) {
-          throw new Error(`${response.status}: ${response.statusText}`);
+        if (error.response?.status && error.response.status >= 500) {
+          throw new Error(`${error.response.status}: ${error.response.statusText}`);
         }
-        throw new Error(`${response.status}: ${await response.text()}`);
+        throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
-
-      return response.json();
-    } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
@@ -26,26 +32,19 @@ export const api = {
 
   post: async (url: string, data?: any) => {
     try {
-      const response = await fetch(`http://0.0.0.0:8080${url}`, {
-        method: "POST",
-        headers: data ? { "Content-Type": "application/json" } : undefined,
-        body: data ? JSON.stringify(data) : undefined,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
+      const response = await axiosInstance.post(url, data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
           window.location.href = '/auth';
           throw new Error('Unauthorized');
         }
-        if (response.status >= 500) {
-          throw new Error(`${response.status}: ${response.statusText}`);
+        if (error.response?.status && error.response.status >= 500) {
+          throw new Error(`${error.response.status}: ${error.response.statusText}`);
         }
-        throw new Error(`${response.status}: ${await response.text()}`);
+        throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
-
-      return response.json();
-    } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
@@ -56,27 +55,25 @@ export const api = {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`http://0.0.0.0:8080${url}`, {
-        method: "POST",
-        body: formData,
-        credentials: "include",
+      const response = await axiosInstance.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
-
-      if (!response.ok) {
-        if (response.status === 401) {
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
           window.location.href = '/auth';
           throw new Error('Unauthorized');
         }
-        if (response.status >= 500) {
-          throw new Error(`${response.status}: ${response.statusText}`);
+        if (error.response?.status && error.response.status >= 500) {
+          throw new Error(`${error.response.status}: ${error.response.statusText}`);
         }
-        throw new Error(`${response.status}: ${await response.text()}`);
+        throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
-
-      return response.json();
-    } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
-  },
+  }
 };
