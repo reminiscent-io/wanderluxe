@@ -126,7 +126,15 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
+      if (password.trim().length < 4) {
+        return res.status(400).json({ message: "Password must be at least 4 characters long" });
+      }
+
       const normalizedUsername = username.toLowerCase().trim();
+      if (normalizedUsername.length < 3) {
+        return res.status(400).json({ message: "Username must be at least 3 characters long" });
+      }
+
       const [existingUser] = await db
         .select()
         .from(users)
