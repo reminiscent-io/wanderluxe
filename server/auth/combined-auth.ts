@@ -41,13 +41,12 @@ export function setupAuth(app: Express) {
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'your-secret-key',
-      resave: false,
-      saveUninitialized: false,
+      resave: true,
+      saveUninitialized: true,
       name: 'sessionId',
       cookie: {
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        domain: isProduction ? '.replit.dev' : undefined,
+        secure: false,
+        sameSite: 'lax',
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/'
