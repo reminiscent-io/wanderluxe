@@ -1,4 +1,3 @@
-
 export const api = {
   get: async (url: string) => {
     const response = await fetch(`http://0.0.0.0:5000${url}`, {
