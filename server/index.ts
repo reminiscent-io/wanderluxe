@@ -19,7 +19,20 @@ import cors from 'cors';
 import helmet from 'helmet';
 
 // Security middleware first
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false // Disable for Replit compatibility
+}));
+
+// Add request logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// Health check endpoint before other routes
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // CORS configuration
 const allowedOrigins = [
