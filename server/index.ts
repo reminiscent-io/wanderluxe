@@ -18,7 +18,20 @@ dns.setDefaultResultOrder('verbatim');
 const app = express();
 
 
+// Configure WebSocket for database
+import ws from 'ws';
+global.WebSocket = ws;
+
 // Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  trustProxy: true, // Trust the Replit proxy
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // Limit each IP to 20 requests per window
