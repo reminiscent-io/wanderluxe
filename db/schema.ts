@@ -33,6 +33,7 @@ export const timelineEntries = pgTable("timeline_entries", {
   location: text("location"),
   type: text("type").notNull(), // e.g., 'flight', 'activity', 'accommodation'
   status: text("status").default("planned"),
+  suggested: boolean("suggested").default(false),
   details: json("details").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
