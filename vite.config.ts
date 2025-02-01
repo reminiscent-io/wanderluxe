@@ -39,7 +39,6 @@ export default defineConfig({
       /-\d+\.repl\.dev$/
     ],
     hmr: {
-      host: 'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
       clientPort: 443,
       protocol: 'wss'
     },
