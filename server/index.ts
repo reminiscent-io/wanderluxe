@@ -36,9 +36,11 @@ app.get("*", (req, res) => {
   }
 });
 
-// Add CORS headers specifically for Replit domains
+// Add CORS headers for development
 app.use((req, res, next) => {
   const allowedOrigins = [
+    'http://localhost:5173',
+    'http://0.0.0.0:5173',
     'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
     /\.replit\.dev$/
   ];
