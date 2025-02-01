@@ -81,10 +81,7 @@ export function setupAuthRoutes(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+  app.get("/api/user", requireAuth, (req, res) => {
     res.json(req.user);
   });
 }
