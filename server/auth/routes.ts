@@ -54,7 +54,7 @@ export function setupAuthRoutes(app: Express) {
     try {
       const { username, password } = req.body;
       
-      if (!username || !password) {
+      if (!username?.trim() || !password?.trim()) {
         return res.status(400).json({ 
           success: false, 
           message: "Username and password are required" 
@@ -63,7 +63,7 @@ export function setupAuthRoutes(app: Express) {
 
       passport.authenticate(
         "local",
-        (err: any, user: Express.User, info: IVerifyOptions) => {
+        async (err: any, user: Express.User, info: IVerifyOptions) => {
           if (err) {
             console.error("Login error:", err);
             return res.status(500).json({ 
@@ -75,33 +75,34 @@ export function setupAuthRoutes(app: Express) {
           if (!user) {
             return res.status(401).json({ 
               success: false, 
-              message: info.message ?? "Invalid credentials" 
+              message: info?.message ?? "Invalid credentials" 
             });
           }
 
-          req.logIn(user, (err) => {
-            if (err) {
-              console.error("Session error:", err);
-              return res.status(500).json({ 
-                success: false, 
-                message: "Failed to create session" 
-              });
-            }
+          return new Promise<void>((resolve) => {
+            req.logIn(user, (err) => {
+              if (err) {
+                console.error("Session error:", err);
+                res.status(500).json({ 
+                  success: false, 
+                  message: "Failed to create session" 
+                });
+                return resolve();
+              }
 
-            return res.json({ 
-              success: true, 
-              user,
-              message: "Login successful" 
+              res.json({ 
+                success: true, 
+                user,
+                message: "Login successful" 
+              });
+              resolve();
             });
           });
         }
       )(req, res, next);
     } catch (error) {
       console.error("Unexpected error:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "An unexpected error occurred" 
-      });
+      next(error);
     }
   });
 
