@@ -44,7 +44,7 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use((req, res, next) => {
-    console.log('Incoming Host:', req.headers.host);
+    console.log('Received Host:', req.headers.host);
     next();
   });
 
