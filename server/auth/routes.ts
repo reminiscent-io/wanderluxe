@@ -50,7 +50,7 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  app.post("/api/login", async (req, res, next) => {
+  app.post("/api/login", (req, res, next) => {
     try {
       const { username, password } = req.body;
 

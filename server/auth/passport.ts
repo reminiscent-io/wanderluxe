@@ -44,6 +44,11 @@ export function setupPassport(app: Express) {
     done(null, user.id);
   });
 
+  app.use((req, res, next) => {
+    res.locals.user = req.user;
+    next();
+  });
+
   passport.deserializeUser(async (id: number, done) => {
     try {
       const [user] = await db

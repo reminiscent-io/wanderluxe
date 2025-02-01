@@ -39,12 +39,17 @@ export function useUser() {
         return responseData;
       } catch (error) {
         console.error("Login error:", error);
-        throw error;
+        //Improved error handling:  Re-throw the error to be handled by the calling component.
+        throw error; 
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
+    onError: (error) => {
+      console.error("Login failed:", error);
+      //Handle error appropriately, e.g., display an error message to the user.
+    }
   });
 
   const registerMutation = useMutation({
