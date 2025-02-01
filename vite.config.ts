@@ -1,12 +1,14 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import dns from 'node:dns';
+import dns from "node:dns";
 
-dns.setDefaultResultOrder('verbatim');
+// Fix DNS resolution order for Node.js v17+
+dns.setDefaultResultOrder("verbatim");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,13 +31,14 @@ export default defineConfig({
     strictPort: true,
     port: 5173,
     allowedHosts: [
-      '.replit.dev',
-      'localhost',
-      '127.0.0.1'
+      ".replit.dev",
+      ".repl.co",
+      "localhost",
+      "127.0.0.1"
     ],
     hmr: {
+      protocol: "wss",
       clientPort: 443,
-      protocol: 'wss'
     },
     proxy: {
       "/api": {
