@@ -109,13 +109,19 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 (async () => {
   const server = registerRoutes(app);
 
+  // API routes
+  app.use('/api', (req, res, next) => {
+    console.log(`[API] ${req.method} ${req.path}`);
+    next();
+  });
+
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // Handle React routing after API routes
+  // Frontend routes - must be after API routes
   app.get("*", (req, res) => {
     if (app.get("env") === "development") {
       res.sendFile(path.join(__dirname, "../client/index.html"));
