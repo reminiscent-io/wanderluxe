@@ -1,11 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupAuth } from "./auth/combined-auth";
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dns from "node:dns";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupAuth } from "./auth/combined-auth";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,10 +17,6 @@ dns.setDefaultResultOrder('verbatim');
 
 const app = express();
 
-// Import security packages
-import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 
 // Rate limiting configuration
 const authLimiter = rateLimit({
@@ -27,6 +26,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
+
 // Security middleware first
 app.use(helmet({
   contentSecurityPolicy: {
@@ -34,6 +34,8 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       connectSrc: ["'self'", "https://*.replit.dev"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
     }
   },
   crossOriginEmbedderPolicy: false
@@ -45,6 +47,7 @@ app.use((req, res, next) => {
   next();
 });
 
+
 // CORS configuration
 app.use(cors({
   origin: [
@@ -52,8 +55,11 @@ app.use(cors({
     process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : undefined
   ].filter(Boolean),
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['set-cookie']
 }));
+
 
 // Body parsing middleware
 app.use(express.json());

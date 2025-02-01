@@ -1,6 +1,5 @@
-
 import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import { Pool } from "@neondatabase/serverless";
 import * as schema from "@db/schema";
 
 if (!process.env.DATABASE_URL) {
@@ -9,13 +8,5 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const dbURL = process.env.DATABASE_URL;
-if (!dbURL) {
-  throw new Error("DATABASE_URL environment variable is required");
-}
-
-export const db = drizzle({
-  connection: dbURL,
-  schema,
-  ws: ws,
-});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool, { schema });

@@ -1,14 +1,16 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { db } from "@db";
-import { users, type User } from "@db/schema";
+import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { Express } from "express";
+import type { User } from "@db/schema";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Extend the base User type from our schema
+    interface User extends Omit<User, "password"> {}
   }
 }
 
@@ -39,7 +41,8 @@ export function setupPassport(app: Express) {
           return done(null, false, { message: "Invalid username or password" });
         }
 
-        return done(null, user);
+        const { password: _, ...userWithoutPassword } = user;
+        return done(null, userWithoutPassword);
       } catch (err) {
         return done(err);
       }
@@ -53,7 +56,11 @@ export function setupPassport(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const [user] = await db
-        .select()
+        .select({
+          id: users.id,
+          username: users.username,
+          createdAt: users.createdAt
+        })
         .from(users)
         .where(eq(users.id, id))
         .limit(1);

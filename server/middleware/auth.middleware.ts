@@ -1,8 +1,8 @@
-
 import { Request, Response, NextFunction } from "express";
 import { db } from "@db";
 import { collaborators } from "@db/schema";
 import { eq, and } from "drizzle-orm";
+import type { User } from "@db/schema";
 
 export const requireAuth = (
   req: Request,
@@ -20,7 +20,8 @@ export const requireAuth = (
 
 export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer") {
   return async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !req.params.tripId) {
+    const user = req.user as User;
+    if (!user?.id || !req.params.tripId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -31,7 +32,7 @@ export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer"
         .where(
           and(
             eq(collaborators.tripId, parseInt(req.params.tripId)),
-            eq(collaborators.userId, req.user.id)
+            eq(collaborators.userId, user.id)
           )
         );
 
@@ -54,4 +55,4 @@ const roleLevel = {
   owner: 3,
   editor: 2,
   viewer: 1,
-};
+} as const;

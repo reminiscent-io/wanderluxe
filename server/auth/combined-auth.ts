@@ -3,19 +3,16 @@ import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import { Express, Request, Response, NextFunction } from "express";
 import { db } from "@db";
-import { users, collaborators, type User } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { users } from "@db/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import type { User } from "@db/schema";
 
 // Types
 declare global {
   namespace Express {
-    interface User {
-      id: number;
-      username: string;
-      password: string;
-      createdAt: Date;
-    }
+    // Extend User interface without password for security
+    interface User extends Omit<User, "password"> {}
   }
 }
 
@@ -24,70 +21,23 @@ const crypto = {
   compare: (password: string, hash: string) => bcrypt.compare(password, hash),
 };
 
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ 
-      message: "Unauthorized",
-      redirectTo: "/auth"
-    });
-  }
-  next();
-};
-
-export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer") {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !req.params.tripId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const [collaborator] = await db
-        .select()
-        .from(collaborators)
-        .where(
-          and(
-            eq(collaborators.tripId, parseInt(req.params.tripId)),
-            eq(collaborators.userId, req.user.id)
-          )
-        );
-
-      if (!collaborator) {
-        return res.status(403).json({ message: "No access to this trip" });
-      }
-
-      if (roleLevel[collaborator.role as keyof typeof roleLevel] < roleLevel[role]) {
-        return res.status(403).json({ message: "Insufficient permissions" });
-      }
-
-      next();
-    } catch (error) {
-      next(error);
-    }
-  };
-}
-
-const roleLevel = {
-  owner: 3,
-  editor: 2,
-  viewer: 1,
-};
-
 // Setup functions
 export function setupAuth(app: Express) {
-  // Session setup
+  // Session setup with secure cookie configuration
+  const isProduction = process.env.NODE_ENV === 'production';
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'your-secret-key',
       resave: false,
       saveUninitialized: false,
-      store: new session.MemoryStore(),
       name: 'sessionId',
       cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.replit.dev' : undefined,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        domain: isProduction ? '.replit.dev' : undefined,
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/'
       }
     })
   );
@@ -95,12 +45,9 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Configure Passport Local Strategy
   passport.use(
-    new LocalStrategy({
-      usernameField: 'username',
-      passwordField: 'password',
-      passReqToCallback: false
-    }, async (username, password, done) => {
+    new LocalStrategy(async (username, password, done) => {
       try {
         const normalizedUsername = username.toLowerCase().trim();
         const [user] = await db
@@ -109,31 +56,38 @@ export function setupAuth(app: Express) {
           .where(eq(users.username, normalizedUsername))
           .limit(1);
 
-        if (!user) return done(null, false, { message: "Invalid credentials" });
+        if (!user) {
+          return done(null, false, { message: "Invalid credentials" });
+        }
 
-        const isValid = await bcrypt.compare(password.trim(), user.password);
-        if (!isValid) return done(null, false, { message: "Invalid credentials" });
+        const isValid = await crypto.compare(password.trim(), user.password);
+        if (!isValid) {
+          return done(null, false, { message: "Invalid credentials" });
+        }
 
-        return done(null, user);
+        // Remove password before sending to client
+        const { password: _, ...userWithoutPassword } = user;
+        return done(null, userWithoutPassword);
       } catch (err) {
         return done(err);
       }
     })
   );
 
-  passport.serializeUser((user, done) => {
+  passport.serializeUser((user: Express.User, done) => {
     done(null, user.id);
   });
 
-  passport.deserializeUser(async (id: unknown, done) => {
+  passport.deserializeUser(async (id: number, done) => {
     try {
-      const numericId = Number(id);
-      if (isNaN(numericId)) return done(new Error('Invalid user ID'));
-
       const [user] = await db
-        .select()
+        .select({
+          id: users.id,
+          username: users.username,
+          createdAt: users.createdAt
+        })
         .from(users)
-        .where(eq(users.id, numericId))
+        .where(eq(users.id, id))
         .limit(1);
 
       if (!user) {
@@ -147,11 +101,15 @@ export function setupAuth(app: Express) {
   });
 
   // Auth routes
-  app.post("/api/register", async (req, res, next) => {
+  app.post("/api/register", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { username, password } = req.body;
-      const normalizedUsername = username.toLowerCase().trim();
 
+      if (!username?.trim() || !password?.trim()) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      const normalizedUsername = username.toLowerCase().trim();
       const [existingUser] = await db
         .select()
         .from(users)
@@ -161,43 +119,43 @@ export function setupAuth(app: Express) {
         return res.status(409).json({ message: "Username already exists" });
       }
 
-      const hashedPassword = await bcrypt.hash(password.trim(), 12);
+      const hashedPassword = await crypto.hash(password.trim());
       const [newUser] = await db
         .insert(users)
         .values({
           username: normalizedUsername,
           password: hashedPassword,
         })
-        .returning();
+        .returning({
+          id: users.id,
+          username: users.username,
+          createdAt: users.createdAt
+        });
 
       req.login(newUser, (err) => {
         if (err) return next(err);
-        return res.status(201).json({
-          id: newUser.id,
-          username: newUser.username
-        });
+        return res.status(201).json(newUser);
       });
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error, user?: Express.User, info?: { message: string }) => {
+  app.post("/api/login", (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate("local", (err: Error, user: Express.User | false, info?: { message: string }) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Authentication failed" });
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Authentication failed" });
+      }
 
-      req.logIn(user, (err) => {
+      req.login(user, (err) => {
         if (err) return next(err);
-        return res.json({
-          id: user.id,
-          username: user.username
-        });
+        return res.json(user);
       });
     })(req, res, next);
   });
 
-  app.post("/api/logout", (req, res) => {
+  app.post("/api/logout", (req: Request, res: Response) => {
     req.logout((err) => {
       if (err) {
         return res.status(500).json({ message: "Logout failed" });
@@ -206,11 +164,12 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", requireAuth, (req, res) => {
+  app.get("/api/user", (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
     const user = req.user as Express.User;
-    res.json({
-      id: user.id,
-      username: user.username,
-    });
+    res.json(user);
   });
 }
