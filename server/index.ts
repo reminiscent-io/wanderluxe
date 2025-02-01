@@ -44,12 +44,9 @@ app.get("/health", (req, res) => {
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-    /\.replit\.dev$/
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 // Body parsing middleware

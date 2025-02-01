@@ -1,3 +1,4 @@
+
 import session from "express-session";
 import { Express } from "express";
 
@@ -9,8 +10,10 @@ export function setupSession(app: Express) {
       saveUninitialized: false,
       cookie: {
         secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
         sameSite: "lax",
-      },
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      }
     })
   );
 }
