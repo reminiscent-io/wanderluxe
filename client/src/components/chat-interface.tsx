@@ -14,52 +14,60 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ tripId, userId }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
-  const { messages, sendMessage } = useChat(tripId, userId);
+  const { messages, sendMessage, isLoading } = useChat(tripId, userId);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim()) {
+    if (input.trim() && !isLoading) {
       sendMessage(input);
       setInput("");
     }
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader className="border-b">
-        <h3 className="text-lg font-semibold">Travel Assistant</h3>
+    <Card className="w-full max-w-2xl h-[600px] flex flex-col">
+      <CardHeader className="text-lg font-semibold border-b">
+        Travel Assistant
       </CardHeader>
-      <CardContent className="flex-1 p-0">
-        <ScrollArea className="h-[500px] p-4">
-          {messages.map((message, i) => (
+      <CardContent className="flex-1 p-4 overflow-hidden">
+        <ScrollArea className="h-[500px] pr-4">
+          {messages.map((message) => (
             <div
-              key={i}
+              key={message.id}
               className={cn(
-                "mb-4 max-w-[80%] rounded-lg p-3",
-                message.isAi
-                  ? "bg-secondary ml-0 mr-auto"
-                  : "bg-primary text-primary-foreground ml-auto mr-0"
+                "mb-4 p-3 rounded-lg",
+                message.isAi 
+                  ? "bg-gray-100 ml-auto w-3/4"
+                  : "bg-blue-100 mr-auto w-3/4"
               )}
             >
-              {message.content}
+              <p className="text-sm">{message.content}</p>
+              {message.isAi && (
+                <p className="text-xs text-gray-500 mt-2">AI Assistant</p>
+              )}
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </ScrollArea>
-        <form
-          onSubmit={handleSubmit}
-          className="border-t p-4 flex items-center gap-2"
-        >
+        <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
+            placeholder="Ask about destinations, budgets, or itineraries..."
             className="flex-1"
+            disabled={isLoading}
           />
-          <Button 
-            type="submit" 
-            size="icon"
-          >
-            <Send className="h-4 w-4" />
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Sending..." : <Send className="h-4 w-4" />}
           </Button>
         </form>
       </CardContent>

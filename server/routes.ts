@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./websocket";
+import chatRouter from "./routes/chat";
 import { db } from "@db";
 import { trips, messages, files, timelineEntries, collaborators, type SelectUser } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -105,6 +106,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Messages
+  app.use('/api/chat', chatRouter);
+
   app.get("/api/trips/:tripId/messages", requireAuth, requireTripAccess("viewer"), async (req, res) => {
     const tripMessages = await db
       .select()
