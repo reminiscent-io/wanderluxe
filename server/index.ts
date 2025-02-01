@@ -58,6 +58,10 @@ app.use(express.urlencoded({ extended: false }));
 
 // Set up session and authentication
 setupSession(app);
+setupPassport(app);
+
+// Set up session and authentication
+setupSession(app);
 setupPassport();
 
 // Request logging middleware
