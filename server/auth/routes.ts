@@ -55,31 +55,53 @@ export function setupAuthRoutes(app: Express) {
       const { username, password } = req.body;
       
       if (!username || !password) {
-        return res.status(400).send("Username and password are required");
+        return res.status(400).json({ 
+          success: false, 
+          message: "Username and password are required" 
+        });
       }
 
       passport.authenticate(
         "local",
         (err: any, user: Express.User, info: IVerifyOptions) => {
           if (err) {
-            return next(err);
+            console.error("Login error:", err);
+            return res.status(500).json({ 
+              success: false, 
+              message: "Internal server error" 
+            });
           }
 
           if (!user) {
-            return res.status(400).send(info.message ?? "Invalid credentials");
+            return res.status(401).json({ 
+              success: false, 
+              message: info.message ?? "Invalid credentials" 
+            });
           }
 
           req.logIn(user, (err) => {
             if (err) {
-              return next(err);
+              console.error("Session error:", err);
+              return res.status(500).json({ 
+                success: false, 
+                message: "Failed to create session" 
+              });
             }
 
-            return res.json({ success: true, user });
+            return res.json({ 
+              success: true, 
+              user,
+              message: "Login successful" 
+            });
           });
         }
       )(req, res, next);
     } catch (error) {
-      next(error);
+      console.error("Unexpected error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "An unexpected error occurred" 
+      });
     }
   });
 

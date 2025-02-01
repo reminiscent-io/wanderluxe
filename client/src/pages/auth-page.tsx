@@ -21,9 +21,9 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!username || !password) {
+    if (!username.trim() || !password.trim()) {
       toast({
-        title: "Error",
+        title: "Validation Error",
         description: "Please enter both username and password",
         variant: "destructive",
       });
@@ -32,11 +32,18 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        await login({ username, password });
-        // Use navigate instead of window.location for proper SPA navigation
+        const result = await login({ username: username.trim(), password });
+        toast({
+          title: "Success",
+          description: "Login successful",
+        });
         window.location.replace('/');
       } else {
-        await register({ username, password });
+        const result = await register({ username: username.trim(), password });
+        toast({
+          title: "Success",
+          description: "Registration successful",
+        });
         window.location.replace('/');
       }
     } catch (error) {
