@@ -1,3 +1,4 @@
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -14,27 +15,6 @@ dns.setDefaultResultOrder('verbatim');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: 'active',
-    host: req.headers.host,
-    allowedHosts: [
-      process.env.VITE_ALLOWED_HOSTS,
-      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev'
-    ]
-  });
-});
-
-// Handle React routing after API routes
-app.get("*", (req, res) => {
-  if (app.get("env") === "development") {
-    res.sendFile(path.join(__dirname, "../client/index.html"));
-  } else {
-    res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
-  }
-});
 
 // Add CORS headers for development
 app.use((req, res, next) => {
@@ -90,10 +70,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint before Vite setup
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: 'active',
+    host: req.headers.host,
+    allowedHosts: [
+      process.env.VITE_ALLOWED_HOSTS,
+      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev'
+    ]
+  });
+});
+
 (async () => {
   const server = registerRoutes(app);
 
-  // Error handling middleware
+  // Error handling middleware before Vite setup
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error('Error:', err);
     const status = err.status || err.statusCode || 500;
@@ -101,11 +93,21 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
   });
 
+  // Setup Vite after core routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+
+  // Handle React routing after API routes
+  app.get("*", (req, res) => {
+    if (app.get("env") === "development") {
+      res.sendFile(path.join(__dirname, "../client/index.html"));
+    } else {
+      res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
+    }
+  });
 
   const PORT = 5000;
   server.listen(PORT, "0.0.0.0", () => {
