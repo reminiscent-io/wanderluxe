@@ -40,6 +40,11 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  app.use((req, res, next) => {
+    console.log('Incoming Host:', req.headers.host);
+    next();
+  });
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
