@@ -35,7 +35,12 @@ export async function setupVite(app: Express, server: Server) {
     },
     server: {
       middlewareMode: true,
-      hmr: { server },
+      hmr: {
+        server,
+        port: 5173,
+        clientPort: 443,
+        host: process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co'
+      },
       host: '0.0.0.0',
       port: 5173,
       strictPort: true
