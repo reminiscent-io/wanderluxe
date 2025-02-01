@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTimeline } from "@/hooks/use-timeline";
-import { TimelineEntry, NewTimelineEntry } from "@db/schema";
+import { TimelineEntry } from "@db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Plus, Calendar, MapPin, Clock } from "lucide-react";
+import { Plus, Calendar, MapPin, Clock, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TimelineViewProps {
   tripId: number;
@@ -22,13 +23,14 @@ interface TimelineViewProps {
 export function TimelineView({ tripId }: TimelineViewProps) {
   const { entries, isLoading, createEntry } = useTimeline(tripId);
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false);
-  const [newEntry, setNewEntry] = useState<NewTimelineEntry>({
+  const [newEntry, setNewEntry] = useState({
     title: "",
     description: "",
     startTime: new Date(),
     location: "",
     type: "activity",
     tripId: tripId,
+    suggested: false,
   });
 
   const handleCreateEntry = async () => {
@@ -42,6 +44,7 @@ export function TimelineView({ tripId }: TimelineViewProps) {
         location: "",
         type: "activity",
         tripId: tripId,
+        suggested: false,
       });
     } catch (error) {
       console.error("Failed to create entry:", error);
@@ -124,15 +127,27 @@ export function TimelineView({ tripId }: TimelineViewProps) {
               {entries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex gap-4 pb-8 last:pb-0 relative"
+                  className={cn(
+                    "flex gap-4 pb-8 last:pb-0 relative",
+                    entry.suggested && "opacity-70"
+                  )}
                 >
                   <div className="absolute top-0 bottom-0 left-[19px] w-px bg-border" />
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center relative z-10">
-                    <Calendar className="h-5 w-5 text-primary" />
+                    {entry.suggested ? (
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Calendar className="h-5 w-5 text-primary" />
+                    )}
                   </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{entry.title}</h4>
+                      {entry.suggested && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                          Suggested
+                        </span>
+                      )}
                       <span className="text-sm text-muted-foreground">
                         {format(new Date(entry.startTime), "MMM d, yyyy h:mm a")}
                       </span>
