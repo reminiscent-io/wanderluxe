@@ -21,11 +21,22 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!username || !password) {
+      toast({
+        title: "Error",
+        description: "Please enter both username and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       if (isLogin) {
         await login({ username, password });
+        window.location.href = '/'; // Redirect after successful login
       } else {
         await register({ username, password });
+        window.location.href = '/'; // Redirect after successful registration
       }
     } catch (error) {
       toast({
