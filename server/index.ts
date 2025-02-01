@@ -68,10 +68,7 @@ app.use(cors({
     'https://*.replit.dev',
     'http://localhost:5173'
   ],
-  methods: ['GET', 'POST'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['set-cookie']
+  credentials: true
 }));
 
 
