@@ -20,8 +20,8 @@ router.post('/', requireAuth, requireTripAccess("viewer"), async (req: Request, 
   try {
     const { tripId, message, model } = req.body;
 
-    if (!tripId || !message) {
-      return res.status(400).json({ error: "Missing required fields: tripId or message" });
+    if (!tripId || !message || typeof tripId !== 'number' || typeof message !== 'string') {
+      return res.status(400).json({ error: "Missing or invalid required fields: tripId must be a number, message must be a string" });
     }
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
