@@ -28,7 +28,7 @@ export function setupPassport(app: Express) {
           return done(null, false, { message: "Incorrect username" });
         }
 
-        const isValid = await crypto.compare(password, user.password);
+        const isValid = await crypto.compare(password.trim(), user.password);
         if (!isValid) {
           return done(null, false, { message: "Incorrect password" });
         }
