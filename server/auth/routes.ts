@@ -50,29 +50,29 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    const { username, password } = req.body;
-      
-    if (!username?.trim() || !password?.trim()) {
-      return res.status(400).json({ message: "Username and password are required" });
-    }
+  app.post("/api/login", async (req, res, next) => {
+    try {
+      const { username, password } = req.body;
 
-    passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json(info);
-      
-      req.logIn(user, (err) => {
+      if (!username?.trim() || !password?.trim()) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
         if (err) return next(err);
-        return res.json({
-          user: {
-            id: user.id,
-            username: user.username
-          }
+        if (!user) return res.status(401).json(info);
+
+        req.logIn(user, (err) => {
+          if (err) return next(err);
+          return res.json({
+            user: {
+              id: user.id,
+              username: user.username
+            }
+          });
         });
-      });
-    })(req, res, next);
+      })(req, res, next);
     } catch (error) {
-      console.error("Unexpected error:", error);
       next(error);
     }
   });
@@ -84,30 +84,6 @@ export function setupAuthRoutes(app: Express) {
       }
       res.json({ message: "Logged out successfully" });
     });
-  });
-
-  // Test login endpoint
-  app.post("/api/test-login", async (req, res) => {
-    try {
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, "test"))
-        .limit(1);
-
-      if (!user) {
-        return res.status(400).json({ error: "Test user not found" });
-      }
-
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ error: "Login failed" });
-        }
-        return res.json({ success: true, user });
-      });
-    } catch (error) {
-      return res.status(500).json({ error: "Server error" });
-    }
   });
 
   app.get("/api/user", requireAuth, (req, res) => {
