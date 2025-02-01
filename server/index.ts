@@ -29,7 +29,11 @@ app.get("/health", (req, res) => {
 
 // Handle React routing after API routes
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
+  if (app.get("env") === "development") {
+    res.sendFile(path.join(__dirname, "../client/index.html"));
+  } else {
+    res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
+  }
 });
 
 // Add CORS headers specifically for Replit domains
