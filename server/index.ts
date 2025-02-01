@@ -35,15 +35,12 @@ app.get("/health", (req, res) => {
 });
 
 // CORS configuration
-const allowedOrigins = [
-  'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-  /https:\/\/([a-z0-9-]+\.)*replit\.dev/
-];
-
 app.use(cors({
-  origin: allowedOrigins,
+  origin: [
+    'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+    /\.replit\.dev$/
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
