@@ -1,3 +1,4 @@
+
 import { Request, Response, NextFunction } from "express";
 import { db } from "@db";
 import { collaborators } from "@db/schema";
@@ -38,13 +39,6 @@ export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer"
         return res.status(403).json({ message: "No access to this trip" });
       }
 
-      // Check if user has sufficient role level
-      const roleLevel = {
-        owner: 3,
-        editor: 2,
-        viewer: 1,
-      };
-
       if (roleLevel[collaborator.role as keyof typeof roleLevel] < roleLevel[role]) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
@@ -55,3 +49,9 @@ export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer"
     }
   };
 }
+
+const roleLevel = {
+  owner: 3,
+  editor: 2,
+  viewer: 1,
+};
