@@ -70,9 +70,10 @@ app.use((req, res, next) => {
 // CORS configuration
 app.use(cors({
   origin: [
-    'https://*.replit.dev',
-    'http://localhost:5173'
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    /\.replit\.dev$/
   ],
+  methods: ['POST', 'GET'],
   credentials: true
 }));
 
