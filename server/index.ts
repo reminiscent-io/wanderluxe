@@ -6,6 +6,8 @@ import dns from "node:dns";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { setupSession } from "./auth/session";
+import { setupPassport } from "./auth/passport";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -53,6 +55,10 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Set up session and authentication
+setupSession(app);
+setupPassport();
 
 // Request logging middleware
 app.use((req, res, next) => {
