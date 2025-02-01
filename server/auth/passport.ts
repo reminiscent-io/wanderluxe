@@ -27,16 +27,16 @@ export function setupPassport(app: Express) {
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.username, username.toLowerCase()))
+          .where(eq(users.username, username.toLowerCase().trim()))
           .limit(1);
 
         if (!user) {
-          return done(null, false, { message: "Incorrect username" });
+          return done(null, false, { message: "Invalid username or password" });
         }
 
         const isValid = await crypto.compare(password.trim(), user.password);
         if (!isValid) {
-          return done(null, false, { message: "Incorrect password" });
+          return done(null, false, { message: "Invalid username or password" });
         }
 
         return done(null, user);
@@ -57,6 +57,11 @@ export function setupPassport(app: Express) {
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
+
+      if (!user) {
+        return done(new Error('User not found'));
+      }
+
       done(null, user);
     } catch (err) {
       done(err);

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "./use-toast";
+import { useLocation } from "wouter";
 
 interface User {
   id: number;
@@ -14,6 +15,7 @@ interface AuthCredentials {
 export function useAuth() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user"],
@@ -30,15 +32,15 @@ export function useAuth() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Login failed");
+        const data = await response.json();
+        throw new Error(data.message || "Login failed");
       }
 
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data);
-      window.location.href = "/"; // Force navigation to home after successful login
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
@@ -59,15 +61,15 @@ export function useAuth() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Registration failed");
+        const data = await response.json();
+        throw new Error(data.message || "Registration failed");
       }
 
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data);
-      window.location.href = "/"; // Force navigation to home after successful registration
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
