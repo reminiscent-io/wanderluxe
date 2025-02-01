@@ -5,6 +5,7 @@ import { db } from "@db";
 import { users, insertUserSchema } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { crypto } from "./passport";
+import { requireAuth } from "../middleware/auth.middleware";
 
 export function setupAuthRoutes(app: Express) {
   app.post("/api/register", async (req, res, next) => {
