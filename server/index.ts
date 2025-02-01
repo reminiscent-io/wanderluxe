@@ -17,6 +17,8 @@ dns.setDefaultResultOrder('verbatim');
 
 const app = express();
 
+// Trust proxy - required for Replit's environment
+app.set('trust proxy', true);
 
 // Configure WebSocket for database
 import ws from 'ws';
