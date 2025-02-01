@@ -1,9 +1,13 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path, { dirname } from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
+import dns from 'node:dns';
+
+dns.setDefaultResultOrder('verbatim');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,13 +26,13 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    hmr: {
-      clientPort: 443,
-      protocol: "wss",
-    },
-    host: "0.0.0.0",
+    host: '0.0.0.0',
     strictPort: true,
     port: 5173,
+    hmr: {
+      clientPort: 443,
+      protocol: 'wss',
+    },
     proxy: {
       "/api": {
         target: "http://localhost:5000",
@@ -36,9 +40,10 @@ export default defineConfig({
       },
     },
     allowedHosts: [
-      "dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev",
-      ".replit.dev",
-      "*.replit.dev"
+      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+      '.replit.dev',
+      '::1',
+      '127.0.0.1'
     ],
   },
 });
