@@ -1,4 +1,3 @@
-
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -19,6 +18,15 @@ const app = express();
 // Import security packages
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+
+// Rate limiting configuration
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 requests per window
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Security middleware first
 app.use(helmet({
@@ -44,14 +52,21 @@ app.get("/health", (req, res) => {
 
 // CORS configuration
 app.use(cors({
-  origin: true,
+  origin: [
+    'https://*.replit.dev',
+    'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+    'http://localhost:5173'
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  exposedHeaders: ['set-cookie']
 }));
 
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Apply rate limiting to auth routes
+app.use('/api/(login|register)', authLimiter);
 
 // Set up session and authentication
 setupSession(app);
@@ -105,7 +120,11 @@ app.get("/health", (req, res) => {
 
   // Error handling middleware before Vite setup
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('Error:', err);
+    console.error('Error details:', {
+      message: err.message,
+      stack: err.stack,
+      status: err.status || err.statusCode || 500
+    });
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     res.status(status).json({ message });
@@ -130,6 +149,11 @@ app.get("/health", (req, res) => {
   const PORT = 8080;
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log('CORS origins:', [
+      'https://*.replit.dev',
+      'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+      'http://localhost:5173'
+    ]);
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
   });
