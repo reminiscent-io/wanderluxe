@@ -13,12 +13,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dns.setDefaultResultOrder('verbatim');
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// Add CORS configuration
+// Import security packages
 import cors from 'cors';
+import helmet from 'helmet';
 
+// Security middleware first
+app.use(helmet());
+
+// CORS configuration
 const allowedOrigins = [
   'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
   /https:\/\/([a-z0-9-]+\.)*replit\.dev/
@@ -30,6 +33,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Request logging middleware
 app.use((req, res, next) => {
