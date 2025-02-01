@@ -50,27 +50,37 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate(
-      "local",
-      (err: any, user: Express.User, info: IVerifyOptions) => {
-        if (err) {
-          return next(err);
-        }
+  app.post("/api/login", async (req, res, next) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).send("Username and password are required");
+      }
 
-        if (!user) {
-          return res.status(400).send(info.message ?? "Login failed");
-        }
-
-        req.logIn(user, (err) => {
+      passport.authenticate(
+        "local",
+        (err: any, user: Express.User, info: IVerifyOptions) => {
           if (err) {
             return next(err);
           }
 
-          return res.json(user);
-        });
-      }
-    )(req, res, next);
+          if (!user) {
+            return res.status(400).send(info.message ?? "Invalid credentials");
+          }
+
+          req.logIn(user, (err) => {
+            if (err) {
+              return next(err);
+            }
+
+            return res.json({ success: true, user });
+          });
+        }
+      )(req, res, next);
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.post("/api/logout", (req, res) => {
