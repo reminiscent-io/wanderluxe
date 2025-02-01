@@ -9,19 +9,16 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "cloudrun"
 build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
-
-[[ports]]
-localPort = 5000
-externalPort = 8080
-
-[[ports]]
-localPort = 5173
-externalPort = 443
+run = "npm run dev"
 
 [[ports]]
 localPort = 8080
 externalPort = 80
+exposeLocalhost = true
+
+[[ports]]
+localPort = 5173
+externalPort = 443
 
 [workflows]
 
