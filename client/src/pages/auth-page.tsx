@@ -33,10 +33,11 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         await login({ username, password });
-        window.location.href = '/'; // Redirect after successful login
+        // Use navigate instead of window.location for proper SPA navigation
+        window.location.replace('/');
       } else {
         await register({ username, password });
-        window.location.href = '/'; // Redirect after successful registration
+        window.location.replace('/');
       }
     } catch (error) {
       toast({
