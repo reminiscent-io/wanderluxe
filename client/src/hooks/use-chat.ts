@@ -1,41 +1,54 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Message } from "@db/schema";
 
 export function useChat(tripId: number, userId: number) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws?tripId=${tripId}`);
-    wsRef.current = ws;
+  const sendMessage = async (content: string) => {
+    try {
+      setIsLoading(true);
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      setMessages((prev) => [...prev, message]);
-    };
+      // Add user message immediately
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        tripId,
+        userId,
+        content,
+        createdAt: new Date(),
+        isAi: false
+      }]);
 
-    return () => {
-      ws.close();
-    };
-  }, [tripId]);
-
-  const sendMessage = (content: string, isAi: boolean = false) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          type: "message",
+      // Get Perplexity API response
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           tripId,
-          userId,
-          content,
-          isAi,
-        })
-      );
+          message: content,
+          model: "sonar-pro", // Or "sonar"
+        }),
+      });
+
+      const aiResponse = await response.json();
+
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        tripId,
+        userId,
+        content: aiResponse.content,
+        createdAt: new Date(),
+        isAi: true
+      }]);
+
+    } catch (error) {
+      console.error('Chat error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return {
-    messages,
-    sendMessage,
-  };
+  return { messages, sendMessage, isLoading };
 }
