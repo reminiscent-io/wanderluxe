@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dns from "node:dns";
+import net from "node:net";
 
 // Fix DNS resolution order for Node.js v17+
 dns.setDefaultResultOrder('verbatim');
@@ -21,7 +22,7 @@ app.use((req, res, next) => {
   if (origin && (allowedOrigins.includes(origin) || allowedOrigins.some(pattern => pattern instanceof RegExp && pattern.test(origin)))) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Sec-WebSocket-Protocol');
     res.header('Access-Control-Allow-Credentials', 'true');
   }
 
@@ -31,7 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging middleware with enhanced port status
+// Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -67,7 +68,7 @@ app.use((req, res, next) => {
 
   // Error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('Error:', err); // Add explicit error logging
+    console.error('Error:', err);
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     res.status(status).json({ message });
@@ -81,29 +82,8 @@ app.use((req, res, next) => {
 
   const PORT = 5000;
   server.listen(PORT, "0.0.0.0", () => {
-    // Enhanced logging to indicate both ports
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
     log(`Application is ready for connections`, "express");
-
-    // Additional status check for ports
-    const net = require('net');
-
-    // Check if Vite port is available
-    const checkVitePort = () => {
-      const client = new net.Socket();
-      client.connect(5173, '0.0.0.0', () => {
-        log(`Vite server port 5173 is ready`, "express");
-        client.destroy();
-      });
-
-      client.on('error', () => {
-        log(`Waiting for Vite server on port 5173...`, "express");
-        setTimeout(checkVitePort, 1000);
-      });
-    };
-
-    // Start checking Vite port
-    checkVitePort();
   });
 })();
