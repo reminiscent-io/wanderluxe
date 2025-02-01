@@ -2,8 +2,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
-import path, { dirname } from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import dns from 'node:dns';
 
@@ -29,9 +29,19 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: true,
     port: 5173,
+    allowedHosts: [
+      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+      '.replit.dev',
+      'localhost',
+      '127.0.0.1',
+      '::1',
+      /\.repl\.co$/,
+      /-\d+\.repl\.dev$/
+    ],
     hmr: {
+      host: 'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
       clientPort: 443,
-      protocol: 'wss',
+      protocol: 'wss'
     },
     proxy: {
       "/api": {
@@ -39,11 +49,5 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
-    allowedHosts: [
-      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-      '.replit.dev',
-      '::1',
-      '127.0.0.1'
-    ],
   },
 });
