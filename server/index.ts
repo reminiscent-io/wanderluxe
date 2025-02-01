@@ -12,17 +12,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Health check endpoint
-app.use("/health", (req, res) => {
-  res.json({
-    resolvedHost: req.headers.host,
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: 'active',
+    host: req.headers.host,
     allowedHosts: [
-      ".replit.dev",
-      ".repl.co",
-      "localhost",
-      "127.0.0.1",
-      process.env.REPLIT_URL || "",
-    ],
+      process.env.VITE_ALLOWED_HOSTS,
+      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev'
+    ]
   });
+});
+
+// Handle React routing after API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
 });
 
 // Add CORS headers specifically for Replit domains
