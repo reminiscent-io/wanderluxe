@@ -33,6 +33,7 @@ export default defineConfig({
     allowedHosts: [
       ".replit.dev",
       ".repl.co",
+      ".janeway.replit.dev",
       "localhost",
       "127.0.0.1"
     ],
