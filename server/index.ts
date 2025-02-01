@@ -55,6 +55,7 @@ app.get("/health", (req, res) => {
 app.use(cors({
   origin: [
     'https://*.replit.dev',
+    'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
     'http://localhost:5173'
   ],
   credentials: true,
@@ -145,6 +146,11 @@ app.get("/health", (req, res) => {
   const PORT = 8080;
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log('CORS origins:', [
+      'https://*.replit.dev',
+      'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
+      'http://localhost:5173'
+    ]);
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
   });
