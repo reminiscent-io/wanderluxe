@@ -53,7 +53,11 @@ export const useUser = () => {
       setUser(response.data);
     } catch (error) {
       console.error("Login failed:", error);
-      // Handle login error appropriately, e.g., display an error message
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || "Login failed";
+        throw new Error(message);
+      }
+      throw error;
     } finally {
       setIsLoading(false);
     }
