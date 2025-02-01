@@ -13,12 +13,28 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dns.setDefaultResultOrder('verbatim');
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// Add CORS configuration
+// Import security packages
 import cors from 'cors';
+import helmet from 'helmet';
 
+// Security middleware first
+app.use(helmet({
+  contentSecurityPolicy: false // Disable for Replit compatibility
+}));
+
+// Add request logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// Health check endpoint before other routes
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// CORS configuration
 const allowedOrigins = [
   'https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
   /https:\/\/([a-z0-9-]+\.)*replit\.dev/
@@ -30,6 +46,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -101,10 +121,10 @@ app.get("/health", (req, res) => {
     }
   });
 
-  const PORT = process.env.PORT || 8080;
+  const PORT = 8080;
   server.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
     log(`Express server running on port ${PORT}`, "express");
     log(`Vite dev server running on port 5173`, "express");
-    log(`Application is ready for connections`, "express");
   });
 })();
