@@ -1,4 +1,1 @@
-// Re-export authentication functionality
-export * from "./passport";
-export * from "./session";
-export * from "./routes";
+// This file is no longer needed and can be safely deleted
