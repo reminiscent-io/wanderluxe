@@ -15,10 +15,19 @@ const Navigation = () => {
   }, []);
 
   const handleNavigation = (path: string) => {
-    if (path === "Explore") {
-      navigate("/explore");
+    switch (path) {
+      case "Explore":
+        navigate("/explore");
+        break;
+      case "My Trips":
+        navigate("/my-trips");
+        break;
+      case "Inspiration":
+        navigate("/inspiration");
+        break;
+      default:
+        break;
     }
-    // Other navigation items can be handled here as they are implemented
   };
 
   return (
