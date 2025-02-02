@@ -13,9 +13,8 @@ export default function App() {
   logger.log('App initialized');
 
   return (
-    <StrictMode>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/budget" component={Budget} />
