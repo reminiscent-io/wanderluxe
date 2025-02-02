@@ -5,17 +5,22 @@ import { Route, Switch } from 'wouter';
 import Home from './pages/home';
 import NotFound from './pages/not-found';
 import Budget from './pages/budget';
+import { ErrorBoundary } from './components/error-boundary';
+import { Toaster } from './components/ui/toaster';
 
 export default function App() {
   logger.log('App initialized');
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/budget" component={Budget} />
-        <Route component={NotFound} />
-      </Switch>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/budget" component={Budget} />
+          <Route component={NotFound} />
+        </Switch>
+        <Toaster />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

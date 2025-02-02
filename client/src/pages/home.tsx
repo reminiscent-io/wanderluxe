@@ -71,9 +71,9 @@ export default function Home() {
                 <Plus className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby="dialog-title">
               <DialogHeader>
-                <DialogTitle>Create New Trip</DialogTitle>
+                <DialogTitle id="dialog-title">Create New Trip</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
