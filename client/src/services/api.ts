@@ -1,6 +1,6 @@
 import { toast } from '@/hooks/use-toast';
 
-const BASE_URL = `http://0.0.0.0:${process.env.PORT || 8080}/api`; // Updated port
+const BASE_URL = `/api`; // Updated port
 
 const handleApiError = (error: any) => {
   const message = error?.response?.data?.message || 'An error occurred';
