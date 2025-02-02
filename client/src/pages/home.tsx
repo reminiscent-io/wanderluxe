@@ -30,10 +30,10 @@ export default function Home() {
 
   const handleCreateTrip = async () => {
     try {
-      if (!newTrip.title || !newTrip.destination) {
+      if (!newTrip.title) {
         toast({
           title: "Error",
-          description: "Title and destination are required",
+          description: "Title is required",
           variant: "destructive",
         });
         return;
@@ -71,9 +71,9 @@ export default function Home() {
                 <Plus className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby="dialog-title">
               <DialogHeader>
-                <DialogTitle>Create New Trip</DialogTitle>
+                <DialogTitle id="dialog-title">Create New Trip</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -119,7 +119,8 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <ErrorBoundary>
+  <main className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-6">
             <div className="flex items-center justify-between">

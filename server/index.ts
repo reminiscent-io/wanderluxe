@@ -16,18 +16,28 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dns.setDefaultResultOrder('verbatim');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 // Trust proxy - required for Replit's environment
 app.set('trust proxy', true);
 
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 // Enable CORS
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://0.0.0.0:5173', process.env.FRONTEND_URL || 'http://localhost:5173'],
+  origin: true,
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'X-Requested-With']
 }));
 
-// Rate limiting configuration
+// Global error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
@@ -73,6 +83,10 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 (async () => {
   const server = registerRoutes(app);
+  
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+  });
 
   // API routes
   app.use('/api/chat', chatRouter);
@@ -93,9 +107,12 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 
   const PORT = process.env.PORT || 8080;
-  server.listen(PORT, () => {
+  const VITE_PORT = process.env.VITE_PORT || 5173;
+
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     log(`Express server running on port ${PORT}`, "express");
+    log(`Vite dev server running on port ${VITE_PORT}`, "vite");
   });
 
   // Handle graceful shutdown

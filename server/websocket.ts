@@ -14,17 +14,15 @@ interface ChatMessage {
 export function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ 
     noServer: true,
-    perMessageDeflate: false
+    perMessageDeflate: false,
+    clientTracking: true,
+    handleProtocols: () => 'ws'
   });
 
   server.on("upgrade", (request, socket, head) => {
     const { pathname } = parse(request.url || "", true);
 
-    if (pathname?.includes('@vite') || pathname?.includes('@react-refresh')) {
-      return;
-    }
-
-    if (pathname === "/ws") {
+    if (pathname === "/ws" || pathname?.includes('@vite') || pathname?.includes('@react-refresh')) {
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit("connection", ws, request);
       });
@@ -54,6 +52,20 @@ export function setupWebSocket(server: Server) {
 
     ws.on('pong', () => {
       ws.isAlive = true;
+    });
+
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+
+    ws.on("close", () => {
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        setTimeout(() => {
+          // Attempt reconnection
+          const newWs = new WebSocket(ws.url);
+          ws = newWs;
+        }, 1000 * reconnectAttempts);
+      }
     });
 
     ws.on("message", async (data) => {

@@ -34,8 +34,9 @@ export function ChatInterface({ tripId }: ChatInterfaceProps) {
 
   return (
     <Card className="w-full h-[600px] flex flex-col">
-      <CardHeader className="text-lg font-semibold border-b">
+      <CardHeader className="text-lg font-semibold border-b flex justify-between items-center">
         Luxury Travel Assistant
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
       </CardHeader>
       <CardContent className="flex-1 p-4 overflow-hidden">
         <ScrollArea className="h-[500px] pr-4">

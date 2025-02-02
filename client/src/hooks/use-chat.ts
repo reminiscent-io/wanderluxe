@@ -20,8 +20,16 @@ const SYSTEM_PROMPT = `You are a luxury travel planning assistant. Help users pl
 Today's date is ${new Date().toLocaleDateString()}.`;
 
 export function useChat(tripId: number) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem(`chat-${tripId}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(`chat-${tripId}`, JSON.stringify(messages));
+  }, [messages, tripId]);
 
   const sendMessage = async (content: string) => {
     try {
