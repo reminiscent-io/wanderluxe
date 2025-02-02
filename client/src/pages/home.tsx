@@ -30,10 +30,10 @@ export default function Home() {
 
   const handleCreateTrip = async () => {
     try {
-      if (!newTrip.title || !newTrip.destination) {
+      if (!newTrip.title) {
         toast({
           title: "Error",
-          description: "Title and destination are required",
+          description: "Title is required",
           variant: "destructive",
         });
         return;

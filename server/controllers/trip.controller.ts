@@ -21,15 +21,15 @@ export async function createTrip(req: Request, res: Response) {
   try {
     const { title, destination, budget, status } = req.body;
     
-    if (!title || !destination) {
-      return res.status(400).json({ error: 'Title and destination are required' });
+    if (!title) {
+      return res.status(400).json({ error: 'Title is required' });
     }
 
     const [trip] = await db
       .insert(trips)
       .values({
         title,
-        destination,
+        destination: destination || null,
         budget: budget || null,
         status: status || 'planning'
       })
