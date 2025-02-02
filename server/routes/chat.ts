@@ -14,11 +14,11 @@ router.get('/', (req, res) => {
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { tripId, message, model } = req.body;
+    const { messages, model } = req.body;
 
-    if (!tripId || !message) {
+    if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ 
-        error: "Missing required fields: tripId or message" 
+        error: "Missing or invalid messages array" 
       });
     }
 
@@ -29,19 +29,10 @@ router.post('/', async (req: Request, res: Response) => {
         'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`
       },
       body: JSON.stringify({
-        model: model || "sonar-pro",
-        messages: [
-          {
-            role: "system",
-            content: `You are a luxury travel assistant. Help plan trip ID ${tripId}.
-                      Focus on high-end experiences, exclusive locations, and personalized service.
-                      Consider budget, timeline, and user preferences.`
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ]
+        model: model || "llama-3.1-sonar-small-128k-online",
+        messages,
+        temperature: 0.2,
+        max_tokens: 1000
       })
     });
 
@@ -57,9 +48,8 @@ router.post('/', async (req: Request, res: Response) => {
     const data = await response.json();
 
     res.json({
-      content: data.choices[0]?.message?.content || "No response from AI",
-      tripId,
-      sources: data.sources || []
+      choices: data.choices,
+      citations: data.citations || []
     });
 
   } catch (error) {
