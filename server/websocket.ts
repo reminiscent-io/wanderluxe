@@ -15,7 +15,8 @@ export function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ 
     noServer: true,
     perMessageDeflate: false,
-    clientTracking: true
+    clientTracking: true,
+    handleProtocols: () => 'ws'
   });
 
   server.on("upgrade", (request, socket, head) => {

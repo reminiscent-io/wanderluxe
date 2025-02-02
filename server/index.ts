@@ -102,9 +102,12 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 
   const PORT = process.env.PORT || 8080;
-  server.listen(PORT, () => {
+  const VITE_PORT = process.env.VITE_PORT || 5173;
+
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     log(`Express server running on port ${PORT}`, "express");
+    log(`Vite dev server running on port ${VITE_PORT}`, "vite");
   });
 
   // Handle graceful shutdown
