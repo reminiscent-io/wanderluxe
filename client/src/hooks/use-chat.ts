@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "@/services/api";
+import { perplexityService } from "@/services/perplexity";
 
 interface Message {
   id: number;
@@ -7,7 +7,10 @@ interface Message {
   content: string;
   isAi: boolean;
   createdAt: Date;
+  citations?: string[];
 }
+
+const SYSTEM_PROMPT = `You are a luxury travel planning assistant. Help users plan their trips by suggesting activities, accommodations, and managing their budget. Be precise and concise in your recommendations. When suggesting activities or places, include specific details like addresses and estimated costs. Today's date is ${new Date().toLocaleDateString()}.`;
 
 export function useChat(tripId: number) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -17,23 +20,30 @@ export function useChat(tripId: number) {
     try {
       setIsLoading(true);
 
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          tripId,
-          content,
-          createdAt: new Date(),
-          isAi: false
-        }
-      ]);
-
-      const response = await api.post('/chat', {
+      // Add user message to the chat
+      const userMessage = {
+        id: Date.now(),
         tripId,
-        message: content,
-        model: "sonar-pro"
-      });
+        content,
+        createdAt: new Date(),
+        isAi: false
+      };
+      setMessages(prev => [...prev, userMessage]);
 
+      // Prepare conversation history for Perplexity
+      const conversationHistory = [
+        { role: "system" as const, content: SYSTEM_PROMPT },
+        ...messages.map(msg => ({
+          role: msg.isAi ? "assistant" as const : "user" as const,
+          content: msg.content
+        })),
+        { role: "user" as const, content }
+      ];
+
+      // Get AI response
+      const response = await perplexityService.chat(conversationHistory);
+
+      // Add AI response to the chat
       setMessages(prev => [
         ...prev,
         {
@@ -41,7 +51,8 @@ export function useChat(tripId: number) {
           tripId,
           content: response.content,
           createdAt: new Date(),
-          isAi: true
+          isAi: true,
+          citations: response.citations
         }
       ]);
     } catch (error) {

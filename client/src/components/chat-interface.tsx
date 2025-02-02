@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChat } from "@/hooks/use-chat";
-import { Send } from "lucide-react";
+import { Send, ExternalLink, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInterfaceProps {
@@ -33,9 +33,9 @@ export function ChatInterface({ tripId }: ChatInterfaceProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl h-[600px] flex flex-col">
+    <Card className="w-full h-[600px] flex flex-col">
       <CardHeader className="text-lg font-semibold border-b">
-        Travel Assistant
+        Luxury Travel Assistant
       </CardHeader>
       <CardContent className="flex-1 p-4 overflow-hidden">
         <ScrollArea className="h-[500px] pr-4">
@@ -43,13 +43,31 @@ export function ChatInterface({ tripId }: ChatInterfaceProps) {
             <div
               key={message.id || index}
               className={cn(
-                "mb-4 p-3 rounded-lg",
-                message.isAi ? "bg-gray-100 ml-auto w-3/4" : "bg-blue-100 mr-auto w-3/4"
+                "mb-4 p-4 rounded-lg",
+                message.isAi 
+                  ? "bg-secondary/50 ml-4" 
+                  : "bg-primary/10 mr-4"
               )}
             >
-              <p className="text-sm">{message.content}</p>
-              {message.isAi && (
-                <p className="text-xs text-gray-500 mt-2">AI Assistant</p>
+              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              {message.isAi && message.citations && message.citations.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground mb-1">Sources:</p>
+                  <div className="space-y-1">
+                    {message.citations.map((citation, i) => (
+                      <a
+                        key={i}
+                        href={citation}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        {new URL(citation).hostname}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           ))}
@@ -59,12 +77,16 @@ export function ChatInterface({ tripId }: ChatInterfaceProps) {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about destinations, budgets, or itineraries..."
+            placeholder="Ask about destinations, activities, or budgeting..."
             className="flex-1"
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Sending..." : <Send className="h-4 w-4" />}
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </form>
       </CardContent>
