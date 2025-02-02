@@ -9,15 +9,23 @@ export function TimelineView({ tripId }: { tripId: number }) {
   const { entries, isLoading } = useTimeline(tripId);
 
   if (isLoading) {
-    return <div className="p-4">Loading timeline...</div>;
+    return (
+      <div className="flex items-center justify-center h-[500px]">
+        <div className="animate-pulse text-muted-foreground">Loading timeline...</div>
+      </div>
+    );
   }
 
   if (!entries?.length) {
-    return <div className="p-4">No timeline entries yet.</div>;
+    return (
+      <div className="flex items-center justify-center h-[500px] text-muted-foreground">
+        No timeline entries yet.
+      </div>
+    );
   }
 
   return (
-    <ScrollArea className="h-[500px] w-full">
+    <ScrollArea className="h-[500px]">
       <div className="space-y-4 p-4">
         {entries.map((event) => {
           const timestamp = event.startTime ? new Date(event.startTime) : null;
@@ -29,8 +37,8 @@ export function TimelineView({ tripId }: { tripId: number }) {
             <div
               key={event.id}
               className={cn(
-                "flex gap-4 items-start p-4 rounded-lg border",
-                event.suggested ? "opacity-70" : ""
+                "flex gap-4 items-start p-4 rounded-lg border bg-card",
+                event.suggested && "opacity-70"
               )}
             >
               <div className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/10">
@@ -40,21 +48,25 @@ export function TimelineView({ tripId }: { tripId: number }) {
                   <Calendar className="h-4 w-4 text-primary" />
                 )}
               </div>
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium">{event.title}</h3>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-medium line-clamp-1">{event.title}</h3>
                   {event.suggested && (
-                    <Badge variant="secondary">Suggested</Badge>
+                    <Badge variant="secondary" className="shrink-0">Suggested</Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mt-1">
                   {formattedDate}
                 </p>
                 {event.description && (
-                  <p className="text-sm text-muted-foreground">{event.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                    {event.description}
+                  </p>
                 )}
                 {event.location && (
-                  <p className="text-sm text-muted-foreground">📍 {event.location}</p>
+                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                    📍 <span className="line-clamp-1">{event.location}</span>
+                  </p>
                 )}
               </div>
             </div>

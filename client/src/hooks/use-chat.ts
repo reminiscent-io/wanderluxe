@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { perplexityService } from "@/services/perplexity";
 
 interface Message {
@@ -20,12 +20,15 @@ const SYSTEM_PROMPT = `You are a luxury travel planning assistant. Help users pl
 Today's date is ${new Date().toLocaleDateString()}.`;
 
 export function useChat(tripId: number) {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = localStorage.getItem(`chat-${tripId}`);
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`chat-${tripId}`);
+    if (saved) {
+      setMessages(JSON.parse(saved));
+    }
+  }, [tripId]);
 
   useEffect(() => {
     localStorage.setItem(`chat-${tripId}`, JSON.stringify(messages));
@@ -35,8 +38,8 @@ export function useChat(tripId: number) {
     try {
       setIsLoading(true);
 
-      // Add user message to the chat
-      const userMessage = {
+      // Add user message
+      const userMessage: Message = {
         id: Date.now(),
         tripId,
         content,
@@ -45,7 +48,7 @@ export function useChat(tripId: number) {
       };
       setMessages(prev => [...prev, userMessage]);
 
-      // Prepare conversation history for Perplexity
+      // Prepare conversation history
       const conversationHistory = [
         { role: "system" as const, content: SYSTEM_PROMPT },
         ...messages.map(msg => ({
@@ -58,7 +61,7 @@ export function useChat(tripId: number) {
       // Get AI response
       const response = await perplexityService.chat(conversationHistory);
 
-      // Add AI response to the chat
+      // Add AI response
       setMessages(prev => [
         ...prev,
         {
@@ -72,13 +75,12 @@ export function useChat(tripId: number) {
       ]);
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
       setMessages(prev => [
         ...prev,
         {
           id: Date.now() + 1,
           tripId,
-          content: `Error: ${errorMessage}`,
+          content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
           createdAt: new Date(),
           isAi: true
         }
