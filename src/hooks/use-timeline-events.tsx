@@ -25,12 +25,16 @@ interface CreateTimelineEventInput {
   order_index: number;
 }
 
-export const useTimelineEvents = (tripId: string) => {
+export const useTimelineEvents = (tripId: string | null) => {
   const queryClient = useQueryClient();
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
+      if (!tripId) {
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('timeline_events')
         .select('*, activities(*)')
@@ -40,6 +44,7 @@ export const useTimelineEvents = (tripId: string) => {
       if (error) throw error;
       return data;
     },
+    enabled: !!tripId, // Only run the query if tripId exists
   });
 
   const generateContent = async (destination: string, date: string, description?: string) => {
