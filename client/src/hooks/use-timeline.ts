@@ -1,3 +1,4 @@
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimelineEntry } from "@db/schema";
 
@@ -5,7 +6,16 @@ export function useTimeline(tripId: number) {
   const queryClient = useQueryClient();
 
   const { data: entries, isLoading } = useQuery<TimelineEntry[]>({
-    queryKey: [`/api/trips/${tripId}/timeline`],
+    queryKey: [`timeline-${tripId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/trips/${tripId}/timeline`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch timeline');
+      }
+      return response.json();
+    },
     enabled: !!tripId,
   });
 
@@ -25,7 +35,7 @@ export function useTimeline(tripId: number) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/timeline`] });
+      queryClient.invalidateQueries({ queryKey: [`timeline-${tripId}`] });
     },
   });
 
@@ -45,12 +55,12 @@ export function useTimeline(tripId: number) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/timeline`] });
+      queryClient.invalidateQueries({ queryKey: [`timeline-${tripId}`] });
     },
   });
 
   return {
-    entries,
+    entries: entries || [],
     isLoading,
     createEntry: createEntryMutation.mutate,
     updateEntry: updateEntryMutation.mutate,

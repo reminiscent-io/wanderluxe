@@ -8,6 +8,7 @@ export function setupSession(app: Express) {
       secret: process.env.SESSION_SECRET || "development-secret",
       resave: false,
       saveUninitialized: false,
+      proxy: true, // Required for Replit's environment
       cookie: {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

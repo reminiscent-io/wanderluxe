@@ -1,9 +1,21 @@
-// server/routes/chat.ts
+
 import express from 'express';
 import { Request, Response } from "express";
 import { requireAuth, requireTripAccess } from "../middleware/auth.middleware";
+import cors from 'cors';
 
 const router = express.Router();
+
+// Configure CORS for this route
+router.use(cors({
+  origin: true,
+  credentials: true,
+}));
+
+// Health check endpoint
+router.get('/', (req, res) => {
+  res.json({ status: 'Chat service is running', timestamp: new Date().toISOString() });
+});
 
 router.post('/',
   requireAuth,
@@ -13,14 +25,12 @@ router.post('/',
     try {
       const { tripId, message, model } = req.body;
 
-      // Validation check
       if (!tripId || !message) {
         return res.status(400).json({ 
           error: "Missing required fields: tripId or message" 
         });
       }
 
-      // Perplexity API call
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
