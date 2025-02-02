@@ -94,7 +94,7 @@ const startServer = async () => {
       serveStatic(app);
     }
 
-    const PORT = process.env.PORT || 8080;
+    const PORT = 8080;
     const VITE_PORT = process.env.VITE_PORT || 5173;
 
     server.listen(PORT, '0.0.0.0', () => {
