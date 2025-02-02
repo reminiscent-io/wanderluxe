@@ -123,66 +123,66 @@ export default function Home() {
       </header>
 
       <ErrorBoundary>
-    <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Your Trips</h2>
+        <main className="container mx-auto px-4 py-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Your Trips</h2>
+              </div>
+
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-border" />
+                  </div>
+                ) : trips?.length === 0 ? (
+                  <div className="text-center text-muted-foreground p-4">
+                    No trips yet. Create your first luxury travel experience!
+                  </div>
+                ) : (
+                  trips?.map((trip) => (
+                    <TripCard
+                      key={trip.id}
+                      trip={trip}
+                      onClick={() => setSelectedTrip(trip.id)}
+                    />
+                  ))
+                )}
+              </div>
             </div>
 
-            <div className="space-y-4">
-              {isLoading ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-border" />
-                </div>
-              ) : trips?.length === 0 ? (
-                <div className="text-center text-muted-foreground p-4">
-                  No trips yet. Create your first luxury travel experience!
-                </div>
-              ) : (
-                trips?.map((trip) => (
-                  <TripCard
-                    key={trip.id}
-                    trip={trip}
-                    onClick={() => setSelectedTrip(trip.id)}
+            <div className="lg:col-span-2 space-y-6">
+              {selectedTrip ? (
+                <>
+                  <TimelineView tripId={selectedTrip} />
+                  <ChatInterface tripId={selectedTrip} />
+                  <FileUpload
+                    tripId={selectedTrip}
+                    onSuccess={() =>
+                      toast({
+                        title: "Success",
+                        description: "File uploaded successfully",
+                      })
+                    }
                   />
-                ))
+                </>
+              ) : (
+                <div className="h-[600px] flex items-center justify-center text-center text-muted-foreground">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      Select a Trip to Start Planning
+                    </h3>
+                    <p>
+                      Chat with our AI travel assistant to plan your perfect luxury
+                      experience
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
-
-          <div className="lg:col-span-2 space-y-6">
-            {selectedTrip ? (
-              <>
-                <TimelineView tripId={selectedTrip} />
-                <ChatInterface tripId={selectedTrip} />
-                <FileUpload
-                  tripId={selectedTrip}
-                  onSuccess={() =>
-                    toast({
-                      title: "Success",
-                      description: "File uploaded successfully",
-                    })
-                  }
-                />
-              </>
-            ) : (
-              <div className="h-[600px] flex items-center justify-center text-center text-muted-foreground">
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">
-                    Select a Trip to Start Planning
-                  </h3>
-                  <p>
-                    Chat with our AI travel assistant to plan your perfect luxury
-                    experience
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-    </ErrorBoundary>
+        </main>
+      </ErrorBoundary>
     </div>
   );
 }
