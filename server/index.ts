@@ -33,7 +33,6 @@ const limiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.ip || 'anonymous'
 });
 
 app.use(limiter);
@@ -76,12 +75,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const server = registerRoutes(app);
 
   // API routes
-  app.use('/api', (req, res, next) => {
-    console.log(`[API] ${req.method} ${req.path}`);
-    next();
-  });
-
-  // Add chat router
   app.use('/api/chat', chatRouter);
 
   if (app.get("env") === "development") {
