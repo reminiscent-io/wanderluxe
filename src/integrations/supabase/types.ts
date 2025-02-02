@@ -9,6 +9,35 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activities: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "timeline_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -27,6 +56,83 @@ export type Database = {
           created_at?: string
           id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      timeline_events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          hotel: string | null
+          hotel_details: string | null
+          id: string
+          image_url: string | null
+          order_index: number
+          title: string
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          hotel?: string | null
+          hotel_details?: string | null
+          id?: string
+          image_url?: string | null
+          order_index: number
+          title: string
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          hotel?: string | null
+          hotel_details?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          title?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_events_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          destination: string
+          end_date: string
+          id: string
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          destination: string
+          end_date: string
+          id?: string
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          destination?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          user_id?: string
         }
         Relationships: []
       }
