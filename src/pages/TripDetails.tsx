@@ -70,6 +70,10 @@ const transportationConnections = [
 ];
 
 const TripDetails = () => {
+  const renderTransportIcon = (IconComponent: typeof Car | typeof Helicopter) => {
+    return <IconComponent className="h-6 w-6 text-earth-500" />;
+  };
+
   return (
     <div className="min-h-screen bg-sand-50">
       <Navigation />
@@ -176,9 +180,9 @@ const TripDetails = () => {
                   <Card className="max-w-md mx-auto">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
-                        {transportationConnections[index].icon && (
-                          <transportationConnections[index].icon className="h-6 w-6 text-earth-500" />
-                        )}
+                        {transportationConnections[index].icon && 
+                          renderTransportIcon(transportationConnections[index].icon)
+                        }
                         <div>
                           <p className="font-medium">{transportationConnections[index].details}</p>
                           <p className="text-sm text-gray-600">Duration: {transportationConnections[index].duration}</p>
