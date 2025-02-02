@@ -3,6 +3,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Trip {
   id: number;
@@ -13,11 +28,42 @@ interface Trip {
 const MyTrips = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [tripToDelete, setTripToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const storedTrips = JSON.parse(localStorage.getItem("trips") || "[]");
     setTrips(storedTrips);
   }, []);
+
+  const handleDeleteTrip = async (tripId: string) => {
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', tripId);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedTrips = trips.filter(trip => trip.id.toString() !== tripId);
+      setTrips(updatedTrips);
+      localStorage.setItem("trips", JSON.stringify(updatedTrips));
+      
+      toast({
+        title: "Trip deleted",
+        description: "Your trip has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete trip. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setTripToDelete(null);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,15 +90,50 @@ const MyTrips = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => navigate(`/trip/${trip.id}`)}>
+                <Card className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {trip.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Created on {new Date(trip.createdAt).toLocaleDateString()}
-                    </p>
+                    <div className="flex justify-between items-start">
+                      <div 
+                        className="cursor-pointer flex-grow"
+                        onClick={() => navigate(`/trip/${trip.id}`)}
+                      >
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                          {trip.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Created on {new Date(trip.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-gray-500 hover:text-red-600"
+                          >
+                            <Trash className="h-5 w-5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Trip</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this trip? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteTrip(trip.id.toString())}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
