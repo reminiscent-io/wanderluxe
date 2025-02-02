@@ -14,6 +14,13 @@ const Navigation = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleNavigation = (path: string) => {
+    if (path === "Explore") {
+      navigate("/explore");
+    }
+    // Other navigation items can be handled here as they are implemented
+  };
+
   return (
     <motion.nav
       initial={{ y: -100 }}
@@ -36,16 +43,16 @@ const Navigation = () => {
         </motion.a>
         <div className="hidden space-x-8 md:flex">
           {["Explore", "My Trips", "Inspiration"].map((item) => (
-            <motion.a
+            <motion.button
               key={item}
-              href="#"
+              onClick={() => handleNavigation(item)}
               whileHover={{ y: -2 }}
               className={`text-sm font-medium ${
                 isScrolled ? "text-earth-500" : "text-white"
               }`}
             >
               {item}
-            </motion.a>
+            </motion.button>
           ))}
         </div>
         <motion.button
