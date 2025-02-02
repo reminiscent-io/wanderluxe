@@ -77,12 +77,16 @@ app.use((req, res, next) => {
 
 // CORS configuration
 app.use(cors({
-  origin: (origin, callback) => {
-    callback(null, true); // Allow all origins
-  },
+  origin: [
+    /^https?:\/\/.*\.replit\.dev$/,
+    'https://replit.com',
+    process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : undefined
+  ].filter(Boolean) as string[],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
+  maxAge: 86400 // 24 hours
 }));
 
 
