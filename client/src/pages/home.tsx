@@ -30,10 +30,19 @@ export default function Home() {
 
   const handleCreateTrip = async () => {
     try {
+      if (!newTrip.title || !newTrip.destination) {
+        toast({
+          title: "Error",
+          description: "Title and destination are required",
+          variant: "destructive",
+        });
+        return;
+      }
+
       await createTrip({
         title: newTrip.title,
         destination: newTrip.destination,
-        budget: parseInt(newTrip.budget),
+        budget: newTrip.budget ? parseInt(newTrip.budget) : null,
         status: "planning",
       });
       setIsNewTripOpen(false);
@@ -56,6 +65,57 @@ export default function Home() {
       <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Luxury Travel Planner</h1>
+          <Dialog open={isNewTripOpen} onOpenChange={setIsNewTripOpen}>
+            <DialogTrigger asChild>
+              <Button size="icon">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Trip</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={newTrip.title}
+                    onChange={(e) =>
+                      setNewTrip({ ...newTrip, title: e.target.value })
+                    }
+                    placeholder="Summer Vacation 2025"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination">Destination</Label>
+                  <Input
+                    id="destination"
+                    value={newTrip.destination}
+                    onChange={(e) =>
+                      setNewTrip({ ...newTrip, destination: e.target.value })
+                    }
+                    placeholder="Paris, France"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="budget">Budget (USD)</Label>
+                  <Input
+                    id="budget"
+                    type="number"
+                    value={newTrip.budget}
+                    onChange={(e) =>
+                      setNewTrip({ ...newTrip, budget: e.target.value })
+                    }
+                    placeholder="5000"
+                  />
+                </div>
+                <Button className="w-full" onClick={handleCreateTrip}>
+                  Create Trip
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
@@ -64,54 +124,6 @@ export default function Home() {
           <div className="lg:col-span-1 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Your Trips</h2>
-              <Dialog open={isNewTripOpen} onOpenChange={setIsNewTripOpen}>
-                <DialogTrigger asChild>
-                  <Button size="icon">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Trip</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Title</Label>
-                      <Input
-                        id="title"
-                        value={newTrip.title}
-                        onChange={(e) =>
-                          setNewTrip({ ...newTrip, title: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="destination">Destination</Label>
-                      <Input
-                        id="destination"
-                        value={newTrip.destination}
-                        onChange={(e) =>
-                          setNewTrip({ ...newTrip, destination: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="budget">Budget (USD)</Label>
-                      <Input
-                        id="budget"
-                        type="number"
-                        value={newTrip.budget}
-                        onChange={(e) =>
-                          setNewTrip({ ...newTrip, budget: e.target.value })
-                        }
-                      />
-                    </div>
-                    <Button className="w-full" onClick={handleCreateTrip}>
-                      Create Trip
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
 
             <div className="space-y-4">
