@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.DEV ? 'http://0.0.0.0:8080/api' : '/api',
   withCredentials: true,
   headers: {
     'X-Requested-With': 'XMLHttpRequest',

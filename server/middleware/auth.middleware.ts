@@ -1,3 +1,4 @@
+
 import { Request, Response, NextFunction } from "express";
 import { db } from "@db";
 import { collaborators } from "@db/schema";
@@ -9,12 +10,37 @@ export const requireAuth = (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.isAuthenticated()) {
+  // Check both the method existence and authentication state
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    console.log('Unauthorized access attempt:', {
+      path: req.path,
+      method: req.method,
+      ip: req.ip,
+      origin: req.headers.origin,
+      userAgent: req.headers['user-agent'],
+      sessionID: req.sessionID,
+      authState: {
+        hasAuthMethod: !!req.isAuthenticated,
+        isAuthed: !!req.isAuthenticated?.(),
+      }
+    });
+    
     return res.status(401).json({ 
       message: "Unauthorized",
-      redirectTo: "/auth"
+      redirectTo: "/auth",
+      code: "AUTH_REQUIRED"
     });
   }
+
+  // Add user info to req.log for downstream use
+  if (req.user) {
+    console.log('Authorized access:', {
+      userId: req.user.id,
+      username: req.user.username,
+      path: req.path
+    });
+  }
+
   next();
 };
 
@@ -46,6 +72,7 @@ export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer"
 
       next();
     } catch (error) {
+      console.error('Trip access error:', error);
       next(error);
     }
   };
