@@ -27,13 +27,20 @@ export function useChat(tripId: number, userId: number) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
         },
+        credentials: 'include',
         body: JSON.stringify({
           tripId,
           message: content,
           model: "sonar-pro"
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send message');
+      }
 
       if (!response.ok) {
         throw new Error(await response.text());
