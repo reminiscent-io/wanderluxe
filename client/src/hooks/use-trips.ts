@@ -7,11 +7,15 @@ export function useTrips() {
   const { data: trips, isLoading } = useQuery<Trip[]>({
     queryKey: ["/api/trips"],
     queryFn: async () => {
-      const response = await fetch("/api/trips", {
-        credentials: "include"
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/trips`, {
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       if (!response.ok) {
-        throw new Error("Failed to fetch trips");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch trips");
       }
       return response.json();
     }
