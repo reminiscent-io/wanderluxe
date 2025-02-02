@@ -4,31 +4,31 @@ import { eq, desc } from "drizzle-orm";
 import type { Request, Response } from "express";
 
 export async function getTrips(req: Request, res: Response) {
-  if (!req.user) {
-    return res.status(401).send("Not authenticated");
+  try {
+    const userTrips = await db
+      .select()
+      .from(trips)
+      .orderBy(desc(trips.createdAt));
+
+    res.json(userTrips);
+  } catch (error) {
+    console.error('Error fetching trips:', error);
+    res.status(500).json({ error: 'Failed to fetch trips' });
   }
-
-  const userTrips = await db
-    .select()
-    .from(trips)
-    .where(eq(trips.userId, req.user.id))
-    .orderBy(desc(trips.createdAt));
-
-  res.json(userTrips);
 }
 
 export async function createTrip(req: Request, res: Response) {
-  if (!req.user) {
-    return res.status(401).send("Not authenticated");
+  try {
+    const [trip] = await db
+      .insert(trips)
+      .values({
+        ...req.body
+      })
+      .returning();
+
+    res.json(trip);
+  } catch (error) {
+    console.error('Error creating trip:', error);
+    res.status(500).json({ error: 'Failed to create trip' });
   }
-
-  const [trip] = await db
-    .insert(trips)
-    .values({
-      ...req.body,
-      userId: req.user.id,
-    })
-    .returning();
-
-  res.json(trip);
 }

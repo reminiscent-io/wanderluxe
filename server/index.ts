@@ -5,7 +5,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dns from "node:dns";
-import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,14 +20,9 @@ const app = express();
 // Trust proxy - required for Replit's environment
 app.set('trust proxy', true);
 
-// Configure WebSocket for database
-import ws from 'ws';
-global.WebSocket = ws;
-
 // Enable CORS before other middleware
 app.use(cors({
   origin: ['http://localhost:5173', 'http://0.0.0.0:5173', process.env.FRONTEND_URL || 'http://localhost:5173'],
-  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
@@ -39,7 +33,7 @@ const limiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.ip
+  keyGenerator: (req) => req.ip || 'anonymous'
 });
 
 app.use(limiter);
@@ -49,12 +43,6 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
-
-// Add request logging
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
 
 // Body parsing middleware
 app.use(express.json());
@@ -112,7 +100,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 
   const PORT = process.env.PORT || 8080;
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     log(`Express server running on port ${PORT}`, "express");
   });

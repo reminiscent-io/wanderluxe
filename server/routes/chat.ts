@@ -4,11 +4,8 @@ import cors from 'cors';
 
 const router = express.Router();
 
-// Configure CORS for this route
-router.use(cors({
-  origin: true,
-  credentials: true,
-}));
+// Basic CORS setup
+router.use(cors());
 
 // Health check endpoint
 router.get('/', (req, res) => {
