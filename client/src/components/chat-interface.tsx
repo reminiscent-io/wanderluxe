@@ -27,8 +27,12 @@ export function ChatInterface({ tripId }: ChatInterfaceProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
-      await sendMessage(input);
-      setInput("");
+      try {
+        await sendMessage(input);
+        setInput("");
+      } catch (error) {
+        console.error("Failed to send message:", error);
+      }
     }
   };
 
