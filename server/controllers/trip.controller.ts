@@ -19,10 +19,19 @@ export async function getTrips(req: Request, res: Response) {
 
 export async function createTrip(req: Request, res: Response) {
   try {
+    const { title, destination, budget, status } = req.body;
+    
+    if (!title || !destination) {
+      return res.status(400).json({ error: 'Title and destination are required' });
+    }
+
     const [trip] = await db
       .insert(trips)
       .values({
-        ...req.body
+        title,
+        destination,
+        budget: budget || null,
+        status: status || 'planning'
       })
       .returning();
 

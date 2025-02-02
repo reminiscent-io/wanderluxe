@@ -10,18 +10,24 @@ export function useTrips() {
 
   const createTripMutation = useMutation({
     mutationFn: async (data: Partial<Trip>) => {
-      const response = await fetch("/api/trips", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
+      try {
+        const response = await fetch("/api/trips", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        throw new Error(await response.text());
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create trip');
+        }
+
+        return result;
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : 'Network error occurred');
       }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
