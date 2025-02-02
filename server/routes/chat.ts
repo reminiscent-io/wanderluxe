@@ -1,7 +1,5 @@
-
 import express from 'express';
 import { Request, Response } from "express";
-import { requireAuth, requireTripAccess } from "../middleware/auth.middleware";
 import cors from 'cors';
 
 const router = express.Router();
@@ -18,8 +16,6 @@ router.get('/', (req, res) => {
 });
 
 router.post('/',
-  requireAuth,
-  requireTripAccess("viewer"),
   express.json(),
   async (req: Request, res: Response) => {
     try {
