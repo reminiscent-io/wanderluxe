@@ -78,6 +78,10 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 (async () => {
   const server = registerRoutes(app);
+  
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+  });
 
   // API routes
   app.use('/api/chat', chatRouter);

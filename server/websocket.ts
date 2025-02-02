@@ -20,11 +20,7 @@ export function setupWebSocket(server: Server) {
   server.on("upgrade", (request, socket, head) => {
     const { pathname } = parse(request.url || "", true);
 
-    if (pathname?.includes('@vite') || pathname?.includes('@react-refresh')) {
-      return;
-    }
-
-    if (pathname === "/ws") {
+    if (pathname === "/ws" || pathname?.includes('@vite') || pathname?.includes('@react-refresh')) {
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit("connection", ws, request);
       });
