@@ -1,2 +1,1 @@
-<replit_final_file>
-</replit_final_file>
+// This file is no longer needed and can be safely deleted
