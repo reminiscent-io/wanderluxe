@@ -1,7 +1,9 @@
+import React from 'react';
 import Navigation from "../components/Navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import { motion } from "framer-motion";
-import { Plane, Car } from "lucide-react";
+import HeroSection from "../components/trip/HeroSection";
+import FlightCard from "../components/trip/FlightCard";
+import TimelineEvent from "../components/trip/TimelineEvent";
+import TransportationCard from "../components/trip/TransportationCard";
 
 const timelineEvents = [
   {
@@ -56,7 +58,6 @@ const transportationConnections = [
     type: "car",
     details: "Private luxury transfer",
     duration: "1.5 hours",
-    icon: Car
   },
   {
     id: 2,
@@ -65,157 +66,69 @@ const transportationConnections = [
     type: "plane",
     details: "Scenic air transfer",
     duration: "15 minutes",
-    icon: Plane
   }
 ];
 
 const TripDetails = () => {
-  const renderTransportIcon = (IconComponent: typeof Car | typeof Plane) => {
-    return <IconComponent className="h-6 w-6 text-earth-500" />;
-  };
-
   return (
     <div className="min-h-screen bg-sand-50">
       <Navigation />
       
-      {/* Hero Section */}
-      <div className="relative h-[60vh] overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?q=80&w=2574&auto=format&fit=crop"
-          alt="Amalfi Coast"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white">
-            <h1 className="text-5xl font-bold mb-4">Amalfi Coast</h1>
-            <p className="text-xl">June 2024</p>
-          </div>
-        </div>
-      </div>
+      <HeroSection 
+        title="Amalfi Coast"
+        date="June 2024"
+        imageUrl="https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?q=80&w=2574&auto=format&fit=crop"
+      />
 
-      {/* Flight Details */}
       <div className="container mx-auto px-4 py-8">
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold mb-2">Outbound Flight</h3>
-                <p className="text-earth-500">American Airlines AA123</p>
-                <p>JFK → NAP</p>
-              </div>
-              <Plane className="h-8 w-8 text-earth-500" />
-              <div>
-                <p className="font-semibold">June 1, 2024</p>
-                <p>Departure: 18:30</p>
-                <p>Arrival: 09:45 +1</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <FlightCard
+          type="outbound"
+          flightNumber="American Airlines AA123"
+          route="JFK → NAP"
+          date="June 1, 2024"
+          departure="18:30"
+          arrival="09:45 +1"
+        />
       </div>
 
-      {/* Timeline Section */}
       <div className="container mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold text-earth-500 mb-8">Trip Timeline</h2>
         <div className="space-y-12">
           {timelineEvents.map((event, index) => (
             <div key={event.id}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
-                viewport={{ once: true }}
-              >
-                <Card className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="h-64 md:h-auto">
-                        <img 
-                          src={event.image} 
-                          alt={event.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-6 flex flex-col justify-between">
-                        <div>
-                          <div className="text-sm font-semibold text-earth-500 mb-2">
-                            {event.date}
-                          </div>
-                          <h3 className="text-2xl font-bold mb-2">{event.title}</h3>
-                          <p className="text-gray-600 mb-4">{event.description}</p>
-                          
-                          {/* Hotel Details */}
-                          <div className="mb-4">
-                            <h4 className="font-semibold text-earth-500">Accommodation</h4>
-                            <p className="font-medium">{event.hotel}</p>
-                            <p className="text-sm text-gray-600">{event.hotelDetails}</p>
-                          </div>
-                          
-                          {/* Activities */}
-                          <div>
-                            <h4 className="font-semibold text-earth-500">Activities</h4>
-                            <ul className="list-disc list-inside text-sm text-gray-600">
-                              {event.activities.map((activity, i) => (
-                                <li key={i}>{activity}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <TimelineEvent
+                date={event.date}
+                title={event.title}
+                description={event.description}
+                image={event.image}
+                hotel={event.hotel}
+                hotelDetails={event.hotelDetails}
+                activities={event.activities}
+                index={index}
+              />
 
-              {/* Transportation Connection */}
               {index < timelineEvents.length - 1 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: index * 0.2 }}
-                  viewport={{ once: true }}
-                  className="my-4"
-                >
-                  <Card className="max-w-md mx-auto">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        {transportationConnections[index].icon && 
-                          renderTransportIcon(transportationConnections[index].icon)
-                        }
-                        <div>
-                          <p className="font-medium">{transportationConnections[index].details}</p>
-                          <p className="text-sm text-gray-600">Duration: {transportationConnections[index].duration}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <TransportationCard
+                  type={transportationConnections[index].type as "car" | "plane"}
+                  details={transportationConnections[index].details}
+                  duration={transportationConnections[index].duration}
+                  index={index}
+                />
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Return Flight */}
       <div className="container mx-auto px-4 py-8">
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold mb-2">Return Flight</h3>
-                <p className="text-earth-500">American Airlines AA124</p>
-                <p>NAP → JFK</p>
-              </div>
-              <Plane className="h-8 w-8 text-earth-500" />
-              <div>
-                <p className="font-semibold">June 4, 2024</p>
-                <p>Departure: 11:30</p>
-                <p>Arrival: 15:45</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <FlightCard
+          type="return"
+          flightNumber="American Airlines AA124"
+          route="NAP → JFK"
+          date="June 4, 2024"
+          departure="11:30"
+          arrival="15:45"
+        />
       </div>
     </div>
   );
