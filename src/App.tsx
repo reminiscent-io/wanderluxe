@@ -23,8 +23,7 @@ const App = () => (
           <Route path="/create-trip" element={<CreateTrip />} />
           <Route path="/my-trips" element={<MyTrips />} />
           <Route path="/inspiration" element={<Inspiration />} />
-          <Route path="/trip/amalfi-coast" element={<TripDetails />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/trip/:tripId" element={<TripDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
