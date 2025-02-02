@@ -16,9 +16,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dns.setDefaultResultOrder('verbatim');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 // Trust proxy - required for Replit's environment
 app.set('trust proxy', true);
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // Enable CORS
 app.use(cors({
