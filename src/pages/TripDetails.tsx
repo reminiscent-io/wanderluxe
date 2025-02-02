@@ -1,7 +1,7 @@
 import Navigation from "../components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Plane, Train, Car, Helicopter } from "lucide-react";
+import { Plane, Car } from "lucide-react";
 
 const timelineEvents = [
   {
@@ -62,15 +62,15 @@ const transportationConnections = [
     id: 2,
     from: 2,
     to: 3,
-    type: "helicopter",
-    details: "Scenic helicopter transfer",
+    type: "plane",
+    details: "Scenic air transfer",
     duration: "15 minutes",
-    icon: Helicopter
+    icon: Plane
   }
 ];
 
 const TripDetails = () => {
-  const renderTransportIcon = (IconComponent: typeof Car | typeof Helicopter) => {
+  const renderTransportIcon = (IconComponent: typeof Car | typeof Plane) => {
     return <IconComponent className="h-6 w-6 text-earth-500" />;
   };
 
