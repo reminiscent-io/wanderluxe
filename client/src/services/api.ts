@@ -1,9 +1,7 @@
-
 import axios from 'axios';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.DEV ? 'http://0.0.0.0:8080/api' : '/api',
-  withCredentials: true,
   headers: {
     'X-Requested-With': 'XMLHttpRequest',
     'Content-Type': 'application/json'
@@ -17,13 +15,6 @@ export const api = {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          const authUrl = '/auth';
-          if (window.location.pathname !== authUrl) {
-            window.location.assign(authUrl);
-          }
-          throw new Error('Unauthorized');
-        }
         throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
       throw error;
@@ -36,13 +27,6 @@ export const api = {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          const authUrl = '/auth';
-          if (window.location.pathname !== authUrl) {
-            window.location.assign(authUrl);
-          }
-          throw new Error('Unauthorized');
-        }
         throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
       throw error;
@@ -53,7 +37,7 @@ export const api = {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      
+
       const response = await axiosInstance.post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -62,13 +46,6 @@ export const api = {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          const authUrl = '/auth';
-          if (window.location.pathname !== authUrl) {
-            window.location.assign(authUrl);
-          }
-          throw new Error('Unauthorized');
-        }
         throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
       throw error;

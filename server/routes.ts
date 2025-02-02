@@ -53,24 +53,10 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/trips/:tripId/timeline", createTimelineEntry);
   app.put("/api/trips/:tripId/timeline/:entryId", updateTimelineEntry);
 
-  // Messages
+  // Chat Routes
   app.use('/api/chat', chatRouter);
 
-  app.get("/api/trips/:tripId/messages", async (req, res) => {
-    try {
-      const tripMessages = await db
-        .select()
-        .from(messages)
-        .where(eq(messages.tripId, parseInt(req.params.tripId)))
-        .orderBy(desc(messages.createdAt));
-      res.json(tripMessages);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      res.status(500).json({ error: "Failed to fetch messages" });
-    }
-  });
-
-  // Files
+  // Files Upload
   app.post(
     "/api/trips/:tripId/files",
     upload.single("file"),
@@ -86,7 +72,7 @@ export function registerRoutes(app: Express): Server {
             filename: req.file.originalname,
             path: req.file.path,
             type: path.extname(req.file.originalname),
-            tripId: parseInt(req.params.tripId)
+            tripId: parseInt(req.params.tripId),
           })
           .returning();
 

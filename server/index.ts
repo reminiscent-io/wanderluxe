@@ -24,7 +24,7 @@ app.set('trust proxy', true);
 app.use(cors({
   origin: ['http://localhost:5173', 'http://0.0.0.0:5173', process.env.FRONTEND_URL || 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'X-Requested-With']
 }));
 
 // Rate limiting configuration
@@ -81,14 +81,14 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     next();
   });
 
+  // Add chat router
+  app.use('/api/chat', chatRouter);
+
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
-
-  // Add after other middleware
-  app.use('/api/chat', chatRouter);
 
   // Frontend routes - must be after API routes
   app.get("*", (req, res) => {
