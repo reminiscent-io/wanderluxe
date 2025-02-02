@@ -24,13 +24,14 @@ export function useChat(tripId: number, userId: number) {
       ]);
 
       // Call backend API
+      console.log('Sending chat request with credentials');
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        credentials: 'include',
+        credentials: 'include', // Ensures cookies are sent
         body: JSON.stringify({
           tripId,
           message: content,
@@ -44,6 +45,7 @@ export function useChat(tripId: number, userId: number) {
       }
 
       const aiResponse = await response.json();
+      console.log('Received chat response:', aiResponse);
 
       // Add AI response to messages
       setMessages(prev => [
