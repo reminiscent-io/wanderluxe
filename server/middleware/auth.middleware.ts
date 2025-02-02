@@ -10,6 +10,9 @@ export const requireAuth = (
   res: Response,
   next: NextFunction
 ) => {
+  console.log('Headers:', req.headers);
+  console.log('Session:', req.session);
+  
   // Check both the method existence and authentication state
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     console.log('Unauthorized access attempt:', {
