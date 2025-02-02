@@ -75,18 +75,12 @@ app.use((req, res, next) => {
 });
 
 
-// CORS configuration - Improved to allow credentials and specific origins
+// CORS configuration
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests from localhost and Replit
-    if (!origin || origin.includes('localhost:5173') || /\.replit\.dev$/.test(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['POST', 'GET', 'PUT', 'DELETE'], // Added other common methods
-  credentials: true
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 
