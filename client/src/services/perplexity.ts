@@ -28,7 +28,14 @@ export const perplexityService = {
       };
     } catch (error) {
       console.error("Perplexity API error:", error);
-      throw new Error("Failed to get AI response");
+      if (error instanceof Error) {
+        if (error.message.includes('rate limit')) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        } else if (error.message.includes('unauthorized')) {
+          throw new Error("Authentication failed. Please check your API key.");
+        }
+      }
+      throw new Error("Failed to get AI response. Please try again.");
     }
   },
 };

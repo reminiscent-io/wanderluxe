@@ -56,6 +56,20 @@ export function setupWebSocket(server: Server) {
       ws.isAlive = true;
     });
 
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+
+    ws.on("close", () => {
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        setTimeout(() => {
+          // Attempt reconnection
+          const newWs = new WebSocket(ws.url);
+          ws = newWs;
+        }, 1000 * reconnectAttempts);
+      }
+    });
+
     ws.on("message", async (data) => {
       try {
         const message = JSON.parse(data.toString()) as ChatMessage;

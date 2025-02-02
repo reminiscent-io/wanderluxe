@@ -26,7 +26,9 @@ router.post('/', async (req: Request, res: Response) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'X-Request-ID': crypto.randomUUID(),
+        'X-Client-Version': process.env.npm_package_version || '1.0.0'
       },
       body: JSON.stringify({
         model: model || "llama-3.1-sonar-small-128k-online",
