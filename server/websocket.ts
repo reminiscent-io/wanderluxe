@@ -7,7 +7,6 @@ import { parse } from "url";
 interface ChatMessage {
   type: "message";
   tripId: number;
-  userId: number;
   content: string;
   isAi: boolean;
 }
@@ -15,24 +14,21 @@ interface ChatMessage {
 export function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ 
     noServer: true,
-    perMessageDeflate: false // Disable per-message-deflate to reduce memory usage
+    perMessageDeflate: false
   });
 
   server.on("upgrade", (request, socket, head) => {
     const { pathname } = parse(request.url || "", true);
 
-    // Important: Let Vite handle its own WebSocket connections
     if (pathname?.includes('@vite') || pathname?.includes('@react-refresh')) {
-      return; // Allow Vite to handle its own upgrade
+      return;
     }
 
-    // Only handle our chat WebSocket connections
     if (pathname === "/ws") {
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit("connection", ws, request);
       });
     } else {
-      // Destroy socket for unhandled paths
       socket.destroy();
     }
   });
@@ -54,10 +50,8 @@ export function setupWebSocket(server: Server) {
     console.log(`New WebSocket connection for trip ${tripId}`);
     ws.isAlive = true;
 
-    // Send initial connection success message
     ws.send(JSON.stringify({ type: "connection", status: "connected" }));
 
-    // Setup ping-pong for connection health check
     ws.on('pong', () => {
       ws.isAlive = true;
     });
@@ -67,18 +61,15 @@ export function setupWebSocket(server: Server) {
         const message = JSON.parse(data.toString()) as ChatMessage;
 
         if (message.type === "message") {
-          // Store message in database
           const [savedMessage] = await db
             .insert(messages)
             .values({
               tripId: message.tripId,
-              userId: message.userId,
               content: message.content,
               isAi: message.isAi,
             })
             .returning();
 
-          // Broadcast to all clients in this trip
           wss.clients.forEach((client) => {
             if (
               client.readyState === WebSocket.OPEN &&
@@ -98,20 +89,17 @@ export function setupWebSocket(server: Server) {
       }
     });
 
-    // Handle client disconnection
     ws.on("close", () => {
       console.log(`Client disconnected from trip ${tripId}`);
       ws.isAlive = false;
     });
 
-    // Handle errors
     ws.on("error", (error) => {
       console.error("WebSocket error:", error);
       ws.close(1011, "Internal server error");
     });
   });
 
-  // Periodic health check and cleanup of stale connections
   const interval = setInterval(() => {
     wss.clients.forEach((ws: WebSocket & { isAlive?: boolean }) => {
       if (ws.isAlive === false) {
@@ -122,7 +110,6 @@ export function setupWebSocket(server: Server) {
     });
   }, 30000);
 
-  // Clean up interval on server close
   server.on('close', () => {
     clearInterval(interval);
   });

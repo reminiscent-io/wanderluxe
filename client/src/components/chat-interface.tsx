@@ -9,12 +9,11 @@ import { cn } from "@/lib/utils";
 
 interface ChatInterfaceProps {
   tripId: number;
-  userId: number;
 }
 
-export function ChatInterface({ tripId, userId }: ChatInterfaceProps) {
+export function ChatInterface({ tripId }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
-  const { messages, sendMessage, isLoading } = useChat(tripId, userId);
+  const { messages, sendMessage, isLoading } = useChat(tripId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -44,9 +43,9 @@ export function ChatInterface({ tripId, userId }: ChatInterfaceProps) {
       </CardHeader>
       <CardContent className="flex-1 p-4 overflow-hidden">
         <ScrollArea className="h-[500px] pr-4">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
-              key={message.id}
+              key={message.id || index}
               className={cn(
                 "mb-4 p-3 rounded-lg",
                 message.isAi ? "bg-gray-100 ml-auto w-3/4" : "bg-blue-100 mr-auto w-3/4"

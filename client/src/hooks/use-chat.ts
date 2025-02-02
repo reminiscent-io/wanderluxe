@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
-import type { Message } from "@db/schema";
+import { useState } from "react";
 import { api } from "@/services/api";
 
-export function useChat(tripId: number, userId: number) {
+interface Message {
+  id: number;
+  tripId: number;
+  content: string;
+  isAi: boolean;
+  createdAt: Date;
+}
+
+export function useChat(tripId: number) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -15,7 +22,6 @@ export function useChat(tripId: number, userId: number) {
         {
           id: Date.now(),
           tripId,
-          userId,
           content,
           createdAt: new Date(),
           isAi: false
@@ -31,9 +37,8 @@ export function useChat(tripId: number, userId: number) {
       setMessages(prev => [
         ...prev,
         {
-          id: Date.now(),
+          id: Date.now() + 1,
           tripId,
-          userId,
           content: response.content,
           createdAt: new Date(),
           isAi: true
@@ -45,9 +50,8 @@ export function useChat(tripId: number, userId: number) {
       setMessages(prev => [
         ...prev,
         {
-          id: Date.now(),
+          id: Date.now() + 1,
           tripId,
-          userId,
           content: `Error: ${errorMessage}`,
           createdAt: new Date(),
           isAi: true
