@@ -1,5 +1,6 @@
 import Navigation from "../components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { EyeOff } from "lucide-react";
