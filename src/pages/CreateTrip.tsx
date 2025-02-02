@@ -6,9 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const CreateTrip = () => {
   const [destination, setDestination] = useState("");
+  const [timingType, setTimingType] = useState("timeOfYear"); // "timeOfYear" or "specificDates"
+  const [timeOfYear, setTimeOfYear] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +28,21 @@ const CreateTrip = () => {
       return;
     }
 
+    if (!destination) {
+      toast.error("Please enter a destination");
+      return;
+    }
+
+    if (timingType === "timeOfYear" && !timeOfYear) {
+      toast.error("Please enter a time of year");
+      return;
+    }
+
+    if (timingType === "specificDates" && (!startDate || !endDate)) {
+      toast.error("Please enter both start and end dates");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -33,8 +52,8 @@ const CreateTrip = () => {
           {
             user_id: session.user.id,
             destination,
-            start_date: startDate,
-            end_date: endDate,
+            start_date: timingType === "specificDates" ? startDate : timeOfYear,
+            end_date: timingType === "specificDates" ? endDate : timeOfYear,
           }
         ])
         .select()
@@ -61,7 +80,7 @@ const CreateTrip = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label
                 htmlFor="destination"
@@ -79,37 +98,77 @@ const CreateTrip = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="startDate"
-                className="text-sm font-medium text-gray-700"
+            <div className="space-y-4">
+              <Label className="text-sm font-medium text-gray-700">
+                When are you planning to travel?
+              </Label>
+              <RadioGroup
+                value={timingType}
+                onValueChange={setTimingType}
+                className="space-y-2"
               >
-                Start Date
-              </label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="timeOfYear" id="timeOfYear" />
+                  <Label htmlFor="timeOfYear">Time of Year</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="specificDates" id="specificDates" />
+                  <Label htmlFor="specificDates">Specific Dates</Label>
+                </div>
+              </RadioGroup>
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="endDate"
-                className="text-sm font-medium text-gray-700"
-              >
-                End Date
-              </label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                required
-              />
-            </div>
+            {timingType === "timeOfYear" && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="timeOfYear"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Time of Year
+                </label>
+                <Input
+                  id="timeOfYear"
+                  type="text"
+                  placeholder="e.g., Summer, June, Winter holidays"
+                  value={timeOfYear}
+                  onChange={(e) => setTimeOfYear(e.target.value)}
+                />
+              </div>
+            )}
+
+            {timingType === "specificDates" && (
+              <>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="startDate"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Start Date
+                  </label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="endDate"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    End Date
+                  </label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="flex justify-end space-x-2">
               <Button
