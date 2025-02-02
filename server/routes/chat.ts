@@ -6,9 +6,9 @@ import { requireAuth, requireTripAccess } from "../middleware/auth.middleware";
 const router = express.Router();
 
 router.post('/',
-  express.json(), 
-  requireAuth, 
-  requireTripAccess("viewer"), 
+  requireAuth,
+  requireTripAccess("viewer"),
+  express.json(),
   async (req: Request, res: Response) => {
     try {
       const { tripId, message, model } = req.body;

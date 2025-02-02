@@ -23,7 +23,7 @@ export function useChat(tripId: number, userId: number) {
       ]);
 
       // Call backend API
-      const response = await fetch('/api/chat/', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
