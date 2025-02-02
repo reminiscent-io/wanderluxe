@@ -49,12 +49,13 @@ export function setupAuth(app: Express) {
   );
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || 'your-secret-key',
-      resave: true,
-      saveUninitialized: true,
+      secret: process.env.SESSION_SECRET || 'development-secret',
+      resave: false,
+      saveUninitialized: false,
+      proxy: true, // Required for Replit's environment
       name: 'sessionId',
       cookie: {
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
