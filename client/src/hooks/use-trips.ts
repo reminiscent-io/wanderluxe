@@ -7,11 +7,15 @@ export function useTrips() {
   const { data: trips, isLoading } = useQuery<Trip[]>({
     queryKey: ["/api/trips"],
     queryFn: async () => {
-      const response = await fetch("/api/trips", {
-        credentials: "include"
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/trips`, {
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       if (!response.ok) {
-        throw new Error("Failed to fetch trips");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch trips");
       }
       return response.json();
     }
@@ -19,23 +23,24 @@ export function useTrips() {
 
   const createTripMutation = useMutation({
     mutationFn: async (data: Partial<Trip>) => {
+      console.log('Creating trip:', data);
       try {
-        const response = await fetch("/api/trips", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/trips`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
           credentials: "include",
         });
 
-        const result = await response.json();
-        
         if (!response.ok) {
+          const result = await response.json();
           throw new Error(result.error || 'Failed to create trip');
         }
 
-        return result;
+        return response.json();
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : 'Network error occurred');
+        console.error('Trip creation error:', error);
+        throw error;
       }
     },
     onSuccess: () => {

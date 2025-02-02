@@ -6,20 +6,34 @@ import type { Request, Response } from "express";
 export async function getTrips(req: Request, res: Response) {
   try {
     const userTrips = await db
-      .select()
+      .select({
+        id: trips.id,
+        title: trips.title,
+        destination: trips.destination,
+        budget: trips.budget,
+        status: trips.status,
+        startDate: trips.startDate,
+        endDate: trips.endDate,
+        createdAt: trips.createdAt,
+      })
       .from(trips)
       .orderBy(desc(trips.createdAt));
+
+    if (!userTrips) {
+      return res.status(404).json({ message: 'No trips found' });
+    }
 
     res.json(userTrips);
   } catch (error) {
     console.error('Error fetching trips:', error);
-    res.status(500).json({ error: 'Failed to fetch trips' });
+    res.status(500).json({ message: 'Failed to fetch trips', error: error instanceof Error ? error.message : 'Unknown error' });
   }
 }
 
 export async function createTrip(req: Request, res: Response) {
   try {
     const { title, destination, budget, status } = req.body;
+    console.log('Received trip data:', { title, destination, budget, status });
     
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
