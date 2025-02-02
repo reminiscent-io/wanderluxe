@@ -6,6 +6,15 @@ export function useTrips() {
 
   const { data: trips, isLoading } = useQuery<Trip[]>({
     queryKey: ["/api/trips"],
+    queryFn: async () => {
+      const response = await fetch("/api/trips", {
+        credentials: "include"
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch trips");
+      }
+      return response.json();
+    }
   });
 
   const createTripMutation = useMutation({
