@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupAuth } from "./auth/combined-auth";
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -11,9 +10,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import chatRouter from './routes/chat';
-
-
-
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,24 +39,10 @@ const limiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    // Use X-Replit-User-Id header or fallback to IP
-    return req.headers['x-replit-user-id']?.toString() || req.ip;
-  }
+  keyGenerator: (req) => req.ip
 });
 
 app.use(limiter);
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 requests per window
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => {
-    // Use X-Replit-User-Id header or fallback to IP
-    return req.headers['x-replit-user-id']?.toString() || req.ip;
-  }
-});
-
 
 // Security middleware first
 app.use(helmet({
@@ -74,31 +56,9 @@ app.use((req, res, next) => {
   next();
 });
 
-
-// CORS configuration
-app.use(cors({
-  origin: [
-    /^https?:\/\/.*\.replit\.dev$/,
-    'https://replit.com',
-    process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : undefined
-  ].filter(Boolean) as string[],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
-  maxAge: 86400 // 24 hours
-}));
-
-
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Apply rate limiting to auth routes
-app.use('/api/(login|register)', authLimiter);
-
-// Set up authentication
-setupAuth(app);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -137,7 +97,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     await setupVite(app, server);
   } else {
     serveStatic(app);
-  };
+  }
 
   // Add after other middleware
   app.use('/api/chat', chatRouter);

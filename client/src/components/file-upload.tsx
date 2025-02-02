@@ -22,7 +22,6 @@ export function FileUpload({ tripId, onSuccess }: FileUploadProps) {
       const response = await fetch(`/api/trips/${tripId}/files`, {
         method: "POST",
         body: formData,
-        credentials: "include",
       });
 
       if (!response.ok) {
