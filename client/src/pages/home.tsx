@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTrips } from "@/hooks/use-trips";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { TripCard } from "@/components/trip-card";
 import { ChatInterface } from "@/components/chat-interface";
 import { FileUpload } from "@/components/file-upload";
