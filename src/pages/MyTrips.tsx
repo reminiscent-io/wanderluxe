@@ -18,25 +18,36 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 interface Trip {
-  id: number;
-  name: string;
-  createdAt: string;
+  id: string;
+  destination: string;
   start_date: string;
   end_date: string;
 }
 
 const MyTrips = () => {
-  const [trips, setTrips] = useState<Trip[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [tripToDelete, setTripToDelete] = useState<string | null>(null);
 
-  useEffect(() => {
-    const storedTrips = JSON.parse(localStorage.getItem("trips") || "[]");
-    setTrips(storedTrips);
-  }, []);
+  const { data: trips = [], refetch } = useQuery({
+    queryKey: ['trips'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .order('start_date', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching trips:', error);
+        throw error;
+      }
+      
+      return data || [];
+    },
+  });
 
   const handleDeleteTrip = async (tripId: string) => {
     try {
@@ -47,10 +58,7 @@ const MyTrips = () => {
 
       if (error) throw error;
 
-      // Update local state
-      const updatedTrips = trips.filter(trip => trip.id.toString() !== tripId);
-      setTrips(updatedTrips);
-      localStorage.setItem("trips", JSON.stringify(updatedTrips));
+      refetch();
       
       toast({
         title: "Trip deleted",
@@ -94,7 +102,7 @@ const MyTrips = () => {
               onClick={() => navigate(`/trip/${trip.id}`)}
             >
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {trip.name}
+                {trip.destination}
               </h3>
               <p className="text-sm text-gray-500">
                 {new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}
@@ -121,7 +129,7 @@ const MyTrips = () => {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => handleDeleteTrip(trip.id.toString())}
+                    onClick={() => handleDeleteTrip(trip.id)}
                     className="bg-red-600 hover:bg-red-700"
                   >
                     Delete
