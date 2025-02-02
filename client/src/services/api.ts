@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 const axiosInstance = axios.create({
@@ -23,12 +24,8 @@ export const api = {
           }
           throw new Error('Unauthorized');
         }
-        if (error.response?.status && error.response.status >= 500) {
-          throw new Error(`${error.response.status}: ${error.response.statusText}`);
-        }
         throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
-      console.error('API Error:', error);
       throw error;
     }
   },
@@ -46,12 +43,8 @@ export const api = {
           }
           throw new Error('Unauthorized');
         }
-        if (error.response?.status && error.response.status >= 500) {
-          throw new Error(`${error.response.status}: ${error.response.statusText}`);
-        }
         throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
-      console.error('API Error:', error);
       throw error;
     }
   },
@@ -60,7 +53,7 @@ export const api = {
     try {
       const formData = new FormData();
       formData.append("file", file);
-
+      
       const response = await axiosInstance.post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -76,12 +69,8 @@ export const api = {
           }
           throw new Error('Unauthorized');
         }
-        if (error.response?.status && error.response.status >= 500) {
-          throw new Error(`${error.response.status}: ${error.response.statusText}`);
-        }
         throw new Error(`${error.response?.status}: ${error.response?.data}`);
       }
-      console.error('API Error:', error);
       throw error;
     }
   }

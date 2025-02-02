@@ -1,6 +1,6 @@
-
 import { useEffect, useState } from "react";
 import type { Message } from "@db/schema";
+import { api } from "@/services/api";
 
 export function useChat(tripId: number, userId: number) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -10,7 +10,6 @@ export function useChat(tripId: number, userId: number) {
     try {
       setIsLoading(true);
 
-      // Add user message immediately
       setMessages(prev => [
         ...prev,
         {
@@ -23,38 +22,19 @@ export function useChat(tripId: number, userId: number) {
         }
       ]);
 
-      // Call backend API
-      console.log('Sending chat request with credentials');
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'include', // Ensures cookies are sent
-        body: JSON.stringify({
-          tripId,
-          message: content,
-          model: "sonar-pro"
-        }),
+      const response = await api.post('/chat', {
+        tripId,
+        message: content,
+        model: "sonar-pro"
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send message');
-      }
-
-      const aiResponse = await response.json();
-      console.log('Received chat response:', aiResponse);
-
-      // Add AI response to messages
       setMessages(prev => [
         ...prev,
         {
           id: Date.now(),
           tripId,
           userId,
-          content: aiResponse.content || "AI did not respond.",
+          content: response.content,
           createdAt: new Date(),
           isAi: true
         }
