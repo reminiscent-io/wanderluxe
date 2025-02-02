@@ -33,7 +33,6 @@ export async function getTrips(req: Request, res: Response) {
 export async function createTrip(req: Request, res: Response) {
   try {
     const { title, destination, budget, status } = req.body;
-    console.log('Received trip data:', { title, destination, budget, status });
     
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });

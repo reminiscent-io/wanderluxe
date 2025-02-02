@@ -23,7 +23,6 @@ export function useTrips() {
 
   const createTripMutation = useMutation({
     mutationFn: async (data: Partial<Trip>) => {
-      console.log('Creating trip:', data);
       try {
         const response = await fetch("/api/trips", {
           method: "POST",
