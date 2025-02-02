@@ -1,9 +1,8 @@
 import Navigation from "../components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Trash } from "lucide-react";
+import { EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -30,7 +29,7 @@ interface Trip {
 const MyTrips = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tripToDelete, setTripToDelete] = useState<string | null>(null);
+  const [tripToHide, setTripToHide] = useState<string | null>(null);
 
   const { data: trips = [], refetch } = useQuery({
     queryKey: ['trips'],
@@ -49,11 +48,11 @@ const MyTrips = () => {
     },
   });
 
-  const handleDeleteTrip = async (tripId: string) => {
+  const handleHideTrip = async (tripId: string) => {
     try {
       const { error } = await supabase
         .from('trips')
-        .delete()
+        .update({ hidden: true })
         .eq('id', tripId);
 
       if (error) throw error;
@@ -61,18 +60,18 @@ const MyTrips = () => {
       refetch();
       
       toast({
-        title: "Trip deleted",
-        description: "Your trip has been successfully deleted.",
+        title: "Trip hidden",
+        description: "Your trip has been hidden from your view.",
       });
     } catch (error) {
-      console.error('Error deleting trip:', error);
+      console.error('Error hiding trip:', error);
       toast({
         title: "Error",
-        description: "Failed to delete trip. Please try again.",
+        description: "Failed to hide trip. Please try again.",
         variant: "destructive",
       });
     }
-    setTripToDelete(null);
+    setTripToHide(null);
   };
 
   const today = new Date();
@@ -114,25 +113,25 @@ const MyTrips = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-gray-500 hover:text-red-600"
+                  className="text-gray-500 hover:text-gray-600"
                 >
-                  <Trash className="h-5 w-5" />
+                  <EyeOff className="h-5 w-5" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Trip</AlertDialogTitle>
+                  <AlertDialogTitle>Hide Trip</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete this trip? This action cannot be undone.
+                    Are you sure you want to hide this trip? You won't be able to see it in your trips list anymore.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => handleDeleteTrip(trip.id)}
-                    className="bg-red-600 hover:bg-red-700"
+                    onClick={() => handleHideTrip(trip.id)}
+                    className="bg-gray-600 hover:bg-gray-700"
                   >
-                    Delete
+                    Hide
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

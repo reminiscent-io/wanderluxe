@@ -118,6 +118,7 @@ export type Database = {
           created_at: string
           destination: string
           end_date: string
+          hidden: boolean | null
           id: string
           start_date: string
           user_id: string
@@ -127,6 +128,7 @@ export type Database = {
           created_at?: string
           destination: string
           end_date: string
+          hidden?: boolean | null
           id?: string
           start_date: string
           user_id: string
@@ -136,6 +138,7 @@ export type Database = {
           created_at?: string
           destination?: string
           end_date?: string
+          hidden?: boolean | null
           id?: string
           start_date?: string
           user_id?: string
