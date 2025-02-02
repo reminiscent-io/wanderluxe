@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTrips } from "@/hooks/use-trips";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { DialogDescription } from "@/components/ui/dialog";
 import { TripCard } from "@/components/trip-card";
 import { ChatInterface } from "@/components/chat-interface";
 import { FileUpload } from "@/components/file-upload";
@@ -72,9 +73,10 @@ export default function Home() {
                 <Plus className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent aria-describedby="dialog-title">
+            <DialogContent>
               <DialogHeader>
-                <DialogTitle id="dialog-title">Create New Trip</DialogTitle>
+                <DialogTitle>Create New Trip</DialogTitle>
+                <DialogDescription>Enter the details for your new luxury travel experience</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
