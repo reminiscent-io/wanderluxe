@@ -1,3 +1,4 @@
+
 import { Request, Response, NextFunction } from "express";
 import { db } from "@db";
 import { collaborators } from "@db/schema";
@@ -10,6 +11,12 @@ export const requireAuth = (
   next: NextFunction
 ) => {
   if (!req.isAuthenticated()) {
+    console.log('Unauthorized access attempt:', {
+      path: req.path,
+      method: req.method,
+      origin: req.headers.origin,
+      userAgent: req.headers['user-agent']
+    });
     return res.status(401).json({ 
       message: "Unauthorized",
       redirectTo: "/auth"
@@ -46,6 +53,7 @@ export function requireTripAccess(role: "owner" | "editor" | "viewer" = "viewer"
 
       next();
     } catch (error) {
+      console.error('Trip access error:', error);
       next(error);
     }
   };
