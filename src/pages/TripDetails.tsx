@@ -6,13 +6,19 @@ import FlightCard from "../components/trip/FlightCard";
 import TimelineEvent from "../components/trip/TimelineEvent";
 import TransportationCard from "../components/trip/TransportationCard";
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { toast } from 'sonner';
 
 const TripDetails = () => {
   const { tripId } = useParams();
   const trips = JSON.parse(localStorage.getItem('trips') || '[]');
   const trip = trips.find((t: any) => t.id.toString() === tripId);
 
-  const { events, updateEvent, deleteEvent } = useTimelineEvents(tripId || '');
+  // We'll only fetch timeline events if we have a valid UUID
+  const isValidUUID = trip?.uuid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trip.uuid);
+  
+  const { events, updateEvent, deleteEvent } = useTimelineEvents(
+    isValidUUID ? trip.uuid : null
+  );
 
   if (!trip) {
     return (
@@ -25,23 +31,17 @@ const TripDetails = () => {
     );
   }
 
-  // For now, we'll use placeholder data similar to Amalfi example
-  const timelineEvents = [
-    {
-      id: '1',
-      date: "Day 1",
-      title: "Arrival",
-      description: "Begin your journey",
-      image: "https://images.unsplash.com/photo-1501854140801-50d01698950b",
-      hotel: "Hotel Example",
-      hotelDetails: "4-star hotel with great views",
-      activities: [
-        "Check-in at 3 PM",
-        "Welcome dinner",
-        "Evening orientation"
-      ]
-    }
-  ];
+  if (!isValidUUID) {
+    toast.error("Invalid trip ID format");
+    return (
+      <div>
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold">Invalid trip format</h1>
+        </div>
+      </div>
+    );
+  }
 
   const handleEditEvent = (id: string, data: any) => {
     updateEvent.mutate({ id, ...data });
@@ -75,22 +75,22 @@ const TripDetails = () => {
       <div className="container mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold text-earth-500 mb-8">Trip Timeline</h2>
         <div className="space-y-12">
-          {timelineEvents.map((event, index) => (
+          {events?.map((event, index) => (
             <div key={event.id}>
               <TimelineEvent
                 id={event.id}
                 date={event.date}
                 title={event.title}
-                description={event.description}
-                image={event.image}
-                hotel={event.hotel}
-                hotelDetails={event.hotelDetails}
-                activities={event.activities}
+                description={event.description || ''}
+                image={event.image_url || ''}
+                hotel={event.hotel || ''}
+                hotelDetails={event.hotel_details || ''}
+                activities={event.activities?.map(a => a.text) || []}
                 index={index}
                 onEdit={handleEditEvent}
                 onDelete={handleDeleteEvent}
               />
-              {index < timelineEvents.length - 1 && (
+              {index < (events?.length || 0) - 1 && (
                 <TransportationCard
                   type="car"
                   details="Transportation details to be planned"
