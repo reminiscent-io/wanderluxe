@@ -3,40 +3,53 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CreateTrip = () => {
-  const [tripName, setTripName] = useState("");
+  const [destination, setDestination] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { session } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Get existing trips from localStorage or initialize empty array
-    const existingTrips = JSON.parse(localStorage.getItem("trips") || "[]");
-    
-    // Create new trip object
-    const newTrip = {
-      id: Date.now(),
-      name: tripName,
-      createdAt: new Date().toISOString(),
-    };
-    
-    // Add new trip to array
-    const updatedTrips = [...existingTrips, newTrip];
-    
-    // Save back to localStorage
-    localStorage.setItem("trips", JSON.stringify(updatedTrips));
-    
-    // Show success toast
-    toast({
-      title: "Trip Created",
-      description: `Your trip "${tripName}" has been created successfully.`,
-    });
-    
-    // Navigate to my trips page
-    navigate("/my-trips");
+    if (!session?.user) {
+      toast.error("You must be logged in to create a trip");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const { data, error } = await supabase
+        .from('trips')
+        .insert([
+          {
+            user_id: session.user.id,
+            destination,
+            start_date: startDate,
+            end_date: endDate,
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Trip created successfully!");
+      navigate(`/trip/${data.id}`);
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      toast.error("Failed to create trip. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,29 +64,64 @@ const CreateTrip = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label
-                htmlFor="tripName"
+                htmlFor="destination"
                 className="text-sm font-medium text-gray-700"
               >
-                Trip Name
+                Destination
               </label>
               <Input
-                id="tripName"
+                id="destination"
                 type="text"
-                placeholder="Enter trip name"
-                value={tripName}
-                onChange={(e) => setTripName(e.target.value)}
+                placeholder="Enter destination"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="startDate"
+                className="text-sm font-medium text-gray-700"
+              >
+                Start Date
+              </label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="endDate"
+                className="text-sm font-medium text-gray-700"
+              >
+                End Date
+              </label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
+            </div>
+
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/my-trips")}
               >
                 Cancel
               </Button>
-              <Button type="submit">Create Trip</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Trip"}
+              </Button>
             </div>
           </form>
         </CardContent>
