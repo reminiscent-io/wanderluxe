@@ -67,13 +67,17 @@ app.use((req, res, next) => {
 });
 
 
-// CORS configuration
+// CORS configuration - Improved to allow credentials and specific origins
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    /\.replit\.dev$/
-  ],
-  methods: ['POST', 'GET'],
+  origin: (origin, callback) => {
+    // Allow requests from localhost and Replit
+    if (!origin || origin.includes('localhost:5173') || /\.replit\.dev$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['POST', 'GET', 'PUT', 'DELETE'], // Added other common methods
   credentials: true
 }));
 
@@ -129,7 +133,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   // Add after other middleware
   app.use('/api/chat', chatRouter);
-  
+
   // Frontend routes - must be after API routes
   app.get("*", (req, res) => {
     if (app.get("env") === "development") {
