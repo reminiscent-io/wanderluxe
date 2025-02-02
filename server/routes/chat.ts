@@ -5,7 +5,8 @@ import { requireAuth, requireTripAccess } from "../middleware/auth.middleware";
 
 const router = express.Router();
 
-router.post('/', 
+router.post('/',
+  express.json(), 
   requireAuth, 
   requireTripAccess("viewer"), 
   async (req: Request, res: Response) => {

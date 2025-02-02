@@ -106,7 +106,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Messages
-  app.use('/api/chat', chatRouter);
+  app.use('/api/chat', requireAuth, chatRouter);
 
   app.get("/api/trips/:tripId/messages", requireAuth, requireTripAccess("viewer"), async (req, res) => {
     const tripMessages = await db
