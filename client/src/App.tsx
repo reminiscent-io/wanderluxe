@@ -15,14 +15,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/budget" component={Budget} />
-            <Route component={NotFound} />
-          </Switch>
-          <Toaster />
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </StrictMode>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/budget" component={Budget} />
+          <Route component={NotFound} />
+        </Switch>
+        <Toaster />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
