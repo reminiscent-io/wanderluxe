@@ -5,11 +5,14 @@ import HeroSection from "../components/trip/HeroSection";
 import FlightCard from "../components/trip/FlightCard";
 import TimelineEvent from "../components/trip/TimelineEvent";
 import TransportationCard from "../components/trip/TransportationCard";
+import { useTimelineEvents } from '@/hooks/use-timeline-events';
 
 const TripDetails = () => {
   const { tripId } = useParams();
   const trips = JSON.parse(localStorage.getItem('trips') || '[]');
   const trip = trips.find((t: any) => t.id.toString() === tripId);
+
+  const { events, updateEvent, deleteEvent } = useTimelineEvents(tripId || '');
 
   if (!trip) {
     return (
@@ -25,7 +28,7 @@ const TripDetails = () => {
   // For now, we'll use placeholder data similar to Amalfi example
   const timelineEvents = [
     {
-      id: 1,
+      id: '1',
       date: "Day 1",
       title: "Arrival",
       description: "Begin your journey",
@@ -39,6 +42,14 @@ const TripDetails = () => {
       ]
     }
   ];
+
+  const handleEditEvent = (id: string, data: any) => {
+    updateEvent.mutate({ id, ...data });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    deleteEvent.mutate(id);
+  };
 
   return (
     <div className="min-h-screen bg-sand-50">
@@ -67,6 +78,7 @@ const TripDetails = () => {
           {timelineEvents.map((event, index) => (
             <div key={event.id}>
               <TimelineEvent
+                id={event.id}
                 date={event.date}
                 title={event.title}
                 description={event.description}
@@ -75,6 +87,8 @@ const TripDetails = () => {
                 hotelDetails={event.hotelDetails}
                 activities={event.activities}
                 index={index}
+                onEdit={handleEditEvent}
+                onDelete={handleDeleteEvent}
               />
               {index < timelineEvents.length - 1 && (
                 <TransportationCard
