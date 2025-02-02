@@ -14,7 +14,8 @@ interface ChatMessage {
 export function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ 
     noServer: true,
-    perMessageDeflate: false
+    perMessageDeflate: false,
+    clientTracking: true
   });
 
   server.on("upgrade", (request, socket, head) => {
