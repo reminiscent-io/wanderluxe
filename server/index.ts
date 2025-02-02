@@ -20,7 +20,7 @@ const app = express();
 // Trust proxy - required for Replit's environment
 app.set('trust proxy', true);
 
-// Enable CORS before other middleware
+// Enable CORS
 app.use(cors({
   origin: ['http://localhost:5173', 'http://0.0.0.0:5173', process.env.FRONTEND_URL || 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -38,7 +38,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Security middleware first
+// Security middleware
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
