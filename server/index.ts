@@ -7,7 +7,6 @@ import rateLimit from 'express-rate-limit';
 import dns from "node:dns";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
 import chatRouter from './routes/chat';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,14 +15,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dns.setDefaultResultOrder('verbatim');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Trust proxy - required for Replit's environment
 app.set('trust proxy', true);
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
 // Enable CORS
 app.use(cors({
@@ -38,9 +32,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
+
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -69,42 +64,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('Error details:', {
-    message: err.message,
-    stack: err.stack,
-    status: err.status || err.statusCode || 500
-  });
-  const status = err.status || err.statusCode || 500;
-  const message = process.env.NODE_ENV === 'development' ? err.message : "Internal Server Error";
-  res.status(status).json({ message });
-});
+// API routes
+app.use('/api/chat', chatRouter);
 
 (async () => {
   const server = registerRoutes(app);
-  
+
   server.on('error', (err) => {
     console.error('Server error:', err);
   });
 
-  // API routes
-  app.use('/api/chat', chatRouter);
-
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    await setupVite(app);
   } else {
     serveStatic(app);
   }
-
-  // Frontend routes - must be after API routes
-  app.get("*", (req, res) => {
-    if (app.get("env") === "development") {
-      res.sendFile(path.join(__dirname, "../client/index.html"));
-    } else {
-      res.sendFile(path.join(__dirname, "../client/dist/public/index.html"));
-    }
-  });
 
   const PORT = process.env.PORT || 8080;
   const VITE_PORT = process.env.VITE_PORT || 5173;
