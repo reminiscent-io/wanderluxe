@@ -25,8 +25,11 @@ export function useTrips() {
     mutationFn: async (data: Partial<Trip>) => {
       console.log('Creating trip:', data);
       try {
-        const response = await fetch("/api/trips", {
+        const response = await fetch(`/api/trips`, {
           method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
           credentials: "include",

@@ -73,12 +73,10 @@ export default function Home() {
                 <Plus className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px]" aria-describedby="trip-dialog-description">
               <DialogHeader>
                 <DialogTitle>Create New Trip</DialogTitle>
-                <DialogDescription id="trip-dialog-description">
-                  Enter the details for your new luxury travel experience
-                </DialogDescription>
+                <DialogDescription id="trip-dialog-description">Enter the details for your new luxury travel experience</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
