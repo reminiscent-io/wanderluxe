@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useUser } from "@/hooks/use-user";
 import { useTrips } from "@/hooks/use-trips";
 import { TripCard } from "@/components/trip-card";
 import { ChatInterface } from "@/components/chat-interface";
@@ -14,19 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { TimelineView } from "@/components/timeline/timeline-view";
 
 export default function Home() {
-  const { user, logout } = useUser();
   const { trips, createTrip, isLoading } = useTrips();
   const [selectedTrip, setSelectedTrip] = useState<number | null>(null);
   const [isNewTripOpen, setIsNewTripOpen] = useState(false);
@@ -65,14 +56,6 @@ export default function Home() {
       <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Luxury Travel Planner</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              Welcome, {user?.username}
-            </span>
-            <Button variant="ghost" size="icon" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </header>
 
@@ -156,7 +139,7 @@ export default function Home() {
             {selectedTrip ? (
               <>
                 <TimelineView tripId={selectedTrip} />
-                <ChatInterface tripId={selectedTrip} userId={user!.id} />
+                <ChatInterface tripId={selectedTrip} />
                 <FileUpload
                   tripId={selectedTrip}
                   onSuccess={() =>
