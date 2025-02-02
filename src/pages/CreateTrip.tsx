@@ -3,16 +3,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 const CreateTrip = () => {
   const [tripName, setTripName] = useState("");
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just navigate back to home
-    // Later we can add actual trip creation logic
-    navigate("/");
+    
+    // Get existing trips from localStorage or initialize empty array
+    const existingTrips = JSON.parse(localStorage.getItem("trips") || "[]");
+    
+    // Create new trip object
+    const newTrip = {
+      id: Date.now(),
+      name: tripName,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Add new trip to array
+    const updatedTrips = [...existingTrips, newTrip];
+    
+    // Save back to localStorage
+    localStorage.setItem("trips", JSON.stringify(updatedTrips));
+    
+    // Show success toast
+    toast({
+      title: "Trip Created",
+      description: `Your trip "${tripName}" has been created successfully.`,
+    });
+    
+    // Navigate to my trips page
+    navigate("/my-trips");
   };
 
   return (

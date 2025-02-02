@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CreateTrip from "./pages/CreateTrip";
 import NotFound from "./pages/NotFound";
-import Explore from "./pages/Explore";
 import MyTrips from "./pages/MyTrips";
 import Inspiration from "./pages/Inspiration";
 import TripDetails from "./pages/TripDetails";
@@ -22,7 +21,6 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/create-trip" element={<CreateTrip />} />
-          <Route path="/explore" element={<Explore />} />
           <Route path="/my-trips" element={<MyTrips />} />
           <Route path="/inspiration" element={<Inspiration />} />
           <Route path="/trip/amalfi-coast" element={<TripDetails />} />

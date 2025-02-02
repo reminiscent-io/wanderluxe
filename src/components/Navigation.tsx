@@ -16,9 +16,6 @@ const Navigation = () => {
 
   const handleNavigation = (path: string) => {
     switch (path) {
-      case "Explore":
-        navigate("/explore");
-        break;
       case "My Trips":
         navigate("/my-trips");
         break;
@@ -51,7 +48,7 @@ const Navigation = () => {
           Wanderlust
         </motion.a>
         <div className="hidden space-x-8 md:flex">
-          {["Explore", "My Trips", "Inspiration"].map((item) => (
+          {["My Trips", "Inspiration"].map((item) => (
             <motion.button
               key={item}
               onClick={() => handleNavigation(item)}
