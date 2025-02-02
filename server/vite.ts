@@ -53,13 +53,8 @@ export async function setupVite(app: Express, server: Server) {
     next();
   });
 
-  app.use((req, res, next) => {
-    // Bypass Vite for WebSocket connections
-    if (req.headers['sec-websocket-protocol']?.includes('vite-hmr')) {
-      return next();
-    }
-    vite.middlewares(req, res, next);
-  });
+  // Apply Vite middleware before any WebSocket handling
+  app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 

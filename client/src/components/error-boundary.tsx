@@ -28,6 +28,11 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  public componentWillUnmount() {
+    // Cleanup any pending state or listeners
+    this.setState = () => null;
+  }
+
   private handleReset = () => {
     this.setState({ hasError: false, error: undefined });
     window.location.reload();
