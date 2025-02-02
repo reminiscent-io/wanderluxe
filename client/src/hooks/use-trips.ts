@@ -25,22 +25,22 @@ export function useTrips() {
     mutationFn: async (data: Partial<Trip>) => {
       console.log('Creating trip:', data);
       try {
-        const response = await fetch(`/api/trips`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/trips`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
           credentials: "include",
         });
 
-        const result = await response.json();
-
         if (!response.ok) {
+          const result = await response.json();
           throw new Error(result.error || 'Failed to create trip');
         }
 
-        return result;
+        return response.json();
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : 'Network error occurred');
+        console.error('Trip creation error:', error);
+        throw error;
       }
     },
     onSuccess: () => {
