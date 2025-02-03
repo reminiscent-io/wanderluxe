@@ -8,7 +8,7 @@ import { useTripDays } from '@/hooks/use-trip-days';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { parseISO, startOfDay } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 
 interface TimelineViewProps {
   tripId: string | undefined;
@@ -92,15 +92,22 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
 
       <div className="space-y-12">
         {days?.map((day, index) => {
-          // Find all hotel stays that overlap with this day
-          const dayDate = startOfDay(parseISO(day.date));
-          const dayHotel = events?.find(event => 
-            event.hotel && 
-            event.hotel_checkin_date && 
-            event.hotel_checkout_date &&
-            dayDate >= startOfDay(parseISO(event.hotel_checkin_date)) && 
-            dayDate < startOfDay(parseISO(event.hotel_checkout_date))
-          );
+          // Convert the day.date (which is a date from the database) to a comparable format
+          const dayDate = format(new Date(day.date), 'yyyy-MM-dd');
+          
+          // Find hotel stays that overlap with this day
+          const dayHotel = events?.find(event => {
+            if (!event.hotel || !event.hotel_checkin_date || !event.hotel_checkout_date) {
+              return false;
+            }
+            
+            // Format the check-in and check-out dates to match the day.date format
+            const checkinDate = format(parseISO(event.hotel_checkin_date), 'yyyy-MM-dd');
+            const checkoutDate = format(parseISO(event.hotel_checkout_date), 'yyyy-MM-dd');
+            
+            // Compare the formatted dates as strings
+            return dayDate >= checkinDate && dayDate < checkoutDate;
+          });
 
           const hotelDetails = dayHotel ? {
             name: dayHotel.hotel || '',
