@@ -9,10 +9,7 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
     .select('date')
     .eq('trip_id', tripId);
 
-  // Ensure we're comparing date strings in the same format
-  const existingDatesSet = new Set(
-    existingDays?.map(day => new Date(day.date).toISOString().split('T')[0]) || []
-  );
+  const existingDatesSet = new Set(existingDays?.map(day => day.date.toString()) || []);
   
   // Filter out dates that already have trip days
   const newDates = dates.filter(date => !existingDatesSet.has(date));
@@ -28,7 +25,7 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
     .insert(
       newDates.map(date => ({
         trip_id: tripId,
-        date: date, // Store as date without time component
+        date: date,
       }))
     );
 

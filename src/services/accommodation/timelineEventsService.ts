@@ -25,6 +25,10 @@ export const createAccommodationEvents = async (
       expense_type: 'accommodation',
       expense_cost: formData.expenseCost ? Number(formData.expenseCost) : null,
       expense_currency: formData.expenseCurrency,
+      hotel_address: formData.hotelAddress,
+      hotel_phone: formData.hotelPhone,
+      hotel_place_id: formData.hotelPlaceId,
+      hotel_website: formData.hotelWebsite,
       order_index: 0
     }])
     .select()
@@ -43,6 +47,10 @@ export const createAccommodationEvents = async (
       hotel_url: formData.hotelUrl,
       hotel_checkin_date: checkinDate,
       hotel_checkout_date: checkoutDate,
+      hotel_address: formData.hotelAddress,
+      hotel_phone: formData.hotelPhone,
+      hotel_place_id: formData.hotelPlaceId,
+      hotel_website: formData.hotelWebsite,
       order_index: 0
     }));
 
@@ -65,6 +73,10 @@ export const createAccommodationEvents = async (
       hotel_url: formData.hotelUrl,
       hotel_checkin_date: checkinDate,
       hotel_checkout_date: checkoutDate,
+      hotel_address: formData.hotelAddress,
+      hotel_phone: formData.hotelPhone,
+      hotel_place_id: formData.hotelPlaceId,
+      hotel_website: formData.hotelWebsite,
       order_index: 0
     }]);
 
