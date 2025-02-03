@@ -17,7 +17,6 @@ interface TimelineEvent {
   hotel_checkout_date: string | null;
   hotel_url: string | null;
   activities: any[];
-  final_accommodation_day: string | null;
 }
 
 export const useTimelineEvents = (tripId: string | undefined) => {
@@ -81,7 +80,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
           e.hotel_checkin_date && 
           e.hotel_checkout_date &&
           new Date(event.date) >= new Date(e.hotel_checkin_date) && 
-          new Date(event.date) <= new Date(e.final_accommodation_day)
+          new Date(event.date) < new Date(e.hotel_checkout_date)  // Changed to use < instead of <= for checkout date
         );
 
         // If there's an overlapping hotel stay and this event doesn't have its own hotel
@@ -92,8 +91,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
             hotel_details: hotelStay.hotel_details,
             hotel_url: hotelStay.hotel_url,
             hotel_checkin_date: hotelStay.hotel_checkin_date,
-            hotel_checkout_date: hotelStay.hotel_checkout_date,
-            final_accommodation_day: hotelStay.final_accommodation_day
+            hotel_checkout_date: hotelStay.hotel_checkout_date
           };
         }
 
