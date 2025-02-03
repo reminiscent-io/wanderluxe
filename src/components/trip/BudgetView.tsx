@@ -128,6 +128,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     let otherTotal = 0;
 
     events?.forEach(event => {
+      // Handle main expense costs
       if (event.expense_cost && event.expense_currency) {
         const convertedAmount = convertAmount(Number(event.expense_cost), event.expense_currency);
         switch (event.expense_type) {
@@ -145,20 +146,26 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
             break;
         }
       }
-      // Add activity costs to activities total
-      event.activities?.forEach(activity => {
-        if (activity.cost && activity.currency) {
-          activitiesTotal += convertAmount(Number(activity.cost), activity.currency);
-        }
-      });
+
+      // Handle activity costs separately
+      if (event.activities && event.activities.length > 0) {
+        event.activities.forEach(activity => {
+          if (activity.cost && activity.currency) {
+            const convertedActivityAmount = convertAmount(Number(activity.cost), activity.currency);
+            activitiesTotal += convertedActivityAmount;
+          }
+        });
+      }
     });
 
+    const total = accommodationTotal + transportationTotal + activitiesTotal + otherTotal;
+    
     return {
       accommodation: accommodationTotal,
       transportation: transportationTotal,
       activities: activitiesTotal,
       other: otherTotal,
-      total: accommodationTotal + transportationTotal + activitiesTotal + otherTotal
+      total: total
     };
   };
 
