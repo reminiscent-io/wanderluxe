@@ -27,11 +27,13 @@ interface AccommodationFormProps {
 }
 
 const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCancel, initialData }) => {
+  const today = new Date().toISOString().split('T')[0];
+  
   const [formData, setFormData] = useState({
     hotel: initialData?.hotel || '',
     hotelDetails: initialData?.hotelDetails || '',
     hotelUrl: initialData?.hotelUrl || '',
-    checkinDate: initialData?.checkinDate || '',
+    checkinDate: initialData?.checkinDate || today,
     checkoutDate: initialData?.checkoutDate || '',
     expenseCost: initialData?.expenseCost || '',
     expenseCurrency: initialData?.expenseCurrency || 'USD'
