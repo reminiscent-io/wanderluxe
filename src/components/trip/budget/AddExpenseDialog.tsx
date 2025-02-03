@@ -51,23 +51,25 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Expense</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isCustomCategory ? (
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full bg-white border-earth-200">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 {DEFAULT_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
+                  <SelectItem key={cat} value={cat} className="hover:bg-earth-50">
                     {cat}
                   </SelectItem>
                 ))}
-                <SelectItem value="custom">+ Add Custom Category</SelectItem>
+                <SelectItem value="custom" className="hover:bg-earth-50">
+                  + Add Custom Category
+                </SelectItem>
               </SelectContent>
             </Select>
           ) : (
@@ -75,6 +77,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
               placeholder="Enter custom category"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
+              className="bg-white"
             />
           )}
 
@@ -83,6 +86,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
               type="button"
               variant="outline"
               onClick={() => setIsCustomCategory(true)}
+              className="w-full"
             >
               Add Custom Category
             </Button>
@@ -94,24 +98,30 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
               placeholder="Amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="flex-1"
+              className="flex-1 bg-white"
             />
             <CurrencySelector
               value={currency}
               onValueChange={setCurrency}
-              className="w-[120px]"
+              className="w-[120px] bg-white"
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
+              className="text-earth-500"
             >
               Cancel
             </Button>
-            <Button type="submit">Add Expense</Button>
+            <Button 
+              type="submit"
+              className="bg-earth-500 text-white hover:bg-earth-600"
+            >
+              Add Expense
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
