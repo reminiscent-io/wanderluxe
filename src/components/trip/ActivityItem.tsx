@@ -23,9 +23,9 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onEdit, formatTim
         <h4 className="font-medium">{activity.title}</h4>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={onEdit}
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
         >
           <Pencil className="h-4 w-4 text-earth-500" />
         </Button>
