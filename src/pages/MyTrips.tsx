@@ -16,15 +16,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { Tables } from "@/integrations/supabase/types";
 
-interface Trip {
-  id: string;
-  destination: string;
-  start_date: string;
-  end_date: string;
+type Trip = Tables<"trips">;
+
+interface TripsData {
+  userTrips: Trip[];
+  exampleTrips: Trip[];
 }
 
 const MyTrips = () => {
@@ -32,7 +34,7 @@ const MyTrips = () => {
   const { toast } = useToast();
   const [tripToHide, setTripToHide] = useState<string | null>(null);
 
-  const { data: trips = [], refetch } = useQuery({
+  const { data: trips = { userTrips: [], exampleTrips: [] }, refetch } = useQuery<TripsData>({
     queryKey: ['trips'],
     queryFn: async () => {
       const { data: userTrips, error: userError } = await supabase
@@ -116,7 +118,16 @@ const MyTrips = () => {
                   {trip.destination}
                 </h3>
                 {isExample && (
-                  <Info className="h-5 w-5 text-gray-500" title="Example Trip" />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-5 w-5 text-gray-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Example Trip
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
               <p className="text-sm text-gray-500 mt-2">
@@ -170,7 +181,16 @@ const MyTrips = () => {
           <section className="mb-12">
             <div className="flex items-center gap-2 mb-6">
               <h2 className="text-2xl font-semibold text-gray-800">Example Trips</h2>
-              <Info className="h-5 w-5 text-gray-500" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-5 w-5 text-gray-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Explore our curated example trips for inspiration
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {exampleTrips.map((trip) => (
