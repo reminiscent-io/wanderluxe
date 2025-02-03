@@ -12,7 +12,7 @@ const FeaturedTrips = () => {
         .from('trips')
         .select('*')
         .eq('destination', 'Amalfi Coast')
-        .limit(3);
+        .limit(1);  // Changed to limit 1
       
       if (error) throw error;
       return data || [];
