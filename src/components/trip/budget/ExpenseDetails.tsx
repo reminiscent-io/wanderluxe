@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CurrencySelector from './CurrencySelector';
 import { Pencil, Trash2 } from 'lucide-react';
+import { format, parse } from 'date-fns';
 
 interface ExpenseDetailsProps {
   id: string;
@@ -32,6 +33,22 @@ const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({
     onSave(Number(editCost), editCurrency);
   };
 
+  const formatDescription = (desc: string) => {
+    // Split the description to separate date and title
+    const [dateStr, ...titleParts] = desc.split(' - ');
+    
+    try {
+      // Parse the date string (expected format: YYYY-MM-DD)
+      const date = parse(dateStr, 'yyyy-MM-dd', new Date());
+      // Format the date in the desired format
+      const formattedDate = format(date, 'MMMM d, yyyy');
+      return `${formattedDate} - ${titleParts.join(' - ')}`;
+    } catch (error) {
+      // If date parsing fails, return the original description
+      return desc;
+    }
+  };
+
   if (isEditing) {
     return (
       <div className="flex items-center gap-2 p-2">
@@ -54,7 +71,7 @@ const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({
   return (
     <div className="flex justify-between items-center text-sm text-gray-600 p-2 hover:bg-gray-50 rounded-md">
       <div>
-        <span>{description}</span>
+        <span>{formatDescription(description)}</span>
         <span className="ml-2 text-earth-500">
           {cost} {currency}
         </span>
