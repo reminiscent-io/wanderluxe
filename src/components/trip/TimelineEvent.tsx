@@ -3,9 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import EventHeader from './event/EventHeader';
-import EventAccommodation from './event/EventAccommodation';
-import EventActivitiesList from './event/EventActivitiesList';
+import EventImage from './event/EventImage';
+import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
 
 interface TimelineEventProps {
@@ -135,17 +134,6 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     }
   };
 
-  const getImageUrl = () => {
-    if (title.toLowerCase().includes('naples')) {
-      return "https://images.unsplash.com/photo-1516483638261-f4dbaf036963"; 
-    } else if (title.toLowerCase().includes('positano')) {
-      return "https://images.unsplash.com/photo-1533606688076-b6683a5f59f1"; 
-    }
-    return image;
-  };
-
-  const isCheckoutDay = hotel && hotel_checkout_date === date;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -156,57 +144,29 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="h-64 md:h-auto">
-              <img 
-                src={getImageUrl()} 
-                alt={title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="p-6 flex flex-col justify-between">
-              <div>
-                <EventHeader
-                  date={date}
-                  title={title}
-                  onEdit={() => setIsEditing(true)}
-                />
-                
-                <p className="text-gray-600 mb-4">{description}</p>
-                
-                {(hotel && date >= hotel_checkin_date && date < hotel_checkout_date) && (
-                  <EventAccommodation
-                    hotel={hotel}
-                    hotelDetails={hotel_details}
-                    hotelUrl={hotel_url}
-                  />
-                )}
-                
-                <EventActivitiesList
-                  activities={activities}
-                  isCheckoutDay={hotel && hotel_checkout_date === date}
-                  hotel={hotel}
-                  onAddActivity={() => setIsAddingActivity(true)}
-                  onEditActivity={(activity) => {
-                    setEditingActivity(activity.id);
-                    setActivityEdit({
-                      text: activity.text,
-                      cost: activity.cost?.toString() || "",
-                      currency: activity.currency || "USD"
-                    });
-                  }}
-                  isAddingActivity={isAddingActivity}
-                  onAddingActivityChange={setIsAddingActivity}
-                  newActivity={newActivity}
-                  onNewActivityChange={setNewActivity}
-                  handleAddActivity={handleAddActivity}
-                  editingActivity={editingActivity}
-                  onEditingActivityChange={setEditingActivity}
-                  activityEdit={activityEdit}
-                  onActivityEditChange={setActivityEdit}
-                  handleEditActivity={handleEditActivity}
-                />
-              </div>
-            </div>
+            <EventImage title={title} imageUrl={image} />
+            <EventContent
+              date={date}
+              title={title}
+              description={description}
+              hotel={hotel}
+              hotelDetails={hotel_details}
+              hotelUrl={hotel_url}
+              hotelCheckinDate={hotel_checkin_date}
+              hotelCheckoutDate={hotel_checkout_date}
+              activities={activities}
+              onEdit={() => setIsEditing(true)}
+              isAddingActivity={isAddingActivity}
+              onAddingActivityChange={setIsAddingActivity}
+              newActivity={newActivity}
+              onNewActivityChange={setNewActivity}
+              handleAddActivity={handleAddActivity}
+              editingActivity={editingActivity}
+              onEditingActivityChange={setEditingActivity}
+              activityEdit={activityEdit}
+              onActivityEditChange={setActivityEdit}
+              handleEditActivity={handleEditActivity}
+            />
           </div>
         </CardContent>
       </Card>
