@@ -21,6 +21,8 @@ interface AccommodationsSectionProps {
     hotel_url?: string;
     hotel_checkin_date: string;
     hotel_checkout_date: string;
+    expense_cost?: number;
+    expense_currency?: string;
   }>;
 }
 
@@ -129,8 +131,8 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
                   hotelUrl: hotelStays.find(s => s.id === editingStay)?.hotel_url || '',
                   checkinDate: hotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
                   checkoutDate: hotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
-                  expenseCost: '',
-                  expenseCurrency: 'USD'
+                  expenseCost: hotelStays.find(s => s.id === editingStay)?.expense_cost || '',
+                  expenseCurrency: hotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD'
                 }}
               />
             </Card>

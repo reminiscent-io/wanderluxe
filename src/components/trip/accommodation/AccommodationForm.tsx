@@ -21,7 +21,7 @@ interface AccommodationFormProps {
     hotelUrl: string;
     checkinDate: string;
     checkoutDate: string;
-    expenseCost: string;
+    expenseCost: string | number;
     expenseCurrency: string;
   };
 }
@@ -35,20 +35,13 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
     hotelUrl: initialData?.hotelUrl || '',
     checkinDate: initialData?.checkinDate || today,
     checkoutDate: initialData?.checkoutDate || '',
-    expenseCost: initialData?.expenseCost || '',
+    expenseCost: initialData?.expenseCost ? initialData.expenseCost.toString() : '',
     expenseCurrency: initialData?.expenseCurrency || 'USD'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submission - Check-in date:', formData.checkinDate);
     onSubmit(formData);
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    console.log(`Date input changed - ${id}:`, value);
-    setFormData({ ...formData, [id]: value });
   };
 
   return (
@@ -90,7 +83,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
             id="checkinDate"
             type="date"
             value={formData.checkinDate}
-            onChange={handleDateChange}
+            onChange={(e) => setFormData({ ...formData, checkinDate: e.target.value })}
             required
           />
         </div>
@@ -100,7 +93,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
             id="checkoutDate"
             type="date"
             value={formData.checkoutDate}
-            onChange={handleDateChange}
+            onChange={(e) => setFormData({ ...formData, checkoutDate: e.target.value })}
             required
           />
         </div>
