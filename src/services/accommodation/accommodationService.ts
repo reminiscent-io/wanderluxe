@@ -1,10 +1,10 @@
 import { toast } from 'sonner';
-import { AccommodationFormData, HotelStay } from './types';
+import type { AccommodationFormData, HotelStay } from './types';
 import { generateDatesArray } from './dateUtils';
 import { createTripDays } from './tripDaysService';
 import { createAccommodationEvents, deleteAccommodationEvents } from './timelineEventsService';
 
-export { AccommodationFormData } from './types';
+export type { AccommodationFormData } from './types';
 export { generateDatesArray } from './dateUtils';
 
 export const addAccommodation = async (tripId: string, formData: AccommodationFormData) => {
