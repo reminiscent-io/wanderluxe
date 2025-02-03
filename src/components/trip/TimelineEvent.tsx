@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Pencil, Plus, ExternalLink } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import ActivityForm from './ActivityForm';
-import EventEditForm from './EventEditForm';
+import EventHeader from './event/EventHeader';
+import EventAccommodation from './event/EventAccommodation';
+import EventActivitiesList from './event/EventActivitiesList';
+import EventEditDialog from './event/EventEditDialog';
 
 interface TimelineEventProps {
   id: string;
@@ -32,7 +25,7 @@ interface TimelineEventProps {
   onDelete: (id: string) => void;
 }
 
-const TimelineEvent = ({ 
+const TimelineEvent: React.FC<TimelineEventProps> = ({ 
   id,
   date, 
   title, 
@@ -47,7 +40,7 @@ const TimelineEvent = ({
   index,
   onEdit,
   onDelete
-}: TimelineEventProps) => {
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     date,
@@ -172,144 +165,59 @@ const TimelineEvent = ({
             </div>
             <div className="p-6 flex flex-col justify-between">
               <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="text-sm font-semibold text-earth-500 mb-2">
-                      {date}
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">{title}</h3>
-                  </div>
-                  <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Edit Event</DialogTitle>
-                      </DialogHeader>
-                      <EventEditForm
-                        editData={editData}
-                        onEditDataChange={setEditData}
-                        onSubmit={handleEdit}
-                        onCancel={() => setIsEditing(false)}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                <EventHeader
+                  date={date}
+                  title={title}
+                  onEdit={() => setIsEditing(true)}
+                />
+                
                 <p className="text-gray-600 mb-4">{description}</p>
                 
                 {(hotel && date >= hotel_checkin_date && date < hotel_checkout_date) && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-earth-500">Accommodation</h4>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{hotel}</p>
-                      {hotel_url && (
-                        <a 
-                          href={hotel_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-earth-500 hover:text-earth-600"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600">{hotelDetails}</p>
-                  </div>
+                  <EventAccommodation
+                    hotel={hotel}
+                    hotelDetails={hotelDetails}
+                    hotelUrl={hotel_url}
+                  />
                 )}
                 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold text-earth-500">Activities</h4>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setIsAddingActivity(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Activity
-                    </Button>
-                  </div>
-                  
-                  {isCheckoutDay && (
-                    <div className="text-sm text-gray-400 p-2 bg-gray-50 rounded-md mb-2">
-                      Check-out of {hotel}
-                    </div>
-                  )}
-
-                  <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Activity</DialogTitle>
-                      </DialogHeader>
-                      <ActivityForm
-                        activity={newActivity}
-                        onActivityChange={setNewActivity}
-                        onSubmit={handleAddActivity}
-                        onCancel={() => setIsAddingActivity(false)}
-                        submitLabel="Add Activity"
-                      />
-                    </DialogContent>
-                  </Dialog>
-
-                  <ul className="space-y-2">
-                    {activities.map((activity) => (
-                      <li 
-                        key={activity.id} 
-                        className="flex justify-between items-center text-sm text-gray-600 p-2 hover:bg-gray-50 rounded-md"
-                      >
-                        {editingActivity === activity.id ? (
-                          <Dialog open={true} onOpenChange={() => setEditingActivity(null)}>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Edit Activity</DialogTitle>
-                              </DialogHeader>
-                              <ActivityForm
-                                activity={activityEdit}
-                                onActivityChange={setActivityEdit}
-                                onSubmit={() => handleEditActivity(activity.id)}
-                                onCancel={() => setEditingActivity(null)}
-                                submitLabel="Save Changes"
-                              />
-                            </DialogContent>
-                          </Dialog>
-                        ) : (
-                          <>
-                            <div>
-                              <span>{activity.text}</span>
-                              {activity.cost && (
-                                <span className="ml-2 text-earth-500">
-                                  {activity.cost} {activity.currency}
-                                </span>
-                              )}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditingActivity(activity.id);
-                                setActivityEdit({
-                                  text: activity.text,
-                                  cost: activity.cost?.toString() || "",
-                                  currency: activity.currency || "USD"
-                                });
-                              }}
-                            >
-                              <Pencil className="h-4 w-4 text-earth-500" />
-                            </Button>
-                          </>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <EventActivitiesList
+                  activities={activities}
+                  isCheckoutDay={isCheckoutDay}
+                  hotel={hotel}
+                  onAddActivity={() => setIsAddingActivity(true)}
+                  onEditActivity={(activity) => {
+                    setEditingActivity(activity.id);
+                    setActivityEdit({
+                      text: activity.text,
+                      cost: activity.cost?.toString() || "",
+                      currency: activity.currency || "USD"
+                    });
+                  }}
+                  isAddingActivity={isAddingActivity}
+                  onAddingActivityChange={setIsAddingActivity}
+                  newActivity={newActivity}
+                  onNewActivityChange={setNewActivity}
+                  handleAddActivity={handleAddActivity}
+                  editingActivity={editingActivity}
+                  onEditingActivityChange={setEditingActivity}
+                  activityEdit={activityEdit}
+                  onActivityEditChange={setActivityEdit}
+                  handleEditActivity={handleEditActivity}
+                />
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <EventEditDialog
+        isOpen={isEditing}
+        onOpenChange={setIsEditing}
+        editData={editData}
+        onEditDataChange={setEditData}
+        onSubmit={handleEdit}
+      />
     </motion.div>
   );
 };
