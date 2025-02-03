@@ -15,7 +15,7 @@ interface TimelineEventProps {
   description: string;
   image: string;
   hotel: string;
-  hotelDetails: string;
+  hotel_details: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
   hotel_url: string;
@@ -32,7 +32,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   description, 
   image, 
   hotel, 
-  hotelDetails,
+  hotel_details,
   hotel_checkin_date,
   hotel_checkout_date,
   hotel_url,
@@ -47,7 +47,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     title,
     description,
     hotel,
-    hotelDetails,
+    hotel_details,
     hotel_checkin_date,
     hotel_checkout_date,
     hotel_url,
@@ -176,14 +176,14 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
                 {(hotel && date >= hotel_checkin_date && date < hotel_checkout_date) && (
                   <EventAccommodation
                     hotel={hotel}
-                    hotelDetails={hotelDetails}
+                    hotelDetails={hotel_details}
                     hotelUrl={hotel_url}
                   />
                 )}
                 
                 <EventActivitiesList
                   activities={activities}
-                  isCheckoutDay={isCheckoutDay}
+                  isCheckoutDay={hotel && hotel_checkout_date === date}
                   hotel={hotel}
                   onAddActivity={() => setIsAddingActivity(true)}
                   onEditActivity={(activity) => {

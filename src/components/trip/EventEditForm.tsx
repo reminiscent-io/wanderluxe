@@ -10,7 +10,7 @@ interface EventEditFormProps {
     title: string;
     description: string;
     hotel: string;
-    hotelDetails: string;
+    hotel_details: string;
     hotel_checkin_date: string;
     hotel_checkout_date: string;
     hotel_url: string;
@@ -49,12 +49,12 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
 
       <AccommodationFields
         hotel={editData.hotel}
-        hotelDetails={editData.hotelDetails}
+        hotelDetails={editData.hotel_details}
         hotelUrl={editData.hotel_url}
         checkinDate={editData.hotel_checkin_date}
         checkoutDate={editData.hotel_checkout_date}
         onHotelChange={(value) => onEditDataChange({ ...editData, hotel: value })}
-        onHotelDetailsChange={(value) => onEditDataChange({ ...editData, hotelDetails: value })}
+        onHotelDetailsChange={(value) => onEditDataChange({ ...editData, hotel_details: value })}
         onHotelUrlChange={(value) => onEditDataChange({ ...editData, hotel_url: value })}
         onCheckinDateChange={(value) => onEditDataChange({ ...editData, hotel_checkin_date: value })}
         onCheckoutDateChange={(value) => onEditDataChange({ ...editData, hotel_checkout_date: value })}
