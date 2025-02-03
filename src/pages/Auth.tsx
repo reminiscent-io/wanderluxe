@@ -87,8 +87,13 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-sand-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="relative min-h-screen flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat"
+      >
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
+      <Card className="w-full max-w-md relative bg-white/80 backdrop-blur-md border-0">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Welcome to WanderLuxe</CardTitle>
         </CardHeader>
@@ -103,6 +108,7 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="bg-white/50"
               />
             </div>
             <div className="space-y-2">
@@ -114,12 +120,13 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="bg-white/50"
               />
             </div>
             <div className="space-y-4">
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-sand-500 hover:bg-sand-600"
                 disabled={loading}
               >
                 Sign In
@@ -138,7 +145,7 @@ const Auth = () => {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
+                  <span className="bg-white/50 px-2 text-muted-foreground">
                     Or continue with
                   </span>
                 </div>
