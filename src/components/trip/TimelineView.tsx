@@ -91,10 +91,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
 
       <div className="space-y-12">
         {days?.map((day, index) => {
+          // Find all hotel stays that overlap with this day
+          const dayDate = new Date(day.date);
           const dayHotel = events?.find(event => 
             event.hotel && 
-            new Date(event.hotel_checkin_date || '').toDateString() <= new Date(day.date).toDateString() &&
-            new Date(event.hotel_checkout_date || '').toDateString() > new Date(day.date).toDateString()
+            event.hotel_checkin_date && 
+            event.hotel_checkout_date &&
+            dayDate >= new Date(event.hotel_checkin_date) && 
+            dayDate < new Date(event.hotel_checkout_date)
           );
 
           const hotelDetails = dayHotel ? {
