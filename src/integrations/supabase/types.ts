@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       activities: {
@@ -34,15 +34,6 @@ export type Database = {
           id?: string
           text?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "activities_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "timeline_events"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       day_activities: {
         Row: {
@@ -81,15 +72,6 @@ export type Database = {
           start_time?: string | null
           title?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "day_activities_day_id_fkey"
-            columns: ["day_id"]
-            isOneToOne: false
-            referencedRelation: "trip_days"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       exchange_rates: {
         Row: {
@@ -352,4 +334,24 @@ export type Database = {
       [_ in never]: never
     }
   }
+}
+
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+
+export type TransportationEvent = {
+  id: string;
+  trip_id: string;
+  type: 'flight' | 'train' | 'car_service' | 'shuttle' | 'ferry' | 'rental_car';
+  provider?: string;
+  details?: string;
+  confirmation_number?: string;
+  start_date: string;
+  start_time?: string;
+  end_date?: string;
+  end_time?: string;
+  departure_location?: string;
+  arrival_location?: string;
+  cost?: number;
+  currency?: string;
+  created_at: string;
 }
