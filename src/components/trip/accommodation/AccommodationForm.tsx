@@ -15,17 +15,26 @@ interface AccommodationFormProps {
     expenseCurrency: string;
   }) => void;
   onCancel: () => void;
+  initialData?: {
+    hotel: string;
+    hotelDetails: string;
+    hotelUrl: string;
+    checkinDate: string;
+    checkoutDate: string;
+    expenseCost: string;
+    expenseCurrency: string;
+  };
 }
 
-const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCancel }) => {
+const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState({
-    hotel: '',
-    hotelDetails: '',
-    hotelUrl: '',
-    checkinDate: '',
-    checkoutDate: '',
-    expenseCost: '',
-    expenseCurrency: 'USD'
+    hotel: initialData?.hotel || '',
+    hotelDetails: initialData?.hotelDetails || '',
+    hotelUrl: initialData?.hotelUrl || '',
+    checkinDate: initialData?.checkinDate || '',
+    checkoutDate: initialData?.checkoutDate || '',
+    expenseCost: initialData?.expenseCost || '',
+    expenseCurrency: initialData?.expenseCurrency || 'USD'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -115,7 +124,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
           Cancel
         </Button>
         <Button type="submit">
-          Add Accommodation
+          {initialData ? 'Update' : 'Add'} Accommodation
         </Button>
       </div>
     </form>

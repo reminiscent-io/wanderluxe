@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Hotel, Calendar, ExternalLink } from "lucide-react";
+import { Plus, Hotel, Calendar, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import AccommodationForm from './accommodation/AccommodationForm';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +25,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   hotelStays 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [editingStay, setEditingStay] = useState<string | null>(null);
 
   const handleSubmit = async (formData: {
     hotel: string;
@@ -68,6 +69,62 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     }
   };
 
+  const handleUpdate = async (stayId: string, formData: {
+    hotel: string;
+    hotelDetails: string;
+    hotelUrl: string;
+    checkinDate: string;
+    checkoutDate: string;
+    expenseCost: string;
+    expenseCurrency: string;
+  }) => {
+    try {
+      const finalAccommodationDay = new Date(formData.checkoutDate);
+      finalAccommodationDay.setDate(finalAccommodationDay.getDate() - 1);
+
+      const { error } = await supabase
+        .from('timeline_events')
+        .update({
+          title: `Check-in: ${formData.hotel}`,
+          hotel: formData.hotel,
+          hotel_details: formData.hotelDetails,
+          hotel_url: formData.hotelUrl,
+          hotel_checkin_date: formData.checkinDate,
+          hotel_checkout_date: formData.checkoutDate,
+          expense_cost: formData.expenseCost ? Number(formData.expenseCost) : null,
+          expense_currency: formData.expenseCurrency,
+          final_accommodation_day: finalAccommodationDay.toISOString().split('T')[0],
+        })
+        .eq('id', stayId);
+
+      if (error) throw error;
+
+      toast.success('Accommodation updated successfully');
+      setEditingStay(null);
+      onAccommodationChange();
+    } catch (error) {
+      console.error('Error updating accommodation:', error);
+      toast.error('Failed to update accommodation');
+    }
+  };
+
+  const handleDelete = async (stayId: string) => {
+    try {
+      const { error } = await supabase
+        .from('timeline_events')
+        .delete()
+        .eq('id', stayId);
+
+      if (error) throw error;
+
+      toast.success('Accommodation deleted successfully');
+      onAccommodationChange();
+    } catch (error) {
+      console.error('Error deleting accommodation:', error);
+      toast.error('Failed to delete accommodation');
+    }
+  };
+
   return (
     <Card className="bg-sand-50 shadow-md">
       <Button
@@ -86,29 +143,69 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
         <div className="p-6 pt-0 space-y-6">
           {hotelStays.length > 0 && (
             <div className="space-y-4">
-              {hotelStays.map((stay, index) => (
+              {hotelStays.map((stay) => (
                 <div 
                   key={stay.id}
                   className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm"
                 >
                   <Calendar className="h-5 w-5 text-gray-500 mt-1" />
                   <div className="flex-1">
-                    <h3 className="font-medium">{stay.hotel}</h3>
-                    <p className="text-sm text-gray-600">
-                      {new Date(stay.hotel_checkin_date).toLocaleDateString()} - {new Date(stay.hotel_checkout_date).toLocaleDateString()}
-                    </p>
-                    {stay.hotel_details && (
-                      <p className="text-sm text-gray-600 mt-1">{stay.hotel_details}</p>
-                    )}
-                    {stay.hotel_url && (
-                      <a 
-                        href={stay.hotel_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-1"
-                      >
-                        View Hotel <ExternalLink className="h-3 w-3" />
-                      </a>
+                    {editingStay === stay.id ? (
+                      <AccommodationForm 
+                        onSubmit={(formData) => handleUpdate(stay.id, formData)}
+                        onCancel={() => setEditingStay(null)}
+                        initialData={{
+                          hotel: stay.hotel,
+                          hotelDetails: stay.hotel_details || '',
+                          hotelUrl: stay.hotel_url || '',
+                          checkinDate: stay.hotel_checkin_date,
+                          checkoutDate: stay.hotel_checkout_date,
+                          expenseCost: '',
+                          expenseCurrency: 'USD'
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">{stay.hotel}</h3>
+                            <p className="text-sm text-gray-600">
+                              {new Date(stay.hotel_checkin_date).toLocaleDateString()} - {new Date(stay.hotel_checkout_date).toLocaleDateString()}
+                            </p>
+                            {stay.hotel_details && (
+                              <p className="text-sm text-gray-600 mt-1">{stay.hotel_details}</p>
+                            )}
+                            {stay.hotel_url && (
+                              <a 
+                                href={stay.hotel_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-1"
+                              >
+                                View Hotel <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingStay(stay.id)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(stay.id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -116,18 +213,22 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             </div>
           )}
 
-          <Button
-            onClick={() => setIsExpanded(true)}
-            variant="outline"
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Accommodation
-          </Button>
+          {!editingStay && (
+            <>
+              <Button
+                onClick={() => setIsExpanded(true)}
+                variant="outline"
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Accommodation
+              </Button>
 
-          <Card className="p-6 bg-white">
-            <AccommodationForm onSubmit={handleSubmit} onCancel={() => setIsExpanded(false)} />
-          </Card>
+              <Card className="p-6 bg-white">
+                <AccommodationForm onSubmit={handleSubmit} onCancel={() => setIsExpanded(false)} />
+              </Card>
+            </>
+          )}
         </div>
       )}
     </Card>
