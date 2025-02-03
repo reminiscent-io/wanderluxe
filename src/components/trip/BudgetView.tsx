@@ -10,6 +10,7 @@ import ExpenseCard from './budget/ExpenseCard';
 import CurrencySelector from './budget/CurrencySelector';
 import ExpenseDetails from './budget/ExpenseDetails';
 import TransportationDetails from './budget/TransportationDetails';
+import AddExpenseDialog from './budget/AddExpenseDialog';
 
 interface BudgetViewProps {
   tripId: string | undefined;
@@ -22,6 +23,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
 
   useEffect(() => {
     const fetchExchangeRates = async () => {
@@ -78,6 +80,34 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     } catch (error) {
       console.error('Error updating cost:', error);
       toast.error('Failed to update cost');
+    }
+  };
+
+  const handleAddExpense = async (category: string, amount: number, currency: string) => {
+    try {
+      if (!tripId) throw new Error('No trip ID provided');
+      
+      // Create a new timeline event for the expense
+      const { data, error } = await supabase
+        .from('timeline_events')
+        .insert([{
+          trip_id: tripId,
+          title: `${category} Expense`,
+          date: format(new Date(), 'yyyy-MM-dd'),
+          order_index: events?.length || 0,
+          [`${category.toLowerCase()}_cost`]: amount,
+          [`${category.toLowerCase()}_currency`]: currency
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast.success('Expense added successfully');
+      setIsAddExpenseOpen(false);
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      toast.error('Failed to add expense');
     }
   };
 
@@ -163,7 +193,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                 className="w-[100px]"
               />
             </div>
-            <Button>
+            <Button onClick={() => setIsAddExpenseOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Expense
             </Button>
@@ -246,6 +276,12 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           </p>
         </Card>
       </div>
+
+      <AddExpenseDialog 
+        open={isAddExpenseOpen}
+        onOpenChange={setIsAddExpenseOpen}
+        onSubmit={handleAddExpense}
+      />
     </div>
   );
 };
