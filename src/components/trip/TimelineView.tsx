@@ -12,6 +12,14 @@ interface TimelineViewProps {
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
   const { events, isLoading, updateEvent, deleteEvent, refetch } = useTimelineEvents(tripId);
 
+  const handleUpdateEvent = (id: string, data: any) => {
+    updateEvent.mutate({ id, ...data });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    deleteEvent.mutate(id);
+  };
+
   if (isLoading) {
     return <div>Loading timeline...</div>;
   }
