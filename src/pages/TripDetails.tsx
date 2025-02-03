@@ -77,26 +77,26 @@ const TripDetails = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="timeline" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-white shadow-lg rounded-xl p-2 border-2 border-earth-100">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-white shadow-lg rounded-xl p-3 border-2 border-earth-100">
             <TabsTrigger 
               value="timeline"
-              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-6 py-3 rounded-lg transition-all duration-200"
+              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600"
             >
-              <Calendar className="w-4 h-4 mr-2" />
+              <Calendar className="w-5 h-5 mr-2" />
               Timeline
             </TabsTrigger>
             <TabsTrigger 
               value="budget"
-              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-6 py-3 rounded-lg transition-all duration-200"
+              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600"
             >
-              <BarChart2 className="w-4 h-4 mr-2" />
+              <BarChart2 className="w-5 h-5 mr-2" />
               Budget
             </TabsTrigger>
             <TabsTrigger 
               value="packing"
-              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-6 py-3 rounded-lg transition-all duration-200"
+              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600"
             >
-              <List className="w-4 h-4 mr-2" />
+              <List className="w-5 h-5 mr-2" />
               Packing List
             </TabsTrigger>
           </TabsList>

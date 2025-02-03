@@ -2,18 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import ExpenseCard from './budget/ExpenseCard';
+import CurrencySelector from './budget/CurrencySelector';
+import ExpenseDetails from './budget/ExpenseDetails';
 
 interface BudgetViewProps {
   tripId: string | undefined;
@@ -114,93 +109,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
   const totals = calculateTotals();
 
-  const renderExpenseDetails = (type: 'accommodation' | 'transportation' | 'activities') => {
-    return events?.map(event => {
-      if (type === 'activities') {
-        return event.activities?.map(activity => (
-          <div key={activity.id} className="pl-4 py-2 flex justify-between items-center">
-            <span>{activity.text}</span>
-            {editingItem === activity.id ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={activity.cost}
-                  onChange={(e) => {/* Handle cost update */}}
-                  className="w-24"
-                />
-                <Select value={activity.currency}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["USD", "EUR", "GBP", "JPY", "AUD", "CAD"].map(curr => (
-                      <SelectItem key={curr} value={curr}>{curr}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={() => setEditingItem(null)}>Save</Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span>{activity.cost} {activity.currency}</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setEditingItem(activity.id)}
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        ));
-      }
-
-      const cost = type === 'accommodation' ? event.accommodation_cost : event.transportation_cost;
-      const currency = type === 'accommodation' ? event.accommodation_currency : event.transportation_currency;
-
-      if (!cost) return null;
-
-      return (
-        <div key={`${event.id}-${type}`} className="pl-4 py-2 flex justify-between items-center">
-          <span>{event.date} - {event.title}</span>
-          {editingItem === `${event.id}-${type}` ? (
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                value={cost}
-                onChange={(e) => {/* Handle cost update */}}
-                className="w-24"
-              />
-              <Select value={currency}>
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="Currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  {["USD", "EUR", "GBP", "JPY", "AUD", "CAD"].map(curr => (
-                    <SelectItem key={curr} value={curr}>{curr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={() => setEditingItem(null)}>Save</Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span>{cost} {currency}</span>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setEditingItem(`${event.id}-${type}`)}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-      );
-    });
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex flex-col space-y-4">
@@ -209,16 +117,11 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">Display in:</span>
-              <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
+              <CurrencySelector
+                value={selectedCurrency}
+                onValueChange={setSelectedCurrency}
+                className="w-[100px]"
+              />
             </div>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -234,65 +137,74 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card 
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => toggleSection('accommodation')}
+        <ExpenseCard
+          title="Accommodation"
+          amount={totals.accommodation}
+          currency={selectedCurrency}
+          isExpanded={expandedSections.includes('accommodation')}
+          onToggle={() => toggleSection('accommodation')}
         >
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-medium text-gray-500">Accommodation</h3>
-            {expandedSections.includes('accommodation') ? (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-500" />
-            )}
-          </div>
-          <p className="text-2xl font-bold">{selectedCurrency} {totals.accommodation.toFixed(2)}</p>
-          {expandedSections.includes('accommodation') && (
-            <div className="mt-4 border-t pt-4">
-              {renderExpenseDetails('accommodation')}
-            </div>
-          )}
-        </Card>
+          {events?.map(event => (
+            event.accommodation_cost && (
+              <ExpenseDetails
+                key={`${event.id}-accommodation`}
+                id={event.id}
+                cost={event.accommodation_cost}
+                currency={event.accommodation_currency}
+                description={`${event.date} - ${event.title}`}
+                isEditing={editingItem === `${event.id}-accommodation`}
+                onEdit={() => setEditingItem(`${event.id}-accommodation`)}
+                onSave={(cost, currency) => handleUpdateCost(event.id, 'accommodation', cost, currency)}
+              />
+            )
+          ))}
+        </ExpenseCard>
 
-        <Card 
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => toggleSection('transportation')}
+        <ExpenseCard
+          title="Transportation"
+          amount={totals.transportation}
+          currency={selectedCurrency}
+          isExpanded={expandedSections.includes('transportation')}
+          onToggle={() => toggleSection('transportation')}
         >
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-medium text-gray-500">Transportation</h3>
-            {expandedSections.includes('transportation') ? (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-500" />
-            )}
-          </div>
-          <p className="text-2xl font-bold">{selectedCurrency} {totals.transportation.toFixed(2)}</p>
-          {expandedSections.includes('transportation') && (
-            <div className="mt-4 border-t pt-4">
-              {renderExpenseDetails('transportation')}
-            </div>
-          )}
-        </Card>
+          {events?.map(event => (
+            event.transportation_cost && (
+              <ExpenseDetails
+                key={`${event.id}-transportation`}
+                id={event.id}
+                cost={event.transportation_cost}
+                currency={event.transportation_currency}
+                description={`${event.date} - ${event.title}`}
+                isEditing={editingItem === `${event.id}-transportation`}
+                onEdit={() => setEditingItem(`${event.id}-transportation`)}
+                onSave={(cost, currency) => handleUpdateCost(event.id, 'transportation', cost, currency)}
+              />
+            )
+          ))}
+        </ExpenseCard>
 
-        <Card 
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => toggleSection('activities')}
+        <ExpenseCard
+          title="Activities"
+          amount={totals.activities}
+          currency={selectedCurrency}
+          isExpanded={expandedSections.includes('activities')}
+          onToggle={() => toggleSection('activities')}
         >
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-medium text-gray-500">Activities</h3>
-            {expandedSections.includes('activities') ? (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-500" />
-            )}
-          </div>
-          <p className="text-2xl font-bold">{selectedCurrency} {totals.activities.toFixed(2)}</p>
-          {expandedSections.includes('activities') && (
-            <div className="mt-4 border-t pt-4">
-              {renderExpenseDetails('activities')}
-            </div>
+          {events?.map(event => 
+            event.activities?.map(activity => (
+              <ExpenseDetails
+                key={activity.id}
+                id={activity.id}
+                cost={activity.cost}
+                currency={activity.currency}
+                description={activity.text}
+                isEditing={editingItem === activity.id}
+                onEdit={() => setEditingItem(activity.id)}
+                onSave={(cost, currency) => handleUpdateCost(activity.id, 'activity', cost, currency)}
+              />
+            ))
           )}
-        </Card>
+        </ExpenseCard>
 
         <Card className="p-6 bg-earth-50">
           <h3 className="text-sm font-medium text-earth-500">Total</h3>
