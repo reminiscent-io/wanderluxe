@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import BasicInfoFields from './event/form/BasicInfoFields';
 import AccommodationFields from './event/form/AccommodationFields';
@@ -29,6 +29,13 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
   onSubmit,
   onCancel
 }) => {
+  // Set expense type to 'accommodation' when hotel is present
+  useEffect(() => {
+    if (editData.hotel && editData.expense_type !== 'accommodation') {
+      onEditDataChange({ ...editData, expense_type: 'accommodation' });
+    }
+  }, [editData.hotel]);
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <BasicInfoFields
@@ -60,6 +67,7 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
         onExpenseTypeChange={(value) => onEditDataChange({ ...editData, expense_type: value })}
         onExpenseCostChange={(value) => onEditDataChange({ ...editData, expense_cost: value })}
         onExpenseCurrencyChange={(value) => onEditDataChange({ ...editData, expense_currency: value })}
+        hasHotel={!!editData.hotel}
       />
 
       <div className="flex justify-end gap-2">
