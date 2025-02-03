@@ -142,6 +142,56 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurant_reservations: {
+        Row: {
+          confirmation_number: string | null
+          cost: number | null
+          created_at: string
+          currency: string | null
+          day_id: string
+          id: string
+          notes: string | null
+          number_of_people: number | null
+          order_index: number
+          reservation_time: string | null
+          restaurant_name: string
+        }
+        Insert: {
+          confirmation_number?: string | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          day_id: string
+          id?: string
+          notes?: string | null
+          number_of_people?: number | null
+          order_index: number
+          reservation_time?: string | null
+          restaurant_name: string
+        }
+        Update: {
+          confirmation_number?: string | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          day_id?: string
+          id?: string
+          notes?: string | null
+          number_of_people?: number | null
+          order_index?: number
+          reservation_time?: string | null
+          restaurant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_reservations_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "trip_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       timeline_events: {
         Row: {
           created_at: string

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import HotelInfo from './HotelInfo';
 import ActivitiesList from './ActivitiesList';
+import DiningList from './DiningList';
 import DayHeader from './day/DayHeader';
 import EditTitleDialog from './day/EditTitleDialog';
 import ActivityDialogs from './day/ActivityDialogs';
@@ -145,7 +146,7 @@ const DayCard: React.FC<DayCardProps> = ({
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="space-y-4"
     >
-      <Card className="overflow-hidden relative">
+      <Card className="overflow-hidden">
         <DayHeader
           date={date}
           onEdit={() => setIsEditing(true)}
@@ -163,9 +164,12 @@ const DayCard: React.FC<DayCardProps> = ({
           
           <div className="p-6">
             <div className="space-y-6">
-              <h3 className="text-2xl font-semibold">
-                Day {index + 1}{title && `: ${title}`}
-              </h3>
+              <div>
+                <span className="text-sm text-gray-500">Day {index + 1}</span>
+                <h3 className="text-2xl font-semibold mt-1">
+                  {title || "Untitled Day"}
+                </h3>
+              </div>
 
               {hotelDetails && (
                 <HotelInfo
@@ -188,6 +192,12 @@ const DayCard: React.FC<DayCardProps> = ({
                     setEditingActivity(id);
                   }
                 }}
+                formatTime={formatTime}
+              />
+
+              <DiningList
+                reservations={[]}
+                onAddReservation={() => {}}
                 formatTime={formatTime}
               />
             </div>
