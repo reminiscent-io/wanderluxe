@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
   const [scrollY, setScrollY] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,6 +51,20 @@ const Hero = () => {
           >
             Create unforgettable journeys with our intelligent travel companion
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1 }}
+            className="pt-4"
+          >
+            <Button 
+              size="lg"
+              className="bg-sand-500 hover:bg-sand-600 text-white text-lg px-8 py-6 h-auto"
+              onClick={() => navigate("/create-trip")}
+            >
+              Start Planning Your Journey
+            </Button>
+          </motion.div>
         </div>
       </motion.div>
     </div>
