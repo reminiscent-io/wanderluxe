@@ -1,17 +1,17 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Car, Plane } from "lucide-react";
+import { Car, Plane, LogOut } from "lucide-react";
 
 interface TransportationCardProps {
-  type: "car" | "plane";
+  type: "car" | "plane" | "hotel-checkout";
   details: string;
   duration: string;
   index: number;
 }
 
 const TransportationCard = ({ type, details, duration, index }: TransportationCardProps) => {
-  const Icon = type === "car" ? Car : Plane;
+  const Icon = type === "car" ? Car : type === "plane" ? Plane : LogOut;
 
   return (
     <motion.div
@@ -21,13 +21,13 @@ const TransportationCard = ({ type, details, duration, index }: TransportationCa
       viewport={{ once: true }}
       className="my-4"
     >
-      <Card className="max-w-md mx-auto">
+      <Card className={`max-w-md mx-auto ${type === 'hotel-checkout' ? 'bg-gray-50' : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <Icon className="h-6 w-6 text-earth-500" />
             <div>
               <p className="font-medium">{details}</p>
-              <p className="text-sm text-gray-600">Duration: {duration}</p>
+              {duration && <p className="text-sm text-gray-600">Duration: {duration}</p>}
             </div>
           </div>
         </CardContent>

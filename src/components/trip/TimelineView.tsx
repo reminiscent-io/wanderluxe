@@ -24,7 +24,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
     return <div>Loading timeline...</div>;
   }
 
-  // Filter unique hotel stays by combining check-in date and hotel name
+  // Filter unique hotel stays
   const uniqueHotelStays = events?.reduce((acc: any[], event) => {
     if (event.hotel && event.hotel_checkin_date) {
       const stayKey = `${event.hotel}-${event.hotel_checkin_date}`;
@@ -34,6 +34,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
     }
     return acc;
   }, []) || [];
+
+  // Sort events by date
+  const sortedEvents = [...(events || [])].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return dateA.getTime() - dateB.getTime();
+  });
 
   return (
     <div className="space-y-8">
@@ -53,8 +60,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
       />
 
       <div className="space-y-12">
-        {events?.map((event, index) => (
+        {sortedEvents.map((event, index) => (
           <div key={event.id}>
+            {/* Show checkout card at the start of the day if it's a checkout day */}
+            {event.hotel_checkout_date === event.date && (
+              <TransportationCard
+                type="hotel-checkout"
+                details={`Check out of ${event.hotel}`}
+                duration=""
+                index={index}
+              />
+            )}
+            
             <TimelineEvent
               id={event.id}
               date={event.date}
@@ -77,7 +94,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
               onEdit={handleUpdateEvent}
               onDelete={handleDeleteEvent}
             />
-            {index < (events?.length || 0) - 1 && (
+            
+            {/* Show transportation card between events */}
+            {index < sortedEvents.length - 1 && (
               <TransportationCard
                 type={index === 0 ? "car" : "car"}
                 details={index === 0 ? "Private car service from Naples Airport to Hotel" : "Transportation details to be planned"}
