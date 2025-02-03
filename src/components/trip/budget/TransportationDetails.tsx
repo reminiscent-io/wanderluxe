@@ -13,11 +13,13 @@ interface TransportType {
 interface TransportationDetailsProps {
   transportationExpenses: TransportType[];
   onUpdateCost: (id: string, cost: number, currency: string) => void;
+  onDeleteTransport: (id: string) => void;
 }
 
 const TransportationDetails: React.FC<TransportationDetailsProps> = ({
   transportationExpenses,
   onUpdateCost,
+  onDeleteTransport,
 }) => {
   const getIcon = (type: string) => {
     switch (type) {
@@ -41,12 +43,13 @@ const TransportationDetails: React.FC<TransportationDetailsProps> = ({
           {getIcon(expense.type)}
           <ExpenseDetails
             id={expense.id}
-            cost={expense.cost}
-            currency={expense.currency}
+            cost={expense.cost || 0}
+            currency={expense.currency || ''}
             description={expense.description}
             isEditing={false}
             onEdit={() => {}}
             onSave={(cost, currency) => onUpdateCost(expense.id, cost, currency)}
+            onDelete={() => onDeleteTransport(expense.id)}
           />
         </div>
       ))}
