@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { EyeOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format, getYear } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Tables } from "@/integrations/supabase/types";
 
-type Trip = Tables<"trips">;
+type Trip = Tables<"trips"> & {
+  timeline_events: { date: string }[];
+};
 
 interface TripsData {
   userTrips: Trip[];
@@ -39,13 +42,13 @@ const MyTrips = () => {
     queryFn: async () => {
       const { data: userTrips, error: userError } = await supabase
         .from('trips')
-        .select('*')
+        .select('*, timeline_events(date)')
         .neq('destination', 'Amalfi Coast')
         .order('start_date', { ascending: true });
       
       const { data: exampleTrips, error: exampleError } = await supabase
         .from('trips')
-        .select('*')
+        .select('*, timeline_events(date)')
         .eq('destination', 'Amalfi Coast')
         .order('start_date', { ascending: true });
       
@@ -57,6 +60,31 @@ const MyTrips = () => {
       };
     },
   });
+
+  const formatDateRange = (trip: Trip) => {
+    const startDate = new Date(trip.start_date);
+    let endDate = startDate;
+
+    // Find the last event date
+    if (trip.timeline_events && trip.timeline_events.length > 0) {
+      const lastEvent = trip.timeline_events[trip.timeline_events.length - 1];
+      endDate = new Date(lastEvent.date);
+    }
+
+    const startYear = getYear(startDate);
+    const endYear = getYear(endDate);
+
+    const formatDate = (date: Date, includeYear: boolean) => {
+      const day = format(date, "do");
+      const month = format(date, "MMMM");
+      return includeYear ? `${month} ${day} ${format(date, "yyyy")}` : `${month} ${day}`;
+    };
+
+    if (startYear === endYear) {
+      return `${formatDate(startDate, false)} - ${formatDate(endDate, true)}`;
+    }
+    return `${formatDate(startDate, true)} - ${formatDate(endDate, true)}`;
+  };
 
   const handleHideTrip = async (tripId: string) => {
     try {
@@ -91,12 +119,16 @@ const MyTrips = () => {
   const exampleTrips = trips.exampleTrips || [];
 
   const upcomingTrips = userTrips.filter(trip => {
-    const endDate = new Date(trip.end_date);
+    const endDate = trip.timeline_events?.length > 0 
+      ? new Date(trip.timeline_events[trip.timeline_events.length - 1].date)
+      : new Date(trip.end_date);
     return endDate >= today;
   });
 
   const pastTrips = userTrips.filter(trip => {
-    const endDate = new Date(trip.end_date);
+    const endDate = trip.timeline_events?.length > 0 
+      ? new Date(trip.timeline_events[trip.timeline_events.length - 1].date)
+      : new Date(trip.end_date);
     return endDate < today;
   });
 
@@ -131,7 +163,7 @@ const MyTrips = () => {
                 )}
               </div>
               <p className="text-sm text-gray-500 mt-2">
-                {new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}
+                {formatDateRange(trip)}
               </p>
             </div>
             
