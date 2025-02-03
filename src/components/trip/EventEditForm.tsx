@@ -12,6 +12,9 @@ interface EventEditFormProps {
     description: string;
     hotel: string;
     hotelDetails: string;
+    hotel_checkin_date: string;
+    hotel_checkout_date: string;
+    hotel_url: string;
     accommodation_cost: string;
     accommodation_currency: string;
     transportation_cost: string;
@@ -71,6 +74,38 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
           value={editData.hotelDetails}
           onChange={(e) => onEditDataChange({ ...editData, hotelDetails: e.target.value })}
         />
+      </div>
+      <div>
+        <Label htmlFor="hotel_url">Hotel URL (optional)</Label>
+        <Input
+          id="hotel_url"
+          type="url"
+          value={editData.hotel_url}
+          onChange={(e) => onEditDataChange({ ...editData, hotel_url: e.target.value })}
+          placeholder="https://..."
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="hotel_checkin_date">Check-in Date</Label>
+          <Input
+            id="hotel_checkin_date"
+            type="date"
+            value={editData.hotel_checkin_date}
+            onChange={(e) => onEditDataChange({ ...editData, hotel_checkin_date: e.target.value })}
+            required={editData.hotel ? true : false}
+          />
+        </div>
+        <div>
+          <Label htmlFor="hotel_checkout_date">Check-out Date</Label>
+          <Input
+            id="hotel_checkout_date"
+            type="date"
+            value={editData.hotel_checkout_date}
+            onChange={(e) => onEditDataChange({ ...editData, hotel_checkout_date: e.target.value })}
+            required={editData.hotel ? true : false}
+          />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>

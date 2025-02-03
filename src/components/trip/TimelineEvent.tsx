@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,9 @@ interface TimelineEventProps {
   image: string;
   hotel: string;
   hotelDetails: string;
+  hotel_checkin_date: string;
+  hotel_checkout_date: string;
+  hotel_url: string;
   activities: { id: string; text: string; cost?: number; currency?: string }[];
   index: number;
   onEdit: (id: string, data: any) => void;
@@ -36,7 +39,10 @@ const TimelineEvent = ({
   description, 
   image, 
   hotel, 
-  hotelDetails, 
+  hotelDetails,
+  hotel_checkin_date,
+  hotel_checkout_date,
+  hotel_url,
   activities,
   index,
   onEdit,
@@ -49,6 +55,9 @@ const TimelineEvent = ({
     description,
     hotel,
     hotelDetails,
+    hotel_checkin_date,
+    hotel_checkout_date,
+    hotel_url,
     accommodation_cost: "",
     accommodation_currency: "USD",
     transportation_cost: "",
@@ -144,6 +153,8 @@ const TimelineEvent = ({
     return image;
   };
 
+  const isCheckoutDay = hotel && hotel_checkout_date === date;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -191,11 +202,25 @@ const TimelineEvent = ({
                 </div>
                 <p className="text-gray-600 mb-4">{description}</p>
                 
-                <div className="mb-4">
-                  <h4 className="font-semibold text-earth-500">Accommodation</h4>
-                  <p className="font-medium">{hotel}</p>
-                  <p className="text-sm text-gray-600">{hotelDetails}</p>
-                </div>
+                {(hotel && date >= hotel_checkin_date && date < hotel_checkout_date) && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-earth-500">Accommodation</h4>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{hotel}</p>
+                      {hotel_url && (
+                        <a 
+                          href={hotel_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-earth-500 hover:text-earth-600"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">{hotelDetails}</p>
+                  </div>
+                )}
                 
                 <div>
                   <div className="flex justify-between items-center mb-2">
@@ -210,6 +235,12 @@ const TimelineEvent = ({
                     </Button>
                   </div>
                   
+                  {isCheckoutDay && (
+                    <div className="text-sm text-gray-400 p-2 bg-gray-50 rounded-md mb-2">
+                      Check-out of {hotel}
+                    </div>
+                  )}
+
                   <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
                     <DialogContent>
                       <DialogHeader>
