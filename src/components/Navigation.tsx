@@ -68,7 +68,7 @@ const Navigation = () => {
             isScrolled ? "text-earth-500" : "text-white"
           }`}
         >
-          Wanderlust
+          WanderLuxe
         </motion.a>
         <div className="hidden space-x-8 md:flex">
           {["My Trips", "Inspiration"].map((item) => (
