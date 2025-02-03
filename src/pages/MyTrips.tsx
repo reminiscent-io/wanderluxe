@@ -1,27 +1,18 @@
 import Navigation from "../components/Navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { EyeOff, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { format, getYear } from "date-fns";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { supabase } from "@/integrations/supabase/client";
+import { Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import TripCard from "@/components/trip/TripCard";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Trip = Tables<"trips"> & {
   timeline_events: { date: string }[];
@@ -35,7 +26,7 @@ interface TripsData {
 const MyTrips = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tripToHide, setTripToHide] = useState<string | null>(null);
+  const [tripToHide] = useState<string | null>(null);
 
   const { data: trips = { userTrips: [], exampleTrips: [] }, refetch } = useQuery<TripsData>({
     queryKey: ['trips'],
@@ -61,31 +52,6 @@ const MyTrips = () => {
     },
   });
 
-  const formatDateRange = (trip: Trip) => {
-    const startDate = new Date(trip.start_date);
-    let endDate = startDate;
-
-    // Find the last event date
-    if (trip.timeline_events && trip.timeline_events.length > 0) {
-      const lastEvent = trip.timeline_events[trip.timeline_events.length - 1];
-      endDate = new Date(lastEvent.date);
-    }
-
-    const startYear = getYear(startDate);
-    const endYear = getYear(endDate);
-
-    const formatDate = (date: Date, includeYear: boolean) => {
-      const day = format(date, "do");
-      const month = format(date, "MMMM");
-      return includeYear ? `${month} ${day} ${format(date, "yyyy")}` : `${month} ${day}`;
-    };
-
-    if (startYear === endYear) {
-      return `${formatDate(startDate, false)} - ${formatDate(endDate, true)}`;
-    }
-    return `${formatDate(startDate, true)} - ${formatDate(endDate, true)}`;
-  };
-
   const handleHideTrip = async (tripId: string) => {
     try {
       const { error } = await supabase
@@ -109,7 +75,6 @@ const MyTrips = () => {
         variant: "destructive",
       });
     }
-    setTripToHide(null);
   };
 
   const today = new Date();
@@ -131,85 +96,6 @@ const MyTrips = () => {
       : new Date(trip.end_date);
     return endDate < today;
   });
-
-  const TripCard = ({ trip, isExample = false }: { trip: Trip, isExample?: boolean }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-        <div className="relative h-48">
-          <img 
-            src={trip.cover_image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'}
-            alt={trip.destination}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/20" />
-        </div>
-        <CardContent className="p-6">
-          <div className="flex justify-between items-start">
-            <div 
-              className="cursor-pointer flex-grow"
-              onClick={() => navigate(`/trip/${trip.id}`)}
-            >
-              <div className="flex items-center gap-2">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {trip.destination}
-                </h3>
-                {isExample && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-5 w-5 text-gray-500" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Example Trip
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-              <p className="text-sm text-gray-500 mt-2">
-                {formatDateRange(trip)}
-              </p>
-            </div>
-            
-            {!isExample && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-gray-500 hover:text-gray-600"
-                  >
-                    <EyeOff className="h-5 w-5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Hide Trip</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to hide this trip? You won't be able to see it in your trips list anymore.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleHideTrip(trip.id)}
-                      className="bg-gray-600 hover:bg-gray-700"
-                    >
-                      Hide
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -234,7 +120,12 @@ const MyTrips = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {exampleTrips.map((trip) => (
-                <TripCard key={trip.id} trip={trip} isExample={true} />
+                <TripCard 
+                  key={trip.id} 
+                  trip={trip} 
+                  isExample={true}
+                  onHide={handleHideTrip}
+                />
               ))}
             </div>
           </section>
@@ -257,7 +148,11 @@ const MyTrips = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">Upcoming Trips</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {upcomingTrips.map((trip) => (
-                    <TripCard key={trip.id} trip={trip} />
+                    <TripCard 
+                      key={trip.id} 
+                      trip={trip}
+                      onHide={handleHideTrip}
+                    />
                   ))}
                 </div>
               </section>
@@ -268,7 +163,11 @@ const MyTrips = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">Past Trips</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {pastTrips.map((trip) => (
-                    <TripCard key={trip.id} trip={trip} />
+                    <TripCard 
+                      key={trip.id} 
+                      trip={trip}
+                      onHide={handleHideTrip}
+                    />
                   ))}
                 </div>
               </section>
