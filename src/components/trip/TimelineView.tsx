@@ -1,26 +1,25 @@
 import React from 'react';
 import FlightCard from "./FlightCard";
-import TimelineEvent from "./TimelineEvent";
+import DayCard from "./DayCard";
 import TransportationCard from "./TransportationCard";
 import AccommodationsSection from "./AccommodationsSection";
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { useTripDays } from '@/hooks/use-trip-days';
 
 interface TimelineViewProps {
   tripId: string | undefined;
 }
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
-  const { events, isLoading, updateEvent, deleteEvent, refetch } = useTimelineEvents(tripId);
+  const { events, isLoading: eventsLoading, updateEvent, deleteEvent, refetch } = useTimelineEvents(tripId);
+  const { days, isLoading: daysLoading, addActivity } = useTripDays(tripId);
 
-  const handleUpdateEvent = (id: string, data: any) => {
-    updateEvent.mutate({ id, ...data });
+  const handleAddActivity = (dayId: string) => {
+    // TODO: Implement activity form dialog
+    console.log('Adding activity to day:', dayId);
   };
 
-  const handleDeleteEvent = (id: string) => {
-    deleteEvent.mutate(id);
-  };
-
-  if (isLoading) {
+  if (eventsLoading || daysLoading) {
     return <div>Loading timeline...</div>;
   }
 
@@ -34,13 +33,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
     }
     return acc;
   }, []) || [];
-
-  // Sort events by date
-  const sortedEvents = [...(events || [])].sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    return dateA.getTime() - dateB.getTime();
-  });
 
   return (
     <div className="space-y-8">
@@ -60,47 +52,22 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
       />
 
       <div className="space-y-12">
-        {sortedEvents.map((event, index) => (
-          <div key={event.id}>
-            {/* Show checkout card at the start of the day if it's a checkout day */}
-            {event.hotel_checkout_date === event.date && (
-              <TransportationCard
-                type="hotel-checkout"
-                details={`Check out of ${event.hotel}`}
-                duration=""
-                index={index}
-              />
-            )}
-            
-            <TimelineEvent
-              id={event.id}
-              date={event.date}
-              title={event.title}
-              description={event.description || ''}
-              image={
-                event.title.includes('Naples') 
-                  ? "https://images.unsplash.com/photo-1516483638261-f4dbaf036963"
-                  : event.title.includes('Positano')
-                  ? "https://images.unsplash.com/photo-1533606688076-b6683a5f59f1"
-                  : event.image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'
-              }
-              hotel={event.hotel || ''}
-              hotel_details={event.hotel_details || ''}
-              hotel_checkin_date={event.hotel_checkin_date || ''}
-              hotel_checkout_date={event.hotel_checkout_date || ''}
-              hotel_url={event.hotel_url || ''}
-              activities={event.activities || []}
+        {days?.map((day, index) => (
+          <div key={day.id}>
+            <DayCard
+              date={day.date}
+              title={day.title}
+              description={day.description}
+              activities={day.activities}
+              onAddActivity={() => handleAddActivity(day.id)}
               index={index}
-              onEdit={handleUpdateEvent}
-              onDelete={handleDeleteEvent}
             />
             
-            {/* Show transportation card between events */}
-            {index < sortedEvents.length - 1 && (
+            {index < (days?.length || 0) - 1 && (
               <TransportationCard
-                type={index === 0 ? "car" : "car"}
-                details={index === 0 ? "Private car service from Naples Airport to Hotel" : "Transportation details to be planned"}
-                duration={index === 0 ? "45 minutes - Arrival at 1:00 PM" : "TBD"}
+                type="car"
+                details="Transportation details to be planned"
+                duration="TBD"
                 index={index}
               />
             )}
