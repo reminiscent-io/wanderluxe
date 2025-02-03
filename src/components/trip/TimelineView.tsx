@@ -24,15 +24,23 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
     return <div>Loading timeline...</div>;
   }
 
-  // Filter hotel stays
-  const hotelStays = events?.filter(event => event.hotel) || [];
+  // Filter unique hotel stays by combining check-in date and hotel name
+  const uniqueHotelStays = events?.reduce((acc: any[], event) => {
+    if (event.hotel && event.hotel_checkin_date) {
+      const stayKey = `${event.hotel}-${event.hotel_checkin_date}`;
+      if (!acc.find(stay => `${stay.hotel}-${stay.hotel_checkin_date}` === stayKey)) {
+        acc.push(event);
+      }
+    }
+    return acc;
+  }, []) || [];
 
   return (
     <div className="space-y-8">
       <AccommodationsSection 
         tripId={tripId || ''} 
         onAccommodationChange={refetch}
-        hotelStays={hotelStays}
+        hotelStays={uniqueHotelStays}
       />
 
       <FlightCard
