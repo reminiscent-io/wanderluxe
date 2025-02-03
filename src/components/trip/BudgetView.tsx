@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -10,25 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface BudgetViewProps {
   tripId: string | undefined;
 }
 
-interface ExchangeRate {
-  currency_from: string;
-  currency_to: string;
-  rate: number;
-  last_updated: string;
-}
-
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { events } = useTimelineEvents(tripId);
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
+  const [exchangeRates, setExchangeRates] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const [editingItem, setEditingItem] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchExchangeRates = async () => {
@@ -64,6 +61,30 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     return amount * rate;
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
+
+  const handleUpdateCost = async (eventId: string, field: string, value: number, currency: string) => {
+    try {
+      const { error } = await supabase
+        .from('timeline_events')
+        .update({ [`${field}_cost`]: value, [`${field}_currency`]: currency })
+        .eq('id', eventId);
+
+      if (error) throw error;
+      toast.success('Cost updated successfully');
+      setEditingItem(null);
+    } catch (error) {
+      console.error('Error updating cost:', error);
+      toast.error('Failed to update cost');
+    }
+  };
+
   const calculateTotals = () => {
     let accommodationTotal = 0;
     let transportationTotal = 0;
@@ -92,6 +113,93 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   };
 
   const totals = calculateTotals();
+
+  const renderExpenseDetails = (type: 'accommodation' | 'transportation' | 'activities') => {
+    return events?.map(event => {
+      if (type === 'activities') {
+        return event.activities?.map(activity => (
+          <div key={activity.id} className="pl-4 py-2 flex justify-between items-center">
+            <span>{activity.text}</span>
+            {editingItem === activity.id ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={activity.cost}
+                  onChange={(e) => {/* Handle cost update */}}
+                  className="w-24"
+                />
+                <Select value={activity.currency}>
+                  <SelectTrigger className="w-24">
+                    <SelectValue placeholder="Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["USD", "EUR", "GBP", "JPY", "AUD", "CAD"].map(curr => (
+                      <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => setEditingItem(null)}>Save</Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span>{activity.cost} {activity.currency}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setEditingItem(activity.id)}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        ));
+      }
+
+      const cost = type === 'accommodation' ? event.accommodation_cost : event.transportation_cost;
+      const currency = type === 'accommodation' ? event.accommodation_currency : event.transportation_currency;
+
+      if (!cost) return null;
+
+      return (
+        <div key={`${event.id}-${type}`} className="pl-4 py-2 flex justify-between items-center">
+          <span>{event.date} - {event.title}</span>
+          {editingItem === `${event.id}-${type}` ? (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={cost}
+                onChange={(e) => {/* Handle cost update */}}
+                className="w-24"
+              />
+              <Select value={currency}>
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="Currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {["USD", "EUR", "GBP", "JPY", "AUD", "CAD"].map(curr => (
+                    <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={() => setEditingItem(null)}>Save</Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span>{cost} {currency}</span>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setEditingItem(`${event.id}-${type}`)}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -126,26 +234,72 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-gray-500">Accommodation</h3>
+        <Card 
+          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => toggleSection('accommodation')}
+        >
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-medium text-gray-500">Accommodation</h3>
+            {expandedSections.includes('accommodation') ? (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-gray-500" />
+            )}
+          </div>
           <p className="text-2xl font-bold">{selectedCurrency} {totals.accommodation.toFixed(2)}</p>
+          {expandedSections.includes('accommodation') && (
+            <div className="mt-4 border-t pt-4">
+              {renderExpenseDetails('accommodation')}
+            </div>
+          )}
         </Card>
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-gray-500">Transportation</h3>
+
+        <Card 
+          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => toggleSection('transportation')}
+        >
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-medium text-gray-500">Transportation</h3>
+            {expandedSections.includes('transportation') ? (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-gray-500" />
+            )}
+          </div>
           <p className="text-2xl font-bold">{selectedCurrency} {totals.transportation.toFixed(2)}</p>
+          {expandedSections.includes('transportation') && (
+            <div className="mt-4 border-t pt-4">
+              {renderExpenseDetails('transportation')}
+            </div>
+          )}
         </Card>
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-gray-500">Activities</h3>
+
+        <Card 
+          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => toggleSection('activities')}
+        >
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-medium text-gray-500">Activities</h3>
+            {expandedSections.includes('activities') ? (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-gray-500" />
+            )}
+          </div>
           <p className="text-2xl font-bold">{selectedCurrency} {totals.activities.toFixed(2)}</p>
+          {expandedSections.includes('activities') && (
+            <div className="mt-4 border-t pt-4">
+              {renderExpenseDetails('activities')}
+            </div>
+          )}
         </Card>
+
         <Card className="p-6 bg-earth-50">
           <h3 className="text-sm font-medium text-earth-500">Total</h3>
-          <p className="text-2xl font-bold text-earth-500">{selectedCurrency} {totals.total.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-earth-500">
+            {selectedCurrency} {totals.total.toFixed(2)}
+          </p>
         </Card>
-      </div>
-
-      <div className="mt-8">
-        {/* We'll implement the detailed expense list and add expense form in the next iteration */}
       </div>
     </div>
   );

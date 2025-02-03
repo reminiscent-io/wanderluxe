@@ -9,6 +9,7 @@ import PackingView from "../components/trip/PackingView";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Calendar, BarChart2, List } from 'lucide-react';
 
 const TripDetails = () => {
   const { tripId } = useParams();
@@ -76,10 +77,28 @@ const TripDetails = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="timeline" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger value="timeline">Timeline</TabsTrigger>
-            <TabsTrigger value="budget">Budget</TabsTrigger>
-            <TabsTrigger value="packing">Packing List</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-white shadow-lg rounded-xl p-2 border-2 border-earth-100">
+            <TabsTrigger 
+              value="timeline"
+              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-6 py-3 rounded-lg transition-all duration-200"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Timeline
+            </TabsTrigger>
+            <TabsTrigger 
+              value="budget"
+              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-6 py-3 rounded-lg transition-all duration-200"
+            >
+              <BarChart2 className="w-4 h-4 mr-2" />
+              Budget
+            </TabsTrigger>
+            <TabsTrigger 
+              value="packing"
+              className="data-[state=active]:bg-earth-500 data-[state=active]:text-white px-6 py-3 rounded-lg transition-all duration-200"
+            >
+              <List className="w-4 h-4 mr-2" />
+              Packing List
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="timeline">
