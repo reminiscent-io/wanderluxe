@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,8 +8,8 @@ import { toast } from 'sonner';
 import ExpenseCard from './budget/ExpenseCard';
 import CurrencySelector from './budget/CurrencySelector';
 import ExpenseDetails from './budget/ExpenseDetails';
-import TransportationDetails from './budget/TransportationDetails';
 import AddExpenseDialog from './budget/AddExpenseDialog';
+import TotalExpenseCard from './budget/TotalExpenseCard';
 
 interface BudgetViewProps {
   tripId: string | undefined;
@@ -267,12 +266,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           )}
         </ExpenseCard>
 
-        <Card className="p-6 bg-earth-50">
-          <h3 className="text-sm font-medium text-earth-500">Total</h3>
-          <p className="text-2xl font-bold text-earth-500">
-            {selectedCurrency} {totals.total.toFixed(2)}
-          </p>
-        </Card>
+        <TotalExpenseCard total={totals.total} currency={selectedCurrency} />
       </div>
 
       <AddExpenseDialog 
