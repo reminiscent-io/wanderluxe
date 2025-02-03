@@ -39,18 +39,18 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   const getIcon = (type: TransportationEvent['type']) => {
     switch (type) {
       case 'flight':
-        return <Plane className="h-5 w-5" />;
+        return <Plane className="h-5 w-5 text-earth-500" />;
       case 'train':
-        return <Train className="h-5 w-5" />;
+        return <Train className="h-5 w-5 text-earth-500" />;
       case 'car_service':
       case 'rental_car':
-        return <Car className="h-5 w-5" />;
+        return <Car className="h-5 w-5 text-earth-500" />;
       case 'shuttle':
-        return <Bus className="h-5 w-5" />;
+        return <Bus className="h-5 w-5 text-earth-500" />;
       case 'ferry':
-        return <Ship className="h-5 w-5" />;
+        return <Ship className="h-5 w-5 text-earth-500" />;
       default:
-        return <Car className="h-5 w-5" />;
+        return <Car className="h-5 w-5 text-earth-500" />;
     }
   };
 
@@ -81,8 +81,8 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Car className="h-5 w-5" />
-          <span className="text-lg font-medium">Transportation</span>
+          <Plane className="h-5 w-5" />
+          <span className="text-lg font-medium">Flight and Transportation</span>
         </div>
         <Plus className="h-5 w-5" />
       </Button>

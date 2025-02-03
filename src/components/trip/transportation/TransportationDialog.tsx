@@ -5,10 +5,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { TransportationEvent } from '@/integrations/supabase/types';
+import { Tables } from '@/integrations/supabase/types';
 import TransportationForm from './TransportationForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+type TransportationEvent = Tables<'transportation_events'>;
 
 interface TransportationDialogProps {
   tripId: string;
