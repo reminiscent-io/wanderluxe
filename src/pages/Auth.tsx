@@ -126,7 +126,7 @@ const Auth = () => {
             <div className="space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-sand-500 hover:bg-sand-600"
+                className="w-full bg-[#F1F1F1] hover:bg-[#E5E5E5] text-gray-700"
                 disabled={loading}
               >
                 Sign In
