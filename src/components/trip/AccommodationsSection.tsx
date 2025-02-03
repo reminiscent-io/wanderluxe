@@ -25,6 +25,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   hotelStays 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<string | null>(null);
 
   const handleSubmit = async (formData: {
@@ -215,18 +216,23 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
           {!editingStay && (
             <>
-              <Button
-                onClick={() => setIsExpanded(true)}
-                variant="outline"
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Accommodation
-              </Button>
-
-              <Card className="p-6 bg-white">
-                <AccommodationForm onSubmit={handleSubmit} onCancel={() => setIsExpanded(false)} />
-              </Card>
+              {!isAddingAccommodation ? (
+                <Button
+                  onClick={() => setIsAddingAccommodation(true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Accommodation
+                </Button>
+              ) : (
+                <Card className="p-6 bg-white">
+                  <AccommodationForm 
+                    onSubmit={handleSubmit} 
+                    onCancel={() => setIsAddingAccommodation(false)} 
+                  />
+                </Card>
+              )}
             </>
           )}
         </div>
