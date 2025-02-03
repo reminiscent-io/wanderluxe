@@ -24,8 +24,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
     return <div>Loading timeline...</div>;
   }
 
+  // Filter hotel stays
+  const hotelStays = events?.filter(event => event.hotel) || [];
+
   return (
     <div className="space-y-8">
+      <AccommodationsSection 
+        tripId={tripId || ''} 
+        onAccommodationChange={refetch}
+        hotelStays={hotelStays}
+      />
+
       <FlightCard
         type="outbound"
         flightNumber="DL582"
@@ -33,11 +42,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
         date="June 1, 2024"
         departure="7:55 PM EDT"
         arrival="10:15 AM CEST"
-      />
-
-      <AccommodationsSection 
-        tripId={tripId || ''} 
-        onAccommodationChange={refetch}
       />
 
       <div className="space-y-12">
