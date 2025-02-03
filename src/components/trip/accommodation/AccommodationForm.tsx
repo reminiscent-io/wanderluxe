@@ -41,7 +41,14 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submission - Check-in date:', formData.checkinDate);
     onSubmit(formData);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    console.log(`Date input changed - ${id}:`, value);
+    setFormData({ ...formData, [id]: value });
   };
 
   return (
@@ -83,7 +90,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
             id="checkinDate"
             type="date"
             value={formData.checkinDate}
-            onChange={(e) => setFormData({ ...formData, checkinDate: e.target.value })}
+            onChange={handleDateChange}
             required
           />
         </div>
@@ -93,7 +100,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
             id="checkoutDate"
             type="date"
             value={formData.checkoutDate}
-            onChange={(e) => setFormData({ ...formData, checkoutDate: e.target.value })}
+            onChange={handleDateChange}
             required
           />
         </div>

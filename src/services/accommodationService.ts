@@ -12,20 +12,27 @@ export interface AccommodationFormData {
 }
 
 export const generateDatesArray = (startDate: string, endDate: string) => {
+  console.log('Generating dates array with:', { startDate, endDate });
   const dates = [];
   let currentDate = new Date(startDate);
   const lastDate = new Date(endDate);
 
-  while (currentDate < lastDate) {
+  while (currentDate <= lastDate) {
     dates.push(currentDate.toISOString().split('T')[0]);
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
+  console.log('Generated dates:', dates);
   return dates;
 };
 
 export const addAccommodation = async (tripId: string, formData: AccommodationFormData) => {
   try {
+    console.log('Adding accommodation with dates:', {
+      checkin: formData.checkinDate,
+      checkout: formData.checkoutDate
+    });
+
     // Create the main check-in event
     const { data: checkInEvent, error: checkInError } = await supabase
       .from('timeline_events')
@@ -103,6 +110,11 @@ export const updateAccommodation = async (
   formData: AccommodationFormData
 ) => {
   try {
+    console.log('Updating accommodation with dates:', {
+      checkin: formData.checkinDate,
+      checkout: formData.checkoutDate
+    });
+
     // First, delete all existing events for this hotel stay
     const { error: deleteError } = await supabase
       .from('timeline_events')
