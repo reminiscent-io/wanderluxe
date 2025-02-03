@@ -62,6 +62,16 @@ const TimelineEvent = ({
     }
   };
 
+  // Determine the correct image URL based on the title
+  const getImageUrl = () => {
+    if (title.toLowerCase().includes('naples')) {
+      return "https://images.unsplash.com/photo-1516483638261-f4dbaf036963"; // Naples cityscape
+    } else if (title.toLowerCase().includes('positano')) {
+      return "https://images.unsplash.com/photo-1533606688076-b6683a5f59f1"; // Classic Positano view
+    }
+    return image;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -74,7 +84,7 @@ const TimelineEvent = ({
           <div className="grid md:grid-cols-2 gap-4">
             <div className="h-64 md:h-auto">
               <img 
-                src={image} 
+                src={getImageUrl()} 
                 alt={title}
                 className="w-full h-full object-cover"
               />
