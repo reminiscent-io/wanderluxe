@@ -6,18 +6,22 @@ export const createAccommodationEvents = async (
   formData: AccommodationFormData,
   stayDates: string[]
 ) => {
+  // Ensure we're using date-only strings
+  const checkinDate = formData.checkinDate.split('T')[0];
+  const checkoutDate = formData.checkoutDate.split('T')[0];
+
   // Create the main check-in event
   const { data: checkInEvent, error: checkInError } = await supabase
     .from('timeline_events')
     .insert([{
       trip_id: tripId,
-      date: formData.checkinDate,
+      date: checkinDate,
       title: `Check-in: ${formData.hotel}`,
       hotel: formData.hotel,
       hotel_details: formData.hotelDetails,
       hotel_url: formData.hotelUrl,
-      hotel_checkin_date: formData.checkinDate,
-      hotel_checkout_date: formData.checkoutDate,
+      hotel_checkin_date: checkinDate,
+      hotel_checkout_date: checkoutDate,
       expense_type: 'accommodation',
       expense_cost: formData.expenseCost ? Number(formData.expenseCost) : null,
       expense_currency: formData.expenseCurrency,
@@ -37,8 +41,8 @@ export const createAccommodationEvents = async (
       hotel: formData.hotel,
       hotel_details: formData.hotelDetails,
       hotel_url: formData.hotelUrl,
-      hotel_checkin_date: formData.checkinDate,
-      hotel_checkout_date: formData.checkoutDate,
+      hotel_checkin_date: checkinDate,
+      hotel_checkout_date: checkoutDate,
       order_index: 0
     }));
 
@@ -54,13 +58,13 @@ export const createAccommodationEvents = async (
     .from('timeline_events')
     .insert([{
       trip_id: tripId,
-      date: formData.checkoutDate,
+      date: checkoutDate,
       title: `Check-out: ${formData.hotel}`,
       hotel: formData.hotel,
       hotel_details: formData.hotelDetails,
       hotel_url: formData.hotelUrl,
-      hotel_checkin_date: formData.checkinDate,
-      hotel_checkout_date: formData.checkoutDate,
+      hotel_checkin_date: checkinDate,
+      hotel_checkout_date: checkoutDate,
       order_index: 0
     }]);
 
@@ -78,8 +82,8 @@ export const deleteAccommodationEvents = async (stay: {
     .from('timeline_events')
     .delete()
     .eq('hotel', stay.hotel)
-    .eq('hotel_checkin_date', stay.hotel_checkin_date)
-    .eq('hotel_checkout_date', stay.hotel_checkout_date);
+    .eq('hotel_checkin_date', stay.hotel_checkin_date.split('T')[0])
+    .eq('hotel_checkout_date', stay.hotel_checkout_date.split('T')[0]);
 
   if (error) throw error;
 };
