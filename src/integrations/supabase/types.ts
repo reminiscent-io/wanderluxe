@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       activities: {
@@ -34,6 +34,15 @@ export interface Database {
           id?: string
           text?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "activities_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "timeline_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       day_activities: {
         Row: {
@@ -72,6 +81,15 @@ export interface Database {
           start_time?: string | null
           title?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "day_activities_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "trip_days"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exchange_rates: {
         Row: {
@@ -198,6 +216,68 @@ export interface Database {
           },
         ]
       }
+      transportation_events: {
+        Row: {
+          arrival_location: string | null
+          confirmation_number: string | null
+          cost: number | null
+          created_at: string
+          currency: string | null
+          departure_location: string | null
+          details: string | null
+          end_date: string | null
+          end_time: string | null
+          id: string
+          provider: string | null
+          start_date: string
+          start_time: string | null
+          trip_id: string
+          type: Database["public"]["Enums"]["transportation_type"]
+        }
+        Insert: {
+          arrival_location?: string | null
+          confirmation_number?: string | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          departure_location?: string | null
+          details?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          provider?: string | null
+          start_date: string
+          start_time?: string | null
+          trip_id: string
+          type: Database["public"]["Enums"]["transportation_type"]
+        }
+        Update: {
+          arrival_location?: string | null
+          confirmation_number?: string | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          departure_location?: string | null
+          details?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          provider?: string | null
+          start_date?: string
+          start_time?: string | null
+          trip_id?: string
+          type?: Database["public"]["Enums"]["transportation_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transportation_events_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_days: {
         Row: {
           created_at: string
@@ -266,60 +346,6 @@ export interface Database {
         }
         Relationships: []
       }
-      transportation_events: {
-        Row: {
-          id: string;
-          trip_id: string;
-          type: 'flight' | 'train' | 'car_service' | 'shuttle' | 'ferry' | 'rental_car';
-          provider?: string;
-          details?: string;
-          confirmation_number?: string;
-          start_date: string;
-          start_time?: string;
-          end_date?: string;
-          end_time?: string;
-          departure_location?: string;
-          arrival_location?: string;
-          cost?: number;
-          currency?: string;
-          created_at: string;
-        }
-        Insert: {
-          id?: string;
-          trip_id: string;
-          type: 'flight' | 'train' | 'car_service' | 'shuttle' | 'ferry' | 'rental_car';
-          provider?: string;
-          details?: string;
-          confirmation_number?: string;
-          start_date: string;
-          start_time?: string;
-          end_date?: string;
-          end_time?: string;
-          departure_location?: string;
-          arrival_location?: string;
-          cost?: number;
-          currency?: string;
-          created_at?: string;
-        }
-        Update: {
-          id?: string;
-          trip_id?: string;
-          type?: 'flight' | 'train' | 'car_service' | 'shuttle' | 'ferry' | 'rental_car';
-          provider?: string;
-          details?: string;
-          confirmation_number?: string;
-          start_date?: string;
-          start_time?: string;
-          end_date?: string;
-          end_time?: string;
-          departure_location?: string;
-          arrival_location?: string;
-          cost?: number;
-          currency?: string;
-          created_at?: string;
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -328,7 +354,13 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      transportation_type:
+        | "flight"
+        | "train"
+        | "car_service"
+        | "shuttle"
+        | "ferry"
+        | "rental_car"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -336,22 +368,99 @@ export interface Database {
   }
 }
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
-export type TransportationEvent = {
-  id: string;
-  trip_id: string;
-  type: 'flight' | 'train' | 'car_service' | 'shuttle' | 'ferry' | 'rental_car';
-  provider?: string;
-  details?: string;
-  confirmation_number?: string;
-  start_date: string;
-  start_time?: string;
-  end_date?: string;
-  end_time?: string;
-  departure_location?: string;
-  arrival_location?: string;
-  cost?: number;
-  currency?: string;
-  created_at: string;
-}
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never

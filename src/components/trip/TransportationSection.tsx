@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Plane, Train, Car, Bus, Ship } from "lucide-react";
 import { TransportationEvent } from '@/integrations/supabase/types';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import TransportationDialog from './transportation/TransportationDialog';
 
 interface TransportationSectionProps {
   tripId: string;
@@ -15,7 +16,10 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   tripId,
   onTransportationChange
 }) => {
-  const { data: transportationEvents } = useQuery({
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<TransportationEvent | undefined>();
+
+  const { data: transportationEvents, refetch } = useQuery({
     queryKey: ['transportation-events', tripId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,61 +59,89 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
     return formattedDate;
   };
 
+  const handleEventClick = (event: TransportationEvent) => {
+    setSelectedEvent(event);
+    setDialogOpen(true);
+  };
+
+  const handleSuccess = () => {
+    refetch();
+    onTransportationChange();
+    setSelectedEvent(undefined);
+  };
+
   return (
-    <Card className="mb-8">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Transportation</CardTitle>
-        <Button variant="outline" onClick={() => {}}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Transportation
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {transportationEvents?.map((event) => (
-            <div
-              key={event.id}
-              className="flex items-start gap-4 p-4 bg-sand-50 rounded-lg"
-            >
-              {getIcon(event.type)}
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <h4 className="font-semibold capitalize">
-                    {event.type.replace('_', ' ')}
-                  </h4>
-                  {event.provider && (
-                    <span className="text-sm text-gray-600">{event.provider}</span>
+    <>
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Transportation</CardTitle>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setSelectedEvent(undefined);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transportation
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {transportationEvents?.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-start gap-4 p-4 bg-sand-50 rounded-lg cursor-pointer hover:bg-sand-100 transition-colors"
+                onClick={() => handleEventClick(event)}
+              >
+                {getIcon(event.type)}
+                <div className="flex-1">
+                  <div className="flex justify-between">
+                    <h4 className="font-semibold capitalize">
+                      {event.type.replace('_', ' ')}
+                    </h4>
+                    {event.provider && (
+                      <span className="text-sm text-gray-600">{event.provider}</span>
+                    )}
+                  </div>
+                  {event.details && (
+                    <p className="text-sm text-gray-600 mt-1">{event.details}</p>
                   )}
-                </div>
-                {event.details && (
-                  <p className="text-sm text-gray-600 mt-1">{event.details}</p>
-                )}
-                <div className="mt-2 text-sm">
-                  <p>
-                    From: {event.departure_location} ({formatDateTime(event.start_date, event.start_time)})
-                  </p>
-                  {event.end_date && (
+                  <div className="mt-2 text-sm">
                     <p>
-                      To: {event.arrival_location} ({formatDateTime(event.end_date, event.end_time)})
+                      From: {event.departure_location} ({formatDateTime(event.start_date, event.start_time)})
+                    </p>
+                    {event.end_date && (
+                      <p>
+                        To: {event.arrival_location} ({formatDateTime(event.end_date, event.end_time)})
+                      </p>
+                    )}
+                  </div>
+                  {event.confirmation_number && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Confirmation: {event.confirmation_number}
+                    </p>
+                  )}
+                  {event.cost && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Cost: {event.cost} {event.currency}
                     </p>
                   )}
                 </div>
-                {event.confirmation_number && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    Confirmation: {event.confirmation_number}
-                  </p>
-                )}
-                {event.cost && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    Cost: {event.cost} {event.currency}
-                  </p>
-                )}
               </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <TransportationDialog
+        tripId={tripId}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initialData={selectedEvent}
+        onSuccess={handleSuccess}
+      />
+    </>
   );
 };
 
