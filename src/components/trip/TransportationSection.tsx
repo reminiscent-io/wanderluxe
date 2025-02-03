@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Plane, Train, Car, Bus, Ship } from "lucide-react";
-import { TransportationEvent } from '@/integrations/supabase/types';
+import { Card } from "@/components/ui/card";
+import { Plus, Car, Plane, Train, Bus, Ship } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TransportationDialog from './transportation/TransportationDialog';
+import { Tables } from '@/integrations/supabase/types';
+
+type TransportationEvent = Tables<'transportation_events'>;
 
 interface TransportationSectionProps {
   tripId: string;
@@ -16,6 +18,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   tripId,
   onTransportationChange
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<TransportationEvent | undefined>();
 
@@ -51,7 +54,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
     }
   };
 
-  const formatDateTime = (date: string, time?: string) => {
+  const formatDateTime = (date: string, time?: string | null) => {
     const formattedDate = new Date(date).toLocaleDateString();
     if (time) {
       return `${formattedDate} ${time}`;
@@ -71,28 +74,27 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   };
 
   return (
-    <>
-      <Card className="mb-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Transportation</CardTitle>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setSelectedEvent(undefined);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Transportation
-          </Button>
-        </CardHeader>
-        <CardContent>
+    <Card className="bg-sand-50 shadow-md">
+      <Button
+        onClick={() => setIsExpanded(!isExpanded)}
+        variant="ghost"
+        className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Car className="h-5 w-5" />
+          <span className="text-lg font-medium">Transportation</span>
+        </div>
+        <Plus className="h-5 w-5" />
+      </Button>
+
+      {isExpanded && (
+        <div className="p-6 pt-0 space-y-6">
           <div className="space-y-4">
             {transportationEvents?.map((event) => (
               <div
                 key={event.id}
-                className="flex items-start gap-4 p-4 bg-sand-50 rounded-lg cursor-pointer hover:bg-sand-100 transition-colors"
                 onClick={() => handleEventClick(event)}
+                className="flex items-start gap-4 p-4 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
               >
                 {getIcon(event.type)}
                 <div className="flex-1">
@@ -131,8 +133,20 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+
+          <Button
+            onClick={() => {
+              setSelectedEvent(undefined);
+              setDialogOpen(true);
+            }}
+            variant="outline"
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transportation
+          </Button>
+        </div>
+      )}
 
       <TransportationDialog
         tripId={tripId}
@@ -141,7 +155,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         initialData={selectedEvent}
         onSuccess={handleSuccess}
       />
-    </>
+    </Card>
   );
 };
 
