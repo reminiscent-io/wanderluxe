@@ -1,5 +1,4 @@
 export * from './database';
-export * from './tables';
+export * from './models';
 export * from './enums';
 export * from './composite';
-export * from './models';
