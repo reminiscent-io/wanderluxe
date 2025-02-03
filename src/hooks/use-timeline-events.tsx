@@ -35,16 +35,35 @@ export const useTimelineEvents = (tripId: string | null) => {
         return [];
       }
       
-      const { data, error } = await supabase
+      // First get the timeline events
+      const { data: timelineEvents, error: timelineError } = await supabase
         .from('timeline_events')
-        .select('*, activities(*)')
+        .select('*')
         .eq('trip_id', tripId)
         .order('order_index');
 
-      if (error) throw error;
-      return data;
+      if (timelineError) throw timelineError;
+
+      // Then get activities for each timeline event
+      const eventsWithActivities = await Promise.all(
+        timelineEvents.map(async (event) => {
+          const { data: activities, error: activitiesError } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('event_id', event.id);
+
+          if (activitiesError) throw activitiesError;
+
+          return {
+            ...event,
+            activities: activities || []
+          };
+        })
+      );
+
+      return eventsWithActivities;
     },
-    enabled: !!tripId, // Only run the query if tripId exists
+    enabled: !!tripId,
   });
 
   const generateContent = async (destination: string, date: string, description?: string) => {
