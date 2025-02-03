@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Clock, DollarSign, Pencil } from "lucide-react";
 import { motion } from "framer-motion";
+import HotelInfo from './HotelInfo';
+import ActivitiesList from './ActivitiesList';
 
 interface DayCardProps {
   date: string;
@@ -75,69 +75,18 @@ const DayCard: React.FC<DayCardProps> = ({
               </div>
 
               {hotelDetails && (
-                <div>
-                  <h4 className="text-sm font-medium text-earth-500 mb-2">Accommodation</h4>
-                  <p className="text-lg font-medium">{hotelDetails.name}</p>
-                  {hotelDetails.details && (
-                    <p className="text-sm text-gray-600 mt-1">{hotelDetails.details}</p>
-                  )}
-                </div>
+                <HotelInfo
+                  name={hotelDetails.name}
+                  details={hotelDetails.details}
+                />
               )}
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-medium text-earth-500">Activities</h4>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onAddActivity}
-                    className="text-earth-500"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Activity
-                  </Button>
-                </div>
-
-                {activities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="group relative p-4 bg-sand-50 rounded-lg space-y-2 hover:bg-sand-100 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-medium">{activity.title}</h4>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Pencil className="h-4 w-4 text-earth-500" />
-                      </Button>
-                    </div>
-                    {activity.description && (
-                      <p className="text-sm text-gray-600">{activity.description}</p>
-                    )}
-                    <div className="flex gap-4 text-sm text-gray-500">
-                      {(activity.start_time || activity.end_time) && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            {activity.start_time && formatTime(activity.start_time)}
-                            {activity.end_time && ` - ${formatTime(activity.end_time)}`}
-                          </span>
-                        </div>
-                      )}
-                      {activity.cost && (
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4" />
-                          <span>
-                            {activity.cost} {activity.currency || 'USD'}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ActivitiesList
+                activities={activities}
+                onAddActivity={onAddActivity}
+                onEditActivity={() => {}}
+                formatTime={formatTime}
+              />
             </div>
           </div>
         </div>
