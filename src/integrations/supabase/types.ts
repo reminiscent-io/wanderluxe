@@ -44,6 +44,53 @@ export type Database = {
           },
         ]
       }
+      day_activities: {
+        Row: {
+          cost: number | null
+          created_at: string
+          currency: string | null
+          day_id: string
+          description: string | null
+          end_time: string | null
+          id: string
+          order_index: number
+          start_time: string | null
+          title: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          day_id: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          order_index: number
+          start_time?: string | null
+          title: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          day_id?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          order_index?: number
+          start_time?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_activities_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "trip_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exchange_rates: {
         Row: {
           currency_from: string
@@ -162,6 +209,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "timeline_events_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_days: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          title: string | null
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          title?: string | null
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          title?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_days_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
