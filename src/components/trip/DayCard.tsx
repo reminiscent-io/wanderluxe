@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import HotelInfo from './HotelInfo';
-import ActivitiesList from './ActivitiesList';
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import ActivityForm from './ActivityForm';
+import HotelInfo from './HotelInfo';
+import ActivitiesList from './ActivitiesList';
+import DayHeader from './day/DayHeader';
+import EditTitleDialog from './day/EditTitleDialog';
+import ActivityDialogs from './day/ActivityDialogs';
 
 interface DayCardProps {
   id: string;
@@ -147,34 +145,14 @@ const DayCard: React.FC<DayCardProps> = ({
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="space-y-4"
     >
-      <div className="text-center text-sm font-medium text-earth-500 mb-2">
-        {new Date(date).toLocaleDateString(undefined, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}
-      </div>
-
       <Card className="overflow-hidden relative">
-        <div className="absolute top-4 right-4 flex gap-2 z-10">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-white/80 hover:bg-white/90"
-            onClick={() => setIsEditing(true)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-white/80 hover:bg-white/90 hover:text-red-500"
-            onClick={handleDeleteDay}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <DayHeader
+          date={date}
+          index={index}
+          title={title}
+          onEdit={() => setIsEditing(true)}
+          onDelete={handleDeleteDay}
+        />
         
         <div className="grid md:grid-cols-2 h-full">
           <div className="h-64 md:h-full">
@@ -187,12 +165,6 @@ const DayCard: React.FC<DayCardProps> = ({
           
           <div className="p-6">
             <div className="space-y-6">
-              <div>
-                <h3 className="text-2xl font-semibold mb-2">
-                  Day {index + 1}{title && `: ${title}`}
-                </h3>
-              </div>
-
               {hotelDetails && (
                 <HotelInfo
                   name={hotelDetails.name}
@@ -221,58 +193,26 @@ const DayCard: React.FC<DayCardProps> = ({
         </div>
       </Card>
 
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Day Title</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Enter day title"
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateTitle}>
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <EditTitleDialog
+        isOpen={isEditing}
+        onOpenChange={setIsEditing}
+        title={editTitle}
+        onTitleChange={setEditTitle}
+        onSave={handleUpdateTitle}
+      />
 
-      <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Activity</DialogTitle>
-          </DialogHeader>
-          <ActivityForm
-            activity={newActivity}
-            onActivityChange={setNewActivity}
-            onSubmit={handleAddActivity}
-            onCancel={() => setIsAddingActivity(false)}
-            submitLabel="Add Activity"
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Activity</DialogTitle>
-          </DialogHeader>
-          <ActivityForm
-            activity={activityEdit}
-            onActivityChange={setActivityEdit}
-            onSubmit={() => editingActivity && handleEditActivity(editingActivity)}
-            onCancel={() => setEditingActivity(null)}
-            submitLabel="Save Changes"
-          />
-        </DialogContent>
-      </Dialog>
+      <ActivityDialogs
+        isAddingActivity={isAddingActivity}
+        setIsAddingActivity={setIsAddingActivity}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
+        newActivity={newActivity}
+        setNewActivity={setNewActivity}
+        activityEdit={activityEdit}
+        setActivityEdit={setActivityEdit}
+        onAddActivity={handleAddActivity}
+        onEditActivity={handleEditActivity}
+      />
     </motion.div>
   );
 };
