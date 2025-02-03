@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Calendar, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { Calendar, ExternalLink, Pencil, Trash2, ChevronDown } from "lucide-react";
+import { format } from 'date-fns';
 
 interface HotelStayCardProps {
   stay: {
@@ -22,10 +23,26 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
   onDelete,
   formatDateRange,
 }) => {
+  // Generate array of dates between check-in and check-out
+  const getDatesInRange = (startDate: string, endDate: string) => {
+    const dates = [];
+    let currentDate = new Date(startDate);
+    const lastDate = new Date(endDate);
+
+    while (currentDate <= lastDate) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dates;
+  };
+
+  const stayDates = getDatesInRange(stay.hotel_checkin_date, stay.hotel_checkout_date);
+
   return (
     <div className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm">
       <Calendar className="h-5 w-5 text-gray-500 mt-1" />
-      <div className="flex-1">
+      <div className="flex-1 space-y-2">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-medium">{stay.hotel}</h3>
@@ -63,6 +80,19 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
             >
               <Trash2 className="h-4 w-4" />
             </Button>
+          </div>
+        </div>
+        
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-500 font-medium mb-1">Daily Schedule:</p>
+          <div className="space-y-1">
+            {stayDates.map((date, index) => (
+              <p key={date.toISOString()} className="text-xs text-gray-500">
+                {format(date, 'EEEE, MMMM d, yyyy')}
+                {index === 0 && " (Check-in)"}
+                {index === stayDates.length - 1 && " (Check-out)"}
+              </p>
+            ))}
           </div>
         </div>
       </div>
