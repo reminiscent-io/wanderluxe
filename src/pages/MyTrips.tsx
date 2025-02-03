@@ -138,7 +138,15 @@ const MyTrips = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+        <div className="relative h-48">
+          <img 
+            src={trip.cover_image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'}
+            alt={trip.destination}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/20" />
+        </div>
         <CardContent className="p-6">
           <div className="flex justify-between items-start">
             <div 
