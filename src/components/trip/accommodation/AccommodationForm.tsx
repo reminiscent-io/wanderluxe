@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import HotelSearchInput from './HotelSearchInput';
 
 interface AccommodationFormProps {
   onSubmit: (data: {
@@ -13,6 +14,10 @@ interface AccommodationFormProps {
     checkoutDate: string;
     expenseCost: string;
     expenseCurrency: string;
+    hotelAddress?: string;
+    hotelPhone?: string;
+    hotelPlaceId?: string;
+    hotelWebsite?: string;
   }) => void;
   onCancel: () => void;
   initialData?: {
@@ -23,6 +28,10 @@ interface AccommodationFormProps {
     checkoutDate: string;
     expenseCost: string | number;
     expenseCurrency: string;
+    hotelAddress?: string;
+    hotelPhone?: string;
+    hotelPlaceId?: string;
+    hotelWebsite?: string;
   };
 }
 
@@ -36,8 +45,24 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
     checkinDate: initialData?.checkinDate || today,
     checkoutDate: initialData?.checkoutDate || '',
     expenseCost: initialData?.expenseCost ? initialData.expenseCost.toString() : '',
-    expenseCurrency: initialData?.expenseCurrency || 'USD'
+    expenseCurrency: initialData?.expenseCurrency || 'USD',
+    hotelAddress: initialData?.hotelAddress || '',
+    hotelPhone: initialData?.hotelPhone || '',
+    hotelPlaceId: initialData?.hotelPlaceId || '',
+    hotelWebsite: initialData?.hotelWebsite || ''
   });
+
+  const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => {
+    setFormData(prev => ({
+      ...prev,
+      hotel: hotelName,
+      hotelAddress: placeDetails?.formatted_address || prev.hotelAddress,
+      hotelPhone: placeDetails?.formatted_phone_number || prev.hotelPhone,
+      hotelPlaceId: placeDetails?.place_id || prev.hotelPlaceId,
+      hotelWebsite: placeDetails?.website || prev.hotelWebsite,
+      hotelUrl: placeDetails?.website || prev.hotelUrl
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,15 +71,24 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="hotel">Hotel Name *</Label>
-        <Input
-          id="hotel"
-          value={formData.hotel}
-          onChange={(e) => setFormData({ ...formData, hotel: e.target.value })}
-          required
-        />
-      </div>
+      <HotelSearchInput
+        value={formData.hotel}
+        onChange={handleHotelSelect}
+      />
+
+      {formData.hotelAddress && (
+        <div>
+          <Label>Address</Label>
+          <p className="text-sm text-gray-600">{formData.hotelAddress}</p>
+        </div>
+      )}
+
+      {formData.hotelPhone && (
+        <div>
+          <Label>Phone</Label>
+          <p className="text-sm text-gray-600">{formData.hotelPhone}</p>
+        </div>
+      )}
 
       <div>
         <Label htmlFor="hotelDetails">Details (Optional)</Label>
@@ -71,8 +105,8 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
           id="hotelUrl"
           type="url"
           value={formData.hotelUrl}
-          onChange={(e) => setFormData({ ...formData, hotelUrl: e.target.value })}
           placeholder="https://..."
+          onChange={(e) => setFormData({ ...formData, hotelUrl: e.target.value })}
         />
       </div>
 

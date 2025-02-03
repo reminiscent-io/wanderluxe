@@ -6,6 +6,10 @@ export interface AccommodationFormData {
   checkoutDate: string;
   expenseCost: string;
   expenseCurrency: string;
+  hotelAddress?: string;
+  hotelPhone?: string;
+  hotelPlaceId?: string;
+  hotelWebsite?: string;
 }
 
 export interface HotelStay {

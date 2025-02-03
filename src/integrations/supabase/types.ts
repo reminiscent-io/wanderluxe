@@ -204,10 +204,14 @@ export type Database = {
           expense_type: string | null
           final_accommodation_day: string | null
           hotel: string | null
+          hotel_address: string | null
           hotel_checkin_date: string | null
           hotel_checkout_date: string | null
           hotel_details: string | null
+          hotel_phone: string | null
+          hotel_place_id: string | null
           hotel_url: string | null
+          hotel_website: string | null
           id: string
           image_url: string | null
           order_index: number
@@ -225,10 +229,14 @@ export type Database = {
           expense_type?: string | null
           final_accommodation_day?: string | null
           hotel?: string | null
+          hotel_address?: string | null
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
           hotel_details?: string | null
+          hotel_phone?: string | null
+          hotel_place_id?: string | null
           hotel_url?: string | null
+          hotel_website?: string | null
           id?: string
           image_url?: string | null
           order_index: number
@@ -246,10 +254,14 @@ export type Database = {
           expense_type?: string | null
           final_accommodation_day?: string | null
           hotel?: string | null
+          hotel_address?: string | null
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
           hotel_details?: string | null
+          hotel_phone?: string | null
+          hotel_place_id?: string | null
           hotel_url?: string | null
+          hotel_website?: string | null
           id?: string
           image_url?: string | null
           order_index?: number
