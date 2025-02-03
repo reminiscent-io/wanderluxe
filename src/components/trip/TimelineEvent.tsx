@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimelineEventProps {
   id: string;
@@ -22,7 +24,7 @@ interface TimelineEventProps {
   image: string;
   hotel: string;
   hotelDetails: string;
-  activities: string[];
+  activities: { id: string; text: string }[];
   index: number;
   onEdit: (id: string, data: any) => void;
   onDelete: (id: string) => void;
@@ -49,6 +51,8 @@ const TimelineEvent = ({
     hotel,
     hotelDetails,
   });
+  const [newActivity, setNewActivity] = useState("");
+  const [isAddingActivity, setIsAddingActivity] = useState(false);
 
   const handleEdit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +63,57 @@ const TimelineEvent = ({
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this event?')) {
       onDelete(id);
+    }
+  };
+
+  const handleAddActivity = async () => {
+    if (!newActivity.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .insert([
+          { event_id: id, text: newActivity.trim() }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update the local state through the parent component
+      onEdit(id, {
+        ...editData,
+        activities: [...activities, data]
+      });
+
+      setNewActivity("");
+      setIsAddingActivity(false);
+      toast.success("Activity added successfully");
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      toast.error("Failed to add activity");
+    }
+  };
+
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .delete()
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      // Update the local state through the parent component
+      onEdit(id, {
+        ...editData,
+        activities: activities.filter(a => a.id !== activityId)
+      });
+
+      toast.success("Activity deleted successfully");
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error("Failed to delete activity");
     }
   };
 
@@ -173,10 +228,67 @@ const TimelineEvent = ({
                 </div>
                 
                 <div>
-                  <h4 className="font-semibold text-earth-500">Activities</h4>
-                  <ul className="list-disc list-inside text-sm text-gray-600">
-                    {activities.map((activity, i) => (
-                      <li key={i}>{activity}</li>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold text-earth-500">Activities</h4>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsAddingActivity(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Activity
+                    </Button>
+                  </div>
+                  
+                  <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Activity</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="activity">Activity Description</Label>
+                          <Input
+                            id="activity"
+                            value={newActivity}
+                            onChange={(e) => setNewActivity(e.target.value)}
+                            placeholder="Enter activity description"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setIsAddingActivity(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="button"
+                            onClick={handleAddActivity}
+                          >
+                            Add Activity
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <ul className="space-y-2">
+                    {activities.map((activity) => (
+                      <li 
+                        key={activity.id} 
+                        className="flex justify-between items-center text-sm text-gray-600"
+                      >
+                        <span>{activity.text}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteActivity(activity.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </li>
                     ))}
                   </ul>
                 </div>
