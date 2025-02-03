@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (category: string, title: string, amount: number, currency: string, isPaid: boolean) => void;
+  defaultCategory?: string;
 }
 
 const DEFAULT_CATEGORIES = ['Accommodation', 'Transportation', 'Activities', 'Other'];
@@ -31,12 +32,19 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   open,
   onOpenChange,
   onSubmit,
+  defaultCategory
 }) => {
   const [category, setCategory] = useState<string>('');
   const [title, setTitle] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [currency, setCurrency] = useState<string>('USD');
   const [isPaid, setIsPaid] = useState(false);
+
+  useEffect(() => {
+    if (defaultCategory) {
+      setCategory(defaultCategory.toLowerCase());
+    }
+  }, [defaultCategory]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

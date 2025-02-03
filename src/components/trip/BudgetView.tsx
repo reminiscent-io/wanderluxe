@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -25,6 +24,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   useEffect(() => {
     const fetchExchangeRates = async () => {
@@ -143,7 +143,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     let otherTotal = 0;
 
     events?.forEach(event => {
-      // Handle main expense costs
       if (event.expense_cost && event.expense_currency) {
         const convertedAmount = convertAmount(Number(event.expense_cost), event.expense_currency);
         switch (event.expense_type) {
@@ -162,7 +161,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         }
       }
 
-      // Handle activity costs separately
       if (event.activities && event.activities.length > 0) {
         event.activities.forEach(activity => {
           if (activity.cost && activity.currency) {
@@ -184,12 +182,15 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     };
   };
 
-  const totals = calculateTotals();
-
   const getExpensesByType = (type: string) => {
     return events?.filter(event => 
       event.expense_type === type && event.expense_cost && event.expense_currency
     ) || [];
+  };
+
+  const handleAddExpenseClick = (category: string) => {
+    setSelectedCategory(category);
+    setIsAddExpenseOpen(true);
   };
 
   useEffect(() => {
@@ -205,7 +206,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           filter: `trip_id=eq.${tripId}`
         },
         () => {
-          // Invalidate and refetch the events query
           queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
         }
       )
@@ -216,24 +216,20 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     };
   }, [tripId, queryClient]);
 
+  const totals = calculateTotals();
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-earth-500">Trip Budget</h2>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Display in:</span>
-              <CurrencySelector
-                value={selectedCurrency}
-                onValueChange={setSelectedCurrency}
-                className="w-[100px]"
-              />
-            </div>
-            <Button onClick={() => setIsAddExpenseOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Expense
-            </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Display in:</span>
+            <CurrencySelector
+              value={selectedCurrency}
+              onValueChange={setSelectedCurrency}
+              className="w-[100px]"
+            />
           </div>
         </div>
         {lastUpdated && (
@@ -250,6 +246,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('accommodation')}
           onToggle={() => toggleSection('accommodation')}
+          onAddExpense={() => handleAddExpenseClick('accommodation')}
         >
           {getExpensesByType('accommodation').map(event => (
             <ExpenseDetails
@@ -272,6 +269,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('transportation')}
           onToggle={() => toggleSection('transportation')}
+          onAddExpense={() => handleAddExpenseClick('transportation')}
         >
           {getExpensesByType('transportation').map(event => (
             <ExpenseDetails
@@ -294,6 +292,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('activities')}
           onToggle={() => toggleSection('activities')}
+          onAddExpense={() => handleAddExpenseClick('activities')}
         >
           {getExpensesByType('activities').map(event => (
             <ExpenseDetails
@@ -332,6 +331,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         open={isAddExpenseOpen}
         onOpenChange={setIsAddExpenseOpen}
         onSubmit={handleAddExpense}
+        defaultCategory={selectedCategory}
       />
     </div>
   );

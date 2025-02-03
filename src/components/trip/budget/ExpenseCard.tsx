@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Hotel, BarChart2, Car, Ticket } from 'lucide-react';
+import { ChevronDown, ChevronRight, Hotel, BarChart2, Car, Ticket, Plus } from 'lucide-react';
 
 interface ExpenseCardProps {
   title: string;
@@ -9,6 +9,7 @@ interface ExpenseCardProps {
   currency: string;
   isExpanded: boolean;
   onToggle: () => void;
+  onAddExpense: () => void;
   children?: React.ReactNode;
 }
 
@@ -18,6 +19,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({
   currency,
   isExpanded,
   onToggle,
+  onAddExpense,
   children
 }) => {
   const getIcon = () => {
@@ -57,6 +59,14 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({
       {isExpanded && (
         <div className="p-6 pt-0 space-y-4">
           {children}
+          <Button 
+            onClick={onAddExpense}
+            variant="outline" 
+            className="w-full mt-4 text-earth-600 border-earth-200 hover:bg-earth-50"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add {title} Expense
+          </Button>
         </div>
       )}
     </Card>
