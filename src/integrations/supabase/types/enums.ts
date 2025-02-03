@@ -1,3 +1,7 @@
-import { Database } from './database';
-
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];
+export type TransportationType = 
+  | "flight"
+  | "train"
+  | "car_service"
+  | "shuttle"
+  | "ferry"
+  | "rental_car";
