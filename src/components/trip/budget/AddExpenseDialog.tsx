@@ -63,9 +63,14 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
               <SelectTrigger id="category" className="w-full bg-white border-earth-200">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
-              <SelectContent className="bg-white">
+              <SelectContent 
+                className="bg-white w-[400px] max-h-[300px] overflow-y-auto"
+                position="popper"
+                side="bottom"
+                align="start"
+              >
                 {DEFAULT_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat.toLowerCase()} className="hover:bg-earth-50">
+                  <SelectItem key={cat} value={cat.toLowerCase()} className="hover:bg-earth-50 py-3">
                     {cat}
                   </SelectItem>
                 ))}
@@ -106,14 +111,15 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <Label htmlFor="paid" className="text-sm font-medium">
+          <div className="flex items-center justify-between p-4 bg-earth-50 rounded-lg">
+            <Label htmlFor="paid" className="text-base font-medium text-earth-600">
               Mark as paid
             </Label>
             <Switch
               id="paid"
               checked={isPaid}
               onCheckedChange={setIsPaid}
+              className="data-[state=checked]:bg-earth-500"
             />
           </div>
 
