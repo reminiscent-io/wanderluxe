@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronRight, Hotel, BarChart2, Car, Ticket } from 'lucide-react';
 
 interface ExpenseCardProps {
   title: string;
@@ -19,22 +20,42 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({
   onToggle,
   children
 }) => {
+  const getIcon = () => {
+    switch (title.toLowerCase()) {
+      case 'accommodation':
+        return <Hotel className="h-5 w-5" />;
+      case 'transportation':
+        return <Car className="h-5 w-5" />;
+      case 'activities':
+        return <Ticket className="h-5 w-5" />;
+      default:
+        return <BarChart2 className="h-5 w-5" />;
+    }
+  };
+
   return (
-    <Card 
-      className="p-6 cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onToggle}
-    >
-      <div className="flex justify-between items-center">
-        <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+    <Card className="bg-sand-50 shadow-md">
+      <Button
+        onClick={onToggle}
+        variant="ghost"
+        className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {getIcon()}
+          <span className="text-lg font-medium">{title}</span>
+          <span className="text-sm text-gray-500">
+            {currency} {amount.toFixed(2)}
+          </span>
+        </div>
         {isExpanded ? (
-          <ChevronDown className="h-4 w-4 text-gray-500" />
+          <ChevronDown className="h-5 w-5" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-gray-500" />
+          <ChevronRight className="h-5 w-5" />
         )}
-      </div>
-      <p className="text-2xl font-bold">{currency} {amount.toFixed(2)}</p>
+      </Button>
+
       {isExpanded && (
-        <div className="mt-4 border-t pt-4">
+        <div className="p-6 pt-0 space-y-4">
           {children}
         </div>
       )}
