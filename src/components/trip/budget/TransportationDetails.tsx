@@ -1,6 +1,6 @@
 import React from 'react';
 import { Car, Plane, Train, Bus } from 'lucide-react';
-import { ExpenseDetails } from './ExpenseDetails';
+import ExpenseDetails from './ExpenseDetails';
 
 interface TransportType {
   id: string;
