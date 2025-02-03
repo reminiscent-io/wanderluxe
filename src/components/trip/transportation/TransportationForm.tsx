@@ -68,7 +68,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-gray-800">
               {TRANSPORT_TYPES.map((type) => (
                 <SelectItem 
                   key={type.value} 
