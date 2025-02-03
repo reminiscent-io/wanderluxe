@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import HotelInfo from './HotelInfo';
 import ActivitiesList from './ActivitiesList';
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 
 interface DayCardProps {
   date: string;
@@ -59,16 +61,24 @@ const DayCard: React.FC<DayCardProps> = ({
       </div>
 
       <Card className="overflow-hidden">
-        <div className="grid md:grid-cols-3 h-full">
+        <div className="grid md:grid-cols-2 h-full">
           <div className="h-64 md:h-full relative">
             <img
               src="https://images.unsplash.com/photo-1533606688076-b6683a5f59f1?auto=format&fit=crop&w=800&q=80"
               alt="Positano coastal view"
               className="w-full h-full object-cover"
             />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 bg-white/80 hover:bg-white/90"
+              onClick={() => {}}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
           </div>
           
-          <div className="col-span-2 p-6">
+          <div className="p-6">
             <div className="space-y-6">
               <div>
                 <h3 className="text-2xl font-semibold mb-2">Day {index + 1}{title && `: ${title}`}</h3>
@@ -83,7 +93,7 @@ const DayCard: React.FC<DayCardProps> = ({
 
               <ActivitiesList
                 activities={activities}
-                onAddActivity={onAddActivity}
+                onAddActivity={() => {}}
                 onEditActivity={() => {}}
                 formatTime={formatTime}
               />
