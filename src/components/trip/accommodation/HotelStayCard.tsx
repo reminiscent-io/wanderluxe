@@ -47,6 +47,9 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-medium">{stay.hotel}</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {format(parseISO(stay.hotel_checkin_date), 'MMM d, yyyy')} - {format(parseISO(stay.hotel_checkout_date), 'MMM d, yyyy')}
+            </p>
             {stay.hotel_details && (
               <p className="text-sm text-gray-600 mt-1">{stay.hotel_details}</p>
             )}
