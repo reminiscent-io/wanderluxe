@@ -90,55 +90,6 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  const handleAddActivity = async () => {
-    if (!newActivity.text.trim()) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('day_activities')
-        .insert([{
-          day_id: id,
-          title: newActivity.text.trim(),
-          cost: newActivity.cost ? Number(newActivity.cost) : null,
-          currency: newActivity.currency,
-          order_index: activities.length
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast.success('Activity added successfully');
-      setIsAddingActivity(false);
-      setNewActivity({ text: "", cost: "", currency: "USD" });
-    } catch (error) {
-      console.error('Error adding activity:', error);
-      toast.error('Failed to add activity');
-    }
-  };
-
-  const handleEditActivity = async (activityId: string) => {
-    try {
-      const { error } = await supabase
-        .from('day_activities')
-        .update({
-          title: activityEdit.text,
-          cost: activityEdit.cost ? Number(activityEdit.cost) : null,
-          currency: activityEdit.currency
-        })
-        .eq('id', activityId);
-
-      if (error) throw error;
-
-      toast.success('Activity updated successfully');
-      setEditingActivity(null);
-      setActivityEdit({ text: "", cost: "", currency: "USD" });
-    } catch (error) {
-      console.error('Error updating activity:', error);
-      toast.error('Failed to update activity');
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -222,8 +173,8 @@ const DayCard: React.FC<DayCardProps> = ({
         setNewActivity={setNewActivity}
         activityEdit={activityEdit}
         setActivityEdit={setActivityEdit}
-        onAddActivity={handleAddActivity}
-        onEditActivity={handleEditActivity}
+        onAddActivity={() => {}}
+        onEditActivity={() => {}}
       />
     </motion.div>
   );
