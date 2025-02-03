@@ -368,8 +368,6 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
-
 export type Tables<
   PublicTableNameOrOptions extends
     | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
@@ -394,6 +392,11 @@ export type Tables<
       ? R
       : never
     : never
+
+type PublicSchema = Database[Extract<keyof Database, "public">]
+
+// Export the TransportationEvent type based on the database schema
+export type TransportationEvent = Tables<"transportation_events">
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
