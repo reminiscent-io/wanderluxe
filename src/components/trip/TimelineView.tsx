@@ -52,6 +52,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
               }
               hotel={event.hotel || ''}
               hotelDetails={event.hotel_details || ''}
+              hotel_checkin_date={event.hotel_checkin_date || ''}
+              hotel_checkout_date={event.hotel_checkout_date || ''}
+              hotel_url={event.hotel_url || ''}
               activities={event.activities || []}
               index={index}
               onEdit={handleUpdateEvent}
