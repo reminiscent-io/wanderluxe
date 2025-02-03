@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Car, Plane, Train, Bus, Ship } from "lucide-react";
+import { Plus, Plane } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TransportationDialog from './transportation/TransportationDialog';
+import TransportationListItem from './transportation/TransportationListItem';
 import { Tables } from '@/integrations/supabase/types';
 
 type TransportationEvent = Tables<'transportation_events'>;
@@ -36,32 +37,6 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
     }
   });
 
-  const getIcon = (type: TransportationEvent['type']) => {
-    switch (type) {
-      case 'flight':
-        return <Plane className="h-5 w-5 text-earth-500" />;
-      case 'train':
-        return <Train className="h-5 w-5 text-earth-500" />;
-      case 'car_service':
-      case 'rental_car':
-        return <Car className="h-5 w-5 text-earth-500" />;
-      case 'shuttle':
-        return <Bus className="h-5 w-5 text-earth-500" />;
-      case 'ferry':
-        return <Ship className="h-5 w-5 text-earth-500" />;
-      default:
-        return <Car className="h-5 w-5 text-earth-500" />;
-    }
-  };
-
-  const formatDateTime = (date: string, time?: string | null) => {
-    const formattedDate = new Date(date).toLocaleDateString();
-    if (time) {
-      return `${formattedDate} ${time}`;
-    }
-    return formattedDate;
-  };
-
   const handleEventClick = (event: TransportationEvent) => {
     setSelectedEvent(event);
     setDialogOpen(true);
@@ -91,46 +66,11 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         <div className="p-6 pt-0 space-y-6">
           <div className="space-y-4">
             {transportationEvents?.map((event) => (
-              <div
+              <TransportationListItem
                 key={event.id}
-                onClick={() => handleEventClick(event)}
-                className="flex items-start gap-4 p-4 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                {getIcon(event.type)}
-                <div className="flex-1">
-                  <div className="flex justify-between">
-                    <h4 className="font-semibold capitalize">
-                      {event.type.replace('_', ' ')}
-                    </h4>
-                    {event.provider && (
-                      <span className="text-sm text-gray-600">{event.provider}</span>
-                    )}
-                  </div>
-                  {event.details && (
-                    <p className="text-sm text-gray-600 mt-1">{event.details}</p>
-                  )}
-                  <div className="mt-2 text-sm">
-                    <p>
-                      From: {event.departure_location} ({formatDateTime(event.start_date, event.start_time)})
-                    </p>
-                    {event.end_date && (
-                      <p>
-                        To: {event.arrival_location} ({formatDateTime(event.end_date, event.end_time)})
-                      </p>
-                    )}
-                  </div>
-                  {event.confirmation_number && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      Confirmation: {event.confirmation_number}
-                    </p>
-                  )}
-                  {event.cost && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      Cost: {event.cost} {event.currency}
-                    </p>
-                  )}
-                </div>
-              </div>
+                event={event}
+                onClick={handleEventClick}
+              />
             ))}
           </div>
 
