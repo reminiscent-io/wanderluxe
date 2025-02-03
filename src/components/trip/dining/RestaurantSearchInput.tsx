@@ -16,6 +16,12 @@ interface RestaurantSearchInputProps {
   defaultValue?: string;
 }
 
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
 const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   onPlaceSelect,
   defaultValue = ''
@@ -27,12 +33,12 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   useEffect(() => {
     if (!inputRef.current) return;
 
-    const options = {
+    const options: google.maps.places.AutocompleteOptions = {
       types: ['restaurant'],
       fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating']
     };
 
-    autoCompleteRef.current = new google.maps.places.Autocomplete(
+    autoCompleteRef.current = new window.google.maps.places.Autocomplete(
       inputRef.current,
       options
     );
