@@ -4,16 +4,12 @@ import { Pencil, Trash2 } from "lucide-react";
 
 interface DayHeaderProps {
   date: string;
-  index: number;
-  title?: string;
   onEdit: () => void;
   onDelete: () => void;
 }
 
 const DayHeader: React.FC<DayHeaderProps> = ({
   date,
-  index,
-  title,
   onEdit,
   onDelete,
 }) => {
@@ -45,9 +41,6 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      <h3 className="text-2xl font-semibold mb-2">
-        Day {index + 1}{title && `: ${title}`}
-      </h3>
     </>
   );
 };

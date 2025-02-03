@@ -148,8 +148,6 @@ const DayCard: React.FC<DayCardProps> = ({
       <Card className="overflow-hidden relative">
         <DayHeader
           date={date}
-          index={index}
-          title={title}
           onEdit={() => setIsEditing(true)}
           onDelete={handleDeleteDay}
         />
@@ -165,6 +163,10 @@ const DayCard: React.FC<DayCardProps> = ({
           
           <div className="p-6">
             <div className="space-y-6">
+              <h3 className="text-2xl font-semibold">
+                Day {index + 1}{title && `: ${title}`}
+              </h3>
+
               {hotelDetails && (
                 <HotelInfo
                   name={hotelDetails.name}
