@@ -59,7 +59,7 @@ const Hero = () => {
           >
             <Button 
               size="lg"
-              className="bg-sand-500 hover:bg-sand-600 text-white text-lg px-8 py-6 h-auto"
+              className="bg-sand-500 hover:bg-sand-600 text-white text-base px-6 py-4 h-auto transform transition-all duration-300 hover:scale-110 hover:px-8 hover:py-5 hover:text-lg"
               onClick={() => navigate("/create-trip")}
             >
               Start Planning Your Journey
