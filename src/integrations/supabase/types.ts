@@ -104,6 +104,7 @@ export type Database = {
           expense_currency: string | null
           expense_paid: boolean | null
           expense_type: string | null
+          final_accommodation_day: string | null
           hotel: string | null
           hotel_checkin_date: string | null
           hotel_checkout_date: string | null
@@ -123,6 +124,7 @@ export type Database = {
           expense_currency?: string | null
           expense_paid?: boolean | null
           expense_type?: string | null
+          final_accommodation_day?: string | null
           hotel?: string | null
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           expense_currency?: string | null
           expense_paid?: boolean | null
           expense_type?: string | null
+          final_accommodation_day?: string | null
           hotel?: string | null
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null

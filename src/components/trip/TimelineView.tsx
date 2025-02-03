@@ -2,6 +2,7 @@ import React from 'react';
 import FlightCard from "./FlightCard";
 import TimelineEvent from "./TimelineEvent";
 import TransportationCard from "./TransportationCard";
+import AccommodationsSection from "./AccommodationsSection";
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 
 interface TimelineViewProps {
@@ -9,20 +10,11 @@ interface TimelineViewProps {
 }
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
-  const { events, isLoading, updateEvent, deleteEvent } = useTimelineEvents(tripId);
+  const { events, isLoading, updateEvent, deleteEvent, refetch } = useTimelineEvents(tripId);
 
   if (isLoading) {
     return <div>Loading timeline...</div>;
   }
-
-  // Create wrapper functions to pass the correct function signatures
-  const handleUpdateEvent = (id: string, data: any) => {
-    updateEvent.mutate({ id, ...data });
-  };
-
-  const handleDeleteEvent = (id: string) => {
-    deleteEvent.mutate(id);
-  };
 
   return (
     <div className="space-y-8">
@@ -33,6 +25,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
         date="June 1, 2024"
         departure="7:55 PM EDT"
         arrival="10:15 AM CEST"
+      />
+
+      <AccommodationsSection 
+        tripId={tripId || ''} 
+        onAccommodationChange={refetch}
       />
 
       <div className="space-y-12">
