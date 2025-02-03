@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Utensils } from "lucide-react";
 import { Clock, DollarSign } from "lucide-react";
+import RestaurantReservationForm from './dining/RestaurantReservationForm';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface DiningListProps {
   reservations: Array<{
@@ -13,16 +17,48 @@ interface DiningListProps {
     notes?: string;
     cost?: number;
     currency?: string;
+    address?: string;
+    phone_number?: string;
+    website?: string;
+    place_id?: string;
+    rating?: number;
   }>;
   onAddReservation: () => void;
   formatTime: (time?: string) => string;
+  dayId: string;
 }
 
 const DiningList: React.FC<DiningListProps> = ({
   reservations,
-  onAddReservation,
   formatTime,
+  dayId
 }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('restaurant_reservations')
+        .insert({
+          ...data,
+          day_id: dayId,
+          order_index: reservations.length
+        });
+
+      if (error) throw error;
+      
+      toast.success('Reservation added successfully');
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding reservation:', error);
+      toast.error('Failed to add reservation');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -30,7 +66,7 @@ const DiningList: React.FC<DiningListProps> = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={onAddReservation}
+          onClick={() => setIsDialogOpen(true)}
           className="text-earth-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -50,6 +86,9 @@ const DiningList: React.FC<DiningListProps> = ({
                   <Utensils className="h-4 w-4 text-earth-500" />
                   {reservation.restaurant_name}
                 </h5>
+                {reservation.address && (
+                  <p className="text-sm text-gray-600 mt-1">{reservation.address}</p>
+                )}
                 {reservation.notes && (
                   <p className="text-sm text-gray-600 mt-1">{reservation.notes}</p>
                 )}
@@ -84,6 +123,18 @@ const DiningList: React.FC<DiningListProps> = ({
           </div>
         ))}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Restaurant Reservation</DialogTitle>
+          </DialogHeader>
+          <RestaurantReservationForm
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

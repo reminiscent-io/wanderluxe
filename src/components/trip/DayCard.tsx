@@ -150,6 +150,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 reservations={[]}
                 onAddReservation={() => {}}
                 formatTime={formatTime}
+                dayId={id}
               />
             </div>
           </div>
