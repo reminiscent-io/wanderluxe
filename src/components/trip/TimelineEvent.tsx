@@ -117,7 +117,6 @@ const TimelineEvent = ({
 
       if (error) throw error;
 
-      // Update the local state through the parent component
       onEdit(id, {
         ...editData,
         activities: activities.map(a => 
@@ -140,12 +139,11 @@ const TimelineEvent = ({
     }
   };
 
-  // Determine the correct image URL based on the title
   const getImageUrl = () => {
     if (title.toLowerCase().includes('naples')) {
-      return "https://images.unsplash.com/photo-1516483638261-f4dbaf036963"; // Naples cityscape
+      return "https://images.unsplash.com/photo-1516483638261-f4dbaf036963"; 
     } else if (title.toLowerCase().includes('positano')) {
-      return "https://images.unsplash.com/photo-1533606688076-b6683a5f59f1"; // Classic Positano view
+      return "https://images.unsplash.com/photo-1533606688076-b6683a5f59f1"; 
     }
     return image;
   };
@@ -245,12 +243,16 @@ const TimelineEvent = ({
                               value={editData.accommodation_currency}
                               onValueChange={(value) => setEditData({ ...editData, accommodation_currency: value })}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="bg-white border-gray-200">
                                 <SelectValue placeholder="Select currency" />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="bg-white border border-gray-200 shadow-lg">
                                 {CURRENCIES.map((currency) => (
-                                  <SelectItem key={currency} value={currency}>
+                                  <SelectItem 
+                                    key={currency} 
+                                    value={currency}
+                                    className="hover:bg-gray-100"
+                                  >
                                     {currency}
                                   </SelectItem>
                                 ))}
@@ -276,12 +278,16 @@ const TimelineEvent = ({
                               value={editData.transportation_currency}
                               onValueChange={(value) => setEditData({ ...editData, transportation_currency: value })}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="bg-white border-gray-200">
                                 <SelectValue placeholder="Select currency" />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="bg-white border border-gray-200 shadow-lg">
                                 {CURRENCIES.map((currency) => (
-                                  <SelectItem key={currency} value={currency}>
+                                  <SelectItem 
+                                    key={currency} 
+                                    value={currency}
+                                    className="hover:bg-gray-100"
+                                  >
                                     {currency}
                                   </SelectItem>
                                 ))}
@@ -290,10 +296,20 @@ const TimelineEvent = ({
                           </div>
                         </div>
                         <div className="flex justify-end gap-2">
-                          <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setIsEditing(false)}
+                            className="text-gray-600"
+                          >
                             Cancel
                           </Button>
-                          <Button type="submit">Save Changes</Button>
+                          <Button 
+                            type="submit"
+                            className="bg-earth-500 hover:bg-earth-600 text-white"
+                          >
+                            Save Changes
+                          </Button>
                         </div>
                       </form>
                     </DialogContent>
