@@ -19,11 +19,16 @@ Deno.serve(async (req) => {
     )
 
     // Fetch exchange rates from an API (using exchangerate-api.com as an example)
-    const response = await fetch('https://v6.exchangerate-api.com/v6/YOUR_API_KEY/latest/USD')
+    const response = await fetch(`https://v6.exchangerate-api.com/v6/${Deno.env.get('EXCHANGE_RATE_API')}/latest/USD`)
     const data = await response.json()
+
+    if (!data.conversion_rates) {
+      throw new Error('Failed to fetch exchange rates')
+    }
 
     const rates = data.conversion_rates
     const currencies = Object.keys(rates)
+    console.log(`Fetched rates for ${currencies.length} currencies`)
 
     // Update exchange rates in the database
     for (const fromCurrency of currencies) {
@@ -31,7 +36,7 @@ Deno.serve(async (req) => {
         if (fromCurrency !== toCurrency) {
           const rate = rates[toCurrency] / rates[fromCurrency]
           
-          await supabaseClient
+          const { error } = await supabaseClient
             .from('exchange_rates')
             .upsert({
               currency_from: fromCurrency,
@@ -41,10 +46,15 @@ Deno.serve(async (req) => {
             }, {
               onConflict: 'currency_from,currency_to'
             })
+
+          if (error) {
+            console.error(`Error updating rate for ${fromCurrency} to ${toCurrency}:`, error)
+          }
         }
       }
     }
 
+    console.log('Exchange rates updated successfully')
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
