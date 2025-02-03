@@ -127,9 +127,18 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   };
 
   const formatDateRange = (checkinDate: string, checkoutDate: string) => {
+    // Parse the dates but don't modify them
     const checkin = new Date(checkinDate);
     const checkout = new Date(checkoutDate);
-    return `${checkin.toLocaleDateString()} - ${checkout.toLocaleDateString()}`;
+    
+    // Format the dates directly without any date adjustments
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    };
+    
+    return `${checkin.toLocaleDateString(undefined, options)} - ${checkout.toLocaleDateString(undefined, options)}`;
   };
 
   return (
