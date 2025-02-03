@@ -1,3 +1,4 @@
+import React from "react"; // Add explicit React import
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,49 +14,61 @@ import Inspiration from "./pages/Inspiration";
 import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
 
-const queryClient = new QueryClient();
+// Move queryClient inside the component to ensure proper React context
+const App = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/create-trip"
-              element={
-                <ProtectedRoute>
-                  <CreateTrip />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-trips"
-              element={
-                <ProtectedRoute>
-                  <MyTrips />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/inspiration" element={<Inspiration />} />
-            <Route
-              path="/trip/:tripId"
-              element={
-                <ProtectedRoute>
-                  <TripDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route
+                  path="/create-trip"
+                  element={
+                    <ProtectedRoute>
+                      <CreateTrip />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/my-trips"
+                  element={
+                    <ProtectedRoute>
+                      <MyTrips />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/inspiration" element={<Inspiration />} />
+                <Route
+                  path="/trip/:tripId"
+                  element={
+                    <ProtectedRoute>
+                      <TripDetails />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;
