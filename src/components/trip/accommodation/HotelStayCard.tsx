@@ -26,13 +26,13 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
   // Generate array of dates between check-in and check-out
   const getDatesInRange = (startDate: string, endDate: string) => {
     const dates = [];
-    // Create date at noon to avoid timezone issues
-    let currentDate = new Date(`${startDate}T12:00:00`);
-    const lastDate = new Date(`${endDate}T12:00:00`);
+    // Create dates using UTC to avoid timezone issues
+    const currentDate = new Date(startDate + 'T00:00:00Z');
+    const lastDate = new Date(endDate + 'T00:00:00Z');
 
     while (currentDate <= lastDate) {
       dates.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
     }
 
     return dates;
