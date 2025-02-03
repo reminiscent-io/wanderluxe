@@ -51,7 +51,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
                   : event.image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'
               }
               hotel={event.hotel || ''}
-              hotelDetails={event.hotel_details || ''}
+              hotel_details={event.hotel_details || ''}
               hotel_checkin_date={event.hotel_checkin_date || ''}
               hotel_checkout_date={event.hotel_checkout_date || ''}
               hotel_url={event.hotel_url || ''}
