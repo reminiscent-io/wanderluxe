@@ -1,22 +1,18 @@
-import { TransportationType } from './enums';
+import { Database } from './database';
 
-// Define composite types if needed in the future
-// Currently, there are no composite types defined
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
-export type TransportationEventComposite = {
-  id: string;
-  trip_id: string;
-  type: TransportationType;
-  provider: string | null;
-  details: string | null;
-  departure_location: string | null;
-  arrival_location: string | null;
-  start_date: string;
-  start_time: string | null;
-  end_date: string | null;
-  end_time: string | null;
-  confirmation_number: string | null;
-  cost: number | null;
-  currency: string | null;
-  created_at: string;
-};
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never

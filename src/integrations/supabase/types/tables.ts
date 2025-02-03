@@ -1,6 +1,6 @@
 import { Database } from './database';
 
-type PublicSchema = Database[Extract<keyof Database, "public">];
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
   PublicTableNameOrOptions extends
@@ -25,7 +25,7 @@ export type Tables<
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
@@ -46,7 +46,7 @@ export type TablesInsert<
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
   PublicTableNameOrOptions extends
@@ -67,4 +67,4 @@ export type TablesUpdate<
       }
       ? U
       : never
-    : never;
+    : never
