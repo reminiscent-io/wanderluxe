@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Calendar, ExternalLink, Pencil, Trash2, ChevronDown } from "lucide-react";
+import { Calendar, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
 
 interface HotelStayCardProps {
@@ -26,8 +26,8 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
   // Generate array of dates between check-in and check-out
   const getDatesInRange = (startDate: string, endDate: string) => {
     const dates = [];
-    let currentDate = new Date(startDate);
-    const lastDate = new Date(endDate);
+    let currentDate = new Date(stay.hotel_checkin_date);
+    const lastDate = new Date(stay.hotel_checkout_date);
 
     while (currentDate <= lastDate) {
       dates.push(new Date(currentDate));
