@@ -15,10 +15,9 @@ interface EventEditFormProps {
     hotel_checkin_date: string;
     hotel_checkout_date: string;
     hotel_url: string;
-    accommodation_cost: string;
-    accommodation_currency: string;
-    transportation_cost: string;
-    transportation_currency: string;
+    expense_type: string;
+    expense_cost: string;
+    expense_currency: string;
   };
   onEditDataChange: (data: any) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -26,6 +25,7 @@ interface EventEditFormProps {
 }
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD"];
+const EXPENSE_TYPES = ["accommodation", "transportation", "activities", "other"];
 
 const EventEditForm: React.FC<EventEditFormProps> = ({
   editData,
@@ -107,58 +107,45 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="accommodation_cost">Accommodation Cost</Label>
-          <Input
-            id="accommodation_cost"
-            type="number"
-            step="0.01"
-            value={editData.accommodation_cost}
-            onChange={(e) => onEditDataChange({ ...editData, accommodation_cost: e.target.value })}
-            placeholder="Enter cost"
-          />
-        </div>
-        <div>
-          <Label htmlFor="accommodation_currency">Currency</Label>
+          <Label htmlFor="expense_type">Expense Type</Label>
           <Select
-            value={editData.accommodation_currency}
-            onValueChange={(value) => onEditDataChange({ ...editData, accommodation_currency: value })}
+            value={editData.expense_type}
+            onValueChange={(value) => onEditDataChange({ ...editData, expense_type: value })}
           >
             <SelectTrigger className="bg-white border-gray-200">
-              <SelectValue placeholder="Select currency" />
+              <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent className="bg-white border border-gray-200 shadow-lg">
-              {CURRENCIES.map((currency) => (
+              {EXPENSE_TYPES.map((type) => (
                 <SelectItem 
-                  key={currency} 
-                  value={currency}
+                  key={type} 
+                  value={type}
                   className="hover:bg-gray-100"
                 >
-                  {currency}
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="transportation_cost">Transportation Cost</Label>
+          <Label htmlFor="expense_cost">Cost</Label>
           <Input
-            id="transportation_cost"
+            id="expense_cost"
             type="number"
             step="0.01"
-            value={editData.transportation_cost}
-            onChange={(e) => onEditDataChange({ ...editData, transportation_cost: e.target.value })}
+            value={editData.expense_cost}
+            onChange={(e) => onEditDataChange({ ...editData, expense_cost: e.target.value })}
             placeholder="Enter cost"
           />
         </div>
         <div>
-          <Label htmlFor="transportation_currency">Currency</Label>
+          <Label htmlFor="expense_currency">Currency</Label>
           <Select
-            value={editData.transportation_currency}
-            onValueChange={(value) => onEditDataChange({ ...editData, transportation_currency: value })}
+            value={editData.expense_currency}
+            onValueChange={(value) => onEditDataChange({ ...editData, expense_currency: value })}
           >
             <SelectTrigger className="bg-white border-gray-200">
               <SelectValue placeholder="Select currency" />

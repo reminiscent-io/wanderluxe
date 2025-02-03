@@ -58,10 +58,9 @@ const TimelineEvent = ({
     hotel_checkin_date,
     hotel_checkout_date,
     hotel_url,
-    accommodation_cost: "",
-    accommodation_currency: "USD",
-    transportation_cost: "",
-    transportation_currency: "USD",
+    expense_type: "",
+    expense_cost: "",
+    expense_currency: "USD",
   });
   const [newActivity, setNewActivity] = useState({ text: "", cost: "", currency: "USD" });
   const [isAddingActivity, setIsAddingActivity] = useState(false);
@@ -72,8 +71,7 @@ const TimelineEvent = ({
     e.preventDefault();
     onEdit(id, {
       ...editData,
-      accommodation_cost: editData.accommodation_cost ? Number(editData.accommodation_cost) : null,
-      transportation_cost: editData.transportation_cost ? Number(editData.transportation_cost) : null,
+      expense_cost: editData.expense_cost ? Number(editData.expense_cost) : null,
     });
     setIsEditing(false);
   };
