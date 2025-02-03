@@ -29,8 +29,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     const fetchExchangeRates = async () => {
       const usedCurrencies = new Set<string>();
       events?.forEach(event => {
-        if (event.accommodation_currency) usedCurrencies.add(event.accommodation_currency);
-        if (event.transportation_currency) usedCurrencies.add(event.transportation_currency);
+        if (event.expense_currency) usedCurrencies.add(event.expense_currency);
         event.activities?.forEach(activity => {
           if (activity.currency) usedCurrencies.add(activity.currency);
         });
@@ -67,11 +66,14 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     );
   };
 
-  const handleUpdateCost = async (eventId: string, field: string, value: number, currency: string) => {
+  const handleUpdateCost = async (eventId: string, cost: number, currency: string) => {
     try {
       const { error } = await supabase
         .from('timeline_events')
-        .update({ [`${field}_cost`]: value, [`${field}_currency`]: currency })
+        .update({ 
+          expense_cost: cost,
+          expense_currency: currency
+        })
         .eq('id', eventId);
 
       if (error) throw error;
@@ -87,7 +89,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     try {
       if (!tripId) throw new Error('No trip ID provided');
       
-      // Create a new timeline event for the expense
       const { data, error } = await supabase
         .from('timeline_events')
         .insert([{
@@ -95,8 +96,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           title: `${category} Expense`,
           date: format(new Date(), 'yyyy-MM-dd'),
           order_index: events?.length || 0,
-          [`${category.toLowerCase()}_cost`]: amount,
-          [`${category.toLowerCase()}_currency`]: currency
+          expense_type: category.toLowerCase(),
+          expense_cost: amount,
+          expense_currency: currency
         }])
         .select()
         .single();
@@ -115,14 +117,27 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     let accommodationTotal = 0;
     let transportationTotal = 0;
     let activitiesTotal = 0;
+    let otherTotal = 0;
 
     events?.forEach(event => {
-      if (event.accommodation_cost && event.accommodation_currency) {
-        accommodationTotal += convertAmount(Number(event.accommodation_cost), event.accommodation_currency);
+      if (event.expense_cost && event.expense_currency) {
+        const convertedAmount = convertAmount(Number(event.expense_cost), event.expense_currency);
+        switch (event.expense_type) {
+          case 'accommodation':
+            accommodationTotal += convertedAmount;
+            break;
+          case 'transportation':
+            transportationTotal += convertedAmount;
+            break;
+          case 'activities':
+            activitiesTotal += convertedAmount;
+            break;
+          case 'other':
+            otherTotal += convertedAmount;
+            break;
+        }
       }
-      if (event.transportation_cost && event.transportation_currency) {
-        transportationTotal += convertAmount(Number(event.transportation_cost), event.transportation_currency);
-      }
+      // Add activity costs to activities total
       event.activities?.forEach(activity => {
         if (activity.cost && activity.currency) {
           activitiesTotal += convertAmount(Number(activity.cost), activity.currency);
@@ -134,49 +149,17 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       accommodation: accommodationTotal,
       transportation: transportationTotal,
       activities: activitiesTotal,
-      total: accommodationTotal + transportationTotal + activitiesTotal
+      other: otherTotal,
+      total: accommodationTotal + transportationTotal + activitiesTotal + otherTotal
     };
   };
 
   const totals = calculateTotals();
 
-  const getTransportationExpenses = () => {
-    const expenses: any[] = [];
-    events?.forEach(event => {
-      if (event.transportation_cost && event.transportation_currency) {
-        // Add flight expenses
-        if (event.title.toLowerCase().includes('flight')) {
-          expenses.push({
-            id: `${event.id}-flight`,
-            type: 'plane',
-            description: `Flight: ${event.date} - ${event.title}`,
-            cost: event.transportation_cost,
-            currency: event.transportation_currency
-          });
-        }
-        // Add car service expenses
-        else if (event.title.toLowerCase().includes('car')) {
-          expenses.push({
-            id: `${event.id}-car`,
-            type: 'car',
-            description: `Car Service: ${event.date} - ${event.title}`,
-            cost: event.transportation_cost,
-            currency: event.transportation_currency
-          });
-        }
-        // Add other transportation expenses
-        else {
-          expenses.push({
-            id: `${event.id}-transport`,
-            type: 'car',
-            description: `Transportation: ${event.date} - ${event.title}`,
-            cost: event.transportation_cost,
-            currency: event.transportation_currency
-          });
-        }
-      }
-    });
-    return expenses;
+  const getExpensesByType = (type: string) => {
+    return events?.filter(event => 
+      event.expense_type === type && event.expense_cost && event.expense_currency
+    ) || [];
   };
 
   return (
@@ -214,19 +197,17 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           isExpanded={expandedSections.includes('accommodation')}
           onToggle={() => toggleSection('accommodation')}
         >
-          {events?.map(event => (
-            event.accommodation_cost && (
-              <ExpenseDetails
-                key={`${event.id}-accommodation`}
-                id={event.id}
-                cost={event.accommodation_cost}
-                currency={event.accommodation_currency}
-                description={`${event.date} - ${event.title}`}
-                isEditing={editingItem === `${event.id}-accommodation`}
-                onEdit={() => setEditingItem(`${event.id}-accommodation`)}
-                onSave={(cost, currency) => handleUpdateCost(event.id, 'accommodation', cost, currency)}
-              />
-            )
+          {getExpensesByType('accommodation').map(event => (
+            <ExpenseDetails
+              key={event.id}
+              id={event.id}
+              cost={event.expense_cost}
+              currency={event.expense_currency}
+              description={`${event.date} - ${event.title}`}
+              isEditing={editingItem === event.id}
+              onEdit={() => setEditingItem(event.id)}
+              onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
+            />
           ))}
         </ExpenseCard>
 
@@ -237,13 +218,18 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           isExpanded={expandedSections.includes('transportation')}
           onToggle={() => toggleSection('transportation')}
         >
-          <TransportationDetails
-            transportationExpenses={getTransportationExpenses()}
-            onUpdateCost={(id, cost, currency) => {
-              const eventId = id.split('-')[0];
-              handleUpdateCost(eventId, 'transportation', cost, currency);
-            }}
-          />
+          {getExpensesByType('transportation').map(event => (
+            <ExpenseDetails
+              key={event.id}
+              id={event.id}
+              cost={event.expense_cost}
+              currency={event.expense_currency}
+              description={`${event.date} - ${event.title}`}
+              isEditing={editingItem === event.id}
+              onEdit={() => setEditingItem(event.id)}
+              onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
+            />
+          ))}
         </ExpenseCard>
 
         <ExpenseCard
@@ -253,6 +239,18 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           isExpanded={expandedSections.includes('activities')}
           onToggle={() => toggleSection('activities')}
         >
+          {getExpensesByType('activities').map(event => (
+            <ExpenseDetails
+              key={event.id}
+              id={event.id}
+              cost={event.expense_cost}
+              currency={event.expense_currency}
+              description={`${event.date} - ${event.title}`}
+              isEditing={editingItem === event.id}
+              onEdit={() => setEditingItem(event.id)}
+              onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
+            />
+          ))}
           {events?.map(event => 
             event.activities?.map(activity => (
               <ExpenseDetails
@@ -263,7 +261,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                 description={activity.text}
                 isEditing={editingItem === activity.id}
                 onEdit={() => setEditingItem(activity.id)}
-                onSave={(cost, currency) => handleUpdateCost(activity.id, 'activity', cost, currency)}
+                onSave={(cost, currency) => handleUpdateCost(activity.id, cost, currency)}
               />
             ))
           )}

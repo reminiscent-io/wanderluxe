@@ -97,51 +97,48 @@ export type Database = {
       }
       timeline_events: {
         Row: {
-          accommodation_cost: number | null
-          accommodation_currency: string | null
           created_at: string
           date: string
           description: string | null
+          expense_cost: number | null
+          expense_currency: string | null
+          expense_type: string | null
           hotel: string | null
           hotel_details: string | null
           id: string
           image_url: string | null
           order_index: number
           title: string
-          transportation_cost: number | null
-          transportation_currency: string | null
           trip_id: string
         }
         Insert: {
-          accommodation_cost?: number | null
-          accommodation_currency?: string | null
           created_at?: string
           date: string
           description?: string | null
+          expense_cost?: number | null
+          expense_currency?: string | null
+          expense_type?: string | null
           hotel?: string | null
           hotel_details?: string | null
           id?: string
           image_url?: string | null
           order_index: number
           title: string
-          transportation_cost?: number | null
-          transportation_currency?: string | null
           trip_id: string
         }
         Update: {
-          accommodation_cost?: number | null
-          accommodation_currency?: string | null
           created_at?: string
           date?: string
           description?: string | null
+          expense_cost?: number | null
+          expense_currency?: string | null
+          expense_type?: string | null
           hotel?: string | null
           hotel_details?: string | null
           id?: string
           image_url?: string | null
           order_index?: number
           title?: string
-          transportation_cost?: number | null
-          transportation_currency?: string | null
           trip_id?: string
         }
         Relationships: [
