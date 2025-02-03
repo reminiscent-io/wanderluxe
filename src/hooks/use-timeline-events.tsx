@@ -80,7 +80,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
           e.hotel_checkin_date && 
           e.hotel_checkout_date &&
           new Date(event.date) >= new Date(e.hotel_checkin_date) && 
-          new Date(event.date) < new Date(e.hotel_checkout_date)  // Changed to use < instead of <= for checkout date
+          new Date(event.date) < new Date(e.hotel_checkout_date)
         );
 
         // If there's an overlapping hotel stay and this event doesn't have its own hotel
