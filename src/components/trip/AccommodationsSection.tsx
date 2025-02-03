@@ -126,6 +126,12 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     }
   };
 
+  const formatDateRange = (checkinDate: string, checkoutDate: string) => {
+    const checkin = new Date(checkinDate);
+    const checkout = new Date(checkoutDate);
+    return `${checkin.toLocaleDateString()} - ${checkout.toLocaleDateString()}`;
+  };
+
   return (
     <Card className="bg-sand-50 shadow-md">
       <Button
@@ -171,7 +177,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
                           <div>
                             <h3 className="font-medium">{stay.hotel}</h3>
                             <p className="text-sm text-gray-600">
-                              {new Date(stay.hotel_checkin_date).toLocaleDateString()} - {new Date(stay.hotel_checkout_date).toLocaleDateString()}
+                              {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
                             </p>
                             {stay.hotel_details && (
                               <p className="text-sm text-gray-600 mt-1">{stay.hotel_details}</p>
