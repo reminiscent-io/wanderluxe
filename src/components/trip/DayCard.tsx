@@ -62,8 +62,8 @@ const DayCard: React.FC<DayCardProps> = ({
         <div className="grid md:grid-cols-3 h-full">
           <div className="h-64 md:h-full relative">
             <img
-              src="https://images.unsplash.com/photo-1455587734955-081b22074882?auto=format&fit=crop&w=800&q=80"
-              alt="Positano coastal view"
+              src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"
+              alt="Modern hotel architecture"
               className="w-full h-full object-cover"
             />
           </div>
