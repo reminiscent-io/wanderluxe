@@ -10,12 +10,14 @@ import CurrencySelector from './budget/CurrencySelector';
 import ExpenseDetails from './budget/ExpenseDetails';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 import TotalExpenseCard from './budget/TotalExpenseCard';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface BudgetViewProps {
   tripId: string | undefined;
 }
 
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
+  const queryClient = useQueryClient();
   const { events } = useTimelineEvents(tripId);
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [exchangeRates, setExchangeRates] = useState<any[]>([]);
@@ -167,6 +169,30 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       event.expense_type === type && event.expense_cost && event.expense_currency
     ) || [];
   };
+
+  useEffect(() => {
+    // Set up real-time subscription for timeline_events table
+    const channel = supabase
+      .channel('timeline-events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'timeline_events',
+          filter: `trip_id=eq.${tripId}`
+        },
+        () => {
+          // Invalidate and refetch the events query
+          queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tripId, queryClient]);
 
   return (
     <div className="space-y-8">
