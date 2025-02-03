@@ -123,7 +123,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCance
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" variant="default">
+        <Button type="submit" className="bg-earth-500 hover:bg-earth-600 text-white">
           {initialData ? 'Update' : 'Add Accommodation'}
         </Button>
       </div>
