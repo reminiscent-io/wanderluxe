@@ -14,6 +14,7 @@ interface AccommodationFieldsProps {
   onHotelUrlChange: (value: string) => void;
   onCheckinDateChange: (value: string) => void;
   onCheckoutDateChange: (value: string) => void;
+  isExistingStay?: boolean;
 }
 
 const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
@@ -26,7 +27,8 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
   onHotelDetailsChange,
   onHotelUrlChange,
   onCheckinDateChange,
-  onCheckoutDateChange
+  onCheckoutDateChange,
+  isExistingStay = false
 }) => {
   return (
     <div className="space-y-4">
@@ -36,6 +38,8 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
           id="hotel"
           value={hotel}
           onChange={(e) => onHotelChange(e.target.value)}
+          disabled={isExistingStay}
+          className={isExistingStay ? "bg-gray-100" : ""}
         />
       </div>
       <div>
@@ -44,6 +48,8 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
           id="hotelDetails"
           value={hotelDetails}
           onChange={(e) => onHotelDetailsChange(e.target.value)}
+          disabled={isExistingStay}
+          className={isExistingStay ? "bg-gray-100" : ""}
         />
       </div>
       <div>
@@ -54,6 +60,8 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
           value={hotelUrl}
           placeholder="https://..."
           onChange={(e) => onHotelUrlChange(e.target.value)}
+          disabled={isExistingStay}
+          className={isExistingStay ? "bg-gray-100" : ""}
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -65,6 +73,8 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
             value={checkinDate}
             onChange={(e) => onCheckinDateChange(e.target.value)}
             required={hotel ? true : false}
+            disabled={isExistingStay}
+            className={isExistingStay ? "bg-gray-100" : ""}
           />
         </div>
         <div>
@@ -75,6 +85,8 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
             value={checkoutDate}
             onChange={(e) => onCheckoutDateChange(e.target.value)}
             required={hotel ? true : false}
+            disabled={isExistingStay}
+            className={isExistingStay ? "bg-gray-100" : ""}
           />
         </div>
       </div>

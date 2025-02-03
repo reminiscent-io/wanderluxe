@@ -36,6 +36,14 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
     }
   }, [editData.hotel]);
 
+  // If there's a hotel stay that overlaps with this date but no hotel set for this event,
+  // we should show the hotel information in a disabled state
+  const isExistingHotelStay = editData.hotel && 
+    editData.hotel_checkin_date && 
+    editData.hotel_checkout_date && 
+    editData.date >= editData.hotel_checkin_date && 
+    editData.date < editData.hotel_checkout_date;
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <BasicInfoFields
@@ -58,6 +66,7 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
         onHotelUrlChange={(value) => onEditDataChange({ ...editData, hotel_url: value })}
         onCheckinDateChange={(value) => onEditDataChange({ ...editData, hotel_checkin_date: value })}
         onCheckoutDateChange={(value) => onEditDataChange({ ...editData, hotel_checkout_date: value })}
+        isExistingStay={isExistingHotelStay}
       />
 
       <ExpenseFields
