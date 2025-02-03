@@ -102,6 +102,7 @@ export type Database = {
           description: string | null
           expense_cost: number | null
           expense_currency: string | null
+          expense_paid: boolean | null
           expense_type: string | null
           hotel: string | null
           hotel_details: string | null
@@ -117,6 +118,7 @@ export type Database = {
           description?: string | null
           expense_cost?: number | null
           expense_currency?: string | null
+          expense_paid?: boolean | null
           expense_type?: string | null
           hotel?: string | null
           hotel_details?: string | null
@@ -132,6 +134,7 @@ export type Database = {
           description?: string | null
           expense_cost?: number | null
           expense_currency?: string | null
+          expense_paid?: boolean | null
           expense_type?: string | null
           hotel?: string | null
           hotel_details?: string | null
