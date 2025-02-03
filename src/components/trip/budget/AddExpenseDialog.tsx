@@ -22,7 +22,7 @@ import CurrencySelector from './CurrencySelector';
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (category: string, title: string, amount: number, currency: string, isPaid: boolean) => void;
+  onSubmit: (category: string, title: string, amount: number, currency: string, isPaid: boolean, date: string | null) => void;
   defaultCategory?: string;
 }
 
@@ -39,6 +39,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   const [amount, setAmount] = useState<string>('');
   const [currency, setCurrency] = useState<string>('USD');
   const [isPaid, setIsPaid] = useState(false);
+  const [date, setDate] = useState<string>('');
 
   useEffect(() => {
     if (defaultCategory) {
@@ -50,12 +51,21 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
     e.preventDefault();
     if (!category || !title || !amount) return;
     
-    onSubmit(category, title, Number(amount), currency, isPaid);
+    onSubmit(
+      category, 
+      title, 
+      Number(amount), 
+      currency, 
+      isPaid, 
+      date || null
+    );
+    
     setCategory('');
     setTitle('');
     setAmount('');
     setCurrency('USD');
     setIsPaid(false);
+    setDate('');
   };
 
   return (
@@ -93,6 +103,17 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
               placeholder="e.g., Private Transfer from Naples Airport"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              className="bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Date (Optional)</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               className="bg-white"
             />
           </div>

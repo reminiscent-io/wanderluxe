@@ -106,7 +106,8 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     title: string,
     amount: number,
     currency: string,
-    isPaid: boolean
+    isPaid: boolean,
+    date: string | null
   ) => {
     try {
       if (!tripId) throw new Error('No trip ID provided');
@@ -116,12 +117,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         .insert([{
           trip_id: tripId,
           title: title,
-          date: format(new Date(), 'yyyy-MM-dd'),
+          date: date || format(new Date(), 'yyyy-MM-dd'),
           order_index: events?.length || 0,
           expense_type: category.toLowerCase(),
           expense_cost: amount,
           expense_currency: currency,
-          expense_paid: isPaid
+          expense_paid: isPaid,
+          expense_date: date
         }])
         .select()
         .single();
@@ -254,7 +256,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               id={event.id}
               cost={event.expense_cost}
               currency={event.expense_currency}
-              description={`${event.date} - ${event.title}`}
+              description={`${event.expense_date || event.date} - ${event.title}`}
               isEditing={editingItem === event.id}
               onEdit={() => setEditingItem(event.id)}
               onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
@@ -277,7 +279,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               id={event.id}
               cost={event.expense_cost}
               currency={event.expense_currency}
-              description={`${event.date} - ${event.title}`}
+              description={`${event.expense_date || event.date} - ${event.title}`}
               isEditing={editingItem === event.id}
               onEdit={() => setEditingItem(event.id)}
               onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
@@ -300,7 +302,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               id={event.id}
               cost={event.expense_cost}
               currency={event.expense_currency}
-              description={`${event.date} - ${event.title}`}
+              description={`${event.expense_date || event.date} - ${event.title}`}
               isEditing={editingItem === event.id}
               onEdit={() => setEditingItem(event.id)}
               onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
