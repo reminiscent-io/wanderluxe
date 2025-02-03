@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
 import FlightCard from "../components/trip/FlightCard";
@@ -7,40 +7,64 @@ import TimelineEvent from "../components/trip/TimelineEvent";
 import TransportationCard from "../components/trip/TransportationCard";
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 const TripDetails = () => {
   const { tripId } = useParams();
-  const trips = JSON.parse(localStorage.getItem('trips') || '[]');
-  const trip = trips.find((t: any) => t.id.toString() === tripId);
+  const navigate = useNavigate();
 
-  // We'll only fetch timeline events if we have a valid UUID
-  const isValidUUID = trip?.uuid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trip.uuid);
-  
-  const { events, updateEvent, deleteEvent } = useTimelineEvents(
-    isValidUUID ? trip.uuid : null
-  );
+  // Fetch trip details from Supabase
+  const { data: trip, isLoading: tripLoading } = useQuery({
+    queryKey: ['trip', tripId],
+    queryFn: async () => {
+      if (!tripId) throw new Error('No trip ID provided');
+      
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', tripId)
+        .single();
 
-  if (!trip) {
+      if (error) {
+        console.error('Error fetching trip:', error);
+        toast.error('Failed to load trip details');
+        throw error;
+      }
+      
+      if (!data) {
+        toast.error('Trip not found');
+        navigate('/my-trips');
+        throw new Error('Trip not found');
+      }
+
+      return data;
+    },
+    retry: false
+  });
+
+  const { events, isLoading: eventsLoading, updateEvent, deleteEvent } = useTimelineEvents(tripId);
+
+  if (tripLoading || eventsLoading) {
     return (
       <div>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold">Trip not found</h1>
+          <div className="animate-pulse">
+            <div className="h-[60vh] bg-gray-200 rounded-lg mb-8"></div>
+            <div className="h-32 bg-gray-200 rounded-lg mb-8"></div>
+            <div className="space-y-12">
+              <div className="h-96 bg-gray-200 rounded-lg"></div>
+              <div className="h-96 bg-gray-200 rounded-lg"></div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!isValidUUID) {
-    toast.error("Invalid trip ID format");
-    return (
-      <div>
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold">Invalid trip format</h1>
-        </div>
-      </div>
-    );
+  if (!trip) {
+    return null; // The navigate in queryFn will handle the redirect
   }
 
   const handleEditEvent = (id: string, data: any) => {
@@ -57,8 +81,8 @@ const TripDetails = () => {
       
       <HeroSection 
         title={trip.destination}
-        date={trip.startDate}
-        imageUrl="https://images.unsplash.com/photo-1501854140801-50d01698950b"
+        date={`${trip.start_date} - ${trip.end_date}`}
+        imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1501854140801-50d01698950b"}
       />
 
       <div className="container mx-auto px-4 py-8">
@@ -66,7 +90,7 @@ const TripDetails = () => {
           type="outbound"
           flightNumber="TBD"
           route={`Your City → ${trip.destination}`}
-          date={trip.startDate}
+          date={trip.start_date}
           departure="TBD"
           arrival="TBD"
         />
@@ -82,7 +106,7 @@ const TripDetails = () => {
                 date={event.date}
                 title={event.title}
                 description={event.description || ''}
-                image={event.image_url || ''}
+                image={event.image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'}
                 hotel={event.hotel || ''}
                 hotelDetails={event.hotel_details || ''}
                 activities={event.activities?.map(a => a.text) || []}
@@ -108,7 +132,7 @@ const TripDetails = () => {
           type="return"
           flightNumber="TBD"
           route={`${trip.destination} → Your City`}
-          date={trip.endDate}
+          date={trip.end_date}
           departure="TBD"
           arrival="TBD"
         />
