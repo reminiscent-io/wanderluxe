@@ -64,7 +64,7 @@ const TripDetails = () => {
   }
 
   if (!trip) {
-    return null; // The navigate in queryFn will handle the redirect
+    return null;
   }
 
   const handleEditEvent = (id: string, data: any) => {
@@ -115,7 +115,7 @@ const TripDetails = () => {
                 }
                 hotel={event.hotel || ''}
                 hotelDetails={event.hotel_details || ''}
-                activities={event.activities?.map(a => a.text) || []}
+                activities={event.activities || []}
                 index={index}
                 onEdit={handleEditEvent}
                 onDelete={handleDeleteEvent}
