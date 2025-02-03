@@ -15,6 +15,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
     return <div>Loading timeline...</div>;
   }
 
+  // Create wrapper functions to pass the correct function signatures
+  const handleUpdateEvent = (id: string, data: any) => {
+    updateEvent.mutate({ id, ...data });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    deleteEvent.mutate(id);
+  };
+
   return (
     <div className="space-y-8">
       <FlightCard
@@ -45,8 +54,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
               hotelDetails={event.hotel_details || ''}
               activities={event.activities || []}
               index={index}
-              onEdit={updateEvent}
-              onDelete={deleteEvent}
+              onEdit={handleUpdateEvent}
+              onDelete={handleDeleteEvent}
             />
             {index < (events?.length || 0) - 1 && (
               <TransportationCard
