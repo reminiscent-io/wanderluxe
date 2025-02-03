@@ -46,60 +46,6 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
       <div className="flex-1 space-y-2">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-medium">{stay.hotel}</I'll help you remove the selected text element from the HotelStayCard component.
-
-<lov-code>
-Let's update the HotelStayCard.tsx file to remove the unnecessary text element:
-
-<lov-write file_path="src/components/trip/accommodation/HotelStayCard.tsx">
-import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Calendar, ExternalLink, Pencil, Trash2 } from "lucide-react";
-import { format, parseISO } from 'date-fns';
-
-interface HotelStayCardProps {
-  stay: {
-    id: string;
-    hotel: string;
-    hotel_details?: string;
-    hotel_url?: string;
-    hotel_checkin_date: string;
-    hotel_checkout_date: string;
-  };
-  onEdit: (stayId: string) => void;
-  onDelete: (stayId: string) => void;
-  formatDateRange: (checkinDate: string, checkoutDate: string) => string;
-}
-
-const HotelStayCard: React.FC<HotelStayCardProps> = ({
-  stay,
-  onEdit,
-  onDelete,
-  formatDateRange,
-}) => {
-  // Generate array of dates between check-in and check-out
-  const getDatesInRange = (startDate: string, endDate: string) => {
-    const dates = [];
-    const start = parseISO(startDate);
-    const end = parseISO(endDate);
-    
-    let current = new Date(start);
-    while (current <= end) {
-      dates.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-    
-    return dates;
-  };
-
-  const stayDates = getDatesInRange(stay.hotel_checkin_date, stay.hotel_checkout_date);
-
-  return (
-    <div className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm">
-      <Calendar className="h-5 w-5 text-gray-500 mt-1" />
-      <div className="flex-1 space-y-2">
-        <div className="flex justify-between items-start">
-          <div>
             <h3 className="font-medium">{stay.hotel}</h3>
             {stay.hotel_details && (
               <p className="text-sm text-gray-600 mt-1">{stay.hotel_details}</p>
