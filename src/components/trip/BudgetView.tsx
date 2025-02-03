@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import ExpenseCard from './budget/ExpenseCard';
 import CurrencySelector from './budget/CurrencySelector';
 import ExpenseDetails from './budget/ExpenseDetails';
+import TransportationDetails from './budget/TransportationDetails';
 
 interface BudgetViewProps {
   tripId: string | undefined;
@@ -109,6 +110,45 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
   const totals = calculateTotals();
 
+  const getTransportationExpenses = () => {
+    const expenses: any[] = [];
+    events?.forEach(event => {
+      if (event.transportation_cost && event.transportation_currency) {
+        // Add flight expenses
+        if (event.title.toLowerCase().includes('flight')) {
+          expenses.push({
+            id: `${event.id}-flight`,
+            type: 'plane',
+            description: `Flight: ${event.date} - ${event.title}`,
+            cost: event.transportation_cost,
+            currency: event.transportation_currency
+          });
+        }
+        // Add car service expenses
+        else if (event.title.toLowerCase().includes('car')) {
+          expenses.push({
+            id: `${event.id}-car`,
+            type: 'car',
+            description: `Car Service: ${event.date} - ${event.title}`,
+            cost: event.transportation_cost,
+            currency: event.transportation_currency
+          });
+        }
+        // Add other transportation expenses
+        else {
+          expenses.push({
+            id: `${event.id}-transport`,
+            type: 'car',
+            description: `Transportation: ${event.date} - ${event.title}`,
+            cost: event.transportation_cost,
+            currency: event.transportation_currency
+          });
+        }
+      }
+    });
+    return expenses;
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col space-y-4">
@@ -167,20 +207,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           isExpanded={expandedSections.includes('transportation')}
           onToggle={() => toggleSection('transportation')}
         >
-          {events?.map(event => (
-            event.transportation_cost && (
-              <ExpenseDetails
-                key={`${event.id}-transportation`}
-                id={event.id}
-                cost={event.transportation_cost}
-                currency={event.transportation_currency}
-                description={`${event.date} - ${event.title}`}
-                isEditing={editingItem === `${event.id}-transportation`}
-                onEdit={() => setEditingItem(`${event.id}-transportation`)}
-                onSave={(cost, currency) => handleUpdateCost(event.id, 'transportation', cost, currency)}
-              />
-            )
-          ))}
+          <TransportationDetails
+            transportationExpenses={getTransportationExpenses()}
+            onUpdateCost={(id, cost, currency) => {
+              const eventId = id.split('-')[0];
+              handleUpdateCost(eventId, 'transportation', cost, currency);
+            }}
+          />
         </ExpenseCard>
 
         <ExpenseCard
