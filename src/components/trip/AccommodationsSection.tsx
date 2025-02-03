@@ -9,7 +9,7 @@ import {
   updateAccommodation, 
   deleteAccommodation,
   AccommodationFormData 
-} from '@/services/accommodationService';
+} from '@/services/accommodation/accommodationService';
 
 interface AccommodationsSectionProps {
   tripId: string;
