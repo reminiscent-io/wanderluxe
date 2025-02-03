@@ -28,6 +28,19 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<string | null>(null);
 
+  const generateDatesArray = (startDate: string, endDate: string) => {
+    const dates = [];
+    let currentDate = new Date(startDate);
+    const lastDate = new Date(endDate);
+
+    while (currentDate < lastDate) {
+      dates.push(currentDate.toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dates;
+  };
+
   const handleSubmit = async (formData: {
     hotel: string;
     hotelDetails: string;
@@ -38,10 +51,8 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     expenseCurrency: string;
   }) => {
     try {
-      const finalAccommodationDay = new Date(formData.checkoutDate);
-      finalAccommodationDay.setDate(finalAccommodationDay.getDate() - 1);
-      
-      const { error } = await supabase
+      // Create the main check-in event
+      const { data: checkInEvent, error: checkInError } = await supabase
         .from('timeline_events')
         .insert([{
           trip_id: tripId,
@@ -55,11 +66,52 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
           expense_type: 'accommodation',
           expense_cost: formData.expenseCost ? Number(formData.expenseCost) : null,
           expense_currency: formData.expenseCurrency,
-          final_accommodation_day: finalAccommodationDay.toISOString().split('T')[0],
+          order_index: 0
+        }])
+        .select()
+        .single();
+
+      if (checkInError) throw checkInError;
+
+      // Generate events for each day of the stay (excluding check-in and checkout days)
+      const stayDates = generateDatesArray(formData.checkinDate, formData.checkoutDate);
+      
+      if (stayDates.length > 1) {
+        const stayEvents = stayDates.slice(1).map((date) => ({
+          trip_id: tripId,
+          date: date,
+          title: `Stay at ${formData.hotel}`,
+          hotel: formData.hotel,
+          hotel_details: formData.hotelDetails,
+          hotel_url: formData.hotelUrl,
+          hotel_checkin_date: formData.checkinDate,
+          hotel_checkout_date: formData.checkoutDate,
+          order_index: 0
+        }));
+
+        const { error: stayError } = await supabase
+          .from('timeline_events')
+          .insert(stayEvents);
+
+        if (stayError) throw stayError;
+      }
+
+      // Create checkout event
+      const { error: checkoutError } = await supabase
+        .from('timeline_events')
+        .insert([{
+          trip_id: tripId,
+          date: formData.checkoutDate,
+          title: `Check-out: ${formData.hotel}`,
+          hotel: formData.hotel,
+          hotel_details: formData.hotelDetails,
+          hotel_url: formData.hotelUrl,
+          hotel_checkin_date: formData.checkinDate,
+          hotel_checkout_date: formData.checkoutDate,
           order_index: 0
         }]);
 
-      if (error) throw error;
+      if (checkoutError) throw checkoutError;
 
       toast.success('Accommodation added successfully');
       setIsExpanded(false);
@@ -80,29 +132,21 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     expenseCurrency: string;
   }) => {
     try {
-      const finalAccommodationDay = new Date(formData.checkoutDate);
-      finalAccommodationDay.setDate(finalAccommodationDay.getDate() - 1);
-
-      const { error } = await supabase
+      // First, delete all existing events for this hotel stay
+      const { error: deleteError } = await supabase
         .from('timeline_events')
-        .update({
-          title: `Check-in: ${formData.hotel}`,
-          hotel: formData.hotel,
-          hotel_details: formData.hotelDetails,
-          hotel_url: formData.hotelUrl,
-          hotel_checkin_date: formData.checkinDate,
-          hotel_checkout_date: formData.checkoutDate,
-          expense_cost: formData.expenseCost ? Number(formData.expenseCost) : null,
-          expense_currency: formData.expenseCurrency,
-          final_accommodation_day: finalAccommodationDay.toISOString().split('T')[0],
-        })
-        .eq('id', stayId);
+        .delete()
+        .eq('hotel', formData.hotel)
+        .eq('hotel_checkin_date', formData.checkinDate)
+        .eq('hotel_checkout_date', formData.checkoutDate);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
-      toast.success('Accommodation updated successfully');
+      // Then create new events for the updated stay
+      await handleSubmit(formData);
+
       setEditingStay(null);
-      onAccommodationChange();
+      toast.success('Accommodation updated successfully');
     } catch (error) {
       console.error('Error updating accommodation:', error);
       toast.error('Failed to update accommodation');
@@ -111,10 +155,17 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
   const handleDelete = async (stayId: string) => {
     try {
+      // Get the hotel stay details first
+      const stay = hotelStays.find(s => s.id === stayId);
+      if (!stay) throw new Error('Stay not found');
+
+      // Delete all events related to this hotel stay
       const { error } = await supabase
         .from('timeline_events')
         .delete()
-        .eq('id', stayId);
+        .eq('hotel', stay.hotel)
+        .eq('hotel_checkin_date', stay.hotel_checkin_date)
+        .eq('hotel_checkout_date', stay.hotel_checkout_date);
 
       if (error) throw error;
 
