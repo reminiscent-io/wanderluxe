@@ -1,7 +1,7 @@
 import React from 'react';
 import FlightCard from "./FlightCard";
 import DayCard from "./DayCard";
-import TransportationCard from "./TransportationCard";
+import TransportationSection from "./TransportationSection";
 import AccommodationsSection from "./AccommodationsSection";
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTripDays } from '@/hooks/use-trip-days';
@@ -74,6 +74,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
         hotelStays={uniqueHotelStays}
       />
 
+      <TransportationSection
+        tripId={tripId || ''}
+        onTransportationChange={refetch}
+      />
+
       {accommodationGaps.map((gap, index) => (
         <Alert key={index} variant="destructive" className="bg-orange-50 border-orange-200">
           <AlertTriangle className="h-4 w-4 text-orange-500" />
@@ -84,47 +89,34 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
         </Alert>
       ))}
 
-      <FlightCard
-        type="outbound"
-        flightNumber="DL582"
-        route="New York (JFK) → Naples (NAP)"
-        date="June 1, 2024"
-        departure="7:55 PM EDT"
-        arrival="10:15 AM CEST"
-      />
-
       <div className="space-y-12">
-        {days?.map((day, index) => (
-          <div key={day.id}>
+        {days?.map((day, index) => {
+          const dayHotel = events?.find(event => 
+            event.hotel && 
+            new Date(event.hotel_checkin_date || '').toDateString() <= new Date(day.date).toDateString() &&
+            new Date(event.hotel_checkout_date || '').toDateString() > new Date(day.date).toDateString()
+          );
+
+          const hotelDetails = dayHotel ? {
+            name: dayHotel.hotel || '',
+            details: dayHotel.hotel_details || '',
+            imageUrl: dayHotel.image_url
+          } : undefined;
+
+          return (
             <DayCard
+              key={day.id}
               date={day.date}
               title={day.title}
               description={day.description}
               activities={day.activities}
               onAddActivity={() => handleAddActivity(day.id)}
               index={index}
+              hotelDetails={hotelDetails}
             />
-            
-            {index < (days?.length || 0) - 1 && (
-              <TransportationCard
-                type="car"
-                details="Transportation details to be planned"
-                duration="TBD"
-                index={index}
-              />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
-
-      <FlightCard
-        type="return"
-        flightNumber="DL585"
-        route="Naples (NAP) → New York (JFK)"
-        date="June 8, 2024"
-        departure="11:45 AM CEST"
-        arrival="3:25 PM EDT"
-      />
     </div>
   );
 };

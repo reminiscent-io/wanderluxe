@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Clock, DollarSign } from "lucide-react";
+import { Plus, Clock, DollarSign, Hotel } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DayCardProps {
@@ -19,6 +19,11 @@ interface DayCardProps {
   }>;
   onAddActivity: () => void;
   index: number;
+  hotelDetails?: {
+    name: string;
+    details: string;
+    imageUrl?: string;
+  };
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -27,7 +32,8 @@ const DayCard: React.FC<DayCardProps> = ({
   description,
   activities,
   onAddActivity,
-  index
+  index,
+  hotelDetails
 }) => {
   const formatTime = (time?: string) => {
     if (!time) return '';
@@ -44,6 +50,15 @@ const DayCard: React.FC<DayCardProps> = ({
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
       <Card className="overflow-hidden">
+        {hotelDetails?.imageUrl && (
+          <div className="h-48 w-full">
+            <img
+              src={hotelDetails.imageUrl}
+              alt={hotelDetails.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <CardContent className="p-6">
           <div className="mb-4">
             <div className="text-sm font-semibold text-earth-500 mb-2">
@@ -57,6 +72,16 @@ const DayCard: React.FC<DayCardProps> = ({
             {title && <h3 className="text-2xl font-bold mb-2">{title}</h3>}
             {description && <p className="text-gray-600 mb-4">{description}</p>}
           </div>
+
+          {hotelDetails && (
+            <div className="mb-6 p-4 bg-sand-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Hotel className="h-5 w-5 text-earth-500" />
+                <h4 className="font-semibold">{hotelDetails.name}</h4>
+              </div>
+              <p className="text-sm text-gray-600">{hotelDetails.details}</p>
+            </div>
+          )}
 
           <div className="space-y-4">
             {activities.map((activity) => (
