@@ -37,7 +37,6 @@ export const useTimelineEvents = (tripId: string | undefined) => {
           filter: `trip_id=eq.${tripId}`
         },
         () => {
-          // Invalidate and refetch when changes occur
           queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
         }
       )
@@ -50,7 +49,6 @@ export const useTimelineEvents = (tripId: string | undefined) => {
           filter: `event_id=in.(select id from timeline_events where trip_id='${tripId}')`
         },
         () => {
-          // Invalidate and refetch when activities change
           queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
         }
       )
@@ -81,8 +79,8 @@ export const useTimelineEvents = (tripId: string | undefined) => {
           e.hotel && 
           e.hotel_checkin_date && 
           e.hotel_checkout_date &&
-          event.date >= e.hotel_checkin_date && 
-          event.date < e.hotel_checkout_date
+          new Date(event.date) >= new Date(e.hotel_checkin_date) && 
+          new Date(event.date) < new Date(e.hotel_checkout_date)
         );
 
         // If there's an overlapping hotel stay and this event doesn't have its own hotel
@@ -119,6 +117,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success('Event updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
     },
     onError: (error) => {
       console.error('Error:', error);
@@ -137,6 +136,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success('Event deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
     },
     onError: (error) => {
       console.error('Error:', error);
