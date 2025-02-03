@@ -1,5 +1,5 @@
 import React from 'react';
-import { format } from 'date-fns';
+import { format, getYear } from 'date-fns';
 
 interface HeroSectionProps {
   title: string;
@@ -10,7 +10,14 @@ interface HeroSectionProps {
 const HeroSection = ({ title, date, imageUrl }: HeroSectionProps) => {
   const formatDateRange = (dateString: string) => {
     const [startDate, endDate] = dateString.split(' - ').map(d => new Date(d));
-    return `${format(startDate, "MMMM d ''yy")} - ${format(endDate, "MMMM d ''yy")}`;
+    const startYear = getYear(startDate);
+    const endYear = getYear(endDate);
+
+    if (startYear === endYear) {
+      return `${format(startDate, "MMMM do")} - ${format(endDate, "MMMM do yyyy")}`;
+    }
+    
+    return `${format(startDate, "MMMM do yyyy")} - ${format(endDate, "MMMM do yyyy")}`;
   };
 
   return (
