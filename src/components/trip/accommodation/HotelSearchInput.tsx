@@ -2,12 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
-
 interface HotelSearchInputProps {
   value: string;
   onChange: (value: string, placeDetails?: google.maps.places.PlaceResult) => void;
@@ -51,6 +45,11 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
     };
   }, [onChange, disabled]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow manual input while maintaining the controlled component pattern
+    onChange(e.target.value);
+  };
+
   return (
     <div>
       <Label htmlFor="hotel">Hotel Name *</Label>
@@ -58,10 +57,11 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
         ref={inputRef}
         id="hotel"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleInputChange}
         disabled={disabled}
         className={disabled ? "bg-gray-100" : ""}
         placeholder="Search for a hotel..."
+        required
       />
     </div>
   );
