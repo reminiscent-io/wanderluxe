@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 interface TimelineEvent {
   id: string;
@@ -12,96 +13,96 @@ interface TimelineEvent {
   hotel: string | null;
   hotel_details: string | null;
   order_index: number;
+  hotel_checkin_date: string | null;
+  hotel_checkout_date: string | null;
+  hotel_url: string | null;
+  activities: any[];
 }
 
-interface CreateTimelineEventInput {
-  trip_id: string;
-  date: string;
-  title: string;
-  description?: string;
-  image_url?: string;
-  hotel?: string;
-  hotel_details?: string;
-  order_index: number;
-}
-
-export const useTimelineEvents = (tripId: string | null) => {
+export const useTimelineEvents = (tripId: string | undefined) => {
   const queryClient = useQueryClient();
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel('timeline-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'timeline_events',
+          filter: `trip_id=eq.${tripId}`
+        },
+        () => {
+          // Invalidate and refetch when changes occur
+          queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities',
+          filter: `event_id=in.(select id from timeline_events where trip_id='${tripId}')`
+        },
+        () => {
+          // Invalidate and refetch when activities change
+          queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tripId, queryClient]);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
-      if (!tripId) {
-        return [];
-      }
+      if (!tripId) return [];
       
-      // First get the timeline events
       const { data: timelineEvents, error: timelineError } = await supabase
         .from('timeline_events')
-        .select('*')
+        .select('*, activities(*)')
         .eq('trip_id', tripId)
         .order('order_index');
 
       if (timelineError) throw timelineError;
 
-      // Then get activities for each timeline event
-      const eventsWithActivities = await Promise.all(
-        timelineEvents.map(async (event) => {
-          const { data: activities, error: activitiesError } = await supabase
-            .from('activities')
-            .select('*')
-            .eq('event_id', event.id);
+      // Process events to include hotel information for dates between check-in and check-out
+      const processedEvents = timelineEvents.map(event => {
+        // Find any hotel stays that overlap with this event's date
+        const hotelStay = timelineEvents.find(e => 
+          e.hotel && 
+          e.hotel_checkin_date && 
+          e.hotel_checkout_date &&
+          event.date >= e.hotel_checkin_date && 
+          event.date < e.hotel_checkout_date
+        );
 
-          if (activitiesError) throw activitiesError;
-
+        // If there's an overlapping hotel stay and this event doesn't have its own hotel
+        if (hotelStay && !event.hotel) {
           return {
             ...event,
-            activities: activities || []
+            hotel: hotelStay.hotel,
+            hotel_details: hotelStay.hotel_details,
+            hotel_url: hotelStay.hotel_url,
+            hotel_checkin_date: hotelStay.hotel_checkin_date,
+            hotel_checkout_date: hotelStay.hotel_checkout_date
           };
-        })
-      );
+        }
 
-      return eventsWithActivities;
+        return event;
+      });
+
+      return processedEvents;
     },
     enabled: !!tripId,
-  });
-
-  const generateContent = async (destination: string, date: string, description?: string) => {
-    const { data, error } = await supabase.functions.invoke('generate-trip-content', {
-      body: { destination, date, description },
-    });
-
-    if (error) throw error;
-    return data;
-  };
-
-  const createEvent = useMutation({
-    mutationFn: async (input: CreateTimelineEventInput) => {
-      try {
-        // Generate AI content for the event
-        const content = await generateContent(input.title, input.date, input.description);
-        
-        const { data, error } = await supabase
-          .from('timeline_events')
-          .insert([{ ...input, description: content.description }])
-          .select()
-          .single();
-
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.error('Error creating event:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
-      toast.success('Event created successfully');
-    },
-    onError: (error) => {
-      console.error('Error:', error);
-      toast.error('Failed to create event');
-    },
   });
 
   const updateEvent = useMutation({
@@ -117,7 +118,6 @@ export const useTimelineEvents = (tripId: string | null) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
       toast.success('Event updated successfully');
     },
     onError: (error) => {
@@ -136,7 +136,6 @@ export const useTimelineEvents = (tripId: string | null) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
       toast.success('Event deleted successfully');
     },
     onError: (error) => {
@@ -148,7 +147,6 @@ export const useTimelineEvents = (tripId: string | null) => {
   return {
     events,
     isLoading,
-    createEvent,
     updateEvent,
     deleteEvent,
   };
