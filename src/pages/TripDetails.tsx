@@ -88,11 +88,11 @@ const TripDetails = () => {
       <div className="container mx-auto px-4 py-8">
         <FlightCard
           type="outbound"
-          flightNumber="TBD"
-          route={`Your City → ${trip.destination}`}
-          date={trip.start_date}
-          departure="TBD"
-          arrival="TBD"
+          flightNumber="DL582"
+          route="New York (JFK) → Naples (NAP)"
+          date="June 1, 2024"
+          departure="7:55 PM EDT"
+          arrival="10:15 AM CEST"
         />
       </div>
 
@@ -106,7 +106,13 @@ const TripDetails = () => {
                 date={event.date}
                 title={event.title}
                 description={event.description || ''}
-                image={event.image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'}
+                image={
+                  event.title.includes('Naples') 
+                    ? "https://images.unsplash.com/photo-1516483638261-f4dbaf036963" // Naples cityscape
+                    : event.title.includes('Positano')
+                    ? "https://images.unsplash.com/photo-1533606688076-b6683a5f59f1" // Classic Positano view
+                    : event.image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'
+                }
                 hotel={event.hotel || ''}
                 hotelDetails={event.hotel_details || ''}
                 activities={event.activities?.map(a => a.text) || []}
@@ -116,9 +122,9 @@ const TripDetails = () => {
               />
               {index < (events?.length || 0) - 1 && (
                 <TransportationCard
-                  type="car"
-                  details="Transportation details to be planned"
-                  duration="TBD"
+                  type={index === 0 ? "car" : "car"}
+                  details={index === 0 ? "Private car service from Naples Airport to Hotel" : "Transportation details to be planned"}
+                  duration={index === 0 ? "45 minutes - Arrival at 1:00 PM" : "TBD"}
                   index={index}
                 />
               )}
@@ -130,11 +136,11 @@ const TripDetails = () => {
       <div className="container mx-auto px-4 py-8">
         <FlightCard
           type="return"
-          flightNumber="TBD"
-          route={`${trip.destination} → Your City`}
-          date={trip.end_date}
-          departure="TBD"
-          arrival="TBD"
+          flightNumber="DL585"
+          route="Naples (NAP) → New York (JFK)"
+          date="June 8, 2024"
+          departure="11:45 AM CEST"
+          arrival="3:25 PM EDT"
         />
       </div>
     </div>
