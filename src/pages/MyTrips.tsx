@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { EyeOff } from "lucide-react";
+import { EyeOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -35,17 +35,24 @@ const MyTrips = () => {
   const { data: trips = [], refetch } = useQuery({
     queryKey: ['trips'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: userTrips, error: userError } = await supabase
         .from('trips')
         .select('*')
+        .neq('destination', 'Amalfi Coast')
         .order('start_date', { ascending: true });
       
-      if (error) {
-        console.error('Error fetching trips:', error);
-        throw error;
-      }
+      const { data: exampleTrips, error: exampleError } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('destination', 'Amalfi Coast')
+        .order('start_date', { ascending: true });
       
-      return data || [];
+      if (userError || exampleError) throw userError || exampleError;
+      
+      return {
+        userTrips: userTrips || [],
+        exampleTrips: exampleTrips || []
+      };
     },
   });
 
@@ -78,17 +85,20 @@ const MyTrips = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const upcomingTrips = trips.filter(trip => {
+  const userTrips = trips.userTrips || [];
+  const exampleTrips = trips.exampleTrips || [];
+
+  const upcomingTrips = userTrips.filter(trip => {
     const endDate = new Date(trip.end_date);
     return endDate >= today;
   });
 
-  const pastTrips = trips.filter(trip => {
+  const pastTrips = userTrips.filter(trip => {
     const endDate = new Date(trip.end_date);
     return endDate < today;
   });
 
-  const TripCard = ({ trip }: { trip: Trip }) => (
+  const TripCard = ({ trip, isExample = false }: { trip: Trip, isExample?: boolean }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -101,42 +111,49 @@ const MyTrips = () => {
               className="cursor-pointer flex-grow"
               onClick={() => navigate(`/trip/${trip.id}`)}
             >
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {trip.destination}
-              </h3>
-              <p className="text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {trip.destination}
+                </h3>
+                {isExample && (
+                  <Info className="h-5 w-5 text-gray-500" title="Example Trip" />
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
                 {new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}
               </p>
             </div>
             
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500 hover:text-gray-600"
-                >
-                  <EyeOff className="h-5 w-5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Hide Trip</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to hide this trip? You won't be able to see it in your trips list anymore.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => handleHideTrip(trip.id)}
-                    className="bg-gray-600 hover:bg-gray-700"
+            {!isExample && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-500 hover:text-gray-600"
                   >
-                    Hide
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    <EyeOff className="h-5 w-5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Hide Trip</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to hide this trip? You won't be able to see it in your trips list anymore.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleHideTrip(trip.id)}
+                      className="bg-gray-600 hover:bg-gray-700"
+                    >
+                      Hide
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -149,7 +166,21 @@ const MyTrips = () => {
       <div className="container mx-auto px-4 pt-24">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">My Trips</h1>
         
-        {trips.length === 0 ? (
+        {exampleTrips.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-2 mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">Example Trips</h2>
+              <Info className="h-5 w-5 text-gray-500" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {exampleTrips.map((trip) => (
+                <TripCard key={trip.id} trip={trip} isExample={true} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {userTrips.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 mb-4">You haven't created any trips yet.</p>
             <button
