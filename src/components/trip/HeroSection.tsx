@@ -8,7 +8,7 @@ interface HeroSectionProps {
 
 const HeroSection = ({ title, date, imageUrl }: HeroSectionProps) => {
   return (
-    <div className="relative h-[60vh] overflow-hidden">
+    <div className="relative h-[30vh] overflow-hidden">
       <img 
         src={imageUrl}
         alt={title}
@@ -17,8 +17,8 @@ const HeroSection = ({ title, date, imageUrl }: HeroSectionProps) => {
       <div className="absolute inset-0 bg-black/40" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center text-white">
-          <h1 className="text-5xl font-bold mb-4">{title}</h1>
-          <p className="text-xl">{date}</p>
+          <h1 className="text-4xl font-bold mb-2">{title}</h1>
+          <p className="text-lg">{date}</p>
         </div>
       </div>
     </div>
