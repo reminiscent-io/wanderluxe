@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -20,10 +22,10 @@ import CurrencySelector from './CurrencySelector';
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (category: string, amount: number, currency: string) => void;
+  onSubmit: (category: string, title: string, amount: number, currency: string, isPaid: boolean) => void;
 }
 
-const DEFAULT_CATEGORIES = ['Accommodation', 'Transportation', 'Activities'];
+const DEFAULT_CATEGORIES = ['Accommodation', 'Transportation', 'Activities', 'Other'];
 
 const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   open,
@@ -31,22 +33,21 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   onSubmit,
 }) => {
   const [category, setCategory] = useState<string>('');
-  const [newCategory, setNewCategory] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [currency, setCurrency] = useState<string>('USD');
-  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalCategory = isCustomCategory ? newCategory : category;
-    if (!finalCategory || !amount) return;
+    if (!category || !title || !amount) return;
     
-    onSubmit(finalCategory, Number(amount), currency);
+    onSubmit(category, title, Number(amount), currency, isPaid);
     setCategory('');
-    setNewCategory('');
+    setTitle('');
     setAmount('');
     setCurrency('USD');
-    setIsCustomCategory(false);
+    setIsPaid(false);
   };
 
   return (
@@ -56,54 +57,63 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
           <DialogTitle>Add New Expense</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isCustomCategory ? (
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-full bg-white border-earth-200">
+              <SelectTrigger id="category" className="w-full bg-white border-earth-200">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent className="bg-white">
                 {DEFAULT_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat} className="hover:bg-earth-50">
+                  <SelectItem key={cat} value={cat.toLowerCase()} className="hover:bg-earth-50">
                     {cat}
                   </SelectItem>
                 ))}
-                <SelectItem value="custom" className="hover:bg-earth-50">
-                  + Add Custom Category
-                </SelectItem>
               </SelectContent>
             </Select>
-          ) : (
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="title">Expense Name</Label>
             <Input
-              placeholder="Enter custom category"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
+              id="title"
+              placeholder="e.g., Private Transfer from Naples Airport"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="bg-white"
             />
-          )}
-
-          {category === 'custom' && !isCustomCategory && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsCustomCategory(true)}
-              className="w-full"
-            >
-              Add Custom Category
-            </Button>
-          )}
+          </div>
 
           <div className="flex gap-4">
-            <Input
-              type="number"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="flex-1 bg-white"
-            />
-            <CurrencySelector
-              value={currency}
-              onValueChange={setCurrency}
-              className="w-[120px] bg-white"
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="amount">Amount</Label>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="bg-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <CurrencySelector
+                value={currency}
+                onValueChange={setCurrency}
+                className="w-[120px] bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="paid" className="text-sm font-medium">
+              Mark as paid
+            </Label>
+            <Switch
+              id="paid"
+              checked={isPaid}
+              onCheckedChange={setIsPaid}
             />
           </div>
 

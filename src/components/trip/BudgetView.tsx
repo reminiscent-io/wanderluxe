@@ -84,7 +84,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     }
   };
 
-  const handleAddExpense = async (category: string, amount: number, currency: string) => {
+  const handleAddExpense = async (
+    category: string,
+    title: string,
+    amount: number,
+    currency: string,
+    isPaid: boolean
+  ) => {
     try {
       if (!tripId) throw new Error('No trip ID provided');
       
@@ -92,12 +98,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         .from('timeline_events')
         .insert([{
           trip_id: tripId,
-          title: `${category} Expense`,
+          title: title,
           date: format(new Date(), 'yyyy-MM-dd'),
           order_index: events?.length || 0,
           expense_type: category.toLowerCase(),
           expense_cost: amount,
-          expense_currency: currency
+          expense_currency: currency,
+          expense_paid: isPaid
         }])
         .select()
         .single();
