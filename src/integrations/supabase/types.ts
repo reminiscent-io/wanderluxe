@@ -11,19 +11,25 @@ export type Database = {
     Tables: {
       activities: {
         Row: {
+          cost: number | null
           created_at: string
+          currency: string | null
           event_id: string
           id: string
           text: string
         }
         Insert: {
+          cost?: number | null
           created_at?: string
+          currency?: string | null
           event_id: string
           id?: string
           text: string
         }
         Update: {
+          cost?: number | null
           created_at?: string
+          currency?: string | null
           event_id?: string
           id?: string
           text?: string
@@ -67,6 +73,8 @@ export type Database = {
       }
       timeline_events: {
         Row: {
+          accommodation_cost: number | null
+          accommodation_currency: string | null
           created_at: string
           date: string
           description: string | null
@@ -76,9 +84,13 @@ export type Database = {
           image_url: string | null
           order_index: number
           title: string
+          transportation_cost: number | null
+          transportation_currency: string | null
           trip_id: string
         }
         Insert: {
+          accommodation_cost?: number | null
+          accommodation_currency?: string | null
           created_at?: string
           date: string
           description?: string | null
@@ -88,9 +100,13 @@ export type Database = {
           image_url?: string | null
           order_index: number
           title: string
+          transportation_cost?: number | null
+          transportation_currency?: string | null
           trip_id: string
         }
         Update: {
+          accommodation_cost?: number | null
+          accommodation_currency?: string | null
           created_at?: string
           date?: string
           description?: string | null
@@ -100,6 +116,8 @@ export type Database = {
           image_url?: string | null
           order_index?: number
           title?: string
+          transportation_cost?: number | null
+          transportation_currency?: string | null
           trip_id?: string
         }
         Relationships: [
