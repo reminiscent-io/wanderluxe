@@ -5,11 +5,20 @@ interface HeroSectionProps {
   title: string;
   date: string;
   imageUrl: string;
+  events?: { date: string }[];
 }
 
-const HeroSection = ({ title, date, imageUrl }: HeroSectionProps) => {
+const HeroSection = ({ title, date, imageUrl, events = [] }: HeroSectionProps) => {
   const formatDateRange = (dateString: string) => {
-    const [startDate, endDate] = dateString.split(' - ').map(d => new Date(d));
+    const [startDate] = dateString.split(' - ').map(d => new Date(d));
+    
+    // Find the last event date
+    let endDate = startDate;
+    if (events.length > 0) {
+      const lastEvent = events[events.length - 1];
+      endDate = new Date(lastEvent.date);
+    }
+
     const startYear = getYear(startDate);
     const endYear = getYear(endDate);
 

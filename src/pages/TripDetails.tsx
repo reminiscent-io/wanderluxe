@@ -22,7 +22,7 @@ const TripDetails = () => {
       
       const { data, error } = await supabase
         .from('trips')
-        .select('*')
+        .select('*, timeline_events(date)')
         .eq('id', tripId)
         .single();
 
@@ -73,6 +73,7 @@ const TripDetails = () => {
         title={trip.destination}
         date={`${trip.start_date} - ${trip.end_date}`}
         imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1501854140801-50d01698950b"}
+        events={trip.timeline_events}
       />
 
       <div className="container mx-auto px-4 py-8">
