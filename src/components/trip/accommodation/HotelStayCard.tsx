@@ -26,8 +26,11 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
   // Generate array of dates between check-in and check-out
   const getDatesInRange = (startDate: string, endDate: string) => {
     const dates = [];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+    
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
     
     let current = new Date(start);
     while (current <= end) {
