@@ -53,6 +53,21 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     fetchExchangeRates();
   }, [events, selectedCurrency]);
 
+  const handleDeleteExpense = async (eventId: string) => {
+    try {
+      const { error } = await supabase
+        .from('timeline_events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) throw error;
+      toast.success('Expense deleted successfully');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('Failed to delete expense');
+    }
+  };
+
   const convertAmount = (amount: number, fromCurrency: string) => {
     if (fromCurrency === selectedCurrency) return amount;
     const rate = exchangeRates.find(r => r.currency_from === fromCurrency)?.rate || 1;
@@ -246,6 +261,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               isEditing={editingItem === event.id}
               onEdit={() => setEditingItem(event.id)}
               onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
+              onDelete={() => handleDeleteExpense(event.id)}
             />
           ))}
         </ExpenseCard>
@@ -267,6 +283,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               isEditing={editingItem === event.id}
               onEdit={() => setEditingItem(event.id)}
               onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
+              onDelete={() => handleDeleteExpense(event.id)}
             />
           ))}
         </ExpenseCard>
@@ -288,6 +305,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               isEditing={editingItem === event.id}
               onEdit={() => setEditingItem(event.id)}
               onSave={(cost, currency) => handleUpdateCost(event.id, cost, currency)}
+              onDelete={() => handleDeleteExpense(event.id)}
             />
           ))}
           {events?.map(event => 
@@ -301,6 +319,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                 isEditing={editingItem === activity.id}
                 onEdit={() => setEditingItem(activity.id)}
                 onSave={(cost, currency) => handleUpdateCost(activity.id, cost, currency)}
+                onDelete={() => handleDeleteExpense(activity.id)}
               />
             ))
           )}
