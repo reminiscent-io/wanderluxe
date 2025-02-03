@@ -156,32 +156,33 @@ const DayCard: React.FC<DayCardProps> = ({
         })}
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden relative">
+        <div className="absolute top-4 right-4 flex gap-2 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="bg-white/80 hover:bg-white/90"
+            onClick={() => setIsEditing(true)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="bg-white/80 hover:bg-white/90 hover:text-red-500"
+            onClick={handleDeleteDay}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+        
         <div className="grid md:grid-cols-2 h-full">
-          <div className="h-64 md:h-full relative">
+          <div className="h-64 md:h-full">
             <img
               src="https://images.unsplash.com/photo-1533606688076-b6683a5f59f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3270&q=80"
               alt="Positano coastal view"
               className="w-full h-full object-cover"
             />
-            <div className="absolute top-2 right-2 flex gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="bg-white/80 hover:bg-white/90"
-                onClick={() => setIsEditing(true)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="bg-white/80 hover:bg-white/90 hover:text-red-500"
-                onClick={handleDeleteDay}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
           
           <div className="p-6">
