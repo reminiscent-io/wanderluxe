@@ -85,6 +85,8 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       if (error) throw error;
       toast.success('Day updated successfully');
       onOpenChange(false);
+      // Force a reload of the page to reflect the changes
+      window.location.reload();
     } catch (error) {
       console.error('Error updating day:', error);
       toast.error('Failed to update day');
@@ -178,7 +180,10 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>
+            <Button 
+              onClick={handleSave}
+              className="bg-primary hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
+            >
               Save Changes
             </Button>
           </div>
