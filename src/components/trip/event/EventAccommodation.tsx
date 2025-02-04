@@ -7,6 +7,8 @@ interface EventAccommodationProps {
   hotelUrl?: string;
   hotelAddress?: string;
   hotelPhone?: string;
+  checkinDate?: string;
+  checkoutDate?: string;
 }
 
 const EventAccommodation: React.FC<EventAccommodationProps> = ({ 
@@ -14,7 +16,9 @@ const EventAccommodation: React.FC<EventAccommodationProps> = ({
   hotelDetails, 
   hotelUrl,
   hotelAddress,
-  hotelPhone
+  hotelPhone,
+  checkinDate,
+  checkoutDate
 }) => {
   if (!hotel) return null;
 
@@ -46,7 +50,13 @@ const EventAccommodation: React.FC<EventAccommodationProps> = ({
           <p>{hotelPhone}</p>
         </div>
       )}
-      <p className="text-sm text-gray-600">{hotelDetails}</p>
+      {(checkinDate || checkoutDate) && (
+        <div className="text-sm text-gray-600 mt-1">
+          {checkinDate && <span>Check-in: {checkinDate}</span>}
+          {checkoutDate && <span className="ml-2">Check-out: {checkoutDate}</span>}
+        </div>
+      )}
+      <p className="text-sm text-gray-600 mt-1">{hotelDetails}</p>
     </div>
   );
 };

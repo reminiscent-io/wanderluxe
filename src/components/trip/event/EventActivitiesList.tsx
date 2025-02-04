@@ -20,13 +20,11 @@ interface EventActivitiesListProps {
   activities: Activity[];
   isCheckoutDay: boolean;
   hotel?: string;
-  onAddActivity: () => void;
-  onEditActivity: (activity: Activity) => void;
   isAddingActivity: boolean;
   onAddingActivityChange: (isAdding: boolean) => void;
   newActivity: { text: string; cost: string; currency: string };
   onNewActivityChange: (activity: { text: string; cost: string; currency: string }) => void;
-  handleAddActivity: () => void;
+  handleAddActivity: (activity: { text: string; cost: string; currency: string }) => void;
   editingActivity: string | null;
   onEditingActivityChange: (id: string | null) => void;
   activityEdit: { text: string; cost: string; currency: string };
@@ -38,8 +36,6 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
   activities,
   isCheckoutDay,
   hotel,
-  onAddActivity,
-  onEditActivity,
   isAddingActivity,
   onAddingActivityChange,
   newActivity,
@@ -58,7 +54,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
         <Button 
           variant="outline" 
           size="sm"
-          onClick={onAddActivity}
+          onClick={() => onAddingActivityChange(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Activity
@@ -79,7 +75,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
           <ActivityForm
             activity={newActivity}
             onActivityChange={onNewActivityChange}
-            onSubmit={handleAddActivity}
+            onSubmit={() => handleAddActivity(newActivity)}
             onCancel={() => onAddingActivityChange(false)}
             submitLabel="Add Activity"
           />

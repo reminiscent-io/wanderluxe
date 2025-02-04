@@ -20,7 +20,7 @@ interface EventContentProps {
   onAddingActivityChange: (isAdding: boolean) => void;
   newActivity: { text: string; cost: string; currency: string };
   onNewActivityChange: (activity: { text: string; cost: string; currency: string }) => void;
-  handleAddActivity: () => void;
+  handleAddActivity: (activity: { text: string; cost: string; currency: string }) => void;
   editingActivity: string | null;
   onEditingActivityChange: (id: string | null) => void;
   activityEdit: { text: string; cost: string; currency: string };
@@ -50,6 +50,8 @@ const EventContent: React.FC<EventContentProps> = ({
   onActivityEditChange,
   handleEditActivity,
 }) => {
+  const isCheckoutDay = hotelCheckoutDate === date;
+
   return (
     <div className="p-6 flex flex-col h-full bg-white">
       <EventHeader
@@ -68,41 +70,28 @@ const EventContent: React.FC<EventContentProps> = ({
         {hotel && (
           <EventAccommodation
             hotel={hotel}
-            hotelDetails={hotelDetails}
+            hotelDetails={hotelDetails || ''}
             hotelUrl={hotelUrl}
             checkinDate={hotelCheckinDate}
             checkoutDate={hotelCheckoutDate}
           />
         )}
 
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="font-semibold text-gray-900">Activities</h4>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onAddingActivityChange(true)}
-              className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Activity
-            </Button>
-          </div>
-
-          <EventActivitiesList
-            activities={activities}
-            isAddingActivity={isAddingActivity}
-            onAddingActivityChange={onAddingActivityChange}
-            newActivity={newActivity}
-            onNewActivityChange={onNewActivityChange}
-            handleAddActivity={handleAddActivity}
-            editingActivity={editingActivity}
-            onEditingActivityChange={onEditingActivityChange}
-            activityEdit={activityEdit}
-            onActivityEditChange={onActivityEditChange}
-            handleEditActivity={handleEditActivity}
-          />
-        </div>
+        <EventActivitiesList
+          activities={activities}
+          isCheckoutDay={isCheckoutDay}
+          hotel={hotel}
+          isAddingActivity={isAddingActivity}
+          onAddingActivityChange={onAddingActivityChange}
+          newActivity={newActivity}
+          onNewActivityChange={onNewActivityChange}
+          handleAddActivity={handleAddActivity}
+          editingActivity={editingActivity}
+          onEditingActivityChange={onEditingActivityChange}
+          activityEdit={activityEdit}
+          onActivityEditChange={onActivityEditChange}
+          handleEditActivity={handleEditActivity}
+        />
       </div>
     </div>
   );
