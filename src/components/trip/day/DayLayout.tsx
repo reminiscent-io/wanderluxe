@@ -28,7 +28,6 @@ interface DayLayoutProps {
 const DayLayout: React.FC<DayLayoutProps> = ({
   title,
   activities,
-  hotelDetails,
   index,
   onAddActivity,
   onEditActivity,
@@ -39,7 +38,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
     <div className="grid md:grid-cols-2 h-full">
       <DayImage
         title={title}
-        imageUrl={hotelDetails?.imageUrl}
+        imageUrl={null}
       />
       
       <DayCardContent

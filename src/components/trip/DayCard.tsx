@@ -30,6 +30,7 @@ interface DayCardProps {
     imageUrl?: string;
   };
   onDelete: (id: string) => void;
+  imageUrl?: string;
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -38,8 +39,8 @@ const DayCard: React.FC<DayCardProps> = ({
   title,
   activities,
   index,
-  hotelDetails,
-  onDelete
+  onDelete,
+  imageUrl
 }) => {
   const {
     isEditing,
@@ -88,7 +89,6 @@ const DayCard: React.FC<DayCardProps> = ({
         <DayLayout
           title={title || ""}
           activities={activities}
-          hotelDetails={hotelDetails}
           index={index}
           onAddActivity={() => setIsAddingActivity(true)}
           onEditActivity={(id) => {
