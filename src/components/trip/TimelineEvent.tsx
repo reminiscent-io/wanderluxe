@@ -1,8 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import EventImage from './event/EventImage';
+import DayImage from './day/DayImage';
 import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
 import { useEventState } from './event/useEventState';
@@ -100,7 +99,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
         <CardContent className="p-0">
           <div className="grid md:grid-cols-2">
-            <EventImage title={title} imageUrl={image} />
+            <DayImage title={title} imageUrl={image} />
             <EventContent
               date={date}
               title={title}

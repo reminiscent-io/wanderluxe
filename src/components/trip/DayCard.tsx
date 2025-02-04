@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import DayHeader from './day/DayHeader';
 import EditTitleDialog from './day/EditTitleDialog';
 import ActivityDialogs from './day/ActivityDialogs';
-import EventImage from './event/EventImage';
-import DayCardContent from './day/DayCardContent';
+import DayLayout from './day/DayLayout';
 import { useDayCardState } from './day/DayCardState';
 import { useDayCardHandlers } from './day/DayCardHandlers';
 
@@ -86,32 +85,26 @@ const DayCard: React.FC<DayCardProps> = ({
           formatTime={formatTime}
         />
         
-        <div className="grid md:grid-cols-2 h-full">
-          <EventImage
-            title={title || "Positano"}
-            imageUrl={hotelDetails?.imageUrl || ""}
-          />
-          
-          <DayCardContent
-            index={index}
-            title={title || ""}
-            activities={activities}
-            onAddActivity={() => setIsAddingActivity(true)}
-            onEditActivity={(id) => {
-              const activity = activities.find(a => a.id === id);
-              if (activity) {
-                setActivityEdit({
-                  text: activity.title,
-                  cost: activity.cost?.toString() || "",
-                  currency: activity.currency || "USD"
-                });
-                setEditingActivity(id);
-              }
-            }}
-            formatTime={formatTime}
-            dayId={id}
-          />
-        </div>
+        <DayLayout
+          title={title || ""}
+          activities={activities}
+          hotelDetails={hotelDetails}
+          index={index}
+          onAddActivity={() => setIsAddingActivity(true)}
+          onEditActivity={(id) => {
+            const activity = activities.find(a => a.id === id);
+            if (activity) {
+              setActivityEdit({
+                text: activity.title,
+                cost: activity.cost?.toString() || "",
+                currency: activity.currency || "USD"
+              });
+              setEditingActivity(id);
+            }
+          }}
+          formatTime={formatTime}
+          dayId={id}
+        />
       </Card>
 
       <EditTitleDialog
