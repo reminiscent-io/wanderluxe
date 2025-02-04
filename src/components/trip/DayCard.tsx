@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import DayHeader from './day/DayHeader';
 import EditTitleDialog from './day/EditTitleDialog';
 import ActivityDialogs from './day/ActivityDialogs';
 import EventImage from './event/EventImage';
-import DayContent from './day/DayContent';
+import DayCardContent from './day/DayCardContent';
+import { useDayCardState } from './day/DayCardState';
+import { useDayCardHandlers } from './day/DayCardHandlers';
 
 interface DayCardProps {
   id: string;
@@ -42,12 +42,22 @@ const DayCard: React.FC<DayCardProps> = ({
   hotelDetails,
   onDelete
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(title || '');
-  const [isAddingActivity, setIsAddingActivity] = useState(false);
-  const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [newActivity, setNewActivity] = useState({ text: "", cost: "", currency: "USD" });
-  const [activityEdit, setActivityEdit] = useState({ text: "", cost: "", currency: "USD" });
+  const {
+    isEditing,
+    setIsEditing,
+    editTitle,
+    setEditTitle,
+    isAddingActivity,
+    setIsAddingActivity,
+    editingActivity,
+    setEditingActivity,
+    newActivity,
+    setNewActivity,
+    activityEdit,
+    setActivityEdit,
+  } = useDayCardState(title);
+
+  const { handleUpdateTitle, handleDeleteDay } = useDayCardHandlers(id, onDelete);
 
   const formatTime = (time?: string) => {
     if (!time) return '';
@@ -55,38 +65,6 @@ const DayCard: React.FC<DayCardProps> = ({
       hour: 'numeric',
       minute: '2-digit'
     });
-  };
-
-  const handleUpdateTitle = async () => {
-    try {
-      const { error } = await supabase
-        .from('trip_days')
-        .update({ title: editTitle })
-        .eq('id', id);
-
-      if (error) throw error;
-      toast.success('Day title updated successfully');
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating day title:', error);
-      toast.error('Failed to update day title');
-    }
-  };
-
-  const handleDeleteDay = async () => {
-    try {
-      const { error } = await supabase
-        .from('trip_days')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      toast.success('Day deleted successfully');
-      onDelete(id);
-    } catch (error) {
-      console.error('Error deleting day:', error);
-      toast.error('Failed to delete day');
-    }
   };
 
   return (
@@ -109,7 +87,7 @@ const DayCard: React.FC<DayCardProps> = ({
             imageUrl={hotelDetails?.imageUrl || ""}
           />
           
-          <DayContent
+          <DayCardContent
             index={index}
             title={title || ""}
             hotelDetails={hotelDetails}
@@ -127,7 +105,6 @@ const DayCard: React.FC<DayCardProps> = ({
               }
             }}
             formatTime={formatTime}
-            dayId={id}
           />
         </div>
       </Card>
@@ -137,7 +114,10 @@ const DayCard: React.FC<DayCardProps> = ({
         onOpenChange={setIsEditing}
         title={editTitle}
         onTitleChange={setEditTitle}
-        onSave={handleUpdateTitle}
+        onSave={async () => {
+          const success = await handleUpdateTitle(editTitle);
+          if (success) setIsEditing(false);
+        }}
       />
 
       <ActivityDialogs
