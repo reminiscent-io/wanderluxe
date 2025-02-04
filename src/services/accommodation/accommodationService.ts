@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import type { AccommodationFormData, HotelStay } from './types';
 import { generateDatesArray } from './dateUtils';
 import { createTripDays } from './tripDaysService';
-import { createAccommodationEvents, deleteAccommodationEvents } from './timelineEventsService';
+import { createAccommodationEvents, deleteAccommodationEvents, updateAccommodationEvents } from './timelineEventsService';
 
 export type { AccommodationFormData } from './types';
 export { generateDatesArray } from './dateUtils';
@@ -42,16 +42,10 @@ export const updateAccommodation = async (
       checkout: formData.checkoutDate
     });
 
-    // First, delete all existing events for this hotel stay
-    await deleteAccommodationEvents({
-      hotel: formData.hotel,
-      hotel_checkin_date: formData.checkinDate,
-      hotel_checkout_date: formData.checkoutDate
-    });
-
-    // Then create new events for the updated stay
-    const success = await addAccommodation(tripId, formData);
-    if (!success) throw new Error('Failed to update accommodation');
+    const stayDates = generateDatesArray(formData.checkinDate, formData.checkoutDate);
+    
+    // Update existing events for this hotel stay
+    await updateAccommodationEvents(tripId, formData, stayDates);
 
     toast.success('Accommodation updated successfully');
     return true;
