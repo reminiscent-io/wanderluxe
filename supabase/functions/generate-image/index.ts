@@ -81,7 +81,7 @@ serve(async (req) => {
     }
 
     const cleanKeywords = keywords.trim().toLowerCase();
-    const searchQuery = `${cleanKeywords} travel -people -person -portrait -selfie`;
+    const searchQuery = `${cleanKeywords} travel`;
     console.log('Search query:', searchQuery);
     
     // Use search endpoint instead of random for better relevance
