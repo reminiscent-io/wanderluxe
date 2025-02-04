@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import AccommodationGroup from '../accommodation/AccommodationGroup';
-import DayCard from '../DayCard';
+import DayCard from '../day/DayCard';
 import { TripDay } from '@/types/trip';
 import FlightIndicator from '../transportation/FlightIndicator';
 import TransportationDialog from '../transportation/TransportationDialog';
