@@ -27,7 +27,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative h-[60vh] min-h-[400px] w-full">
-      <div className="absolute inset-0">
+      <div className="fixed inset-0 h-[60vh] min-h-[400px] w-full">
         <img
           src={imageUrl}
           alt={title}
