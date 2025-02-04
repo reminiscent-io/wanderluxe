@@ -31,10 +31,18 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     end_time: '',
     departure_location: '',
     arrival_location: '',
-    cost: undefined,
+    cost: initialData?.cost ? Number(initialData.cost) : undefined,
     currency: 'USD',
     ...initialData
   });
+
+  const formatCost = (value: number | undefined | null) => {
+    if (value === undefined || value === null) return '';
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +54,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
       <TransportationFormFields
         formData={formData}
         setFormData={setFormData}
+        formatCost={formatCost}
       />
 
       <div className="flex justify-end gap-2">

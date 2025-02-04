@@ -50,7 +50,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     hotelUrl: initialData?.hotelUrl || '',
     checkinDate: initialData?.checkinDate || tripArrivalDate || '',
     checkoutDate: initialData?.checkoutDate || tripDepartureDate || '',
-    expenseCost: initialData?.expenseCost ? initialData.expenseCost.toString() : '',
+    expenseCost: initialData?.expenseCost ? typeof initialData.expenseCost === 'string' ? initialData.expenseCost : initialData.expenseCost.toFixed(2) : '',
     expenseCurrency: initialData?.expenseCurrency || 'USD',
     hotelAddress: initialData?.hotelAddress || '',
     hotelPhone: initialData?.hotelPhone || '',
@@ -73,6 +73,25 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  const formatCost = (value: string) => {
+    // Remove any non-numeric characters except decimal point
+    const numericValue = value.replace(/[^\d.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split('.');
+    const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
+    
+    // Format with commas for thousands
+    const number = parseFloat(formattedValue);
+    if (!isNaN(number)) {
+      return number.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+    return formattedValue;
   };
 
   return (
@@ -144,9 +163,10 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
           <Label htmlFor="expenseCost">Total Cost</Label>
           <Input
             id="expenseCost"
-            type="number"
+            type="text"
             value={formData.expenseCost}
             onChange={(e) => setFormData({ ...formData, expenseCost: e.target.value })}
+            onBlur={(e) => setFormData({ ...formData, expenseCost: formatCost(e.target.value) })}
             placeholder="0.00"
           />
         </div>

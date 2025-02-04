@@ -2,133 +2,116 @@ import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
-import { Plane, Train, Car, Bus, Ship } from 'lucide-react';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
 interface TransportationFormFieldsProps {
   formData: Partial<TransportationEvent>;
   setFormData: (data: Partial<TransportationEvent>) => void;
+  formatCost: (value: number | undefined | null) => string;
 }
-
-const TRANSPORT_TYPES = [
-  { value: 'flight', label: 'Flight', icon: Plane },
-  { value: 'train', label: 'Train', icon: Train },
-  { value: 'car_service', label: 'Car Service', icon: Car },
-  { value: 'rental_car', label: 'Rental Car', icon: Car },
-  { value: 'shuttle', label: 'Shuttle', icon: Bus },
-  { value: 'ferry', label: 'Ferry', icon: Ship },
-] as const;
 
 const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   formData,
   setFormData,
+  formatCost
 }) => {
-  const getIcon = (type: string) => {
-    const transportType = TRANSPORT_TYPES.find(t => t.value === type);
-    if (!transportType) return <Car className="h-4 w-4" />;
-    const Icon = transportType.icon;
-    return <Icon className="h-4 w-4" />;
+  const handleCostChange = (value: string) => {
+    // Remove any non-numeric characters except decimal point
+    const numericValue = value.replace(/[^\d.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split('.');
+    const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
+    
+    // Convert to number for the formData
+    const numberValue = parseFloat(formattedValue);
+    setFormData({ ...formData, cost: isNaN(numberValue) ? undefined : numberValue });
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label>Transportation Type</Label>
-        <Select
-          value={formData.type}
-          onValueChange={(value: TransportationEvent['type']) => 
-            setFormData({ ...formData, type: value })
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select type" />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800">
-            {TRANSPORT_TYPES.map((type) => (
-              <SelectItem 
-                key={type.value} 
-                value={type.value}
-                className="flex items-center gap-2"
-              >
-                <span className="flex items-center gap-2">
-                  {getIcon(type.value)}
-                  {type.label}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="provider">Provider</Label>
-          <Input
-            id="provider"
-            value={formData.provider || ''}
-            onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
-            placeholder="e.g., United Airlines"
-          />
+          <Label>Type</Label>
+          <Select
+            value={formData.type || 'flight'}
+            onValueChange={(value: any) => setFormData({ ...formData, type: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="flight">Flight</SelectItem>
+              <SelectItem value="train">Train</SelectItem>
+              <SelectItem value="car_service">Car Service</SelectItem>
+              <SelectItem value="rental_car">Rental Car</SelectItem>
+              <SelectItem value="shuttle">Shuttle</SelectItem>
+              <SelectItem value="ferry">Ferry</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <Label htmlFor="confirmation">Confirmation Number</Label>
+          <Label>Provider (Optional)</Label>
           <Input
-            id="confirmation"
-            value={formData.confirmation_number || ''}
-            onChange={(e) => setFormData({ ...formData, confirmation_number: e.target.value })}
-            placeholder="e.g., ABC123"
+            value={formData.provider || ''}
+            onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
+            placeholder="e.g. United Airlines"
           />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="details">Details</Label>
-        <Input
-          id="details"
+        <Label>Details (Optional)</Label>
+        <Textarea
           value={formData.details || ''}
           onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-          placeholder="Additional details"
+          placeholder="Add any additional details"
+        />
+      </div>
+
+      <div>
+        <Label>Confirmation Number (Optional)</Label>
+        <Input
+          value={formData.confirmation_number || ''}
+          onChange={(e) => setFormData({ ...formData, confirmation_number: e.target.value })}
+          placeholder="Enter confirmation number"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="departure">From</Label>
+          <Label>Departure Location</Label>
           <Input
-            id="departure"
             value={formData.departure_location || ''}
             onChange={(e) => setFormData({ ...formData, departure_location: e.target.value })}
-            placeholder="Departure location"
+            placeholder="From"
           />
         </div>
         <div>
-          <Label htmlFor="arrival">To</Label>
+          <Label>Arrival Location</Label>
           <Input
-            id="arrival"
             value={formData.arrival_location || ''}
             onChange={(e) => setFormData({ ...formData, arrival_location: e.target.value })}
-            placeholder="Arrival location"
+            placeholder="To"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="start_date">Start Date</Label>
+          <Label>Start Date</Label>
           <Input
-            id="start_date"
             type="date"
             value={formData.start_date || ''}
             onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-            required
           />
         </div>
         <div>
-          <Label htmlFor="start_time">Start Time</Label>
+          <Label>Start Time (Optional)</Label>
           <Input
-            id="start_time"
             type="time"
             value={formData.start_time || ''}
             onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
@@ -138,18 +121,16 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="end_date">End Date</Label>
+          <Label>End Date (Optional)</Label>
           <Input
-            id="end_date"
             type="date"
             value={formData.end_date || ''}
             onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
           />
         </div>
         <div>
-          <Label htmlFor="end_time">End Time</Label>
+          <Label>End Time (Optional)</Label>
           <Input
-            id="end_time"
             type="time"
             value={formData.end_time || ''}
             onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
@@ -159,33 +140,21 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="cost">Cost</Label>
+          <Label>Cost (Optional)</Label>
           <Input
-            id="cost"
-            type="number"
-            step="0.01"
-            value={formData.cost || ''}
-            onChange={(e) => setFormData({ ...formData, cost: parseFloat(e.target.value) })}
+            type="text"
+            value={formatCost(formData.cost)}
+            onChange={(e) => handleCostChange(e.target.value)}
             placeholder="0.00"
           />
         </div>
         <div>
-          <Label htmlFor="currency">Currency</Label>
-          <Select
+          <Label>Currency</Label>
+          <Input
             value={formData.currency || 'USD'}
-            onValueChange={(value) => setFormData({ ...formData, currency: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent>
-              {['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD'].map((currency) => (
-                <SelectItem key={currency} value={currency}>
-                  {currency}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+            placeholder="USD"
+          />
         </div>
       </div>
     </div>
