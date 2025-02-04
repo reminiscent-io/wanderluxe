@@ -40,14 +40,18 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       />
 
       <TimingSection
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
+        timingType="specificDates"
+        onTimingTypeChange={() => {}}
+        timeOfYear=""
+        onTimeOfYearChange={() => {}}
+        arrivalDate={startDate}
+        onArrivalDateChange={setStartDate}
+        departureDate={endDate}
+        onDepartureDateChange={setEndDate}
       />
 
       <ImageSection
-        imageUrl={coverImageUrl}
+        coverImageUrl={coverImageUrl}
         onImageChange={setCoverImageUrl}
       />
 
