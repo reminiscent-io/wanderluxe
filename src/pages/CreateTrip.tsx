@@ -8,15 +8,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import ImageUpload from "@/components/ImageUpload";
 
 const CreateTrip = () => {
   const [destination, setDestination] = useState("");
-  const [timingType, setTimingType] = useState("timeOfYear"); // "timeOfYear" or "specificDates"
+  const [timingType, setTimingType] = useState("timeOfYear");
   const [timeOfYear, setTimeOfYear] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [arrivalDate, setArrivalDate] = useState("");
   const [departureDate, setDepartureDate] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
@@ -63,6 +65,7 @@ const CreateTrip = () => {
             end_date: timingType === "specificDates" ? endDate : timeOfYear,
             arrival_date: timingType === "specificDates" ? arrivalDate : null,
             departure_date: timingType === "specificDates" ? departureDate : null,
+            cover_image_url: coverImageUrl,
           }
         ])
         .select()
@@ -104,6 +107,16 @@ const CreateTrip = () => {
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 required
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Label className="text-sm font-medium text-gray-700">
+                Cover Image
+              </Label>
+              <ImageUpload
+                onImageUpload={(url) => setCoverImageUrl(url)}
+                currentImageUrl={coverImageUrl}
               />
             </div>
 
