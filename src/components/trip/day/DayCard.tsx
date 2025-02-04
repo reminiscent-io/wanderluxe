@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import DayHeader from './DayHeader';
 import EditTitleDialog from './EditTitleDialog';
 import ActivityDialogs from './ActivityDialogs';
-import EventImage from '../event/EventImage';
+import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
 import { useDayCardState } from './DayCardState';
 import { useDayCardHandlers } from './DayCardHandlers';
@@ -87,9 +87,9 @@ const DayCard: React.FC<DayCardProps> = ({
         />
         
         <div className="grid md:grid-cols-2 h-full">
-          <EventImage
-            title={title || "Positano"}
-            imageUrl={hotelDetails?.imageUrl || ""}
+          <DayImage
+            title={title || ""}
+            imageUrl={hotelDetails?.imageUrl}
           />
           
           <DayCardContent

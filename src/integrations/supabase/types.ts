@@ -144,6 +144,7 @@ export type Database = {
       }
       restaurant_reservations: {
         Row: {
+          address: string | null
           confirmation_number: string | null
           cost: number | null
           created_at: string
@@ -153,10 +154,15 @@ export type Database = {
           notes: string | null
           number_of_people: number | null
           order_index: number
+          phone_number: string | null
+          place_id: string | null
+          rating: number | null
           reservation_time: string | null
           restaurant_name: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
@@ -166,10 +172,15 @@ export type Database = {
           notes?: string | null
           number_of_people?: number | null
           order_index: number
+          phone_number?: string | null
+          place_id?: string | null
+          rating?: number | null
           reservation_time?: string | null
           restaurant_name: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
@@ -179,8 +190,12 @@ export type Database = {
           notes?: string | null
           number_of_people?: number | null
           order_index?: number
+          phone_number?: string | null
+          place_id?: string | null
+          rating?: number | null
           reservation_time?: string | null
           restaurant_name?: string
+          website?: string | null
         }
         Relationships: [
           {
