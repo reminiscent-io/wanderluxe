@@ -35,7 +35,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                 <DayCard
                   key={day.id}
                   id={day.id}
-                  date={day.date}
+                  date={day.date.split('T')[0]} // Ensure we only use the date part
                   title={day.title}
                   description={day.description}
                   activities={day.activities || []}
@@ -51,7 +51,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                 <DayCard
                   key={day.id}
                   id={day.id}
-                  date={day.date}
+                  date={day.date.split('T')[0]} // Ensure we only use the date part
                   title={day.title}
                   description={day.description}
                   activities={day.activities || []}

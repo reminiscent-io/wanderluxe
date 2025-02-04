@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
+import { parseISO, format } from 'date-fns';
 
 interface DayHeaderProps {
   date: string;
@@ -13,15 +14,13 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   onEdit,
   onDelete,
 }) => {
+  // Parse the date string and format it without timezone consideration
+  const formattedDate = format(parseISO(date), 'EEEE, MMMM d, yyyy');
+
   return (
     <>
       <div className="text-center text-sm font-medium text-earth-500 mb-2">
-        {new Date(date).toLocaleDateString(undefined, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}
+        {formattedDate}
       </div>
       <div className="absolute top-4 right-4 flex gap-2 z-10">
         <Button
