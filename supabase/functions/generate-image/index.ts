@@ -13,8 +13,11 @@ serve(async (req) => {
   try {
     const { keywords } = await req.json()
     
+    // Combine the user's keywords with travel-related terms and content filters
+    const searchQuery = `${keywords} travel destination landscape scenic -person -people -portrait`
+    
     const response = await fetch(
-      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(keywords)}&orientation=landscape`,
+      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(searchQuery)}&orientation=landscape&content_filter=high`,
       {
         headers: {
           'Authorization': `Client-ID ${Deno.env.get('UNSPLASH_ACCESS_KEY')}`,
@@ -24,6 +27,10 @@ serve(async (req) => {
 
     const data = await response.json()
     
+    if (!response.ok) {
+      throw new Error(`Unsplash API error: ${data.errors?.[0] || 'Unknown error'}`)
+    }
+
     return new Response(
       JSON.stringify({ imageUrl: data.urls.regular }),
       { 
@@ -32,6 +39,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('Error generating image:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
