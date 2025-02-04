@@ -24,12 +24,12 @@ interface EventActivitiesListProps {
   onAddingActivityChange: (isAdding: boolean) => void;
   newActivity: { text: string; cost: string; currency: string };
   onNewActivityChange: (activity: { text: string; cost: string; currency: string }) => void;
-  handleAddActivity: (activity: { text: string; cost: string; currency: string }) => void;
+  onAddActivity: () => void;
   editingActivity: string | null;
   onEditingActivityChange: (id: string | null) => void;
   activityEdit: { text: string; cost: string; currency: string };
   onActivityEditChange: (edit: { text: string; cost: string; currency: string }) => void;
-  handleEditActivity: (id: string) => void;
+  onEditActivity: (id: string) => void;
 }
 
 const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
@@ -40,12 +40,12 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
   onAddingActivityChange,
   newActivity,
   onNewActivityChange,
-  handleAddActivity,
+  onAddActivity,
   editingActivity,
   onEditingActivityChange,
   activityEdit,
   onActivityEditChange,
-  handleEditActivity,
+  onEditActivity,
 }) => {
   return (
     <div>
@@ -75,7 +75,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
           <ActivityForm
             activity={newActivity}
             onActivityChange={onNewActivityChange}
-            onSubmit={() => handleAddActivity(newActivity)}
+            onSubmit={onAddActivity}
             onCancel={() => onAddingActivityChange(false)}
             submitLabel="Add Activity"
           />
@@ -97,7 +97,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
                   <ActivityForm
                     activity={activityEdit}
                     onActivityChange={onActivityEditChange}
-                    onSubmit={() => handleEditActivity(activity.id)}
+                    onSubmit={() => onEditActivity(activity.id)}
                     onCancel={() => onEditingActivityChange(null)}
                     submitLabel="Save Changes"
                   />
