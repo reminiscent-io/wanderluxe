@@ -49,7 +49,7 @@ const TripDetails = () => {
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
-            <div className="h-[40vh] bg-gray-200 rounded-lg mb-8"></div>
+            <div className="h-[0vh] bg-gray-200 rounded-lg mb-8"></div>
             <div className="h-32 bg-gray-200 rounded-lg mb-8"></div>
             <div className="space-y-12">
               <div className="h-96 bg-gray-200 rounded-lg"></div>
