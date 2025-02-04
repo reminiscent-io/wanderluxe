@@ -18,6 +18,7 @@ interface ActivityDialogsProps {
   setActivityEdit: (activity: { text: string; cost: string; currency: string }) => void;
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
+  eventId: string;
 }
 
 const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
@@ -31,6 +32,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
   setActivityEdit,
   onAddActivity,
   onEditActivity,
+  eventId,
 }) => {
   return (
     <>
@@ -45,6 +47,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
             onSubmit={onAddActivity}
             onCancel={() => setIsAddingActivity(false)}
             submitLabel="Add Activity"
+            eventId={eventId}
           />
         </DialogContent>
       </Dialog>
@@ -60,6 +63,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
             onCancel={() => setEditingActivity(null)}
             submitLabel="Save Changes"
+            eventId={eventId}
           />
         </DialogContent>
       </Dialog>

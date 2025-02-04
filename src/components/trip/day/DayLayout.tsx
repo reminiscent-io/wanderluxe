@@ -49,6 +49,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
         onEditActivity={onEditActivity}
         formatTime={formatTime}
         dayId={dayId}
+        eventId={dayId}
       />
     </div>
   );
