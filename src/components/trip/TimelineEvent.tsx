@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import EventImage from './event/EventImage';
 import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
@@ -70,6 +71,22 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     handleEditActivity,
   } = useEventHandlers(id, onEdit, editData, activities);
 
+  const onAddActivity = async () => {
+    const success = await handleAddActivity(newActivity);
+    if (success) {
+      setIsAddingActivity(false);
+      setNewActivity({ text: "", cost: "", currency: "USD" });
+    }
+  };
+
+  const onEditActivity = async (activityId: string) => {
+    const success = await handleEditActivity(activityId, activityEdit);
+    if (success) {
+      setEditingActivity(null);
+      setActivityEdit({ text: "", cost: "", currency: "USD" });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -97,12 +114,13 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
               onAddingActivityChange={setIsAddingActivity}
               newActivity={newActivity}
               onNewActivityChange={setNewActivity}
-              handleAddActivity={handleAddActivity}
+              onAddActivity={onAddActivity}
               editingActivity={editingActivity}
               onEditingActivityChange={setEditingActivity}
               activityEdit={activityEdit}
               onActivityEditChange={setActivityEdit}
-              handleEditActivity={() => handleEditActivity(editingActivity!, activityEdit)}
+              onEditActivity={onEditActivity}
+              isCheckoutDay={hotel_checkout_date === date}
             />
           </div>
         </CardContent>

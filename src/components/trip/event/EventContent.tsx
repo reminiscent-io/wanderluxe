@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import EventHeader from './EventHeader';
 import EventAccommodation from './EventAccommodation';
 import EventActivitiesList from './EventActivitiesList';
@@ -20,12 +20,13 @@ interface EventContentProps {
   onAddingActivityChange: (isAdding: boolean) => void;
   newActivity: { text: string; cost: string; currency: string };
   onNewActivityChange: (activity: { text: string; cost: string; currency: string }) => void;
-  handleAddActivity: (activity: { text: string; cost: string; currency: string }) => void;
+  onAddActivity: () => void;
   editingActivity: string | null;
   onEditingActivityChange: (id: string | null) => void;
   activityEdit: { text: string; cost: string; currency: string };
   onActivityEditChange: (edit: { text: string; cost: string; currency: string }) => void;
-  handleEditActivity: (id: string) => void;
+  onEditActivity: (id: string) => void;
+  isCheckoutDay: boolean;
 }
 
 const EventContent: React.FC<EventContentProps> = ({
@@ -43,15 +44,14 @@ const EventContent: React.FC<EventContentProps> = ({
   onAddingActivityChange,
   newActivity,
   onNewActivityChange,
-  handleAddActivity,
+  onAddActivity,
   editingActivity,
   onEditingActivityChange,
   activityEdit,
   onActivityEditChange,
-  handleEditActivity,
+  onEditActivity,
+  isCheckoutDay,
 }) => {
-  const isCheckoutDay = hotelCheckoutDate === date;
-
   return (
     <div className="p-6 flex flex-col h-full bg-white">
       <EventHeader
@@ -71,9 +71,9 @@ const EventContent: React.FC<EventContentProps> = ({
           <EventAccommodation
             hotel={hotel}
             hotelDetails={hotelDetails || ''}
-            hotelUrl={hotelUrl}
-            checkinDate={hotelCheckinDate}
-            checkoutDate={hotelCheckoutDate}
+            hotelUrl={hotelUrl || ''}
+            hotelCheckinDate={hotelCheckinDate || ''}
+            hotelCheckoutDate={hotelCheckoutDate || ''}
           />
         )}
 
@@ -85,12 +85,12 @@ const EventContent: React.FC<EventContentProps> = ({
           onAddingActivityChange={onAddingActivityChange}
           newActivity={newActivity}
           onNewActivityChange={onNewActivityChange}
-          handleAddActivity={handleAddActivity}
+          onAddActivity={onAddActivity}
           editingActivity={editingActivity}
           onEditingActivityChange={onEditingActivityChange}
           activityEdit={activityEdit}
           onActivityEditChange={onActivityEditChange}
-          handleEditActivity={handleEditActivity}
+          onEditActivity={onEditActivity}
         />
       </div>
     </div>
