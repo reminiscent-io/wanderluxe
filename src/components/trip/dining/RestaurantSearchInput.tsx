@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface RestaurantDetails {
   name: string;
@@ -28,18 +29,22 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
   useEffect(() => {
     const initializeAutocomplete = async () => {
-      if (!inputRef.current || !window.google) return;
+      if (!inputRef.current) return;
 
       try {
         const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
         
         if (error) {
           console.error('Error fetching Google Places API key:', error);
+          toast.error('Failed to initialize restaurant search');
+          setIsLoading(false);
           return;
         }
 
         if (!key) {
           console.error('No Google Places API key returned');
+          toast.error('Failed to initialize restaurant search');
+          setIsLoading(false);
           return;
         }
 
@@ -48,37 +53,64 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
         script.async = true;
         script.onload = () => {
-          const options: google.maps.places.AutocompleteOptions = {
-            types: ['restaurant'],
-            fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating']
-          };
+          if (!inputRef.current || !window.google) return;
 
-          autoCompleteRef.current = new window.google.maps.places.Autocomplete(
-            inputRef.current!,
-            options
-          );
+          try {
+            const options: google.maps.places.AutocompleteOptions = {
+              types: ['restaurant'],
+              fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating']
+            };
 
-          autoCompleteRef.current.addListener('place_changed', () => {
-            if (!autoCompleteRef.current) return;
+            autoCompleteRef.current = new window.google.maps.places.Autocomplete(
+              inputRef.current,
+              options
+            );
 
-            const place = autoCompleteRef.current.getPlace();
-            if (!place.place_id) return;
+            autoCompleteRef.current.addListener('place_changed', () => {
+              if (!autoCompleteRef.current) return;
 
-            onPlaceSelect({
-              name: place.name || '',
-              place_id: place.place_id,
-              formatted_address: place.formatted_address,
-              formatted_phone_number: place.formatted_phone_number,
-              website: place.website,
-              rating: place.rating
+              try {
+                const place = autoCompleteRef.current.getPlace();
+                
+                // Check if we have a valid place with at least a name and place_id
+                if (!place || !place.name || !place.place_id) {
+                  console.error('Invalid place selected:', place);
+                  toast.error('Failed to get restaurant details. Please try again.');
+                  return;
+                }
+
+                onPlaceSelect({
+                  name: place.name,
+                  place_id: place.place_id,
+                  formatted_address: place.formatted_address,
+                  formatted_phone_number: place.formatted_phone_number,
+                  website: place.website,
+                  rating: place.rating
+                });
+              } catch (error) {
+                console.error('Error handling place selection:', error);
+                toast.error('Failed to process restaurant selection');
+              }
             });
-          });
+
+            setIsLoading(false);
+          } catch (error) {
+            console.error('Error setting up Google Places Autocomplete:', error);
+            toast.error('Failed to initialize restaurant search');
+            setIsLoading(false);
+          }
+        };
+
+        script.onerror = () => {
+          console.error('Failed to load Google Places script');
+          toast.error('Failed to load restaurant search');
+          setIsLoading(false);
         };
 
         document.head.appendChild(script);
-        setIsLoading(false);
       } catch (error) {
         console.error('Error initializing Google Places:', error);
+        toast.error('Failed to initialize restaurant search');
         setIsLoading(false);
       }
     };
