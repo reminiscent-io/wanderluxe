@@ -49,7 +49,7 @@ const TripDetails = () => {
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
-            <div className="h-[0vh] bg-gray-200 rounded-lg mb-8"></div>
+            <div className="h-[40vh] bg-gray-200 rounded-lg mb-8"></div>
             <div className="h-32 bg-gray-200 rounded-lg mb-8"></div>
             <div className="space-y-12">
               <div className="h-96 bg-gray-200 rounded-lg"></div>
@@ -76,7 +76,7 @@ const TripDetails = () => {
         events={trip.timeline_events}
       />
 
-      <div className="relative z-10 bg-sand-50/95 backdrop-blur-sm mt-[40vh] min-h-screen -mt-1">
+      <div className="relative z-10 bg-sand-50/95 backdrop-blur-sm mt-[0vh] min-h-screen -mt-1">
         <div className="container mx-auto px-4 py-8">
           <Tabs defaultValue="timeline" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-8 rounded-xl p-1 bg-transparent">
