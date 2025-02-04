@@ -28,43 +28,62 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-  const loadGooglePlacesAPI = async () => {
-    if (!window.google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_FALLBACK_API_KEY&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-      
-      script.onload = initializeAutocomplete;
-      return;
-    }
+    const loadGooglePlacesAPI = async () => {
+      try {
+        const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
+        
+        if (error || !key) {
+          console.error('Error fetching API key:', error);
+          toast.error('Failed to initialize restaurant search');
+          setIsLoading(false);
+          return;
+        }
 
-    initializeAutocomplete();
-  };
+        // Load the Google Places script
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          setIsLoading(false);
+          initializeAutocomplete();
+        };
+        document.head.appendChild(script);
 
-  const initializeAutocomplete = async () => {
-    if (!inputRef.current) return;
-
-    try {
-      const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
-      
-      if (error || !key) {
-        console.error('Error fetching API key:', error);
+        return () => {
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        };
+      } catch (error) {
+        console.error('Error initializing Google Places:', error);
         toast.error('Failed to initialize restaurant search');
         setIsLoading(false);
-        return;
+      }
+    };
+
+    loadGooglePlacesAPI();
+  }, []);
+
+  const initializeAutocomplete = () => {
+    if (!inputRef.current || !window.google) return;
+
+    try {
+      // Clean up previous instance if it exists
+      if (autoCompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autoCompleteRef.current);
       }
 
       const options: google.maps.places.AutocompleteOptions = {
         fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
-        types: ['establishment'] // Allow all businesses, not just restaurants
+        types: ['restaurant', 'food']
       };
 
       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
 
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
+        
         const place = autoCompleteRef.current.getPlace();
         console.log('Selected restaurant:', place);
 
@@ -84,31 +103,19 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
         setInputValue(place.name);
         onPlaceSelect(restaurantDetails);
-        toast.success('Restaurant details loaded successfully');
       });
-
-      setIsLoading(false);
     } catch (error) {
-      console.error('Error initializing Google Places:', error);
+      console.error('Error initializing autocomplete:', error);
       toast.error('Failed to initialize restaurant search');
-      setIsLoading(false);
     }
   };
-
-  loadGooglePlacesAPI();
-
-  return () => {
-    if (autoCompleteRef.current) {
-      google.maps.event.clearInstanceListeners(autoCompleteRef.current);
-    }
-  };
-}, [onPlaceSelect]);
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    
     // Allow direct input without requiring selection
-    if (e.target.value === '') {
+    if (newValue === '') {
       onPlaceSelect({
         name: '',
         place_id: `custom-${Date.now()}`
