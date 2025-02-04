@@ -38,6 +38,26 @@ const TripCard = ({ trip, isExample = false, onHide }: TripCardProps) => {
   const navigate = useNavigate();
 
   const formatDateRange = (trip: Trip) => {
+    // If arrival and departure dates are available, use those
+    if (trip.arrival_date && trip.departure_date) {
+      const arrivalDate = new Date(trip.arrival_date);
+      const departureDate = new Date(trip.departure_date);
+      const startYear = getYear(arrivalDate);
+      const endYear = getYear(departureDate);
+
+      const formatDate = (date: Date, includeYear: boolean) => {
+        const day = format(date, "do");
+        const month = format(date, "MMMM");
+        return includeYear ? `${month} ${day} ${format(date, "yyyy")}` : `${month} ${day}`;
+      };
+
+      if (startYear === endYear) {
+        return `${formatDate(arrivalDate, false)} - ${formatDate(departureDate, true)}`;
+      }
+      return `${formatDate(arrivalDate, true)} - ${formatDate(departureDate, true)}`;
+    }
+
+    // Fallback to start_date and end_date if arrival/departure dates aren't available
     const startDate = new Date(trip.start_date);
     let endDate = startDate;
 
