@@ -6,9 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Cache responses for 1 hour to reduce API calls
-const CACHE_AGE = 3600;
-
 // Rate limiting configuration
 const RATE_LIMIT = 50; // requests per hour
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
@@ -122,7 +119,6 @@ serve(async (req) => {
       headers: { 
         ...corsHeaders,
         'Content-Type': 'application/json',
-        'Cache-Control': `public, max-age=${CACHE_AGE}`
       },
       status: 200
     });
