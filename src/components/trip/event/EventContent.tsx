@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import EventHeader from './EventHeader';
 import EventAccommodation from './EventAccommodation';
 import EventActivitiesList from './EventActivitiesList';
@@ -48,51 +50,59 @@ const EventContent: React.FC<EventContentProps> = ({
   onActivityEditChange,
   handleEditActivity,
 }) => {
-  const isCheckoutDay = hotel && hotelCheckoutDate === date;
-
   return (
-    <div className="p-6 flex flex-col justify-between">
-      <div>
-        <EventHeader
-          date={date}
-          title={title}
-          onEdit={onEdit}
-        />
-        
-        <p className="text-gray-600 mb-4">{description}</p>
-        
-        {(hotel && date >= hotelCheckinDate! && date < hotelCheckoutDate!) && (
+    <div className="p-6 flex flex-col h-full bg-white">
+      <EventHeader
+        date={date}
+        title={title}
+        onEdit={onEdit}
+      />
+      
+      <div className="space-y-6 flex-grow">
+        {description && (
+          <p className="text-gray-600 leading-relaxed">
+            {description}
+          </p>
+        )}
+
+        {hotel && (
           <EventAccommodation
             hotel={hotel}
             hotelDetails={hotelDetails}
             hotelUrl={hotelUrl}
+            checkinDate={hotelCheckinDate}
+            checkoutDate={hotelCheckoutDate}
           />
         )}
-        
-        <EventActivitiesList
-          activities={activities}
-          isCheckoutDay={isCheckoutDay}
-          hotel={hotel}
-          onAddActivity={() => onAddingActivityChange(true)}
-          onEditActivity={(activity) => {
-            onEditingActivityChange(activity.id);
-            onActivityEditChange({
-              text: activity.text,
-              cost: activity.cost?.toString() || "",
-              currency: activity.currency || "USD"
-            });
-          }}
-          isAddingActivity={isAddingActivity}
-          onAddingActivityChange={onAddingActivityChange}
-          newActivity={newActivity}
-          onNewActivityChange={onNewActivityChange}
-          handleAddActivity={handleAddActivity}
-          editingActivity={editingActivity}
-          onEditingActivityChange={onEditingActivityChange}
-          activityEdit={activityEdit}
-          onActivityEditChange={onActivityEditChange}
-          handleEditActivity={handleEditActivity}
-        />
+
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="font-semibold text-gray-900">Activities</h4>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onAddingActivityChange(true)}
+              className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Activity
+            </Button>
+          </div>
+
+          <EventActivitiesList
+            activities={activities}
+            isAddingActivity={isAddingActivity}
+            onAddingActivityChange={onAddingActivityChange}
+            newActivity={newActivity}
+            onNewActivityChange={onNewActivityChange}
+            handleAddActivity={handleAddActivity}
+            editingActivity={editingActivity}
+            onEditingActivityChange={onEditingActivityChange}
+            activityEdit={activityEdit}
+            onActivityEditChange={onActivityEditChange}
+            handleEditActivity={handleEditActivity}
+          />
+        </div>
       </div>
     </div>
   );

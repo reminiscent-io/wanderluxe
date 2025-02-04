@@ -76,10 +76,11 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.2 }}
       viewport={{ once: true }}
+      className="group"
     >
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
         <CardContent className="p-0">
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2">
             <EventImage title={title} imageUrl={image} />
             <EventContent
               date={date}
@@ -96,7 +97,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
               onAddingActivityChange={setIsAddingActivity}
               newActivity={newActivity}
               onNewActivityChange={setNewActivity}
-              handleAddActivity={() => handleAddActivity(newActivity)}
+              handleAddActivity={handleAddActivity}
               editingActivity={editingActivity}
               onEditingActivityChange={setEditingActivity}
               activityEdit={activityEdit}
