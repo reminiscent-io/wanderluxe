@@ -38,7 +38,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
   return (
     <div className="grid md:grid-cols-2 h-full">
       <DayImage
-        title={title || ""}
+        title={title}
         imageUrl={hotelDetails?.imageUrl}
       />
       

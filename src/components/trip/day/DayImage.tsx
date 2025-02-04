@@ -9,7 +9,7 @@ const DayImage: React.FC<DayImageProps> = ({ title, imageUrl }) => {
   const [imageError, setImageError] = useState(false);
 
   const getImageUrl = () => {
-    if (imageError || !imageUrl) {
+    if (!imageUrl || imageError) {
       // Default images based on title keywords
       if (title.toLowerCase().includes('naples')) {
         return "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=2574&auto=format&fit=crop"; 
