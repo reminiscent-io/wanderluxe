@@ -39,6 +39,20 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<string | null>(null);
 
+  // Filter out duplicate hotel stays based on hotel name and dates
+  const uniqueHotelStays = hotelStays.reduce((acc, current) => {
+    const isDuplicate = acc.some(stay => 
+      stay.hotel === current.hotel && 
+      stay.hotel_checkin_date === current.hotel_checkin_date &&
+      stay.hotel_checkout_date === current.hotel_checkout_date
+    );
+    
+    if (!isDuplicate) {
+      acc.push(current);
+    }
+    return acc;
+  }, [] as typeof hotelStays);
+
   const formatDateRange = (checkinDate: string, checkoutDate: string) => {
     const checkin = new Date(checkinDate);
     const checkout = new Date(checkoutDate);
@@ -71,7 +85,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   };
 
   const handleDelete = async (stayId: string) => {
-    const stay = hotelStays.find(s => s.id === stayId);
+    const stay = uniqueHotelStays.find(s => s.id === stayId);
     if (!stay) return;
 
     const success = await deleteAccommodation(stay);
@@ -97,7 +111,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       {isExpanded && (
         <div className="p-6 pt-0 space-y-6">
           <HotelStaysList
-            hotelStays={hotelStays}
+            hotelStays={uniqueHotelStays}
             onEdit={setEditingStay}
             onDelete={handleDelete}
             formatDateRange={formatDateRange}
@@ -131,17 +145,17 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
                 onSubmit={(formData) => handleUpdate(editingStay, formData)}
                 onCancel={() => setEditingStay(null)}
                 initialData={{
-                  hotel: hotelStays.find(s => s.id === editingStay)?.hotel || '',
-                  hotelDetails: hotelStays.find(s => s.id === editingStay)?.hotel_details || '',
-                  hotelUrl: hotelStays.find(s => s.id === editingStay)?.hotel_url || '',
-                  checkinDate: hotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
-                  checkoutDate: hotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
-                  expenseCost: hotelStays.find(s => s.id === editingStay)?.expense_cost?.toString() || '',
-                  expenseCurrency: hotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD',
-                  hotelAddress: hotelStays.find(s => s.id === editingStay)?.hotel_address || '',
-                  hotelPhone: hotelStays.find(s => s.id === editingStay)?.hotel_phone || '',
-                  hotelPlaceId: hotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
-                  hotelWebsite: hotelStays.find(s => s.id === editingStay)?.hotel_website || ''
+                  hotel: uniqueHotelStays.find(s => s.id === editingStay)?.hotel || '',
+                  hotelDetails: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_details || '',
+                  hotelUrl: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_url || '',
+                  checkinDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
+                  checkoutDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
+                  expenseCost: uniqueHotelStays.find(s => s.id === editingStay)?.expense_cost?.toString() || '',
+                  expenseCurrency: uniqueHotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD',
+                  hotelAddress: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_address || '',
+                  hotelPhone: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_phone || '',
+                  hotelPlaceId: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
+                  hotelWebsite: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_website || ''
                 }}
               />
             </Card>
