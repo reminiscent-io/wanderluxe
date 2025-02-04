@@ -8,13 +8,22 @@ import AccommodationsSection from './AccommodationsSection';
 import TransportationSection from './TransportationSection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface TimelineViewProps {
   tripId: string;
-  onAddAccommodation?: (startDate: string, endDate: string) => void;
+  onAddAccommodation?: (dates: { startDate: string; endDate: string }) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, onAddAccommodation }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({
+  tripId,
+  onAddAccommodation,
+  onEdit,
+  onDelete
+}) => {
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
@@ -29,7 +38,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, onAddAccommodation 
 
   useEffect(() => {
     const channel = supabase
-      .channel('timeline-changes')
+      .channel('timeline_changes')
       .on(
         'postgres_changes',
         {
@@ -40,7 +49,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, onAddAccommodation 
         },
         () => {
           refreshEvents();
-          toast.info('Timeline updated');
+          toast.success('Timeline updated');
         }
       )
       .on(
@@ -53,7 +62,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, onAddAccommodation 
         },
         () => {
           refreshDays();
-          toast.info('Trip days updated');
+          toast.success('Days updated');
         }
       )
       .subscribe();
@@ -64,7 +73,30 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, onAddAccommodation 
   }, [tripId, refreshEvents, refreshDays]);
 
   return (
-    <div className="space-y-8">
+    <div className="relative space-y-8">
+      <div className="absolute right-0 top-0 flex gap-2 z-10">
+        {onEdit && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onEdit}
+            className="bg-white/80 backdrop-blur-sm hover:bg-white"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
       <div className="grid gap-4">
         <AccommodationsSection
           tripId={tripId}
@@ -89,6 +121,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, onAddAccommodation 
           onTransportationChange={handleRefresh}
         />
       </div>
+
       <TimelineContent groups={groups} />
       <AccommodationGaps gaps={gaps} onAddAccommodation={onAddAccommodation || (() => {})} />
     </div>
