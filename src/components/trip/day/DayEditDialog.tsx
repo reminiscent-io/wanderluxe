@@ -85,8 +85,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       if (error) throw error;
       toast.success('Day updated successfully');
       onOpenChange(false);
-      // Force a reload of the page to reflect the changes
-      window.location.reload();
     } catch (error) {
       console.error('Error updating day:', error);
       toast.error('Failed to update day');
