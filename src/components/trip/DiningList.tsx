@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Utensils, MapPin, Phone, Link as LinkIcon, Star, Clock, Users } from "lucide-react";
+import { Plus, Utensils, MapPin, Phone, Link as LinkIcon, Star, Clock, Users, Edit, Trash2 } from "lucide-react";
 import RestaurantReservationForm from './dining/RestaurantReservationForm';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface DiningListProps {
   reservations: Array<{
@@ -34,28 +35,63 @@ const DiningList: React.FC<DiningListProps> = ({
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<string | null>(null);
+  const [deletingReservation, setDeletingReservation] = useState<string | null>(null);
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('restaurant_reservations')
-        .insert({
-          ...data,
-          day_id: dayId,
-          order_index: reservations.length
-        });
+      if (editingReservation) {
+        const { error } = await supabase
+          .from('restaurant_reservations')
+          .update(data)
+          .eq('id', editingReservation);
 
-      if (error) throw error;
-      
-      toast.success('Reservation added successfully');
+        if (error) throw error;
+        toast.success('Reservation updated successfully');
+      } else {
+        const { error } = await supabase
+          .from('restaurant_reservations')
+          .insert({
+            ...data,
+            day_id: dayId,
+            order_index: reservations.length
+          });
+
+        if (error) throw error;
+        toast.success('Reservation added successfully');
+      }
       setIsDialogOpen(false);
+      setEditingReservation(null);
     } catch (error) {
-      console.error('Error adding reservation:', error);
-      toast.error('Failed to add reservation');
+      console.error('Error saving reservation:', error);
+      toast.error('Failed to save reservation');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingReservation) return;
+    
+    try {
+      const { error } = await supabase
+        .from('restaurant_reservations')
+        .delete()
+        .eq('id', deletingReservation);
+
+      if (error) throw error;
+      toast.success('Reservation deleted successfully');
+      setDeletingReservation(null);
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+      toast.error('Failed to delete reservation');
+    }
+  };
+
+  const handleEdit = (reservation: any) => {
+    setEditingReservation(reservation.id);
+    setIsDialogOpen(true);
   };
 
   return (
@@ -124,11 +160,24 @@ const DiningList: React.FC<DiningListProps> = ({
                 </div>
               </div>
               
-              {reservation.confirmation_number && (
-                <span className="text-xs bg-earth-100 px-2 py-1 rounded text-earth-500">
-                  Conf: {reservation.confirmation_number}
-                </span>
-              )}
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEdit(reservation)}
+                  className="text-earth-500"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDeletingReservation(reservation.id)}
+                  className="text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-gray-600 border-t border-sand-200 pt-2">
@@ -167,14 +216,38 @@ const DiningList: React.FC<DiningListProps> = ({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Restaurant Reservation</DialogTitle>
+            <DialogTitle>
+              {editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
+            </DialogTitle>
           </DialogHeader>
           <RestaurantReservationForm
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
+            defaultValues={
+              editingReservation
+                ? reservations.find((r) => r.id === editingReservation)
+                : undefined
+            }
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deletingReservation} onOpenChange={() => setDeletingReservation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Reservation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this reservation? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
