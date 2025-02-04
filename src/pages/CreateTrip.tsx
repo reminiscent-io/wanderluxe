@@ -1,143 +1,69 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import ImageSection from "@/components/trip/create/ImageSection";
-import TimingSection from "@/components/trip/create/TimingSection";
+import CreateTripForm from "@/components/trip/create/CreateTripForm";
 
 const CreateTrip = () => {
   const [destination, setDestination] = useState("");
-  const [timingType, setTimingType] = useState("timeOfYear");
-  const [timeOfYear, setTimeOfYear] = useState("");
-  const [arrivalDate, setArrivalDate] = useState("");
-  const [departureDate, setDepartureDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!session?.user) {
+    if (!user) {
       toast.error("You must be logged in to create a trip");
       return;
     }
 
-    if (!destination) {
-      toast.error("Please enter a destination");
-      return;
-    }
-
-    if (timingType === "timeOfYear" && !timeOfYear) {
-      toast.error("Please enter a time of year");
-      return;
-    }
-
-    if (timingType === "specificDates" && (!arrivalDate || !departureDate)) {
-      toast.error("Please enter both arrival and departure dates");
-      return;
-    }
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-
-      const { data, error } = await supabase
+      const { data: trip, error: tripError } = await supabase
         .from('trips')
-        .insert([
-          {
-            user_id: session.user.id,
-            destination,
-            start_date: timingType === "specificDates" ? arrivalDate : timeOfYear,
-            end_date: timingType === "specificDates" ? departureDate : timeOfYear,
-            arrival_date: timingType === "specificDates" ? arrivalDate : null,
-            departure_date: timingType === "specificDates" ? departureDate : null,
-            cover_image_url: coverImageUrl,
-          }
-        ])
+        .insert([{
+          user_id: user.id,
+          destination,
+          start_date: startDate,
+          end_date: endDate,
+          cover_image_url: coverImageUrl,
+        }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (tripError) throw tripError;
 
       toast.success("Trip created successfully!");
-      navigate(`/trip/${data.id}`);
+      navigate(`/trip/${trip.id}`);
     } catch (error) {
       console.error('Error creating trip:', error);
-      toast.error("Failed to create trip. Please try again.");
+      toast.error("Failed to create trip");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
-            Create New Trip
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label
-                htmlFor="destination"
-                className="text-sm font-medium text-gray-700"
-              >
-                Destination
-              </label>
-              <Input
-                id="destination"
-                type="text"
-                placeholder="Enter destination"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                required
-              />
-            </div>
-
-            <ImageSection
-              coverImageUrl={coverImageUrl}
-              onImageChange={setCoverImageUrl}
-            />
-
-            <TimingSection
-              timingType={timingType}
-              onTimingTypeChange={setTimingType}
-              timeOfYear={timeOfYear}
-              onTimeOfYearChange={setTimeOfYear}
-              arrivalDate={arrivalDate}
-              onArrivalDateChange={setArrivalDate}
-              departureDate={departureDate}
-              onDepartureDateChange={setDepartureDate}
-            />
-
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/my-trips")}
-                className="px-3"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isLoading} 
-                className="px-8 border border-primary bg-earth-400 hover:bg-earth-500 text-white"
-              >
-                {isLoading ? "Creating..." : "Create Trip"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="container max-w-2xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Create a New Trip</h1>
+      <CreateTripForm
+        destination={destination}
+        setDestination={setDestination}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        coverImageUrl={coverImageUrl}
+        setCoverImageUrl={setCoverImageUrl}
+        isLoading={isLoading}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/my-trips')}
+      />
     </div>
   );
 };
