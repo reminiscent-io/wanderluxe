@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ActivityFormProps {
   activity: {
@@ -14,6 +16,7 @@ interface ActivityFormProps {
   onSubmit: () => void;
   onCancel: () => void;
   submitLabel: string;
+  eventId?: string;
 }
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD"];
@@ -23,8 +26,40 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   onActivityChange,
   onSubmit,
   onCancel,
-  submitLabel
+  submitLabel,
+  eventId
 }) => {
+  const handleSubmit = async () => {
+    if (!eventId) {
+      toast.error("No event ID provided");
+      return;
+    }
+
+    if (!activity.text) {
+      toast.error("Please enter an activity description");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .insert([{
+          event_id: eventId,
+          text: activity.text,
+          cost: activity.cost ? parseFloat(activity.cost) : null,
+          currency: activity.currency || 'USD'
+        }]);
+
+      if (error) throw error;
+
+      toast.success("Activity added successfully");
+      onSubmit();
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      toast.error("Failed to add activity");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -82,7 +117,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         </Button>
         <Button 
           type="button"
-          onClick={onSubmit}
+          onClick={handleSubmit}
           className="bg-earth-500 hover:bg-earth-600 text-white"
         >
           {submitLabel}

@@ -30,6 +30,7 @@ interface EventActivitiesListProps {
   activityEdit: { text: string; cost: string; currency: string };
   onActivityEditChange: (edit: { text: string; cost: string; currency: string }) => void;
   onEditActivity: (id: string) => void;
+  eventId: string;
 }
 
 const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
@@ -46,6 +47,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
   activityEdit,
   onActivityEditChange,
   onEditActivity,
+  eventId,
 }) => {
   return (
     <div>
@@ -78,6 +80,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
             onSubmit={onAddActivity}
             onCancel={() => onAddingActivityChange(false)}
             submitLabel="Add Activity"
+            eventId={eventId}
           />
         </DialogContent>
       </Dialog>
@@ -100,6 +103,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
                     onSubmit={() => onEditActivity(activity.id)}
                     onCancel={() => onEditingActivityChange(null)}
                     submitLabel="Save Changes"
+                    eventId={eventId}
                   />
                 </DialogContent>
               </Dialog>
