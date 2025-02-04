@@ -26,7 +26,8 @@ export const createAccommodationEvents = async (
     hotel_phone: formData.hotelPhone,
     hotel_place_id: formData.hotelPlaceId,
     hotel_website: formData.hotelWebsite,
-    final_accommodation_day: index === stayDates.length - 1 ? date : null
+    final_accommodation_day: index === stayDates.length - 1 ? date : null,
+    order_index: index // Add the required order_index field
   }));
 
   const { error } = await supabase
