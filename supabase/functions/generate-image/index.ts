@@ -21,9 +21,10 @@ serve(async (req) => {
     const cleanKeywords = keywords.trim().toLowerCase()
     console.log('Original keywords:', cleanKeywords)
     
-    // Construct a more specific travel-focused query
-    // Add location/travel specific terms and exclude people/portraits
-    const searchQuery = `${cleanKeywords} destination travel landscape scenic architecture city landmarks nature -person -people -portrait -face -model -fashion`
+    // Create a more specific travel-focused query that emphasizes landscapes and locations
+    const locationTerms = 'scenic landscape mountains valley panorama vista aerial view destination travel tourism'
+    const excludeTerms = '-person -people -portrait -face -model -fashion -crowd -selfie -indoor'
+    const searchQuery = `${cleanKeywords} ${locationTerms} ${excludeTerms}`
     console.log('Final search query:', searchQuery)
     
     const unsplashUrl = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(searchQuery)}&orientation=landscape&content_filter=high`
@@ -46,11 +47,13 @@ serve(async (req) => {
       throw new Error(`Unsplash API error: ${data.errors?.[0] || 'Unknown error'}`)
     }
 
-    // Log some info about the returned image
+    // Log detailed information about the returned image
     console.log('Image details:', {
       description: data.description,
       alt_description: data.alt_description,
-      tags: data.tags?.map((tag: any) => tag.title).join(', ')
+      tags: data.tags?.map((tag: any) => tag.title).join(', '),
+      location: data.location?.name || 'No location data',
+      categories: data.categories || []
     })
 
     return new Response(
