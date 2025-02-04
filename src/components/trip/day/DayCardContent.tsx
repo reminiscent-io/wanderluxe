@@ -37,6 +37,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       />
       <DiningList
         reservations={[]}
+        onAddReservation={() => {}}
         formatTime={formatTime}
         dayId={dayId}
       />
