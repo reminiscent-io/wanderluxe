@@ -48,7 +48,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           return;
         }
 
-        // Load the Google Places library with the fetched API key
+        // Load the Google Places library
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
         script.async = true;
@@ -57,7 +57,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
           try {
             const options: google.maps.places.AutocompleteOptions = {
-              types: ['establishment'],
               fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating']
             };
 
@@ -66,21 +65,23 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
               options
             );
 
+            // Enable input interaction
+            inputRef.current.disabled = false;
+
             autoCompleteRef.current.addListener('place_changed', () => {
               if (!autoCompleteRef.current) return;
 
               const place = autoCompleteRef.current.getPlace();
-              console.log('Selected place:', place); // Debug log
+              console.log('Selected place:', place);
 
               if (!place || !place.name) {
                 toast.error('Please select a valid restaurant from the dropdown');
                 return;
               }
 
-              // Even if some fields are missing, we can still use the place if we have the minimum required info
               const restaurantDetails: RestaurantDetails = {
                 name: place.name,
-                place_id: place.place_id || `custom-${Date.now()}`, // Fallback ID if none provided
+                place_id: place.place_id || `custom-${Date.now()}`,
                 formatted_address: place.formatted_address,
                 formatted_phone_number: place.formatted_phone_number,
                 website: place.website,
@@ -88,6 +89,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
               };
 
               onPlaceSelect(restaurantDetails);
+              setInputValue(place.name);
               toast.success('Restaurant details loaded successfully');
             });
 
@@ -108,7 +110,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         document.head.appendChild(script);
 
         return () => {
-          // Cleanup
           if (autoCompleteRef.current) {
             google.maps.event.clearInstanceListeners(autoCompleteRef.current);
           }
@@ -135,9 +136,18 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         type="text"
         id="restaurant"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          // Allow direct input without requiring selection
+          if (e.target.value === '') {
+            onPlaceSelect({
+              name: '',
+              place_id: `custom-${Date.now()}`
+            });
+          }
+        }}
         placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
-        className="w-full"
+        className="w-full bg-white"
         disabled={isLoading}
       />
     </div>

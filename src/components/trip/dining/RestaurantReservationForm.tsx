@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
+import { Loader } from 'lucide-react';
 
 const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
@@ -15,7 +16,6 @@ const formSchema = z.object({
   website: z.string().optional(),
   reservation_time: z.string().optional(),
   number_of_people: z.number().min(1).optional(),
-  confirmation_number: z.string().optional(),
   notes: z.string().optional(),
   cost: z.number().optional(),
   place_id: z.string().optional(),
@@ -41,7 +41,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       restaurant_name: '',
       reservation_time: '',
       number_of_people: undefined,
-      confirmation_number: '',
       notes: '',
       cost: undefined,
       ...defaultValues,
@@ -81,7 +80,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <FormItem>
                 <FormLabel>Reservation Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} />
+                  <Input type="time" {...field} className="bg-white" />
                 </FormControl>
               </FormItem>
             )}
@@ -98,6 +97,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     type="number"
                     {...field}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    className="bg-white"
                   />
                 </FormControl>
               </FormItem>
@@ -107,25 +107,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
         <FormField
           control={form.control}
-          name="confirmation_number"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirmation Number</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="notes"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} className="bg-white" />
               </FormControl>
             </FormItem>
           )}
@@ -142,14 +129,22 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   type="number"
                   {...field}
                   onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  className="bg-white"
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : 'Save Reservation'}
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? (
+            <>
+              <Loader className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Reservation'
+          )}
         </Button>
       </form>
     </Form>
