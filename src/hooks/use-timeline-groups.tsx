@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { parseISO, isWithinInterval } from 'date-fns';
 import { TimelineEvent, TripDay } from '@/types/trip';
 
 export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineEvent[] | undefined) => {
-  const findAccommodationGaps = () => {
+  const gaps = useMemo(() => {
     if (!events?.length) return [];
 
     const gaps: { startDate: string; endDate: string }[] = [];
@@ -26,9 +26,9 @@ export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineE
     }
 
     return gaps;
-  };
+  }, [events]);
 
-  const groupDaysByAccommodation = useMemo(() => {
+  const groups = useMemo(() => {
     if (!days || !events) return [];
 
     const sortedDays = [...days].sort((a, b) => 
@@ -60,7 +60,6 @@ export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineE
     sortedDays.forEach((day) => {
       const dayDate = parseISO(day.date);
       
-      // Find the hotel stay that covers this day
       const hotelStay = hotelStays.find(stay => {
         if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
         
@@ -71,7 +70,6 @@ export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineE
       });
 
       if (hotelStay) {
-        // If we have a hotel stay and it's different from the current group
         if (!currentGroup || currentGroup.hotel !== hotelStay.hotel) {
           if (currentGroup) {
             groups.push(currentGroup);
@@ -86,17 +84,14 @@ export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineE
         }
         currentGroup.days.push(day);
       } else {
-        // If we don't have a hotel stay for this day
         if (currentGroup) {
           groups.push(currentGroup);
           currentGroup = null;
         }
-        // Create a standalone group for days without accommodation
         groups.push({ days: [day] });
       }
     });
 
-    // Don't forget to add the last group if it exists
     if (currentGroup) {
       groups.push(currentGroup);
     }
@@ -105,7 +100,7 @@ export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineE
   }, [days, events]);
 
   return {
-    findAccommodationGaps,
-    groupDaysByAccommodation
+    groups,
+    gaps
   };
 };

@@ -24,7 +24,7 @@ interface TripDay {
 export const useTripDays = (tripId: string | undefined) => {
   const queryClient = useQueryClient();
 
-  const { data: days, isLoading } = useQuery({
+  const { data: days, isLoading, refetch: refreshDays } = useQuery({
     queryKey: ['trip-days', tripId],
     queryFn: async () => {
       if (!tripId) return [];
@@ -117,6 +117,7 @@ export const useTripDays = (tripId: string | undefined) => {
     days,
     isLoading,
     addDay,
-    addActivity
+    addActivity,
+    refreshDays
   };
 };

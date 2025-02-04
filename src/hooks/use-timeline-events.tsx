@@ -22,7 +22,6 @@ interface TimelineEvent {
 export const useTimelineEvents = (tripId: string | undefined) => {
   const queryClient = useQueryClient();
 
-  // Set up real-time subscription
   useEffect(() => {
     if (!tripId) return;
 
@@ -59,7 +58,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     };
   }, [tripId, queryClient]);
 
-  const { data: events, isLoading, refetch } = useQuery({
+  const { data: events, isLoading, refetch: refreshEvents } = useQuery({
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
       if (!tripId) return [];
@@ -72,9 +71,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
 
       if (timelineError) throw timelineError;
 
-      // Process events to include hotel information for dates between check-in and check-out
       const processedEvents = timelineEvents.map(event => {
-        // Find any hotel stays that overlap with this event's date
         const hotelStay = timelineEvents.find(e => 
           e.hotel && 
           e.hotel_checkin_date && 
@@ -83,7 +80,6 @@ export const useTimelineEvents = (tripId: string | undefined) => {
           new Date(event.date) <= new Date(e.hotel_checkout_date)
         );
 
-        // If there's an overlapping hotel stay and this event doesn't have its own hotel
         if (hotelStay && !event.hotel) {
           return {
             ...event,
@@ -149,6 +145,6 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     isLoading,
     updateEvent,
     deleteEvent,
-    refetch,
+    refreshEvents,
   };
 };
