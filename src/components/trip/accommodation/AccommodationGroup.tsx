@@ -20,7 +20,7 @@ const AccommodationGroup: React.FC<AccommodationGroupProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-sand-50">
+      <Card className="p-4 bg-sand-50/50 shadow-none border-none">
         <div className="flex items-start gap-4">
           <Hotel className="h-5 w-5 text-earth-500 mt-1" />
           <div>
@@ -32,7 +32,7 @@ const AccommodationGroup: React.FC<AccommodationGroupProps> = ({
           </div>
         </div>
       </Card>
-      <div className="pl-4 border-l-2 border-sand-200 space-y-6">
+      <div className="pl-4 border-l border-sand-100 space-y-6">
         {children}
       </div>
     </div>
