@@ -25,10 +25,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
   const [selectedTransportation, setSelectedTransportation] = useState<TransportationEvent>();
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // Get the trip ID from the first day of the first group
+  const tripId = groups[0]?.days[0]?.trip_id;
+
   const { data: transportationEvents } = useQuery({
-    queryKey: ['transportation-events', groups[0]?.days[0]?.trip_id],
+    queryKey: ['transportation-events', tripId],
     queryFn: async () => {
-      const tripId = groups[0]?.days[0]?.trip_id;
       if (!tripId) return [];
 
       const { data, error } = await supabase
@@ -41,7 +43,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
       if (error) throw error;
       return data as TransportationEvent[];
     },
-    enabled: !!groups[0]?.days[0]?.trip_id
+    enabled: !!tripId
   });
 
   const handleTransportationClick = (event: TransportationEvent) => {
@@ -125,7 +127,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
       ))}
 
       <TransportationDialog
-        tripId={groups[0]?.days[0]?.trip_id || ''}
+        tripId={tripId || ''}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         initialData={selectedTransportation}

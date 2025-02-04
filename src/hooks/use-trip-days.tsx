@@ -15,6 +15,7 @@ interface DayActivity {
 
 interface TripDay {
   id: string;
+  trip_id: string;
   date: string;
   title?: string;
   description?: string;
