@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import EventImage from './event/EventImage';
 import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
+import { useEventState } from './event/useEventState';
+import { useEventHandlers } from './event/useEventHandlers';
 
 interface TimelineEventProps {
   id: string;
@@ -40,8 +40,20 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   onEdit,
   onDelete
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
+  const {
+    isEditing,
+    setIsEditing,
+    editData,
+    setEditData,
+    newActivity,
+    setNewActivity,
+    isAddingActivity,
+    setIsAddingActivity,
+    editingActivity,
+    setEditingActivity,
+    activityEdit,
+    setActivityEdit,
+  } = useEventState(
     date,
     title,
     description,
@@ -49,90 +61,14 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     hotel_details,
     hotel_checkin_date,
     hotel_checkout_date,
-    hotel_url,
-    expense_type: "",
-    expense_cost: "",
-    expense_currency: "USD",
-  });
-  const [newActivity, setNewActivity] = useState({ text: "", cost: "", currency: "USD" });
-  const [isAddingActivity, setIsAddingActivity] = useState(false);
-  const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [activityEdit, setActivityEdit] = useState({ text: "", cost: "", currency: "USD" });
+    hotel_url
+  );
 
-  const handleEdit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onEdit(id, {
-      ...editData,
-      expense_cost: editData.expense_cost ? Number(editData.expense_cost) : null,
-    });
-    setIsEditing(false);
-  };
-
-  const handleAddActivity = async () => {
-    if (!newActivity.text.trim()) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('activities')
-        .insert([{
-          event_id: id,
-          text: newActivity.text.trim(),
-          cost: newActivity.cost ? Number(newActivity.cost) : null,
-          currency: newActivity.currency
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      onEdit(id, {
-        ...editData,
-        activities: [...activities, data]
-      });
-
-      setNewActivity({ text: "", cost: "", currency: "USD" });
-      setIsAddingActivity(false);
-      toast.success("Activity added successfully");
-    } catch (error) {
-      console.error('Error adding activity:', error);
-      toast.error("Failed to add activity");
-    }
-  };
-
-  const handleEditActivity = async (activityId: string) => {
-    try {
-      const { error } = await supabase
-        .from('activities')
-        .update({
-          text: activityEdit.text,
-          cost: activityEdit.cost ? Number(activityEdit.cost) : null,
-          currency: activityEdit.currency
-        })
-        .eq('id', activityId);
-
-      if (error) throw error;
-
-      onEdit(id, {
-        ...editData,
-        activities: activities.map(a => 
-          a.id === activityId 
-            ? { 
-                ...a, 
-                text: activityEdit.text,
-                cost: activityEdit.cost ? Number(activityEdit.cost) : null,
-                currency: activityEdit.currency
-              }
-            : a
-        )
-      });
-
-      setEditingActivity(null);
-      toast.success("Activity updated successfully");
-    } catch (error) {
-      console.error('Error updating activity:', error);
-      toast.error("Failed to update activity");
-    }
-  };
+  const {
+    handleEdit,
+    handleAddActivity,
+    handleEditActivity,
+  } = useEventHandlers(id, onEdit, editData, activities);
 
   return (
     <motion.div
@@ -160,12 +96,12 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
               onAddingActivityChange={setIsAddingActivity}
               newActivity={newActivity}
               onNewActivityChange={setNewActivity}
-              handleAddActivity={handleAddActivity}
+              handleAddActivity={() => handleAddActivity(newActivity)}
               editingActivity={editingActivity}
               onEditingActivityChange={setEditingActivity}
               activityEdit={activityEdit}
               onActivityEditChange={setActivityEdit}
-              handleEditActivity={handleEditActivity}
+              handleEditActivity={() => handleEditActivity(editingActivity!, activityEdit)}
             />
           </div>
         </CardContent>
