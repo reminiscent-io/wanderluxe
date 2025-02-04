@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import ImageSection from "@/components/trip/create/ImageSection";
 import TimingSection from "@/components/trip/create/TimingSection";
 
+// ... keep existing code (component setup and state)
+
 const CreateTrip = () => {
   const [destination, setDestination] = useState("");
   const [timingType, setTimingType] = useState("timeOfYear");
@@ -127,7 +129,11 @@ const CreateTrip = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading} className="px-8">
+              <Button 
+                type="submit" 
+                disabled={isLoading} 
+                className="px-8 border border-primary"
+              >
                 {isLoading ? "Creating..." : "Create Trip"}
               </Button>
             </div>
