@@ -27,6 +27,7 @@ interface EventContentProps {
   onActivityEditChange: (edit: { text: string; cost: string; currency: string }) => void;
   onEditActivity: (id: string) => void;
   isCheckoutDay: boolean;
+  eventId: string;
 }
 
 const EventContent: React.FC<EventContentProps> = ({
@@ -51,6 +52,7 @@ const EventContent: React.FC<EventContentProps> = ({
   onActivityEditChange,
   onEditActivity,
   isCheckoutDay,
+  eventId,
 }) => {
   return (
     <div className="p-6 flex flex-col h-full bg-white">
@@ -91,6 +93,7 @@ const EventContent: React.FC<EventContentProps> = ({
           activityEdit={activityEdit}
           onActivityEditChange={onActivityEditChange}
           onEditActivity={onEditActivity}
+          eventId={eventId}
         />
       </div>
     </div>

@@ -122,6 +122,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
               onActivityEditChange={setActivityEdit}
               onEditActivity={onEditActivity}
               isCheckoutDay={hotel_checkout_date === date}
+              eventId={id}
             />
           </div>
         </CardContent>
