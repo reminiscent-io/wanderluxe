@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
 import AccommodationActions from './accommodation/AccommodationActions';
 import HotelStaysList from './accommodation/HotelStaysList';
+import { formatDateRange } from '@/utils/dateUtils';
 import { 
   addAccommodation, 
   updateAccommodation, 
@@ -92,6 +93,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             hotelStays={uniqueHotelStays}
             onEdit={setEditingStay}
             onDelete={handleDelete}
+            formatDateRange={formatDateRange}
           />
 
           <AccommodationActions
