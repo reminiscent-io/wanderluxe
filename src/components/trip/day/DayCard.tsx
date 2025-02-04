@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import DayHeader from './DayHeader';
 import EditTitleDialog from './EditTitleDialog';
 import ActivityDialogs from './ActivityDialogs';
-import DayImage from './DayImage';
-import DayCardContent from './DayCardContent';
+import DayLayout from './DayLayout';
 import { useDayCardState } from './DayCardState';
 import { useDayCardHandlers } from './DayCardHandlers';
 
@@ -86,32 +85,26 @@ const DayCard: React.FC<DayCardProps> = ({
           formatTime={formatTime}
         />
         
-        <div className="grid md:grid-cols-2 h-full">
-          <DayImage
-            title={title || ""}
-            imageUrl={hotelDetails?.imageUrl}
-          />
-          
-          <DayCardContent
-            index={index}
-            title={title || ""}
-            activities={activities}
-            onAddActivity={() => setIsAddingActivity(true)}
-            onEditActivity={(id) => {
-              const activity = activities.find(a => a.id === id);
-              if (activity) {
-                setActivityEdit({
-                  text: activity.title,
-                  cost: activity.cost?.toString() || "",
-                  currency: activity.currency || "USD"
-                });
-                setEditingActivity(id);
-              }
-            }}
-            formatTime={formatTime}
-            dayId={id}
-          />
-        </div>
+        <DayLayout
+          title={title || ""}
+          activities={activities}
+          hotelDetails={hotelDetails}
+          index={index}
+          onAddActivity={() => setIsAddingActivity(true)}
+          onEditActivity={(id) => {
+            const activity = activities.find(a => a.id === id);
+            if (activity) {
+              setActivityEdit({
+                text: activity.title,
+                cost: activity.cost?.toString() || "",
+                currency: activity.currency || "USD"
+              });
+              setEditingActivity(id);
+            }
+          }}
+          formatTime={formatTime}
+          dayId={id}
+        />
       </Card>
 
       <EditTitleDialog
