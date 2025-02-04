@@ -1,5 +1,5 @@
 import React from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface HeroSectionProps {
   title: string;
@@ -18,8 +18,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const formatDateRange = () => {
     if (arrivalDate && departureDate) {
-      const arrival = new Date(arrivalDate);
-      const departure = new Date(departureDate);
+      const arrival = parseISO(arrivalDate);
+      const departure = parseISO(departureDate);
       return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
     }
     return null;

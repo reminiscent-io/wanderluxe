@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { EyeOff, Info } from 'lucide-react';
-import { format, getYear } from 'date-fns';
+import { format, getYear, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,8 +40,8 @@ const TripCard = ({ trip, isExample = false, onHide }: TripCardProps) => {
   const formatDateRange = (trip: Trip) => {
     // If arrival and departure dates are available, use those
     if (trip.arrival_date && trip.departure_date) {
-      const arrivalDate = new Date(trip.arrival_date);
-      const departureDate = new Date(trip.departure_date);
+      const arrivalDate = parseISO(trip.arrival_date);
+      const departureDate = parseISO(trip.departure_date);
       const startYear = getYear(arrivalDate);
       const endYear = getYear(departureDate);
 
