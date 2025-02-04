@@ -1,12 +1,10 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CalendarDays } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, parseISO } from 'date-fns';
+import TripDateDisplay from './TripDateDisplay';
+import TripDateEditDialog from './TripDateEditDialog';
 
 interface TripDatesProps {
   tripId: string;
@@ -24,11 +22,6 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [newArrival, setNewArrival] = React.useState(arrivalDate || '');
   const [newDeparture, setNewDeparture] = React.useState(departureDate || '');
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Not set';
-    return format(parseISO(dateString), 'EEEE MMMM d, yyyy');
-  };
 
   const handleSave = async () => {
     const { error } = await supabase
@@ -55,56 +48,24 @@ const TripDates: React.FC<TripDatesProps> = ({
       <div className="flex items-center gap-4">
         <CalendarDays className="h-5 w-5 text-earth-600" />
         <div className="grid grid-cols-2 gap-8">
-          <div>
-            <p className="text-sm text-gray-500 italic mb-1">Arrival</p>
-            <p className="font-medium">
-              {arrivalDate ? formatDate(arrivalDate) : 'Not set'}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 italic mb-1">Departure</p>
-            <p className="font-medium">
-              {departureDate ? formatDate(departureDate) : 'Not set'}
-            </p>
-          </div>
+          <TripDateDisplay label="Arrival" date={arrivalDate} />
+          <TripDateDisplay label="Departure" date={departureDate} />
         </div>
       </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="sm">
-            Edit Dates
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Trip Dates</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="arrival">Arrival Date</Label>
-              <Input
-                id="arrival"
-                type="date"
-                value={newArrival}
-                onChange={(e) => setNewArrival(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="departure">Departure Date</Label>
-              <Input
-                id="departure"
-                type="date"
-                value={newDeparture}
-                onChange={(e) => setNewDeparture(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleSave} className="w-full">
-              Save Changes
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <Button variant="ghost" size="sm" onClick={() => setIsOpen(true)}>
+        Edit Dates
+      </Button>
+
+      <TripDateEditDialog
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        arrivalDate={newArrival}
+        departureDate={newDeparture}
+        onArrivalChange={setNewArrival}
+        onDepartureChange={setNewDeparture}
+        onSave={handleSave}
+      />
     </div>
   );
 };
