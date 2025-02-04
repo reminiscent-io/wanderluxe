@@ -194,6 +194,7 @@ export type Database = {
       }
       timeline_events: {
         Row: {
+          accommodation_group_id: string | null
           created_at: string
           date: string
           description: string | null
@@ -219,6 +220,7 @@ export type Database = {
           trip_id: string
         }
         Insert: {
+          accommodation_group_id?: string | null
           created_at?: string
           date: string
           description?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           trip_id: string
         }
         Update: {
+          accommodation_group_id?: string | null
           created_at?: string
           date?: string
           description?: string | null
@@ -270,6 +273,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "timeline_events_accommodation_group_id_fkey"
+            columns: ["accommodation_group_id"]
+            isOneToOne: false
+            referencedRelation: "timeline_events"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "timeline_events_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
@@ -290,6 +300,8 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_arrival: boolean | null
+          is_departure: boolean | null
           provider: string | null
           start_date: string
           start_time: string | null
@@ -307,6 +319,8 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          is_arrival?: boolean | null
+          is_departure?: boolean | null
           provider?: string | null
           start_date: string
           start_time?: string | null
@@ -324,6 +338,8 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          is_arrival?: boolean | null
+          is_departure?: boolean | null
           provider?: string | null
           start_date?: string
           start_time?: string | null
@@ -377,8 +393,10 @@ export type Database = {
       }
       trips: {
         Row: {
+          arrival_date: string | null
           cover_image_url: string | null
           created_at: string
+          departure_date: string | null
           destination: string
           end_date: string
           hidden: boolean | null
@@ -387,8 +405,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          arrival_date?: string | null
           cover_image_url?: string | null
           created_at?: string
+          departure_date?: string | null
           destination: string
           end_date: string
           hidden?: boolean | null
@@ -397,8 +417,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          arrival_date?: string | null
           cover_image_url?: string | null
           created_at?: string
+          departure_date?: string | null
           destination?: string
           end_date?: string
           hidden?: boolean | null

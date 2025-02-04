@@ -15,6 +15,8 @@ const CreateTrip = () => {
   const [timeOfYear, setTimeOfYear] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [arrivalDate, setArrivalDate] = useState("");
+  const [departureDate, setDepartureDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
@@ -43,6 +45,11 @@ const CreateTrip = () => {
       return;
     }
 
+    if (timingType === "specificDates" && (!arrivalDate || !departureDate)) {
+      toast.error("Please enter both arrival and departure dates");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -54,6 +61,8 @@ const CreateTrip = () => {
             destination,
             start_date: timingType === "specificDates" ? startDate : timeOfYear,
             end_date: timingType === "specificDates" ? endDate : timeOfYear,
+            arrival_date: timingType === "specificDates" ? arrivalDate : null,
+            departure_date: timingType === "specificDates" ? departureDate : null,
           }
         ])
         .select()
@@ -165,6 +174,36 @@ const CreateTrip = () => {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="arrivalDate"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Arrival Date
+                  </label>
+                  <Input
+                    id="arrivalDate"
+                    type="date"
+                    value={arrivalDate}
+                    onChange={(e) => setArrivalDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="departureDate"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Departure Date
+                  </label>
+                  <Input
+                    id="departureDate"
+                    type="date"
+                    value={departureDate}
+                    onChange={(e) => setDepartureDate(e.target.value)}
                   />
                 </div>
               </>
