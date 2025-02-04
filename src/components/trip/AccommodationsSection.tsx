@@ -23,6 +23,10 @@ interface AccommodationsSectionProps {
     hotel_checkout_date: string;
     expense_cost?: number;
     expense_currency?: string;
+    hotel_address?: string;
+    hotel_phone?: string;
+    hotel_place_id?: string;
+    hotel_website?: string;
   }>;
 }
 
@@ -58,6 +62,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   };
 
   const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
+    console.log('Updating stay:', stayId, formData);
     const success = await updateAccommodation(tripId, stayId, formData);
     if (success) {
       setEditingStay(null);
@@ -131,8 +136,12 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
                   hotelUrl: hotelStays.find(s => s.id === editingStay)?.hotel_url || '',
                   checkinDate: hotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
                   checkoutDate: hotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
-                  expenseCost: hotelStays.find(s => s.id === editingStay)?.expense_cost || '',
-                  expenseCurrency: hotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD'
+                  expenseCost: hotelStays.find(s => s.id === editingStay)?.expense_cost?.toString() || '',
+                  expenseCurrency: hotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD',
+                  hotelAddress: hotelStays.find(s => s.id === editingStay)?.hotel_address || '',
+                  hotelPhone: hotelStays.find(s => s.id === editingStay)?.hotel_phone || '',
+                  hotelPlaceId: hotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
+                  hotelWebsite: hotelStays.find(s => s.id === editingStay)?.hotel_website || ''
                 }}
               />
             </Card>
