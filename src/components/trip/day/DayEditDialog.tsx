@@ -44,14 +44,13 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const handleGenerateImages = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://api.unsplash.com/search/photos', {
+      const url = new URL('https://api.unsplash.com/search/photos');
+      url.searchParams.append('query', imagePrompt);
+      url.searchParams.append('per_page', '5');
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`
-        },
-        method: 'GET',
-        params: {
-          query: imagePrompt,
-          per_page: 5
         }
       });
       

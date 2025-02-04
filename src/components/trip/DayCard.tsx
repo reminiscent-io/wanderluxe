@@ -8,8 +8,6 @@ import EventImage from './event/EventImage';
 import DayCardContent from './day/DayCardContent';
 import { useDayCardState } from './day/DayCardState';
 import { useDayCardHandlers } from './day/DayCardHandlers';
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface DayCardProps {
   id: string;
@@ -82,6 +80,10 @@ const DayCard: React.FC<DayCardProps> = ({
           dayNumber={index + 1}
           onEdit={() => setIsEditing(true)}
           onDelete={handleDeleteDay}
+          dayId={id}
+          title={title}
+          activities={activities}
+          formatTime={formatTime}
         />
         
         <div className="grid md:grid-cols-2 h-full">
