@@ -13,8 +13,6 @@ const CreateTrip = () => {
   const [destination, setDestination] = useState("");
   const [timingType, setTimingType] = useState("timeOfYear");
   const [timeOfYear, setTimeOfYear] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [arrivalDate, setArrivalDate] = useState("");
   const [departureDate, setDepartureDate] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
@@ -41,11 +39,6 @@ const CreateTrip = () => {
       return;
     }
 
-    if (timingType === "specificDates" && (!startDate || !endDate)) {
-      toast.error("Please enter both start and end dates");
-      return;
-    }
-
     if (timingType === "specificDates" && (!arrivalDate || !departureDate)) {
       toast.error("Please enter both arrival and departure dates");
       return;
@@ -60,8 +53,8 @@ const CreateTrip = () => {
           {
             user_id: session.user.id,
             destination,
-            start_date: timingType === "specificDates" ? startDate : timeOfYear,
-            end_date: timingType === "specificDates" ? endDate : timeOfYear,
+            start_date: timingType === "specificDates" ? arrivalDate : timeOfYear,
+            end_date: timingType === "specificDates" ? departureDate : timeOfYear,
             arrival_date: timingType === "specificDates" ? arrivalDate : null,
             departure_date: timingType === "specificDates" ? departureDate : null,
             cover_image_url: coverImageUrl,
@@ -119,10 +112,6 @@ const CreateTrip = () => {
               onTimingTypeChange={setTimingType}
               timeOfYear={timeOfYear}
               onTimeOfYearChange={setTimeOfYear}
-              startDate={startDate}
-              onStartDateChange={setStartDate}
-              endDate={endDate}
-              onEndDateChange={setEndDate}
               arrivalDate={arrivalDate}
               onArrivalDateChange={setArrivalDate}
               departureDate={departureDate}

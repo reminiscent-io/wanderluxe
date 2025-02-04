@@ -8,10 +8,6 @@ interface TimingSectionProps {
   onTimingTypeChange: (value: string) => void;
   timeOfYear: string;
   onTimeOfYearChange: (value: string) => void;
-  startDate: string;
-  onStartDateChange: (value: string) => void;
-  endDate: string;
-  onEndDateChange: (value: string) => void;
   arrivalDate: string;
   onArrivalDateChange: (value: string) => void;
   departureDate: string;
@@ -23,10 +19,6 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   onTimingTypeChange,
   timeOfYear,
   onTimeOfYearChange,
-  startDate,
-  onStartDateChange,
-  endDate,
-  onEndDateChange,
   arrivalDate,
   onArrivalDateChange,
   departureDate,
@@ -72,36 +64,6 @@ const TimingSection: React.FC<TimingSectionProps> = ({
 
       {timingType === "specificDates" && (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label
-              htmlFor="startDate"
-              className="text-sm font-medium text-gray-700"
-            >
-              Start Date
-            </Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={startDate}
-              onChange={(e) => onStartDateChange(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              htmlFor="endDate"
-              className="text-sm font-medium text-gray-700"
-            >
-              End Date
-            </Label>
-            <Input
-              id="endDate"
-              type="date"
-              value={endDate}
-              onChange={(e) => onEndDateChange(e.target.value)}
-            />
-          </div>
-
           <div className="space-y-2">
             <Label
               htmlFor="arrivalDate"
