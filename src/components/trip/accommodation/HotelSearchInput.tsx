@@ -1,7 +1,6 @@
 import React from 'react';
 import { Label } from "@/components/ui/label";
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
-import HotelDetails from './HotelDetails';
 
 interface HotelSearchInputProps {
   value: string;
@@ -13,15 +12,13 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
   onChange
 }) => {
   return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="hotel">Hotel Name *</Label>
-        <GooglePlacesAutocomplete
-          value={value}
-          onChange={onChange}
-          className="mt-1"
-        />
-      </div>
+    <div className="space-y-2">
+      <Label htmlFor="hotel">Hotel Name *</Label>
+      <GooglePlacesAutocomplete
+        value={value}
+        onChange={onChange}
+        placeholder="Start typing to search for hotels..."
+      />
     </div>
   );
 };

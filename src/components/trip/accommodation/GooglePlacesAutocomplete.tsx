@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
+import { supabase } from '@/integrations/supabase/client';
 
 interface GooglePlacesAutocompleteProps {
   value: string;
   onChange: (
     name: string, 
-    details: google.maps.places.PlaceResult
+    details?: google.maps.places.PlaceResult
   ) => void;
   className?: string;
   placeholder?: string;
@@ -20,24 +21,55 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(value);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setInputValue(value);
-  }, [value]);
+    const initializeGooglePlaces = async () => {
+      try {
+        // Get the API key from Supabase Edge Function
+        const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
+        
+        if (error) {
+          console.error('Error fetching Google Places API key:', error);
+          return;
+        }
 
-  useEffect(() => {
+        // Load the Google Places script
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          setIsLoading(false);
+          initializeAutocomplete();
+        };
+        document.head.appendChild(script);
+
+        return () => {
+          document.head.removeChild(script);
+        };
+      } catch (error) {
+        console.error('Error initializing Google Places:', error);
+        setIsLoading(false);
+      }
+    };
+
+    initializeGooglePlaces();
+  }, []);
+
+  const initializeAutocomplete = () => {
     if (!inputRef.current || !window.google) return;
 
     try {
-      const options: google.maps.places.AutocompleteOptions = {
-        types: ['lodging'],
-        fields: ['name', 'formatted_address', 'place_id', 'international_phone_number', 'website', 'formatted_phone_number']
-      };
-
       // Clean up previous instance if it exists
       if (autocompleteRef.current) {
         google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
+
+      const options: google.maps.places.AutocompleteOptions = {
+        types: ['lodging'],
+        fields: ['name', 'formatted_address', 'place_id', 'international_phone_number', 'website', 'formatted_phone_number']
+      };
 
       autocompleteRef.current = new window.google.maps.places.Autocomplete(
         inputRef.current,
@@ -52,25 +84,25 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
         
         if (place.name) {
           setInputValue(place.name);
-          onChange(place.name, {
-            ...place,
-            formatted_phone_number: place.international_phone_number || place.formatted_phone_number
-          });
+          onChange(place.name, place);
         }
       });
-
-      return () => {
-        if (autocompleteRef.current) {
-          google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        }
-      };
     } catch (error) {
       console.error('Error initializing Google Places Autocomplete:', error);
     }
-  }, [onChange]);
+  };
+
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    // Only trigger onChange with the text value when user is typing
+    if (!autocompleteRef.current) {
+      onChange(newValue);
+    }
   };
 
   return (
@@ -81,6 +113,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       onChange={handleInputChange}
       className={className}
       placeholder={placeholder}
+      disabled={isLoading}
     />
   );
 };
