@@ -49,27 +49,21 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
     setIsLoading(true);
     try {
-      const url = new URL('https://api.unsplash.com/search/photos');
-      url.searchParams.append('query', imagePrompt);
-      url.searchParams.append('per_page', '5');
-
-      const response = await fetch(url.toString(), {
-        headers: {
-          'Authorization': `Client-ID ${process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY}`
-        }
+      const { data: response, error } = await supabase.functions.invoke('generate-image', {
+        body: { keywords: imagePrompt }
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch images');
+
+      if (error) {
+        console.error('Error generating images:', error);
+        throw error;
       }
-      
-      const data = await response.json();
-      if (!data.results?.length) {
+
+      if (!response?.images?.length) {
         toast.error('No images found for this prompt');
         return;
       }
-      
-      setImages(data.results.map((img: any) => img.urls.regular));
+
+      setImages(response.images.map((img: any) => img.url));
     } catch (error) {
       console.error('Error generating images:', error);
       toast.error('Failed to generate images');
