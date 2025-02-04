@@ -49,7 +49,7 @@ const TripDetails = () => {
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
-            <div className="h-[40vh] bg-gray-200 rounded-lg mb-8"></div>
+            <div className="relative h-[40vh] bg-gray-200 rounded-lg mb-8"></div>
             <div className="h-32 bg-gray-200 rounded-lg mb-8"></div>
             <div className="space-y-12">
               <div className="h-96 bg-gray-200 rounded-lg"></div>
@@ -72,7 +72,7 @@ const TripDetails = () => {
       <HeroSection 
         title={trip.destination}
         date={`${trip.start_date} - ${trip.end_date}`}
-        imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1501854140801-50d01698950b"}
+        imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
         events={trip.timeline_events}
       />
 
