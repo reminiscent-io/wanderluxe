@@ -9,21 +9,25 @@ interface TransportationFormProps {
   initialData?: Partial<TransportationEvent>;
   onSubmit: (data: Partial<TransportationEvent>) => void;
   onCancel: () => void;
+  tripArrivalDate?: string | null;
+  tripDepartureDate?: string | null;
 }
 
 const TransportationForm: React.FC<TransportationFormProps> = ({
   initialData,
   onSubmit,
-  onCancel
+  onCancel,
+  tripArrivalDate,
+  tripDepartureDate
 }) => {
   const [formData, setFormData] = useState<Partial<TransportationEvent>>({
     type: 'flight',
     provider: '',
     details: '',
     confirmation_number: '',
-    start_date: '',
+    start_date: initialData?.start_date || tripArrivalDate || '',
     start_time: '',
-    end_date: '',
+    end_date: initialData?.end_date || tripDepartureDate || '',
     end_time: '',
     departure_location: '',
     arrival_location: '',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,32 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   initialData,
   onSuccess
 }) => {
+  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
+    arrival_date: null,
+    departure_date: null
+  });
+
+  useEffect(() => {
+    const fetchTripDates = async () => {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('id', tripId)
+        .single();
+
+      if (!error && data) {
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date
+        });
+      }
+    };
+
+    if (open) {
+      fetchTripDates();
+    }
+  }, [tripId, open]);
+
   const handleSubmit = async (data: Partial<TransportationEvent>) => {
     try {
       if (initialData?.id) {
@@ -77,6 +103,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           initialData={initialData}
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
+          tripArrivalDate={tripDates.arrival_date}
+          tripDepartureDate={tripDates.departure_date}
         />
       </DialogContent>
     </Dialog>

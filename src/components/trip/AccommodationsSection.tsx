@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
 import AccommodationActions from './accommodation/AccommodationActions';
 import HotelStaysList from './accommodation/HotelStaysList';
 import { formatDateRange } from '@/utils/dateUtils';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   addAccommodation, 
   updateAccommodation, 
@@ -38,6 +39,29 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<string | null>(null);
+  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
+    arrival_date: null,
+    departure_date: null
+  });
+
+  useEffect(() => {
+    const fetchTripDates = async () => {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('id', tripId)
+        .single();
+
+      if (!error && data) {
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date
+        });
+      }
+    };
+
+    fetchTripDates();
+  }, [tripId]);
 
   // Filter out duplicate hotel stays based on hotel name and dates
   const uniqueHotelStays = hotelStays.reduce((acc, current) => {
@@ -118,6 +142,8 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
               hotelPlaceId: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
               hotelWebsite: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_website || ''
             } : undefined}
+            tripArrivalDate={tripDates.arrival_date}
+            tripDepartureDate={tripDates.departure_date}
           />
         </div>
       )}

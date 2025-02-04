@@ -1,5 +1,5 @@
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import AccommodationForm from './AccommodationForm';
 import { AccommodationFormData } from '@/services/accommodation/accommodationService';
@@ -8,32 +8,36 @@ interface AccommodationActionsProps {
   isAddingAccommodation: boolean;
   setIsAddingAccommodation: (value: boolean) => void;
   editingStay: string | null;
-  onSubmit: (formData: AccommodationFormData) => Promise<void>;
-  initialData?: AccommodationFormData;
+  onSubmit: (data: AccommodationFormData) => void;
   onCancel: () => void;
+  initialData?: AccommodationFormData;
+  tripArrivalDate?: string | null;
+  tripDepartureDate?: string | null;
 }
 
-const AccommodationActions = ({
+const AccommodationActions: React.FC<AccommodationActionsProps> = ({
   isAddingAccommodation,
   setIsAddingAccommodation,
   editingStay,
   onSubmit,
+  onCancel,
   initialData,
-  onCancel
-}: AccommodationActionsProps) => {
-  if (editingStay) {
+  tripArrivalDate,
+  tripDepartureDate
+}) => {
+  if (isAddingAccommodation || editingStay) {
     return (
-      <Card className="p-6 bg-white">
-        <AccommodationForm 
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-          initialData={initialData}
-        />
-      </Card>
+      <AccommodationForm
+        onSubmit={onSubmit}
+        onCancel={onCancel}
+        initialData={initialData}
+        tripArrivalDate={tripArrivalDate}
+        tripDepartureDate={tripDepartureDate}
+      />
     );
   }
 
-  return !isAddingAccommodation ? (
+  return (
     <Button
       onClick={() => setIsAddingAccommodation(true)}
       variant="outline"
@@ -42,13 +46,6 @@ const AccommodationActions = ({
       <Plus className="h-4 w-4 mr-2" />
       Add Accommodation
     </Button>
-  ) : (
-    <Card className="p-6 bg-white">
-      <AccommodationForm 
-        onSubmit={onSubmit}
-        onCancel={() => setIsAddingAccommodation(false)}
-      />
-    </Card>
   );
 };
 

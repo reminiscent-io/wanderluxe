@@ -33,17 +33,23 @@ interface AccommodationFormProps {
     hotelPlaceId?: string;
     hotelWebsite?: string;
   };
+  tripArrivalDate?: string | null;
+  tripDepartureDate?: string | null;
 }
 
-const AccommodationForm: React.FC<AccommodationFormProps> = ({ onSubmit, onCancel, initialData }) => {
-  const today = new Date().toISOString().split('T')[0];
-  
+const AccommodationForm: React.FC<AccommodationFormProps> = ({ 
+  onSubmit, 
+  onCancel, 
+  initialData,
+  tripArrivalDate,
+  tripDepartureDate
+}) => {
   const [formData, setFormData] = useState({
     hotel: initialData?.hotel || '',
     hotelDetails: initialData?.hotelDetails || '',
     hotelUrl: initialData?.hotelUrl || '',
-    checkinDate: initialData?.checkinDate || today,
-    checkoutDate: initialData?.checkoutDate || '',
+    checkinDate: initialData?.checkinDate || tripArrivalDate || '',
+    checkoutDate: initialData?.checkoutDate || tripDepartureDate || '',
     expenseCost: initialData?.expenseCost ? initialData.expenseCost.toString() : '',
     expenseCurrency: initialData?.expenseCurrency || 'USD',
     hotelAddress: initialData?.hotelAddress || '',
