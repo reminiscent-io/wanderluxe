@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Image, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,14 @@ interface ImageUploadProps {
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImageUrl }) => {
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string>(currentImageUrl || '');
+  const [preview, setPreview] = useState<string>('');
+
+  // Update preview when currentImageUrl changes
+  useEffect(() => {
+    if (currentImageUrl) {
+      setPreview(currentImageUrl);
+    }
+  }, [currentImageUrl]);
 
   const uploadImage = async (file: File) => {
     try {
