@@ -129,6 +129,7 @@ const DayCard: React.FC<DayCardProps> = ({
         setActivityEdit={setActivityEdit}
         onAddActivity={() => {}}
         onEditActivity={() => {}}
+        eventId={id}
       />
     </motion.div>
   );
