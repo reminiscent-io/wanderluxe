@@ -39,6 +39,14 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
     }
   };
 
+  const formatDisplayValue = (value: number | undefined | null): string => {
+    if (value === undefined || value === null) return '';
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -151,7 +159,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <Label>Cost (Optional)</Label>
           <Input
             type="text"
-            value={formData.cost !== undefined ? formData.cost.toString() : ''}
+            value={formatDisplayValue(formData.cost)}
             onChange={(e) => handleCostChange(e.target.value)}
             placeholder="0.00"
           />
