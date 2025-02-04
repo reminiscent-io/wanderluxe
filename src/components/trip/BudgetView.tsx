@@ -92,7 +92,12 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           onDelete={handleDeleteExpense}
         />
 
-        <TotalExpenseCard total={totals.total} currency={selectedCurrency} />
+        <TotalExpenseCard 
+          total={totals.total} 
+          paid={totals.paid}
+          unpaid={totals.unpaid}
+          currency={selectedCurrency} 
+        />
       </div>
 
       <AddExpenseDialog 
