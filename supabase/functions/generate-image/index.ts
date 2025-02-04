@@ -21,12 +21,11 @@ serve(async (req) => {
     const cleanKeywords = keywords.trim().toLowerCase()
     console.log('Original keywords:', cleanKeywords)
     
-    // Create a more specific travel-focused query that emphasizes landscapes and locations
-    const locationTerms = 'scenic landscape mountains valley panorama vista aerial view destination travel tourism'
-    const excludeTerms = '-person -people -portrait -face -model -fashion -crowd -selfie -indoor'
-    const searchQuery = `${cleanKeywords} ${locationTerms} ${excludeTerms}`
-    console.log('Final search query:', searchQuery)
+    // Create a more focused travel query
+    const searchQuery = `${cleanKeywords} landscape nature scenic travel destination -people -person -portrait -selfie`
+    console.log('Search query:', searchQuery)
     
+    // Log the full URL we're about to request (without the auth header)
     const unsplashUrl = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(searchQuery)}&orientation=landscape&content_filter=high`
     console.log('Requesting URL:', unsplashUrl)
 
@@ -39,21 +38,25 @@ serve(async (req) => {
       }
     )
 
-    const data = await response.json()
+    // Log the response status
     console.log('Unsplash response status:', response.status)
+    
+    const data = await response.json()
     
     if (!response.ok) {
       console.error('Unsplash API error response:', data)
       throw new Error(`Unsplash API error: ${data.errors?.[0] || 'Unknown error'}`)
     }
 
-    // Log detailed information about the returned image
-    console.log('Image details:', {
+    // Log the full response data for debugging
+    console.log('Unsplash response data:', {
+      id: data.id,
       description: data.description,
       alt_description: data.alt_description,
-      tags: data.tags?.map((tag: any) => tag.title).join(', '),
-      location: data.location?.name || 'No location data',
-      categories: data.categories || []
+      urls: data.urls,
+      tags: data.tags?.map((tag: any) => tag.title),
+      location: data.location,
+      categories: data.categories
     })
 
     return new Response(
