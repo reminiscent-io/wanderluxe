@@ -30,7 +30,7 @@ serve(async (req) => {
     
     // Use search endpoint instead of random for better relevance
     const unsplashUrl = new URL('https://api.unsplash.com/search/photos');
-    unsplashUrl.searchParams.set('query', searchQuery);
+    unsplashUrl.searchParams.set('query', cleanKeywords);
     unsplashUrl.searchParams.set('orientation', 'landscape');
     unsplashUrl.searchParams.set('per_page', count);
     unsplashUrl.searchParams.set('content_filter', 'high');
