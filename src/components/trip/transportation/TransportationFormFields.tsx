@@ -19,6 +19,12 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   formatCost
 }) => {
   const handleCostChange = (value: string) => {
+    // Allow empty input
+    if (value === '') {
+      setFormData({ ...formData, cost: undefined });
+      return;
+    }
+
     // Remove any non-numeric characters except decimal point
     const numericValue = value.replace(/[^\d.]/g, '');
     
@@ -28,7 +34,9 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
     
     // Convert to number for the formData
     const numberValue = parseFloat(formattedValue);
-    setFormData({ ...formData, cost: isNaN(numberValue) ? undefined : numberValue });
+    if (!isNaN(numberValue)) {
+      setFormData({ ...formData, cost: numberValue });
+    }
   };
 
   return (
@@ -143,18 +151,29 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <Label>Cost (Optional)</Label>
           <Input
             type="text"
-            value={formatCost(formData.cost)}
+            value={formData.cost !== undefined ? formData.cost.toString() : ''}
             onChange={(e) => handleCostChange(e.target.value)}
             placeholder="0.00"
           />
         </div>
         <div>
           <Label>Currency</Label>
-          <Input
+          <Select
             value={formData.currency || 'USD'}
-            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-            placeholder="USD"
-          />
+            onValueChange={(value) => setFormData({ ...formData, currency: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select currency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="EUR">EUR</SelectItem>
+              <SelectItem value="GBP">GBP</SelectItem>
+              <SelectItem value="JPY">JPY</SelectItem>
+              <SelectItem value="AUD">AUD</SelectItem>
+              <SelectItem value="CAD">CAD</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
