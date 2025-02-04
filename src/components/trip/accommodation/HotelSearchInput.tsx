@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from '@/integrations/supabase/client';
 
 // Declare the google types globally
 declare global {
@@ -23,19 +24,36 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const [apiKey, setApiKey] = useState<string>('');
 
   useEffect(() => {
-    // Check if Google Places API is loaded
-    const checkGoogleLoaded = () => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        setIsGoogleLoaded(true);
-      } else {
-        // If not loaded, check again in 100ms
-        setTimeout(checkGoogleLoaded, 100);
+    const loadGooglePlacesKey = async () => {
+      try {
+        const { data: { key } } = await supabase.functions.invoke('get-google-places-key');
+        if (key) {
+          setApiKey(key);
+          // Load the Google Places script with the API key
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+          script.async = true;
+          script.defer = true;
+          script.onload = () => setIsGoogleLoaded(true);
+          document.head.appendChild(script);
+        }
+      } catch (error) {
+        console.error('Error loading Google Places API key:', error);
       }
     };
 
-    checkGoogleLoaded();
+    loadGooglePlacesKey();
+
+    // Cleanup function to remove the script when component unmounts
+    return () => {
+      const script = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+      if (script) {
+        document.head.removeChild(script);
+      }
+    };
   }, []);
 
   useEffect(() => {
