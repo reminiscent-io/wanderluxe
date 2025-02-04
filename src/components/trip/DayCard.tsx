@@ -3,13 +3,11 @@ import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import HotelInfo from './HotelInfo';
-import ActivitiesList from './ActivitiesList';
-import DiningList from './DiningList';
 import DayHeader from './day/DayHeader';
 import EditTitleDialog from './day/EditTitleDialog';
 import ActivityDialogs from './day/ActivityDialogs';
 import EventImage from './event/EventImage';
+import DayContent from './day/DayContent';
 
 interface DayCardProps {
   id: string;
@@ -111,47 +109,26 @@ const DayCard: React.FC<DayCardProps> = ({
             imageUrl={hotelDetails?.imageUrl || ""}
           />
           
-          <div className="p-6">
-            <div className="space-y-6">
-              <div>
-                <span className="text-sm text-gray-500">Day {index + 1}</span>
-                <h3 className="text-2xl font-semibold mt-1">
-                  {title || "Untitled Day"}
-                </h3>
-              </div>
-
-              {hotelDetails && (
-                <HotelInfo
-                  name={hotelDetails.name}
-                  details={hotelDetails.details}
-                />
-              )}
-
-              <ActivitiesList
-                activities={activities}
-                onAddActivity={() => setIsAddingActivity(true)}
-                onEditActivity={(id) => {
-                  const activity = activities.find(a => a.id === id);
-                  if (activity) {
-                    setActivityEdit({
-                      text: activity.title,
-                      cost: activity.cost?.toString() || "",
-                      currency: activity.currency || "USD"
-                    });
-                    setEditingActivity(id);
-                  }
-                }}
-                formatTime={formatTime}
-              />
-
-              <DiningList
-                reservations={[]}
-                onAddReservation={() => {}}
-                formatTime={formatTime}
-                dayId={id}
-              />
-            </div>
-          </div>
+          <DayContent
+            index={index}
+            title={title || ""}
+            hotelDetails={hotelDetails}
+            activities={activities}
+            onAddActivity={() => setIsAddingActivity(true)}
+            onEditActivity={(id) => {
+              const activity = activities.find(a => a.id === id);
+              if (activity) {
+                setActivityEdit({
+                  text: activity.title,
+                  cost: activity.cost?.toString() || "",
+                  currency: activity.currency || "USD"
+                });
+                setEditingActivity(id);
+              }
+            }}
+            formatTime={formatTime}
+            dayId={id}
+          />
         </div>
       </Card>
 
