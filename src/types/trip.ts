@@ -1,5 +1,6 @@
 export interface TripDay {
   id: string;
+  trip_id: string;  // Added this field
   date: string;
   title?: string;
   description?: string;
