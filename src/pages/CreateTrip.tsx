@@ -123,10 +123,11 @@ const CreateTrip = () => {
                 type="button"
                 variant="outline"
                 onClick={() => navigate("/my-trips")}
+                className="px-3"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="px-8">
                 {isLoading ? "Creating..." : "Create Trip"}
               </Button>
             </div>
