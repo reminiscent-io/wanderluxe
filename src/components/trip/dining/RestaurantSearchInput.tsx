@@ -57,7 +57,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
           try {
             const options: google.maps.places.AutocompleteOptions = {
-              types: ['restaurant'],
+              types: ['establishment'],
               fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating']
             };
 
@@ -69,28 +69,26 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
             autoCompleteRef.current.addListener('place_changed', () => {
               if (!autoCompleteRef.current) return;
 
-              try {
-                const place = autoCompleteRef.current.getPlace();
-                
-                // Check if we have a valid place with at least a name and place_id
-                if (!place || !place.name || !place.place_id) {
-                  console.error('Invalid place selected:', place);
-                  toast.error('Failed to get restaurant details. Please try again.');
-                  return;
-                }
+              const place = autoCompleteRef.current.getPlace();
+              console.log('Selected place:', place); // Debug log
 
-                onPlaceSelect({
-                  name: place.name,
-                  place_id: place.place_id,
-                  formatted_address: place.formatted_address,
-                  formatted_phone_number: place.formatted_phone_number,
-                  website: place.website,
-                  rating: place.rating
-                });
-              } catch (error) {
-                console.error('Error handling place selection:', error);
-                toast.error('Failed to process restaurant selection');
+              if (!place || !place.name) {
+                toast.error('Please select a valid restaurant from the dropdown');
+                return;
               }
+
+              // Even if some fields are missing, we can still use the place if we have the minimum required info
+              const restaurantDetails: RestaurantDetails = {
+                name: place.name,
+                place_id: place.place_id || `custom-${Date.now()}`, // Fallback ID if none provided
+                formatted_address: place.formatted_address,
+                formatted_phone_number: place.formatted_phone_number,
+                website: place.website,
+                rating: place.rating
+              };
+
+              onPlaceSelect(restaurantDetails);
+              toast.success('Restaurant details loaded successfully');
             });
 
             setIsLoading(false);
@@ -108,6 +106,17 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         };
 
         document.head.appendChild(script);
+
+        return () => {
+          // Cleanup
+          if (autoCompleteRef.current) {
+            google.maps.event.clearInstanceListeners(autoCompleteRef.current);
+          }
+          const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
+          if (existingScript) {
+            existingScript.remove();
+          }
+        };
       } catch (error) {
         console.error('Error initializing Google Places:', error);
         toast.error('Failed to initialize restaurant search');
@@ -116,12 +125,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
     };
 
     initializeAutocomplete();
-
-    return () => {
-      if (autoCompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autoCompleteRef.current);
-      }
-    };
   }, [onPlaceSelect]);
 
   return (
