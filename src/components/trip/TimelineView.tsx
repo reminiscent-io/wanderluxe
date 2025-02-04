@@ -8,6 +8,7 @@ import { generateDaysBetweenDates } from '@/utils/dateUtils';
 import { useTimelineGroups } from '@/hooks/use-timeline-groups';
 import AccommodationGaps from './timeline/AccommodationGaps';
 import TimelineContent from './timeline/TimelineContent';
+import { toast } from 'sonner';
 
 interface TimelineViewProps {
   tripId: string | undefined;
@@ -45,6 +46,47 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
       initializeDays();
     }
   }, [tripId, days, addDay]);
+
+  // Set up real-time subscriptions for timeline events and transportation
+  useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel('timeline-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'timeline_events',
+          filter: `trip_id=eq.${tripId}`
+        },
+        (payload) => {
+          console.log('Timeline event changed:', payload);
+          refetch();
+          toast.success('Timeline updated');
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transportation_events',
+          filter: `trip_id=eq.${tripId}`
+        },
+        (payload) => {
+          console.log('Transportation event changed:', payload);
+          refetch();
+          toast.success('Transportation updated');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tripId, refetch]);
 
   if (eventsLoading || daysLoading) {
     return <div>Loading timeline...</div>;
