@@ -39,7 +39,14 @@ function isRateLimited(clientIP: string): boolean {
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: {
+        ...corsHeaders,
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    });
   }
 
   try {
@@ -58,7 +65,10 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json',
-          'Retry-After': '3600'
+          'Retry-After': '3600',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         }
       });
     }
@@ -87,7 +97,8 @@ serve(async (req) => {
     const response = await fetch(unsplashUrl, {
       headers: {
         'Authorization': `Client-ID ${Deno.env.get('UNSPLASH_ACCESS_KEY')}`,
-        'Accept-Version': 'v1'
+        'Accept-Version': 'v1',
+        'Cache-Control': 'no-cache'
       }
     });
 
@@ -119,6 +130,9 @@ serve(async (req) => {
       headers: { 
         ...corsHeaders,
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
       status: 200
     });
@@ -129,7 +143,13 @@ serve(async (req) => {
       error: error.message,
       documentation: 'https://unsplash.com/documentation'
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
       status: error.message.includes('Please provide') ? 400 : 500
     });
   }
