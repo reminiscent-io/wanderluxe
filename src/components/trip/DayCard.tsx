@@ -8,6 +8,8 @@ import EventImage from './event/EventImage';
 import DayCardContent from './day/DayCardContent';
 import { useDayCardState } from './day/DayCardState';
 import { useDayCardHandlers } from './day/DayCardHandlers';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface DayCardProps {
   id: string;
@@ -77,6 +79,7 @@ const DayCard: React.FC<DayCardProps> = ({
       <Card className="overflow-hidden">
         <DayHeader
           date={date}
+          dayNumber={index + 1}
           onEdit={() => setIsEditing(true)}
           onDelete={handleDeleteDay}
         />
@@ -90,7 +93,6 @@ const DayCard: React.FC<DayCardProps> = ({
           <DayCardContent
             index={index}
             title={title || ""}
-            hotelDetails={hotelDetails}
             activities={activities}
             onAddActivity={() => setIsAddingActivity(true)}
             onEditActivity={(id) => {
@@ -105,6 +107,7 @@ const DayCard: React.FC<DayCardProps> = ({
               }
             }}
             formatTime={formatTime}
+            dayId={id}
           />
         </div>
       </Card>
