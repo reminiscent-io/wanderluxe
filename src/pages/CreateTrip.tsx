@@ -9,8 +9,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import ImageSection from "@/components/trip/create/ImageSection";
 import TimingSection from "@/components/trip/create/TimingSection";
 
-// ... keep existing code (component setup and state)
-
 const CreateTrip = () => {
   const [destination, setDestination] = useState("");
   const [timingType, setTimingType] = useState("timeOfYear");
@@ -132,7 +130,7 @@ const CreateTrip = () => {
               <Button 
                 type="submit" 
                 disabled={isLoading} 
-                className="px-8 border border-primary"
+                className="px-8 border border-primary bg-earth-400 hover:bg-earth-500 text-white"
               >
                 {isLoading ? "Creating..." : "Create Trip"}
               </Button>
