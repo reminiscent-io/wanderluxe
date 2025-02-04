@@ -103,7 +103,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
   }, []) || [];
 
   const accommodationGaps = findAccommodationGaps();
-  const groups = groupDaysByAccommodation();
 
   return (
     <div className="space-y-8">
@@ -119,7 +118,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
       />
 
       <AccommodationGaps gaps={accommodationGaps} />
-      <TimelineContent groups={groups} />
+      <TimelineContent groups={groupDaysByAccommodation} />
     </div>
   );
 };
