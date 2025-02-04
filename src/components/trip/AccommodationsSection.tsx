@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Hotel } from "lucide-react";
-import AccommodationForm from './accommodation/AccommodationForm';
+import AccommodationHeader from './accommodation/AccommodationHeader';
+import AccommodationActions from './accommodation/AccommodationActions';
 import HotelStaysList from './accommodation/HotelStaysList';
 import { 
   addAccommodation, 
@@ -53,19 +52,6 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     return acc;
   }, [] as typeof hotelStays);
 
-  const formatDateRange = (checkinDate: string, checkoutDate: string) => {
-    const checkin = new Date(checkinDate);
-    const checkout = new Date(checkoutDate);
-    
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    };
-    
-    return `${checkin.toLocaleDateString(undefined, options)} - ${checkout.toLocaleDateString(undefined, options)}`;
-  };
-
   const handleSubmit = async (formData: AccommodationFormData) => {
     const success = await addAccommodation(tripId, formData);
     if (success) {
@@ -76,7 +62,6 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   };
 
   const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
-    console.log('Updating stay:', stayId, formData);
     const success = await updateAccommodation(tripId, stayId, formData);
     if (success) {
       setEditingStay(null);
@@ -96,17 +81,10 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
   return (
     <Card className="bg-sand-50 shadow-md">
-      <Button
-        onClick={() => setIsExpanded(!isExpanded)}
-        variant="ghost"
-        className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Hotel className="h-5 w-5" />
-          <span className="text-lg font-medium">Accommodations</span>
-        </div>
-        <Plus className="h-5 w-5" />
-      </Button>
+      <AccommodationHeader 
+        isExpanded={isExpanded}
+        onToggle={() => setIsExpanded(!isExpanded)}
+      />
 
       {isExpanded && (
         <div className="p-6 pt-0 space-y-6">
@@ -114,52 +92,31 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             hotelStays={uniqueHotelStays}
             onEdit={setEditingStay}
             onDelete={handleDelete}
-            formatDateRange={formatDateRange}
           />
 
-          {!editingStay && (
-            <>
-              {!isAddingAccommodation ? (
-                <Button
-                  onClick={() => setIsAddingAccommodation(true)}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Accommodation
-                </Button>
-              ) : (
-                <Card className="p-6 bg-white">
-                  <AccommodationForm 
-                    onSubmit={handleSubmit} 
-                    onCancel={() => setIsAddingAccommodation(false)} 
-                  />
-                </Card>
-              )}
-            </>
-          )}
-
-          {editingStay && (
-            <Card className="p-6 bg-white">
-              <AccommodationForm 
-                onSubmit={(formData) => handleUpdate(editingStay, formData)}
-                onCancel={() => setEditingStay(null)}
-                initialData={{
-                  hotel: uniqueHotelStays.find(s => s.id === editingStay)?.hotel || '',
-                  hotelDetails: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_details || '',
-                  hotelUrl: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_url || '',
-                  checkinDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
-                  checkoutDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
-                  expenseCost: uniqueHotelStays.find(s => s.id === editingStay)?.expense_cost?.toString() || '',
-                  expenseCurrency: uniqueHotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD',
-                  hotelAddress: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_address || '',
-                  hotelPhone: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_phone || '',
-                  hotelPlaceId: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
-                  hotelWebsite: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_website || ''
-                }}
-              />
-            </Card>
-          )}
+          <AccommodationActions
+            isAddingAccommodation={isAddingAccommodation}
+            setIsAddingAccommodation={setIsAddingAccommodation}
+            editingStay={editingStay}
+            onSubmit={editingStay 
+              ? (formData) => handleUpdate(editingStay, formData)
+              : handleSubmit
+            }
+            onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
+            initialData={editingStay ? {
+              hotel: uniqueHotelStays.find(s => s.id === editingStay)?.hotel || '',
+              hotelDetails: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_details || '',
+              hotelUrl: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_url || '',
+              checkinDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
+              checkoutDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
+              expenseCost: uniqueHotelStays.find(s => s.id === editingStay)?.expense_cost?.toString() || '',
+              expenseCurrency: uniqueHotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD',
+              hotelAddress: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_address || '',
+              hotelPhone: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_phone || '',
+              hotelPlaceId: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
+              hotelWebsite: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_website || ''
+            } : undefined}
+          />
         </div>
       )}
     </Card>
