@@ -1,30 +1,47 @@
 import React from 'react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-
-interface Gap {
-  startDate: string;
-  endDate: string;
-}
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface AccommodationGapsProps {
-  gaps: Gap[];
+  gaps: Array<{
+    startDate: string;
+    endDate: string;
+  }>;
+  onAddAccommodation: (startDate: string, endDate: string) => void;
 }
 
-const AccommodationGaps: React.FC<AccommodationGapsProps> = ({ gaps }) => {
+const AccommodationGaps: React.FC<AccommodationGapsProps> = ({
+  gaps,
+  onAddAccommodation,
+}) => {
   if (gaps.length === 0) return null;
 
   return (
-    <div className="space-y-4">
-      {gaps.map((gap, index) => (
-        <Alert key={index} variant="destructive" className="bg-orange-50 border-orange-200">
-          <AlertTriangle className="h-4 w-4 text-orange-500" />
-          <AlertDescription className="text-orange-700">
-            No accommodation planned between {new Date(gap.startDate).toLocaleDateString()} and{' '}
-            {new Date(gap.endDate).toLocaleDateString()}
-          </AlertDescription>
-        </Alert>
-      ))}
+    <div className="space-y-4 mt-8">
+      <h3 className="text-lg font-semibold text-earth-500">Missing Accommodations</h3>
+      <div className="space-y-2">
+        {gaps.map((gap, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between p-4 bg-sand-50 rounded-lg"
+          >
+            <div>
+              <p className="text-sm text-earth-500">
+                {new Date(gap.startDate).toLocaleDateString()} -{' '}
+                {new Date(gap.endDate).toLocaleDateString()}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onAddAccommodation(gap.startDate, gap.endDate)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Accommodation
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
