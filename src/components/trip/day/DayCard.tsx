@@ -1,15 +1,13 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import DayHeader from '../day/DayHeader';
-import EditTitleDialog from '../day/EditTitleDialog';
-import ActivityDialogs from '../day/ActivityDialogs';
+import DayHeader from './DayHeader';
+import EditTitleDialog from './EditTitleDialog';
+import ActivityDialogs from './ActivityDialogs';
 import EventImage from '../event/EventImage';
-import DayCardContent from '../day/DayCardContent';
-import { useDayCardState } from '../day/DayCardState';
-import { useDayCardHandlers } from '../day/DayCardHandlers';
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import DayCardContent from './DayCardContent';
+import { useDayCardState } from './DayCardState';
+import { useDayCardHandlers } from './DayCardHandlers';
 
 interface DayCardProps {
   id: string;
@@ -82,6 +80,10 @@ const DayCard: React.FC<DayCardProps> = ({
           dayNumber={index + 1}
           onEdit={() => setIsEditing(true)}
           onDelete={handleDeleteDay}
+          dayId={id}
+          title={title}
+          activities={activities}
+          formatTime={formatTime}
         />
         
         <div className="grid md:grid-cols-2 h-full">

@@ -44,20 +44,21 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const handleGenerateImages = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://api.unsplash.com/photos/random', {
+      const response = await fetch('https://api.unsplash.com/search/photos', {
         headers: {
           'Authorization': `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`
         },
+        method: 'GET',
         params: {
           query: imagePrompt,
-          count: 5
+          per_page: 5
         }
       });
       
       if (!response.ok) throw new Error('Failed to fetch images');
       
       const data = await response.json();
-      setImages(data.map((img: any) => img.urls.regular));
+      setImages(data.results.map((img: any) => img.urls.regular));
     } catch (error) {
       toast.error('Failed to generate images');
       console.error('Error generating images:', error);
