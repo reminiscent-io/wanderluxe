@@ -62,7 +62,7 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
     try {
       const options: google.maps.places.AutocompleteOptions = {
         types: ['lodging'],
-        fields: ['name', 'formatted_address', 'place_id', 'formatted_phone_number', 'website']
+        fields: ['name', 'formatted_address', 'place_id', 'international_phone_number', 'website']
       };
 
       const autocompleteInstance = new window.google.maps.places.Autocomplete(
@@ -73,7 +73,10 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
       autocompleteInstance.addListener('place_changed', () => {
         const place = autocompleteInstance.getPlace();
         if (place.name) {
-          onChange(place.name, place);
+          onChange(place.name, {
+            ...place,
+            formatted_phone_number: place.international_phone_number || place.formatted_phone_number
+          });
         }
       });
 
