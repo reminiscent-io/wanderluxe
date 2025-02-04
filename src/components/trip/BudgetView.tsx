@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
-import { calculateTotals, getExpensesByType } from './budget/utils/budgetCalculations';
+import { useCurrencyState } from './budget/hooks/useCurrencyState';
+import { useExpandedSections } from './budget/hooks/useExpandedSections';
+import { calculateTotals } from './budget/utils/budgetCalculations';
 import BudgetHeader from './budget/BudgetHeader';
-import ExpenseSection from './budget/ExpenseSection';
+import AccommodationSection from './budget/sections/AccommodationSection';
+import TransportationSection from './budget/sections/TransportationSection';
+import ActivitiesSection from './budget/sections/ActivitiesSection';
 import TotalExpenseCard from './budget/TotalExpenseCard';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 
@@ -11,8 +15,8 @@ interface BudgetViewProps {
 }
 
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
-  const [selectedCurrency, setSelectedCurrency] = useState('USD');
-  const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const { selectedCurrency, setSelectedCurrency } = useCurrencyState('USD');
+  const { expandedSections, toggleSection } = useExpandedSections();
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -25,14 +29,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     handleUpdateCost,
     handleAddExpense
   } = useBudgetEvents(tripId);
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section)
-        : [...prev, section]
-    );
-  };
 
   const handleAddExpenseClick = (category: string) => {
     setSelectedCategory(category);
@@ -50,42 +46,39 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       />
 
       <div className="flex flex-col space-y-4">
-        <ExpenseSection
-          title="Accommodation"
+        <AccommodationSection
+          expenses={events}
           amount={totals.accommodation}
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('accommodation')}
           onToggle={() => toggleSection('accommodation')}
           onAddExpense={() => handleAddExpenseClick('accommodation')}
-          expenses={getExpensesByType(events, 'accommodation')}
           editingItem={editingItem}
           onEdit={setEditingItem}
           onUpdateCost={handleUpdateCost}
           onDelete={handleDeleteExpense}
         />
 
-        <ExpenseSection
-          title="Transportation"
+        <TransportationSection
+          expenses={events}
           amount={totals.transportation}
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('transportation')}
           onToggle={() => toggleSection('transportation')}
           onAddExpense={() => handleAddExpenseClick('transportation')}
-          expenses={getExpensesByType(events, 'transportation')}
           editingItem={editingItem}
           onEdit={setEditingItem}
           onUpdateCost={handleUpdateCost}
           onDelete={handleDeleteExpense}
         />
 
-        <ExpenseSection
-          title="Activities"
+        <ActivitiesSection
+          expenses={events}
           amount={totals.activities}
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('activities')}
           onToggle={() => toggleSection('activities')}
           onAddExpense={() => handleAddExpenseClick('activities')}
-          expenses={getExpensesByType(events, 'activities')}
           editingItem={editingItem}
           onEdit={setEditingItem}
           onUpdateCost={handleUpdateCost}
