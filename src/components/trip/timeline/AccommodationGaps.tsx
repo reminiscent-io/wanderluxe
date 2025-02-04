@@ -7,7 +7,7 @@ interface AccommodationGapsProps {
     startDate: string;
     endDate: string;
   }>;
-  onAddAccommodation: (startDate: string, endDate: string) => void;
+  onAddAccommodation: (dates: { startDate: string; endDate: string }) => void;
 }
 
 const AccommodationGaps: React.FC<AccommodationGapsProps> = ({
@@ -34,7 +34,7 @@ const AccommodationGaps: React.FC<AccommodationGapsProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onAddAccommodation(gap.startDate, gap.endDate)}
+              onClick={() => onAddAccommodation({ startDate: gap.startDate, endDate: gap.endDate })}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Accommodation
