@@ -6,6 +6,7 @@ import TimelineContent from './timeline/TimelineContent';
 import AccommodationGaps from './timeline/AccommodationGaps';
 import AccommodationsSection from './AccommodationsSection';
 import TransportationSection from './TransportationSection';
+import TripDates from './timeline/TripDates';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -28,11 +29,35 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
+    arrival_date: null,
+    departure_date: null
+  });
+
+  const fetchTripDates = async () => {
+    const { data, error } = await supabase
+      .from('trips')
+      .select('arrival_date, departure_date')
+      .eq('id', tripId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching trip dates:', error);
+      return;
+    }
+
+    setTripDates(data);
+  };
+
+  useEffect(() => {
+    fetchTripDates();
+  }, [tripId]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
     refreshEvents();
     refreshDays();
+    fetchTripDates();
     setIsRefreshing(false);
   };
 
@@ -100,6 +125,12 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       </div>
 
       <div className="grid gap-4">
+        <TripDates
+          tripId={tripId}
+          arrivalDate={tripDates.arrival_date}
+          departureDate={tripDates.departure_date}
+          onDatesChange={fetchTripDates}
+        />
         <AccommodationsSection
           tripId={tripId}
           onAccommodationChange={handleRefresh}
