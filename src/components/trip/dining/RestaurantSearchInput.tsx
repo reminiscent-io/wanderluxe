@@ -69,6 +69,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
             // Enable input interaction
             inputRef.current.disabled = false;
 
+            // Add place_changed event listener
             autoCompleteRef.current.addListener('place_changed', () => {
               if (!autoCompleteRef.current) return;
 
@@ -117,6 +118,12 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
     };
 
     initializeAutocomplete();
+
+    // Cleanup function
+    return () => {
+      const scripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+      scripts.forEach(script => script.remove());
+    };
   }, [onPlaceSelect]);
 
   return (
