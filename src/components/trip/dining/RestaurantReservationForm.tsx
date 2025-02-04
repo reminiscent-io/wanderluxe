@@ -56,9 +56,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     form.setValue('rating', place.rating);
   };
 
+  const handleSubmitForm = form.handleSubmit((data) => {
+    onSubmit(data);
+  });
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmitForm} className="space-y-4">
         <FormField
           control={form.control}
           name="restaurant_name"

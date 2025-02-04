@@ -42,25 +42,37 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const handleGenerateImages = async () => {
+    if (!imagePrompt.trim()) {
+      toast.error('Please enter a prompt first');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const url = new URL('https://api.unsplash.com/search/photos');
       url.searchParams.append('query', imagePrompt);
       url.searchParams.append('per_page', '5');
 
-      const response = await fetch(url, {
+      const response = await fetch(url.toString(), {
         headers: {
-          'Authorization': `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`
+          'Authorization': `Client-ID ${process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY}`
         }
       });
       
-      if (!response.ok) throw new Error('Failed to fetch images');
+      if (!response.ok) {
+        throw new Error('Failed to fetch images');
+      }
       
       const data = await response.json();
+      if (!data.results?.length) {
+        toast.error('No images found for this prompt');
+        return;
+      }
+      
       setImages(data.results.map((img: any) => img.urls.regular));
     } catch (error) {
-      toast.error('Failed to generate images');
       console.error('Error generating images:', error);
+      toast.error('Failed to generate images');
     } finally {
       setIsLoading(false);
     }
@@ -80,8 +92,8 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       toast.success('Day updated successfully');
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to update day');
       console.error('Error updating day:', error);
+      toast.error('Failed to update day');
     }
   };
 
@@ -112,7 +124,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
               />
               <Button 
                 onClick={handleGenerateImages}
-                disabled={isLoading || !imagePrompt}
+                disabled={isLoading || !imagePrompt.trim()}
               >
                 {isLoading ? (
                   <Loader className="h-4 w-4 animate-spin mr-2" />
@@ -162,7 +174,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <h3 className="text-lg font-medium mb-4">Dining</h3>
             <DiningList
               reservations={[]}
-              onAddReservation={() => {}}
               formatTime={formatTime}
               dayId={dayId}
             />

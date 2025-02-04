@@ -57,7 +57,8 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
           try {
             const options: google.maps.places.AutocompleteOptions = {
-              fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating']
+              fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
+              types: ['restaurant']
             };
 
             autoCompleteRef.current = new window.google.maps.places.Autocomplete(
@@ -108,16 +109,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         };
 
         document.head.appendChild(script);
-
-        return () => {
-          if (autoCompleteRef.current) {
-            google.maps.event.clearInstanceListeners(autoCompleteRef.current);
-          }
-          const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
-          if (existingScript) {
-            existingScript.remove();
-          }
-        };
       } catch (error) {
         console.error('Error initializing Google Places:', error);
         toast.error('Failed to initialize restaurant search');
