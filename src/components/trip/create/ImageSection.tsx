@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Wand2 } from "lucide-react";
 import ImageUpload from "@/components/ImageUpload";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImageSectionProps {
   coverImageUrl: string;
@@ -23,20 +24,13 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
 
     setIsGeneratingImage(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ keywords: imageKeywords }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('generate-image', {
+        body: { keywords: imageKeywords }
+      });
 
-      const data = await response.json();
-      if (data.imageUrl) {
+      if (error) throw error;
+
+      if (data?.imageUrl) {
         onImageChange(data.imageUrl);
         toast.success('Image generated successfully');
       } else {
