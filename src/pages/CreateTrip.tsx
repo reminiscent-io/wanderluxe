@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import ImageUpload from "@/components/ImageUpload";
+import { Wand2 } from "lucide-react";
 
 const CreateTrip = () => {
   const [destination, setDestination] = useState("");
@@ -19,10 +20,47 @@ const CreateTrip = () => {
   const [arrivalDate, setArrivalDate] = useState("");
   const [departureDate, setDepartureDate] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [imageKeywords, setImageKeywords] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   
   const navigate = useNavigate();
   const { session } = useAuth();
+
+  const generateImage = async () => {
+    if (!imageKeywords.trim()) {
+      toast.error("Please enter keywords for image generation");
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ keywords: imageKeywords }),
+        }
+      );
+
+      const data = await response.json();
+      if (data.imageUrl) {
+        setCoverImageUrl(data.imageUrl);
+        toast.success('Image generated successfully');
+      } else {
+        throw new Error('Failed to generate image');
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast.error('Failed to generate image. Please try again.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,10 +152,34 @@ const CreateTrip = () => {
               <Label className="text-sm font-medium text-gray-700">
                 Cover Image
               </Label>
-              <ImageUpload
-                onImageUpload={(url) => setCoverImageUrl(url)}
-                currentImageUrl={coverImageUrl}
-              />
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter keywords for image generation"
+                    value={imageKeywords}
+                    onChange={(e) => setImageKeywords(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    onClick={generateImage}
+                    disabled={isGeneratingImage}
+                    className="whitespace-nowrap"
+                  >
+                    {isGeneratingImage ? (
+                      "Generating..."
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <ImageUpload
+                  onImageUpload={(url) => setCoverImageUrl(url)}
+                  currentImageUrl={coverImageUrl}
+                />
+              </div>
             </div>
 
             <div className="space-y-4">
