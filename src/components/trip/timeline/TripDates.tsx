@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CalendarDays } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 
 interface TripDatesProps {
   tripId: string;
@@ -23,6 +24,11 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [newArrival, setNewArrival] = React.useState(arrivalDate || '');
   const [newDeparture, setNewDeparture] = React.useState(departureDate || '');
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Not set';
+    return format(parseISO(dateString), 'EEEE MMMM d, yyyy');
+  };
 
   const handleSave = async () => {
     const { error } = await supabase
@@ -46,19 +52,21 @@ const TripDates: React.FC<TripDatesProps> = ({
 
   return (
     <div className="mb-8 flex items-center justify-between bg-white/80 backdrop-blur-sm p-4 rounded-lg shadow-sm">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         <CalendarDays className="h-5 w-5 text-earth-600" />
-        <div>
-          <p className="text-sm text-gray-500">Trip Dates</p>
-          <p className="font-medium">
-            {arrivalDate && departureDate ? (
-              <>
-                {new Date(arrivalDate).toLocaleDateString()} - {new Date(departureDate).toLocaleDateString()}
-              </>
-            ) : (
-              'No dates set'
-            )}
-          </p>
+        <div className="grid grid-cols-2 gap-8">
+          <div>
+            <p className="text-sm text-gray-500 italic mb-1">Arrival</p>
+            <p className="font-medium">
+              {arrivalDate ? formatDate(arrivalDate) : 'Not set'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 italic mb-1">Departure</p>
+            <p className="font-medium">
+              {departureDate ? formatDate(departureDate) : 'Not set'}
+            </p>
+          </div>
         </div>
       </div>
 
