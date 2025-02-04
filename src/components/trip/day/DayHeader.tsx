@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
 import { Pencil, Trash2 } from "lucide-react";
 import DayEditDialog from './DayEditDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface DayHeaderProps {
   date: string;
@@ -33,6 +35,29 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   formatTime,
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      
+      // Delete the day - this will cascade to activities and reservations due to FK constraints
+      const { error } = await supabase
+        .from('trip_days')
+        .delete()
+        .eq('id', dayId);
+
+      if (error) throw error;
+
+      await onDelete();
+      toast.success('Day deleted successfully');
+    } catch (error) {
+      console.error('Error deleting day:', error);
+      toast.error('Failed to delete day');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -55,7 +80,8 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onDelete}
+            onClick={handleDelete}
+            disabled={isDeleting}
             className="h-8 w-8 text-red-500 hover:text-red-600"
           >
             <Trash2 className="h-4 w-4" />
