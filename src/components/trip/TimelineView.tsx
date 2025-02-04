@@ -72,6 +72,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     };
   }, [tripId, refreshEvents, refreshDays]);
 
+  const hotelStays = events?.filter(event => event.hotel) || [];
+
   return (
     <div className="relative space-y-8">
       <div className="absolute right-0 top-0 flex gap-2 z-10">
@@ -101,7 +103,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         <AccommodationsSection
           tripId={tripId}
           onAccommodationChange={handleRefresh}
-          hotelStays={events.filter(event => event.hotel).map(event => ({
+          hotelStays={hotelStays.map(event => ({
             id: event.id,
             hotel: event.hotel || '',
             hotel_details: event.hotel_details,
