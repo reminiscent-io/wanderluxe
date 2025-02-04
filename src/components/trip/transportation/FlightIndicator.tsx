@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Plane } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tables } from '@/integrations/supabase/types';
+import { format } from 'date-fns';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -14,10 +15,10 @@ interface FlightIndicatorProps {
 const FlightIndicator: React.FC<FlightIndicatorProps> = ({ event, onClick }) => {
   const formatTime = (time?: string | null) => {
     if (!time) return '';
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit'
-    });
+    const [hours, minutes] = time.split(':');
+    const timeDate = new Date();
+    timeDate.setHours(parseInt(hours), parseInt(minutes));
+    return format(timeDate, 'h:mm a').toLowerCase();
   };
 
   return (

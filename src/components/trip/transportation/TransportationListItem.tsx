@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tables } from '@/integrations/supabase/types';
 import { Car, Plane, Train, Bus, Ship } from 'lucide-react';
+import { format } from 'date-fns';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -32,9 +33,13 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   };
 
   const formatDateTime = (date: string, time?: string | null) => {
-    const formattedDate = new Date(date).toLocaleDateString();
+    const formattedDate = format(new Date(date), 'MM/dd/yy');
     if (time) {
-      return `${formattedDate} ${time}`;
+      const [hours, minutes] = time.split(':');
+      const timeDate = new Date();
+      timeDate.setHours(parseInt(hours), parseInt(minutes));
+      const formattedTime = format(timeDate, 'h:mm a').toLowerCase();
+      return `${formattedDate} ${formattedTime}`;
     }
     return formattedDate;
   };
@@ -74,7 +79,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
         )}
         {event.cost && (
           <p className="text-sm text-gray-600 mt-1">
-            Cost: {event.cost} {event.currency}
+            Cost: {event.cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {event.currency}
           </p>
         )}
       </div>
