@@ -174,6 +174,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <h3 className="text-lg font-medium mb-4">Dining</h3>
             <DiningList
               reservations={[]}
+              onAddReservation={() => {}}
               formatTime={formatTime}
               dayId={dayId}
             />
