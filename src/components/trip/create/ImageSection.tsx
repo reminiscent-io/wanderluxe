@@ -12,9 +12,17 @@ interface ImageSectionProps {
   onImageChange: (url: string) => void;
 }
 
+interface UnsplashImage {
+  id: string;
+  url: string;
+  description: string;
+  photographer: string;
+}
+
 const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChange }) => {
   const [imageKeywords, setImageKeywords] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<UnsplashImage[]>([]);
 
   const generateImage = async () => {
     if (!imageKeywords.trim()) {
@@ -23,6 +31,8 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
     }
 
     setIsGeneratingImage(true);
+    setGeneratedImages([]);
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-image', {
         body: { keywords: imageKeywords }
@@ -30,18 +40,24 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
 
       if (error) throw error;
 
-      if (data?.imageUrl) {
-        onImageChange(data.imageUrl);
-        toast.success('Image generated successfully');
+      if (data?.images && data.images.length > 0) {
+        setGeneratedImages(data.images);
+        toast.success('Images generated successfully');
       } else {
-        throw new Error('Failed to generate image');
+        throw new Error('No images found');
       }
     } catch (error) {
       console.error('Error generating image:', error);
-      toast.error('Failed to generate image. Please try again.');
+      toast.error('Failed to generate images. Please try again.');
     } finally {
       setIsGeneratingImage(false);
     }
+  };
+
+  const selectGeneratedImage = (imageUrl: string) => {
+    onImageChange(imageUrl);
+    setGeneratedImages([]);
+    toast.success('Image selected successfully');
   };
 
   return (
@@ -72,6 +88,25 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
             )}
           </Button>
         </div>
+
+        {generatedImages.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            {generatedImages.map((image) => (
+              <div key={image.id} className="relative group cursor-pointer">
+                <img
+                  src={image.url}
+                  alt={image.description || 'Generated image'}
+                  className="w-full h-48 object-cover rounded-lg transition-opacity group-hover:opacity-90"
+                  onClick={() => selectGeneratedImage(image.url)}
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-xs">Photo by {image.photographer}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <ImageUpload
           onImageUpload={onImageChange}
           currentImageUrl={coverImageUrl}

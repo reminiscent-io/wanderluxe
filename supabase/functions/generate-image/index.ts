@@ -14,27 +14,26 @@ serve(async (req) => {
   }
 
   try {
-    const { keywords, count = 3 } = await req.json();
+    const { keywords } = await req.json();
     
     // Validate input parameters
     if (!keywords?.trim() || typeof keywords !== 'string') {
       throw new Error('Please provide valid search keywords');
     }
-    
-    if (count > 5 || count < 1) {
-      throw new Error('Image count must be between 1-5');
-    }
 
     const cleanKeywords = keywords.trim().toLowerCase();
-    const searchQuery = `${cleanKeywords} landscape travel destination -people -selfie`;
+    const searchQuery = `${cleanKeywords} landscape scenic travel destination -people -person -portrait -selfie`;
+    console.log('Search query:', searchQuery);
     
     // Use search endpoint instead of random for better relevance
     const unsplashUrl = new URL('https://api.unsplash.com/search/photos');
-    unsplashUrl.searchParams.set('query', cleanKeywords);
+    unsplashUrl.searchParams.set('query', searchQuery);
     unsplashUrl.searchParams.set('orientation', 'landscape');
-    unsplashUrl.searchParams.set('per_page', count);
+    unsplashUrl.searchParams.set('per_page', '3');
     unsplashUrl.searchParams.set('content_filter', 'high');
     unsplashUrl.searchParams.set('order_by', 'relevant');
+
+    console.log('Requesting URL:', unsplashUrl.toString());
 
     const response = await fetch(unsplashUrl, {
       headers: {
@@ -43,6 +42,8 @@ serve(async (req) => {
       }
     });
 
+    console.log('Unsplash response status:', response.status);
+
     if (response.status === 404) {
       throw new Error('No images found for these keywords');
     }
@@ -50,6 +51,7 @@ serve(async (req) => {
     const data = await response.json();
     
     if (!response.ok) {
+      console.error('Unsplash API error response:', data);
       throw new Error(`Unsplash API error: ${data.errors?.join(', ') || 'Unknown error'}`);
     }
 
@@ -61,6 +63,8 @@ serve(async (req) => {
       photographer: photo.user.name,
       downloadLocation: photo.links.download_location
     }));
+
+    console.log('Processed images:', images);
 
     return new Response(JSON.stringify({ images }), {
       headers: { 
