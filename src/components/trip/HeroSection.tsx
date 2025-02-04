@@ -33,7 +33,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           alt={title}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
         <h1 className="text-5xl font-bold mb-4">{title}</h1>
