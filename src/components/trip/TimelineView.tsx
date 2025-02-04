@@ -1,14 +1,15 @@
-import React from 'react';
-import FlightCard from "./FlightCard";
-import DayCard from "./DayCard";
-import TransportationSection from "./TransportationSection";
-import AccommodationsSection from "./AccommodationsSection";
+import React, { useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
-import { parseISO, format } from 'date-fns';
+import { parseISO } from 'date-fns';
+import AccommodationsSection from "./AccommodationsSection";
+import TransportationSection from "./TransportationSection";
+import DayCard from "./DayCard";
+import AccommodationGroup from './accommodation/AccommodationGroup';
+import { generateDaysBetweenDates } from '@/utils/dateUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TimelineViewProps {
   tripId: string | undefined;
@@ -16,7 +17,35 @@ interface TimelineViewProps {
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
   const { events, isLoading: eventsLoading, updateEvent, deleteEvent, refetch } = useTimelineEvents(tripId);
-  const { days, isLoading: daysLoading, addActivity } = useTripDays(tripId);
+  const { days, isLoading: daysLoading, addDay } = useTripDays(tripId);
+
+  useEffect(() => {
+    const initializeDays = async () => {
+      if (!tripId) return;
+      
+      const { data: trip } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('id', tripId)
+        .single();
+
+      if (!trip?.arrival_date || !trip?.departure_date) return;
+
+      const daysList = generateDaysBetweenDates(trip.arrival_date, trip.departure_date);
+      
+      for (const day of daysList) {
+        await addDay.mutateAsync({
+          tripId,
+          date: day.date,
+          title: day.title
+        });
+      }
+    };
+
+    if (!days?.length) {
+      initializeDays();
+    }
+  }, [tripId, days, addDay]);
 
   const findAccommodationGaps = () => {
     if (!events?.length) return [];
@@ -28,12 +57,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
 
     if (!hotelStays.length) return [];
 
-    // Check for gaps between consecutive stays
     for (let i = 0; i < hotelStays.length - 1; i++) {
       const currentStayEnd = new Date(hotelStays[i].hotel_checkout_date!);
       const nextStayStart = new Date(hotelStays[i + 1].hotel_checkin_date!);
 
-      // If there's a gap between stays (more than one day)
       if ((nextStayStart.getTime() - currentStayEnd.getTime()) > 24 * 60 * 60 * 1000) {
         gaps.push({
           startDate: hotelStays[i].hotel_checkout_date!,
@@ -45,19 +72,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
     return gaps;
   };
 
-  const handleDeleteDay = (dayId: string) => {
-    if (!days) return;
-    
-    // Update the remaining days' display order
-    const updatedDays = days.filter(day => day.id !== dayId);
-    refetch();
-  };
-
   if (eventsLoading || daysLoading) {
     return <div>Loading timeline...</div>;
   }
 
-  // Filter unique hotel stays
   const uniqueHotelStays = events?.reduce((acc: any[], event) => {
     if (event.hotel && event.hotel_checkin_date) {
       const stayKey = `${event.hotel}-${event.hotel_checkin_date}`;
@@ -69,6 +87,54 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
   }, []) || [];
 
   const accommodationGaps = findAccommodationGaps();
+
+  const groupDaysByAccommodation = () => {
+    if (!days) return [];
+
+    const groups: any[] = [];
+    let currentGroup: any = null;
+
+    days.forEach((day) => {
+      const dayDate = day.date;
+      const hotelStay = events?.find(event => {
+        if (!event.hotel || !event.hotel_checkin_date || !event.hotel_checkout_date) return false;
+        const checkin = parseISO(event.hotel_checkin_date);
+        const checkout = parseISO(event.hotel_checkout_date);
+        const current = parseISO(dayDate);
+        return current >= checkin && current < checkout;
+      });
+
+      if (hotelStay) {
+        if (!currentGroup || currentGroup.hotel !== hotelStay.hotel) {
+          if (currentGroup) {
+            groups.push(currentGroup);
+          }
+          currentGroup = {
+            hotel: hotelStay.hotel,
+            hotelDetails: hotelStay.hotel_details,
+            checkinDate: hotelStay.hotel_checkin_date,
+            checkoutDate: hotelStay.hotel_checkout_date,
+            days: []
+          };
+        }
+        currentGroup.days.push(day);
+      } else {
+        if (currentGroup) {
+          groups.push(currentGroup);
+          currentGroup = null;
+        }
+        groups.push({ days: [day] });
+      }
+    });
+
+    if (currentGroup) {
+      groups.push(currentGroup);
+    }
+
+    return groups;
+  };
+
+  const groups = groupDaysByAccommodation();
 
   return (
     <div className="space-y-8">
@@ -94,41 +160,47 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId }) => {
       ))}
 
       <div className="space-y-12">
-        {days?.map((day, index) => {
-          const dayDate = format(new Date(day.date), 'yyyy-MM-dd');
-          
-          const dayHotel = events?.find(event => {
-            if (!event.hotel || !event.hotel_checkin_date || !event.hotel_checkout_date) {
-              return false;
-            }
-            
-            const checkinDate = format(parseISO(event.hotel_checkin_date), 'yyyy-MM-dd');
-            const checkoutDate = format(parseISO(event.hotel_checkout_date), 'yyyy-MM-dd');
-            
-            return dayDate >= checkinDate && dayDate < checkoutDate;
-          });
-
-          const hotelDetails = dayHotel ? {
-            name: dayHotel.hotel || '',
-            details: dayHotel.hotel_details || '',
-            imageUrl: dayHotel.image_url
-          } : undefined;
-
-          return (
-            <DayCard
-              key={day.id}
-              id={day.id}
-              date={day.date}
-              title={day.title}
-              description={day.description}
-              activities={day.activities}
-              onAddActivity={() => {}}
-              index={index}
-              hotelDetails={hotelDetails}
-              onDelete={handleDeleteDay}
-            />
-          );
-        })}
+        {groups.map((group, groupIndex) => (
+          group.hotel ? (
+            <AccommodationGroup
+              key={`${group.hotel}-${groupIndex}`}
+              hotel={group.hotel}
+              hotelDetails={group.hotelDetails}
+              checkinDate={group.checkinDate}
+              checkoutDate={group.checkoutDate}
+            >
+              {group.days.map((day: any, dayIndex: number) => (
+                <DayCard
+                  key={day.id}
+                  id={day.id}
+                  date={day.date}
+                  title={day.title}
+                  description={day.description}
+                  activities={day.activities || []}
+                  onAddActivity={() => {}}
+                  index={dayIndex}
+                  onDelete={() => {}}
+                />
+              ))}
+            </AccommodationGroup>
+          ) : (
+            <div key={`standalone-${groupIndex}`} className="space-y-6">
+              {group.days.map((day: any, dayIndex: number) => (
+                <DayCard
+                  key={day.id}
+                  id={day.id}
+                  date={day.date}
+                  title={day.title}
+                  description={day.description}
+                  activities={day.activities || []}
+                  onAddActivity={() => {}}
+                  index={dayIndex}
+                  onDelete={() => {}}
+                />
+              ))}
+            </div>
+          )
+        ))}
       </div>
     </div>
   );
