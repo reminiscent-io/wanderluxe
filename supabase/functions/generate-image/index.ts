@@ -13,11 +13,24 @@ serve(async (req) => {
   try {
     const { keywords } = await req.json()
     
-    // Combine the user's keywords with travel-related terms and content filters
-    const searchQuery = `${keywords} travel destination landscape scenic -person -people -portrait`
+    if (!keywords || typeof keywords !== 'string' || keywords.trim().length === 0) {
+      throw new Error('Invalid or missing keywords')
+    }
+
+    // Clean and format the keywords
+    const cleanKeywords = keywords.trim().toLowerCase()
+    console.log('Original keywords:', cleanKeywords)
     
+    // Construct a more specific travel-focused query
+    // Add location/travel specific terms and exclude people/portraits
+    const searchQuery = `${cleanKeywords} destination travel landscape scenic architecture city landmarks nature -person -people -portrait -face -model -fashion`
+    console.log('Final search query:', searchQuery)
+    
+    const unsplashUrl = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(searchQuery)}&orientation=landscape&content_filter=high`
+    console.log('Requesting URL:', unsplashUrl)
+
     const response = await fetch(
-      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(searchQuery)}&orientation=landscape&content_filter=high`,
+      unsplashUrl,
       {
         headers: {
           'Authorization': `Client-ID ${Deno.env.get('UNSPLASH_ACCESS_KEY')}`,
@@ -26,13 +39,25 @@ serve(async (req) => {
     )
 
     const data = await response.json()
+    console.log('Unsplash response status:', response.status)
     
     if (!response.ok) {
+      console.error('Unsplash API error response:', data)
       throw new Error(`Unsplash API error: ${data.errors?.[0] || 'Unknown error'}`)
     }
 
+    // Log some info about the returned image
+    console.log('Image details:', {
+      description: data.description,
+      alt_description: data.alt_description,
+      tags: data.tags?.map((tag: any) => tag.title).join(', ')
+    })
+
     return new Response(
-      JSON.stringify({ imageUrl: data.urls.regular }),
+      JSON.stringify({ 
+        imageUrl: data.urls.regular,
+        description: data.description || data.alt_description
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
