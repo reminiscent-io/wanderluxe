@@ -2,24 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface Place {
+interface RestaurantDetails {
   name: string;
-  place_id: string;
   formatted_address?: string;
   formatted_phone_number?: string;
   website?: string;
+  place_id: string;
   rating?: number;
 }
 
 interface RestaurantSearchInputProps {
-  onPlaceSelect: (place: Place) => void;
+  onPlaceSelect: (place: RestaurantDetails) => void;
   defaultValue?: string;
-}
-
-declare global {
-  interface Window {
-    google: typeof google;
-  }
 }
 
 const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
@@ -31,7 +25,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!inputRef.current) return;
+    if (!inputRef.current || !window.google) return;
 
     const options: google.maps.places.AutocompleteOptions = {
       types: ['restaurant'],
