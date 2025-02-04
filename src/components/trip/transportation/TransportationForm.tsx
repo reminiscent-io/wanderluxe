@@ -70,7 +70,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
           type="submit"
           className="bg-earth-500 hover:bg-earth-600 text-white"
         >
-          {initialData ? 'Update Transportation' : 'Add Transportation'}
+          {initialData ? 'Update' : 'Add'}
         </Button>
       </div>
     </form>
