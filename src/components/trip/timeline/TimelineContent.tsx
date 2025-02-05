@@ -42,21 +42,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
     enabled: !!tripId
   });
 
-  // Group days by date
-  const daysByDate = groups.reduce((acc, group) => {
-    group.days.forEach(day => {
-      const date = day.date.split('T')[0];
-      acc[date] = day;
-    });
-    return acc;
-  }, {} as Record<string, TripDay>);
-
   const handleDayDelete = async (dayId: string) => {
     try {
       const { error } = await supabase
         .from('trip_days')
         .delete()
-        .eq('id', dayId);
+        .eq('day_id', dayId);
 
       if (error) throw error;
     } catch (error) {
@@ -67,7 +58,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
   return (
     <div className="space-y-8">
       {groups.map((group, groupIndex) => {
-        // Get flights that occur during this accommodation period
         const relevantFlights = transportationEvents?.filter(flight => {
           const flightDate = new Date(flight.start_date);
           const checkinDate = group.checkinDate ? new Date(group.checkinDate) : null;
@@ -108,9 +98,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                 ))}
                 {group.days.map((day, dayIndex) => (
                   <DayCard
-                    key={day.id}
-                    id={day.id}
-                    date={day.date.split('T')[0]}
+                    key={day.day_id}
+                    id={day.day_id}
+                    date={day.date}
                     title={day.title}
                     description={day.description}
                     activities={day.activities || []}
@@ -124,9 +114,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
               <div className="space-y-6">
                 {group.days.map((day, dayIndex) => (
                   <DayCard
-                    key={day.id}
-                    id={day.id}
-                    date={day.date.split('T')[0]}
+                    key={day.day_id}
+                    id={day.day_id}
+                    date={day.date}
                     title={day.title}
                     description={day.description}
                     activities={day.activities || []}

@@ -37,6 +37,11 @@ export interface TimelineEvent {
   expense_type?: string | null;
   expense_date?: string | null;
   activities?: DayActivity[];
+  accommodation_group_id?: string | null;
+  hotel_address?: string | null;
+  hotel_phone?: string | null;
+  hotel_place_id?: string | null;
+  hotel_website?: string | null;
 }
 
 export interface Trip {
@@ -51,4 +56,18 @@ export interface Trip {
   arrival_date?: string | null;
   departure_date?: string | null;
   timeline_events?: { date: string }[];
+}
+
+export interface AccommodationFormData {
+  hotel: string;
+  hotelDetails: string;
+  hotelUrl: string;
+  checkinDate: string;
+  checkoutDate: string;
+  expenseCost: string | number;
+  expenseCurrency: string;
+  hotelAddress?: string;
+  hotelPhone?: string;
+  hotelPlaceId?: string;
+  hotelWebsite?: string;
 }
