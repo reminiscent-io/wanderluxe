@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      currencies: {
+        Row: {
+          currency: string
+          currency_name: string | null
+          symbol: string | null
+        }
+        Insert: {
+          currency: string
+          currency_name?: string | null
+          symbol?: string | null
+        }
+        Update: {
+          currency?: string
+          currency_name?: string | null
+          symbol?: string | null
+        }
+        Relationships: []
+      }
       day_activities: {
         Row: {
           cost: number | null
@@ -51,8 +69,8 @@ export type Database = {
             foreignKeyName: "day_activities_currency_fkey"
             columns: ["currency"]
             isOneToOne: false
-            referencedRelation: "exchange_rates"
-            referencedColumns: ["currency_from"]
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
           },
           {
             foreignKeyName: "day_activities_day_id_fkey"
@@ -85,7 +103,22 @@ export type Database = {
           last_updated?: string | null
           rate?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exchange_rates_currency_from_fkey"
+            columns: ["currency_from"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
+          {
+            foreignKeyName: "exchange_rates_currency_to_fkey"
+            columns: ["currency_to"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -174,8 +207,8 @@ export type Database = {
             foreignKeyName: "restaurant_reservations_currency_fkey"
             columns: ["currency"]
             isOneToOne: false
-            referencedRelation: "exchange_rates"
-            referencedColumns: ["currency_from"]
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
           },
           {
             foreignKeyName: "restaurant_reservations_day_id_fkey"
@@ -345,8 +378,8 @@ export type Database = {
             foreignKeyName: "transportation_events_currency_fkey"
             columns: ["currency"]
             isOneToOne: false
-            referencedRelation: "exchange_rates"
-            referencedColumns: ["currency_from"]
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
           },
           {
             foreignKeyName: "transportation_events_trip_id_fkey"
