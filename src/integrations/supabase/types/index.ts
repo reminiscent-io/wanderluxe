@@ -6,9 +6,11 @@ export type {
   TransportationEvent,
   Trip,
   TripDay,
-  TimelineEvent,
-  Activity,
   DayActivity,
   Profile,
-  ExchangeRate 
+  ExchangeRate,
+  Accommodation,
+  AccommodationDay,
+  RestaurantReservation,
+  Currency
 } from './models';
