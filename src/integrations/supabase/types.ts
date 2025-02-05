@@ -97,13 +97,6 @@ export type Database = {
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
           },
-          {
-            foreignKeyName: "timeline_events_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["trip_id"]
-          },
         ]
       }
       accommodations_days: {
