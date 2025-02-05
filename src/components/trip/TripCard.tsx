@@ -100,7 +100,7 @@ const TripCard = ({ trip, isExample = false, onHide }: TripCardProps) => {
           <div className="flex justify-between items-start">
             <div 
               className="cursor-pointer flex-grow"
-              onClick={() => navigate(`/trip/${trip.id}`)}
+              onClick={() => navigate(`/trip/${trip.trip_id}`)}
             >
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-semibold text-gray-900">
