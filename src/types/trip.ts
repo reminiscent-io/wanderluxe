@@ -35,7 +35,7 @@ export interface TimelineEvent {
   hotel_checkin_date?: string | null;
   hotel_checkout_date?: string | null;
   hotel_url?: string | null;
-  currency?: string | null;
+  currency?: string | null;  // Changed from expense_currency
   expense_cost?: number | null;
   expense_paid?: boolean | null;
   expense_type?: string | null;

@@ -74,7 +74,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onAddActivity = () => {
     handleAddActivity({
       title: newActivity.text,
-      cost: newActivity.cost,
+      cost: newActivity.cost ? Number(newActivity.cost) : null,
       currency: newActivity.currency
     }).then(success => {
       if (success) {
@@ -87,7 +87,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onEditActivity = (activityId: string) => {
     handleEditActivity(activityId, {
       title: activityEdit.text,
-      cost: activityEdit.cost,
+      cost: activityEdit.cost ? Number(activityEdit.cost) : null,
       currency: activityEdit.currency
     }).then(success => {
       if (success) {
