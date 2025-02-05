@@ -17,7 +17,7 @@ export interface TripDay {
   title?: string;
   description?: string;
   image_url?: string;
-  day_activities: DayActivity[];
+  day_activities?: DayActivity[];
 }
 
 export interface Accommodation {
@@ -42,7 +42,6 @@ export interface Accommodation {
   hotel_website?: string;
   stay_id?: string;
   day_id: string;
-  day: TripDay;
 }
 
 export interface Trip {
@@ -56,7 +55,6 @@ export interface Trip {
   hidden: boolean;
   arrival_date: string;
   departure_date: string;
-  accommodations: Accommodation[];
 }
 
 export interface AccommodationFormData {

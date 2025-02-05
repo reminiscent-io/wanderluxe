@@ -2,22 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
-
-interface TimelineEvent {
-  id: string;
-  trip_id: string;
-  date: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  hotel: string | null;
-  hotel_details: string | null;
-  order_index: number;
-  hotel_checkin_date: string | null;
-  hotel_checkout_date: string | null;
-  hotel_url: string | null;
-  activities: any[];
-}
+import { Accommodation } from '@/types/trip';
 
 export const useTimelineEvents = (tripId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -32,20 +17,8 @@ export const useTimelineEvents = (tripId: string | undefined) => {
         {
           event: '*',
           schema: 'public',
-          table: 'timeline_events',
+          table: 'accommodations',
           filter: `trip_id=eq.${tripId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'activities',
-          filter: `event_id=in.(select id from timeline_events where trip_id='${tripId}')`
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
@@ -58,21 +31,21 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     };
   }, [tripId, queryClient]);
 
-  const { data: events, isLoading, refetch: refreshEvents } = useQuery({
+  const { data: events = [], isLoading, refetch: refreshEvents } = useQuery({
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       
-      const { data: timelineEvents, error: timelineError } = await supabase
-        .from('timeline_events')
-        .select('*, activities(*)')
+      const { data: accommodations, error } = await supabase
+        .from('accommodations')
+        .select('*')
         .eq('trip_id', tripId)
         .order('order_index');
 
-      if (timelineError) throw timelineError;
+      if (error) throw error;
 
-      const processedEvents = timelineEvents.map(event => {
-        const hotelStay = timelineEvents.find(e => 
+      const processedEvents = accommodations.map(event => {
+        const hotelStay = accommodations.find(e => 
           e.hotel && 
           e.hotel_checkin_date && 
           e.hotel_checkout_date &&
@@ -94,15 +67,15 @@ export const useTimelineEvents = (tripId: string | undefined) => {
         return event;
       });
 
-      return processedEvents;
+      return processedEvents as Accommodation[];
     },
     enabled: !!tripId,
   });
 
   const updateEvent = useMutation({
-    mutationFn: async (event: Partial<TimelineEvent> & { id: string }) => {
+    mutationFn: async (event: Partial<Accommodation> & { id: string }) => {
       const { data, error } = await supabase
-        .from('timeline_events')
+        .from('accommodations')
         .update(event)
         .eq('id', event.id)
         .select()
@@ -124,7 +97,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
   const deleteEvent = useMutation({
     mutationFn: async (eventId: string) => {
       const { error } = await supabase
-        .from('timeline_events')
+        .from('accommodations')
         .delete()
         .eq('id', eventId);
 
