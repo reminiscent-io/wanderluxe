@@ -11,7 +11,7 @@ export type Database = {
     Tables: {
       accommodations: {
         Row: {
-          id: string
+          stay_id: string
           trip_id: string
           title: string
           description: string | null
@@ -23,7 +23,7 @@ export type Database = {
           expense_type: string | null
           expense_cost: number | null
           currency: string | null
-          expense_paid: boolean | null
+          expense_paid: boolean
           hotel_checkin_date: string | null
           hotel_checkout_date: string | null
           hotel_url: string | null
@@ -33,11 +33,9 @@ export type Database = {
           hotel_phone: string | null
           hotel_place_id: string | null
           hotel_website: string | null
-          stay_id: string | null
-          day_id: string
         }
         Insert: {
-          id?: string
+          stay_id?: string
           trip_id: string
           title: string
           description?: string | null
@@ -49,7 +47,7 @@ export type Database = {
           expense_type?: string | null
           expense_cost?: number | null
           currency?: string | null
-          expense_paid?: boolean | null
+          expense_paid?: boolean
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
           hotel_url?: string | null
@@ -59,11 +57,9 @@ export type Database = {
           hotel_phone?: string | null
           hotel_place_id?: string | null
           hotel_website?: string | null
-          stay_id?: string | null
-          day_id: string
         }
         Update: {
-          id?: string
+          stay_id?: string
           trip_id?: string
           title?: string
           description?: string | null
@@ -75,7 +71,7 @@ export type Database = {
           expense_type?: string | null
           expense_cost?: number | null
           currency?: string | null
-          expense_paid?: boolean | null
+          expense_paid?: boolean
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
           hotel_url?: string | null
@@ -85,319 +81,375 @@ export type Database = {
           hotel_phone?: string | null
           hotel_place_id?: string | null
           hotel_website?: string | null
-          stay_id?: string | null
-          day_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "accommodations_day_id_fkey"
-            columns: ["day_id"]
+            foreignKeyName: "accommodations_currency_fkey"
+            columns: ["currency"]
             isOneToOne: false
-            referencedRelation: "trip_days"
-            referencedColumns: ["id"]
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
           },
           {
-            foreignKeyName: "timeline_events_trip_id_fkey"
+            foreignKeyName: "accommodations_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedColumns: ["trip_id"]
           }
         ]
       }
-      activities: {
+      accommodations_days: {
         Row: {
-          cost: number | null
-          created_at: string
-          currency: string | null
-          event_id: string
           id: string
-          text: string
+          stay_id: string
+          day_id: string
+          date: string
+          created_at: string
         }
         Insert: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          event_id: string
           id?: string
-          text: string
+          stay_id: string
+          day_id: string
+          date: string
+          created_at?: string
         }
         Update: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          event_id?: string
           id?: string
-          text?: string
+          stay_id?: string
+          day_id?: string
+          date?: string
+          created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "activities_event_id_fkey"
-            columns: ["event_id"]
+            foreignKeyName: "accommodations_days_day_id_fkey"
+            columns: ["day_id"]
             isOneToOne: false
-            referencedRelation: "timeline_events"
-            referencedColumns: ["id"]
+            referencedRelation: "trip_days"
+            referencedColumns: ["day_id"]
           },
+          {
+            foreignKeyName: "accommodations_days_stay_id_fkey"
+            columns: ["stay_id"]
+            isOneToOne: false
+            referencedRelation: "accommodations"
+            referencedColumns: ["stay_id"]
+          }
         ]
+      }
+      currencies: {
+        Row: {
+          currency: string
+          currency_name: string | null
+          symbol: string | null
+        }
+        Insert: {
+          currency: string
+          currency_name?: string | null
+          symbol?: string | null
+        }
+        Update: {
+          currency?: string
+          currency_name?: string | null
+          symbol?: string | null
+        }
+        Relationships: []
       }
       day_activities: {
         Row: {
-          cost: number | null
-          created_at: string
-          currency: string | null
-          day_id: string
-          description: string | null
-          end_time: string | null
           id: string
-          order_index: number
-          start_time: string | null
+          day_id: string
           title: string
+          description: string | null
+          start_time: string | null
+          end_time: string | null
+          cost: number | null
+          currency: string
+          created_at: string
+          order_index: number
         }
         Insert: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          day_id: string
-          description?: string | null
-          end_time?: string | null
           id?: string
-          order_index: number
-          start_time?: string | null
+          day_id: string
           title: string
+          description?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
+          order_index: number
         }
         Update: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          day_id?: string
-          description?: string | null
-          end_time?: string | null
           id?: string
-          order_index?: number
-          start_time?: string | null
+          day_id?: string
           title?: string
+          description?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
+          order_index?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "day_activities_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
           {
             foreignKeyName: "day_activities_day_id_fkey"
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "trip_days"
-            referencedColumns: ["id"]
-          },
+            referencedColumns: ["day_id"]
+          }
         ]
       }
       exchange_rates: {
         Row: {
+          id: string
           currency_from: string
           currency_to: string
-          id: string
-          last_updated: string | null
           rate: number
+          last_updated: string | null
         }
         Insert: {
+          id?: string
           currency_from: string
           currency_to: string
-          id?: string
-          last_updated?: string | null
           rate: number
+          last_updated?: string | null
         }
         Update: {
+          id?: string
           currency_from?: string
           currency_to?: string
-          id?: string
-          last_updated?: string | null
           rate?: number
+          last_updated?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exchange_rates_currency_from_fkey"
+            columns: ["currency_from"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
+          {
+            foreignKeyName: "exchange_rates_currency_to_fkey"
+            columns: ["currency_to"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          }
+        ]
       }
       profiles: {
         Row: {
+          id: string
+          username: string | null
           avatar_url: string | null
           created_at: string
           full_name: string | null
           home_location: string | null
-          id: string
-          username: string | null
         }
         Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          full_name?: string | null
-          home_location?: string | null
           id: string
           username?: string | null
-        }
-        Update: {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
           home_location?: string | null
+        }
+        Update: {
           id?: string
           username?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          home_location?: string | null
         }
         Relationships: []
       }
-      timeline_events: {
+      restaurant_reservations: {
         Row: {
-          created_at: string
-          date: string
-          description: string | null
-          expense_cost: number | null
-          expense_currency: string | null
-          expense_date: string | null
-          expense_paid: boolean | null
-          expense_type: string | null
-          final_accommodation_day: string | null
-          hotel: string | null
-          hotel_checkin_date: string | null
-          hotel_checkout_date: string | null
-          hotel_details: string | null
-          hotel_url: string | null
           id: string
-          image_url: string | null
+          day_id: string
+          restaurant_name: string
+          reservation_time: string | null
+          number_of_people: number | null
+          confirmation_number: string | null
+          notes: string | null
+          cost: number | null
+          currency: string
+          created_at: string
           order_index: number
-          title: string
-          trip_id: string
+          address: string | null
+          phone_number: string | null
+          website: string | null
+          place_id: string | null
+          rating: number | null
         }
         Insert: {
-          created_at?: string
-          date: string
-          description?: string | null
-          expense_cost?: number | null
-          expense_currency?: string | null
-          expense_date?: string | null
-          expense_paid?: boolean | null
-          expense_type?: string | null
-          final_accommodation_day?: string | null
-          hotel?: string | null
-          hotel_checkin_date?: string | null
-          hotel_checkout_date?: string | null
-          hotel_details?: string | null
-          hotel_url?: string | null
           id?: string
-          image_url?: string | null
+          day_id: string
+          restaurant_name: string
+          reservation_time?: string | null
+          number_of_people?: number | null
+          confirmation_number?: string | null
+          notes?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
           order_index: number
-          title: string
-          trip_id: string
+          address?: string | null
+          phone_number?: string | null
+          website?: string | null
+          place_id?: string | null
+          rating?: number | null
         }
         Update: {
-          created_at?: string
-          date?: string
-          description?: string | null
-          expense_cost?: number | null
-          expense_currency?: string | null
-          expense_date?: string | null
-          expense_paid?: boolean | null
-          expense_type?: string | null
-          final_accommodation_day?: string | null
-          hotel?: string | null
-          hotel_checkin_date?: string | null
-          hotel_checkout_date?: string | null
-          hotel_details?: string | null
-          hotel_url?: string | null
           id?: string
-          image_url?: string | null
+          day_id?: string
+          restaurant_name?: string
+          reservation_time?: string | null
+          number_of_people?: number | null
+          confirmation_number?: string | null
+          notes?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
           order_index?: number
-          title?: string
-          trip_id?: string
+          address?: string | null
+          phone_number?: string | null
+          website?: string | null
+          place_id?: string | null
+          rating?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "timeline_events_trip_id_fkey"
-            columns: ["trip_id"]
+            foreignKeyName: "restaurant_reservations_currency_fkey"
+            columns: ["currency"]
             isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
           },
+          {
+            foreignKeyName: "restaurant_reservations_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "trip_days"
+            referencedColumns: ["day_id"]
+          }
         ]
       }
       transportation_events: {
         Row: {
-          arrival_location: string | null
-          confirmation_number: string | null
-          cost: number | null
-          created_at: string
-          currency: string | null
-          departure_location: string | null
-          details: string | null
-          end_date: string | null
-          end_time: string | null
           id: string
+          trip_id: string
+          type: Database["public"]["Enums"]["transportation_type"]
           provider: string | null
+          details: string | null
+          confirmation_number: string | null
           start_date: string
           start_time: string | null
-          trip_id: string
-          type: Database["public"]["Enums"]["transportation_type"]
+          end_date: string | null
+          end_time: string | null
+          departure_location: string | null
+          arrival_location: string | null
+          cost: number | null
+          currency: string
+          created_at: string
+          is_arrival: boolean
+          is_departure: boolean
         }
         Insert: {
-          arrival_location?: string | null
-          confirmation_number?: string | null
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          departure_location?: string | null
-          details?: string | null
-          end_date?: string | null
-          end_time?: string | null
           id?: string
-          provider?: string | null
-          start_date: string
-          start_time?: string | null
           trip_id: string
           type: Database["public"]["Enums"]["transportation_type"]
-        }
-        Update: {
-          arrival_location?: string | null
-          confirmation_number?: string | null
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          departure_location?: string | null
+          provider?: string | null
           details?: string | null
+          confirmation_number?: string | null
+          start_date: string
+          start_time?: string | null
           end_date?: string | null
           end_time?: string | null
+          departure_location?: string | null
+          arrival_location?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
+          is_arrival?: boolean
+          is_departure?: boolean
+        }
+        Update: {
           id?: string
-          provider?: string | null
-          start_date?: string
-          start_time?: string | null
           trip_id?: string
           type?: Database["public"]["Enums"]["transportation_type"]
+          provider?: string | null
+          details?: string | null
+          confirmation_number?: string | null
+          start_date?: string
+          start_time?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          departure_location?: string | null
+          arrival_location?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
+          is_arrival?: boolean
+          is_departure?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "transportation_events_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
           {
             foreignKeyName: "transportation_events_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
+            referencedColumns: ["trip_id"]
+          }
         ]
       }
       trip_days: {
         Row: {
-          created_at: string
-          date: string
-          description: string | null
-          id: string
-          title: string | null
+          day_id: string
           trip_id: string
+          date: string
+          title: string | null
+          description: string | null
+          created_at: string
+          image_url: string | null
         }
         Insert: {
-          created_at?: string
-          date: string
-          description?: string | null
-          id?: string
-          title?: string | null
+          day_id?: string
           trip_id: string
+          date: string
+          title?: string | null
+          description?: string | null
+          created_at?: string
+          image_url?: string | null
         }
         Update: {
-          created_at?: string
-          date?: string
-          description?: string | null
-          id?: string
-          title?: string | null
+          day_id?: string
           trip_id?: string
+          date?: string
+          title?: string | null
+          description?: string | null
+          created_at?: string
+          image_url?: string | null
         }
         Relationships: [
           {
@@ -405,40 +457,46 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
+            referencedColumns: ["trip_id"]
+          }
         ]
       }
       trips: {
         Row: {
+          trip_id: string
+          user_id: string
+          destination: string
+          start_date: string
+          end_date: string
           cover_image_url: string | null
           created_at: string
-          destination: string
-          end_date: string
-          hidden: boolean | null
-          id: string
-          start_date: string
-          user_id: string
+          hidden: boolean
+          arrival_date: string
+          departure_date: string
         }
         Insert: {
+          trip_id?: string
+          user_id: string
+          destination: string
+          start_date: string
+          end_date: string
           cover_image_url?: string | null
           created_at?: string
-          destination: string
-          end_date: string
-          hidden?: boolean | null
-          id?: string
-          start_date: string
-          user_id: string
+          hidden?: boolean
+          arrival_date: string
+          departure_date: string
         }
         Update: {
+          trip_id?: string
+          user_id?: string
+          destination?: string
+          start_date?: string
+          end_date?: string
           cover_image_url?: string | null
           created_at?: string
-          destination?: string
-          end_date?: string
-          hidden?: boolean | null
-          id?: string
-          start_date?: string
-          user_id?: string
+          hidden?: boolean
+          arrival_date?: string
+          departure_date?: string
         }
         Relationships: []
       }
@@ -450,13 +508,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      transportation_type:
-        | "flight"
-        | "train"
-        | "car_service"
-        | "shuttle"
-        | "ferry"
-        | "rental_car"
+      transportation_type: "flight" | "train" | "car_service" | "shuttle" | "ferry" | "rental_car"
     }
     CompositeTypes: {
       [_ in never]: never
