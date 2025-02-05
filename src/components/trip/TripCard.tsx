@@ -145,7 +145,7 @@ const TripCard = ({ trip, isExample = false, onHide }: TripCardProps) => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => onHide(trip.id)}
+                      onClick={() => onHide(trip.trip_id)}
                       className="bg-gray-600 hover:bg-gray-700"
                     >
                       Hide
