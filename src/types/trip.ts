@@ -17,18 +17,19 @@ export interface TripDay {
   title?: string;
   description?: string;
   image_url?: string;
-  day_activities?: DayActivity[];
+  day_activities: DayActivity[];
 }
 
 export interface AccommodationDay {
   id: string;
-  accommodation_id: string;
+  stay_id: string;
   day_id: string;
   date: string;
+  trip_days?: TripDay;
 }
 
 export interface Accommodation {
-  id: string;
+  stay_id: string;
   trip_id: string;
   title: string;
   description?: string;
@@ -39,7 +40,7 @@ export interface Accommodation {
   hotel_checkin_date?: string;
   hotel_checkout_date?: string;
   expense_cost?: number;
-  expense_currency?: string;
+  currency?: string;
   expense_type?: string;
   expense_paid?: boolean;
   expense_date?: string;
@@ -47,7 +48,6 @@ export interface Accommodation {
   hotel_phone?: string;
   hotel_place_id?: string;
   hotel_website?: string;
-  stay_id?: string;
   order_index: number;
   accommodations_days?: AccommodationDay[];
 }
@@ -58,11 +58,12 @@ export interface Trip {
   destination: string;
   start_date: string;
   end_date: string;
-  cover_image_url?: string;
+  cover_image_url: string;
   created_at: string;
   hidden: boolean;
   arrival_date: string;
   departure_date: string;
+  accommodations?: Accommodation[];
 }
 
 export interface AccommodationFormData {

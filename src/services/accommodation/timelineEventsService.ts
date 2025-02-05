@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { AccommodationFormData } from './types';
-import { generateDatesArray } from './dateUtils';
 
 export const createAccommodationEvents = async (
   tripId: string,
@@ -43,7 +42,7 @@ export const createAccommodationEvents = async (
 
     // Create accommodation_days entries
     const accommodationDays = tripDays.map(day => ({
-      accommodation_id: accommodation.id,
+      stay_id: accommodation.stay_id,
       day_id: day.day_id,
       date: day.date
     }));
@@ -86,7 +85,7 @@ export const updateAccommodationEvents = async (
         hotel_place_id: formData.hotelPlaceId,
         hotel_website: formData.hotelWebsite
       })
-      .eq('id', formData.id)
+      .eq('stay_id', formData.id)
       .select()
       .single();
 
@@ -96,7 +95,7 @@ export const updateAccommodationEvents = async (
     const { error: deleteError } = await supabase
       .from('accommodations_days')
       .delete()
-      .eq('accommodation_id', accommodation.id);
+      .eq('stay_id', accommodation.stay_id);
 
     if (deleteError) throw deleteError;
 
@@ -111,7 +110,7 @@ export const updateAccommodationEvents = async (
 
     // Create new accommodation_days entries
     const accommodationDays = tripDays.map(day => ({
-      accommodation_id: accommodation.id,
+      stay_id: accommodation.stay_id,
       day_id: day.day_id,
       date: day.date
     }));
@@ -135,7 +134,7 @@ export const deleteAccommodationEvents = async (stay: any) => {
     const { error: daysError } = await supabase
       .from('accommodations_days')
       .delete()
-      .eq('accommodation_id', stay.id);
+      .eq('stay_id', stay.stay_id);
 
     if (daysError) throw daysError;
 
@@ -143,7 +142,7 @@ export const deleteAccommodationEvents = async (stay: any) => {
     const { error: accommodationError } = await supabase
       .from('accommodations')
       .delete()
-      .eq('id', stay.id);
+      .eq('stay_id', stay.stay_id);
 
     if (accommodationError) throw accommodationError;
 
