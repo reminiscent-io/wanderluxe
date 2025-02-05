@@ -40,10 +40,10 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       />
 
       <TimingSection
-        timingType="specificDates"
-        onTimingTypeChange={() => {}}
-        timeOfYear=""
-        onTimeOfYearChange={() => {}}
+        //timingType="specificDates"
+        //onTimingTypeChange={() => {}}
+        //timeOfYear=""
+        //onTimeOfYearChange={() => {}}
         arrivalDate={startDate}
         onArrivalDateChange={setStartDate}
         departureDate={endDate}
