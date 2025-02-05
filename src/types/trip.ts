@@ -1,3 +1,4 @@
+
 export interface TripDay {
   day_id: string;
   trip_id: string;
@@ -11,7 +12,7 @@ export interface TripDay {
 
 export interface DayActivity {
   id: string;
-  title: string;  // Changed from text to title to match DB schema
+  title: string;
   description?: string | null;
   start_time?: string | null;
   end_time?: string | null;
@@ -35,7 +36,7 @@ export interface TimelineEvent {
   hotel_checkin_date?: string | null;
   hotel_checkout_date?: string | null;
   hotel_url?: string | null;
-  currency?: string | null;  // Changed from expense_currency
+  currency?: string | null;
   expense_cost?: number | null;
   expense_paid?: boolean | null;
   expense_type?: string | null;
@@ -58,8 +59,8 @@ export interface Trip {
   cover_image_url?: string | null;
   created_at: string;
   hidden?: boolean | null;
-  arrival_date?: string | null;  // Made optional to match DB schema
-  departure_date?: string | null;  // Made optional to match DB schema
+  arrival_date?: string | null;
+  departure_date?: string | null;
   timeline_events?: TimelineEvent[];
 }
 
@@ -70,7 +71,7 @@ export interface AccommodationFormData {
   checkinDate: string;
   checkoutDate: string;
   expenseCost: string;
-  currency: string;  // Changed from expenseCurrency
+  currency: string;
   hotelAddress?: string;
   hotelPhone?: string;
   hotelPlaceId?: string;

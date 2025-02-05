@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,16 +13,16 @@ const FeaturedTrips = () => {
         .from('trips')
         .select(`
           *,
-          timeline_events (
+          timeline_events:timeline_events (
             *,
-            day_activities (*)
+            day_activities:day_activities (*)
           )
         `)
         .limit(3)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Trip[];
+      return data as unknown as Trip[];
     }
   });
 
