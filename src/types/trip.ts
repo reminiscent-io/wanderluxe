@@ -1,6 +1,6 @@
 export interface TripDay {
-  id: string;
-  trip_id: string;  // Added this field
+  day_id: string;  // Changed from id to day_id
+  trip_id: string;
   date: string;
   title?: string;
   description?: string;
@@ -31,5 +31,23 @@ export interface TimelineEvent {
   hotel_checkin_date?: string | null;
   hotel_checkout_date?: string | null;
   hotel_url?: string | null;
-  activities?: any[];
+  currency?: string | null;  // Added to match database
+  expense_cost?: number | null;
+  expense_paid?: boolean | null;
+  expense_type?: string | null;
+  expense_date?: string | null;
+  activities?: DayActivity[];
+}
+
+export interface Trip {
+  trip_id: string;  // Changed from id to trip_id
+  user_id: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  cover_image_url?: string | null;
+  created_at: string;
+  hidden?: boolean | null;
+  arrival_date?: string | null;
+  departure_date?: string | null;
 }

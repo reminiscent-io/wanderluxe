@@ -37,12 +37,13 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     try {
       const { error } = await supabase
-        .from('activities')
+        .from('day_activities')  // Changed from activities to day_activities
         .insert([{
-          event_id: eventId,
-          text: activity.text,
+          day_id: eventId,  // Changed from event_id to day_id
+          title: activity.text,  // Changed from text to title
           cost: activity.cost ? Number(activity.cost) : null,
-          currency: activity.currency
+          currency: activity.currency,
+          order_index: 0  // Added required field
         }]);
 
       if (error) throw error;

@@ -1,180 +1,130 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Info } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
-import TripCard from "@/components/trip/TripCard";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-type Trip = Tables<"trips"> & {
-  timeline_events: { date: string }[];
-};
-
-interface TripsData {
-  userTrips: Trip[];
-  exampleTrips: Trip[];
-}
+import { Button, Input } from "@/components/ui/button";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import TripCard from '../components/trip/TripCard';
+import { toast } from 'sonner';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Trip } from '@/types/trip';
 
 const MyTrips = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [tripToHide] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const { data: trips = { userTrips: [], exampleTrips: [] }, refetch } = useQuery<TripsData>({
-    queryKey: ['trips'],
+  const { data: trips, isLoading } = useQuery({
+    queryKey: ['my-trips'],
     queryFn: async () => {
-      const { data: userTrips, error: userError } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('No user found');
+
+      const { data, error } = await supabase
         .from('trips')
-        .select('*, timeline_events(date)')
-        .neq('destination', 'Amalfi Coast')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('hidden', false)
         .order('start_date', { ascending: true });
-      
-      const { data: exampleTrips, error: exampleError } = await supabase
-        .from('trips')
-        .select('*, timeline_events(date)')
-        .eq('destination', 'Amalfi Coast')
-        .order('start_date', { ascending: true });
-      
-      if (userError || exampleError) throw userError || exampleError;
-      
-      return {
-        userTrips: userTrips || [],
-        exampleTrips: exampleTrips || []
-      };
-    },
+
+      if (error) throw error;
+      return data;
+    }
   });
 
-  const handleHideTrip = async (tripId: string) => {
+  const handleDeleteTrip = async () => {
+    if (!selectedTrip) return;
+
     try {
       const { error } = await supabase
         .from('trips')
-        .update({ hidden: true })
-        .eq('id', tripId);
+        .delete()
+        .eq('trip_id', selectedTrip.trip_id);
 
       if (error) throw error;
 
-      refetch();
-      
-      toast({
-        title: "Trip hidden",
-        description: "Your trip has been hidden from your view.",
-      });
+      toast.success('Trip deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setSelectedTrip(null);
+      queryClient.invalidateQueries({ queryKey: ['my-trips'] });
     } catch (error) {
-      console.error('Error hiding trip:', error);
-      toast({
-        title: "Error",
-        description: "Failed to hide trip. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error deleting trip:', error);
+      toast.error('Failed to delete trip');
     }
   };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const userTrips = trips.userTrips || [];
-  const exampleTrips = trips.exampleTrips || [];
-
-  const upcomingTrips = userTrips.filter(trip => {
-    const endDate = trip.timeline_events?.length > 0 
-      ? new Date(trip.timeline_events[trip.timeline_events.length - 1].date)
-      : new Date(trip.end_date);
-    return endDate >= today;
-  });
-
-  const pastTrips = userTrips.filter(trip => {
-    const endDate = trip.timeline_events?.length > 0 
-      ? new Date(trip.timeline_events[trip.timeline_events.length - 1].date)
-      : new Date(trip.end_date);
-    return endDate < today;
-  });
+  const filteredTrips = trips?.filter(trip =>
+    trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       <Navigation />
-      <div className="container mx-auto px-4 pt-24">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">My Trips</h1>
-        
-        {exampleTrips.length > 0 && (
-          <section className="mb-12">
-            <div className="flex items-center gap-2 mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Example Trips</h2>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-5 w-5 text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Explore our curated example trips for inspiration
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {exampleTrips.map((trip) => (
-                <TripCard 
-                  key={trip.id} 
-                  trip={trip} 
-                  isExample={true}
-                  onHide={handleHideTrip}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">My Trips</h1>
+          <Button onClick={() => navigate('/trips/create')}>
+            Create New Trip
+          </Button>
+        </div>
 
-        {userTrips.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-4">You haven't created any trips yet.</p>
-            <button
-              onClick={() => navigate("/create-trip")}
-              className="text-earth-500 hover:text-earth-600 font-medium"
-            >
-              Create your first trip
-            </button>
+        <Input
+          type="search"
+          placeholder="Search trips..."
+          className="max-w-sm mb-6"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-64 bg-gray-100 rounded-lg animate-pulse"
+              />
+            ))}
           </div>
         ) : (
-          <div className="space-y-12">
-            {upcomingTrips.length > 0 && (
-              <section>
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Upcoming Trips</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {upcomingTrips.map((trip) => (
-                    <TripCard 
-                      key={trip.id} 
-                      trip={trip}
-                      onHide={handleHideTrip}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {pastTrips.length > 0 && (
-              <section>
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Past Trips</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {pastTrips.map((trip) => (
-                    <TripCard 
-                      key={trip.id} 
-                      trip={trip}
-                      onHide={handleHideTrip}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTrips?.map((trip) => (
+              <TripCard
+                key={trip.trip_id}
+                trip={trip}
+                href={`/trips/${trip.trip_id}`}
+                onEdit={() => navigate(`/trips/${trip.trip_id}/edit`)}
+                onDelete={() => {
+                  setSelectedTrip(trip);
+                  setIsDeleteDialogOpen(true);
+                }}
+              />
+            ))}
           </div>
         )}
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the trip
+              and all its associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTrip}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
