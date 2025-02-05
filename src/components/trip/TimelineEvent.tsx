@@ -72,7 +72,11 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   } = useEventHandlers(id, onEdit, editData, activities);
 
   const onAddActivity = () => {
-    handleAddActivity(newActivity).then(success => {
+    handleAddActivity({
+      title: newActivity.text,
+      cost: newActivity.cost,
+      currency: newActivity.currency
+    }).then(success => {
       if (success) {
         setIsAddingActivity(false);
         setNewActivity({ text: "", cost: "", currency: "USD" });
@@ -81,7 +85,11 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   };
 
   const onEditActivity = (activityId: string) => {
-    handleEditActivity(activityId, activityEdit).then(success => {
+    handleEditActivity(activityId, {
+      title: activityEdit.text,
+      cost: activityEdit.cost,
+      currency: activityEdit.currency
+    }).then(success => {
       if (success) {
         setEditingActivity(null);
         setActivityEdit({ text: "", cost: "", currency: "USD" });
