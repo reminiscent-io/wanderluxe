@@ -38,7 +38,7 @@ const TripDates: React.FC<TripDatesProps> = ({
         arrival_date: newArrival,
         departure_date: newDeparture
       })
-      .eq('id', tripId);
+      .eq('trip_id', tripId);
 
     if (error) {
       console.error('Error updating trip dates:', error);
