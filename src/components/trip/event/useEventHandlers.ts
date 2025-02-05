@@ -2,9 +2,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tables } from '@/integrations/supabase/types';
 
-type Activity = {
+type DayActivity = {
   id: string;
-  text: string;
+  title: string;
   cost?: number;
   currency?: string;
 };
@@ -13,7 +13,7 @@ export const useEventHandlers = (
   id: string,
   onEdit: (id: string, data: any) => void,
   editData: any,
-  activities: Activity[]
+  activities: DayActivity[]
 ) => {
   const handleEdit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +28,13 @@ export const useEventHandlers = (
 
     try {
       const { data, error } = await supabase
-        .from('activities')
+        .from('day_activities')
         .insert([{
-          event_id: id,
-          text: newActivity.text.trim(),
+          day_id: id,
+          title: newActivity.text.trim(),
           cost: newActivity.cost ? Number(newActivity.cost) : null,
-          currency: newActivity.currency
+          currency: newActivity.currency,
+          order_index: activities.length
         }])
         .select()
         .single();
@@ -42,7 +43,7 @@ export const useEventHandlers = (
 
       onEdit(id, {
         ...editData,
-        activities: [...activities, data]
+        day_activities: [...activities, data]
       });
 
       toast.success("Activity added successfully");
@@ -60,9 +61,9 @@ export const useEventHandlers = (
   ) => {
     try {
       const { error } = await supabase
-        .from('activities')
+        .from('day_activities')
         .update({
-          text: activityEdit.text,
+          title: activityEdit.text,
           cost: activityEdit.cost ? Number(activityEdit.cost) : null,
           currency: activityEdit.currency
         })
@@ -72,11 +73,11 @@ export const useEventHandlers = (
 
       onEdit(id, {
         ...editData,
-        activities: activities.map(a => 
+        day_activities: activities.map(a => 
           a.id === activityId 
             ? { 
                 ...a, 
-                text: activityEdit.text,
+                title: activityEdit.text,
                 cost: activityEdit.cost ? Number(activityEdit.cost) : null,
                 currency: activityEdit.currency
               }

@@ -6,6 +6,7 @@ export interface TripDay {
   description?: string | null;
   activities?: DayActivity[];
   created_at: string;
+  image_url?: string | null;
 }
 
 export interface DayActivity {
@@ -39,7 +40,7 @@ export interface TimelineEvent {
   expense_paid?: boolean | null;
   expense_type?: string | null;
   expense_date?: string | null;
-  activities?: DayActivity[];
+  day_activities?: DayActivity[];
   accommodation_group_id?: string | null;
   hotel_address?: string | null;
   hotel_phone?: string | null;
