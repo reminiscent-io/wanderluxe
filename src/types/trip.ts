@@ -60,7 +60,7 @@ export interface Trip {
   hidden?: boolean | null;
   arrival_date?: string | null;
   departure_date?: string | null;
-  timeline_events?: { date: string }[];
+  timeline_events?: TimelineEvent[];
 }
 
 export interface AccommodationFormData {
@@ -69,7 +69,7 @@ export interface AccommodationFormData {
   hotelUrl: string;
   checkinDate: string;
   checkoutDate: string;
-  expenseCost: string | number;
+  expenseCost: string;
   currency: string;
   hotelAddress?: string;
   hotelPhone?: string;

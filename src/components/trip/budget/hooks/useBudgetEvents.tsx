@@ -15,8 +15,8 @@ export const useBudgetEvents = (tripId: string | undefined) => {
     const fetchExchangeRates = async () => {
       const usedCurrencies = new Set<string>();
       events?.forEach(event => {
-        if (event.expense_currency) usedCurrencies.add(event.expense_currency);
-        event.activities?.forEach(activity => {
+        if (event.currency) usedCurrencies.add(event.currency);
+        event.day_activities?.forEach(activity => {
           if (activity.currency) usedCurrencies.add(activity.currency);
         });
       });

@@ -6,6 +6,7 @@ import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
 import { useEventState } from './event/useEventState';
 import { useEventHandlers } from './event/useEventHandlers';
+import { DayActivity } from '@/types/trip';
 
 interface TimelineEventProps {
   id: string;
@@ -18,7 +19,7 @@ interface TimelineEventProps {
   hotel_checkin_date: string;
   hotel_checkout_date: string;
   hotel_url: string;
-  activities: { id: string; text: string; cost?: number; currency?: string }[];
+  activities: DayActivity[];
   index: number;
   onEdit: (id: string, data: any) => void;
   onDelete: (id: string) => void;
