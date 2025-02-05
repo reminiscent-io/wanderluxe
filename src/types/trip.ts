@@ -1,53 +1,47 @@
+export interface DayActivity {
+  id: string;
+  day_id: string;
+  title: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  cost?: number;
+  currency?: string;
+  order_index: number;
+}
 
 export interface TripDay {
   day_id: string;
   trip_id: string;
   date: string;
-  title?: string | null;
-  description?: string | null;
-  activities?: DayActivity[];
-  created_at: string;
-  image_url?: string | null;
+  title?: string;
+  description?: string;
+  image_url?: string;
+  day_activities: DayActivity[];
 }
 
-export interface DayActivity {
-  id: string;
-  title: string;
-  description?: string | null;
-  start_time?: string | null;
-  end_time?: string | null;
-  cost?: number | null;
-  currency?: string | null;
-  order_index: number;
-  day_id: string;
-  created_at: string;
-}
-
-export interface TimelineEvent {
+export interface Accommodation {
   id: string;
   trip_id: string;
-  date: string;
   title: string;
-  description?: string | null;
-  image_url?: string | null;
-  hotel?: string | null;
-  hotel_details?: string | null;
-  order_index: number;
-  hotel_checkin_date?: string | null;
-  hotel_checkout_date?: string | null;
-  hotel_url?: string | null;
-  currency?: string | null;
-  expense_cost?: number | null;
-  expense_paid?: boolean | null;
-  expense_type?: string | null;
-  expense_date?: string | null;
-  day_activities: DayActivity[];
-  accommodation_group_id?: string | null;
-  hotel_address?: string | null;
-  hotel_phone?: string | null;
-  hotel_place_id?: string | null;
-  hotel_website?: string | null;
-  created_at: string;
+  description?: string;
+  image_url?: string;
+  hotel?: string;
+  hotel_details?: string;
+  hotel_url?: string;
+  hotel_checkin_date?: string;
+  hotel_checkout_date?: string;
+  expense_cost?: number;
+  expense_currency?: string;
+  expense_type?: string;
+  expense_paid?: boolean;
+  expense_date?: string;
+  hotel_address?: string;
+  hotel_phone?: string;
+  hotel_place_id?: string;
+  hotel_website?: string;
+  day_id: string;
+  day: TripDay;
 }
 
 export interface Trip {
@@ -56,24 +50,10 @@ export interface Trip {
   destination: string;
   start_date: string;
   end_date: string;
-  cover_image_url?: string | null;
+  cover_image_url?: string;
   created_at: string;
-  hidden?: boolean | null;
-  arrival_date?: string | null;
-  departure_date?: string | null;
-  timeline_events?: TimelineEvent[];
-}
-
-export interface AccommodationFormData {
-  hotel: string;
-  hotelDetails: string;
-  hotelUrl: string;
-  checkinDate: string;
-  checkoutDate: string;
-  expenseCost: string;
-  currency: string;
-  hotelAddress?: string;
-  hotelPhone?: string;
-  hotelPlaceId?: string;
-  hotelWebsite?: string;
+  hidden?: boolean;
+  arrival_date: string;
+  departure_date: string;
+  accommodations: Accommodation[];
 }

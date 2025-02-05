@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,9 +12,12 @@ const FeaturedTrips = () => {
         .from('trips')
         .select(`
           *,
-          timeline_events:timeline_events (
+          accommodations:accommodations (
             *,
-            day_activities:day_activities (*)
+            day:trip_days (
+              *,
+              day_activities(*)
+            )
           )
         `)
         .limit(3)
