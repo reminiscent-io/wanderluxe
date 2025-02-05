@@ -468,9 +468,7 @@ export type Database = {
           created_at: string
           departure_date: string
           destination: string
-          //end_date: string
           hidden: boolean | null
-          //start_date: string
           trip_id: string
           user_id: string
         }
@@ -480,9 +478,7 @@ export type Database = {
           created_at?: string
           departure_date: string
           destination: string
-          //end_date: string
           hidden?: boolean | null
-          //start_date: string
           trip_id?: string
           user_id: string
         }
@@ -492,9 +488,7 @@ export type Database = {
           created_at?: string
           departure_date?: string
           destination?: string
-          //end_date?: string
           hidden?: boolean | null
-          //start_date?: string
           trip_id?: string
           user_id?: string
         }
