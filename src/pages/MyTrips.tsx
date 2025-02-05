@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
-import { Button, Input } from "@/components/ui/button";
-import { useQuery } from '@tanstack/react-query';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from '../components/trip/TripCard';
 import { toast } from 'sonner';
@@ -11,6 +12,7 @@ import { Trip } from '@/types/trip';
 
 const MyTrips = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -24,13 +26,16 @@ const MyTrips = () => {
 
       const { data, error } = await supabase
         .from('trips')
-        .select('*')
+        .select(`
+          *,
+          timeline_events (date)
+        `)
         .eq('user_id', user.id)
         .eq('hidden', false)
         .order('start_date', { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as Trip[];
     }
   });
 
@@ -94,12 +99,7 @@ const MyTrips = () => {
               <TripCard
                 key={trip.trip_id}
                 trip={trip}
-                href={`/trips/${trip.trip_id}`}
-                onEdit={() => navigate(`/trips/${trip.trip_id}/edit`)}
-                onDelete={() => {
-                  setSelectedTrip(trip);
-                  setIsDeleteDialogOpen(true);
-                }}
+                onHide={() => {}}
               />
             ))}
           </div>

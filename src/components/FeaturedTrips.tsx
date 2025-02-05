@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from './trip/TripCard';
+import { Trip } from '@/types/trip';
 
 const FeaturedTrips = () => {
   const { data: trips, isLoading } = useQuery({
@@ -9,12 +10,15 @@ const FeaturedTrips = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('trips')
-        .select('*')
+        .select(`
+          *,
+          timeline_events (date)
+        `)
         .limit(3)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Trip[];
     }
   });
 
@@ -37,7 +41,7 @@ const FeaturedTrips = () => {
         <TripCard
           key={trip.trip_id}
           trip={trip}
-          href={`/trips/${trip.trip_id}`}
+          onHide={() => {}}
         />
       ))}
     </div>

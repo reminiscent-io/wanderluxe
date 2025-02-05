@@ -1,5 +1,5 @@
 export interface TripDay {
-  day_id: string;  // Changed from id to day_id
+  day_id: string;
   trip_id: string;
   date: string;
   title?: string;
@@ -31,7 +31,7 @@ export interface TimelineEvent {
   hotel_checkin_date?: string | null;
   hotel_checkout_date?: string | null;
   hotel_url?: string | null;
-  currency?: string | null;  // Added to match database
+  currency?: string | null;
   expense_cost?: number | null;
   expense_paid?: boolean | null;
   expense_type?: string | null;
@@ -40,7 +40,7 @@ export interface TimelineEvent {
 }
 
 export interface Trip {
-  trip_id: string;  // Changed from id to trip_id
+  trip_id: string;
   user_id: string;
   destination: string;
   start_date: string;
@@ -50,4 +50,5 @@ export interface Trip {
   hidden?: boolean | null;
   arrival_date?: string | null;
   departure_date?: string | null;
+  timeline_events?: { date: string }[];
 }
