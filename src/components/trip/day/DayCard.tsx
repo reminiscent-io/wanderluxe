@@ -30,6 +30,8 @@ interface DayCardProps {
     imageUrl?: string;
   };
   onDelete: (id: string) => void;
+  imageUrl?: string | null;
+  defaultImageUrl?: string;
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -39,7 +41,9 @@ const DayCard: React.FC<DayCardProps> = ({
   activities,
   index,
   hotelDetails,
-  onDelete
+  onDelete,
+  imageUrl,
+  defaultImageUrl
 }) => {
   const {
     isEditing,
@@ -104,6 +108,8 @@ const DayCard: React.FC<DayCardProps> = ({
           }}
           formatTime={formatTime}
           dayId={id}
+          imageUrl={imageUrl}
+          defaultImageUrl={defaultImageUrl}
         />
       </Card>
 

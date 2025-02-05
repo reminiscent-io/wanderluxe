@@ -23,6 +23,8 @@ interface DayLayoutProps {
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
   dayId: string;
+  imageUrl?: string | null;
+  defaultImageUrl?: string;
 }
 
 const DayLayout: React.FC<DayLayoutProps> = ({
@@ -33,12 +35,14 @@ const DayLayout: React.FC<DayLayoutProps> = ({
   onEditActivity,
   formatTime,
   dayId,
+  imageUrl,
+  defaultImageUrl,
 }) => {
   return (
     <div className="grid md:grid-cols-2 h-full">
       <DayImage
         title={title}
-        imageUrl={null}
+        imageUrl={imageUrl || defaultImageUrl}
       />
       
       <DayCardContent

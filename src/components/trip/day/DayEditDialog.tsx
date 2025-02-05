@@ -84,7 +84,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
       if (error) throw error;
       
-      // Add console log to debug
       console.log('Saved day with image:', selectedImage);
       
       toast.success('Day updated successfully');
