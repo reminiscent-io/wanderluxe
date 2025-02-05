@@ -36,38 +36,16 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     queryFn: async () => {
       if (!tripId) return [];
       
-      const { data: accommodations, error } = await supabase
+      // First get all accommodations
+      const { data: accommodations, error: accommodationsError } = await supabase
         .from('accommodations')
-        .select('*')
+        .select('*, accommodations_days(day_id, date)')
         .eq('trip_id', tripId)
         .order('order_index');
 
-      if (error) throw error;
+      if (accommodationsError) throw accommodationsError;
 
-      const processedEvents = accommodations.map(event => {
-        const hotelStay = accommodations.find(e => 
-          e.hotel && 
-          e.hotel_checkin_date && 
-          e.hotel_checkout_date &&
-          new Date(event.date) >= new Date(e.hotel_checkin_date) && 
-          new Date(event.date) <= new Date(e.hotel_checkout_date)
-        );
-
-        if (hotelStay && !event.hotel) {
-          return {
-            ...event,
-            hotel: hotelStay.hotel,
-            hotel_details: hotelStay.hotel_details,
-            hotel_url: hotelStay.hotel_url,
-            hotel_checkin_date: hotelStay.hotel_checkin_date,
-            hotel_checkout_date: hotelStay.hotel_checkout_date
-          };
-        }
-
-        return event;
-      });
-
-      return processedEvents as Accommodation[];
+      return accommodations as Accommodation[];
     },
     enabled: !!tripId,
   });
@@ -96,6 +74,15 @@ export const useTimelineEvents = (tripId: string | undefined) => {
 
   const deleteEvent = useMutation({
     mutationFn: async (eventId: string) => {
+      // First delete all accommodation_days
+      const { error: daysError } = await supabase
+        .from('accommodations_days')
+        .delete()
+        .eq('accommodation_id', eventId);
+
+      if (daysError) throw daysError;
+
+      // Then delete the accommodation
       const { error } = await supabase
         .from('accommodations')
         .delete()

@@ -1,4 +1,5 @@
 export interface AccommodationFormData {
+  id?: string;
   hotel: string;
   hotelDetails: string;
   hotelUrl: string;
@@ -13,7 +14,16 @@ export interface AccommodationFormData {
 }
 
 export interface HotelStay {
+  id: string;
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
+}
+
+export interface AccommodationDay {
+  id: string;
+  accommodation_id: string;
+  day_id: string;
+  date: string;
+  created_at: string;
 }

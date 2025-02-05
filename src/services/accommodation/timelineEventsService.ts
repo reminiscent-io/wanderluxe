@@ -1,39 +1,62 @@
-import { supabase } from "@/integrations/supabase/client";
-import type { AccommodationFormData, HotelStay } from "./types";
-import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
+import { AccommodationFormData } from './types';
+import { generateDatesArray } from './dateUtils';
 
 export const createAccommodationEvents = async (
   tripId: string,
   formData: AccommodationFormData,
-  stayDates: string[]
+  dates: string[]
 ) => {
-  const checkinDate = formData.checkinDate.split('T')[0];
-  const checkoutDate = formData.checkoutDate.split('T')[0];
+  try {
+    // First, create the main accommodation entry
+    const { data: accommodation, error: accommodationError } = await supabase
+      .from('accommodations')
+      .insert([{
+        trip_id: tripId,
+        title: formData.hotel,
+        hotel: formData.hotel,
+        hotel_details: formData.hotelDetails,
+        hotel_url: formData.hotelUrl,
+        hotel_checkin_date: formData.checkinDate,
+        hotel_checkout_date: formData.checkoutDate,
+        expense_cost: formData.expenseCost ? parseFloat(formData.expenseCost) : null,
+        currency: formData.expenseCurrency,
+        hotel_address: formData.hotelAddress,
+        hotel_phone: formData.hotelPhone,
+        hotel_place_id: formData.hotelPlaceId,
+        hotel_website: formData.hotelWebsite,
+        order_index: 0
+      }])
+      .select()
+      .single();
 
-  // Create a new event for each day of the stay
-  const events = stayDates.map((date, index) => ({
-    trip_id: tripId,
-    title: `Stay at ${formData.hotel}`,
-    hotel: formData.hotel,
-    hotel_details: formData.hotelDetails,
-    hotel_url: formData.hotelUrl,
-    hotel_checkin_date: checkinDate,
-    hotel_checkout_date: checkoutDate,
-    expense_cost: formData.expenseCost ? Number(formData.expenseCost) : null,
-    expense_currency: formData.expenseCurrency,
-    hotel_address: formData.hotelAddress,
-    hotel_phone: formData.hotelPhone,
-    hotel_place_id: formData.hotelPlaceId,
-    hotel_website: formData.hotelWebsite,
-    order_index: index
-  }));
+    if (accommodationError) throw accommodationError;
 
-  const { error } = await supabase
-    .from('accommodations')
-    .insert(events);
+    // Get all trip days for this period
+    const { data: tripDays, error: tripDaysError } = await supabase
+      .from('trip_days')
+      .select('day_id, date')
+      .eq('trip_id', tripId)
+      .in('date', dates);
 
-  if (error) {
-    console.error('Error creating accommodation events:', error);
+    if (tripDaysError) throw tripDaysError;
+
+    // Create accommodation_days entries
+    const accommodationDays = tripDays.map(day => ({
+      accommodation_id: accommodation.id,
+      day_id: day.day_id,
+      date: day.date
+    }));
+
+    const { error: daysError } = await supabase
+      .from('accommodations_days')
+      .insert(accommodationDays);
+
+    if (daysError) throw daysError;
+
+    return accommodation;
+  } catch (error) {
+    console.error('Error in createAccommodationEvents:', error);
     throw error;
   }
 };
@@ -41,39 +64,90 @@ export const createAccommodationEvents = async (
 export const updateAccommodationEvents = async (
   tripId: string,
   formData: AccommodationFormData,
-  stayDates: string[]
+  dates: string[]
 ) => {
-  const checkinDate = formData.checkinDate.split('T')[0];
-  const checkoutDate = formData.checkoutDate.split('T')[0];
+  try {
+    // Update the main accommodation entry
+    const { data: accommodation, error: accommodationError } = await supabase
+      .from('accommodations')
+      .update({
+        title: formData.hotel,
+        hotel: formData.hotel,
+        hotel_details: formData.hotelDetails,
+        hotel_url: formData.hotelUrl,
+        hotel_checkin_date: formData.checkinDate,
+        hotel_checkout_date: formData.checkoutDate,
+        expense_cost: formData.expenseCost ? parseFloat(formData.expenseCost) : null,
+        currency: formData.expenseCurrency,
+        hotel_address: formData.hotelAddress,
+        hotel_phone: formData.hotelPhone,
+        hotel_place_id: formData.hotelPlaceId,
+        hotel_website: formData.hotelWebsite
+      })
+      .eq('id', formData.id)
+      .select()
+      .single();
 
-  // First, delete all existing events for this hotel stay
-  const { error: deleteError } = await supabase
-    .from('accommodations')
-    .delete()
-    .eq('trip_id', tripId)
-    .eq('hotel', formData.hotel)
-    .eq('hotel_checkin_date', checkinDate)
-    .eq('hotel_checkout_date', checkoutDate);
+    if (accommodationError) throw accommodationError;
 
-  if (deleteError) {
-    console.error('Error deleting existing accommodation events:', deleteError);
-    throw deleteError;
+    // Delete existing accommodation_days
+    const { error: deleteError } = await supabase
+      .from('accommodations_days')
+      .delete()
+      .eq('accommodation_id', accommodation.id);
+
+    if (deleteError) throw deleteError;
+
+    // Get all trip days for this period
+    const { data: tripDays, error: tripDaysError } = await supabase
+      .from('trip_days')
+      .select('day_id, date')
+      .eq('trip_id', tripId)
+      .in('date', dates);
+
+    if (tripDaysError) throw tripDaysError;
+
+    // Create new accommodation_days entries
+    const accommodationDays = tripDays.map(day => ({
+      accommodation_id: accommodation.id,
+      day_id: day.day_id,
+      date: day.date
+    }));
+
+    const { error: daysError } = await supabase
+      .from('accommodations_days')
+      .insert(accommodationDays);
+
+    if (daysError) throw daysError;
+
+    return accommodation;
+  } catch (error) {
+    console.error('Error in updateAccommodationEvents:', error);
+    throw error;
   }
-
-  // Then create new events for the updated stay
-  await createAccommodationEvents(tripId, formData, stayDates);
 };
 
-export const deleteAccommodationEvents = async (stay: HotelStay) => {
-  const { error } = await supabase
-    .from('accommodations')
-    .delete()
-    .eq('hotel', stay.hotel)
-    .eq('hotel_checkin_date', stay.hotel_checkin_date)
-    .eq('hotel_checkout_date', stay.hotel_checkout_date);
+export const deleteAccommodationEvents = async (stay: any) => {
+  try {
+    // Delete all accommodation_days first
+    const { error: daysError } = await supabase
+      .from('accommodations_days')
+      .delete()
+      .eq('accommodation_id', stay.id);
 
-  if (error) {
-    console.error('Error deleting accommodation events:', error);
+    if (daysError) throw daysError;
+
+    // Then delete the main accommodation entry
+    const { error: accommodationError } = await supabase
+      .from('accommodations')
+      .delete()
+      .eq('id', stay.id);
+
+    if (accommodationError) throw accommodationError;
+
+    return true;
+  } catch (error) {
+    console.error('Error in deleteAccommodationEvents:', error);
     throw error;
   }
 };

@@ -105,6 +105,45 @@ export type Database = {
           },
         ]
       }
+      accommodations_days: {
+        Row: {
+          accommodation_id: string
+          created_at: string
+          date: string
+          day_id: string
+          id: string
+        }
+        Insert: {
+          accommodation_id: string
+          created_at?: string
+          date: string
+          day_id: string
+          id?: string
+        }
+        Update: {
+          accommodation_id?: string
+          created_at?: string
+          date?: string
+          day_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accommodations_days_accommodation_id_fkey"
+            columns: ["accommodation_id"]
+            isOneToOne: false
+            referencedRelation: "accommodations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accommodations_days_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "trip_days"
+            referencedColumns: ["day_id"]
+          },
+        ]
+      }
       currencies: {
         Row: {
           currency: string
