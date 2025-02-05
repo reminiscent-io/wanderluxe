@@ -15,6 +15,8 @@ const FeaturedTrips = () => {
           accommodations (
             *,
             accommodations_days (
+              id,
+              stay_id,
               day_id,
               date,
               trip_days (
