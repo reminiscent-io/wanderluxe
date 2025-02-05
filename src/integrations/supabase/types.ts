@@ -13,7 +13,6 @@ export type Database = {
         Row: {
           created_at: string
           currency: string | null
-          day_id: string
           description: string | null
           expense_cost: number | null
           expense_date: string | null
@@ -29,17 +28,15 @@ export type Database = {
           hotel_place_id: string | null
           hotel_url: string | null
           hotel_website: string | null
-          id: string
           image_url: string | null
           order_index: number
-          stay_id: string | null
+          stay_id: string
           title: string
           trip_id: string
         }
         Insert: {
           created_at?: string
           currency?: string | null
-          day_id: string
           description?: string | null
           expense_cost?: number | null
           expense_date?: string | null
@@ -55,17 +52,15 @@ export type Database = {
           hotel_place_id?: string | null
           hotel_url?: string | null
           hotel_website?: string | null
-          id?: string
           image_url?: string | null
           order_index: number
-          stay_id?: string | null
+          stay_id?: string
           title: string
           trip_id: string
         }
         Update: {
           created_at?: string
           currency?: string | null
-          day_id?: string
           description?: string | null
           expense_cost?: number | null
           expense_date?: string | null
@@ -81,20 +76,26 @@ export type Database = {
           hotel_place_id?: string | null
           hotel_url?: string | null
           hotel_website?: string | null
-          id?: string
           image_url?: string | null
           order_index?: number
-          stay_id?: string | null
+          stay_id?: string
           title?: string
           trip_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "accommodations_day_id_fkey"
-            columns: ["day_id"]
+            foreignKeyName: "accommodations_currency_fkey"
+            columns: ["currency"]
             isOneToOne: false
-            referencedRelation: "trip_days"
-            referencedColumns: ["day_id"]
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
+          {
+            foreignKeyName: "accommodations_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
           },
           {
             foreignKeyName: "timeline_events_trip_id_fkey"
@@ -107,40 +108,40 @@ export type Database = {
       }
       accommodations_days: {
         Row: {
-          accommodation_id: string
           created_at: string
           date: string
           day_id: string
           id: string
+          stay_id: string
         }
         Insert: {
-          accommodation_id: string
           created_at?: string
           date: string
           day_id: string
           id?: string
+          stay_id: string
         }
         Update: {
-          accommodation_id?: string
           created_at?: string
           date?: string
           day_id?: string
           id?: string
+          stay_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "accommodations_days_accommodation_id_fkey"
-            columns: ["accommodation_id"]
-            isOneToOne: false
-            referencedRelation: "accommodations"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "accommodations_days_day_id_fkey"
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "trip_days"
             referencedColumns: ["day_id"]
+          },
+          {
+            foreignKeyName: "accommodations_days_stay_id_fkey"
+            columns: ["stay_id"]
+            isOneToOne: false
+            referencedRelation: "accommodations"
+            referencedColumns: ["stay_id"]
           },
         ]
       }

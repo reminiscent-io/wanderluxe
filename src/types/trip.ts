@@ -21,6 +21,8 @@ export interface TripDay {
 }
 
 export interface AccommodationDay {
+  id: string;
+  accommodation_id: string;
   day_id: string;
   date: string;
 }
@@ -46,7 +48,7 @@ export interface Accommodation {
   hotel_place_id?: string;
   hotel_website?: string;
   stay_id?: string;
-  day_id: string;
+  order_index: number;
   accommodations_days?: AccommodationDay[];
 }
 
@@ -64,6 +66,7 @@ export interface Trip {
 }
 
 export interface AccommodationFormData {
+  id?: string;
   hotel: string;
   hotelDetails: string;
   hotelUrl: string;

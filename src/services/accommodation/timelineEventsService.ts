@@ -67,6 +67,8 @@ export const updateAccommodationEvents = async (
   dates: string[]
 ) => {
   try {
+    if (!formData.id) throw new Error('Accommodation ID is required for update');
+
     // Update the main accommodation entry
     const { data: accommodation, error: accommodationError } = await supabase
       .from('accommodations')
