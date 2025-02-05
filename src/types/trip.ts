@@ -70,7 +70,7 @@ export interface AccommodationFormData {
   checkinDate: string;
   checkoutDate: string;
   expenseCost: string;
-  currency: string;  // Changed from expenseCurrency to currency
+  currency: string;  // Changed from expenseCurrency
   hotelAddress?: string;
   hotelPhone?: string;
   hotelPlaceId?: string;

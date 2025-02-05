@@ -12,7 +12,10 @@ const FeaturedTrips = () => {
         .from('trips')
         .select(`
           *,
-          timeline_events (*)
+          timeline_events (
+            *,
+            day_activities (*)
+          )
         `)
         .limit(3)
         .order('created_at', { ascending: false });
