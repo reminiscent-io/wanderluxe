@@ -12,7 +12,7 @@ export const useTripDates = (tripId: string) => {
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
-        .eq('id', tripId)
+        .eq('trip_id', tripId)  // Changed from 'id' to 'trip_id'
         .single();
 
       if (!error && data) {
