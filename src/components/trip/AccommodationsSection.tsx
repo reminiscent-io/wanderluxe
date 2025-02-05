@@ -11,6 +11,7 @@ import {
   deleteAccommodation,
   AccommodationFormData 
 } from '@/services/accommodation/accommodationService';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AccommodationsSectionProps {
   tripId: string;
@@ -43,6 +44,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     arrival_date: null,
     departure_date: null
   });
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchTripDates = async () => {
@@ -82,6 +84,11 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     if (success) {
       setIsExpanded(false);
       setIsAddingAccommodation(false);
+      // Invalidate both timeline-events and trip-days queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] }),
+        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] })
+      ]);
       onAccommodationChange();
     }
   };
@@ -90,6 +97,11 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     const success = await updateAccommodation(tripId, stayId, formData);
     if (success) {
       setEditingStay(null);
+      // Invalidate both timeline-events and trip-days queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] }),
+        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] })
+      ]);
       onAccommodationChange();
     }
   };
@@ -100,6 +112,11 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
     const success = await deleteAccommodation(stay);
     if (success) {
+      // Invalidate both timeline-events and trip-days queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] }),
+        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] })
+      ]);
       onAccommodationChange();
     }
   };
