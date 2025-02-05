@@ -1,17 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
 import AccommodationActions from './accommodation/AccommodationActions';
 import HotelStaysList from './accommodation/HotelStaysList';
 import { formatDateRange } from '@/utils/dateUtils';
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  addAccommodation, 
-  updateAccommodation, 
-  deleteAccommodation,
-  AccommodationFormData 
-} from '@/services/accommodation/accommodationService';
-import { useQueryClient } from '@tanstack/react-query';
+import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
+import { useTripDates } from './accommodation/hooks/useTripDates';
 
 interface AccommodationsSectionProps {
   tripId: string;
@@ -38,32 +32,16 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   hotelStays 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
-  const [editingStay, setEditingStay] = useState<string | null>(null);
-  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
-    arrival_date: null,
-    departure_date: null
-  });
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const fetchTripDates = async () => {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('arrival_date, departure_date')
-        .eq('id', tripId)
-        .single();
-
-      if (!error && data) {
-        setTripDates({
-          arrival_date: data.arrival_date,
-          departure_date: data.departure_date
-        });
-      }
-    };
-
-    fetchTripDates();
-  }, [tripId]);
+  const tripDates = useTripDates(tripId);
+  const {
+    isAddingAccommodation,
+    setIsAddingAccommodation,
+    editingStay,
+    setEditingStay,
+    handleSubmit,
+    handleUpdate,
+    handleDelete
+  } = useAccommodationHandlers(tripId, onAccommodationChange);
 
   // Filter out duplicate hotel stays based on hotel name and dates
   const uniqueHotelStays = hotelStays.reduce((acc, current) => {
@@ -78,48 +56,6 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     }
     return acc;
   }, [] as typeof hotelStays);
-
-  const handleSubmit = async (formData: AccommodationFormData) => {
-    const success = await addAccommodation(tripId, formData);
-    if (success) {
-      setIsExpanded(false);
-      setIsAddingAccommodation(false);
-      // Invalidate both timeline-events and trip-days queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] }),
-        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] })
-      ]);
-      onAccommodationChange();
-    }
-  };
-
-  const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
-    const success = await updateAccommodation(tripId, stayId, formData);
-    if (success) {
-      setEditingStay(null);
-      // Invalidate both timeline-events and trip-days queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] }),
-        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] })
-      ]);
-      onAccommodationChange();
-    }
-  };
-
-  const handleDelete = async (stayId: string) => {
-    const stay = uniqueHotelStays.find(s => s.id === stayId);
-    if (!stay) return;
-
-    const success = await deleteAccommodation(stay);
-    if (success) {
-      // Invalidate both timeline-events and trip-days queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] }),
-        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] })
-      ]);
-      onAccommodationChange();
-    }
-  };
 
   return (
     <Card className="bg-sand-50 shadow-md">

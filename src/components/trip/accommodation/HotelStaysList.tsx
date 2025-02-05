@@ -23,9 +23,14 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 }) => {
   if (hotelStays.length === 0) return null;
 
+  // Sort hotel stays by check-in date in descending order
+  const sortedStays = [...hotelStays].sort((a, b) => 
+    new Date(b.hotel_checkin_date).getTime() - new Date(a.hotel_checkin_date).getTime()
+  );
+
   return (
     <div className="space-y-4">
-      {hotelStays.map((stay) => (
+      {sortedStays.map((stay) => (
         <HotelStayCard
           key={stay.id}
           stay={stay}
