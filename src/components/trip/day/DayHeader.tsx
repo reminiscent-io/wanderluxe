@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
 import { Pencil, Trash2 } from "lucide-react";
 import DayEditDialog from './DayEditDialog';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface DayHeaderProps {
   date: string;
   dayNumber: number;
   onEdit: () => void;
-  onDelete: () => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   dayId: string;
   title?: string;
   activities: Array<{
@@ -40,16 +39,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      
-      // Delete the day - this will cascade to activities and reservations due to FK constraints
-      const { error } = await supabase
-        .from('trip_days')
-        .delete()
-        .eq('id', dayId);
-
-      if (error) throw error;
-
-      await onDelete();
+      await onDelete(dayId);
       toast.success('Day deleted successfully');
     } catch (error) {
       console.error('Error deleting day:', error);

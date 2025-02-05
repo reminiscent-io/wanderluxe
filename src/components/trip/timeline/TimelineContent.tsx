@@ -51,16 +51,24 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
     return acc;
   }, {} as Record<string, TripDay>);
 
-  // Sort flights by date
-  const sortedFlights = transportationEvents?.sort((a, b) => {
-    return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
-  });
+  const handleDayDelete = async (dayId: string) => {
+    try {
+      const { error } = await supabase
+        .from('trip_days')
+        .delete()
+        .eq('id', dayId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting day:', error);
+    }
+  };
 
   return (
     <div className="space-y-8">
       {groups.map((group, groupIndex) => {
         // Get flights that occur during this accommodation period
-        const relevantFlights = sortedFlights?.filter(flight => {
+        const relevantFlights = transportationEvents?.filter(flight => {
           const flightDate = new Date(flight.start_date);
           const checkinDate = group.checkinDate ? new Date(group.checkinDate) : null;
           const checkoutDate = group.checkoutDate ? new Date(group.checkoutDate) : null;
@@ -108,7 +116,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     activities={day.activities || []}
                     onAddActivity={() => {}}
                     index={dayIndex}
-                    onDelete={() => {}}
+                    onDelete={handleDayDelete}
                   />
                 ))}
               </AccommodationGroup>
@@ -124,7 +132,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     activities={day.activities || []}
                     onAddActivity={() => {}}
                     index={dayIndex}
-                    onDelete={() => {}}
+                    onDelete={handleDayDelete}
                   />
                 ))}
               </div>
