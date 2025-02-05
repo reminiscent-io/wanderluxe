@@ -10,6 +10,21 @@ export interface DayActivity {
   order_index: number;
 }
 
+export interface TimelineEvent {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  expense_cost?: number;
+  currency?: string;
+  hotel?: string;
+  hotel_details?: string;
+  hotel_checkin_date?: string;
+  hotel_checkout_date?: string;
+  hotel_url?: string;
+  day_activities?: DayActivity[];
+}
+
 export interface TripDay {
   day_id: string;
   trip_id: string;

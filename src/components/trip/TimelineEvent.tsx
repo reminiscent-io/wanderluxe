@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -75,7 +74,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onAddActivity = () => {
     handleAddActivity({
       title: newActivity.text,
-      cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
+      cost: newActivity.cost ? Number(newActivity.cost) : undefined,
       currency: newActivity.currency
     }).then(success => {
       if (success) {
@@ -88,7 +87,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onEditActivity = (activityId: string) => {
     handleEditActivity(activityId, {
       title: activityEdit.text,
-      cost: activityEdit.cost ? parseFloat(activityEdit.cost) : null,
+      cost: activityEdit.cost ? Number(activityEdit.cost) : undefined,
       currency: activityEdit.currency
     }).then(success => {
       if (success) {
@@ -97,6 +96,14 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
       }
     });
   };
+
+  // Transform activities to match expected format
+  const formattedActivities = activities.map(activity => ({
+    id: activity.id,
+    text: activity.title,
+    cost: activity.cost,
+    currency: activity.currency
+  }));
 
   return (
     <motion.div
@@ -119,7 +126,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
               hotelUrl={hotel_url}
               hotelCheckinDate={hotel_checkin_date}
               hotelCheckoutDate={hotel_checkout_date}
-              activities={activities}
+              activities={formattedActivities}
               onEdit={() => setIsEditing(true)}
               isAddingActivity={isAddingActivity}
               onAddingActivityChange={setIsAddingActivity}
