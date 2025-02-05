@@ -19,12 +19,6 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   formatCost
 }) => {
   const handleCostChange = (value: string) => {
-    // Allow empty input
-    if (value === '') {
-      setFormData({ ...formData, cost: undefined });
-      return;
-    }
-
     // Remove any non-numeric characters except decimal point
     const numericValue = value.replace(/[^\d.]/g, '');
     
@@ -36,15 +30,9 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
     const numberValue = parseFloat(formattedValue);
     if (!isNaN(numberValue)) {
       setFormData({ ...formData, cost: numberValue });
+    } else if (value === '') {
+      setFormData({ ...formData, cost: undefined });
     }
-  };
-
-  const formatDisplayValue = (value: number | undefined | null): string => {
-    if (value === undefined || value === null) return '';
-    return value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
   };
 
   return (
@@ -159,7 +147,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <Label>Cost (Optional)</Label>
           <Input
             type="text"
-            value={formatDisplayValue(formData.cost)}
+            value={formData.cost !== undefined ? formData.cost.toString() : ''}
             onChange={(e) => handleCostChange(e.target.value)}
             placeholder="0.00"
           />
