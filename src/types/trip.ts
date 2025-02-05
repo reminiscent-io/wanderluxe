@@ -50,10 +50,24 @@ export interface Trip {
   destination: string;
   start_date: string;
   end_date: string;
-  cover_image_url?: string;
+  cover_image_url: string;
   created_at: string;
-  hidden?: boolean;
+  hidden: boolean;
   arrival_date: string;
   departure_date: string;
   accommodations: Accommodation[];
+}
+
+export interface AccommodationFormData {
+  hotel: string;
+  hotelDetails: string;
+  hotelUrl: string;
+  checkinDate: string;
+  checkoutDate: string;
+  expenseCost: string;
+  expenseCurrency: string;
+  hotelAddress?: string;
+  hotelPhone?: string;
+  hotelPlaceId?: string;
+  hotelWebsite?: string;
 }

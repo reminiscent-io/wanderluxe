@@ -13,7 +13,6 @@ export const createAccommodationEvents = async (
   // Create a new event for each day of the stay
   const events = stayDates.map((date, index) => ({
     trip_id: tripId,
-    date,
     title: `Stay at ${formData.hotel}`,
     hotel: formData.hotel,
     hotel_details: formData.hotelDetails,
@@ -26,12 +25,11 @@ export const createAccommodationEvents = async (
     hotel_phone: formData.hotelPhone,
     hotel_place_id: formData.hotelPlaceId,
     hotel_website: formData.hotelWebsite,
-    final_accommodation_day: index === stayDates.length - 1 ? date : null,
     order_index: index
   }));
 
   const { error } = await supabase
-    .from('timeline_events')
+    .from('accommodations')
     .insert(events);
 
   if (error) {
@@ -50,7 +48,7 @@ export const updateAccommodationEvents = async (
 
   // First, delete all existing events for this hotel stay
   const { error: deleteError } = await supabase
-    .from('timeline_events')
+    .from('accommodations')
     .delete()
     .eq('trip_id', tripId)
     .eq('hotel', formData.hotel)
@@ -68,7 +66,7 @@ export const updateAccommodationEvents = async (
 
 export const deleteAccommodationEvents = async (stay: HotelStay) => {
   const { error } = await supabase
-    .from('timeline_events')
+    .from('accommodations')
     .delete()
     .eq('hotel', stay.hotel)
     .eq('hotel_checkin_date', stay.hotel_checkin_date)

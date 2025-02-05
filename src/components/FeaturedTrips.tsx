@@ -12,7 +12,7 @@ const FeaturedTrips = () => {
         .from('trips')
         .select(`
           *,
-          accommodations:accommodations (
+          accommodations (
             *,
             day:trip_days (
               *,
@@ -24,7 +24,7 @@ const FeaturedTrips = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as unknown as Trip[];
+      return data as Trip[];
     }
   });
 
