@@ -13,7 +13,7 @@ interface AccommodationFormProps {
     checkinDate: string;
     checkoutDate: string;
     expenseCost: string;
-    expenseCurrency: string;
+    currency: string;
     hotelAddress?: string;
     hotelPhone?: string;
     hotelPlaceId?: string;
@@ -27,7 +27,7 @@ interface AccommodationFormProps {
     checkinDate: string;
     checkoutDate: string;
     expenseCost: string | number;
-    expenseCurrency: string;
+    currency: string;
     hotelAddress?: string;
     hotelPhone?: string;
     hotelPlaceId?: string;
@@ -51,7 +51,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     checkinDate: initialData?.checkinDate || tripArrivalDate || '',
     checkoutDate: initialData?.checkoutDate || tripDepartureDate || '',
     expenseCost: initialData?.expenseCost ? typeof initialData.expenseCost === 'string' ? initialData.expenseCost : initialData.expenseCost.toFixed(2) : '',
-    expenseCurrency: initialData?.expenseCurrency || 'USD',
+    currency: initialData?.currency || 'USD',
     hotelAddress: initialData?.hotelAddress || '',
     hotelPhone: initialData?.hotelPhone || '',
     hotelPlaceId: initialData?.hotelPlaceId || '',
@@ -171,11 +171,11 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
           />
         </div>
         <div>
-          <Label htmlFor="expenseCurrency">Currency</Label>
+          <Label htmlFor="currency">Currency</Label>
           <Input
-            id="expenseCurrency"
-            value={formData.expenseCurrency}
-            onChange={(e) => setFormData({ ...formData, expenseCurrency: e.target.value })}
+            id="currency"
+            value={formData.currency}
+            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
             placeholder="USD"
           />
         </div>
