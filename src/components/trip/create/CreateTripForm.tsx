@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import ImageSection from "./ImageSection";
@@ -40,14 +41,10 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       />
 
       <TimingSection
-        timingType="specificDates"
-        onTimingTypeChange={() => {}}
-        timeOfYear=""
-        onTimeOfYearChange={() => {}}
-        arrivalDate={startDate}
-        onArrivalDateChange={setStartDate}
-        departureDate={endDate}
-        onDepartureDateChange={setEndDate}
+        startDate={startDate}
+        onStartDateChange={setStartDate}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
       />
 
       <ImageSection

@@ -397,10 +397,10 @@ export type Database = {
       }
       trips: {
         Row: {
-          arrival_date: string | null
+          arrival_date: string
           cover_image_url: string | null
           created_at: string
-          departure_date: string | null
+          departure_date: string
           destination: string
           end_date: string
           hidden: boolean | null
@@ -409,10 +409,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          arrival_date?: string | null
+          arrival_date: string
           cover_image_url?: string | null
           created_at?: string
-          departure_date?: string | null
+          departure_date: string
           destination: string
           end_date: string
           hidden?: boolean | null
@@ -421,10 +421,10 @@ export type Database = {
           user_id: string
         }
         Update: {
-          arrival_date?: string | null
+          arrival_date?: string
           cover_image_url?: string | null
           created_at?: string
-          departure_date?: string | null
+          departure_date?: string
           destination?: string
           end_date?: string
           hidden?: boolean | null
