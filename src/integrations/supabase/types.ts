@@ -90,13 +90,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "accommodations_accommodation_group_id_fkey"
-            columns: ["accommodation_group_id"]
-            isOneToOne: false
-            referencedRelation: "accommodations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "accommodations_day_id_fkey"
             columns: ["day_id"]
             isOneToOne: false
@@ -321,6 +314,21 @@ export type Database = {
             referencedColumns: ["day_id"]
           },
         ]
+      }
+      test_accommodations: {
+        Row: {
+          date: string[] | null
+          id: number
+        }
+        Insert: {
+          date?: string[] | null
+          id: number
+        }
+        Update: {
+          date?: string[] | null
+          id?: number
+        }
+        Relationships: []
       }
       transportation_events: {
         Row: {
