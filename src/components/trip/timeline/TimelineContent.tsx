@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import AccommodationGroup from '../accommodation/AccommodationGroup';
 import DayCard from '../day/DayCard';
-import { TripDay } from '@/types/trip';
 import FlightIndicator from '../transportation/FlightIndicator';
-import TransportationDialog from '../transportation/TransportationDialog';
+import { TripDay } from '@/types/trip';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
@@ -22,9 +21,6 @@ interface TimelineContentProps {
 }
 
 const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
-  const [selectedTransportation, setSelectedTransportation] = useState<TransportationEvent>();
-  const [dialogOpen, setDialogOpen] = useState(false);
-
   // Get the trip ID from the first day of the first group
   const tripId = groups[0]?.days[0]?.trip_id;
 
@@ -46,18 +42,37 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
     enabled: !!tripId
   });
 
-  const handleTransportationClick = (event: TransportationEvent) => {
-    setSelectedTransportation(event);
-    setDialogOpen(true);
-  };
-
-  const handleSuccess = () => {
-    setDialogOpen(false);
-    setSelectedTransportation(undefined);
-  };
+  // Group days by date to match with flights
+  const daysByDate = groups.reduce((acc, group) => {
+    group.days.forEach(day => {
+      const date = day.date.split('T')[0];
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(day);
+    });
+    return acc;
+  }, {} as Record<string, TripDay[]>);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
+      {/* Render flights first */}
+      {transportationEvents?.map((event, index) => (
+        <motion.div
+          key={event.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+          className="flex justify-center"
+        >
+          <FlightIndicator
+            event={event}
+            onClick={() => {}}
+          />
+        </motion.div>
+      ))}
+
+      {/* Then render accommodation groups */}
       {groups.map((group, groupIndex) => (
         <motion.div
           key={`${group.hotel || 'standalone'}-${groupIndex}`}
@@ -73,66 +88,38 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
               checkoutDate={group.checkoutDate!}
             >
               {group.days.map((day, dayIndex) => (
-                <div key={day.id}>
-                  {transportationEvents?.map(event => 
-                    event.start_date === day.date.split('T')[0] && (
-                      <FlightIndicator
-                        key={event.id}
-                        event={event}
-                        onClick={() => handleTransportationClick(event)}
-                      />
-                    )
-                  )}
-                  <DayCard
-                    id={day.id}
-                    date={day.date.split('T')[0]}
-                    title={day.title}
-                    description={day.description}
-                    activities={day.activities || []}
-                    onAddActivity={() => {}}
-                    index={dayIndex}
-                    onDelete={() => {}}
-                  />
-                </div>
+                <DayCard
+                  key={day.id}
+                  id={day.id}
+                  date={day.date.split('T')[0]}
+                  title={day.title}
+                  description={day.description}
+                  activities={day.activities || []}
+                  onAddActivity={() => {}}
+                  index={dayIndex}
+                  onDelete={() => {}}
+                />
               ))}
             </AccommodationGroup>
           ) : (
             <div className="space-y-6">
               {group.days.map((day, dayIndex) => (
-                <div key={day.id}>
-                  {transportationEvents?.map(event => 
-                    event.start_date === day.date.split('T')[0] && (
-                      <FlightIndicator
-                        key={event.id}
-                        event={event}
-                        onClick={() => handleTransportationClick(event)}
-                      />
-                    )
-                  )}
-                  <DayCard
-                    id={day.id}
-                    date={day.date.split('T')[0]}
-                    title={day.title}
-                    description={day.description}
-                    activities={day.activities || []}
-                    onAddActivity={() => {}}
-                    index={dayIndex}
-                    onDelete={() => {}}
-                  />
-                </div>
+                <DayCard
+                  key={day.id}
+                  id={day.id}
+                  date={day.date.split('T')[0]}
+                  title={day.title}
+                  description={day.description}
+                  activities={day.activities || []}
+                  onAddActivity={() => {}}
+                  index={dayIndex}
+                  onDelete={() => {}}
+                />
               ))}
             </div>
           )}
         </motion.div>
       ))}
-
-      <TransportationDialog
-        tripId={tripId || ''}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        initialData={selectedTransportation}
-        onSuccess={handleSuccess}
-      />
     </div>
   );
 };

@@ -25,16 +25,24 @@ const FlightIndicator: React.FC<FlightIndicatorProps> = ({ event, onClick }) => 
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-2"
+      className="mb-4 w-full max-w-md mx-auto"
     >
       <Card
         onClick={onClick}
-        className="p-2 cursor-pointer hover:bg-gray-50 transition-colors inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm"
+        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3 bg-white/80 backdrop-blur-sm shadow-md"
       >
-        <Plane className="h-4 w-4 text-earth-500" />
-        <span className="text-sm">
-          {formatTime(event.start_time)} • {event.departure_location} → {event.arrival_location}
-        </span>
+        <div className="bg-earth-50 p-2 rounded-full">
+          <Plane className="h-5 w-5 text-earth-500" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium">
+            {event.departure_location} → {event.arrival_location}
+          </p>
+          <p className="text-sm text-gray-600">
+            {formatTime(event.start_time)}
+            {event.end_time && ` - ${formatTime(event.end_time)}`}
+          </p>
+        </div>
       </Card>
     </motion.div>
   );
