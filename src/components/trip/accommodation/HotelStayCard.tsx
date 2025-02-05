@@ -13,7 +13,7 @@ interface HotelStayCardProps {
     hotel_checkout_date: string;
   };
   onEdit: (stayId: string) => void;
-  onDelete: (stayId: string) => void;
+  onDelete: (stay: { hotel: string; hotel_checkin_date: string; hotel_checkout_date: string; }) => void;
   formatDateRange: (checkinDate: string, checkoutDate: string) => string;
 }
 
@@ -39,6 +39,14 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
   };
 
   const stayDates = getDatesInRange(stay.hotel_checkin_date, stay.hotel_checkout_date);
+
+  const handleDelete = () => {
+    onDelete({
+      hotel: stay.hotel,
+      hotel_checkin_date: stay.hotel_checkin_date,
+      hotel_checkout_date: stay.hotel_checkout_date
+    });
+  };
 
   return (
     <div className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm">
@@ -76,7 +84,7 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onDelete(stay.id)}
+              onClick={handleDelete}
               className="text-red-500 hover:text-red-700"
             >
               <Trash2 className="h-4 w-4" />
