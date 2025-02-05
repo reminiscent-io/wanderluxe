@@ -7,7 +7,6 @@ import { TripDay } from '@/types/trip';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
-import { format, parseISO } from 'date-fns';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -101,7 +100,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     key={day.day_id}
                     id={day.day_id}
                     date={day.date}
-                    title={day.title}
+                    title={day.title || ''}
                     description={day.description}
                     activities={day.activities || []}
                     onAddActivity={() => {}}
@@ -117,7 +116,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     key={day.day_id}
                     id={day.day_id}
                     date={day.date}
-                    title={day.title}
+                    title={day.title || ''}
                     description={day.description}
                     activities={day.activities || []}
                     onAddActivity={() => {}}

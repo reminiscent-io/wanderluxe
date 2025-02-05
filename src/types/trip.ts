@@ -2,20 +2,23 @@ export interface TripDay {
   day_id: string;
   trip_id: string;
   date: string;
-  title?: string;
-  description?: string;
+  title?: string | null;
+  description?: string | null;
   activities?: DayActivity[];
+  created_at: string;
 }
 
 export interface DayActivity {
   id: string;
   title: string;
-  description?: string;
-  start_time?: string;
-  end_time?: string;
-  cost?: number;
-  currency?: string;
+  description?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  cost?: number | null;
+  currency?: string | null;
   order_index: number;
+  day_id: string;
+  created_at: string;
 }
 
 export interface TimelineEvent {
@@ -42,6 +45,7 @@ export interface TimelineEvent {
   hotel_phone?: string | null;
   hotel_place_id?: string | null;
   hotel_website?: string | null;
+  created_at: string;
 }
 
 export interface Trip {
@@ -65,7 +69,7 @@ export interface AccommodationFormData {
   checkinDate: string;
   checkoutDate: string;
   expenseCost: string | number;
-  expenseCurrency: string;
+  currency: string;
   hotelAddress?: string;
   hotelPhone?: string;
   hotelPlaceId?: string;
