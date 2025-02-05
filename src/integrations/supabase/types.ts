@@ -9,41 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      activities: {
-        Row: {
-          cost: number | null
-          created_at: string
-          currency: string | null
-          event_id: string
-          id: string
-          text: string
-        }
-        Insert: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          event_id: string
-          id?: string
-          text: string
-        }
-        Update: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          event_id?: string
-          id?: string
-          text?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activities_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "timeline_events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       day_activities: {
         Row: {
           cost: number | null
@@ -83,11 +48,18 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "day_activities_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "exchange_rates"
+            referencedColumns: ["currency_from"]
+          },
+          {
             foreignKeyName: "day_activities_day_id_fkey"
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "trip_days"
-            referencedColumns: ["id"]
+            referencedColumns: ["day_id"]
           },
         ]
       }
@@ -199,11 +171,18 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "restaurant_reservations_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "exchange_rates"
+            referencedColumns: ["currency_from"]
+          },
+          {
             foreignKeyName: "restaurant_reservations_day_id_fkey"
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "trip_days"
-            referencedColumns: ["id"]
+            referencedColumns: ["day_id"]
           },
         ]
       }
@@ -211,10 +190,10 @@ export type Database = {
         Row: {
           accommodation_group_id: string | null
           created_at: string
+          currency: string | null
           date: string
           description: string | null
           expense_cost: number | null
-          expense_currency: string | null
           expense_date: string | null
           expense_paid: boolean | null
           expense_type: string | null
@@ -237,10 +216,10 @@ export type Database = {
         Insert: {
           accommodation_group_id?: string | null
           created_at?: string
+          currency?: string | null
           date: string
           description?: string | null
           expense_cost?: number | null
-          expense_currency?: string | null
           expense_date?: string | null
           expense_paid?: boolean | null
           expense_type?: string | null
@@ -263,10 +242,10 @@ export type Database = {
         Update: {
           accommodation_group_id?: string | null
           created_at?: string
+          currency?: string | null
           date?: string
           description?: string | null
           expense_cost?: number | null
-          expense_currency?: string | null
           expense_date?: string | null
           expense_paid?: boolean | null
           expense_type?: string | null
@@ -299,7 +278,7 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedColumns: ["trip_id"]
           },
         ]
       }
@@ -363,11 +342,18 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "transportation_events_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "exchange_rates"
+            referencedColumns: ["currency_from"]
+          },
+          {
             foreignKeyName: "transportation_events_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedColumns: ["trip_id"]
           },
         ]
       }
@@ -375,8 +361,8 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          day_id: string
           description: string | null
-          id: string
           image_url: string | null
           title: string | null
           trip_id: string
@@ -384,8 +370,8 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          day_id?: string
           description?: string | null
-          id?: string
           image_url?: string | null
           title?: string | null
           trip_id: string
@@ -393,8 +379,8 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          day_id?: string
           description?: string | null
-          id?: string
           image_url?: string | null
           title?: string | null
           trip_id?: string
@@ -405,7 +391,7 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedColumns: ["trip_id"]
           },
         ]
       }
@@ -418,8 +404,8 @@ export type Database = {
           destination: string
           end_date: string
           hidden: boolean | null
-          id: string
           start_date: string
+          trip_id: string
           user_id: string
         }
         Insert: {
@@ -430,8 +416,8 @@ export type Database = {
           destination: string
           end_date: string
           hidden?: boolean | null
-          id?: string
           start_date: string
+          trip_id?: string
           user_id: string
         }
         Update: {
@@ -442,8 +428,8 @@ export type Database = {
           destination?: string
           end_date?: string
           hidden?: boolean | null
-          id?: string
           start_date?: string
+          trip_id?: string
           user_id?: string
         }
         Relationships: []
