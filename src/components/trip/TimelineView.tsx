@@ -69,7 +69,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         {
           event: '*',
           schema: 'public',
-          table: 'timeline_events',
+          table: 'accommodations',
           filter: `trip_id=eq.${tripId}`,
         },
         () => {
@@ -135,7 +135,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           tripId={tripId}
           onAccommodationChange={handleRefresh}
           hotelStays={hotelStays.map(event => ({
-            id: event.id,
+            id: event.stay_id,
             hotel: event.hotel || '',
             hotel_details: event.hotel_details,
             hotel_url: event.hotel_url,
