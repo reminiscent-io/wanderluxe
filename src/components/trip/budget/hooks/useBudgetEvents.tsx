@@ -1,15 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { TimelineEvent } from '@/types/trip';
 
-export const useBudgetEvents = (tripId: string | undefined) => {
-  const queryClient = useQueryClient();
-  const { events } = useTimelineEvents(tripId);
-  const [exchangeRates, setExchangeRates] = useState<any[]>([]);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+export const useBudgetEvents = (tripId: string) => {
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
+
+  const { data: events } = useQuery({
+    queryKey: ['timeline-events', tripId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('timeline_events')
+        .select('*, day_activities(*)')
+        .eq('trip_id', tripId)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      return data as TimelineEvent[];
+    }
+  });
 
   useEffect(() => {
     const fetchExchangeRates = async () => {
@@ -21,122 +30,27 @@ export const useBudgetEvents = (tripId: string | undefined) => {
         });
       });
 
-      const { data, error } = await supabase
-        .from('exchange_rates')
-        .select('*')
-        .in('currency_from', Array.from(usedCurrencies))
-        .eq('currency_to', 'USD');
+      // Fetch exchange rates for used currencies
+      const rates = await Promise.all(
+        Array.from(usedCurrencies).map(async (currency) => {
+          const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${currency}`);
+          const data = await response.json();
+          return { currency, rate: data.rates };
+        })
+      );
 
-      if (error) {
-        console.error('Error fetching exchange rates:', error);
-      } else if (data && data.length > 0) {
-        setExchangeRates(data);
-        setLastUpdated(data[0].last_updated);
-      }
+      const ratesMap = rates.reduce((acc, { currency, rate }) => {
+        acc[currency] = rate;
+        return acc;
+      }, {} as Record<string, number>);
+
+      setExchangeRates(ratesMap);
     };
 
-    fetchExchangeRates();
+    if (events?.length) {
+      fetchExchangeRates();
+    }
   }, [events]);
 
-  const handleDeleteExpense = async (eventId: string) => {
-    try {
-      const { error } = await supabase
-        .from('timeline_events')
-        .delete()
-        .eq('id', eventId);
-
-      if (error) throw error;
-      toast.success('Expense deleted successfully');
-    } catch (error) {
-      console.error('Error deleting expense:', error);
-      toast.error('Failed to delete expense');
-    }
-  };
-
-  const handleUpdateCost = async (eventId: string, cost: number, currency: string) => {
-    try {
-      const { error } = await supabase
-        .from('timeline_events')
-        .update({ 
-          expense_cost: cost,
-          expense_currency: currency
-        })
-        .eq('id', eventId);
-
-      if (error) throw error;
-      toast.success('Cost updated successfully');
-    } catch (error) {
-      console.error('Error updating cost:', error);
-      toast.error('Failed to update cost');
-    }
-  };
-
-  const handleAddExpense = async (
-    category: string,
-    title: string,
-    amount: number,
-    currency: string,
-    isPaid: boolean,
-    date: string | null
-  ) => {
-    try {
-      if (!tripId) throw new Error('No trip ID provided');
-      
-      const { data, error } = await supabase
-        .from('timeline_events')
-        .insert([{
-          trip_id: tripId,
-          title: title,
-          date: date || format(new Date(), 'yyyy-MM-dd'),
-          order_index: events?.length || 0,
-          expense_type: category.toLowerCase(),
-          expense_cost: amount,
-          expense_currency: currency,
-          expense_paid: isPaid,
-          expense_date: date
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      toast.success('Expense added successfully');
-      return true;
-    } catch (error) {
-      console.error('Error adding expense:', error);
-      toast.error('Failed to add expense');
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('timeline-events-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'timeline_events',
-          filter: `trip_id=eq.${tripId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tripId, queryClient]);
-
-  return {
-    events,
-    exchangeRates,
-    lastUpdated,
-    handleDeleteExpense,
-    handleUpdateCost,
-    handleAddExpense
-  };
+  return { events, exchangeRates };
 };
