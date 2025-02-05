@@ -28,11 +28,11 @@ const MyTrips = () => {
         .from('trips')
         .select(`
           *,
-          timeline_events (date)
+          accommodations (date)
         `)
         .eq('user_id', user.id)
         .eq('hidden', false)
-        .order('start_date', { ascending: true });
+        .order('arrival_date', { ascending: true });
 
       if (error) throw error;
       return data as Trip[];
