@@ -26,10 +26,7 @@ const MyTrips = () => {
 
       const { data, error } = await supabase
         .from('trips')
-        .select(`
-          *,
-          accommodations (date)
-        `)
+        .select(`*`)
         .eq('user_id', user.id)
         .eq('hidden', false)
         .order('arrival_date', { ascending: true });
