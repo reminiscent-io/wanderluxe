@@ -142,7 +142,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             hotel_checkin_date: event.hotel_checkin_date || '',
             hotel_checkout_date: event.hotel_checkout_date || '',
             expense_cost: event.expense_cost,
-            expense_currency: event.expense_currency,
+            currency: event.currency,
             hotel_address: event.hotel_address,
             hotel_phone: event.hotel_phone,
             hotel_place_id: event.hotel_place_id,
