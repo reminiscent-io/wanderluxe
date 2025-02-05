@@ -55,7 +55,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
       const { data, error } = await supabase
         .from('accommodations')
         .update(event)
-        .eq('id', event.id)
+        .eq('stay_id', event.stay_id)
         .select()
         .single();
 
@@ -86,7 +86,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
       const { error } = await supabase
         .from('accommodations')
         .delete()
-        .eq('id', eventId);
+        .eq('stay_id', eventId);
 
       if (error) throw error;
     },
