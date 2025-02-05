@@ -10,6 +10,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, BarChart2, List } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Pencil, Trash2 } from 'lucide-react';
 
 const TripDetails = () => {
   const { tripId } = useParams();
@@ -22,8 +24,24 @@ const TripDetails = () => {
       
       const { data, error } = await supabase
         .from('trips')
-        .select('*, accommodations(date)')
-        .eq('trip_id', tripId)  // Changed from 'id' to 'trip_id'
+        .select(`
+          *,
+          accommodations(
+            stay_id,
+            hotel,
+            hotel_details,
+            hotel_url,
+            hotel_checkin_date,
+            hotel_checkout_date,
+            expense_cost,
+            currency,
+            hotel_address,
+            hotel_phone,
+            hotel_place_id,
+            hotel_website
+          )
+        `)
+        .eq('trip_id', tripId)
         .single();
 
       if (error) {
@@ -71,9 +89,9 @@ const TripDetails = () => {
       
       <HeroSection 
         title={trip.destination}
-        date={`${trip.arrival_date} - ${trip.end_date}`}
+        date={`${trip.arrival_date} - ${trip.departure_date}`}
         imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
-        events={trip.accommodations}
+        events={trip.accommodations || []}
         arrivalDate={trip.arrival_date}
         departureDate={trip.departure_date}
       />
