@@ -40,6 +40,7 @@ export interface Accommodation {
   hotel_phone?: string;
   hotel_place_id?: string;
   hotel_website?: string;
+  stay_id?: string;
   day_id: string;
   day: TripDay;
 }
@@ -50,7 +51,7 @@ export interface Trip {
   destination: string;
   start_date: string;
   end_date: string;
-  cover_image_url: string;
+  cover_image_url?: string;
   created_at: string;
   hidden: boolean;
   arrival_date: string;

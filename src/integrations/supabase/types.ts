@@ -11,7 +11,6 @@ export type Database = {
     Tables: {
       accommodations: {
         Row: {
-          accommodation_group_id: string | null
           created_at: string
           currency: string | null
           day_id: string
@@ -33,11 +32,11 @@ export type Database = {
           id: string
           image_url: string | null
           order_index: number
+          stay_id: string | null
           title: string
           trip_id: string
         }
         Insert: {
-          accommodation_group_id?: string | null
           created_at?: string
           currency?: string | null
           day_id: string
@@ -59,11 +58,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           order_index: number
+          stay_id?: string | null
           title: string
           trip_id: string
         }
         Update: {
-          accommodation_group_id?: string | null
           created_at?: string
           currency?: string | null
           day_id?: string
@@ -85,6 +84,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           order_index?: number
+          stay_id?: string | null
           title?: string
           trip_id?: string
         }
@@ -314,21 +314,6 @@ export type Database = {
             referencedColumns: ["day_id"]
           },
         ]
-      }
-      test_accommodations: {
-        Row: {
-          date: string[] | null
-          id: number
-        }
-        Insert: {
-          date?: string[] | null
-          id: number
-        }
-        Update: {
-          date?: string[] | null
-          id?: number
-        }
-        Relationships: []
       }
       transportation_events: {
         Row: {

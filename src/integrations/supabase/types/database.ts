@@ -9,6 +9,102 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      accommodations: {
+        Row: {
+          id: string
+          trip_id: string
+          title: string
+          description: string | null
+          image_url: string | null
+          hotel: string | null
+          hotel_details: string | null
+          created_at: string
+          order_index: number
+          expense_type: string | null
+          expense_cost: number | null
+          currency: string | null
+          expense_paid: boolean | null
+          hotel_checkin_date: string | null
+          hotel_checkout_date: string | null
+          hotel_url: string | null
+          final_accommodation_day: string | null
+          expense_date: string | null
+          hotel_address: string | null
+          hotel_phone: string | null
+          hotel_place_id: string | null
+          hotel_website: string | null
+          stay_id: string | null
+          day_id: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          title: string
+          description?: string | null
+          image_url?: string | null
+          hotel?: string | null
+          hotel_details?: string | null
+          created_at?: string
+          order_index: number
+          expense_type?: string | null
+          expense_cost?: number | null
+          currency?: string | null
+          expense_paid?: boolean | null
+          hotel_checkin_date?: string | null
+          hotel_checkout_date?: string | null
+          hotel_url?: string | null
+          final_accommodation_day?: string | null
+          expense_date?: string | null
+          hotel_address?: string | null
+          hotel_phone?: string | null
+          hotel_place_id?: string | null
+          hotel_website?: string | null
+          stay_id?: string | null
+          day_id: string
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          title?: string
+          description?: string | null
+          image_url?: string | null
+          hotel?: string | null
+          hotel_details?: string | null
+          created_at?: string
+          order_index?: number
+          expense_type?: string | null
+          expense_cost?: number | null
+          currency?: string | null
+          expense_paid?: boolean | null
+          hotel_checkin_date?: string | null
+          hotel_checkout_date?: string | null
+          hotel_url?: string | null
+          final_accommodation_day?: string | null
+          expense_date?: string | null
+          hotel_address?: string | null
+          hotel_phone?: string | null
+          hotel_place_id?: string | null
+          hotel_website?: string | null
+          stay_id?: string | null
+          day_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accommodations_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "trip_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_events_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       activities: {
         Row: {
           cost: number | null
