@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 interface DiningListProps {
   reservations: Array<{
     id: string;
+    day_id: string; 
     restaurant_name: string;
     reservation_time?: string;
     number_of_people?: number;
@@ -19,9 +20,10 @@ interface DiningListProps {
     currency?: string;
     address?: string;
     phone_number?: string;
+    phone_id?: string;    
     website?: string;
-    place_id?: string;
     rating?: number;
+    created_at: string;   
   }>;
   onAddReservation: () => void;
   formatTime: (time?: string) => string;
