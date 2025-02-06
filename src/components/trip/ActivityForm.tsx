@@ -8,16 +8,27 @@ import { toast } from 'sonner';
 
 interface ActivityFormProps {
   activity: {
-    text: string;
+    title: string;      // Changed from text to match schema
+    description?: string;  // Add this from schema
+    start_time?: string;  // Add this from schema
+    end_time?: string;    // Add this from schema
     cost: string;
     currency: string;
   };
-  onActivityChange: (activity: { text: string; cost: string; currency: string }) => void;
+  onActivityChange: (activity: { 
+    title: string;
+    description?: string;
+    start_time?: string;
+    end_time?: string;
+    cost: string;
+    currency: string;
+  }) => void;
   onSubmit: () => void;
   onCancel: () => void;
   submitLabel: string;
-  eventId: string;
+  eventId: string;  // This represents day_id in the schema
 }
+
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
   activity,
@@ -37,14 +48,19 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     try {
       const { error } = await supabase
-        .from('day_activities')  // Changed from activities to day_activities
-        .insert([{
-          day_id: eventId,  // Changed from event_id to day_id
-          title: activity.text,  // Changed from text to title
-          cost: activity.cost ? Number(activity.cost) : null,
-          currency: activity.currency,
-          order_index: 0  // Added required field
-        }]);
+  .from('day_activities')
+  .insert([{
+    day_id: eventId,
+    title: activity.title,  // Changed from text
+    description: activity.description,  // Add this
+    start_time: activity.start_time,    // Add this
+    end_time: activity.end_time,        // Add this
+    cost: activity.cost ? Number(activity.cost) : null,
+    currency: activity.currency,
+    order_index: 0,
+    created_at: new Date().toISOString()  // Add this required field
+  }]);
+
 
       if (error) throw error;
 
@@ -59,14 +75,45 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="text">Activity</Label>
+        <Label htmlFor="title">Activity Title</Label>
         <Input
-          id="text"
-          value={activity.text}
-          onChange={(e) => onActivityChange({ ...activity, text: e.target.value })}
-          placeholder="Enter activity details"
+          id="title"
+          value={activity.title}
+          onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
+          placeholder="Enter activity title"
           required
         />
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Input
+          id="description"
+          value={activity.description}
+          onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
+          placeholder="Enter activity description"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="start_time">Start Time</Label>
+          <Input
+            id="start_time"
+            type="time"
+            value={activity.start_time}
+            onChange={(e) => onActivityChange({ ...activity, start_time: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="end_time">End Time</Label>
+          <Input
+            id="end_time"
+            type="time"
+            value={activity.end_time}
+            onChange={(e) => onActivityChange({ ...activity, end_time: e.target.value })}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -114,5 +161,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     </form>
   );
 };
+
 
 export default ActivityForm;
