@@ -24,8 +24,21 @@ import {
 } from '@/components/ui/tooltip';
 import { Tables } from '@/integrations/supabase/types';
 
-type Trip = Tables<'trips'> & {
-  timeline_events: { date: string }[];
+type Trip = {
+  trip_id: string;
+  user_id: string;
+  destination: string;
+  cover_image_url: string | null;
+  created_at: string;
+  hidden: boolean;
+  arrival_date: string | null;
+  departure_date: string | null;
+  accommodations?: {
+    stay_id: string;
+    hotel: string;
+    hotel_checkin_date: string;
+    hotel_checkout_date: string;
+  }[];
 };
 
 interface TripCardProps {
