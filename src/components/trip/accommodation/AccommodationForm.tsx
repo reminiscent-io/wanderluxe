@@ -7,31 +7,41 @@ import HotelSearchInput from './HotelSearchInput';
 
 interface AccommodationFormProps {
   onSubmit: (data: {
+    stay_id?: string;
     hotel: string;
-    hotelDetails: string;
-    hotelUrl: string;
-    checkinDate: string;
-    checkoutDate: string;
-    expenseCost: string;
+    hotel_details: string;
+    hotel_url: string;
+    hotel_checkin_date: string;
+    hotel_checkout_date: string;
+    expense_cost: string;
     currency: string;
-    hotelAddress?: string;
-    hotelPhone?: string;
-    hotelPlaceId?: string;
-    hotelWebsite?: string;
+    hotel_address?: string;
+    hotel_phone?: string;
+    hotel_place_id?: string;
+    hotel_website?: string;
+    expense_type?: string;
+    expense_paid?: boolean;
+    expense_date?: string;
+    order_index?: number;
   }) => void;
   onCancel: () => void;
   initialData?: {
+    stay_id?: string;
     hotel: string;
-    hotelDetails: string;
-    hotelUrl: string;
-    checkinDate: string;
-    checkoutDate: string;
-    expenseCost: string | number;
+    hotel_details: string;
+    hotel_url: string;
+    hotel_checkin_date: string;
+    hotel_checkout_date: string;
+    expense_cost: string | number;
     currency: string;
-    hotelAddress?: string;
-    hotelPhone?: string;
-    hotelPlaceId?: string;
-    hotelWebsite?: string;
+    hotel_address?: string;
+    hotel_phone?: string;
+    hotel_place_id?: string;
+    hotel_website?: string;
+    expense_type?: string;
+    expense_paid?: boolean;
+    expense_date?: string;
+    order_index?: number;
   };
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
@@ -45,28 +55,33 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   tripDepartureDate
 }) => {
   const [formData, setFormData] = useState({
+    stay_id: initialData?.stay_id || undefined,
     hotel: initialData?.hotel || '',
-    hotelDetails: initialData?.hotelDetails || '',
-    hotelUrl: initialData?.hotelUrl || '',
-    checkinDate: initialData?.checkinDate || tripArrivalDate || '',
-    checkoutDate: initialData?.checkoutDate || tripDepartureDate || '',
-    expenseCost: initialData?.expenseCost ? typeof initialData.expenseCost === 'string' ? initialData.expenseCost : initialData.expenseCost.toFixed(2) : '',
+    hotel_details: initialData?.hotel_details || '',
+    hotel_url: initialData?.hotel_url || '',
+    hotel_checkin_date: initialData?.hotel_checkin_date || tripArrivalDate || '',
+    hotel_checkout_date: initialData?.hotel_checkout_date || tripDepartureDate || '',
+    expense_cost: initialData?.expense_cost ? typeof initialData.expense_cost === 'string' ? initialData.expense_cost : initialData.expense_cost.toFixed(2) : '',
     currency: initialData?.currency || 'USD',
-    hotelAddress: initialData?.hotelAddress || '',
-    hotelPhone: initialData?.hotelPhone || '',
-    hotelPlaceId: initialData?.hotelPlaceId || '',
-    hotelWebsite: initialData?.hotelWebsite || ''
+    hotel_address: initialData?.hotel_address || '',
+    hotel_phone: initialData?.hotel_phone || '',
+    hotel_place_id: initialData?.hotel_place_id || '',
+    hotel_website: initialData?.hotel_website || '',
+    expense_type: initialData?.expense_type || 'accommodation',
+    expense_paid: initialData?.expense_paid || false,
+    expense_date: initialData?.expense_date || '',
+    order_index: initialData?.order_index || 0
   });
 
   const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => {
     setFormData(prev => ({
       ...prev,
       hotel: hotelName,
-      hotelAddress: placeDetails?.formatted_address || prev.hotelAddress,
-      hotelPhone: placeDetails?.formatted_phone_number || prev.hotelPhone,
-      hotelPlaceId: placeDetails?.place_id || prev.hotelPlaceId,
-      hotelWebsite: placeDetails?.website || prev.hotelWebsite,
-      hotelUrl: placeDetails?.website || prev.hotelUrl
+      hotel_address: placeDetails?.formatted_address || prev.hotel_address,
+      hotel_phone: placeDetails?.formatted_phone_number || prev.hotel_phone,
+      hotel_place_id: placeDetails?.place_id || prev.hotel_place_id,
+      hotel_website: placeDetails?.website || prev.hotel_website,
+      hotel_url: placeDetails?.website || prev.hotel_url
     }));
   };
 
@@ -76,14 +91,10 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   };
 
   const formatCost = (value: string) => {
-    // Remove any non-numeric characters except decimal point
     const numericValue = value.replace(/[^\d.]/g, '');
-    
-    // Ensure only one decimal point
     const parts = numericValue.split('.');
     const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
     
-    // Format with commas for thousands
     const number = parseFloat(formattedValue);
     if (!isNaN(number)) {
       return number.toLocaleString('en-US', {
@@ -101,58 +112,58 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
         onChange={handleHotelSelect}
       />
 
-      {formData.hotelAddress && (
+      {formData.hotel_address && (
         <div>
           <Label>Address</Label>
-          <p className="text-sm text-gray-600">{formData.hotelAddress}</p>
+          <p className="text-sm text-gray-600">{formData.hotel_address}</p>
         </div>
       )}
 
-      {formData.hotelPhone && (
+      {formData.hotel_phone && (
         <div>
           <Label>Phone</Label>
-          <p className="text-sm text-gray-600">{formData.hotelPhone}</p>
+          <p className="text-sm text-gray-600">{formData.hotel_phone}</p>
         </div>
       )}
 
       <div>
-        <Label htmlFor="hotelDetails">Details (Optional)</Label>
+        <Label htmlFor="hotel_details">Details (Optional)</Label>
         <Textarea
-          id="hotelDetails"
-          value={formData.hotelDetails}
-          onChange={(e) => setFormData({ ...formData, hotelDetails: e.target.value })}
+          id="hotel_details"
+          value={formData.hotel_details}
+          onChange={(e) => setFormData({ ...formData, hotel_details: e.target.value })}
         />
       </div>
 
       <div>
-        <Label htmlFor="hotelUrl">URL (Optional)</Label>
+        <Label htmlFor="hotel_url">URL (Optional)</Label>
         <Input
-          id="hotelUrl"
+          id="hotel_url"
           type="url"
-          value={formData.hotelUrl}
+          value={formData.hotel_url}
           placeholder="https://..."
-          onChange={(e) => setFormData({ ...formData, hotelUrl: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, hotel_url: e.target.value })}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="checkinDate">Check-in Date *</Label>
+          <Label htmlFor="hotel_checkin_date">Check-in Date *</Label>
           <Input
-            id="checkinDate"
+            id="hotel_checkin_date"
             type="date"
-            value={formData.checkinDate}
-            onChange={(e) => setFormData({ ...formData, checkinDate: e.target.value })}
+            value={formData.hotel_checkin_date}
+            onChange={(e) => setFormData({ ...formData, hotel_checkin_date: e.target.value })}
             required
           />
         </div>
         <div>
-          <Label htmlFor="checkoutDate">Check-out Date *</Label>
+          <Label htmlFor="hotel_checkout_date">Check-out Date *</Label>
           <Input
-            id="checkoutDate"
+            id="hotel_checkout_date"
             type="date"
-            value={formData.checkoutDate}
-            onChange={(e) => setFormData({ ...formData, checkoutDate: e.target.value })}
+            value={formData.hotel_checkout_date}
+            onChange={(e) => setFormData({ ...formData, hotel_checkout_date: e.target.value })}
             required
           />
         </div>
@@ -160,13 +171,13 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="expenseCost">Total Cost</Label>
+          <Label htmlFor="expense_cost">Total Cost</Label>
           <Input
-            id="expenseCost"
+            id="expense_cost"
             type="text"
-            value={formData.expenseCost}
-            onChange={(e) => setFormData({ ...formData, expenseCost: e.target.value })}
-            onBlur={(e) => setFormData({ ...formData, expenseCost: formatCost(e.target.value) })}
+            value={formData.expense_cost}
+            onChange={(e) => setFormData({ ...formData, expense_cost: e.target.value })}
+            onBlur={(e) => setFormData({ ...formData, expense_cost: formatCost(e.target.value) })}
             placeholder="0.00"
           />
         </div>
