@@ -10,11 +10,11 @@ export { generateDatesArray } from './dateUtils';
 export const addAccommodation = async (tripId: string, formData: AccommodationFormData) => {
   try {
     console.log('Adding accommodation with dates:', {
-      checkin: formData.hotel_checkin_Date,
-      checkout: formData.hotel_checkout_Date
+      checkin: formData.hotel_checkin_date,
+      checkout: formData.hotel_checkout_date
     });
 
-    const stayDates = generateDatesArray(formData.hotel_checkin_Date, formData.hotel_checkout_Date);
+    const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
     
     // Create trip days for the entire stay period
     await createTripDays(tripId, stayDates);
@@ -33,7 +33,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
 
 export const updateAccommodation = async (
   tripId: string,
-  stay_Id: string,
+  stay_id: string,
   formData: AccommodationFormData
 ) => {
   try {
