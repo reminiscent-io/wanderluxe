@@ -1,20 +1,51 @@
-export const convertAmount = (amount: number, fromCurrency: string, selectedCurrency: string, exchangeRates: any[]) => {
+interface ExchangeRate {
+  id: string;
+  currency_from: string;
+  currency_to: string;
+  rate: number;
+  last_updated: string;
+}
+
+interface Currency {
+  currency: string;
+  currency_name: string;
+  symbol: string;
+}
+
+interface Accommodation {
+  stay_id: string;
+  expense_cost: number | null;
+  currency: string | null;
+  expense_type: string | null;
+  expense_paid: boolean;
+}
+
+export const convertAmount = (
+  amount: number, 
+  fromCurrency: string, 
+  selectedCurrency: string, 
+  exchangeRates: ExchangeRate[]
+) => {
   if (fromCurrency === selectedCurrency) return amount;
   
-  // First convert to USD (our base currency)
   const toUsdRate = exchangeRates.find(r => 
-    r.currency_from === fromCurrency && r.currency_to === 'USD'
+    r.currency_from === fromCurrency && 
+    r.currency_to === 'USD'
   )?.rate || 1;
   
-  // Then convert from USD to target currency
   const fromUsdRate = exchangeRates.find(r => 
-    r.currency_from === 'USD' && r.currency_to === selectedCurrency
+    r.currency_from === 'USD' && 
+    r.currency_to === selectedCurrency
   )?.rate || 1;
 
   return amount * toUsdRate * fromUsdRate;
 };
 
-export const calculateTotals = (events: any[] | undefined, selectedCurrency: string, exchangeRates: any[]) => {
+export const calculateTotals = (
+  events: Accommodation[] | undefined, 
+  selectedCurrency: string, 
+  exchangeRates: ExchangeRate[]
+) => {
   let accommodationTotal = 0;
   let transportationTotal = 0;
   let activitiesTotal = 0;
@@ -23,15 +54,14 @@ export const calculateTotals = (events: any[] | undefined, selectedCurrency: str
   let unpaidTotal = 0;
 
   events?.forEach(event => {
-    if (event.expense_cost && event.expense_currency) {
+    if (event.expense_cost && event.currency) {
       const convertedAmount = convertAmount(
         Number(event.expense_cost), 
-        event.expense_currency, 
+        event.currency, 
         selectedCurrency, 
         exchangeRates
       );
 
-      // Add to category totals
       switch (event.expense_type) {
         case 'accommodation':
           accommodationTotal += convertedAmount;
@@ -47,29 +77,11 @@ export const calculateTotals = (events: any[] | undefined, selectedCurrency: str
           break;
       }
 
-      // Add to paid/unpaid totals
       if (event.expense_paid) {
         paidTotal += convertedAmount;
       } else {
         unpaidTotal += convertedAmount;
       }
-    }
-
-    // Include activity costs
-    if (event.activities && event.activities.length > 0) {
-      event.activities.forEach((activity: any) => {
-        if (activity.cost && activity.currency) {
-          const convertedActivityAmount = convertAmount(
-            Number(activity.cost), 
-            activity.currency, 
-            selectedCurrency, 
-            exchangeRates
-          );
-          activitiesTotal += convertedActivityAmount;
-          // Assume activities are unpaid by default
-          unpaidTotal += convertedActivityAmount;
-        }
-      });
     }
   });
 
@@ -86,13 +98,18 @@ export const calculateTotals = (events: any[] | undefined, selectedCurrency: str
   };
 };
 
-export const getExpensesByType = (events: any[] | undefined, type: string) => {
+export const getExpensesByType = (
+  events: Accommodation[] | undefined, 
+  type: string
+): Accommodation[] => {
   return events?.filter(event => 
-    event.expense_type === type && event.expense_cost && event.expense_currency
+    event.expense_type === type && 
+    event.expense_cost !== null && 
+    event.currency !== null
   ) || [];
 };
 
-export const formatCurrency = (amount: number, currency: string) => {
+export const formatCurrency = (amount: number, currency: string): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
