@@ -1,49 +1,49 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { TimelineEvent } from '@/types/trip';
+import { Accomodation } from '@/types/trip';
 
 export const useBudgetEvents = (tripId: string | undefined) => {
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const { data: events = [] } = useQuery({
-    queryKey: ['timeline-events', tripId],
+    queryKey: ['accommodations', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       
       const { data, error } = await supabase
-        .from('timeline_events')
+        .from('accommodations')
         .select('*, day_activities(*)')
         .eq('trip_id', tripId);
 
       if (error) throw error;
-      return data as TimelineEvent[];
+      return data as Accomodation[];
     }
   });
 
-  const handleDeleteExpense = async (id: string) => {
+  const handleDeleteExpense = async (stay_id: string) => {
     if (!tripId) return;
     const { error } = await supabase
-      .from('timeline_events')
+      .from('accommodations')
       .delete()
-      .eq('id', id);
+      .eq('stay_id', id);
     if (error) throw error;
   };
 
-  const handleUpdateCost = async (id: string, cost: number, currency: string) => {
+  const handleUpdateCost = async (stay_id: string, expense_cost: number, currency: string) => {
     if (!tripId) return;
     const { error } = await supabase
-      .from('timeline_events')
+      .from('accommodations')
       .update({ expense_cost: cost, currency })
-      .eq('id', id);
+      .eq('stay_id', stay_id);
     if (error) throw error;
   };
 
   const handleAddExpense = async (data: any) => {
     if (!tripId) return;
     const { error } = await supabase
-      .from('timeline_events')
+      .from('accommodations')
       .insert([{ ...data, trip_id: tripId }]);
     if (error) throw error;
   };
