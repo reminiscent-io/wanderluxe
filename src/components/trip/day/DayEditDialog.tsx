@@ -80,7 +80,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           title: title,
           image_url: selectedImage 
         })
-        .eq('id', dayId);
+        .eq('day_id', dayId);
 
       if (error) throw error;
       
