@@ -6,12 +6,15 @@ import ActivityItem from './ActivityItem';
 interface ActivitiesListProps {
   activities: Array<{
     id: string;
+    day_id: string;
     title: string;
     description?: string;
     start_time?: string;
     end_time?: string;
     cost?: number;
     currency?: string;
+    order_index: number;
+    created_at: string;
   }>;
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
