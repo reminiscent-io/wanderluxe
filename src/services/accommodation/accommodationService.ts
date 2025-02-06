@@ -38,11 +38,11 @@ export const updateAccommodation = async (
 ) => {
   try {
     console.log('Updating accommodation with dates:', {
-      checkin: formData.hotel_checkin_Date,
-      checkout: formData.hotel_checkout_Date
+      checkin: formData.hotel_checkin_date,
+      checkout: formData.hotel_checkout_date
     });
 
-    const stayDates = generateDatesArray(formData.hotel_checkin_Date, formData.hotel_checkout_Date);
+    const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
     
     // Update existing events for this hotel stay
     await updateAccommodationEvents(tripId, formData, stayDates);
