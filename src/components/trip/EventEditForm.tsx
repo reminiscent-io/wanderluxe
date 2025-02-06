@@ -16,7 +16,14 @@ interface EventEditFormProps {
     hotel_url: string;
     expense_type: string;
     expense_cost: string;
-    expense_currency: string;
+    currency: string;
+    hotel_address?: string;  // Add these new fields
+    hotel_phone?: string;
+    hotel_place_id?: string;
+    hotel_website?: string;
+    expense_paid?: boolean;
+    expense_date?: string;
+    order_index: number;
   };
   onEditDataChange: (data: any) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -72,10 +79,10 @@ const EventEditForm: React.FC<EventEditFormProps> = ({
       <ExpenseFields
         expenseType={editData.expense_type}
         expenseCost={editData.expense_cost}
-        expenseCurrency={editData.expense_currency}
+        expenseCurrency={editData.currency}
         onExpenseTypeChange={(value) => onEditDataChange({ ...editData, expense_type: value })}
         onExpenseCostChange={(value) => onEditDataChange({ ...editData, expense_cost: value })}
-        onExpenseCurrencyChange={(value) => onEditDataChange({ ...editData, expense_currency: value })}
+        onExpenseCurrencyChange={(value) => onEditDataChange({ ...editData, currency: value })}
         hasHotel={!!editData.hotel}
       />
 
