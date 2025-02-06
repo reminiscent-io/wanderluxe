@@ -11,14 +11,14 @@ interface AccommodationsSectionProps {
   tripId: string;
   onAccommodationChange: () => void;
   hotelStays: Array<{
-    id: string;
+    stay_id: string;
     hotel: string;
     hotel_details?: string;
     hotel_url?: string;
     hotel_checkin_date: string;
     hotel_checkout_date: string;
     expense_cost?: number;
-    expense_currency?: string;
+    currency?: string;
     hotel_address?: string;
     hotel_phone?: string;
     hotel_place_id?: string;
@@ -89,7 +89,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
               checkinDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
               checkoutDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
               expenseCost: uniqueHotelStays.find(s => s.id === editingStay)?.expense_cost?.toString() || '',
-              expenseCurrency: uniqueHotelStays.find(s => s.id === editingStay)?.expense_currency || 'USD',
+              expenseCurrency: uniqueHotelStays.find(s => s.id === editingStay)?.currency || 'USD',
               hotelAddress: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_address || '',
               hotelPhone: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_phone || '',
               hotelPlaceId: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
