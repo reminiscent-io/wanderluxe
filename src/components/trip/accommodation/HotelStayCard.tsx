@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 
 interface HotelStayCardProps {
   stay: {
-    id: string;
+    stay_id: string;
     hotel: string;
     hotel_details?: string;
     hotel_url?: string;
@@ -76,7 +76,7 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onEdit(stay.id)}
+              onClick={() => onEdit(stay.stay_id)}
               className="text-gray-500 hover:text-gray-700"
             >
               <Pencil className="h-4 w-4" />
