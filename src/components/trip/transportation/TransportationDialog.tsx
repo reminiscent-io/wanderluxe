@@ -37,7 +37,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
-        .eq('id', tripId)
+        .eq('trip_id', tripId)
         .single();
 
       if (!error && data) {
@@ -54,42 +54,64 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   }, [tripId, open]);
 
   const handleSubmit = async (data: Partial<TransportationEvent>) => {
-    try {
-      if (initialData?.id) {
-        // Update existing transportation event
-        const { error } = await supabase
-          .from('transportation_events')
-          .update({
-            ...data,
-            start_date: data.start_date,
-            type: data.type
-          })
-          .eq('id', initialData.id);
+  try {
+    if (initialData?.id) {
+      // Update existing transportation event
+      const { error } = await supabase
+        .from('transportation_events')
+        .update({
+          type: data.type,
+          provider: data.provider,
+          details: data.details,
+          confirmation_number: data.confirmation_number,
+          start_date: data.start_date,
+          start_time: data.start_time,
+          end_time: data.end_time,
+          departure_location: data.departure_location,
+          arrival_location: data.arrival_location,
+          cost: data.cost,
+          currency: data.currency,
+          is_arrival: data.is_arrival,
+          is_departure: data.is_departure
+        })
+        .eq('id', initialData.id);
 
-        if (error) throw error;
-        toast.success('Transportation updated successfully');
-      } else {
-        // Create new transportation event
-        const { error } = await supabase
-          .from('transportation_events')
-          .insert([{
-            ...data,
-            trip_id: tripId,
-            start_date: data.start_date,
-            type: data.type
-          }]);
+      if (error) throw error;
+      toast.success('Transportation updated successfully');
+    } else {
+      // Create new transportation event
+      const { error } = await supabase
+        .from('transportation_events')
+        .insert([{
+          trip_id: tripId,
+          type: data.type,
+          provider: data.provider,
+          details: data.details,
+          confirmation_number: data.confirmation_number,
+          start_date: data.start_date,
+          start_time: data.start_time,
+          end_time: data.end_time,
+          departure_location: data.departure_location,
+          arrival_location: data.arrival_location,
+          cost: data.cost,
+          currency: data.currency,
+          is_arrival: data.is_arrival,
+          is_departure: data.is_departure,
+          created_at: new Date().toISOString()
+        }]);
 
-        if (error) throw error;
-        toast.success('Transportation added successfully');
-      }
-
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error saving transportation:', error);
-      toast.error('Failed to save transportation');
+      if (error) throw error;
+      toast.success('Transportation added successfully');
     }
-  };
+
+    onSuccess();
+    onOpenChange(false);
+  } catch (error) {
+    console.error('Error saving transportation:', error);
+    toast.error('Failed to save transportation');
+  }
+};
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
