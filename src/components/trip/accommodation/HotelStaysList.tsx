@@ -3,7 +3,7 @@ import HotelStayCard from './HotelStayCard';
 
 interface HotelStaysListProps {
   hotelStays: Array<{
-    id: string;
+    stay_id: string;
     hotel: string;
     hotel_details?: string;
     hotel_url?: string;
@@ -32,7 +32,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
     <div className="space-y-4">
       {sortedStays.map((stay) => (
         <HotelStayCard
-          key={stay.id}
+          key={stay.stay_id}
           stay={stay}
           onEdit={onEdit}
           onDelete={onDelete}
