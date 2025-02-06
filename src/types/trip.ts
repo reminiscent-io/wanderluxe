@@ -66,6 +66,7 @@ export interface Trip {
   arrival_date: string;
   departure_date: string;
   accommodations?: Accommodation[];
+  transportation_events?: TransportationEvent[];
 }
 
 export interface AccommodationFormData {

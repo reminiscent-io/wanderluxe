@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { EyeOff, Info } from 'lucide-react';
@@ -22,24 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Tables } from '@/integrations/supabase/types';
-
-type Trip = {
-  trip_id: string;
-  user_id: string;
-  destination: string;
-  cover_image_url: string | null;
-  created_at: string;
-  hidden: boolean;
-  arrival_date: string | null;
-  departure_date: string | null;
-  accommodations?: {
-    stay_id: string;
-    hotel: string;
-    hotel_checkin_date: string;
-    hotel_checkout_date: string;
-  }[];
-};
+import { Trip } from '@/types/trip';
 
 interface TripCardProps {
   trip: Trip;
@@ -68,7 +52,9 @@ const TripCard = ({ trip, isExample = false, onHide }: TripCardProps) => {
         return `${formatDate(arrivalDate, false)} - ${formatDate(departureDate, true)}`;
       }
       return `${formatDate(arrivalDate, true)} - ${formatDate(departureDate, true)}`;
-    };
+    }
+    return ''; // Return empty string if no dates available
+  };
 
   return (
     <motion.div
