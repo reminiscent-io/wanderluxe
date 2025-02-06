@@ -55,31 +55,7 @@ const TripCard = ({ trip, isExample = false, onHide }: TripCardProps) => {
         return `${formatDate(arrivalDate, false)} - ${formatDate(departureDate, true)}`;
       }
       return `${formatDate(arrivalDate, true)} - ${formatDate(departureDate, true)}`;
-    }
-
-    // Fallback to start_date and end_date if arrival/departure dates aren't available
-    const startDate = new Date(trip.start_date);
-    let endDate = startDate;
-
-    if (trip.timeline_events && trip.timeline_events.length > 0) {
-      const lastEvent = trip.timeline_events[trip.timeline_events.length - 1];
-      endDate = new Date(lastEvent.date);
-    }
-
-    const startYear = getYear(startDate);
-    const endYear = getYear(endDate);
-
-    const formatDate = (date: Date, includeYear: boolean) => {
-      const day = format(date, "do");
-      const month = format(date, "MMMM");
-      return includeYear ? `${month} ${day} ${format(date, "yyyy")}` : `${month} ${day}`;
     };
-
-    if (startYear === endYear) {
-      return `${formatDate(startDate, false)} - ${formatDate(endDate, true)}`;
-    }
-    return `${formatDate(startDate, true)} - ${formatDate(endDate, true)}`;
-  };
 
   return (
     <motion.div
