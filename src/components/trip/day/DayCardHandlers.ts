@@ -7,7 +7,7 @@ export const useDayCardHandlers = (id: string, onDelete: (id: string) => void) =
       const { error } = await supabase
         .from('trip_days')
         .update({ title: editTitle })
-        .eq('id', id);
+        .eq('day_id', id);
 
       if (error) throw error;
       toast.success('Day title updated successfully');
@@ -24,7 +24,7 @@ export const useDayCardHandlers = (id: string, onDelete: (id: string) => void) =
       const { error } = await supabase
         .from('trip_days')
         .delete()
-        .eq('id', id);
+        .eq('day_id', id);
 
       if (error) throw error;
       toast.success('Day deleted successfully');
