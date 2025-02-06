@@ -14,7 +14,7 @@ export const useAccommodationHandlers = (tripId: string, onAccommodationChange: 
 
   const invalidateQueries = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] }),
+      queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] }),
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] })
     ]);
   };
@@ -28,8 +28,8 @@ export const useAccommodationHandlers = (tripId: string, onAccommodationChange: 
     }
   };
 
-  const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
-    const success = await updateAccommodation(tripId, stayId, formData);
+  const handleUpdate = async (stay_id: string, formData: AccommodationFormData) => {
+    const success = await updateAccommodation(tripId, stay_id, formData);
     if (success) {
       setEditingStay(null);
       await invalidateQueries();
@@ -37,7 +37,7 @@ export const useAccommodationHandlers = (tripId: string, onAccommodationChange: 
     }
   };
 
-  const handleDelete = async (stay: any) => {
+  const handleDelete = async (stay: { stay_id: string }) => {
     const success = await deleteAccommodation(stay);
     if (success) {
       await invalidateQueries();
