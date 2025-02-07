@@ -24,7 +24,7 @@ export const convertAmount = (
 };
 
 export const calculateTotals = (
-  events: Expense[] | undefined, 
+  expenses: Expense[] | undefined, 
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
 ) => {
@@ -33,16 +33,16 @@ export const calculateTotals = (
   let activitiesTotal = 0;
   let total = 0;
 
-  events?.forEach(event => {
-    if (event.cost) {
+  expenses?.forEach(expense => {
+    if (expense.cost) {
       const convertedAmount = convertAmount(
-        Number(event.cost), 
-        event.currency, 
+        Number(expense.cost), 
+        expense.currency, 
         selectedCurrency, 
         exchangeRates
       );
 
-      switch (event.category) {
+      switch (expense.category) {
         case 'reservations':
           reservationsTotal += convertedAmount;
           break;
@@ -67,10 +67,10 @@ export const calculateTotals = (
 };
 
 export const getExpensesByCategory = (
-  events: Expense[] | undefined, 
+  expenses: Expense[] | undefined, 
   category: string
 ): Expense[] => {
-  return events?.filter(event => event.category === category) || [];
+  return expenses?.filter(expense => expense.category === category) || [];
 };
 
 export const formatCurrency = (amount: number, currency: string): string => {

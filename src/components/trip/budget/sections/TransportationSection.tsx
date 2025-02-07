@@ -1,6 +1,7 @@
+
 import React from 'react';
 import ExpenseSection from '../ExpenseSection';
-import { getExpensesByType } from '../utils/budgetCalculations';
+import { getExpensesByCategory } from '../utils/budgetCalculations';
 
 interface TransportationSectionProps {
   expenses: any[];
@@ -11,8 +12,8 @@ interface TransportationSectionProps {
   onAddExpense: () => void;
   editingItem: string | null;
   onEdit: (id: string) => void;
-  onUpdateCost: (id: string, cost: number, currency: string) => void;
-  onDelete: (id: string) => void;
+  onUpdateCost: (id: string, category: string, cost: number, currency: string) => void;
+  onDelete: (id: string, category: string) => void;
 }
 
 const TransportationSection: React.FC<TransportationSectionProps> = ({
@@ -35,11 +36,11 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
       isExpanded={isExpanded}
       onToggle={onToggle}
       onAddExpense={onAddExpense}
-      expenses={getExpensesByType(expenses, 'transportation')}
+      expenses={getExpensesByCategory(expenses, 'transportation')}
       editingItem={editingItem}
       onEdit={onEdit}
-      onUpdateCost={onUpdateCost}
-      onDelete={onDelete}
+      onUpdateCost={(id, cost, curr) => onUpdateCost(id, 'transportation', cost, curr)}
+      onDelete={(id) => onDelete(id, 'transportation')}
     />
   );
 };

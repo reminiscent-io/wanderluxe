@@ -1,6 +1,7 @@
+
 import React from 'react';
 import ExpenseSection from '../ExpenseSection';
-import { getExpensesByType } from '../utils/budgetCalculations';
+import { getExpensesByCategory } from '../utils/budgetCalculations';
 
 interface AccommodationSectionProps {
   expenses: any[];
@@ -10,9 +11,9 @@ interface AccommodationSectionProps {
   onToggle: () => void;
   onAddExpense: () => void;
   editingItem: string | null;
-  onEdit: (stay_id: string) => void;
-  onUpdateCost: (stay_id: string, cost: number, currency: string) => void;
-  onDelete: (stay_id: string) => void;
+  onEdit: (id: string) => void;
+  onUpdateCost: (id: string, category: string, cost: number, currency: string) => void;
+  onDelete: (id: string, category: string) => void;
 }
 
 const AccommodationSection: React.FC<AccommodationSectionProps> = ({
@@ -35,11 +36,11 @@ const AccommodationSection: React.FC<AccommodationSectionProps> = ({
       isExpanded={isExpanded}
       onToggle={onToggle}
       onAddExpense={onAddExpense}
-      expenses={getExpensesByType(expenses, 'accommodation')}
+      expenses={getExpensesByCategory(expenses, 'reservations')}
       editingItem={editingItem}
       onEdit={onEdit}
-      onUpdateCost={onUpdateCost}
-      onDelete={onDelete}
+      onUpdateCost={(id, cost, curr) => onUpdateCost(id, 'reservations', cost, curr)}
+      onDelete={(id) => onDelete(id, 'reservations')}
     />
   );
 };

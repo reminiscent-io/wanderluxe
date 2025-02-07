@@ -1,40 +1,87 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
-import { Accommodation } from '@/types/trip';  // Changed from TimelineEvent
+import { calculateTotals, formatCurrency } from './budget/utils/budgetCalculations';
+import TotalExpenseCard from './budget/TotalExpenseCard';
+import BudgetHeader from './budget/BudgetHeader';
+import AccommodationSection from './budget/sections/AccommodationSection';
+import TransportationSection from './budget/sections/TransportationSection';
+import ActivitiesSection from './budget/sections/ActivitiesSection';
+import { useExpandedSections } from './budget/hooks/useExpandedSections';
+import { useCurrencyState } from './budget/hooks/useCurrencyState';
 
 interface BudgetViewProps {
   tripId: string;
 }
 
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
-  const { events, exchangeRates } = useBudgetEvents(tripId);
+  const { events, exchangeRates, lastUpdated, handleDeleteExpense, handleUpdateCost } = useBudgetEvents(tripId);
+  const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
+  const { expandedSections, toggleSection } = useExpandedSections();
+  const [editingItem, setEditingItem] = useState<string | null>(null);
 
-  const calculateTotalInUSD = (events: Accommodation[]) => {
-    return events.reduce((total, event) => {
-      if (event.expense_cost && event.currency) {
-        const rate = exchangeRates[event.currency] || 1;
-        return total + (event.expense_cost * rate);
-      }
-      return total;
-    }, 0);
+  const totals = calculateTotals(events, selectedCurrency, exchangeRates);
+
+  const handleAddExpense = (category: string) => {
+    console.log('Add expense:', category);
+    // Implement add expense functionality
   };
 
-  const totalInUSD = calculateTotalInUSD(events);
-
   return (
-    <div>
-      <h2 className="text-lg font-semibold">Budget Overview</h2>
-      <p className="text-gray-600">Total Budget in USD: ${totalInUSD.toFixed(2)}</p>
-      <ul className="mt-4">
-        {events.map((event) => (
-          <li key={event.stay_id} className="flex justify-between">
-            <span>{event.title}</span>
-            <span>
-              {event.expense_cost} {event.currency}
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-6">
+      <BudgetHeader
+        selectedCurrency={selectedCurrency}
+        onCurrencyChange={handleCurrencyChange}
+        lastUpdated={lastUpdated}
+      />
+
+      <TotalExpenseCard
+        total={totals.total}
+        paid={0} // Implement paid/unpaid tracking if needed
+        unpaid={totals.total}
+        currency={selectedCurrency}
+      />
+
+      <div className="space-y-4">
+        <TransportationSection
+          expenses={events}
+          amount={totals.transportation}
+          currency={selectedCurrency}
+          isExpanded={expandedSections.includes('transportation')}
+          onToggle={() => toggleSection('transportation')}
+          onAddExpense={() => handleAddExpense('transportation')}
+          editingItem={editingItem}
+          onEdit={setEditingItem}
+          onUpdateCost={handleUpdateCost}
+          onDelete={handleDeleteExpense}
+        />
+
+        <ActivitiesSection
+          expenses={events}
+          amount={totals.activities}
+          currency={selectedCurrency}
+          isExpanded={expandedSections.includes('activities')}
+          onToggle={() => toggleSection('activities')}
+          onAddExpense={() => handleAddExpense('activities')}
+          editingItem={editingItem}
+          onEdit={setEditingItem}
+          onUpdateCost={handleUpdateCost}
+          onDelete={handleDeleteExpense}
+        />
+
+        <AccommodationSection
+          expenses={events}
+          amount={totals.reservations}
+          currency={selectedCurrency}
+          isExpanded={expandedSections.includes('reservations')}
+          onToggle={() => toggleSection('reservations')}
+          onAddExpense={() => handleAddExpense('reservations')}
+          editingItem={editingItem}
+          onEdit={setEditingItem}
+          onUpdateCost={handleUpdateCost}
+          onDelete={handleDeleteExpense}
+        />
+      </div>
     </div>
   );
 };

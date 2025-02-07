@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Expense } from '@/types/trip';
+import { ExchangeRate } from '@/integrations/supabase/types';
 
 export const useBudgetEvents = (tripId: string | undefined) => {
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const { data: events = [] } = useQuery({
@@ -84,16 +85,12 @@ export const useBudgetEvents = (tripId: string | undefined) => {
         return;
       }
 
-      const rates: Record<string, number> = {};
-      data.forEach(rate => {
-        rates[rate.currency_from] = rate.rate;
-      });
-      setExchangeRates(rates);
+      setExchangeRates(data);
       setLastUpdated(data[0]?.last_updated || null);
     };
 
     fetchExchangeRates();
-  }, [events]);
+  }, []);
 
   return {
     events,

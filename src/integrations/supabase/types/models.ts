@@ -1,3 +1,4 @@
+
 import { Tables } from './tables';
 
 // Export specific table types that are commonly used

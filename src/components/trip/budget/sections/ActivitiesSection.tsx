@@ -1,6 +1,7 @@
+
 import React from 'react';
 import ExpenseSection from '../ExpenseSection';
-import { getExpensesByType } from '../utils/budgetCalculations';
+import { getExpensesByCategory } from '../utils/budgetCalculations';
 
 interface ActivitiesSectionProps {
   expenses: any[];
@@ -11,8 +12,8 @@ interface ActivitiesSectionProps {
   onAddExpense: () => void;
   editingItem: string | null;
   onEdit: (id: string) => void;
-  onUpdateCost: (id: string, cost: number, currency: string) => void;
-  onDelete: (id: string) => void;
+  onUpdateCost: (id: string, category: string, cost: number, currency: string) => void;
+  onDelete: (id: string, category: string) => void;
 }
 
 const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({
@@ -35,11 +36,11 @@ const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({
       isExpanded={isExpanded}
       onToggle={onToggle}
       onAddExpense={onAddExpense}
-      expenses={getExpensesByType(expenses, 'activities')}
+      expenses={getExpensesByCategory(expenses, 'activities')}
       editingItem={editingItem}
       onEdit={onEdit}
-      onUpdateCost={onUpdateCost}
-      onDelete={onDelete}
+      onUpdateCost={(id, cost, curr) => onUpdateCost(id, 'activities', cost, curr)}
+      onDelete={(id) => onDelete(id, 'activities')}
     />
   );
 };
