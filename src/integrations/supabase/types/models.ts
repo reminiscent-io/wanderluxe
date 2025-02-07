@@ -12,3 +12,14 @@ export type Accommodation = Tables<"accommodations">
 export type AccommodationDay = Tables<"accommodations_days">
 export type RestaurantReservation = Tables<"restaurant_reservations">
 export type Currency = Tables<"currencies">
+export type Expense = {
+  category: 'reservations' | 'activities' | 'transportation';
+  id: string;
+  title: string;
+  cost: number;
+  currency: string;
+  date: string;
+  day_id?: string;
+  trip_id: string;
+}
+

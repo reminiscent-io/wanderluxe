@@ -1,28 +1,32 @@
+
 export interface AccommodationFormData {
-  stay_id?: string;  // changed from id to stay_id
+  stay_id?: string;
   hotel: string;
-  hotel_details: string;  // changed from hotelDetails
-  hotel_url: string;  // changed from hotelUrl
-  hotel_checkin_date: string;  // changed from checkinDate
-  hotel_checkout_date: string;  // changed from checkoutDate
-  expense_cost: string;  // changed from expenseCost
-  currency: string;  // changed from expenseCurrency
-  hotel_address?: string;  // changed from hotelAddress
-  hotel_phone?: string;  // changed from hotelPhone
-  hotel_place_id?: string;  // changed from hotelPlaceId
-  hotel_website?: string;  // changed from hotelWebsite
+  hotel_details: string;
+  hotel_url: string;
+  hotel_checkin_date: string;
+  hotel_checkout_date: string;
+  expense_cost: string;
+  currency: string;
+  hotel_address?: string;
+  hotel_phone?: string;
+  hotel_place_id?: string;
+  hotel_website?: string;
+  expense_type?: string;
+  expense_paid?: boolean;
+  expense_date?: string;
 }
 
 export interface HotelStay {
-  stay_id: string;  // changed from id
+  stay_id: string;
   hotel: string;
-  hotel_checkin_date: string;  // changed from hotel_checkin_date
-  hotel_checkout_date: string;  // changed from hotel_checkout_date
+  hotel_checkin_date: string;
+  hotel_checkout_date: string;
 }
 
 export interface AccommodationDay {
-  stay_id: string;  // changed from id
-  accommodation_id: string;
+  id: string;
+  stay_id: string;
   day_id: string;
   date: string;
   created_at: string;

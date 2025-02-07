@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Expense } from '@/types/trip';
-import { ExchangeRate } from '@/integrations/supabase/types';
+import { Expense, ExchangeRate } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
 
 export const useBudgetEvents = (tripId: string | undefined) => {
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
@@ -19,59 +19,77 @@ export const useBudgetEvents = (tripId: string | undefined) => {
         .select('*')
         .eq('trip_id', tripId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching expenses:', error);
+        throw error;
+      }
       return data as Expense[];
-    }
+    },
+    enabled: !!tripId
   });
 
   const handleDeleteExpense = async (id: string, category: string) => {
     if (!tripId) return;
     
-    let table: string;
-    switch (category) {
-      case 'reservations':
-        table = 'restaurant_reservations';
-        break;
-      case 'activities':
-        table = 'day_activities';
-        break;
-      case 'transportation':
-        table = 'transportation_events';
-        break;
-      default:
-        throw new Error('Invalid category');
-    }
+    try {
+      let table: string;
+      switch (category) {
+        case 'reservations':
+          table = 'restaurant_reservations';
+          break;
+        case 'activities':
+          table = 'day_activities';
+          break;
+        case 'transportation':
+          table = 'transportation_events';
+          break;
+        default:
+          throw new Error('Invalid category');
+      }
 
-    const { error } = await supabase
-      .from(table)
-      .delete()
-      .eq('id', id);
-    if (error) throw error;
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Expense deleted successfully');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('Failed to delete expense');
+    }
   };
 
   const handleUpdateCost = async (id: string, category: string, cost: number, currency: string) => {
     if (!tripId) return;
     
-    let table: string;
-    switch (category) {
-      case 'reservations':
-        table = 'restaurant_reservations';
-        break;
-      case 'activities':
-        table = 'day_activities';
-        break;
-      case 'transportation':
-        table = 'transportation_events';
-        break;
-      default:
-        throw new Error('Invalid category');
-    }
+    try {
+      let table: string;
+      switch (category) {
+        case 'reservations':
+          table = 'restaurant_reservations';
+          break;
+        case 'activities':
+          table = 'day_activities';
+          break;
+        case 'transportation':
+          table = 'transportation_events';
+          break;
+        default:
+          throw new Error('Invalid category');
+      }
 
-    const { error } = await supabase
-      .from(table)
-      .update({ cost, currency })
-      .eq('id', id);
-    if (error) throw error;
+      const { error } = await supabase
+        .from(table)
+        .update({ cost, currency })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Cost updated successfully');
+    } catch (error) {
+      console.error('Error updating cost:', error);
+      toast.error('Failed to update cost');
+    }
   };
 
   useEffect(() => {

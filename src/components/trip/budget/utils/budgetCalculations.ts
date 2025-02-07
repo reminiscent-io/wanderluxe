@@ -1,6 +1,5 @@
 
-import { Expense } from '@/types/trip';
-import { ExchangeRate } from '@/integrations/supabase/types';
+import { Expense, ExchangeRate } from '@/integrations/supabase/types';
 
 export const convertAmount = (
   amount: number, 
@@ -24,7 +23,7 @@ export const convertAmount = (
 };
 
 export const calculateTotals = (
-  expenses: Expense[] | undefined, 
+  expenses: Expense[], 
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
 ) => {
@@ -33,10 +32,10 @@ export const calculateTotals = (
   let activitiesTotal = 0;
   let total = 0;
 
-  expenses?.forEach(expense => {
+  expenses.forEach(expense => {
     if (expense.cost) {
       const convertedAmount = convertAmount(
-        Number(expense.cost), 
+        expense.cost, 
         expense.currency, 
         selectedCurrency, 
         exchangeRates
@@ -67,10 +66,10 @@ export const calculateTotals = (
 };
 
 export const getExpensesByCategory = (
-  expenses: Expense[] | undefined, 
+  expenses: Expense[], 
   category: string
 ): Expense[] => {
-  return expenses?.filter(expense => expense.category === category) || [];
+  return expenses.filter(expense => expense.category === category);
 };
 
 export const formatCurrency = (amount: number, currency: string): string => {
