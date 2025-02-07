@@ -89,7 +89,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
               checkinDate: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_checkin_date || '',
               checkoutDate: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_checkout_date || '',
               expenseCost: uniqueHotelStays.find(s => s.stay_id === editingStay)?.expense_cost?.toString() || '',
-              expenseCurrency: uniqueHotelStays.find(s => s.stay_id === editingStay)?.currency || 'USD',
+              Currency: uniqueHotelStays.find(s => s.stay_id === editingStay)?.currency || 'USD',
               hotelAddress: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_address || '',
               hotelPhone: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_phone || '',
               hotelPlaceId: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_place_id || '',
