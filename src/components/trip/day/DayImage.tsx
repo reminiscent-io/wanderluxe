@@ -3,6 +3,7 @@ import React from 'react';
 interface DayImageProps {
   title: string;
   imageUrl?: string | null;
+  isLoading?: boolean;
 }
 
 const DayImage: React.FC<DayImageProps> = ({ title, imageUrl }) => {
