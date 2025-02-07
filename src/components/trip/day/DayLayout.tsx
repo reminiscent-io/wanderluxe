@@ -1,3 +1,4 @@
+
 import React from 'react';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
@@ -23,6 +24,7 @@ interface DayLayoutProps {
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
   dayId: string;
+  tripId: string;
   imageUrl?: string | null;
   defaultImageUrl?: string;
 }
@@ -35,6 +37,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
   onEditActivity,
   formatTime,
   dayId,
+  tripId,
   imageUrl,
   defaultImageUrl,
 }) => {
@@ -42,7 +45,9 @@ const DayLayout: React.FC<DayLayoutProps> = ({
     <div className="grid md:grid-cols-2 h-full">
       <DayImage
         title={title}
-        imageUrl={imageUrl || defaultImageUrl}
+        imageUrl={imageUrl}
+        dayId={dayId}
+        tripId={tripId}
       />
       
       <DayCardContent
