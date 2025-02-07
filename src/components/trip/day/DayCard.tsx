@@ -108,8 +108,7 @@ const DayCard: React.FC<DayCardProps> = ({
           }}
           formatTime={formatTime}
           dayId={id}
-          imageUrl={imageUrl}
-          defaultImageUrl={defaultImageUrl}
+          imageUrl={imageUrl || defaultImageUrl} // Use defaultImageUrl if imageUrl is not provided
         />
       </Card>
 
