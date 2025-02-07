@@ -4,6 +4,7 @@ import { Clock, DollarSign, Pencil } from "lucide-react";
 
 interface ActivityItemProps {
   activity: {
+    order_index: number;
     id: string;
     title: string;
     description?: string;
@@ -22,6 +23,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onEdit, formatTim
       <div className="flex justify-between items-start">
         <h4 className="font-medium">{activity.title}</h4>
         <Button
+          aria-label={`Edit ${activity.title}`}
           variant="ghost"
           size="icon"
           onClick={onEdit}
