@@ -83,17 +83,17 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             }
             onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
             initialData={editingStay ? {
-              hotel: uniqueHotelStays.find(s => s.id === editingStay)?.hotel || '',
-              hotelDetails: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_details || '',
-              hotelUrl: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_url || '',
-              checkinDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkin_date || '',
-              checkoutDate: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_checkout_date || '',
-              expenseCost: uniqueHotelStays.find(s => s.id === editingStay)?.expense_cost?.toString() || '',
-              expenseCurrency: uniqueHotelStays.find(s => s.id === editingStay)?.currency || 'USD',
-              hotelAddress: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_address || '',
-              hotelPhone: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_phone || '',
-              hotelPlaceId: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_place_id || '',
-              hotelWebsite: uniqueHotelStays.find(s => s.id === editingStay)?.hotel_website || ''
+              hotel: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel || '',
+              hotelDetails: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_details || '',
+              hotelUrl: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_url || '',
+              checkinDate: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_checkin_date || '',
+              checkoutDate: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_checkout_date || '',
+              expenseCost: uniqueHotelStays.find(s => s.stay_id === editingStay)?.expense_cost?.toString() || '',
+              expenseCurrency: uniqueHotelStays.find(s => s.stay_id === editingStay)?.currency || 'USD',
+              hotelAddress: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_address || '',
+              hotelPhone: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_phone || '',
+              hotelPlaceId: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_place_id || '',
+              hotelWebsite: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_website || ''
             } : undefined}
             tripArrivalDate={tripDates.arrival_date}
             tripDepartureDate={tripDates.departure_date}
