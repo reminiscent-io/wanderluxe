@@ -103,6 +103,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     title={day.title || ''}
                     description={day.description}
                     activities={day.activities || []}
+                    imageUrl={day.image_url} // Ensure this is passed correctly from trip_days.image_url
                     onAddActivity={() => {}}
                     index={dayIndex}
                     onDelete={handleDayDelete}
@@ -119,6 +120,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     title={day.title || ''}
                     description={day.description}
                     activities={day.activities || []}
+                    imageUrl={day.image_url}
                     onAddActivity={() => {}}
                     index={dayIndex}
                     onDelete={handleDayDelete}
