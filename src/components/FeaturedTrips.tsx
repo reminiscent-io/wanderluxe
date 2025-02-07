@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +20,7 @@ const FeaturedTrips = () => {
               stay_id,
               day_id,
               date,
+              created_at,
               trip_days (
                 *,
                 day_activities (*)
@@ -30,7 +32,7 @@ const FeaturedTrips = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Trip[];
+      return data as unknown as Trip[];
     }
   });
 
