@@ -10,6 +10,7 @@ interface DayImageProps {
 
 const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl }) => {
   // If no image URL is provided, show the placeholder state
+  console.log("imageUrl:", imageUrl);
   if (!imageUrl) {
     return (
       <div className="relative h-full min-h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
