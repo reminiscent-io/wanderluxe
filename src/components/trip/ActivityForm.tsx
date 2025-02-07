@@ -12,7 +12,7 @@ interface ActivityFormProps {
     description?: string;  // Add this from schema
     start_time?: string;  // Add this from schema
     end_time?: string;    // Add this from schema
-    cost: string;
+    cost: number;
     currency: string;
   };
   onActivityChange: (activity: { 
@@ -20,7 +20,7 @@ interface ActivityFormProps {
     description?: string;
     start_time?: string;
     end_time?: string;
-    cost: string;
+    cost: number;
     currency: string;
   }) => void;
   onSubmit: () => void;
