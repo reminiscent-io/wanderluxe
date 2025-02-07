@@ -496,7 +496,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      expenses: {
+        Row: {
+          category: string | null
+          cost: number | null
+          currency: string | null
+          date: string | null
+          day_id: string | null
+          id: string | null
+          title: string | null
+          trip_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

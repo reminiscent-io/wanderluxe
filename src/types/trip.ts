@@ -1,4 +1,3 @@
-
 export interface DayActivity {
   id: string;
   day_id: string;
@@ -134,4 +133,15 @@ export interface Currency {
   currency: string;
   currency_name: string;
   symbol: string;
+}
+
+export interface Expense {
+  category: 'reservations' | 'activities' | 'transportation';
+  id: string;
+  title: string;
+  cost: number;
+  currency: string;
+  date: string;
+  day_id?: string;
+  trip_id: string;
 }

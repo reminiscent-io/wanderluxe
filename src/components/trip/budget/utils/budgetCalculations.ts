@@ -1,24 +1,6 @@
-interface ExchangeRate {
-  id: string;
-  currency_from: string;
-  currency_to: string;
-  rate: number;
-  last_updated: string;
-}
 
-interface Currency {
-  currency: string;
-  currency_name: string;
-  symbol: string;
-}
-
-interface Accommodation {
-  stay_id: string;
-  expense_cost: number | null;
-  currency: string | null;
-  expense_type: string | null;
-  expense_paid: boolean;
-}
+import { Expense } from '@/types/trip';
+import { ExchangeRate } from '@/integrations/supabase/types';
 
 export const convertAmount = (
   amount: number, 
@@ -42,29 +24,27 @@ export const convertAmount = (
 };
 
 export const calculateTotals = (
-  events: Accommodation[] | undefined, 
+  events: Expense[] | undefined, 
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
 ) => {
-  let accommodationTotal = 0;
+  let reservationsTotal = 0;
   let transportationTotal = 0;
   let activitiesTotal = 0;
-  let otherTotal = 0;
-  let paidTotal = 0;
-  let unpaidTotal = 0;
+  let total = 0;
 
   events?.forEach(event => {
-    if (event.expense_cost && event.currency) {
+    if (event.cost) {
       const convertedAmount = convertAmount(
-        Number(event.expense_cost), 
+        Number(event.cost), 
         event.currency, 
         selectedCurrency, 
         exchangeRates
       );
 
-      switch (event.expense_type) {
-        case 'accommodation':
-          accommodationTotal += convertedAmount;
+      switch (event.category) {
+        case 'reservations':
+          reservationsTotal += convertedAmount;
           break;
         case 'transportation':
           transportationTotal += convertedAmount;
@@ -72,41 +52,25 @@ export const calculateTotals = (
         case 'activities':
           activitiesTotal += convertedAmount;
           break;
-        case 'other':
-          otherTotal += convertedAmount;
-          break;
       }
 
-      if (event.expense_paid) {
-        paidTotal += convertedAmount;
-      } else {
-        unpaidTotal += convertedAmount;
-      }
+      total += convertedAmount;
     }
   });
-
-  const total = accommodationTotal + transportationTotal + activitiesTotal + otherTotal;
   
   return {
-    accommodation: accommodationTotal,
+    reservations: reservationsTotal,
     transportation: transportationTotal,
     activities: activitiesTotal,
-    other: otherTotal,
-    total,
-    paid: paidTotal,
-    unpaid: unpaidTotal
+    total
   };
 };
 
-export const getExpensesByType = (
-  events: Accommodation[] | undefined, 
-  type: string
-): Accommodation[] => {
-  return events?.filter(event => 
-    event.expense_type === type && 
-    event.expense_cost !== null && 
-    event.currency !== null
-  ) || [];
+export const getExpensesByCategory = (
+  events: Expense[] | undefined, 
+  category: string
+): Expense[] => {
+  return events?.filter(event => event.category === category) || [];
 };
 
 export const formatCurrency = (amount: number, currency: string): string => {
