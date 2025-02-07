@@ -15,15 +15,15 @@ interface EventEditFormProps {
     hotel_checkout_date: string;
     hotel_url: string;
     expense_type: string;
-    expense_cost: string;
+    expense_cost: number;
     currency: string;
-    hotel_address?: string;  // Add these new fields
+    hotel_address?: string; 
     hotel_phone?: string;
     hotel_place_id?: string;
     hotel_website?: string;
     expense_paid?: boolean;
     expense_date?: string;
-    order_index: number;
+    order_index?: number;
   };
   onEditDataChange: (data: any) => void;
   onSubmit: (e: React.FormEvent) => void;
