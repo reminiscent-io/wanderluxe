@@ -26,7 +26,7 @@ const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({
   onSave,
   onDelete
 }) => {
-  const [editCost, setEditCost] = React.useState(cost.toString());
+  const [editCost, setEditCost] = React.useState(cost);
   const [editCurrency, setEditCurrency] = React.useState(currency);
 
   const handleSave = () => {
