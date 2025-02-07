@@ -81,14 +81,14 @@ serve(async (req) => {
     }
 
     const cleanKeywords = keywords.trim().toLowerCase();
-    const searchQuery = `${cleanKeywords} travel`;
+    const searchQuery = `${cleanKeywords}`;
     console.log('Search query:', searchQuery);
     
     // Use search endpoint instead of random for better relevance
     const unsplashUrl = new URL('https://api.unsplash.com/search/photos');
     unsplashUrl.searchParams.set('query', searchQuery);
     unsplashUrl.searchParams.set('orientation', 'landscape');
-    unsplashUrl.searchParams.set('per_page', '3');
+    unsplashUrl.searchParams.set('per_page', '6');
     unsplashUrl.searchParams.set('content_filter', 'high');
     unsplashUrl.searchParams.set('order_by', 'relevant');
 
