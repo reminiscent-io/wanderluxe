@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 
 export const useDayCardState = (title: string = '') => {
@@ -5,8 +6,22 @@ export const useDayCardState = (title: string = '') => {
   const [editTitle, setEditTitle] = useState(title);
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [newActivity, setNewActivity] = useState({ text: "", cost: "", currency: "USD" });
-  const [activityEdit, setActivityEdit] = useState({ text: "", cost: "", currency: "USD" });
+  const [newActivity, setNewActivity] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
+  const [activityEdit, setActivityEdit] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
 
   return {
     isEditing,

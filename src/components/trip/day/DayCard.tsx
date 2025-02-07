@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -7,6 +8,8 @@ import ActivityDialogs from './ActivityDialogs';
 import DayLayout from './DayLayout';
 import { useDayCardState } from './DayCardState';
 import { useDayCardHandlers } from './DayCardHandlers';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface DayCardProps {
   id: string;
@@ -32,6 +35,7 @@ interface DayCardProps {
   onDelete: (id: string) => void;
   imageUrl?: string | null;
   defaultImageUrl?: string;
+  tripId: string;
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -43,7 +47,8 @@ const DayCard: React.FC<DayCardProps> = ({
   hotelDetails,
   onDelete,
   imageUrl,
-  defaultImageUrl
+  defaultImageUrl,
+  tripId
 }) => {
   const {
     isEditing,
@@ -68,6 +73,54 @@ const DayCard: React.FC<DayCardProps> = ({
       hour: 'numeric',
       minute: '2-digit'
     });
+  };
+
+  const handleAddActivity = async () => {
+    try {
+      const { error } = await supabase
+        .from('day_activities')
+        .insert([{
+          day_id: id,
+          title: newActivity.title,
+          description: newActivity.description,
+          start_time: newActivity.start_time,
+          end_time: newActivity.end_time,
+          cost: newActivity.cost ? Number(newActivity.cost) : null,
+          currency: newActivity.currency,
+          order_index: activities.length
+        }]);
+
+      if (error) throw error;
+      toast.success('Activity added successfully');
+      setIsAddingActivity(false);
+      setNewActivity({ title: '', description: '', cost: '', currency: 'USD' });
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      toast.error('Failed to add activity');
+    }
+  };
+
+  const handleEditActivity = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('day_activities')
+        .update({
+          title: activityEdit.title,
+          description: activityEdit.description,
+          start_time: activityEdit.start_time,
+          end_time: activityEdit.end_time,
+          cost: activityEdit.cost ? Number(activityEdit.cost) : null,
+          currency: activityEdit.currency
+        })
+        .eq('id', activityId);
+
+      if (error) throw error;
+      toast.success('Activity updated successfully');
+      setEditingActivity(null);
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error('Failed to update activity');
+    }
   };
 
   return (
@@ -99,7 +152,10 @@ const DayCard: React.FC<DayCardProps> = ({
             const activity = activities.find(a => a.id === id);
             if (activity) {
               setActivityEdit({
-                text: activity.title,
+                title: activity.title,
+                description: activity.description,
+                start_time: activity.start_time,
+                end_time: activity.end_time,
                 cost: activity.cost?.toString() || "",
                 currency: activity.currency || "USD"
               });
@@ -108,7 +164,8 @@ const DayCard: React.FC<DayCardProps> = ({
           }}
           formatTime={formatTime}
           dayId={id}
-          imageUrl={imageUrl || defaultImageUrl} // Use defaultImageUrl if imageUrl is not provided
+          tripId={tripId}
+          imageUrl={imageUrl || defaultImageUrl}
         />
       </Card>
 
@@ -132,8 +189,8 @@ const DayCard: React.FC<DayCardProps> = ({
         setNewActivity={setNewActivity}
         activityEdit={activityEdit}
         setActivityEdit={setActivityEdit}
-        onAddActivity={() => {}}
-        onEditActivity={() => {}}
+        onAddActivity={handleAddActivity}
+        onEditActivity={handleEditActivity}
         eventId={id}
       />
     </motion.div>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -12,10 +13,10 @@ interface ActivityDialogsProps {
   setIsAddingActivity: (value: boolean) => void;
   editingActivity: string | null;
   setEditingActivity: (value: string | null) => void;
-  newActivity: { text: string; cost: string; currency: string };
-  setNewActivity: (activity: { text: string; cost: string; currency: string }) => void;
-  activityEdit: { text: string; cost: string; currency: string };
-  setActivityEdit: (activity: { text: string; cost: string; currency: string }) => void;
+  newActivity: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string };
+  setNewActivity: (activity: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string }) => void;
+  activityEdit: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string };
+  setActivityEdit: (activity: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string }) => void;
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
   eventId: string;
