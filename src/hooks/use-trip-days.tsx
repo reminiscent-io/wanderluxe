@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 
 interface DayActivity {
   id: string;
+  day_id: string;
   title: string;
   description?: string;
   start_time?: string;
@@ -11,6 +12,7 @@ interface DayActivity {
   cost?: number;
   currency?: string;
   order_index: number;
+  created_at: string;
 }
 
 interface TripDay {
@@ -19,6 +21,8 @@ interface TripDay {
   date: string;
   title?: string;
   description?: string;
+  image_url?: string;
+  created_at: string;
   activities: DayActivity[];
 }
 
@@ -46,20 +50,28 @@ export const useTripDays = (tripId: string | undefined) => {
 
       return tripDays.map(day => ({
         ...day,
-        activities: day.day_activities || []
+        activities: (day.day_activities || []).sort((a, b) => a.order_index - b.order_index)
       }));
     },
     enabled: !!tripId
   });
 
   const addDay = useMutation({
-    mutationFn: async (newDay: { tripId: string, date: string, title?: string }) => {
+    mutationFn: async (newDay: { 
+      tripId: string; 
+      date: string; 
+      title?: string;
+      description?: string;
+      image_url?: string;
+    }) => {
       const { data, error } = await supabase
         .from('trip_days')
         .insert([{
           trip_id: newDay.tripId,
           date: newDay.date,
-          title: newDay.title
+          title: newDay.title,
+          description: newDay.description,
+          image_url: newDay.image_url
         }])
         .select()
         .single();
@@ -73,6 +85,35 @@ export const useTripDays = (tripId: string | undefined) => {
     },
     onError: () => {
       toast.error('Failed to add day');
+    }
+  });
+
+  const updateDay = useMutation({
+    mutationFn: async (updatedDay: {
+      id: string;
+      title?: string;
+      description?: string;
+      image_url?: string;
+      date?: string;
+    }) => {
+      const { error } = await supabase
+        .from('trip_days')
+        .update({
+          title: updatedDay.title,
+          description: updatedDay.description,
+          image_url: updatedDay.image_url,
+          date: updatedDay.date
+        })
+        .eq('id', updatedDay.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      toast.success('Day updated successfully');
+    },
+    onError: () => {
+      toast.error('Failed to update day');
     }
   });
 
@@ -114,11 +155,39 @@ export const useTripDays = (tripId: string | undefined) => {
     }
   });
 
+  const reorderActivities = useMutation({
+    mutationFn: async ({ dayId, activities }: {
+      dayId: string;
+      activities: { id: string; order_index: number }[];
+    }) => {
+      const { error } = await supabase
+        .from('day_activities')
+        .upsert(
+          activities.map(activity => ({
+            id: activity.id,
+            day_id: dayId,
+            order_index: activity.order_index
+          }))
+        );
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      toast.success('Activities reordered successfully');
+    },
+    onError: () => {
+      toast.error('Failed to reorder activities');
+    }
+  });
+
   return {
     days,
     isLoading,
     addDay,
+    updateDay,
     addActivity,
+    reorderActivities,
     refreshDays
   };
 };
