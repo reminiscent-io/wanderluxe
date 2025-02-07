@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTripDays } from '@/hooks/useTripDays';
+import { useTripDays } from '@/hooks/use-trip-days';
 
 interface DayImageProps {
   dayId: string;
