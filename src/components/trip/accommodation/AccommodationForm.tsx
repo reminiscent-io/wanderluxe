@@ -1,48 +1,17 @@
+
 import React, { useState } from 'react';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import HotelSearchInput from './HotelSearchInput';
+import DateInputs from './form/DateInputs';
+import CostInputs from './form/CostInputs';
+import HotelOptionalDetails from './form/HotelOptionalDetails';
+import HotelContactInfo from './form/HotelContactInfo';
+import { AccommodationFormData } from '@/services/accommodation/types';
 
 interface AccommodationFormProps {
-  onSubmit: (data: {
-    stay_id?: string;
-    hotel: string;
-    hotel_details: string;
-    hotel_url: string;
-    hotel_checkin_date: string;
-    hotel_checkout_date: string;
-    expense_cost: string;
-    currency: string;
-    hotel_address?: string;
-    hotel_phone?: string;
-    hotel_place_id?: string;
-    hotel_website?: string;
-    expense_type?: string;
-    expense_paid?: boolean;
-    expense_date?: string;
-    order_index?: number;
-  }) => void;
+  onSubmit: (data: AccommodationFormData) => void;
   onCancel: () => void;
-  initialData?: {
-    stay_id?: string;
-    hotel: string;
-    hotel_details: string;
-    hotel_url: string;
-    hotel_checkin_date: string;
-    hotel_checkout_date: string;
-    expense_cost: string | number;
-    currency: string;
-    hotel_address?: string;
-    hotel_phone?: string;
-    hotel_place_id?: string;
-    hotel_website?: string;
-    expense_type?: string;
-    expense_paid?: boolean;
-    expense_date?: string;
-    order_index?: number;
-  };
+  initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
 }
@@ -112,85 +81,32 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
         onChange={handleHotelSelect}
       />
 
-      {formData.hotel_address && (
-        <div>
-          <Label>Address</Label>
-          <p className="text-sm text-gray-600">{formData.hotel_address}</p>
-        </div>
-      )}
+      <HotelContactInfo
+        address={formData.hotel_address}
+        phone={formData.hotel_phone}
+      />
 
-      {formData.hotel_phone && (
-        <div>
-          <Label>Phone</Label>
-          <p className="text-sm text-gray-600">{formData.hotel_phone}</p>
-        </div>
-      )}
+      <HotelOptionalDetails
+        hotelDetails={formData.hotel_details}
+        hotelUrl={formData.hotel_url}
+        onDetailsChange={(value) => setFormData({ ...formData, hotel_details: value })}
+        onUrlChange={(value) => setFormData({ ...formData, hotel_url: value })}
+      />
 
-      <div>
-        <Label htmlFor="hotel_details">Details (Optional)</Label>
-        <Textarea
-          id="hotel_details"
-          value={formData.hotel_details}
-          onChange={(e) => setFormData({ ...formData, hotel_details: e.target.value })}
-        />
-      </div>
+      <DateInputs
+        checkinDate={formData.hotel_checkin_date}
+        checkoutDate={formData.hotel_checkout_date}
+        onCheckinChange={(value) => setFormData({ ...formData, hotel_checkin_date: value })}
+        onCheckoutChange={(value) => setFormData({ ...formData, hotel_checkout_date: value })}
+      />
 
-      <div>
-        <Label htmlFor="hotel_url">URL (Optional)</Label>
-        <Input
-          id="hotel_url"
-          type="url"
-          value={formData.hotel_url}
-          placeholder="https://..."
-          onChange={(e) => setFormData({ ...formData, hotel_url: e.target.value })}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="hotel_checkin_date">Check-in Date *</Label>
-          <Input
-            id="hotel_checkin_date"
-            type="date"
-            value={formData.hotel_checkin_date}
-            onChange={(e) => setFormData({ ...formData, hotel_checkin_date: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="hotel_checkout_date">Check-out Date *</Label>
-          <Input
-            id="hotel_checkout_date"
-            type="date"
-            value={formData.hotel_checkout_date}
-            onChange={(e) => setFormData({ ...formData, hotel_checkout_date: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="expense_cost">Total Cost</Label>
-          <Input
-            id="expense_cost"
-            type="text"
-            value={formData.expense_cost}
-            onChange={(e) => setFormData({ ...formData, expense_cost: e.target.value })}
-            onBlur={(e) => setFormData({ ...formData, expense_cost: formatCost(e.target.value) })}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <Label htmlFor="currency">Currency</Label>
-          <Input
-            id="currency"
-            value={formData.currency}
-            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-            placeholder="USD"
-          />
-        </div>
-      </div>
+      <CostInputs
+        expenseCost={formData.expense_cost}
+        currency={formData.currency}
+        onCostChange={(value) => setFormData({ ...formData, expense_cost: value })}
+        onCurrencyChange={(value) => setFormData({ ...formData, currency: value })}
+        formatCost={formatCost}
+      />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
