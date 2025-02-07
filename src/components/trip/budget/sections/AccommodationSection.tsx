@@ -10,9 +10,9 @@ interface AccommodationSectionProps {
   onToggle: () => void;
   onAddExpense: () => void;
   editingItem: string | null;
-  onEdit: (id: string) => void;
-  onUpdateCost: (id: string, cost: number, currency: string) => void;
-  onDelete: (id: string) => void;
+  onEdit: (stay_id: string) => void;
+  onUpdateCost: (stay_id: string, cost: number, currency: string) => void;
+  onDelete: (stay_id: string) => void;
 }
 
 const AccommodationSection: React.FC<AccommodationSectionProps> = ({
