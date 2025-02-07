@@ -1,12 +1,27 @@
 import React from 'react';
+import { useTripDays } from '@/hooks/useTripDays';
 
 interface DayImageProps {
+  dayId: string;
+  tripId: string;
   title: string;
-  imageUrl?: string | null;
-  isLoading?: boolean;
 }
 
-const DayImage: React.FC<DayImageProps> = ({ title, imageUrl }) => {
+const DayImage: React.FC<DayImageProps> = ({ dayId, tripId, title }) => {
+  const { days, isLoading } = useTripDays(tripId);
+  const day = days?.find(d => d.id === dayId);
+  const imageUrl = day?.image_url;
+
+  if (isLoading) {
+    return (
+      <div className="relative h-full min-h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
   if (!imageUrl) {
     return (
       <div className="relative h-full min-h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
