@@ -1,69 +1,54 @@
-
+// useAccommodationHandlers.ts
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { 
-  addAccommodation, 
-  updateAccommodation, 
-  deleteAccommodation,
-  AccommodationFormData 
-} from '@/services/accommodation/accommodationService';
-import { toast } from 'sonner';
-import { HotelStay } from '@/services/accommodation/types';
+import { supabase } from '@/integrations/supabase/client';
+import type { AccommodationFormData, HotelStay } from '@/services/accommodation/types';
 
-export const useAccommodationHandlers = (tripId: string, onAccommodationChange: () => void) => {
+export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) => {
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<(AccommodationFormData & { stay_id: string }) | null>(null);
-  const queryClient = useQueryClient();
-
-  const invalidateQueries = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] }),
-      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] }),
-      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] })
-    ]);
-  };
 
   const handleSubmit = async (formData: AccommodationFormData) => {
     try {
-      const success = await addAccommodation(tripId, formData);
-      if (success) {
-        setIsAddingAccommodation(false);
-        await invalidateQueries();
-        onAccommodationChange();
-        toast.success('Accommodation added successfully');
-      }
+      const { error } = await supabase
+        .from('hotel_stays')
+        .insert([{ 
+          ...formData,
+          trip_id: tripId,
+          expense_cost: formData.expense_cost ? Number(formData.expense_cost) : null
+        }]);
+
+      if (error) throw error;
+      onSuccess();
     } catch (error) {
-      console.error('Error adding accommodation:', error);
-      toast.error('Failed to add accommodation');
+      console.error('Error saving accommodation:', error);
     }
   };
 
-  const handleUpdate = async (stay_id: string, formData: AccommodationFormData) => {
+  const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
     try {
-      const success = await updateAccommodation(tripId, stay_id, formData);
-      if (success) {
-        setEditingStay(null);
-        await invalidateQueries();
-        onAccommodationChange();
-        toast.success('Accommodation updated successfully');
-      }
+      const { error } = await supabase
+        .from('hotel_stays')
+        .update(formData)
+        .eq('stay_id', stayId);
+
+      if (error) throw error;
+      onSuccess();
     } catch (error) {
       console.error('Error updating accommodation:', error);
-      toast.error('Failed to update accommodation');
     }
   };
 
-  const handleDelete = async (stay: HotelStay) => {
+  const handleDelete = async (stayId: string) => {
     try {
-      const success = await deleteAccommodation(stay);
-      if (success) {
-        await invalidateQueries();
-        onAccommodationChange();
-        toast.success('Accommodation deleted successfully');
-      }
+      const { error } = await supabase
+        .from('hotel_stays')
+        .delete()
+        .eq('stay_id', stayId);
+
+      if (error) throw error;
+      onSuccess();
     } catch (error) {
       console.error('Error deleting accommodation:', error);
-      toast.error('Failed to delete accommodation');
     }
   };
 
