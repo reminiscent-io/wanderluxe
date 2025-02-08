@@ -1,29 +1,58 @@
-// AccommodationsSection.tsx
-import React, { useState } from 'react';
-import { Card } from "@/components/ui/card";
-import AccommodationHeader from './accommodation/AccommodationHeader';
-import AccommodationActions from './accommodation/AccommodationActions';
-import HotelStaysList from './accommodation/HotelStaysList';
-import { formatDateRange } from '@/utils/dateUtils';
-import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
-import { useTripDates } from './accommodation/hooks/useTripDates';
-import { HotelStay, AccommodationFormData } from '@/services/accommodation/types';
+// useAccommodationHandlers.ts
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { AccommodationFormData } from '@/services/accommodation/types';
 
-interface AccommodationsSectionProps {
-  tripId: string;
-  onAccommodationChange: () => void;
-  hotelStays: HotelStay[];
-}
+export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) => {
+  const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
+  const [editingStay, setEditingStay] = useState<AccommodationFormData & { stay_id: string } | null>(null);
 
-const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
-  tripId,
-  onAccommodationChange,
-  hotelStays
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const tripDates = useTripDates(tripId);
-  
-  const {
+  const handleSubmit = async (formData: AccommodationFormData) => {
+    try {
+      const { error } = await supabase
+        .from('hotel_stays')
+        .insert([{ 
+          ...formData,
+          trip_id: tripId,
+          expense_cost: formData.expense_cost ? Number(formData.expense_cost) : null
+        }]);
+
+      if (error) throw error;
+      onSuccess();
+    } catch (error) {
+      console.error('Error saving accommodation:', error);
+    }
+  };
+
+  const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
+    try {
+      const { error } = await supabase
+        .from('hotel_stays')
+        .update(formData)
+        .eq('stay_id', stayId);
+
+      if (error) throw error;
+      onSuccess();
+    } catch (error) {
+      console.error('Error updating accommodation:', error);
+    }
+  };
+
+  const handleDelete = async (stayId: string) => {
+    try {
+      const { error } = await supabase
+        .from('hotel_stays')
+        .delete()
+        .eq('stay_id', stayId);
+
+      if (error) throw error;
+      onSuccess();
+    } catch (error) {
+      console.error('Error deleting accommodation:', error);
+    }
+  };
+
+  return {
     isAddingAccommodation,
     setIsAddingAccommodation,
     editingStay,
@@ -31,50 +60,5 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     handleSubmit,
     handleUpdate,
     handleDelete
-  } = useAccommodationHandlers(tripId, onAccommodationChange);
-
-  const handleEdit = (stayId: string) => {
-    const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
-    if (stayToEdit) {
-      setEditingStay({
-        ...stayToEdit,
-        expense_cost: stayToEdit.expense_cost?.toString() || '',
-        hotel_details: stayToEdit.hotel_details || '',
-        hotel_url: stayToEdit.hotel_url || '',
-        currency: stayToEdit.currency || 'USD'
-      });
-    }
   };
-
-  return (
-    <Card>
-      <AccommodationHeader 
-        isExpanded={isExpanded}
-        onToggle={() => setIsExpanded(!isExpanded)}
-      />
-
-      {isExpanded && (
-        <>
-          <HotelStaysList
-            hotelStays={hotelStays}
-            onEdit={handleEdit}
-            onDelete={(stayId) => handleDelete(stayId)}
-            formatDateRange={formatDateRange}
-          />
-
-          <AccommodationActions
-            onSubmit={editingStay ? 
-              (formData) => handleUpdate(editingStay.stay_id, formData)
-              : handleSubmit}
-            onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
-            initialData={editingStay}
-            tripArrivalDate={tripDates.arrival_date}
-            tripDepartureDate={tripDates.departure_date}
-          />
-        </>
-      )}
-    </Card>
-  );
 };
-
-export default AccommodationsSection;
