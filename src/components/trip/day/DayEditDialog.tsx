@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ActivitiesList from '../ActivitiesList';
 import DiningList from '../DiningList';
+import ActivityForm from '../ActivityForm';
+import { DayActivity } from '@/types/trip';
 
 interface DayEditDialogProps {
   isOpen: boolean;
@@ -41,7 +44,18 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [localActivities, setLocalActivities] = useState(activities);
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(null); // Track editing state
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [isAddingActivity, setIsAddingActivity] = useState(false);
+
+  // Initialize empty activity for the form
+  const emptyActivity = {
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  };
 
   const handleGenerateImages = async () => {
     if (!imagePrompt.trim()) {
@@ -75,43 +89,79 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   };
 
   const handleAddActivity = () => {
-    const newActivity = {
-      id: Date.now().toString(),
-      title: "",
-      description: "",
-      start_time: "",
-      end_time: "",
-      cost: undefined,
-      currency: "USD",
-    };
+    setIsAddingActivity(true);
+  };
 
-    setLocalActivities((prev) => [...prev, newActivity]);
-    setEditingActivityId(newActivity.id); // Set editing mode for the new activity
+  const handleActivitySubmit = async (activity: typeof emptyActivity) => {
+    try {
+      const { data, error } = await supabase
+        .from('day_activities')
+        .insert([{
+          day_id: dayId,
+          title: activity.title,
+          description: activity.description,
+          start_time: activity.start_time,
+          end_time: activity.end_time,
+          cost: activity.cost ? Number(activity.cost) : null,
+          currency: activity.currency,
+          order_index: localActivities.length,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setLocalActivities([...localActivities, data]);
+      setIsAddingActivity(false);
+      toast.success('Activity added successfully');
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      toast.error('Failed to add activity');
+    }
   };
 
   const handleEditActivity = (id: string) => {
-    setEditingActivityId(id); // Set editing mode for the selected activity
+    setEditingActivityId(id);
   };
 
-  const handleSaveActivity = (id: string, updatedActivity: any) => {
-    setLocalActivities((prev) =>
-      prev.map((activity) => (activity.id === id ? updatedActivity : activity))
-    );
-    setEditingActivityId(null); // Exit editing mode
-  };
+  const handleUpdateActivity = async (activity: typeof emptyActivity) => {
+    if (!editingActivityId) return;
 
-  const handleCancelEdit = () => {
-    // Cancel editing and reset the state
-    setEditingActivityId(null);
+    try {
+      const { error } = await supabase
+        .from('day_activities')
+        .update({
+          title: activity.title,
+          description: activity.description,
+          start_time: activity.start_time,
+          end_time: activity.end_time,
+          cost: activity.cost ? Number(activity.cost) : null,
+          currency: activity.currency
+        })
+        .eq('id', editingActivityId);
+
+      if (error) throw error;
+
+      setLocalActivities(prev => 
+        prev.map(act => 
+          act.id === editingActivityId 
+            ? { ...act, ...activity }
+            : act
+        )
+      );
+      setEditingActivityId(null);
+      toast.success('Activity updated successfully');
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error('Failed to update activity');
+    }
   };
 
   const handleSave = async () => {
     try {
-      const updateData: { title: string; image_url?: string; activities?: any[] } = { title };
-
+      const updateData: { title: string; image_url?: string } = { title };
       if (selectedImage) updateData.image_url = selectedImage;
-
-      updateData.activities = localActivities;
 
       const { error } = await supabase
         .from('trip_days')
@@ -127,6 +177,11 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       toast.error('Failed to update day');
     }
   };
+
+  // Find the activity being edited
+  const activityBeingEdited = editingActivityId 
+    ? localActivities.find(act => act.id === editingActivityId)
+    : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -188,35 +243,82 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           )}
 
           <div>
-            <h3 className="text-lg font-medium mb-4">Activities</h3>
-            {localActivities.map((activity) =>
-              editingActivityId === activity.id ? (
-                <div key={activity.id} className="space-y-2">
-                  {/* Inline Form for Editing */}
-                  <Input
-                    value={activity.title}
-                    onChange={(e) =>
-                      handleSaveActivity(activity.id, { ...activity, title: e.target.value })
-                    }
-                    placeholder="Enter activity title"
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Activities</h3>
+              <Button variant="outline" size="sm" onClick={handleAddActivity}>
+                Add Activity
+              </Button>
+            </div>
+
+            {/* Activity Form Dialog */}
+            <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Activity</DialogTitle>
+                </DialogHeader>
+                <ActivityForm
+                  activity={emptyActivity}
+                  onActivityChange={() => {}}
+                  onSubmit={handleActivitySubmit}
+                  onCancel={() => setIsAddingActivity(false)}
+                  submitLabel="Add Activity"
+                  eventId={dayId}
+                />
+              </DialogContent>
+            </Dialog>
+
+            {/* Edit Activity Dialog */}
+            <Dialog open={!!editingActivityId} onOpenChange={() => setEditingActivityId(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Activity</DialogTitle>
+                </DialogHeader>
+                {activityBeingEdited && (
+                  <ActivityForm
+                    activity={{
+                      title: activityBeingEdited.title,
+                      description: activityBeingEdited.description || '',
+                      start_time: activityBeingEdited.start_time || '',
+                      end_time: activityBeingEdited.end_time || '',
+                      cost: activityBeingEdited.cost?.toString() || '',
+                      currency: activityBeingEdited.currency || 'USD'
+                    }}
+                    onActivityChange={() => {}}
+                    onSubmit={handleUpdateActivity}
+                    onCancel={() => setEditingActivityId(null)}
+                    submitLabel="Update Activity"
+                    eventId={dayId}
                   />
-                  {/* Add other fields like description, start_time as needed */}
-                  <Button variant="outline" onClick={handleCancelEdit}>
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <div key={activity.id} className="flex justify-between items-center">
-                  <span>{activity.title || "Untitled Activity"}</span>
-                  <Button variant="ghost" size="sm" onClick={() => handleEditActivity(activity.id)}>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Activities List */}
+            <div className="space-y-2">
+              {localActivities.map((activity) => (
+                <div 
+                  key={activity.id} 
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <h4 className="font-medium">{activity.title}</h4>
+                    {activity.start_time && (
+                      <p className="text-sm text-gray-500">
+                        {formatTime(activity.start_time)}
+                        {activity.end_time && ` - ${formatTime(activity.end_time)}`}
+                      </p>
+                    )}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleEditActivity(activity.id)}
+                  >
                     Edit
                   </Button>
                 </div>
-              )
-            )}
-            <Button variant="outline" size="sm" onClick={handleAddActivity}>
-              Add Activity
-            </Button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -233,10 +335,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleSave}
-              className="bg-primary hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
-            >
+            <Button onClick={handleSave}>
               Save Changes
             </Button>
           </div>
