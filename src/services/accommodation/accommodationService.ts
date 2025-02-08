@@ -15,10 +15,10 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     });
 
     const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
-    
+
     // Create trip days for the entire stay period
     await createTripDays(tripId, stayDates);
-    
+
     // Create all timeline events for the stay
     await createAccommodationEvents(tripId, formData, stayDates);
 
@@ -43,7 +43,7 @@ export const updateAccommodation = async (
     });
 
     const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
-    
+
     // Update existing events for this hotel stay
     await updateAccommodationEvents(tripId, formData, stayDates);
 
@@ -56,9 +56,12 @@ export const updateAccommodation = async (
   }
 };
 
-export const deleteAccommodation = async (stay: HotelStay) => {
+export const deleteAccommodation = async (id?: string) => {
+  if (!id) {
+    throw new Error('Accommodation ID is required for deletion');
+  }
   try {
-    await deleteAccommodationEvents(stay);
+    await deleteAccommodationEvents(id);
     toast.success('Accommodation deleted successfully');
     return true;
   } catch (error) {

@@ -1,8 +1,10 @@
-
 export const loadGoogleMapsApi = async () => {
+  if (window.google?.maps) {
+    return Promise.resolve();
+  }
   try {
     const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
-    
+
     if (error || !key) {
       throw new Error('Failed to fetch Google Places API key');
     }

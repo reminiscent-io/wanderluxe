@@ -11,6 +11,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import DiningList from '../DiningList'; // Added import for DiningList
 
+// ErrorBoundary component (needs to be defined elsewhere or imported)
+const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
+  const [hasError, setHasError] = React.useState(false);
+
+  React.useEffect(() => {
+      //Optional: Log the error to a service like Sentry or LogRocket
+  }, [hasError])
+
+  if (hasError) {
+    return <div>Something went wrong.</div>;
+  }
+
+  return (
+      <React.Suspense fallback={<div>Loading...</div>}>
+          {children}
+      </React.Suspense>
+  );
+};
+
 
 interface DayCardProps {
   id: string;
@@ -150,33 +169,35 @@ const DayCard: React.FC<DayCardProps> = ({
           formatTime={formatTime}
         />
 
-        <DayLayout
-          title={title || ""}
-          activities={activities}
-          hotelDetails={hotelDetails}
-          index={index}
-          onAddActivity={() => setIsAddingActivity(true)}
-          onEditActivity={(id) => {
-            const activity = activities.find(a => a.id === id);
-            if (activity) {
-              setActivityEdit({
-                title: activity.title,
-                description: activity.description,
-                start_time: activity.start_time,
-                end_time: activity.end_time,
-                cost: activity.cost?.toString() || "",
-                currency: activity.currency || "USD"
-              });
-              setEditingActivity(id);
-            }
-          }}
-          formatTime={formatTime}
-          dayId={id}
-          tripId={tripId}
-          imageUrl={imageUrl || defaultImageUrl}
-          reservations={reservations}
-        />
-          {reservations && <DiningList reservations={reservations} />} {/* Added DiningList component */}
+        <ErrorBoundary> {/* Wrapping DayLayout with ErrorBoundary */}
+          <DayLayout
+            title={title || ""}
+            activities={activities}
+            hotelDetails={hotelDetails}
+            index={index}
+            onAddActivity={() => setIsAddingActivity(true)}
+            onEditActivity={(id) => {
+              const activity = activities.find(a => a.id === id);
+              if (activity) {
+                setActivityEdit({
+                  title: activity.title,
+                  description: activity.description,
+                  start_time: activity.start_time,
+                  end_time: activity.end_time,
+                  cost: activity.cost?.toString() || "",
+                  currency: activity.currency || "USD"
+                });
+                setEditingActivity(id);
+              }
+            }}
+            formatTime={formatTime}
+            dayId={id}
+            tripId={tripId}
+            imageUrl={imageUrl || defaultImageUrl}
+            reservations={reservations}
+          />
+        </ErrorBoundary> {/* Closing ErrorBoundary */}
+        {reservations && <DiningList reservations={reservations} />} {/* Added DiningList component */}
       </Card>
 
       <EditTitleDialog
