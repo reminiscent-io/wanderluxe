@@ -9,10 +9,12 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
     .select('date')
     .eq('trip_id', tripId);
 
-  const existingDatesSet = new Set(existingDays?.map(day => day.date.toString()) || []);
+  // Ensure dates are in YYYY-MM-DD format without time information
+  const formattedDates = dates.map(date => date.split('T')[0]);
+  const existingDatesSet = new Set(existingDays?.map(day => day.date.split('T')[0]) || []);
   
   // Filter out dates that already have trip days
-  const newDates = dates.filter(date => !existingDatesSet.has(date));
+  const newDates = formattedDates.filter(date => !existingDatesSet.has(date));
   
   if (newDates.length === 0) {
     console.log('No new trip days to create');
