@@ -5,8 +5,15 @@ import ActivityDialogs from './ActivityDialogs';
 import { Utensils } from "lucide-react";
 import DiningList from '../DiningList';
 
+import DiningList from '../DiningList';
+
 interface DayCardContentProps {
   index: number;
+  reservations?: Array<{
+    id: string;
+    restaurant: string;
+    time: string;
+  }>;
   title: string;
   activities: Array<{
     id: string;

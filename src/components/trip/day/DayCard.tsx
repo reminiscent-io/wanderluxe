@@ -9,6 +9,8 @@ import { useDayCardState } from './DayCardState';
 import { useDayCardHandlers } from './DayCardHandlers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import DiningList from './DiningList'; // Added import for DiningList
+
 
 interface DayCardProps {
   id: string;
@@ -35,7 +37,7 @@ interface DayCardProps {
   imageUrl?: string | null;
   defaultImageUrl?: string;
   tripId: string;
-  reservations?: Array<{ // Added reservations prop
+  reservations?: Array<{
     id: string;
     restaurant: string;
     time: string;
@@ -54,7 +56,7 @@ const DayCard: React.FC<DayCardProps> = ({
   imageUrl,
   defaultImageUrl,
   tripId,
-  reservations // Added reservations prop
+  reservations
 }) => {
   const {
     isEditing,
@@ -172,8 +174,9 @@ const DayCard: React.FC<DayCardProps> = ({
           dayId={id}
           tripId={tripId}
           imageUrl={imageUrl || defaultImageUrl}
-          reservations={reservations} // Pass reservations to DayLayout
+          reservations={reservations}
         />
+          {reservations && <DiningList reservations={reservations} />} {/* Added DiningList component */}
       </Card>
 
       <EditTitleDialog
