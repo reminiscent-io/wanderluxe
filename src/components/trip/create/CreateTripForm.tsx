@@ -34,7 +34,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   onCancel
 }) => {
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-6">
       <DestinationInput
         destination={destination}
         setDestination={setDestination}

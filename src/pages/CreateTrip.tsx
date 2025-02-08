@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,19 +52,24 @@ const CreateTrip = () => {
   };
 
   return (
-    <CreateTripForm
-      destination={destination}
-      setDestination={setDestination}
-      startDate={startDate}
-      setStartDate={setStartDate}
-      endDate={endDate}
-      setEndDate={setEndDate}
-      coverImageUrl={coverImageUrl}
-      setCoverImageUrl={setCoverImageUrl}
-      isLoading={isLoading}
-      onSubmit={handleSubmit}
-      onCancel={() => navigate('/my-trips')}
-    />
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-xl bg-white rounded-lg shadow-lg p-8">
+        <h1 className="text-2xl font-semibold text-center mb-8">Create New Trip</h1>
+        <CreateTripForm
+          destination={destination}
+          setDestination={setDestination}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          coverImageUrl={coverImageUrl}
+          setCoverImageUrl={setCoverImageUrl}
+          isLoading={isLoading}
+          onSubmit={handleSubmit}
+          onCancel={() => navigate('/my-trips')}
+        />
+      </div>
+    </div>
   );
 };
 
