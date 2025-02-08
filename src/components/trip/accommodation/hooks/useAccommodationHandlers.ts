@@ -1,8 +1,7 @@
 
-// useAccommodationHandlers.ts
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import type { AccommodationFormData, HotelStay } from '@/services/accommodation/types';
+import { addAccommodation, updateAccommodation, deleteAccommodation } from '@/services/accommodation/accommodationService';
 
 export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) => {
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
@@ -11,6 +10,7 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
   const handleSubmit = async (formData: AccommodationFormData) => {
     try {
       await addAccommodation(tripId, formData);
+      setIsAddingAccommodation(false);
       onSuccess();
     } catch (error) {
       console.error('Error saving accommodation:', error);
@@ -20,8 +20,8 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
   const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
     try {
       await updateAccommodation(tripId, stayId, { ...formData, stay_id: stayId });
+      setEditingStay(null);
       onSuccess();
-      setEditingStay(null); // Clear editing state after successful update
     } catch (error) {
       console.error('Error updating accommodation:', error);
     }
