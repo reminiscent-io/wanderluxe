@@ -114,7 +114,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-earth-600 border border-transparent rounded-md shadow-sm hover:bg-earth-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
+          className="px-4 py-2 text-sm font-medium text-white bg-[#E6D5B8] border border-transparent rounded-md shadow-sm hover:bg-[#d4c4a7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E6D5B8]"
         >
           {submitLabel}
         </button>

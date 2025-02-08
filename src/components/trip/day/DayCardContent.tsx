@@ -45,7 +45,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   const [activityEdit, setActivityEdit] = useState({ text: "", cost: "", currency: "USD" });
 
   return (
-    <div className="p-6 space-y-4 bg-[#E6D5B8] text-white">
+    <div className="p-6 space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Activities</h3>
         <Button
