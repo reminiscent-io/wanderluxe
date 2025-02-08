@@ -23,13 +23,11 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [newArrival, setNewArrival] = React.useState('');
   const [newDeparture, setNewDeparture] = React.useState('');
 
-  // Update local state when props change or dialog opens
+  // Initialize state when component mounts and when props change
   React.useEffect(() => {
-    if (isOpen) {
-      setNewArrival(arrivalDate || '');
-      setNewDeparture(departureDate || '');
-    }
-  }, [isOpen, arrivalDate, departureDate]);
+    setNewArrival(arrivalDate || '');
+    setNewDeparture(departureDate || '');
+  }, [arrivalDate, departureDate]);
 
   const handleSave = async () => {
     const { error } = await supabase
