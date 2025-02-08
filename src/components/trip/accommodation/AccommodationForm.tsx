@@ -30,7 +30,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     hotel_url: initialData?.hotel_url || '',
     hotel_checkin_date: initialData?.hotel_checkin_date || tripArrivalDate || '',
     hotel_checkout_date: initialData?.hotel_checkout_date || tripDepartureDate || '',
-    expense_cost: initialData?.expense_cost || null,
+    expense_cost: initialData?.expense_cost?.toString() || '',
     currency: initialData?.currency || 'USD',
     hotel_address: initialData?.hotel_address || '',
     hotel_phone: initialData?.hotel_phone || '',
