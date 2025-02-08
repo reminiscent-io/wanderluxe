@@ -85,7 +85,13 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 
       <div className="mt-8">
         <DiningList
-          reservations={reservations || []}
+          reservations={(reservations || []).sort((a, b) => {
+            if (!a.reservation_time && !b.reservation_time) return 0;
+            if (!a.reservation_time) return 1;
+            if (!b.reservation_time) return -1;
+            return new Date(`2000-01-01T${b.reservation_time}`).getTime() - 
+                   new Date(`2000-01-01T${a.reservation_time}`).getTime();
+          })}
           formatTime={formatTime}
           dayId={dayId}
           onAddReservation={() => {}}
