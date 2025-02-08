@@ -320,7 +320,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                 if (timeA === '' && timeB === '') return 0;
                 if (timeA === '') return 1;
                 if (timeB === '') return -1;
-                return new Date(timeB).getTime() - new Date(timeA).getTime();
+                return new Date(timeA).getTime() - new Date(timeB).getTime();
               }).map((activity) => (
                 <div
                   key={activity.id}
