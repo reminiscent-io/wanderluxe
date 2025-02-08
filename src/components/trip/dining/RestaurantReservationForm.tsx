@@ -143,7 +143,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         <Button 
           type="submit" 
           disabled={isSubmitting} 
-          className="w-full bg-[#E6D5B8] hover:bg-[#d4c4a7] text-white"
+          className="w-full bg-sand-500 hover:bg-sand-600 text-white"
         >
           {isSubmitting ? (
             <>
