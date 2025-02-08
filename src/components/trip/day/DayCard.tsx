@@ -9,7 +9,7 @@ import { useDayCardState } from './DayCardState';
 import { useDayCardHandlers } from './DayCardHandlers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import DiningList from './DiningList'; // Added import for DiningList
+import DiningList from '../DiningList'; // Added import for DiningList
 
 
 interface DayCardProps {
