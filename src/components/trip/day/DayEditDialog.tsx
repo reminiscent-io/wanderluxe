@@ -361,7 +361,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>
+            <Button onClick={handleSave} className="bg-[#E6D5B8] hover:bg-[#d4c4a7] text-white">
               Save Changes
             </Button>
           </div>
