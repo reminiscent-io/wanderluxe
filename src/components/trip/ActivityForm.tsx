@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +9,11 @@ import { toast } from 'sonner';
 
 interface ActivityFormProps {
   activity: {
-    title: string;      // Changed from text to match schema
-    description?: string;  // Add this from schema
-    start_time?: string;  // Add this from schema
-    end_time?: string;    // Add this from schema
-    cost: number;
+    title: string;      
+    description?: string;  
+    start_time?: string;  
+    end_time?: string;    
+    cost: number | string;
     currency: string;
   };
   onActivityChange: (activity: { 
@@ -20,15 +21,14 @@ interface ActivityFormProps {
     description?: string;
     start_time?: string;
     end_time?: string;
-    cost: number;
+    cost: number | string;
     currency: string;
   }) => void;
   onSubmit: () => void;
   onCancel: () => void;
   submitLabel: string;
-  eventId: string;  // This represents day_id in the schema
+  eventId: string;
 }
-
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
   activity,
@@ -48,19 +48,19 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     try {
       const { error } = await supabase
-  .from('day_activities')
-  .insert([{
-    day_id: eventId,
-    title: activity.title,  // Changed from text
-    description: activity.description,  // Add this
-    start_time: activity.start_time,    // Add this
-    end_time: activity.end_time,        // Add this
-    cost: activity.cost ?? null,
-    currency: activity.currency,
-    order_index: 0,
-    created_at: new Date().toISOString()  // Add this required field
-  }]);
-
+        .from('day_activities')
+        .insert([{
+          day_id: eventId,
+          title: activity.title,
+          description: activity.description,
+          start_time: activity.start_time,
+          end_time: activity.end_time,
+          // Convert empty string or invalid cost to null, otherwise parse as number
+          cost: activity.cost ? Number(activity.cost) || null : null,
+          currency: activity.currency,
+          order_index: 0,
+          created_at: new Date().toISOString()
+        }]);
 
       if (error) throw error;
 
@@ -124,7 +124,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="number"
             step="0.01"
             value={activity.cost}
-            onChange={(e) => onActivityChange({ ...activity, cost: e.target.value })}
+            onChange={(e) => onActivityChange({ 
+              ...activity, 
+              cost: e.target.value === '' ? '' : e.target.value
+            })}
             placeholder="Enter cost"
           />
         </div>
@@ -161,6 +164,5 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     </form>
   );
 };
-
 
 export default ActivityForm;
