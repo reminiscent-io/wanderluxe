@@ -10,15 +10,7 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
 
   const handleSubmit = async (formData: AccommodationFormData) => {
     try {
-      const { error } = await supabase
-        .from('hotel_stays')
-        .insert([{ 
-          ...formData,
-          trip_id: tripId,
-          expense_cost: formData.expense_cost ? Number(formData.expense_cost) : null
-        }]);
-
-      if (error) throw error;
+      await addAccommodation(tripId, formData);
       onSuccess();
     } catch (error) {
       console.error('Error saving accommodation:', error);
@@ -27,18 +19,7 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
 
   const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
     try {
-      // Convert expense_cost to number or null before updating
-      const expense_cost = formData.expense_cost ? Number(formData.expense_cost) : null;
-      
-      const { error } = await supabase
-        .from('hotel_stays')
-        .update({ 
-          ...formData,
-          expense_cost 
-        })
-        .eq('stay_id', stayId);
-
-      if (error) throw error;
+      await updateAccommodation(tripId, stayId, { ...formData, stay_id: stayId });
       onSuccess();
       setEditingStay(null); // Clear editing state after successful update
     } catch (error) {
@@ -46,14 +27,9 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
     }
   };
 
-  const handleDelete = async (stayId: string) => {
+  const handleDelete = async (stay: HotelStay) => {
     try {
-      const { error } = await supabase
-        .from('hotel_stays')
-        .delete()
-        .eq('stay_id', stayId);
-
-      if (error) throw error;
+      await deleteAccommodation(stay);
       onSuccess();
     } catch (error) {
       console.error('Error deleting accommodation:', error);

@@ -11,7 +11,7 @@ interface HotelStaysListProps {
     hotel_checkout_date: string;
   }>;
   onEdit: (stayId: string) => void;
-  onDelete: (stay: { hotel: string; hotel_checkin_date: string; hotel_checkout_date: string; }) => void;
+  onDelete: (stay: { stay_id: string; hotel: string; hotel_checkin_date: string; hotel_checkout_date: string; }) => void;
   formatDateRange: (checkinDate: string, checkoutDate: string) => string;
 }
 
