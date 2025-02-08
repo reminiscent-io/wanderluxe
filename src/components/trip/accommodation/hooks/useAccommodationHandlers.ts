@@ -19,7 +19,11 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
 
   const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
     try {
-      await updateAccommodation(tripId, stayId, { ...formData, stay_id: stayId });
+      if (!stayId) {
+        console.error('No stay ID provided for update');
+        return;
+      }
+      await updateAccommodation(tripId, stayId, formData);
       setEditingStay(null);
       onSuccess();
     } catch (error) {

@@ -37,15 +37,23 @@ export const updateAccommodation = async (
   formData: AccommodationFormData
 ) => {
   try {
+    if (!stay_id) {
+      throw new Error('stay_id is required for update');
+    }
+    
     console.log('Updating accommodation with dates:', {
       checkin: formData.hotel_checkin_date,
-      checkout: formData.hotel_checkout_date
+      checkout: formData.hotel_checkout_date,
+      stay_id: stay_id
     });
 
     const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
 
+    // Create trip days for the entire stay period if needed
+    await createTripDays(tripId, stayDates);
+
     // Update existing events for this hotel stay
-    await updateAccommodationEvents(tripId, formData, stayDates);
+    await updateAccommodationEvents(tripId, { ...formData, stay_id }, stayDates);
 
     toast.success('Accommodation updated successfully');
     return true;
