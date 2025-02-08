@@ -77,22 +77,22 @@ export const updateAccommodationEvents = async (
 const { data: accommodation, error: accommodationError } = await supabase
   .from('accommodations')
   .update({
-  title: formData.hotel,
-  hotel: formData.hotel,
-  hotel_details: formData.hotel_details,
-  hotel_url: formData.hotel_url,
-  hotel_checkin_date: formData.hotel_checkin_date,
-  hotel_checkout_date: formData.hotel_checkout_date,
-  expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost) : null,
-  currency: formData.currency,
-  hotel_address: formData.hotel_address,
-  hotel_phone: formData.hotel_phone,
-  hotel_place_id: formData.hotel_place_id,
-  hotel_website: formData.hotel_website,
-  expense_type: formData.expense_type || 'accommodation',  // Add this
-  expense_paid: formData.expense_paid || false,           // Add this
-  expense_date: formData.expense_date || null             // Add this
-})
+    title: formData.hotel,
+    hotel: formData.hotel,
+    hotel_details: formData.hotel_details || '',
+    hotel_url: formData.hotel_url || '',
+    hotel_checkin_date: formData.hotel_checkin_date,
+    hotel_checkout_date: formData.hotel_checkout_date,
+    expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost) : null,
+    currency: formData.currency || 'USD',
+    hotel_address: formData.hotel_address || '',
+    hotel_phone: formData.hotel_phone || '',
+    hotel_place_id: formData.hotel_place_id || '',
+    hotel_website: formData.hotel_website || '',
+    expense_type: 'accommodation',
+    expense_paid: formData.expense_paid || false,
+    expense_date: formData.expense_date || null
+  })
 
   .eq('stay_id', formData.stay_id)  // Changed from formData.id
 
