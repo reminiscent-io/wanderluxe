@@ -56,12 +56,12 @@ export const updateAccommodation = async (
   }
 };
 
-export const deleteAccommodation = async (id?: string) => {
-  if (!id) {
+export const deleteAccommodation = async (stay_id: string) => {
+  if (!stay_id) {
     throw new Error('Accommodation ID is required for deletion');
   }
   try {
-    await deleteAccommodationEvents(id);
+    await deleteAccommodationEvents(stay_id);
     toast.success('Accommodation deleted successfully');
     return true;
   } catch (error) {

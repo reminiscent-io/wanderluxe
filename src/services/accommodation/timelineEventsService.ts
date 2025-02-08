@@ -139,24 +139,23 @@ export const updateAccommodationEvents = async (
   }
 };
 
-export const deleteAccommodationEvents = async (stay: { stay_id: string }) => {
+export const deleteAccommodationEvents = async (stay_id: string) => {
   try {
-    // Delete all accommodation_days first
+    // First delete the accommodation days
     const { error: daysError } = await supabase
       .from('accommodations_days')
       .delete()
-      .eq('stay_id', stay.stay_id);
+      .eq('stay_id', stay_id);
 
     if (daysError) throw daysError;
 
-    // Then delete the main accommodation entry
-    const { error: accommodationError } = await supabase
+    // Then delete the accommodation
+    const { error } = await supabase
       .from('accommodations')
       .delete()
-      .eq('stay_id', stay.stay_id);
+      .eq('stay_id', stay_id);
 
-    if (accommodationError) throw accommodationError;
-
+    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Error in deleteAccommodationEvents:', error);
