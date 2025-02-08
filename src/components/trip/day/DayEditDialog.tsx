@@ -73,26 +73,31 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   };
 
   const handleSave = async () => {
-    try {
-      const { error } = await supabase
-        .from('trip_days')
-        .update({ 
-          title: title,
-          image_url: selectedImage 
-        })
-        .eq('day_id', dayId);
+  try {
+    const updateData: { title: string; image_url?: string } = { title };
 
-      if (error) throw error;
-      
-      console.log('Saved day with image:', selectedImage);
-      
-      toast.success('Day updated successfully');
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error updating day:', error);
-      toast.error('Failed to update day');
+    // Only include image_url if a new image is selected
+    if (selectedImage) {
+      updateData.image_url = selectedImage;
     }
-  };
+
+    const { error } = await supabase
+      .from('trip_days')
+      .update(updateData)
+      .eq('day_id', dayId);
+
+    if (error) throw error;
+
+    console.log('Saved day with data:', updateData);
+
+    toast.success('Day updated successfully');
+    onOpenChange(false);
+  } catch (error) {
+    console.error('Error updating day:', error);
+    toast.error('Failed to update day');
+  }
+};
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
