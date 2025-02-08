@@ -22,6 +22,19 @@ export const useTimelineEvents = (tripId: string | undefined) => {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+          queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trip_days',
+          filter: `trip_id=eq.${tripId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
         }
       )
       .subscribe();

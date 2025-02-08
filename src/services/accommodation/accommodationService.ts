@@ -54,6 +54,11 @@ export const updateAccommodation = async (
 
     // Update existing events for this hotel stay
     await updateAccommodationEvents(tripId, { ...formData, stay_id }, stayDates);
+    
+    // Invalidate both timeline and trip days queries
+    const queryClient = useQueryClient();
+    queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
 
     toast.success('Accommodation updated successfully');
     return true;
