@@ -54,7 +54,14 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 
       {activities.length > 0 ? (
         <ul className="space-y-2">
-          {activities.map((activity) => (
+          {activities.sort((a, b) => {
+            const timeA = a.start_time || '';
+            const timeB = b.start_time || '';
+            if (timeA === '' && timeB === '') return 0;
+            if (timeA === '') return 1;
+            if (timeB === '') return -1;
+            return new Date(`2000-01-01T${timeA}`).getTime() - new Date(`2000-01-01T${timeB}`).getTime();
+          }).map((activity) => (
             <li key={activity.id} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
               <span>{activity.title}</span>
               {activity.start_time && (
