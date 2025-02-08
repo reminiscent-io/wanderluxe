@@ -75,7 +75,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 p-6">
       <HotelSearchInput
         value={formData.hotel}
         onChange={handleHotelSelect}
