@@ -1,168 +1,80 @@
+// AccommodationsSection.tsx
+import React, { useState } from 'react';
+import { Card } from "@/components/ui/card";
+import AccommodationHeader from './accommodation/AccommodationHeader';
+import AccommodationActions from './accommodation/AccommodationActions';
+import HotelStaysList from './accommodation/HotelStaysList';
+import { formatDateRange } from '@/utils/dateUtils';
+import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
+import { useTripDates } from './accommodation/hooks/useTripDates';
+import { HotelStay, AccommodationFormData } from '@/services/accommodation/types';
 
-import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-
-interface ActivityFormProps {
-  activity: {
-    title: string;      
-    description?: string;  
-    start_time?: string;  
-    end_time?: string;    
-    cost: number | string;
-    currency: string;
-  };
-  onActivityChange: (activity: { 
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost: number | string;
-    currency: string;
-  }) => void;
-  onSubmit: () => void;
-  onCancel: () => void;
-  submitLabel: string;
-  eventId: string;
+interface AccommodationsSectionProps {
+  tripId: string;
+  onAccommodationChange: () => void;
+  hotelStays: HotelStay[];
 }
 
-const ActivityForm: React.FC<ActivityFormProps> = ({
-  activity,
-  onActivityChange,
-  onSubmit,
-  onCancel,
-  submitLabel,
-  eventId
+const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
+  tripId,
+  onAccommodationChange,
+  hotelStays
 }) => {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!eventId) {
-      toast.error('No event ID provided');
-      return;
-    }
+  const [isExpanded, setIsExpanded] = useState(false);
+  const tripDates = useTripDates(tripId);
+  
+  const {
+    isAddingAccommodation,
+    setIsAddingAccommodation,
+    editingStay,
+    setEditingStay,
+    handleSubmit,
+    handleUpdate,
+    handleDelete
+  } = useAccommodationHandlers(tripId, onAccommodationChange);
 
-    try {
-      const { error } = await supabase
-        .from('day_activities')
-        .insert([{
-          day_id: eventId,
-          title: activity.title,
-          description: activity.description,
-          start_time: activity.start_time,
-          end_time: activity.end_time,
-          // Convert empty string or invalid cost to null, otherwise parse as number
-          cost: activity.cost ? Number(activity.cost) || null : null,
-          currency: activity.currency,
-          order_index: 0,
-          created_at: new Date().toISOString()
-        }]);
-
-      if (error) throw error;
-
-      toast.success('Activity saved successfully');
-      onSubmit();
-    } catch (error) {
-      console.error('Error saving activity:', error);
-      toast.error('Failed to save activity');
+  const handleEdit = (stayId: string) => {
+    const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
+    if (stayToEdit) {
+      setEditingStay({
+        ...stayToEdit,
+        expense_cost: stayToEdit.expense_cost?.toString() || '',
+        hotel_details: stayToEdit.hotel_details || '',
+        hotel_url: stayToEdit.hotel_url || '',
+        currency: stayToEdit.currency || 'USD'
+      });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="title">Activity Title</Label>
-        <Input
-          id="title"
-          value={activity.title}
-          onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
-          placeholder="Enter activity title"
-          required
-        />
-      </div>
+    <Card>
+      <AccommodationHeader 
+        isExpanded={isExpanded}
+        onToggle={() => setIsExpanded(!isExpanded)}
+      />
 
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Input
-          id="description"
-          value={activity.description}
-          onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
-          placeholder="Enter activity description"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="start_time">Start Time</Label>
-          <Input
-            id="start_time"
-            type="time"
-            value={activity.start_time}
-            onChange={(e) => onActivityChange({ ...activity, start_time: e.target.value })}
+      {isExpanded && (
+        <>
+          <HotelStaysList
+            hotelStays={hotelStays}
+            onEdit={handleEdit}
+            onDelete={(stayId) => handleDelete(stayId)}
+            formatDateRange={formatDateRange}
           />
-        </div>
-        <div>
-          <Label htmlFor="end_time">End Time</Label>
-          <Input
-            id="end_time"
-            type="time"
-            value={activity.end_time}
-            onChange={(e) => onActivityChange({ ...activity, end_time: e.target.value })}
+
+          <AccommodationActions
+            onSubmit={editingStay ? 
+              (formData) => handleUpdate(editingStay.stay_id, formData)
+              : handleSubmit}
+            onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
+            initialData={editingStay}
+            tripArrivalDate={tripDates.arrival_date}
+            tripDepartureDate={tripDates.departure_date}
           />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="cost">Cost (optional)</Label>
-          <Input
-            id="cost"
-            type="number"
-            step="0.01"
-            value={activity.cost}
-            onChange={(e) => onActivityChange({ 
-              ...activity, 
-              cost: e.target.value === '' ? '' : e.target.value
-            })}
-            placeholder="Enter cost"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="currency">Currency</Label>
-          <Select
-            value={activity.currency}
-            onValueChange={(value) => onActivityChange({ ...activity, currency: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USD">USD</SelectItem>
-              <SelectItem value="EUR">EUR</SelectItem>
-              <SelectItem value="GBP">GBP</SelectItem>
-              <SelectItem value="JPY">JPY</SelectItem>
-              <SelectItem value="AUD">AUD</SelectItem>
-              <SelectItem value="CAD">CAD</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" className="bg-earth-500 hover:bg-earth-600 text-white">
-          {submitLabel}
-        </Button>
-      </div>
-    </form>
+        </>
+      )}
+    </Card>
   );
 };
 
-export default ActivityForm;
+export default AccommodationsSection;
