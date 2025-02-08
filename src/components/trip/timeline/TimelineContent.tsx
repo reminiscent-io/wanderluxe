@@ -62,7 +62,13 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
           const checkinDate = group.checkinDate ? new Date(group.checkinDate) : null;
           const checkoutDate = group.checkoutDate ? new Date(group.checkoutDate) : null;
           
-          if (!checkinDate || !checkoutDate) return false;
+          // If this is a standalone group (no hotel), show flights for that day
+          if (!checkinDate || !checkoutDate) {
+            return group.days.some(day => {
+              const dayDate = new Date(day.date);
+              return flightDate.toDateString() === dayDate.toDateString();
+            });
+          }
           
           return flightDate >= checkinDate && flightDate <= checkoutDate;
         });
