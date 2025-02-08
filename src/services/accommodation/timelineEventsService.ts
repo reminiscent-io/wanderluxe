@@ -83,7 +83,7 @@ const { data: accommodation, error: accommodationError } = await supabase
     hotel_url: formData.hotel_url || '',
     hotel_checkin_date: formData.hotel_checkin_date,
     hotel_checkout_date: formData.hotel_checkout_date,
-    expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost.replace(/[^0-9.]/g, '')) : null,
+    expense_cost: formData.expense_cost && formData.expense_cost !== '' ? parseFloat(formData.expense_cost) : null,
     currency: formData.currency || 'USD',
     hotel_address: formData.hotel_address || '',
     hotel_phone: formData.hotel_phone || '',
