@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ActivitiesList from '../ActivitiesList';
 import DiningList from '../DiningList';
 import ActivityForm from '../ActivityForm';
+import { useQuery } from '@tanstack/react-query';
 import { DayActivity } from '@/types/trip';
 
 interface DayEditDialogProps {
@@ -46,6 +46,25 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [localActivities, setLocalActivities] = useState(activities);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [isAddingActivity, setIsAddingActivity] = useState(false);
+
+  // Fetch restaurant reservations
+  const { data: reservations = [] } = useQuery({
+    queryKey: ['reservations', dayId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('restaurant_reservations')
+        .select('*')
+        .eq('day_id', dayId)
+        .order('order_index');
+
+      if (error) {
+        console.error('Error fetching reservations:', error);
+        throw error;
+      }
+      return data;
+    },
+    enabled: !!dayId && isOpen,
+  });
 
   // Initialize empty activity for the form
   const emptyActivity = {
@@ -146,7 +165,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       setLocalActivities(prev => 
         prev.map(act => 
           act.id === editingActivityId 
-            ? { ...act, ...activity }
+            ? { ...act, ...activity, cost: activity.cost ? Number(activity.cost) : null }
             : act
         )
       );
@@ -324,7 +343,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           <div>
             <h3 className="text-lg font-medium mb-4">Dining</h3>
             <DiningList
-              reservations={[]}
+              reservations={reservations}
               onAddReservation={() => {}}
               formatTime={formatTime}
               dayId={dayId}
