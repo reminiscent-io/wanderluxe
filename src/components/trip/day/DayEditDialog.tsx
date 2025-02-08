@@ -41,6 +41,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [localActivities, setLocalActivities] = useState(activities);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null); // Track editing state
 
   const handleGenerateImages = async () => {
     if (!imagePrompt.trim()) {
@@ -75,28 +76,41 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
   const handleAddActivity = () => {
     const newActivity = {
-      id: Date.now().toString(), // Unique ID
-      title: "New Activity",
+      id: Date.now().toString(),
+      title: "",
       description: "",
       start_time: "",
       end_time: "",
-      cost: 0,
+      cost: undefined,
       currency: "USD",
     };
 
     setLocalActivities((prev) => [...prev, newActivity]);
+    setEditingActivityId(newActivity.id); // Set editing mode for the new activity
+  };
+
+  const handleEditActivity = (id: string) => {
+    setEditingActivityId(id); // Set editing mode for the selected activity
+  };
+
+  const handleSaveActivity = (id: string, updatedActivity: any) => {
+    setLocalActivities((prev) =>
+      prev.map((activity) => (activity.id === id ? updatedActivity : activity))
+    );
+    setEditingActivityId(null); // Exit editing mode
+  };
+
+  const handleCancelEdit = () => {
+    // Cancel editing and reset the state
+    setEditingActivityId(null);
   };
 
   const handleSave = async () => {
     try {
       const updateData: { title: string; image_url?: string; activities?: any[] } = { title };
 
-      // Only include image_url if a new image is selected
-      if (selectedImage) {
-        updateData.image_url = selectedImage;
-      }
+      if (selectedImage) updateData.image_url = selectedImage;
 
-      // Include updated activities in save logic
       updateData.activities = localActivities;
 
       const { error } = await supabase
@@ -175,16 +189,34 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
           <div>
             <h3 className="text-lg font-medium mb-4">Activities</h3>
-            <ActivitiesList
-              activities={localActivities.sort((a, b) => {
-                if (!a.start_time) return 1;
-                if (!b.start_time) return -1;
-                return a.start_time.localeCompare(b.start_time);
-              })}
-              onAddActivity={handleAddActivity}
-              onEditActivity={(id) => console.log(`Edit activity with ID ${id}`)}
-              formatTime={formatTime}
-            />
+            {localActivities.map((activity) =>
+              editingActivityId === activity.id ? (
+                <div key={activity.id} className="space-y-2">
+                  {/* Inline Form for Editing */}
+                  <Input
+                    value={activity.title}
+                    onChange={(e) =>
+                      handleSaveActivity(activity.id, { ...activity, title: e.target.value })
+                    }
+                    placeholder="Enter activity title"
+                  />
+                  {/* Add other fields like description, start_time as needed */}
+                  <Button variant="outline" onClick={handleCancelEdit}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div key={activity.id} className="flex justify-between items-center">
+                  <span>{activity.title || "Untitled Activity"}</span>
+                  <Button variant="ghost" size="sm" onClick={() => handleEditActivity(activity.id)}>
+                    Edit
+                  </Button>
+                </div>
+              )
+            )}
+            <Button variant="outline" size="sm" onClick={handleAddActivity}>
+              Add Activity
+            </Button>
           </div>
 
           <div>
