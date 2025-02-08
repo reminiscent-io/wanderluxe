@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ActivityDialogs from './ActivityDialogs';
+import { Utensils } from "lucide-react"; // Import Utensils icon
 
 interface DayCardContentProps {
   index: number;
@@ -15,6 +16,11 @@ interface DayCardContentProps {
     cost?: number;
     currency?: string;
   }>;
+  reservations: Array<{ // Added reservations prop
+    id: string;
+    restaurant: string;
+    time: string;
+  }>;
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
@@ -26,6 +32,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   index,
   title,
   activities,
+  reservations, // Use reservations prop
   onAddActivity,
   onEditActivity,
   formatTime,
@@ -75,6 +82,20 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       ) : (
         <p className="text-gray-500 text-center py-4">No activities planned yet</p>
       )}
+
+      <div className="mt-8">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Utensils className="h-5 w-5 text-earth-600" />
+            Dining
+          </h3>
+        </div>
+        <DiningList
+          reservations={reservations || []}
+          formatTime={formatTime}
+          dayId={dayId}
+        />
+      </div>
 
       <ActivityDialogs
         isAddingActivity={isAddingActivity}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -36,6 +35,12 @@ interface DayCardProps {
   imageUrl?: string | null;
   defaultImageUrl?: string;
   tripId: string;
+  reservations?: Array<{ // Added reservations prop
+    id: string;
+    restaurant: string;
+    time: string;
+    // ...other reservation details
+  }>;
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -48,7 +53,8 @@ const DayCard: React.FC<DayCardProps> = ({
   onDelete,
   imageUrl,
   defaultImageUrl,
-  tripId
+  tripId,
+  reservations // Added reservations prop
 }) => {
   const {
     isEditing,
@@ -141,7 +147,7 @@ const DayCard: React.FC<DayCardProps> = ({
           activities={activities}
           formatTime={formatTime}
         />
-        
+
         <DayLayout
           title={title || ""}
           activities={activities}
@@ -166,6 +172,7 @@ const DayCard: React.FC<DayCardProps> = ({
           dayId={id}
           tripId={tripId}
           imageUrl={imageUrl || defaultImageUrl}
+          reservations={reservations} // Pass reservations to DayLayout
         />
       </Card>
 
