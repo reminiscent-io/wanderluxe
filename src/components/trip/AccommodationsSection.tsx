@@ -7,7 +7,7 @@ import HotelStaysList from './accommodation/HotelStaysList';
 import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDates } from './accommodation/hooks/useTripDates';
-import { HotelStay, AccommodationFormData } from '@/services/accommodation/types';
+import type { HotelStay, AccommodationFormData } from '@/services/accommodation/types';
 
 interface AccommodationsSectionProps {
   tripId: string;
@@ -39,9 +39,13 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       setEditingStay({
         ...stayToEdit,
         expense_cost: stayToEdit.expense_cost?.toString() || '',
+        // Required fields with defaults
         hotel_details: stayToEdit.hotel_details || '',
+        currency: stayToEdit.currency || 'USD',
+        // Optional fields with empty defaults
         hotel_url: stayToEdit.hotel_url || '',
-        currency: stayToEdit.currency || 'USD'
+        hotel_address: stayToEdit.hotel_address || '',
+        hotel_phone: stayToEdit.hotel_phone || ''
       });
     }
   };
@@ -58,7 +62,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
           <HotelStaysList
             hotelStays={hotelStays}
             onEdit={handleEdit}
-            onDelete={(stayId) => handleDelete(stayId)}
+            onDelete={handleDelete} // Directly pass stay_id
             formatDateRange={formatDateRange}
           />
 
