@@ -27,6 +27,11 @@ interface DayLayoutProps {
   tripId: string;
   imageUrl?: string | null;
   defaultImageUrl?: string;
+  reservations?: Array<{
+    id: string;
+    restaurant: string;
+    time: string;
+  }>;
 }
 
 const DayLayout: React.FC<DayLayoutProps> = ({
@@ -59,6 +64,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
         formatTime={formatTime}
         dayId={dayId}
         eventId={dayId}
+        reservations={reservations}
       />
     </div>
   );

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ActivityDialogs from './ActivityDialogs';
-import { Utensils } from "lucide-react"; // Import Utensils icon
+import { Utensils } from "lucide-react";
+import DiningList from '../DiningList';
 
 interface DayCardContentProps {
   index: number;
