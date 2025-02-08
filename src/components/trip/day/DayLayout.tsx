@@ -14,6 +14,11 @@ interface DayLayoutProps {
     cost?: number;
     currency?: string;
   }>;
+  reservations?: Array<{
+    id: string;
+    restaurant: string;
+    time: string;
+  }>;
   hotelDetails?: {
     name: string;
     details: string;

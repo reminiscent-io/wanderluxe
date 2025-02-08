@@ -21,11 +21,6 @@ interface DayCardContentProps {
     cost?: number;
     currency?: string;
   }>;
-  reservations: Array<{ // Added reservations prop
-    id: string;
-    restaurant: string;
-    time: string;
-  }>;
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
@@ -37,7 +32,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   index,
   title,
   activities,
-  reservations, // Use reservations prop
+  reservations,
   onAddActivity,
   onEditActivity,
   formatTime,
