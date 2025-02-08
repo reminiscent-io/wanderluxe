@@ -8,10 +8,11 @@ import {
   AccommodationFormData 
 } from '@/services/accommodation/accommodationService';
 import { toast } from 'sonner';
+import { HotelStay } from '@/services/accommodation/types';
 
 export const useAccommodationHandlers = (tripId: string, onAccommodationChange: () => void) => {
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
-  const [editingStay, setEditingStay] = useState<string | null>(null);
+  const [editingStay, setEditingStay] = useState<(AccommodationFormData & { stay_id: string }) | null>(null);
   const queryClient = useQueryClient();
 
   const invalidateQueries = async () => {
@@ -52,7 +53,7 @@ export const useAccommodationHandlers = (tripId: string, onAccommodationChange: 
     }
   };
 
-  const handleDelete = async (stay: { stay_id: string }) => {
+  const handleDelete = async (stay: HotelStay) => {
     try {
       const success = await deleteAccommodation(stay);
       if (success) {

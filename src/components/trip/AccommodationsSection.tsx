@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
@@ -6,6 +7,7 @@ import HotelStaysList from './accommodation/HotelStaysList';
 import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDates } from './accommodation/hooks/useTripDates';
+import { HotelStay } from '@/services/accommodation/types';
 
 interface AccommodationsSectionProps {
   tripId: string;
@@ -46,7 +48,10 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   const handleEdit = (stayId: string) => {
     const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
     if (stayToEdit) {
-      setEditingStay(stayToEdit);
+      setEditingStay({
+        ...stayToEdit,
+        expense_cost: stayToEdit.expense_cost?.toString() || ''
+      });
     }
   };
 
@@ -62,7 +67,12 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
           <HotelStaysList
             hotelStays={hotelStays}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={(stay) => handleDelete({ 
+              stay_id: stay.stay_id,
+              hotel: stay.hotel,
+              hotel_checkin_date: stay.hotel_checkin_date,
+              hotel_checkout_date: stay.hotel_checkout_date
+            })}
             formatDateRange={formatDateRange}
           />
 
@@ -71,7 +81,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             setIsAddingAccommodation={setIsAddingAccommodation}
             editingStay={editingStay}
             onSubmit={editingStay 
-              ? (formData) => handleUpdate(editingStay, formData)
+              ? (formData) => handleUpdate(editingStay.stay_id, formData)
               : handleSubmit
             }
             onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
