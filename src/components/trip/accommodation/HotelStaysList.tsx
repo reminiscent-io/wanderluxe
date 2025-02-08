@@ -35,7 +35,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
           key={stay.stay_id}
           stay={stay}
           onEdit={onEdit}
-          onDelete={onDelete}
+          onDelete={() => onDelete(stay)}
           formatDateRange={formatDateRange}
         />
       ))}
