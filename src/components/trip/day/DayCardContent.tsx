@@ -52,7 +52,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
           onClick={() => setIsAddingActivity(true)}
           variant="ghost"
           size="sm"
-          className="bg-sand-500 hover:bg-sand-600 text-white"
+          className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
         >
           <Plus className="w-4 h-4 mr-1" />
           Add Activity
