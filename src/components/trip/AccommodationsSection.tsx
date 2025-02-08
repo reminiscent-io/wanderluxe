@@ -68,6 +68,9 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
           />
 
           <AccommodationActions
+            isAddingAccommodation={isAddingAccommodation}
+            setIsAddingAccommodation={setIsAddingAccommodation}
+            editingStay={editingStay}
             onSubmit={editingStay ? 
               (formData) => handleUpdate(editingStay.stay_id, formData)
               : handleSubmit}
