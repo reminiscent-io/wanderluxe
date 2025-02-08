@@ -84,12 +84,6 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       )}
 
       <div className="mt-8">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Utensils className="h-5 w-5 text-earth-600" />
-            Dining
-          </h3>
-        </div>
         <DiningList
           reservations={reservations || []}
           formatTime={formatTime}
