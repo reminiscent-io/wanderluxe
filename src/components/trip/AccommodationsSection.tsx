@@ -43,19 +43,12 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     handleDelete
   } = useAccommodationHandlers(tripId, onAccommodationChange);
 
-  // Filter out duplicate hotel stays based on hotel name and dates
-  const uniqueHotelStays = hotelStays.reduce((acc, current) => {
-    const isDuplicate = acc.some(stay => 
-      stay.hotel === current.hotel && 
-      stay.hotel_checkin_date === current.hotel_checkin_date &&
-      stay.hotel_checkout_date === current.hotel_checkout_date
-    );
-    
-    if (!isDuplicate) {
-      acc.push(current);
+  const handleEdit = (stayId: string) => {
+    const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
+    if (stayToEdit) {
+      setEditingStay(stayToEdit);
     }
-    return acc;
-  }, [] as typeof hotelStays);
+  };
 
   return (
     <Card className="bg-sand-50 shadow-md">
@@ -67,8 +60,8 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       {isExpanded && (
         <div className="p-6 pt-0 space-y-6">
           <HotelStaysList
-            hotelStays={uniqueHotelStays}
-            onEdit={setEditingStay}
+            hotelStays={hotelStays}
+            onEdit={handleEdit}
             onDelete={handleDelete}
             formatDateRange={formatDateRange}
           />
@@ -82,20 +75,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
               : handleSubmit
             }
             onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
-            initialData={editingStay ? {
-              hotel: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel || '',
-              hotel_details: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_details || '', // Corrected property name
-              hotel_url: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_url || '', // Corrected property name
-              hotel_checkin_date: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_checkin_date || '', // Corrected property name
-              hotel_checkout_date: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_checkout_date || '', // Corrected property name
-              expense_cost: uniqueHotelStays.find(s => s.stay_id === editingStay)?.expense_cost || '', // Corrected property name
-              currency: uniqueHotelStays.find(s => s.stay_id === editingStay)?.currency || 'USD', // Corrected capitalization
-              hotel_address: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_address || '', // Corrected property name
-              hotel_phone: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_phone || '', // Corrected property name
-              hotel_place_id: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_place_id || '', // Corrected property name
-              hotel_website: uniqueHotelStays.find(s => s.stay_id === editingStay)?.hotel_website || '' // Corrected property name
-            } : undefined}
-
+            initialData={editingStay || undefined}
             tripArrivalDate={tripDates.arrival_date}
             tripDepartureDate={tripDates.departure_date}
           />
