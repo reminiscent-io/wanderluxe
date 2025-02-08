@@ -55,7 +55,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     description: activity.description,  // Add this
     start_time: activity.start_time,    // Add this
     end_time: activity.end_time,        // Add this
-    cost: activity.cost ? Number(activity.cost) : null,
+    cost: activity.cost ?? null,
     currency: activity.currency,
     order_index: 0,
     created_at: new Date().toISOString()  // Add this required field
