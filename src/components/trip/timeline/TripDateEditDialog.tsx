@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,13 @@ const TripDateEditDialog = ({
   onDepartureChange,
   onSave,
 }: TripDateEditDialogProps) => {
+  useEffect(() => {
+    if (isOpen) {
+      onArrivalChange(arrivalDate);
+      onDepartureChange(departureDate);
+    }
+  }, [isOpen, arrivalDate, departureDate]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
