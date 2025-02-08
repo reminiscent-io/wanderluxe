@@ -1,3 +1,4 @@
+
 // AccommodationsSection.tsx
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
@@ -38,7 +39,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     if (stayToEdit) {
       setEditingStay({
         ...stayToEdit,
-        expense_cost: stayToEdit.expense_cost?.toString() || '',
+        expense_cost: stayToEdit.expense_cost?.toString() || null,
         // Required fields with defaults
         hotel_details: stayToEdit.hotel_details || '',
         currency: stayToEdit.currency || 'USD',

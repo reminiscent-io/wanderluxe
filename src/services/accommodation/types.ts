@@ -1,6 +1,7 @@
+
 // types.ts (Accommodation types)
 export interface AccommodationFormData {
-  expense_cost: string;
+  expense_cost: string | null;
   hotel: string;
   hotel_details: string;
   hotel_url?: string;
@@ -17,6 +18,7 @@ export interface HotelStay extends AccommodationFormData {
   stay_id: string;
   trip_id: string;
   created_at?: string;
+}
 
 export interface AccommodationDay {
   id: string;

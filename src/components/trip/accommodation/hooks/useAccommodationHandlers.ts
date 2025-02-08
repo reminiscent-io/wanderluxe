@@ -1,3 +1,4 @@
+
 // useAccommodationHandlers.ts
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,13 +27,20 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
 
   const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
     try {
+      // Convert expense_cost to number or null before updating
+      const expense_cost = formData.expense_cost ? Number(formData.expense_cost) : null;
+      
       const { error } = await supabase
         .from('hotel_stays')
-        .update(formData)
+        .update({ 
+          ...formData,
+          expense_cost 
+        })
         .eq('stay_id', stayId);
 
       if (error) throw error;
       onSuccess();
+      setEditingStay(null); // Clear editing state after successful update
     } catch (error) {
       console.error('Error updating accommodation:', error);
     }
