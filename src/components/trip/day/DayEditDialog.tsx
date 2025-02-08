@@ -40,6 +40,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [localActivities, setLocalActivities] = useState(activities);
 
   const handleGenerateImages = async () => {
     if (!imagePrompt.trim()) {
@@ -72,32 +73,46 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     }
   };
 
+  const handleAddActivity = () => {
+    const newActivity = {
+      id: Date.now().toString(), // Unique ID
+      title: "New Activity",
+      description: "",
+      start_time: "",
+      end_time: "",
+      cost: 0,
+      currency: "USD",
+    };
+
+    setLocalActivities((prev) => [...prev, newActivity]);
+  };
+
   const handleSave = async () => {
-  try {
-    const updateData: { title: string; image_url?: string } = { title };
+    try {
+      const updateData: { title: string; image_url?: string; activities?: any[] } = { title };
 
-    // Only include image_url if a new image is selected
-    if (selectedImage) {
-      updateData.image_url = selectedImage;
+      // Only include image_url if a new image is selected
+      if (selectedImage) {
+        updateData.image_url = selectedImage;
+      }
+
+      // Include updated activities in save logic
+      updateData.activities = localActivities;
+
+      const { error } = await supabase
+        .from('trip_days')
+        .update(updateData)
+        .eq('day_id', dayId);
+
+      if (error) throw error;
+
+      toast.success('Day updated successfully');
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating day:', error);
+      toast.error('Failed to update day');
     }
-
-    const { error } = await supabase
-      .from('trip_days')
-      .update(updateData)
-      .eq('day_id', dayId);
-
-    if (error) throw error;
-
-    console.log('Saved day with data:', updateData);
-
-    toast.success('Day updated successfully');
-    onOpenChange(false);
-  } catch (error) {
-    console.error('Error updating day:', error);
-    toast.error('Failed to update day');
-  }
-};
-
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -161,13 +176,13 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           <div>
             <h3 className="text-lg font-medium mb-4">Activities</h3>
             <ActivitiesList
-              activities={activities.sort((a, b) => {
+              activities={localActivities.sort((a, b) => {
                 if (!a.start_time) return 1;
                 if (!b.start_time) return -1;
                 return a.start_time.localeCompare(b.start_time);
               })}
-              onAddActivity={() => {}}
-              onEditActivity={() => {}}
+              onAddActivity={handleAddActivity}
+              onEditActivity={(id) => console.log(`Edit activity with ID ${id}`)}
               formatTime={formatTime}
             />
           </div>
