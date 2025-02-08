@@ -1,21 +1,36 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const createTripDays = async (tripId: string, dates: string[]) => {
-  console.log('Creating trip days for dates:', dates);
+  console.log('Managing trip days for dates:', dates);
   
-  // First, check which dates already have trip days
+  // Get all existing trip days
   const { data: existingDays } = await supabase
     .from('trip_days')
-    .select('date')
+    .select('id, date')
     .eq('trip_id', tripId);
 
   // Ensure dates are in YYYY-MM-DD format without time information
   const formattedDates = dates.map(date => date.split('T')[0]);
   const existingDatesSet = new Set(existingDays?.map(day => day.date.split('T')[0]) || []);
   
-  // Filter out dates that already have trip days
+  // Find dates to create and delete
   const newDates = formattedDates.filter(date => !existingDatesSet.has(date));
-  
+  const datesToDelete = existingDays?.filter(day => !formattedDates.includes(day.date.split('T')[0])) || [];
+
+  // Delete days that are no longer in the range
+  if (datesToDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('trip_days')
+      .delete()
+      .in('id', datesToDelete.map(day => day.id));
+
+    if (deleteError) {
+      console.error('Error deleting trip days:', deleteError);
+      throw deleteError;
+    }
+  }
+
+  // Create new days
   if (newDates.length === 0) {
     console.log('No new trip days to create');
     return;
