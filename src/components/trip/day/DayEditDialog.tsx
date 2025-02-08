@@ -162,9 +162,9 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
       if (error) throw error;
 
-      setLocalActivities(prev => 
-        prev.map(act => 
-          act.id === editingActivityId 
+      setLocalActivities(prev =>
+        prev.map(act =>
+          act.id === editingActivityId
             ? { ...act, ...activity, cost: activity.cost ? Number(activity.cost) : null }
             : act
         )
@@ -198,7 +198,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   };
 
   // Find the activity being edited
-  const activityBeingEdited = editingActivityId 
+  const activityBeingEdited = editingActivityId
     ? localActivities.find(act => act.id === editingActivityId)
     : null;
 
@@ -208,7 +208,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Edit Day Details</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div>
             <label className="text-sm font-medium mb-2 block">Day Title</label>
@@ -227,7 +227,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                 onChange={(e) => setImagePrompt(e.target.value)}
                 placeholder="Where will you be today?"
               />
-              <Button 
+              <Button
                 onClick={handleGenerateImages}
                 disabled={isLoading || !imagePrompt.trim()}
               >
@@ -277,7 +277,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                 </DialogHeader>
                 <ActivityForm
                   activity={emptyActivity}
-                  onActivityChange={() => {}}
+                  onActivityChange={() => { }}
                   onSubmit={handleActivitySubmit}
                   onCancel={() => setIsAddingActivity(false)}
                   submitLabel="Add Activity"
@@ -302,7 +302,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                       cost: activityBeingEdited.cost?.toString() || '',
                       currency: activityBeingEdited.currency || 'USD'
                     }}
-                    onActivityChange={() => {}}
+                    onActivityChange={() => { }}
                     onSubmit={handleUpdateActivity}
                     onCancel={() => setEditingActivityId(null)}
                     submitLabel="Update Activity"
@@ -314,9 +314,16 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
             {/* Activities List */}
             <div className="space-y-2">
-              {localActivities.map((activity) => (
-                <div 
-                  key={activity.id} 
+              {localActivities.sort((a, b) => {
+                const timeA = a.start_time || '';
+                const timeB = b.start_time || '';
+                if (timeA === '' && timeB === '') return 0;
+                if (timeA === '') return 1;
+                if (timeB === '') return -1;
+                return new Date(timeB).getTime() - new Date(timeA).getTime();
+              }).map((activity) => (
+                <div
+                  key={activity.id}
                   className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
                 >
                   <div>
@@ -328,9 +335,9 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                       </p>
                     )}
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleEditActivity(activity.id)}
                   >
                     Edit
@@ -344,7 +351,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <h3 className="text-lg font-medium mb-4">Dining</h3>
             <DiningList
               reservations={reservations}
-              onAddReservation={() => {}}
+              onAddReservation={() => { }}
               formatTime={formatTime}
               dayId={dayId}
             />
