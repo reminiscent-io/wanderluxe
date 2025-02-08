@@ -1,7 +1,7 @@
-
 import React from 'react';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
+import DiningList from './DiningList'; // Added import for DiningList
 
 interface DayLayoutProps {
   title: string;
@@ -45,6 +45,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
   tripId,
   imageUrl,
   defaultImageUrl,
+  reservations, // Added reservations prop
 }) => {
   return (
     <div className="grid md:grid-cols-2 h-full">
@@ -54,7 +55,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
         dayId={dayId}
         tripId={tripId}
       />
-      
+
       <DayCardContent
         index={index}
         title={title}
@@ -64,7 +65,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
         formatTime={formatTime}
         dayId={dayId}
         eventId={dayId}
-        reservations={reservations}
+        reservations={reservations} // Passed reservations prop
       />
     </div>
   );

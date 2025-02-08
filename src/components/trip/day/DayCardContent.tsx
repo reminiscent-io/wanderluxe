@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Utensils } from "lucide-react";
 import ActivityDialogs from './ActivityDialogs';
-import { Utensils } from "lucide-react";
-import DiningList from '../DiningList';
-
 import DiningList from '../DiningList';
 
 interface DayCardContentProps {
