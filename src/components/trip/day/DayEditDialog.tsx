@@ -356,7 +356,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           </div>
 
           <div>
-            <h3 className="text-lg font-medium">Dining</h3> {/* Removed the second 'Dining' text */}
             <DiningList
               reservations={reservations}
               onAddReservation={() => { }}
