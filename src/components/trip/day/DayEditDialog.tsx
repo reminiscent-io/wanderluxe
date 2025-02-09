@@ -151,16 +151,18 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     if (!editingActivityId) return;
 
     try {
+      const updateData = {
+        title: activity.title,
+        description: activity.description || null,
+        start_time: activity.start_time || null,
+        end_time: activity.end_time || null,
+        cost: activity.cost ? Number(activity.cost) : null,
+        currency: activity.currency
+      };
+
       const { error } = await supabase
         .from('day_activities')
-        .update({
-          title: activity.title,
-          description: activity.description,
-          start_time: activity.start_time,
-          end_time: activity.end_time,
-          cost: activity.cost ? Number(activity.cost) : null,
-          currency: activity.currency
-        })
+        .update(updateData)
         .eq('id', editingActivityId);
 
       if (error) throw error;

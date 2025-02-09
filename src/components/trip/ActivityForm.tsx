@@ -60,7 +60,15 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(activity);
+      // Format the activity data before submitting
+      const formattedActivity = {
+        ...activity,
+        cost: activity.cost ? Number(activity.cost) : null,
+        start_time: activity.start_time || null,
+        end_time: activity.end_time || null
+      };
+      
+      await onSubmit(formattedActivity);
       toast.success('Activity saved successfully');
       onCancel(); // Close the form after successful submission
     } catch (error) {
