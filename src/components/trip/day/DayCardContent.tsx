@@ -102,9 +102,6 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
             return new Date(`2000-01-01T${b.reservation_time}`).getTime() - 
                    new Date(`2000-01-01T${a.reservation_time}`).getTime();
           })}
-            return new Date(`2000-01-01T${b.reservation_time}`).getTime() - 
-                   new Date(`2000-01-01T${a.reservation_time}`).getTime();
-          })}
           formatTime={formatTime}
           dayId={dayId}
           onAddReservation={() => {}}
