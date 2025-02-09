@@ -265,7 +265,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h4 className="text-sm font-medium text-earth-500">Activities</h4>
+              <h4 className="text-base font-semibold text-earth-700">Activities</h4>
               <Button
                 onClick={handleAddActivity}
                 variant="ghost"
