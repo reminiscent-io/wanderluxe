@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Label } from "@/components/ui/label";
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
+import { loadGoogleMapsApi } from '@/utils/loadGoogleMapsApi';
 
 declare global {
   interface Window {
