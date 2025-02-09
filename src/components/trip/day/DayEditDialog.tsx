@@ -336,9 +336,9 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                   className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
                 >
                   <div>
-                    <h4 className="font-medium">{activity.title}</h4>
+                    <h4 className="font-medium text-sm">{activity.title}</h4> {/* Reduced font size */}
                     {activity.start_time && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-500"> {/* Reduced font size */}
                         {formatTime(activity.start_time)}
                         {activity.end_time && ` - ${formatTime(activity.end_time)}`}
                       </p>
@@ -357,10 +357,8 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           </div>
 
           <div>
-            <h3 className="text-lg font-medium mb-2">Dining</h3> 
             <DiningList
               reservations={reservations}
-              onAddReservation={() => { }}
               formatTime={formatTime}
               dayId={dayId}
             />
