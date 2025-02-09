@@ -36,13 +36,13 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            type="button" // Added for semantic correctness
+          <div
+            role="button"
             onClick={() => setIsEditDialogOpen(true)}
-            className="h-8 w-8 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
-          > {/* Replaced Button with button and added styling */}
+            className="h-8 w-8 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md cursor-pointer flex items-center justify-center"
+          >
             <Pencil className="h-4 w-4" />
-          </button> {/* Removed the nested button */}
+          </div>
         </div>
       </div>
 
