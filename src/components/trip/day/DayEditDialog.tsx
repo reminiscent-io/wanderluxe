@@ -135,6 +135,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
       setLocalActivities([...localActivities, data]);
       setIsAddingActivity(false);
+      setEditingActivityId(null); // Close any open edit dialogs
       toast.success('Activity added successfully');
     } catch (error) {
       console.error('Error adding activity:', error);
