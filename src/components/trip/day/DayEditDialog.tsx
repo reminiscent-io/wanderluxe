@@ -69,14 +69,14 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   });
 
   // Initialize empty activity for the form
-  const emptyActivity = {
+  const [emptyActivity, setEmptyActivity] = useState({
     title: '',
     description: '',
     start_time: '',
     end_time: '',
     cost: '',
     currency: 'USD'
-  };
+  });
 
   const handleGenerateImages = async () => {
     if (!imagePrompt.trim()) {
@@ -286,7 +286,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                 </DialogHeader>
                 <ActivityForm
                   activity={emptyActivity}
-                  onActivityChange={() => { }}
+                  onActivityChange={(updatedActivity) => setEmptyActivity(updatedActivity)}
                   onSubmit={handleActivitySubmit}
                   onCancel={() => setIsAddingActivity(false)}
                   submitLabel="Add Activity"
@@ -311,7 +311,15 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                       cost: activityBeingEdited.cost?.toString() || '',
                       currency: activityBeingEdited.currency || 'USD'
                     }}
-                    onActivityChange={() => { }}
+                    onActivityChange={(updatedActivity) => {
+                      setLocalActivities(prev => 
+                        prev.map(act => 
+                          act.id === editingActivityId 
+                            ? { ...act, ...updatedActivity }
+                            : act
+                        )
+                      );
+                    }}
                     onSubmit={handleUpdateActivity}
                     onCancel={() => setEditingActivityId(null)}
                     submitLabel="Update Activity"
