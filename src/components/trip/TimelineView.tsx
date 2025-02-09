@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTimelineGroups } from '@/hooks/use-timeline-groups';
 import { useTripDays } from '@/hooks/use-trip-days';
@@ -21,7 +21,7 @@ interface TimelineViewProps {
 
 const TimelineView: React.FC<TimelineViewProps> = ({
   tripId,
-  onAddAccommodation,
+  onAddAccommodation = () => {},
   onEdit,
   onDelete
 }) => {
@@ -29,39 +29,44 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
-    arrival_date: null,
-    departure_date: null
-  });
+  const [tripDates, setTripDates] = useState<{ 
+    arrival_date: string | null; 
+    departure_date: string | null; 
+  }>({ arrival_date: null, departure_date: null });
 
-  const fetchTripDates = async () => {
-    const { data, error } = await supabase
-      .from('trips')
-      .select('arrival_date, departure_date')
-      .eq('trip_id', tripId)
-      .single();
+  const fetchTripDates = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
 
-    if (error) {
+      if (error) throw error;
+      setTripDates(data);
+    } catch (error) {
       console.error('Error fetching trip dates:', error);
-      return;
+      toast.error('Failed to load trip dates');
     }
-
-    setTripDates(data);
-  };
-
-  useEffect(() => {
-    fetchTripDates();
   }, [tripId]);
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    refreshEvents();
-    refreshDays();
+  useEffect(() => {
     fetchTripDates();
-    setIsRefreshing(false);
-  };
+  }, [fetchTripDates]);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshEvents(), refreshDays(), fetchTripDates()]);
+    } catch (error) {
+      toast.error('Failed to refresh data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshEvents, refreshDays, fetchTripDates]);
 
   useEffect(() => {
+    const abortController = new AbortController();
     const channel = supabase
       .channel('timeline_changes')
       .on(
@@ -73,8 +78,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           filter: `trip_id=eq.${tripId}`,
         },
         () => {
-          refreshEvents();
-          toast.success('Timeline updated');
+          if (!abortController.signal.aborted) {
+            refreshEvents();
+            toast.success('Timeline updated');
+          }
         }
       )
       .on(
@@ -86,21 +93,30 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           filter: `trip_id=eq.${tripId}`,
         },
         () => {
-          refreshDays();
-          toast.success('Days updated');
+          if (!abortController.signal.aborted) {
+            refreshDays();
+            toast.success('Days updated');
+          }
         }
       )
       .subscribe();
 
     return () => {
+      abortController.abort();
       supabase.removeChannel(channel);
     };
   }, [tripId, refreshEvents, refreshDays]);
 
-  const hotelStays = events?.filter(event => event.hotel) || [];
+  const hotelStays = useMemo(() => 
+    events?.filter(event => event.hotel) || []
+  , [events]);
 
   return (
     <div className="relative space-y-8">
+      {isRefreshing && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
+      )}
+
       <div className="absolute right-0 top-0 flex gap-2 z-10">
         {onEdit && (
           <Button
@@ -108,6 +124,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             size="icon"
             onClick={onEdit}
             className="bg-white/80 backdrop-blur-sm hover:bg-white"
+            disabled={isRefreshing}
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -118,6 +135,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             size="icon"
             onClick={onDelete}
             className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
+            disabled={isRefreshing}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -135,7 +153,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           tripId={tripId}
           onAccommodationChange={handleRefresh}
           hotelStays={hotelStays.map(event => ({
-            id: event.stay_id,
+            stay_id: event.stay_id,
             hotel: event.hotel || '',
             hotel_details: event.hotel_details,
             hotel_url: event.hotel_url,
@@ -156,7 +174,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       </div>
 
       <TimelineContent groups={groups} />
-      <AccommodationGaps gaps={gaps} onAddAccommodation={onAddAccommodation || (() => {})} />
+      <AccommodationGaps 
+        gaps={gaps} 
+        onAddAccommodation={onAddAccommodation} 
+      />
     </div>
   );
 };
