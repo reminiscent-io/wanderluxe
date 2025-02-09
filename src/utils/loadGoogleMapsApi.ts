@@ -1,37 +1,30 @@
+import { supabase } from '@/integrations/supabase/client';
 
-let isLoading = false;
-let isLoaded = false;
+let loadPromise: Promise<void> | null = null;
 
 export const loadGoogleMapsApi = async () => {
-  if (isLoaded) return;
-  if (isLoading) {
-    return new Promise(resolve => {
-      const checkLoaded = setInterval(() => {
-        if (isLoaded) {
-          clearInterval(checkLoaded);
-          resolve(true);
-        }
-      }, 100);
-    });
-  }
+  if (window.google?.maps) return;
+  if (loadPromise) return loadPromise;
 
-  isLoading = true;
-  try {
-    await new Promise<void>((resolve, reject) => {
+  loadPromise = new Promise(async (resolve, reject) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-google-places-key');
+      if (error) throw error;
+
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.key}&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
-      script.onload = () => {
-        isLoaded = true;
-        isLoading = false;
-        resolve();
-      };
-      script.onerror = reject;
+
+      script.onload = () => resolve();
+      script.onerror = (error) => reject(error);
+
       document.head.appendChild(script);
-    });
-  } catch (error) {
-    isLoading = false;
-    throw error;
-  }
+    } catch (error) {
+      console.error('Error loading Google Maps API:', error);
+      reject(error);
+    }
+  });
+
+  return loadPromise;
 };

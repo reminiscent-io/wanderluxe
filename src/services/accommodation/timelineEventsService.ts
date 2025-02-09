@@ -95,11 +95,18 @@ export const updateAccommodationEvents = async (
         expense_date: formData.expense_date || null
       })
       .eq('stay_id', formData.stay_id)
-
       .select()
       .single();
 
-    if (accommodationError) throw accommodationError;
+    if (accommodationError) {
+      console.error('Accommodation update error:', accommodationError);
+      throw new Error(`Failed to update accommodation: ${accommodationError.message}`);
+    }
+
+    if (!accommodation) {
+      throw new Error('No accommodation found with the provided stay_id');
+    }
+
 
     // Delete existing accommodation_days
     const { error: deleteError } = await supabase
