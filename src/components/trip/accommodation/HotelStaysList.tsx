@@ -11,7 +11,11 @@ interface HotelStaysListProps {
     hotel_checkout_date: string;
   }>;
   onEdit: (stayId: string) => void;
-  onDelete: (stay: { hotel: string; hotel_checkin_date: string; hotel_checkout_date: string; }) => void;
+  onDelete: (stay: { 
+    hotel: string; 
+    hotel_checkin_date: string; 
+    hotel_checkout_date: string; 
+  }) => void;
   formatDateRange: (checkinDate: string, checkoutDate: string) => string;
 }
 
@@ -23,16 +27,23 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 }) => {
   if (hotelStays.length === 0) return null;
 
-  // Sort hotel stays by check-in date in descending order
-  const sortedStays = [...hotelStays].sort((a, b) => 
-    new Date(b.hotel_checkin_date).getTime() - new Date(a.hotel_checkin_date).getTime()
+  // Enhanced sorting with fallback
+  const sortedStays = [...hotelStays].sort((a, b) => {
+    const dateA = new Date(a.hotel_checkin_date).getTime();
+    const dateB = new Date(b.hotel_checkin_date).getTime();
+    return dateB - dateA || a.stay_id.localeCompare(b.stay_id);
+  });
+
+  // Filter out invalid entries
+  const validStays = sortedStays.filter(stay => 
+    stay.stay_id && typeof stay.stay_id === 'string'
   );
 
   return (
     <div className="space-y-4">
-      {sortedStays.map((stay) => (
+      {validStays.map((stay) => (
         <HotelStayCard
-          key={stay.stay_id}
+          key={`hotel-stay-${stay.stay_id}`}
           stay={stay}
           onEdit={onEdit}
           onDelete={onDelete}
