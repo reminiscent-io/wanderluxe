@@ -70,7 +70,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       </div>
 
       {activities.length > 0 ? (
-        <ul className="space-y-2">
+        <ul className="space-y-1">
           {activities.sort((a, b) => {
             const timeA = a.start_time || '';
             const timeB = b.start_time || '';
