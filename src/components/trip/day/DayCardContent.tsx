@@ -8,8 +8,18 @@ interface DayCardContentProps {
   index: number;
   reservations?: Array<{
     id: string;
-    restaurant: string;
-    time: string;
+    day_id: string;
+    restaurant_name: string;
+    reservation_time?: string;
+    number_of_people?: number;
+    confirmation_number?: string;
+    notes?: string;
+    cost?: number;
+    currency?: string;
+    address?: string;
+    phone_number?: string;
+    website?: string;
+    rating?: number;
   }>;
   title: string;
   activities: Array<{
@@ -85,7 +95,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 
       <div className="mt-8">
         <DiningList
-          reservations={(reservations || []).sort((a, b) => {
+          reservations={reservations || []}
             if (!a.reservation_time && !b.reservation_time) return 0;
             if (!a.reservation_time) return 1;
             if (!b.reservation_time) return -1;
