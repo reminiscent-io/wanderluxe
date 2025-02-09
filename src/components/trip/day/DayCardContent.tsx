@@ -57,7 +57,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   return (
     <div className="p-6 space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Activities</h3>
+        <h4 className="text-sm font-medium text-earth-500">Activities</h4>
         <Button
           onClick={() => setIsAddingActivity(true)}
           variant="ghost"
@@ -95,13 +95,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 
       <div className="mt-8">
         <DiningList
-          reservations={(reservations || []).sort((a, b) => {
-            if (!a.reservation_time && !b.reservation_time) return 0;
-            if (!a.reservation_time) return 1;
-            if (!b.reservation_time) return -1;
-            return new Date(`2000-01-01T${b.reservation_time}`).getTime() - 
-                   new Date(`2000-01-01T${a.reservation_time}`).getTime();
-          })}
+          reservations={reservations || []}
           formatTime={formatTime}
           dayId={dayId}
           onAddReservation={() => {}}
