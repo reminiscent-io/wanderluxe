@@ -57,7 +57,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   return (
     <div className="p-6 space-y-4">
       <div className="flex justify-between items-center">
-        <h4 className="text-sm font-medium text-earth-500">Activities</h4>
+        <h4 className="text-base font-semibold text-earth-700">Activities</h4>
         <Button
           onClick={() => setIsAddingActivity(true)}
           variant="ghost"
