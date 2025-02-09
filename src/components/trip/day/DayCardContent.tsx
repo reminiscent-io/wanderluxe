@@ -79,7 +79,21 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
             if (timeB === '') return -1;
             return new Date(`2000-01-01T${timeA}`).getTime() - new Date(`2000-01-01T${timeB}`).getTime();
           }).map((activity) => (
-            <li key={activity.id} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+            <li 
+              key={activity.id} 
+              className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+              onClick={() => {
+                setEditingActivity(activity.id);
+                setActivityEdit({
+                  title: activity.title,
+                  description: activity.description || '',
+                  start_time: activity.start_time || '',
+                  end_time: activity.end_time || '',
+                  cost: activity.cost?.toString() || '',
+                  currency: activity.currency || 'USD'
+                });
+              }}
+            >
               <span>{activity.title}</span>
               {activity.start_time && (
                 <span className="text-sm text-gray-500">
