@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Calendar, ExternalLink, Pencil, Trash2 } from "lucide-react";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 
 interface HotelStayCardProps {
   stay: {
@@ -23,25 +23,46 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
   onDelete,
   formatDateRange,
 }) => {
-  // Generate array of dates between check-in and check-out
+  // Safe date range generation with validation
   const getDatesInRange = (startDate: string, endDate: string) => {
-    const dates = [];
-    const start = parseISO(startDate);
-    const end = parseISO(endDate);
+    try {
+      const start = parseISO(startDate);
+      const end = parseISO(endDate);
+      
+      if (!isValid(start) || !isValid(end) || start > end) {
+        console.warn('Invalid date range provided.');
+        return [];
+      }
 
-    let current = new Date(start);
-    while (current <= end) {
-      dates.push(new Date(current));
-      current.setDate(current.getDate() + 1);
+      const dates: Date[] = [];
+      for (let current = new Date(start); current <= end; current.setDate(current.getDate() + 1)) {
+        dates.push(new Date(current));
+      }
+      
+      return dates;
+    } catch (error) {
+      console.error('Error generating date range:', error);
+      return [];
     }
-
-    return dates;
   };
 
-  const stayDates = getDatesInRange(stay.hotel_checkin_date, stay.hotel_checkout_date);
+  const stayDates = getDatesInRange(
+    stay.hotel_checkin_date, 
+    stay.hotel_checkout_date
+  );
 
   const handleDelete = () => {
     onDelete(stay.stay_id);
+  };
+
+  // Safe date formatting helper
+  const safeFormatDate = (dateString: string, formatStr: string) => {
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, formatStr) : 'Invalid date';
+    } catch {
+      return 'Invalid date';
+    }
   };
 
   return (
@@ -52,7 +73,8 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
           <div>
             <h3 className="font-medium">{stay.hotel}</h3>
             <p className="text-sm text-gray-500 mt-1">
-              {format(parseISO(stay.hotel_checkin_date), 'MMM d, yyyy')} - {format(parseISO(stay.hotel_checkout_date), 'MMM d, yyyy')}
+              {safeFormatDate(stay.hotel_checkin_date, 'MMM d, yyyy')} - {' '}
+              {safeFormatDate(stay.hotel_checkout_date, 'MMM d, yyyy')}
             </p>
             {stay.hotel_details && (
               <p className="text-sm text-gray-600 mt-1">{stay.hotel_details}</p>
@@ -91,13 +113,21 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
         <div className="pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-500 font-medium mb-1">Daily Schedule:</p>
           <div className="space-y-1">
-            {stayDates.map((date, index) => (
-              <p key={date.toISOString()} className="text-xs text-gray-500">
-                {format(date, 'EEEE, MMMM d, yyyy')}
-                {index === 0 && " (Check-in)"}
-                {index === stayDates.length - 1 && " (Check-out)"}
-              </p>
-            ))}
+            {stayDates.map((date, index) => {
+              const isValidDate = isValid(date);
+              return (
+                <p 
+                  key={isValidDate ? date.toISOString() : `invalid-${index}`}
+                  className="text-xs text-gray-500"
+                >
+                  {isValidDate 
+                    ? format(date, 'EEEE, MMMM d, yyyy') 
+                    : 'Invalid date entry'}
+                  {index === 0 && " (Check-in)"}
+                  {index === stayDates.length - 1 && " (Check-out)"}
+                </p>
+              );
+            })}
           </div>
         </div>
       </div>

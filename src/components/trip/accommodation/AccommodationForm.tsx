@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import HotelSearchInput from './HotelSearchInput';
 import DateInputs from './form/DateInputs';
@@ -23,8 +22,8 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   tripArrivalDate,
   tripDepartureDate
 }) => {
-  const [formData, setFormData] = useState({
-    stay_id: initialData?.stay_id || '',
+      const initialFormState = useMemo(() => ({
+        stay_id: initialData?.stay_id || '',
     hotel: initialData?.hotel || '',
     hotel_details: initialData?.hotel_details || '',
     hotel_url: initialData?.hotel_url || '',
@@ -40,7 +39,14 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     expense_paid: initialData?.expense_paid || false,
     expense_date: initialData?.expense_date || '',
     order_index: initialData?.order_index || 0
-  });
+  }), [initialData, tripArrivalDate, tripDepartureDate]);
+
+  const [formData, setFormData] = useState(initialFormState);
+
+  // Update form when initialData changes
+  useEffect(() => {
+    setFormData(initialFormState);
+  }, [initialFormState]);
 
   const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => {
     setFormData(prev => ({
@@ -56,6 +62,12 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (initialData && !formData.stay_id) {
+      console.error('Missing stay_id for update operation');
+      return;
+    }
+    
     onSubmit(formData);
   };
 
