@@ -1,3 +1,4 @@
+
 import React from 'react';
 import HotelStayCard from './HotelStayCard';
 
@@ -53,5 +54,6 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
       ))}
     </div>
   );
+}
 
 export default HotelStaysList;
