@@ -158,16 +158,21 @@ const DayCard: React.FC<DayCardProps> = ({
       className="space-y-4"
     >
       <Card className="overflow-hidden">
-        <DayHeader
-          date={date}
-          dayNumber={index + 1}
-          onEdit={() => setIsEditing(true)}
-          onDelete={handleDeleteDay}
-          dayId={id}
-          title={title}
-          activities={activities}
-          formatTime={formatTime}
-        />
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <div className="w-full cursor-pointer">
+              <DayHeader
+                date={date}
+                dayNumber={index + 1}
+                onEdit={() => setIsEditing(true)}
+                dayId={id}
+                title={title}
+                activities={activities}
+                formatTime={formatTime}
+              />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
 
         <ErrorBoundary> {/* Wrapping DayLayout with ErrorBoundary */}
           <DayLayout
@@ -198,6 +203,8 @@ const DayCard: React.FC<DayCardProps> = ({
           />
         </ErrorBoundary> {/* Closing ErrorBoundary */}
         {reservations && <DiningList reservations={reservations} />} {/* Added DiningList component */}
+      </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       <EditTitleDialog
