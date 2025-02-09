@@ -24,7 +24,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   tripDepartureDate
 }) => {
   const [formData, setFormData] = useState({
-    stay_id: initialData?.stay_id || undefined,
+    stay_id: initialData?.stay_id || '',
     hotel: initialData?.hotel || '',
     hotel_details: initialData?.hotel_details || '',
     hotel_url: initialData?.hotel_url || '',

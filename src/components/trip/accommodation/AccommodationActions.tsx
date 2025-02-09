@@ -7,7 +7,7 @@ import { AccommodationFormData } from '@/services/accommodation/accommodationSer
 interface AccommodationActionsProps {
   isAddingAccommodation: boolean;
   setIsAddingAccommodation: (value: boolean) => void;
-  editingStay: string | null;
+  editingStay: (AccommodationFormData & { stay_id: string }) | null;
   onSubmit: (data: AccommodationFormData) => void;
   onCancel: () => void;
   initialData?: AccommodationFormData;
