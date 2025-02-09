@@ -32,6 +32,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
     <div className="space-y-4">
       {sortedStays.map((stay) => (
         <HotelStayCard
+  key={stay.id}
           key={stay.stay_id}
           stay={stay}
           onEdit={onEdit}
