@@ -163,9 +163,9 @@ const DayCard: React.FC<DayCardProps> = ({
       className="space-y-4"
     >
       <Card className="overflow-hidden">
-        <Collapsible defaultOpen>
-          <CollapsibleTrigger asChild>
-            <div className="w-full cursor-pointer">
+        <Collapsible defaultOpen={true}>
+          <CollapsibleTrigger className="w-full">
+            <div className="cursor-pointer">
               <DayHeader
                 date={date}
                 dayNumber={index + 1}

@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Label } from "@/components/ui/label";
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
+
+declare global {
+  interface Window {
+    google: any;
+    initGoogleMaps?: () => void;
+  }
+}
 
 interface HotelSearchInputProps {
   value: string;
@@ -11,6 +18,16 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
   value,
   onChange
 }) => {
+  const loadGoogleMapsApi = () => {
+    //Implementation to load Google Maps API
+  };
+
+  useEffect(() => {
+    if (!window.google) {
+      loadGoogleMapsApi();
+    }
+  }, []);
+
   return (
     <div className="space-y-2">
       <Label htmlFor="hotel">Hotel Name *</Label>
