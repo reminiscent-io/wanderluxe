@@ -10,6 +10,8 @@ import DiningList from '../DiningList';
 import ActivityForm from '../ActivityForm';
 import { useQuery } from '@tanstack/react-query';
 import { DayActivity } from '@/types/trip';
+import { Plus } from 'lucide-react'; // Assumed import
+
 
 interface DayEditDialogProps {
   isOpen: boolean;
@@ -263,8 +265,14 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Activities</h3>
-              <Button variant="outline" size="sm" onClick={handleAddActivity}>
+              <h4 className="text-sm font-medium text-earth-500">Activities</h4>
+              <Button
+                onClick={handleAddActivity}
+                variant="ghost"
+                size="sm"
+                className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
+              >
+                <Plus className="h-4 w-4 mr-2" />
                 Add Activity
               </Button>
             </div>
@@ -348,7 +356,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           </div>
 
           <div>
-            <h3 className="text-lg font-medium mb-4">Dining</h3>
+            <h3 className="text-lg font-medium">Dining</h3> {/* Removed the second 'Dining' text */}
             <DiningList
               reservations={reservations}
               onAddReservation={() => { }}
