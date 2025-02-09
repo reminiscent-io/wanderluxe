@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import DayHeader from './DayHeader';
 import EditTitleDialog from './EditTitleDialog';
 import ActivityDialogs from './ActivityDialogs';
