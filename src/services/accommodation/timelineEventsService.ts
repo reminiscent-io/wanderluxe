@@ -92,8 +92,7 @@ export const updateAccommodationEvents = async (
         hotel_website: formData.hotel_website || '',
         expense_type: 'accommodation',
         expense_paid: formData.expense_paid || false,
-        expense_date: formData.expense_date || null,
-        updated_at: new Date().toISOString()
+        expense_date: formData.expense_date || null
       })
       .eq('stay_id', formData.stay_id)
 
