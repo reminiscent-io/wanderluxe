@@ -18,13 +18,9 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
   value,
   onChange
 }) => {
-  const loadGoogleMapsApi = () => {
-    //Implementation to load Google Maps API
-  };
-
   useEffect(() => {
     if (!window.google) {
-      loadGoogleMapsApi();
+      loadGoogleMapsApi().catch(console.error);
     }
   }, []);
 

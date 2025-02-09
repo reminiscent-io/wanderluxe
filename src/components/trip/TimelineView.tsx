@@ -108,7 +108,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   }, [tripId, refreshEvents, refreshDays]);
 
   const hotelStays = useMemo(() => 
-    events?.filter(event => event.hotel) || []
+    events?.filter(event => event.hotel && event.stay_id) || []
   , [events]);
 
   return (
