@@ -27,21 +27,21 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 }) => {
   if (hotelStays.length === 0) return null;
 
-  // Enhanced sorting with fallback
-  const sortedStays = [...hotelStays].sort((a, b) => {
+  // Validate and filter stays
+  const validStays = hotelStays.filter(stay => 
+    stay.stay_id && typeof stay.stay_id === 'string'
+  );
+
+  // Enhanced sorting
+  const sortedStays = [...validStays].sort((a, b) => {
     const dateA = new Date(a.hotel_checkin_date).getTime();
     const dateB = new Date(b.hotel_checkin_date).getTime();
     return dateB - dateA || a.stay_id.localeCompare(b.stay_id);
   });
 
-  // Filter out invalid entries
-  const validStays = sortedStays.filter(stay => 
-    stay.stay_id && typeof stay.stay_id === 'string'
-  );
-
   return (
     <div className="space-y-4">
-      {validStays.map((stay) => (
+      {sortedStays.map((stay) => (
         <HotelStayCard
           key={`hotel-stay-${stay.stay_id}`}
           stay={stay}
@@ -53,5 +53,6 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
     </div>
   );
 };
+
 
 export default HotelStaysList;
