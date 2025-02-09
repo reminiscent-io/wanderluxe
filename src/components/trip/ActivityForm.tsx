@@ -1,9 +1,7 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { AccommodationFormData } from '@/services/accommodation/types';
+import { toast } from 'sonner';
 
-// Props interface for the Activity Form
 interface ActivityFormProps {
   activity: {
     title: string;
@@ -28,9 +26,49 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   submitLabel,
   eventId
 }) => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!activity.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+
+    if (activity.start_time && activity.end_time) {
+      if (activity.start_time > activity.end_time) {
+        newErrors.time = 'End time must be after start time';
+      }
+    }
+
+    if (activity.cost && isNaN(Number(activity.cost))) {
+      newErrors.cost = 'Cost must be a valid number';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(activity);
+    
+    if (!validateForm()) {
+      toast.error('Please fix the form errors');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit(activity);
+      toast.success('Activity saved successfully');
+      onCancel(); // Close the form after successful submission
+    } catch (error) {
+      toast.error('Failed to save activity');
+      console.error('Error saving activity:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -41,9 +79,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="text"
           value={activity.title}
           onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+            errors.title ? 'border-red-500' : 'border-gray-300'
+          } focus:border-earth-500 focus:ring-earth-500`}
           required
         />
+        {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
       </div>
 
       <div>
@@ -75,6 +116,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           />
         </div>
+        {errors.time && <p className="col-span-2 text-xs text-red-500">{errors.time}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -84,10 +126,13 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="number"
             value={activity.cost}
             onChange={(e) => onActivityChange({ ...activity, cost: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+              errors.cost ? 'border-red-500' : 'border-gray-300'
+            } focus:border-earth-500 focus:ring-earth-500`}
             min="0"
             step="0.01"
           />
+          {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Currency</label>
@@ -99,7 +144,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
             <option value="GBP">GBP</option>
-            {/* Add more currency options as needed */}
           </select>
         </div>
       </div>
@@ -109,14 +153,16 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="button"
           onClick={onCancel}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
+          disabled={isSubmitting}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500"
+          className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50"
+          disabled={isSubmitting}
         >
-          {submitLabel}
+          {isSubmitting ? 'Saving...' : submitLabel}
         </button>
       </div>
     </form>
