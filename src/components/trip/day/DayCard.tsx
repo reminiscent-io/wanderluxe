@@ -1,7 +1,11 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import DayHeader from './DayHeader';
 import EditTitleDialog from './EditTitleDialog';
 import ActivityDialogs from './ActivityDialogs';
@@ -159,7 +163,7 @@ const DayCard: React.FC<DayCardProps> = ({
       className="space-y-4"
     >
       <Card className="overflow-hidden">
-        <Collapsible>
+        <Collapsible defaultOpen>
           <CollapsibleTrigger asChild>
             <div className="w-full cursor-pointer">
               <DayHeader
@@ -173,10 +177,9 @@ const DayCard: React.FC<DayCardProps> = ({
               />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent>
-
-        <ErrorBoundary> {/* Wrapping DayLayout with ErrorBoundary */}
-          <DayLayout
+          <CollapsibleContent className="p-4">
+            <ErrorBoundary>
+              <DayLayout
             title={title || ""}
             activities={activities}
             hotelDetails={hotelDetails}
@@ -202,9 +205,9 @@ const DayCard: React.FC<DayCardProps> = ({
             imageUrl={imageUrl || defaultImageUrl}
             reservations={reservations}
           />
-        </ErrorBoundary> {/* Closing ErrorBoundary */}
-        {reservations && <DiningList reservations={reservations} />} {/* Added DiningList component */}
-      </CollapsibleContent>
+              {reservations && <DiningList reservations={reservations} />}
+            </ErrorBoundary>
+          </CollapsibleContent>
         </Collapsible>
       </Card>
 
