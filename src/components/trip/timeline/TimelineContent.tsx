@@ -118,20 +118,25 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
               </AccommodationGroup>
             ) : (
               <div className="space-y-6">
-                {group.days.map((day, dayIndex) => (
-                  <DayCard
-                    key={day.day_id}
-                    id={day.day_id}
-                    date={day.date}
-                    title={day.title || ''}
-                    description={day.description}
-                    activities={day.activities || []}
-                    imageUrl={day.image_url}
-                    onAddActivity={() => {}}
-                    index={dayIndex}
-                    onDelete={handleDayDelete}
-                  />
-                ))}
+                {group.days.map((day) => {
+                  const dayIndex = groups.slice(0, groupIndex)
+                    .reduce((acc, g) => acc + g.days.length, 0) + 
+                    group.days.findIndex(d => d.day_id === day.day_id);
+                  return (
+                    <DayCard
+                      key={day.day_id}
+                      id={day.day_id}
+                      date={day.date}
+                      title={day.title || ''}
+                      description={day.description}
+                      activities={day.activities || []}
+                      imageUrl={day.image_url}
+                      onAddActivity={() => {}}
+                      index={dayIndex}
+                      onDelete={handleDayDelete}
+                    />
+                  );
+                })}
               </div>
             )}
           </motion.div>
