@@ -1,5 +1,3 @@
-
-// AccommodationsSection.tsx
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
@@ -8,7 +6,7 @@ import HotelStaysList from './accommodation/HotelStaysList';
 import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDates } from './accommodation/hooks/useTripDates';
-import type { HotelStay, AccommodationFormData } from '@/services/accommodation/types';
+import type { HotelStay } from '@/services/accommodation/types';
 
 interface AccommodationsSectionProps {
   tripId: string;
@@ -40,16 +38,19 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       setEditingStay({
         ...stayToEdit,
         expense_cost: stayToEdit.expense_cost?.toString() || null,
-        // Required fields with defaults
         hotel_details: stayToEdit.hotel_details || '',
         currency: stayToEdit.currency || 'USD',
-        // Optional fields with empty defaults
         hotel_url: stayToEdit.hotel_url || '',
         hotel_address: stayToEdit.hotel_address || '',
         hotel_phone: stayToEdit.hotel_phone || ''
       });
     }
   };
+
+  // Sort hotel stays by check-in date in ascending order
+  const sortedHotelStays = hotelStays.sort((a, b) =>
+    new Date(a.hotel_checkin_date).getTime() - new Date(b.hotel_checkin_date).getTime()
+  );
 
   return (
     <Card>
@@ -61,9 +62,9 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       {isExpanded && (
         <>
           <HotelStaysList
-            hotelStays={hotelStays}
+            hotelStays={sortedHotelStays}  // Use sorted hotel stays
             onEdit={handleEdit}
-            onDelete={handleDelete} // Directly pass stay_id
+            onDelete={handleDelete}
             formatDateRange={formatDateRange}
           />
 
