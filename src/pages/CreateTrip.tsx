@@ -42,8 +42,8 @@ const CreateTrip = () => {
       if (error) throw error;
 
       toast.success('Trip created successfully!');
-      // Changed from trip_id to id to match the route parameter expectation
-      navigate(`/trip/${data.id}`);
+      // Using trip_id which is the correct column name from the database
+      navigate(`/trip/${data.trip_id}`);
     } catch (error) {
       console.error('Error creating trip:', error);
       toast.error('Failed to create trip');
