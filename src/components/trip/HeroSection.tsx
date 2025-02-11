@@ -11,6 +11,7 @@ interface HeroSectionProps {
   arrivalDate?: string | null;
   departureDate?: string | null;
   photographer?: string;
+  unsplashUsername?: string;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({
@@ -19,6 +20,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   arrivalDate,
   departureDate,
   photographer,
+  unsplashUsername,
 }) => {
   const formatDateRange = () => {
     if (arrivalDate && departureDate) {
@@ -32,13 +34,34 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <div className="relative h-[40vh] min-h-[300px] w-full">
       <div className="fixed inset-0 h-[40vh] min-h-[300px] w-full">
-        {photographer ? (
-          <UnsplashImage
-            src={imageUrl}
-            alt={title}
-            photographer={photographer}
-            className="w-full h-full object-cover"
-          />
+        {photographer && unsplashUsername ? (
+          <div className="relative h-full">
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 text-white text-xs">
+              Photo by{' '}
+              <a
+                href={`https://unsplash.com/@${unsplashUsername}?utm_source=traveler_app&utm_medium=referral`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gray-200"
+              >
+                {photographer}
+              </a>
+              {' '}on{' '}
+              <a
+                href="https://unsplash.com?utm_source=traveler_app&utm_medium=referral"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gray-200"
+              >
+                Unsplash
+              </a>
+            </div>
+          </div>
         ) : (
           <img
             src={imageUrl}
@@ -59,3 +82,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
+
