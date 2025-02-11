@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Utensils } from "lucide-react";
+import { Plus } from "lucide-react";
 import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../DiningList';
+import { DayActivity } from '@/types/trip';
 
 interface DayCardContentProps {
   index: number;
@@ -20,17 +22,11 @@ interface DayCardContentProps {
     phone_number?: string;
     website?: string;
     rating?: number;
+    created_at: string;
+    order_index: number;
   }>;
   title: string;
-  activities: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost?: number;
-    currency?: string;
-  }>;
+  activities: DayActivity[];
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
@@ -51,8 +47,22 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [newActivity, setNewActivity] = useState({ text: "", cost: "", currency: "USD" });
-  const [activityEdit, setActivityEdit] = useState({ text: "", cost: "", currency: "USD" });
+  const [newActivity, setNewActivity] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
+  const [activityEdit, setActivityEdit] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
 
   return (
     <div className="p-6 space-y-4">

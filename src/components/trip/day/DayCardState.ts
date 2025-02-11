@@ -1,13 +1,21 @@
 
 import { useState } from 'react';
-import { ActivityFormData } from '@/types/trip';
+
+interface ActivityData {
+  title: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  cost: string;
+  currency: string;
+}
 
 export const useDayCardState = (title: string = '') => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [newActivity, setNewActivity] = useState<ActivityFormData>({
+  const [newActivity, setNewActivity] = useState<ActivityData>({
     title: '',
     description: '',
     start_time: '',
@@ -15,7 +23,7 @@ export const useDayCardState = (title: string = '') => {
     cost: '',
     currency: 'USD'
   });
-  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
+  const [activityEdit, setActivityEdit] = useState<ActivityData>({
     title: '',
     description: '',
     start_time: '',
