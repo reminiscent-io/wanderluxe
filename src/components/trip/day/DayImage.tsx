@@ -9,16 +9,16 @@ interface DayImageProps {
 }
 
 const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl }) => {
-  // If no image URL is provided, show the placeholder state
+  // If no image URL is provided, show the placeholder state with reduced height
   console.log("imageUrl:", imageUrl);
   if (!imageUrl) {
     return (
-      <div className="relative h-full min-h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
+      <div className="relative h-auto min-h-[100px] overflow-hidden rounded-l-lg bg-gray-100">
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
           No image selected
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/60 to-transparent">
-          <h2 className="text-white text-2xl font-bold drop-shadow-lg">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+          <h2 className="text-white text-xl font-bold drop-shadow-lg">
             {title}
           </h2>
         </div>
