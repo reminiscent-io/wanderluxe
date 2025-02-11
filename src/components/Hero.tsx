@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
+import UnsplashImage from "./UnsplashImage";
 
 const Hero = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -18,11 +20,17 @@ const Hero = () => {
   return (
     <div className="relative h-screen w-full overflow-hidden">
       <div
-        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0"
         style={{
           transform: `translateY(${scrollY * 0.5}px)`,
         }}
       >
+        <UnsplashImage
+          src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop"
+          alt="Mountain landscape"
+          photographer="jeremy-bishop"
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-black/30" />
       </div>
       
