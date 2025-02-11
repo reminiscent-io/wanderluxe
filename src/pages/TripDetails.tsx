@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
@@ -91,7 +92,6 @@ const TripDetails = () => {
         title={trip.destination}
         date={`${trip.arrival_date} - ${trip.departure_date}`}
         imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
-        events={trip.accommodations || []}
         arrivalDate={trip.arrival_date}
         departureDate={trip.departure_date}
       />

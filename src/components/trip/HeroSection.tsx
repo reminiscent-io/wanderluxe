@@ -7,7 +7,7 @@ interface HeroSectionProps {
   title: string;
   date: string;
   imageUrl: string;
-  events?: { date: string }[];
+  events?: any[]; // Remove specific type requirement since we don't use it
   arrivalDate?: string | null;
   departureDate?: string | null;
   photographer?: string;
