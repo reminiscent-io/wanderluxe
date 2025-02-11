@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Wand2 } from "lucide-react";
 import ImageUpload from "@/components/ImageUpload";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import UnsplashImage from '@/components/UnsplashImage';
 
 interface ImageSectionProps {
   coverImageUrl: string;
@@ -92,16 +94,17 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
         {generatedImages.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {generatedImages.map((image) => (
-              <div key={image.id} className="relative group cursor-pointer">
-                <img
+              <div 
+                key={image.id} 
+                className="relative cursor-pointer"
+                onClick={() => selectGeneratedImage(image.url)}
+              >
+                <UnsplashImage
                   src={image.url}
                   alt={image.description || 'Generated image'}
-                  className="w-full h-48 object-cover rounded-lg transition-opacity group-hover:opacity-90"
-                  onClick={() => selectGeneratedImage(image.url)}
+                  photographer={image.photographer}
+                  className="h-48 rounded-lg"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-xs">Photo by {image.photographer}</p>
-                </div>
               </div>
             ))}
           </div>

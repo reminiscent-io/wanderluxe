@@ -1,14 +1,16 @@
 
 import React from 'react';
+import UnsplashImage from '@/components/UnsplashImage';
 
 interface DayImageProps {
   dayId: string;
   tripId: string;
   title: string;
   imageUrl?: string | null;
+  photographer?: string;
 }
 
-const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl }) => {
+const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl, photographer }) => {
   // If no image URL is provided, show the placeholder state with reduced height
   console.log("imageUrl:", imageUrl);
   if (!imageUrl) {
@@ -28,11 +30,20 @@ const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl }) => {
 
   return (
     <div className="relative h-full min-h-[300px] overflow-hidden rounded-l-lg">
-      <img 
-        src={imageUrl} 
-        alt={title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-      />
+      {photographer ? (
+        <UnsplashImage
+          src={imageUrl}
+          alt={title}
+          photographer={photographer}
+          className="absolute inset-0 transition-transform duration-300 hover:scale-105"
+        />
+      ) : (
+        <img 
+          src={imageUrl} 
+          alt={title}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6">
         <h2 className="text-white text-2xl font-bold drop-shadow-lg">
