@@ -97,14 +97,6 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     });
   };
 
-  // Transform activities to match expected format
-  const formattedActivities = activities.map(activity => ({
-    id: activity.id,
-    text: activity.title,
-    cost: activity.cost,
-    currency: activity.currency
-  }));
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -116,7 +108,12 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
         <CardContent className="p-0">
           <div className="grid md:grid-cols-2">
-            <DayImage title={title} imageUrl={image} />
+            <DayImage 
+              title={title} 
+              imageUrl={image} 
+              dayId={id} 
+              tripId={id} 
+            />
             <EventContent
               date={date}
               title={title}
@@ -126,7 +123,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
               hotelUrl={hotel_url}
               hotelCheckinDate={hotel_checkin_date}
               hotelCheckoutDate={hotel_checkout_date}
-              activities={formattedActivities}
+              activities={activities}
               onEdit={() => setIsEditing(true)}
               isAddingActivity={isAddingActivity}
               onAddingActivityChange={setIsAddingActivity}

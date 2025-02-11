@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -60,17 +59,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Format the activity data before submitting
-      const formattedActivity = {
-        ...activity,
-        cost: activity.cost ? Number(activity.cost) : null,
-        start_time: activity.start_time || null,
-        end_time: activity.end_time || null
-      };
-      
-      await onSubmit(formattedActivity);
+      await onSubmit(activity);
       toast.success('Activity saved successfully');
-      onCancel(); // Close the form after successful submission
+      onCancel();
     } catch (error) {
       toast.error('Failed to save activity');
       console.error('Error saving activity:', error);
@@ -131,14 +122,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700">Cost</label>
           <input
-            type="number"
+            type="text"
             value={activity.cost}
             onChange={(e) => onActivityChange({ ...activity, cost: e.target.value })}
             className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
               errors.cost ? 'border-red-500' : 'border-gray-300'
             } focus:border-earth-500 focus:ring-earth-500`}
-            min="0"
-            step="0.01"
           />
           {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
         </div>
