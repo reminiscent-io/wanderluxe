@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../DiningList';
 import { DayActivity } from '@/types/trip';
+import ActivitiesList from './activities/ActivitiesList';
 
 interface DayCardContentProps {
   index: number;
@@ -64,58 +63,26 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     currency: 'USD'
   });
 
+  const handleEditActivity = (activity: DayActivity) => {
+    setEditingActivity(activity.id);
+    setActivityEdit({
+      title: activity.title,
+      description: activity.description || '',
+      start_time: activity.start_time || '',
+      end_time: activity.end_time || '',
+      cost: activity.cost?.toString() || '',
+      currency: activity.currency || 'USD'
+    });
+  };
+
   return (
     <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center">
-        <h4 className="text-base font-semibold text-earth-700">Activities</h4>
-        <Button
-          onClick={() => setIsAddingActivity(true)}
-          variant="ghost"
-          size="sm"
-          className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Add Activity
-        </Button>
-      </div>
-
-      {activities.length > 0 ? (
-        <ul className="space-y-1">
-          {activities.sort((a, b) => {
-            const timeA = a.start_time || '';
-            const timeB = b.start_time || '';
-            if (timeA === '' && timeB === '') return 0;
-            if (timeA === '') return 1;
-            if (timeB === '') return -1;
-            return new Date(`2000-01-01T${timeA}`).getTime() - new Date(`2000-01-01T${timeB}`).getTime();
-          }).map((activity) => (
-            <li 
-              key={activity.id} 
-              className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-              onClick={() => {
-                setEditingActivity(activity.id);
-                setActivityEdit({
-                  title: activity.title,
-                  description: activity.description || '',
-                  start_time: activity.start_time || '',
-                  end_time: activity.end_time || '',
-                  cost: activity.cost?.toString() || '',
-                  currency: activity.currency || 'USD'
-                });
-              }}
-            >
-              <span>{activity.title}</span>
-              {activity.start_time && (
-                <span className="text-sm text-gray-500">
-                  {formatTime(activity.start_time)}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-gray-500 text-center py-4">No activities planned yet</p>
-      )}
+      <ActivitiesList
+        activities={activities}
+        formatTime={formatTime}
+        onAddActivity={() => setIsAddingActivity(true)}
+        onEditActivity={handleEditActivity}
+      />
 
       <div className="mt-8">
         <DiningList
