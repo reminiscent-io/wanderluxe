@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -158,7 +159,7 @@ export const useTripDays = (tripId: string | undefined) => {
   const reorderActivities = useMutation({
     mutationFn: async ({ dayId, activities }: {
       dayId: string;
-      activities: { id: string; order_index: number; title: string }[];
+      activities: DayActivity[];
     }) => {
       const { error } = await supabase
         .from('day_activities')
@@ -166,8 +167,14 @@ export const useTripDays = (tripId: string | undefined) => {
           activities.map(activity => ({
             id: activity.id,
             day_id: dayId,
+            title: activity.title,
+            description: activity.description,
+            start_time: activity.start_time,
+            end_time: activity.end_time,
+            cost: activity.cost,
+            currency: activity.currency,
             order_index: activity.order_index,
-            title: activity.title
+            created_at: activity.created_at
           }))
         );
 
