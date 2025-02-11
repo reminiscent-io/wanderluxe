@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -14,42 +15,32 @@ import { useDayCardState } from './DayCardState';
 import { useDayCardHandlers } from './DayCardHandlers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import DiningList from '../DiningList'; // Added import for DiningList
+import { DayActivity } from '@/types/trip';
 
-// ErrorBoundary component (needs to be defined elsewhere or imported)
 const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
   const [hasError, setHasError] = React.useState(false);
 
   React.useEffect(() => {
-      //Optional: Log the error to a service like Sentry or LogRocket
-  }, [hasError])
+    //Optional: Log the error to a service like Sentry or LogRocket
+  }, [hasError]);
 
   if (hasError) {
     return <div>Something went wrong.</div>;
   }
 
   return (
-      <React.Suspense fallback={<div>Loading...</div>}>
-          {children}
-      </React.Suspense>
+    <React.Suspense fallback={<div>Loading...</div>}>
+      {children}
+    </React.Suspense>
   );
 };
-
 
 interface DayCardProps {
   id: string;
   date: string;
   title?: string;
   description?: string;
-  activities: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost?: number;
-    currency?: string;
-  }>;
+  activities: DayActivity[];
   onAddActivity: () => void;
   index: number;
   hotelDetails?: {
@@ -63,9 +54,20 @@ interface DayCardProps {
   tripId: string;
   reservations?: Array<{
     id: string;
-    restaurant: string;
-    time: string;
-    // ...other reservation details
+    day_id: string;
+    restaurant_name: string;
+    reservation_time?: string;
+    number_of_people?: number;
+    confirmation_number?: string;
+    notes?: string;
+    cost?: number;
+    currency?: string;
+    address?: string;
+    phone_number?: string;
+    website?: string;
+    rating?: number;
+    created_at: string;
+    order_index: number;
   }>;
 }
 
@@ -114,7 +116,7 @@ const DayCard: React.FC<DayCardProps> = ({
         .insert([{
           day_id: id,
           title: newActivity.title,
-          description: newActivity.description,
+          description: newActivity.description || '',
           start_time: newActivity.start_time,
           end_time: newActivity.end_time,
           cost: newActivity.cost ? Number(newActivity.cost) : null,
@@ -125,7 +127,14 @@ const DayCard: React.FC<DayCardProps> = ({
       if (error) throw error;
       toast.success('Activity added successfully');
       setIsAddingActivity(false);
-      setNewActivity({ title: '', description: '', cost: '', currency: 'USD' });
+      setNewActivity({
+        title: '',
+        description: '',
+        start_time: '',
+        end_time: '',
+        cost: '',
+        currency: 'USD'
+      });
     } catch (error) {
       console.error('Error adding activity:', error);
       toast.error('Failed to add activity');
@@ -138,7 +147,7 @@ const DayCard: React.FC<DayCardProps> = ({
         .from('day_activities')
         .update({
           title: activityEdit.title,
-          description: activityEdit.description,
+          description: activityEdit.description || '',
           start_time: activityEdit.start_time,
           end_time: activityEdit.end_time,
           cost: activityEdit.cost ? Number(activityEdit.cost) : null,
@@ -180,32 +189,31 @@ const DayCard: React.FC<DayCardProps> = ({
           <CollapsibleContent className="p-4">
             <ErrorBoundary>
               <DayLayout
-            title={title || ""}
-            activities={activities}
-            hotelDetails={hotelDetails}
-            index={index}
-            onAddActivity={() => setIsAddingActivity(true)}
-            onEditActivity={(id) => {
-              const activity = activities.find(a => a.id === id);
-              if (activity) {
-                setActivityEdit({
-                  title: activity.title,
-                  description: activity.description,
-                  start_time: activity.start_time,
-                  end_time: activity.end_time,
-                  cost: activity.cost?.toString() || "",
-                  currency: activity.currency || "USD"
-                });
-                setEditingActivity(id);
-              }
-            }}
-            formatTime={formatTime}
-            dayId={id}
-            tripId={tripId}
-            imageUrl={imageUrl || defaultImageUrl}
-            reservations={reservations}
-          />
-              {reservations && <DiningList reservations={reservations} />}
+                title={title || ""}
+                activities={activities}
+                hotelDetails={hotelDetails}
+                index={index}
+                onAddActivity={() => setIsAddingActivity(true)}
+                onEditActivity={(id) => {
+                  const activity = activities.find(a => a.id === id);
+                  if (activity) {
+                    setActivityEdit({
+                      title: activity.title,
+                      description: activity.description || '',
+                      start_time: activity.start_time || '',
+                      end_time: activity.end_time || '',
+                      cost: activity.cost?.toString() || '',
+                      currency: activity.currency || 'USD'
+                    });
+                    setEditingActivity(id);
+                  }
+                }}
+                formatTime={formatTime}
+                dayId={id}
+                tripId={tripId}
+                imageUrl={imageUrl || defaultImageUrl}
+                reservations={reservations}
+              />
             </ErrorBoundary>
           </CollapsibleContent>
         </Collapsible>
