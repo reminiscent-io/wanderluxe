@@ -1,4 +1,3 @@
-
 export const generateDatesArray = (startDate: string, endDate: string) => {
   const dates: string[] = [];
   
