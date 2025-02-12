@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
 import { calculateTotals, formatCurrency } from './budget/utils/budgetCalculations';
 import TotalExpenseCard from './budget/TotalExpenseCard';
@@ -18,14 +18,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { events, exchangeRates, lastUpdated, handleDeleteExpense, handleUpdateCost } = useBudgetEvents(tripId);
   const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
   const { expandedSections, toggleSection } = useExpandedSections();
-  const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = React.useState<string | null>(null);
 
   const totals = calculateTotals(events, selectedCurrency, exchangeRates);
-
-  const handleAddExpense = (category: string) => {
-    console.log('Add expense:', category);
-    // Implement add expense functionality
-  };
 
   return (
     <div className="space-y-6">
@@ -45,11 +40,10 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       <div className="space-y-4">
         <TransportationSection
           expenses={events}
-          amount={totals.transportation}
+          amount={totals.Transportation}
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('transportation')}
           onToggle={() => toggleSection('transportation')}
-          onAddExpense={() => handleAddExpense('transportation')}
           editingItem={editingItem}
           onEdit={setEditingItem}
           onUpdateCost={handleUpdateCost}
@@ -58,11 +52,10 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
         <ActivitiesSection
           expenses={events}
-          amount={totals.activities}
+          amount={totals.Activities}
           currency={selectedCurrency}
           isExpanded={expandedSections.includes('activities')}
           onToggle={() => toggleSection('activities')}
-          onAddExpense={() => handleAddExpense('activities')}
           editingItem={editingItem}
           onEdit={setEditingItem}
           onUpdateCost={handleUpdateCost}
@@ -71,11 +64,10 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
         <AccommodationSection
           expenses={events}
-          amount={totals.reservations}
+          amount={totals.Accommodations}
           currency={selectedCurrency}
-          isExpanded={expandedSections.includes('reservations')}
-          onToggle={() => toggleSection('reservations')}
-          onAddExpense={() => handleAddExpense('reservations')}
+          isExpanded={expandedSections.includes('accommodations')}
+          onToggle={() => toggleSection('accommodations')}
           editingItem={editingItem}
           onEdit={setEditingItem}
           onUpdateCost={handleUpdateCost}

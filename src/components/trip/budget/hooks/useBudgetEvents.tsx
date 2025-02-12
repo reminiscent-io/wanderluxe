@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 import { toast } from 'sonner';
 
 export const useBudgetEvents = (tripId: string | undefined) => {
+  const queryClient = useQueryClient();
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
@@ -46,9 +47,45 @@ export const useBudgetEvents = (tripId: string | undefined) => {
     fetchExchangeRates();
   }, []);
 
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
+      toast.success('Expense deleted successfully');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('Failed to delete expense');
+    }
+  };
+
+  const handleUpdateCost = async (id: string, cost: number, currency: string) => {
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .update({ cost, currency })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
+      toast.success('Expense updated successfully');
+    } catch (error) {
+      console.error('Error updating expense:', error);
+      toast.error('Failed to update expense');
+    }
+  };
+
   return {
     events,
     exchangeRates,
-    lastUpdated
+    lastUpdated,
+    handleDeleteExpense,
+    handleUpdateCost
   };
 };

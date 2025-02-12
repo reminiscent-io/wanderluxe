@@ -27,29 +27,31 @@ export const calculateTotals = (
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
 ) => {
-  const totals = {
+  return expenses.reduce((acc, exp) => {
+    if (!exp.cost) return acc;
+    const convertedAmount = convertAmount(
+      exp.cost,
+      exp.currency || 'USD',
+      selectedCurrency,
+      exchangeRates
+    );
+
+    return {
+      ...acc,
+      [exp.category]: (acc[exp.category] || 0) + convertedAmount,
+      total: acc.total + convertedAmount
+    };
+  }, {
     Transportation: 0,
     Activities: 0,
     Accommodations: 0,
     Other: 0,
     total: 0
-  };
-
-  expenses.forEach(expense => {
-    if (expense.cost && expense.currency) {
-      const convertedAmount = convertAmount(
-        expense.cost, 
-        expense.currency, 
-        selectedCurrency, 
-        exchangeRates
-      );
-
-      totals[expense.category as keyof typeof totals] += convertedAmount;
-      totals.total += convertedAmount;
-    }
   });
-  
-  return totals;
+};
+
+export const getExpensesByCategory = (expenses: Expense[], category: string) => {
+  return expenses.filter(expense => expense.category.toLowerCase() === category.toLowerCase());
 };
 
 export const formatCurrency = (amount: number, currency: string): string => {
