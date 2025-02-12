@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTimelineGroups } from '@/hooks/use-timeline-groups';
@@ -108,8 +109,22 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   }, [tripId, refreshEvents, refreshDays]);
 
   const hotelStays = useMemo(() => 
-    events?.filter(event => event.hotel && event.stay_id) || []
-  , [events]);
+    events?.filter(event => event.hotel && event.stay_id).map(event => ({
+      stay_id: event.stay_id,
+      trip_id: tripId, // Add trip_id here
+      hotel: event.hotel || '',
+      hotel_details: event.hotel_details,
+      hotel_url: event.hotel_url,
+      hotel_checkin_date: event.hotel_checkin_date || '',
+      hotel_checkout_date: event.hotel_checkout_date || '',
+      expense_cost: event.expense_cost,
+      currency: event.currency,
+      hotel_address: event.hotel_address,
+      hotel_phone: event.hotel_phone,
+      hotel_place_id: event.hotel_place_id,
+      hotel_website: event.hotel_website,
+    })) || []
+  , [events, tripId]);
 
   return (
     <div className="relative space-y-8">
@@ -152,20 +167,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         <AccommodationsSection
           tripId={tripId}
           onAccommodationChange={handleRefresh}
-          hotelStays={hotelStays.map(event => ({
-            stay_id: event.stay_id,
-            hotel: event.hotel || '',
-            hotel_details: event.hotel_details,
-            hotel_url: event.hotel_url,
-            hotel_checkin_date: event.hotel_checkin_date || '',
-            hotel_checkout_date: event.hotel_checkout_date || '',
-            expense_cost: event.expense_cost,
-            currency: event.currency,
-            hotel_address: event.hotel_address,
-            hotel_phone: event.hotel_phone,
-            hotel_place_id: event.hotel_place_id,
-            hotel_website: event.hotel_website,
-          }))}
+          hotelStays={hotelStays}
         />
         <TransportationSection
           tripId={tripId}
