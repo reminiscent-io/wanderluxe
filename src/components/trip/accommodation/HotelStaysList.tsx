@@ -5,6 +5,7 @@ import HotelStayCard from './HotelStayCard';
 interface HotelStaysListProps {
   hotelStays: Array<{
     stay_id: string;
+    trip_id: string;
     hotel: string;
     hotel_details?: string;
     hotel_url?: string;
@@ -12,12 +13,7 @@ interface HotelStaysListProps {
     hotel_checkout_date: string;
   }>;
   onEdit: (stayId: string) => void;
-  onDelete: (stay: { 
-    stay_id: string; 
-    hotel: string; 
-    hotel_checkin_date: string; 
-    hotel_checkout_date: string; 
-  }) => void;
+  onDelete: (stayId: string) => void;
   formatDateRange: (checkinDate: string, checkoutDate: string) => string;
 }
 
@@ -31,7 +27,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 
   // Validate and filter stays
   const validStays = hotelStays.filter(stay => 
-    stay.stay_id && typeof stay.stay_id === 'string'
+    stay.stay_id && typeof stay.stay_id === 'string' && stay.trip_id
   );
 
   // Enhanced sorting
@@ -47,8 +43,8 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
         <HotelStayCard
           key={`hotel-stay-${stay.stay_id}`}
           stay={stay}
-          onEdit={onEdit}
-          onDelete={() => onDelete(stay)}
+          onEdit={() => onEdit(stay.stay_id)}
+          onDelete={() => onDelete(stay.stay_id)}
           formatDateRange={formatDateRange}
         />
       ))}

@@ -19,10 +19,11 @@ export interface AccommodationFormData {
   order_index?: number;
 }
 
-export interface HotelStay extends AccommodationFormData {
+export interface HotelStay extends Omit<AccommodationFormData, 'expense_cost'> {
   stay_id: string;
   trip_id: string;
   created_at?: string;
+  expense_cost?: number | null;
 }
 
 export interface AccommodationDay {
