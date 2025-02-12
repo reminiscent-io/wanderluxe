@@ -41,8 +41,8 @@ export interface Accommodation {
   hotel?: string;
   hotel_details?: string;
   hotel_url?: string;
-  hotel_checkin_date?: string;
-  hotel_checkout_date?: string;
+  hotel_checkin_date: string; // Changed: no longer optional since it's a required date field
+  hotel_checkout_date: string; // Changed: no longer optional since it's a required date field
   expense_cost?: number | null;
   currency?: string;
   expense_type?: string;
