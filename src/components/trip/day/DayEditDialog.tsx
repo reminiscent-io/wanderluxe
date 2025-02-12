@@ -3,25 +3,13 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import ActivitiesList from '../ActivitiesList';
 import DiningList from '../DiningList';
-import ActivityForm from '../ActivityForm';
 import { useQuery } from '@tanstack/react-query';
 import { DayActivity } from '@/types/trip';
-import { Plus } from 'lucide-react';
-
-interface Activity {
-  id: string;
-  title: string;
-  description?: string;
-  start_time?: string;
-  end_time?: string;
-  cost?: number;
-  currency?: string;
-}
+import ImageGenerationSection from './dialogs/ImageGenerationSection';
+import DayActivitiesSection from './dialogs/DayActivitiesSection';
 
 interface DayEditDialogProps {
   isOpen: boolean;
@@ -29,7 +17,7 @@ interface DayEditDialogProps {
   dayId: string;
   currentTitle: string;
   date: string;
-  activities: Activity[];
+  activities: DayActivity[];
   formatTime: (time?: string) => string;
 }
 
@@ -43,21 +31,10 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   formatTime,
 }) => {
   const [title, setTitle] = useState(currentTitle);
-  const [imagePrompt, setImagePrompt] = useState("");
-  const [images, setImages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [localActivities, setLocalActivities] = useState<Activity[]>(activities);
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [localActivities, setLocalActivities] = useState<DayActivity[]>(activities);
   const [isAddingActivity, setIsAddingActivity] = useState(false);
-  const [emptyActivity, setEmptyActivity] = useState({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD'
-  });
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
 
   // Fetch restaurant reservations
   const { data: reservations = [] } = useQuery({
@@ -78,42 +55,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     enabled: !!dayId && isOpen,
   });
 
-  const handleGenerateImages = async () => {
-    if (!imagePrompt.trim()) {
-      toast.error('Please enter a prompt first');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { data: response, error } = await supabase.functions.invoke('generate-image', {
-        body: { keywords: imagePrompt }
-      });
-
-      if (error) {
-        console.error('Error generating images:', error);
-        throw error;
-      }
-
-      if (!response?.images?.length) {
-        toast.error('No images found for this prompt');
-        return;
-      }
-
-      setImages(response.images.map((img: any) => img.url));
-    } catch (error) {
-      console.error('Error generating images:', error);
-      toast.error('Failed to generate images');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddActivity = () => {
-    setIsAddingActivity(true);
-  };
-
-  const handleActivitySubmit = async (activity: typeof emptyActivity) => {
+  const handleActivitySubmit = async (activity: any) => {
     try {
       const { data, error } = await supabase
         .from('day_activities')
@@ -133,19 +75,8 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
       if (error) throw error;
 
-      const newActivity: Activity = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        cost: data.cost ? Number(data.cost) : undefined,
-        currency: data.currency
-      };
-
-      setLocalActivities(prev => [...prev, newActivity]);
+      setLocalActivities(prev => [...prev, data]);
       setIsAddingActivity(false);
-      setEditingActivityId(null);
       toast.success('Activity added successfully');
     } catch (error) {
       console.error('Error adding activity:', error);
@@ -153,11 +84,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     }
   };
 
-  const handleEditActivity = (id: string) => {
-    setEditingActivityId(id);
-  };
-
-  const handleUpdateActivity = async (activity: typeof emptyActivity) => {
+  const handleUpdateActivity = async (activity: any) => {
     if (!editingActivityId) return;
 
     try {
@@ -180,11 +107,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       setLocalActivities(prev =>
         prev.map(act =>
           act.id === editingActivityId
-            ? {
-                ...act,
-                ...updateData,
-                cost: updateData.cost !== null ? Number(updateData.cost) : undefined
-              }
+            ? { ...act, ...updateData }
             : act
         )
       );
@@ -216,11 +139,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     }
   };
 
-  // Find the activity being edited
-  const activityBeingEdited = editingActivityId
-    ? localActivities.find(act => act.id === editingActivityId)
-    : null;
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -238,145 +156,29 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             />
           </div>
 
-          <div>
-            <label className="text-sm font-medium mb-2 block">Generate Image</label>
-            <div className="flex gap-2">
-              <Input
-                value={imagePrompt}
-                onChange={(e) => setImagePrompt(e.target.value)}
-                placeholder="Where will you be today?"
-              />
-              <Button
-                onClick={handleGenerateImages}
-                disabled={isLoading || !imagePrompt.trim()}
-              >
-                {isLoading ? (
-                  <Loader className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <ImageIcon className="h-4 w-4 mr-2" />
-                )}
-                Generate
-              </Button>
-            </div>
-          </div>
+          <ImageGenerationSection
+            onImageSelect={setSelectedImage}
+            selectedImage={selectedImage}
+          />
 
-          {images.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {images.map((image, index) => (
-                <div
-                  key={index}
-                  className={`relative aspect-video cursor-pointer rounded-lg overflow-hidden ${
-                    selectedImage === image ? 'ring-2 ring-primary' : ''
-                  }`}
-                  onClick={() => setSelectedImage(image)}
-                >
-                  <img
-                    src={image}
-                    alt={`Option ${index + 1}`}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-base font-semibold text-earth-700">Activities</h4>
-              <Button
-                onClick={handleAddActivity}
-                variant="ghost"
-                size="sm"
-                className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Activity
-              </Button>
-            </div>
-
-            {/* Activity Form Dialog */}
-            <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Activity</DialogTitle>
-                </DialogHeader>
-                <ActivityForm
-                  activity={emptyActivity}
-                  onActivityChange={setEmptyActivity}
-                  onSubmit={handleActivitySubmit}
-                  onCancel={() => setIsAddingActivity(false)}
-                  submitLabel="Add Activity"
-                  eventId={dayId}
-                />
-              </DialogContent>
-            </Dialog>
-
-            {/* Edit Activity Dialog */}
-            <Dialog open={!!editingActivityId} onOpenChange={() => setEditingActivityId(null)}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Edit Activity</DialogTitle>
-                </DialogHeader>
-                {activityBeingEdited && (
-                  <ActivityForm
-                    activity={{
-                      title: activityBeingEdited.title,
-                      description: activityBeingEdited.description || '',
-                      start_time: activityBeingEdited.start_time || '',
-                      end_time: activityBeingEdited.end_time || '',
-                      cost: activityBeingEdited.cost?.toString() || '',
-                      currency: activityBeingEdited.currency || 'USD'
-                    }}
-                    onActivityChange={setEmptyActivity}
-                    onSubmit={handleUpdateActivity}
-                    onCancel={() => setEditingActivityId(null)}
-                    submitLabel="Update Activity"
-                    eventId={dayId}
-                  />
-                )}
-              </DialogContent>
-            </Dialog>
-
-            {/* Activities List */}
-            <div className="space-y-2">
-              {localActivities.sort((a, b) => {
-                const timeA = a.start_time || '';
-                const timeB = b.start_time || '';
-                if (timeA === '' && timeB === '') return 0;
-                if (timeA === '') return 1;
-                if (timeB === '') return -1;
-                return new Date(timeA).getTime() - new Date(timeB).getTime();
-              }).map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <h4 className="font-medium text-sm">{activity.title}</h4>
-                    {activity.start_time && (
-                      <p className="text-xs text-gray-500">
-                        {formatTime(activity.start_time)}
-                        {activity.end_time && ` - ${formatTime(activity.end_time)}`}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditActivity(activity.id)}
-                  >
-                    Edit
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <DayActivitiesSection
+            activities={localActivities}
+            isAddingActivity={isAddingActivity}
+            setIsAddingActivity={setIsAddingActivity}
+            editingActivityId={editingActivityId}
+            setEditingActivityId={setEditingActivityId}
+            onAddActivity={handleActivitySubmit}
+            onUpdateActivity={handleUpdateActivity}
+            formatTime={formatTime}
+            dayId={dayId}
+          />
 
           <div>
             <DiningList
               reservations={reservations}
               formatTime={formatTime}
               dayId={dayId}
+              onAddReservation={() => {}}
             />
           </div>
 
