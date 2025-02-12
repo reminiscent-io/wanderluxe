@@ -11,10 +11,10 @@ export type Database = {
     Tables: {
       accommodations: {
         Row: {
+          cost: number | null
           created_at: string
           currency: string | null
           description: string | null
-          expense_cost: number | null
           expense_date: string | null
           expense_paid: boolean | null
           expense_type: string | null
@@ -35,10 +35,10 @@ export type Database = {
           trip_id: string
         }
         Insert: {
+          cost?: number | null
           created_at?: string
           currency?: string | null
           description?: string | null
-          expense_cost?: number | null
           expense_date?: string | null
           expense_paid?: boolean | null
           expense_type?: string | null
@@ -59,10 +59,10 @@ export type Database = {
           trip_id: string
         }
         Update: {
+          cost?: number | null
           created_at?: string
           currency?: string | null
           description?: string | null
-          expense_cost?: number | null
           expense_date?: string | null
           expense_paid?: boolean | null
           expense_type?: string | null
