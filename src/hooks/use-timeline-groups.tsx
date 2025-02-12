@@ -1,26 +1,27 @@
+
 import { useMemo } from 'react';
 import { parseISO, isWithinInterval } from 'date-fns';
-import { TimelineEvent, TripDay } from '@/types/trip';
+import { Accommodation, TripDay } from '@/types/trip';
 
-export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineEvent[] | undefined) => {
+export const useTimelineGroups = (days: TripDay[] | undefined, events: Accommodation[] | undefined) => {
   const gaps = useMemo(() => {
     if (!events?.length) return [];
 
     const gaps: { startDate: string; endDate: string }[] = [];
     const hotelStays = events
       .filter(event => event.hotel && event.hotel_checkin_date && event.hotel_checkout_date)
-      .sort((a, b) => new Date(a.hotel_checkin_date!).getTime() - new Date(b.hotel_checkin_date!).getTime());
+      .sort((a, b) => new Date(a.hotel_checkin_date).getTime() - new Date(b.hotel_checkin_date).getTime());
 
     if (!hotelStays.length) return [];
 
     for (let i = 0; i < hotelStays.length - 1; i++) {
-      const currentStayEnd = new Date(hotelStays[i].hotel_checkout_date!);
-      const nextStayStart = new Date(hotelStays[i + 1].hotel_checkin_date!);
+      const currentStayEnd = new Date(hotelStays[i].hotel_checkout_date);
+      const nextStayStart = new Date(hotelStays[i + 1].hotel_checkin_date);
 
       if ((nextStayStart.getTime() - currentStayEnd.getTime()) > 24 * 60 * 60 * 1000) {
         gaps.push({
-          startDate: hotelStays[i].hotel_checkout_date!,
-          endDate: hotelStays[i + 1].hotel_checkin_date!
+          startDate: hotelStays[i].hotel_checkout_date,
+          endDate: hotelStays[i + 1].hotel_checkin_date
         });
       }
     }
@@ -38,7 +39,7 @@ export const useTimelineGroups = (days: TripDay[] | undefined, events: TimelineE
     const hotelStays = events
       .filter(event => event.hotel && event.hotel_checkin_date && event.hotel_checkout_date)
       .sort((a, b) => 
-        new Date(a.hotel_checkin_date!).getTime() - new Date(b.hotel_checkin_date!).getTime()
+        new Date(a.hotel_checkin_date).getTime() - new Date(b.hotel_checkin_date).getTime()
       );
 
     const groups: Array<{
