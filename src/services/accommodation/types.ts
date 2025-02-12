@@ -19,11 +19,22 @@ export interface AccommodationFormData {
   order_index?: number;
 }
 
-export interface HotelStay extends Omit<AccommodationFormData, 'expense_cost'> {
+// HotelStay represents the data as stored in the database
+export interface HotelStay {
   stay_id: string;
   trip_id: string;
-  created_at?: string;
+  hotel: string;
+  hotel_details: string;
+  hotel_url?: string;
+  hotel_checkin_date: string;
+  hotel_checkout_date: string;
   expense_cost?: number | null;
+  currency: string;
+  hotel_address?: string;
+  hotel_phone?: string;
+  hotel_place_id?: string;
+  hotel_website?: string;
+  created_at?: string;
 }
 
 export interface AccommodationDay {
