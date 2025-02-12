@@ -6,7 +6,7 @@ export interface AccommodationFormData {
   hotel_url?: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost: number | null;  // Changed from expense_cost
+  cost: number | null;
   currency: string;
   hotel_address?: string;
   hotel_phone?: string;
@@ -23,11 +23,13 @@ export interface HotelStay {
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost: number | null;  // Changed from expense_cost
+  cost: number | null;
   currency: string;
   hotel_address?: string;
   hotel_phone?: string;
   hotel_place_id?: string;
   hotel_website?: string;
+  hotel_details?: string;
+  hotel_url?: string;
   created_at?: string;
 }

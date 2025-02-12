@@ -27,6 +27,24 @@ export interface ActivityData {
   currency: string;
 }
 
+// Updated to match the database schema
+export interface HotelStay {
+  stay_id: string;
+  trip_id: string;
+  hotel: string;
+  hotel_details?: string;
+  hotel_url?: string;
+  hotel_checkin_date: string;
+  hotel_checkout_date: string;
+  cost: number | null;
+  currency: string;
+  hotel_address?: string;
+  hotel_phone?: string;
+  hotel_place_id?: string;
+  hotel_website?: string;
+  created_at?: string;
+}
+
 export interface AccommodationData {
   stay_id: string;
   trip_id: string;
@@ -57,3 +75,4 @@ export interface ExpenseData {
   is_paid?: boolean;
   created_at?: string;
 }
+
