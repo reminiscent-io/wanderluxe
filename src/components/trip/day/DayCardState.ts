@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 interface ActivityData {
   title: string;
-  description: string;
+  description?: string;  // Made optional to match usage
   start_time: string;
   end_time: string;
   cost: string;
