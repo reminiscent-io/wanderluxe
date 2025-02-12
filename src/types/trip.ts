@@ -1,3 +1,4 @@
+
 export interface DayActivity {
   id: string;
   day_id: string;
@@ -5,7 +6,7 @@ export interface DayActivity {
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost?: number;
+  cost?: number | null;
   currency?: string;
   order_index: number;
   created_at: string;
@@ -42,7 +43,7 @@ export interface Accommodation {
   hotel_url?: string;
   hotel_checkin_date?: string;
   hotel_checkout_date?: string;
-  expense_cost?: number;
+  expense_cost?: number | null;
   currency?: string;
   expense_type?: string;
   expense_paid?: boolean;
@@ -106,7 +107,7 @@ export interface TransportationEvent {
   end_time?: string;
   departure_location?: string;
   arrival_location?: string;
-  cost?: number;
+  cost?: number | null;
   currency?: string;
   is_arrival?: boolean;
   is_departure?: boolean;
@@ -124,7 +125,7 @@ export interface RestaurantReservation {
   currency?: string;
   address?: string;
   phone_number?: string;
-  phone_id?: string;
+  place_id?: string;
   rating?: number;
   created_at: string;
 }
@@ -136,12 +137,17 @@ export interface Currency {
 }
 
 export interface Expense {
-  category: 'reservations' | 'activities' | 'transportation';
   id: string;
-  title: string;
-  cost: number;
-  currency: string;
-  date: string;
-  day_id?: string;
   trip_id: string;
+  category: string;
+  description: string;
+  cost?: number | null;
+  currency?: string | null;
+  is_paid?: boolean;
+  created_at?: string;
+  transportation_id?: string | null;
+  activity_id?: string | null;
+  accommodation_id?: string | null;
+  title?: string;
+  date?: string;
 }
