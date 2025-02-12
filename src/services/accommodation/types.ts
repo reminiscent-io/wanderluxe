@@ -3,7 +3,7 @@
 export interface AccommodationFormData {
   stay_id?: string;
   trip_id?: string;
-  expense_cost: number | null;  // Changed from string | null to match database
+  expense_cost: string;  // Keep as string for form input
   hotel: string;
   hotel_details: string;
   hotel_url?: string;
@@ -29,7 +29,7 @@ export interface HotelStay {
   hotel_url?: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  expense_cost: number | null;  // Made non-optional but nullable to match DB
+  expense_cost: number | null;  // Database stores as number
   currency: string;
   hotel_address?: string;
   hotel_phone?: string;
@@ -49,14 +49,28 @@ export interface AccommodationDay {
 // Activity interfaces
 export interface ActivityFormData {
   title: string;
-  description: string;  // Made required to match usage
+  description: string;
   start_time: string;
   end_time: string;
   cost: string;
   currency: string;
 }
 
-// RestaurantData interface to fix type mismatches
+// DayActivity represents the database model
+export interface DayActivity {
+  id: string;
+  day_id: string;
+  title: string;
+  description: string;
+  start_time?: string;
+  end_time?: string;
+  cost?: number;
+  currency: string;
+  order_index: number;
+  created_at: string;
+}
+
+// RestaurantData interface
 export interface RestaurantData {
   id: string;
   day_id: string;
@@ -73,4 +87,21 @@ export interface RestaurantData {
   rating?: number;
   created_at: string;
   order_index: number;
+}
+
+// Simple restaurant data for display
+export interface SimpleRestaurantData {
+  id: string;
+  restaurant: string;
+  time: string;
+}
+
+// Timeline event interface
+export interface TimelineEvent {
+  id: string;
+  date: string;
+  title: string;
+  description: string;
+  activities: DayActivity[];
+  image_url?: string;
 }
