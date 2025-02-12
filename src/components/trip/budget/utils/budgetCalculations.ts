@@ -1,5 +1,5 @@
 
-import { Expense, ExchangeRate } from '@/integrations/supabase/types';
+import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
 export const convertAmount = (
   amount: number, 
@@ -27,13 +27,16 @@ export const calculateTotals = (
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
 ) => {
-  let reservationsTotal = 0;
-  let transportationTotal = 0;
-  let activitiesTotal = 0;
-  let total = 0;
+  const totals = {
+    Transportation: 0,
+    Activities: 0,
+    Accommodations: 0,
+    Other: 0,
+    total: 0
+  };
 
   expenses.forEach(expense => {
-    if (expense.cost) {
+    if (expense.cost && expense.currency) {
       const convertedAmount = convertAmount(
         expense.cost, 
         expense.currency, 
@@ -41,35 +44,12 @@ export const calculateTotals = (
         exchangeRates
       );
 
-      switch (expense.category) {
-        case 'reservations':
-          reservationsTotal += convertedAmount;
-          break;
-        case 'transportation':
-          transportationTotal += convertedAmount;
-          break;
-        case 'activities':
-          activitiesTotal += convertedAmount;
-          break;
-      }
-
-      total += convertedAmount;
+      totals[expense.category as keyof typeof totals] += convertedAmount;
+      totals.total += convertedAmount;
     }
   });
   
-  return {
-    reservations: reservationsTotal,
-    transportation: transportationTotal,
-    activities: activitiesTotal,
-    total
-  };
-};
-
-export const getExpensesByCategory = (
-  expenses: Expense[], 
-  category: string
-): Expense[] => {
-  return expenses.filter(expense => expense.category === category);
+  return totals;
 };
 
 export const formatCurrency = (amount: number, currency: string): string => {

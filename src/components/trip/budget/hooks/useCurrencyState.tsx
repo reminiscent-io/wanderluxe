@@ -1,6 +1,12 @@
+
 import { useState } from 'react';
 
 export const useCurrencyState = (initialCurrency: string = 'USD') => {
   const [selectedCurrency, setSelectedCurrency] = useState(initialCurrency);
-  return { selectedCurrency, setSelectedCurrency };
+  
+  const handleCurrencyChange = (currency: string) => {
+    setSelectedCurrency(currency);
+  };
+
+  return { selectedCurrency, handleCurrencyChange };
 };
