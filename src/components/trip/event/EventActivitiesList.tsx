@@ -23,13 +23,13 @@ interface EventActivitiesListProps {
   hotel?: string;
   isAddingActivity: boolean;
   onAddingActivityChange: (isAdding: boolean) => void;
-  newActivity: { text: string; cost: string; currency: string };
-  onNewActivityChange: (activity: { text: string; cost: string; currency: string }) => void;
+  newActivity: { totle: string; cost: string; currency: string };
+  onNewActivityChange: (activity: { title: string; cost: string; currency: string }) => void;
   onAddActivity: () => void;
   editingActivity: string | null;
   onEditingActivityChange: (id: string | null) => void;
-  activityEdit: { text: string; cost: string; currency: string };
-  onActivityEditChange: (edit: { text: string; cost: string; currency: string }) => void;
+  activityEdit: { title: string; cost: string; currency: string };
+  onActivityEditChange: (edit: { title: string; cost: string; currency: string }) => void;
   onEditActivity: (id: string) => void;
   eventId: string;
 }
@@ -111,7 +111,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
             ) : (
               <>
                 <div>
-                  <span>{activity.title}</span>  {/* Changed from activity.text to activity.title */}
+                  <span>{activity.title}</span> 
                   {activity.cost && (
                     <span className="ml-2 text-earth-500">
                       {activity.cost} {activity.currency}
@@ -124,7 +124,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
                   onClick={() => {
                     onEditingActivityChange(activity.id);
                     onActivityEditChange({
-                      text: activity.title,  // Changed from text to title
+                      title: activity.title,  
                       cost: activity.cost?.toString() || "",
                       currency: activity.currency || "USD"
                     });
