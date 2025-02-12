@@ -2,18 +2,12 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { formatCost, parseCost, isValidCost } from '@/utils/costUtils';
+import { ActivityFormData } from '@/types/trip';
 
 interface ActivityFormProps {
-  activity: {
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost: number | null;
-    currency: string;
-  };
-  onActivityChange: (activity: ActivityFormProps['activity']) => void;
-  onSubmit: (activity: ActivityFormProps['activity']) => void;
+  activity: ActivityFormData;
+  onActivityChange: (activity: ActivityFormData) => void;
+  onSubmit: (activity: ActivityFormData) => void;
   onCancel: () => void;
   submitLabel: string;
   eventId: string;
@@ -41,11 +35,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       if (activity.start_time > activity.end_time) {
         newErrors.time = 'End time must be after start time';
       }
-    }
-
-    const costString = activity.cost !== null ? activity.cost.toString() : '';
-    if (costString && !isValidCost(costString)) {
-      newErrors.cost = 'Cost must be a valid number';
     }
 
     setErrors(newErrors);
@@ -136,11 +125,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="text"
             value={formatCost(activity.cost)}
             onChange={(e) => handleCostChange(e.target.value)}
-            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
-              errors.cost ? 'border-red-500' : 'border-gray-300'
-            } focus:border-earth-500 focus:ring-earth-500`}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           />
-          {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Currency</label>
