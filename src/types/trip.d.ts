@@ -21,10 +21,16 @@ export interface ActivityFormData {
   currency: string;
 }
 
+export interface ActivityData {
+  text: string;
+  cost: string;
+  currency: string;
+}
+
 export interface AccommodationData {
   stay_id: string;
   trip_id: string;
-  cost: number | null;  // Changed from expense_cost
+  cost: number | null;
   hotel: string;
   hotel_details: string;
   hotel_url?: string;
