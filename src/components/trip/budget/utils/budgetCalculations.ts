@@ -1,12 +1,13 @@
 
 import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
+// Convert amount between currencies using exchange rates
 export const convertAmount = (
   amount: number, 
   fromCurrency: string, 
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
-) => {
+): number => {
   if (fromCurrency === selectedCurrency) return amount;
   
   const toUsdRate = exchangeRates.find(r => 
@@ -22,6 +23,7 @@ export const convertAmount = (
   return amount * toUsdRate * fromUsdRate;
 };
 
+// Calculate totals for all expense categories
 export const calculateTotals = (
   expenses: Expense[], 
   selectedCurrency: string, 
@@ -50,10 +52,12 @@ export const calculateTotals = (
   });
 };
 
-export const getExpensesByCategory = (expenses: Expense[], category: string) => {
+// Filter expenses by category
+export const getExpensesByCategory = (expenses: Expense[], category: string): Expense[] => {
   return expenses.filter(expense => expense.category.toLowerCase() === category.toLowerCase());
 };
 
+// Format currency amount to string
 export const formatCurrency = (amount: number, currency: string): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -61,4 +65,12 @@ export const formatCurrency = (amount: number, currency: string): string => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(amount);
+};
+
+export type CategoryTotals = {
+  Transportation: number;
+  Activities: number;
+  Accommodations: number;
+  Other: number;
+  total: number;
 };

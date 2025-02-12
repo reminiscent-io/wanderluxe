@@ -2,14 +2,15 @@
 import React from 'react';
 import ExpenseSection from '../ExpenseSection';
 import { getExpensesByCategory } from '../utils/budgetCalculations';
+import { Expense } from '@/integrations/supabase/types/models';
 
 interface ActivitiesSectionProps {
-  expenses: any[];
+  expenses: Expense[];
   amount: number;
   currency: string;
   isExpanded: boolean;
   onToggle: () => void;
-  onAddExpense: () => void;
+  onAddExpense?: () => void;
   editingItem: string | null;
   onEdit: (id: string) => void;
   onUpdateCost: (id: string, category: string, cost: number, currency: string) => void;
@@ -36,11 +37,11 @@ const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({
       isExpanded={isExpanded}
       onToggle={onToggle}
       onAddExpense={onAddExpense}
-      expenses={getExpensesByCategory(expenses, 'activities')}
+      expenses={getExpensesByCategory(expenses, 'Activities')}
       editingItem={editingItem}
       onEdit={onEdit}
-      onUpdateCost={(id, cost, curr) => onUpdateCost(id, 'activities', cost, curr)}
-      onDelete={(id) => onDelete(id, 'activities')}
+      onUpdateCost={(id, cost, curr) => onUpdateCost(id, 'Activities', cost, curr)}
+      onDelete={(id) => onDelete(id, 'Activities')}
     />
   );
 };
