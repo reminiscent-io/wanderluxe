@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,17 @@ import DiningList from '../DiningList';
 import ActivityForm from '../ActivityForm';
 import { useQuery } from '@tanstack/react-query';
 import { DayActivity } from '@/types/trip';
-import { Plus } from 'lucide-react'; // Assumed import
+import { Plus } from 'lucide-react';
 
+interface Activity {
+  id: string;
+  title: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  cost?: number;
+  currency?: string;
+}
 
 interface DayEditDialogProps {
   isOpen: boolean;
@@ -19,15 +29,7 @@ interface DayEditDialogProps {
   dayId: string;
   currentTitle: string;
   date: string;
-  activities: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost?: number;
-    currency?: string;
-  }>;
+  activities: Activity[];
   formatTime: (time?: string) => string;
 }
 
@@ -45,9 +47,17 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [localActivities, setLocalActivities] = useState(activities);
+  const [localActivities, setLocalActivities] = useState<Activity[]>(activities);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [isAddingActivity, setIsAddingActivity] = useState(false);
+  const [emptyActivity, setEmptyActivity] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
 
   // Fetch restaurant reservations
   const { data: reservations = [] } = useQuery({
@@ -66,16 +76,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       return data;
     },
     enabled: !!dayId && isOpen,
-  });
-
-  // Initialize empty activity for the form
-  const [emptyActivity, setEmptyActivity] = useState({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD'
   });
 
   const handleGenerateImages = async () => {
@@ -120,9 +120,9 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
         .insert([{
           day_id: dayId,
           title: activity.title,
-          description: activity.description,
-          start_time: activity.start_time,
-          end_time: activity.end_time,
+          description: activity.description || null,
+          start_time: activity.start_time || null,
+          end_time: activity.end_time || null,
           cost: activity.cost ? Number(activity.cost) : null,
           currency: activity.currency,
           order_index: localActivities.length,
@@ -133,9 +133,19 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
       if (error) throw error;
 
-      setLocalActivities([...localActivities, data]);
+      const newActivity: Activity = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        cost: data.cost ? Number(data.cost) : undefined,
+        currency: data.currency
+      };
+
+      setLocalActivities(prev => [...prev, newActivity]);
       setIsAddingActivity(false);
-      setEditingActivityId(null); // Close any open edit dialogs
+      setEditingActivityId(null);
       toast.success('Activity added successfully');
     } catch (error) {
       console.error('Error adding activity:', error);
@@ -170,7 +180,11 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       setLocalActivities(prev =>
         prev.map(act =>
           act.id === editingActivityId
-            ? { ...act, ...activity, cost: activity.cost ? Number(activity.cost) : null }
+            ? {
+                ...act,
+                ...updateData,
+                cost: updateData.cost !== null ? Number(updateData.cost) : undefined
+              }
             : act
         )
       );
@@ -288,7 +302,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                 </DialogHeader>
                 <ActivityForm
                   activity={emptyActivity}
-                  onActivityChange={(updatedActivity) => setEmptyActivity(updatedActivity)}
+                  onActivityChange={setEmptyActivity}
                   onSubmit={handleActivitySubmit}
                   onCancel={() => setIsAddingActivity(false)}
                   submitLabel="Add Activity"
@@ -313,15 +327,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                       cost: activityBeingEdited.cost?.toString() || '',
                       currency: activityBeingEdited.currency || 'USD'
                     }}
-                    onActivityChange={(updatedActivity) => {
-                      setLocalActivities(prev => 
-                        prev.map(act => 
-                          act.id === editingActivityId 
-                            ? { ...act, ...updatedActivity }
-                            : act
-                        )
-                      );
-                    }}
+                    onActivityChange={setEmptyActivity}
                     onSubmit={handleUpdateActivity}
                     onCancel={() => setEditingActivityId(null)}
                     submitLabel="Update Activity"
@@ -346,9 +352,9 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                   className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
                 >
                   <div>
-                    <h4 className="font-medium text-sm">{activity.title}</h4> {/* Reduced font size */}
+                    <h4 className="font-medium text-sm">{activity.title}</h4>
                     {activity.start_time && (
-                      <p className="text-xs text-gray-500"> {/* Reduced font size */}
+                      <p className="text-xs text-gray-500">
                         {formatTime(activity.start_time)}
                         {activity.end_time && ` - ${formatTime(activity.end_time)}`}
                       </p>
