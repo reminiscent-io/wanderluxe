@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import AccommodationGroup from '../accommodation/AccommodationGroup';
@@ -105,11 +106,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                   <DayCard
                     key={day.day_id}
                     id={day.day_id}
+                    tripId={tripId || ''} // Added tripId property
                     date={day.date}
                     title={day.title || ''}
                     description={day.description}
                     activities={day.activities || []}
-                    imageUrl={day.image_url} // Ensure this is passed correctly from trip_days.image_url
+                    imageUrl={day.image_url}
                     onAddActivity={() => {}}
                     index={dayIndex}
                     onDelete={handleDayDelete}
@@ -126,6 +128,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     <DayCard
                       key={day.day_id}
                       id={day.day_id}
+                      tripId={tripId || ''} // Added tripId property
                       date={day.date}
                       title={day.title || ''}
                       description={day.description}
