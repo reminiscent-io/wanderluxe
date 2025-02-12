@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil } from "lucide-react";
@@ -11,7 +12,7 @@ import ActivityForm from '../ActivityForm';
 
 interface Activity {
   id: string;
-  text: string;
+  title: string;  // Changed from text to title
   cost?: number;
   currency?: string;
 }
@@ -110,7 +111,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
             ) : (
               <>
                 <div>
-                  <span>{activity.text}</span>
+                  <span>{activity.title}</span>  {/* Changed from activity.text to activity.title */}
                   {activity.cost && (
                     <span className="ml-2 text-earth-500">
                       {activity.cost} {activity.currency}
@@ -123,7 +124,7 @@ const EventActivitiesList: React.FC<EventActivitiesListProps> = ({
                   onClick={() => {
                     onEditingActivityChange(activity.id);
                     onActivityEditChange({
-                      text: activity.text,
+                      text: activity.title,  // Changed from text to title
                       cost: activity.cost?.toString() || "",
                       currency: activity.currency || "USD"
                     });
