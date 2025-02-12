@@ -1,4 +1,3 @@
-
 export interface DayActivity {
   id: string;
   day_id: string;
@@ -17,7 +16,7 @@ export interface ActivityFormData {
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost: number | null;
+  cost: string | null;
   currency: string;
 }
 
@@ -36,7 +35,7 @@ export interface HotelStay {
   hotel_url?: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost: number | null;
+  cost: string | null;
   currency: string;
   hotel_address?: string;
   hotel_phone?: string;
@@ -48,7 +47,7 @@ export interface HotelStay {
 export interface AccommodationData {
   stay_id: string;
   trip_id: string;
-  cost: number | null;
+  cost: string | null;
   hotel: string;
   hotel_details: string;
   hotel_url?: string;
@@ -68,11 +67,10 @@ export interface AccommodationData {
 export interface ExpenseData {
   id: string;
   trip_id: string;
-  cost: number | null;
+  cost: string | null;
   category: string;
   description: string;
   currency: string;
   is_paid?: boolean;
   created_at?: string;
 }
-

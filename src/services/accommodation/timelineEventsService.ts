@@ -9,27 +9,26 @@ export const createAccommodationEvents = async (
   try {
     // First, create the main accommodation entry
     const { data: accommodation, error: accommodationError } = await supabase
-  .from('accommodations')
-  .insert([{
-  trip_id: tripId,
-  title: formData.hotel,
-  hotel: formData.hotel,
-  hotel_details: formData.hotel_details,
-  hotel_url: formData.hotel_url,
-  hotel_checkin_date: formData.hotel_checkin_date,
-  hotel_checkout_date: formData.hotel_checkout_date,
-  expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost) : null,
-  currency: formData.currency,
-  hotel_address: formData.hotel_address,
-  hotel_phone: formData.hotel_phone,
-  hotel_place_id: formData.hotel_place_id,
-  hotel_website: formData.hotel_website,
-  order_index: 0,
-  expense_type: 'accommodation',  // Add this
-  expense_paid: false,           // Add this
-  created_at: new Date().toISOString()  // Add this
-}])
-
+      .from('accommodations')
+      .insert([{
+        trip_id: tripId,
+        title: formData.hotel,
+        hotel: formData.hotel,
+        hotel_details: formData.hotel_details,
+        hotel_url: formData.hotel_url,
+        hotel_checkin_date: formData.hotel_checkin_date,
+        hotel_checkout_date: formData.hotel_checkout_date,
+        cost: formData.cost ? parseFloat(formData.cost) : null,
+        currency: formData.currency,
+        hotel_address: formData.hotel_address,
+        hotel_phone: formData.hotel_phone,
+        hotel_place_id: formData.hotel_place_id,
+        hotel_website: formData.hotel_website,
+        order_index: 0,
+        expense_type: 'accommodation',
+        expense_paid: false,
+        created_at: new Date().toISOString()
+      }])
       .select()
       .single();
 
@@ -46,11 +45,10 @@ export const createAccommodationEvents = async (
 
     // Create accommodation_days entries
     const accommodationDays = tripDays.map(day => ({
-  stay_id: accommodation.stay_id,
-  day_id: day.day_id,
-  date: day.date  // Ensure this is in the correct date format
-}));
-
+      stay_id: accommodation.stay_id,
+      day_id: day.day_id,
+      date: day.date
+    }));
 
     const { error: daysError } = await supabase
       .from('accommodations_days')
@@ -84,7 +82,7 @@ export const updateAccommodationEvents = async (
         hotel_url: formData.hotel_url || '',
         hotel_checkin_date: formData.hotel_checkin_date,
         hotel_checkout_date: formData.hotel_checkout_date,
-        expense_cost: formData.expense_cost && formData.expense_cost !== '' ? Number(formData.expense_cost) : null,
+        cost: formData.cost ? parseFloat(formData.cost) : null,
         currency: formData.currency || 'USD',
         hotel_address: formData.hotel_address || '',
         hotel_phone: formData.hotel_phone || '',
@@ -106,7 +104,6 @@ export const updateAccommodationEvents = async (
     if (!accommodation) {
       throw new Error('No accommodation found with the provided stay_id');
     }
-
 
     // Delete existing accommodation_days
     const { error: deleteError } = await supabase

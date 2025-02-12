@@ -2,12 +2,11 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatCost, parseCost } from '@/utils/costUtils';
 
 interface CostInputsProps {
-  cost: number | null;
+  cost: string | null;
   currency: string;
-  onCostChange: (value: number | null) => void;
+  onCostChange: (value: string | null) => void;
   onCurrencyChange: (value: string) => void;
 }
 
@@ -18,8 +17,20 @@ const CostInputs: React.FC<CostInputsProps> = ({
   onCurrencyChange,
 }) => {
   const handleCostChange = (value: string) => {
-    const parsedValue = parseCost(value);
-    onCostChange(parsedValue);
+    // Allow empty string to be converted to null
+    if (value === '') {
+      onCostChange(null);
+      return;
+    }
+
+    // Only allow numbers and decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+    
+    // Ensure proper decimal format
+    const parts = cleanValue.split('.');
+    const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
+    
+    onCostChange(formattedValue);
   };
 
   return (
@@ -29,7 +40,7 @@ const CostInputs: React.FC<CostInputsProps> = ({
         <Input
           id="cost"
           type="text"
-          value={formatCost(cost)}
+          value={cost || ''}
           onChange={(e) => handleCostChange(e.target.value)}
           placeholder="0.00"
         />

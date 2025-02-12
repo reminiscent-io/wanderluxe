@@ -6,7 +6,7 @@ export interface AccommodationFormData {
   hotel_url?: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost: number | null;
+  cost: string | null;  // Changed to string for form handling
   currency: string;
   hotel_address?: string;
   hotel_phone?: string;
@@ -23,7 +23,7 @@ export interface HotelStay {
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost: number | null;
+  cost: string | null;  // Changed to string for UI consistency
   currency: string;
   hotel_address?: string;
   hotel_phone?: string;
