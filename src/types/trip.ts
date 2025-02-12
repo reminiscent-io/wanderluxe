@@ -20,7 +20,7 @@ export interface TripDay {
   description?: string;
   image_url?: string;
   created_at: string;
-  day_activities?: DayActivity[];
+  activities?: DayActivity[]; // Changed from day_activities to activities to match usage
 }
 
 export interface AccommodationDay {
@@ -54,6 +54,7 @@ export interface Accommodation {
   hotel_website?: string;
   order_index: number;
   created_at: string;
+  final_accommodation_day?: string;
   accommodations_days?: AccommodationDay[];
 }
 
