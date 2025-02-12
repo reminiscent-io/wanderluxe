@@ -38,7 +38,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     if (stayToEdit) {
       setEditingStay({
         ...stayToEdit,
-        expense_cost: stayToEdit.expense_cost?.toString() || null,
+        cost: stayToEdit.cost?.toString() || null,
         hotel_details: stayToEdit.hotel_details || '',
         currency: stayToEdit.currency || 'USD',
         hotel_url: stayToEdit.hotel_url || '',
