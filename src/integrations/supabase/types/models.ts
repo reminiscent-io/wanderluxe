@@ -14,7 +14,18 @@ export type RestaurantReservation = Tables<"restaurant_reservations">
 export type Currency = Tables<"currencies">
 
 // Define the Expense type based on the database schema
-export type Expense = Tables<"expenses"> & {
+export interface Expense {
+  id: string;
+  trip_id: string;
+  category: string;
+  description: string;
+  cost?: number | null;
+  currency?: string | null;
+  is_paid?: boolean;
+  created_at?: string;
+  transportation_id?: string | null;
+  activity_id?: string | null;
+  accommodation_id?: string | null;
   title?: string;  // Optional computed field
   date?: string;   // Optional computed field
-};
+}

@@ -1,6 +1,8 @@
+
 import React from 'react';
 import ExpenseCard from './ExpenseCard';
 import ExpenseDetails from './ExpenseDetails';
+import { Expense } from '@/integrations/supabase/types/models';
 
 interface ExpenseSectionProps {
   title: string;
@@ -8,8 +10,8 @@ interface ExpenseSectionProps {
   currency: string;
   isExpanded: boolean;
   onToggle: () => void;
-  onAddExpense: () => void;
-  expenses: any[];
+  onAddExpense?: () => void;
+  expenses: Expense[];
   editingItem: string | null;
   onEdit: (id: string) => void;
   onUpdateCost: (id: string, cost: number, currency: string) => void;
@@ -38,17 +40,10 @@ const ExpenseSection: React.FC<ExpenseSectionProps> = ({
       onToggle={onToggle}
       onAddExpense={onAddExpense}
     >
-      {expenses.map(event => (
+      {expenses.map(expense => (
         <ExpenseDetails
-          key={event.id}
-          id={event.id}
-          cost={event.expense_cost}
-          currency={event.expense_currency}
-          description={`${event.expense_date || event.date} - ${event.title}`}
-          isEditing={editingItem === event.id}
-          onEdit={() => onEdit(event.id)}
-          onSave={(cost, currency) => onUpdateCost(event.id, cost, currency)}
-          onDelete={() => onDelete(event.id)}
+          key={expense.id}
+          expense={expense}
         />
       ))}
     </ExpenseCard>
