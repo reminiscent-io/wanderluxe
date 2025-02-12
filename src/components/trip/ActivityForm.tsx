@@ -1,5 +1,7 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { formatCost, parseCost, isValidCost } from '@/utils/costUtils';
 
 interface ActivityFormProps {
   activity: {
@@ -7,7 +9,7 @@ interface ActivityFormProps {
     description?: string;
     start_time?: string;
     end_time?: string;
-    cost: string;
+    cost: number | null;
     currency: string;
   };
   onActivityChange: (activity: ActivityFormProps['activity']) => void;
@@ -41,7 +43,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       }
     }
 
-    if (activity.cost && isNaN(Number(activity.cost))) {
+    const costString = activity.cost !== null ? activity.cost.toString() : '';
+    if (costString && !isValidCost(costString)) {
       newErrors.cost = 'Cost must be a valid number';
     }
 
@@ -68,6 +71,14 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCostChange = (value: string) => {
+    const parsedCost = parseCost(value);
+    onActivityChange({
+      ...activity,
+      cost: parsedCost
+    });
   };
 
   return (
@@ -123,8 +134,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <label className="block text-sm font-medium text-gray-700">Cost</label>
           <input
             type="text"
-            value={activity.cost}
-            onChange={(e) => onActivityChange({ ...activity, cost: e.target.value })}
+            value={formatCost(activity.cost)}
+            onChange={(e) => handleCostChange(e.target.value)}
             className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
               errors.cost ? 'border-red-500' : 'border-gray-300'
             } focus:border-earth-500 focus:ring-earth-500`}

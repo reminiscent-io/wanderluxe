@@ -2,13 +2,13 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatCost, parseCost } from '@/utils/costUtils';
 
 interface CostInputsProps {
-  expenseCost: string;
+  expenseCost: number | null;
   currency: string;
-  onCostChange: (value: string) => void;
+  onCostChange: (value: number | null) => void;
   onCurrencyChange: (value: string) => void;
-  formatCost: (value: string) => string;
 }
 
 const CostInputs: React.FC<CostInputsProps> = ({
@@ -16,8 +16,12 @@ const CostInputs: React.FC<CostInputsProps> = ({
   currency,
   onCostChange,
   onCurrencyChange,
-  formatCost
 }) => {
+  const handleCostChange = (value: string) => {
+    const parsedValue = parseCost(value);
+    onCostChange(parsedValue);
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
@@ -25,9 +29,8 @@ const CostInputs: React.FC<CostInputsProps> = ({
         <Input
           id="expense_cost"
           type="text"
-          value={expenseCost}
-          onChange={(e) => onCostChange(e.target.value)}
-          onBlur={(e) => onCostChange(formatCost(e.target.value))}
+          value={formatCost(expenseCost)}
+          onChange={(e) => handleCostChange(e.target.value)}
           placeholder="0.00"
         />
       </div>
