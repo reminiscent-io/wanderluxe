@@ -24,7 +24,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     const accommodationData = {
       ...formData,
       trip_id: tripId,
-      expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost) : null
+      cost: formData.cost ? parseFloat(formData.cost.toString()) : null
     };
     
     await createAccommodationEvents(tripId, accommodationData, stayDates);
@@ -64,7 +64,7 @@ export const updateAccommodation = async (
       ...formData,
       stay_id,
       trip_id: tripId,
-      expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost) : null
+      cost: formData.cost ? parseFloat(formData.cost.toString()) : null
     };
     
     await updateAccommodationEvents(tripId, accommodationData, stayDates);

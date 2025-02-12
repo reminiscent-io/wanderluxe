@@ -5,14 +5,14 @@ import { Label } from "@/components/ui/label";
 import { formatCost, parseCost } from '@/utils/costUtils';
 
 interface CostInputsProps {
-  expenseCost: number | null;
+  cost: number | null;
   currency: string;
   onCostChange: (value: number | null) => void;
   onCurrencyChange: (value: string) => void;
 }
 
 const CostInputs: React.FC<CostInputsProps> = ({
-  expenseCost,
+  cost,
   currency,
   onCostChange,
   onCurrencyChange,
@@ -25,11 +25,11 @@ const CostInputs: React.FC<CostInputsProps> = ({
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <Label htmlFor="expense_cost">Total Cost</Label>
+        <Label htmlFor="cost">Total Cost</Label>
         <Input
-          id="expense_cost"
+          id="cost"
           type="text"
-          value={formatCost(expenseCost)}
+          value={formatCost(cost)}
           onChange={(e) => handleCostChange(e.target.value)}
           placeholder="0.00"
         />

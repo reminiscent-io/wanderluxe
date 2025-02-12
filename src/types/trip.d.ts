@@ -24,7 +24,7 @@ export interface ActivityFormData {
 export interface AccommodationData {
   stay_id: string;
   trip_id: string;
-  expense_cost: number | null;
+  cost: number | null;  // Changed from expense_cost
   hotel: string;
   hotel_details: string;
   hotel_url?: string;
