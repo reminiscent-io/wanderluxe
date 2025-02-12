@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import type { AccommodationFormData, HotelStay } from './types';
+import type { AccommodationFormData } from './types';
 import { generateDatesArray } from './dateUtils';
 import { createTripDays } from './tripDaysService';
 import { createAccommodationEvents, deleteAccommodationEvents, updateAccommodationEvents } from './timelineEventsService';
@@ -21,7 +21,13 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     await createTripDays(tripId, stayDates);
 
     // Create all timeline events for the stay
-    await createAccommodationEvents(tripId, formData, stayDates);
+    const accommodationData = {
+      ...formData,
+      trip_id: tripId,
+      expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost) : null
+    };
+    
+    await createAccommodationEvents(tripId, accommodationData, stayDates);
 
     toast.success('Accommodation added successfully');
     return true;
@@ -54,7 +60,14 @@ export const updateAccommodation = async (
     await createTripDays(tripId, stayDates);
 
     // Update existing events for this hotel stay
-    await updateAccommodationEvents(tripId, { ...formData, stay_id }, stayDates);
+    const accommodationData = {
+      ...formData,
+      stay_id,
+      trip_id: tripId,
+      expense_cost: formData.expense_cost ? parseFloat(formData.expense_cost) : null
+    };
+    
+    await updateAccommodationEvents(tripId, accommodationData, stayDates);
 
     toast.success('Accommodation updated successfully');
     return true;
@@ -65,12 +78,12 @@ export const updateAccommodation = async (
   }
 };
 
-export const deleteAccommodation = async (stay_id: string) => {
-  if (!stay_id) {
+export const deleteAccommodation = async (stayId: string) => {
+  if (!stayId) {
     throw new Error('Accommodation ID is required for deletion');
   }
   try {
-    await deleteAccommodationEvents(stay_id);
+    await deleteAccommodationEvents(stayId);
     toast.success('Accommodation deleted successfully');
     return true;
   } catch (error) {

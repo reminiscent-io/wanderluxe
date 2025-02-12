@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
@@ -62,7 +63,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       {isExpanded && (
         <>
           <HotelStaysList
-            hotelStays={sortedHotelStays}  // Use sorted hotel stays
+            hotelStays={sortedHotelStays}
             onEdit={handleEdit}
             onDelete={handleDelete}
             formatDateRange={formatDateRange}

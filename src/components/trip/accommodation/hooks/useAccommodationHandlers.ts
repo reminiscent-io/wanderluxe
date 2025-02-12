@@ -31,9 +31,9 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
     }
   };
 
-  const handleDelete = async (stay: HotelStay) => {
+  const handleDelete = async (stayId: string) => {
     try {
-      await deleteAccommodation(stay);
+      await deleteAccommodation(stayId);
       onSuccess();
     } catch (error) {
       console.error('Error deleting accommodation:', error);
