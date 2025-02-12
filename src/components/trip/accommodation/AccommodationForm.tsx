@@ -29,7 +29,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     hotel_url: initialData?.hotel_url || '',
     hotel_checkin_date: initialData?.hotel_checkin_date || tripArrivalDate || '',
     hotel_checkout_date: initialData?.hotel_checkout_date || tripDepartureDate || '',
-    expense_cost: initialData?.expense_cost ? initialData.expense_cost.toString() : '',
+    cost: initialData?.cost ? initialData.cost.toString() : '',
     currency: initialData?.currency || 'USD',
     hotel_address: initialData?.hotel_address || '',
     hotel_phone: initialData?.hotel_phone || '',
@@ -113,9 +113,9 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       />
 
       <CostInputs
-        expenseCost={formData.expense_cost}
+        expenseCost={formData.cost}
         currency={formData.currency}
-        onCostChange={(value) => setFormData({ ...formData, expense_cost: value })}
+        onCostChange={(value) => setFormData({ ...formData, cost: value })}
         onCurrencyChange={(value) => setFormData({ ...formData, currency: value })}
         formatCost={formatCost}
       />
