@@ -33,6 +33,15 @@ interface DayCardContentProps {
   eventId: string;
 }
 
+interface ActivityState {
+  title: string;
+  description?: string;  // Made optional
+  start_time?: string;   // Made optional
+  end_time?: string;     // Made optional
+  cost: string;
+  currency: string;
+}
+
 const DayCardContent: React.FC<DayCardContentProps> = ({
   index,
   title,
@@ -46,7 +55,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [newActivity, setNewActivity] = useState({
+  const [newActivity, setNewActivity] = useState<ActivityState>({
     title: '',
     description: '',
     start_time: '',
@@ -54,7 +63,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     cost: '',
     currency: 'USD'
   });
-  const [activityEdit, setActivityEdit] = useState({
+  const [activityEdit, setActivityEdit] = useState<ActivityState>({
     title: '',
     description: '',
     start_time: '',
