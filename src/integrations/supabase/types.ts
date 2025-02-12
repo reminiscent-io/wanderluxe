@@ -249,6 +249,84 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          accommodation_id: string | null
+          activity_id: string | null
+          category: string
+          cost: number | null
+          created_at: string | null
+          currency: string | null
+          description: string
+          id: string
+          is_paid: boolean | null
+          transportation_id: string | null
+          trip_id: string
+        }
+        Insert: {
+          accommodation_id?: string | null
+          activity_id?: string | null
+          category: string
+          cost?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description: string
+          id?: string
+          is_paid?: boolean | null
+          transportation_id?: string | null
+          trip_id: string
+        }
+        Update: {
+          accommodation_id?: string | null
+          activity_id?: string | null
+          category?: string
+          cost?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string
+          id?: string
+          is_paid?: boolean | null
+          transportation_id?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_accommodation_id_fkey"
+            columns: ["accommodation_id"]
+            isOneToOne: false
+            referencedRelation: "accommodations"
+            referencedColumns: ["stay_id"]
+          },
+          {
+            foreignKeyName: "expenses_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "day_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
+          {
+            foreignKeyName: "expenses_transportation_id_fkey"
+            columns: ["transportation_id"]
+            isOneToOne: false
+            referencedRelation: "transportation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -496,19 +574,7 @@ export type Database = {
       }
     }
     Views: {
-      expenses: {
-        Row: {
-          category: string | null
-          cost: number | null
-          currency: string | null
-          date: string | null
-          day_id: string | null
-          id: string | null
-          title: string | null
-          trip_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
