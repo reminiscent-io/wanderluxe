@@ -29,6 +29,7 @@ const Hero = () => {
           src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop"
           alt="Mountain landscape"
           photographer="jeremy-bishop"
+          downloadLocation="https://api.unsplash.com/photos/rTZW4f02zY8/download"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/30" />
