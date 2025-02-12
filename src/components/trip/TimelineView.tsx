@@ -35,6 +35,23 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     departure_date: string | null; 
   }>({ arrival_date: null, departure_date: null });
 
+  // Sort all days chronologically once to establish the correct day numbers
+  const sortedDays = useMemo(() => {
+    if (!days) return [];
+    return [...days].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [days]);
+
+  // Create a map of day_id to its index (1-based) in the chronological order
+  const dayIndexMap = useMemo(() => {
+    const map = new Map();
+    sortedDays.forEach((day, index) => {
+      map.set(day.day_id, index + 1); // Add 1 to make it 1-based
+    });
+    return map;
+  }, [sortedDays]);
+
   const fetchTripDates = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -175,7 +192,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         />
       </div>
 
-      <TimelineContent groups={groups} />
+      <TimelineContent groups={groups} dayIndexMap={dayIndexMap} />
       <AccommodationGaps 
         gaps={gaps} 
         onAddAccommodation={onAddAccommodation} 

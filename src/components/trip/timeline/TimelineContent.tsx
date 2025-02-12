@@ -19,9 +19,13 @@ interface TimelineContentProps {
     checkoutDate?: string;
     days: TripDay[];
   }>;
+  dayIndexMap: Map<string, number>;
 }
 
-const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
+const TimelineContent: React.FC<TimelineContentProps> = ({ 
+  groups,
+  dayIndexMap
+}) => {
   const tripId = groups[0]?.days[0]?.trip_id;
 
   const { data: transportationEvents } = useQuery({
@@ -102,7 +106,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     />
                   </motion.div>
                 ))}
-                {group.days.map((day, dayIndex) => (
+                {group.days.map((day) => (
                   <DayCard
                     key={day.day_id}
                     id={day.day_id}
@@ -113,33 +117,28 @@ const TimelineContent: React.FC<TimelineContentProps> = ({ groups }) => {
                     activities={day.activities || []}
                     imageUrl={day.image_url}
                     onAddActivity={() => {}}
-                    index={dayIndex}
+                    index={dayIndexMap.get(day.day_id) || 0}
                     onDelete={handleDayDelete}
                   />
                 ))}
               </AccommodationGroup>
             ) : (
               <div className="space-y-6">
-                {group.days.map((day) => {
-                  const dayIndex = groups.slice(0, groupIndex)
-                    .reduce((acc, g) => acc + g.days.length, 0) + 
-                    group.days.findIndex(d => d.day_id === day.day_id);
-                  return (
-                    <DayCard
-                      key={day.day_id}
-                      id={day.day_id}
-                      tripId={tripId || ''} // Added tripId property
-                      date={day.date}
-                      title={day.title || ''}
-                      description={day.description}
-                      activities={day.activities || []}
-                      imageUrl={day.image_url}
-                      onAddActivity={() => {}}
-                      index={dayIndex}
-                      onDelete={handleDayDelete}
-                    />
-                  );
-                })}
+                {group.days.map((day) => (
+                  <DayCard
+                    key={day.day_id}
+                    id={day.day_id}
+                    tripId={tripId || ''} // Added tripId property
+                    date={day.date}
+                    title={day.title || ''}
+                    description={day.description}
+                    activities={day.activities || []}
+                    imageUrl={day.image_url}
+                    onAddActivity={() => {}}
+                    index={dayIndexMap.get(day.day_id) || 0}
+                    onDelete={handleDayDelete}
+                  />
+                ))}
               </div>
             )}
           </motion.div>
