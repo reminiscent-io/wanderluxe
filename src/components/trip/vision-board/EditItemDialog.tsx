@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface EditItemDialogProps {
   isOpen: boolean;
@@ -43,21 +44,62 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
   item,
   onClose,
 }) => {
-  const [title, setTitle] = React.useState(item.title);
-  const [description, setDescription] = React.useState(item.description || "");
-  const [category, setCategory] = React.useState(item.category);
-  const [sourceUrl, setSourceUrl] = React.useState(item.source_url || "");
-  const [imageUrl, setImageUrl] = React.useState(item.image_url || "");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [title, setTitle] = useState(item.title);
+  const [description, setDescription] = useState(item.description || "");
+  const [category, setCategory] = useState(item.category);
+  const [sourceUrl, setSourceUrl] = useState(item.source_url || "");
+  const [imageUrl, setImageUrl] = useState(item.image_url || "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
 
   // Reset form when dialog opens with new item
-  React.useEffect(() => {
+  useEffect(() => {
     setTitle(item.title);
     setDescription(item.description || "");
     setCategory(item.category);
     setSourceUrl(item.source_url || "");
     setImageUrl(item.image_url || "");
   }, [item]);
+
+  // Fetch metadata when URL changes
+  const fetchUrlMetadata = async (url: string) => {
+    if (!url || isFetchingMetadata) return;
+
+    setIsFetchingMetadata(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-url-metadata', {
+        body: { url }
+      });
+
+      if (error) throw error;
+
+      if (data.image_url && !imageUrl) {
+        setImageUrl(data.image_url);
+      }
+      if (data.title && !title) {
+        setTitle(data.title);
+      }
+      if (data.description && !description) {
+        setDescription(data.description);
+      }
+    } catch (error) {
+      console.error('Error fetching URL metadata:', error);
+      toast.error("Failed to fetch URL metadata");
+    } finally {
+      setIsFetchingMetadata(false);
+    }
+  };
+
+  // Debounce URL changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (sourceUrl && sourceUrl !== item.source_url) {
+        fetchUrlMetadata(sourceUrl);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [sourceUrl, item.source_url]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +184,12 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="sourceUrl">Source URL</Label>
+              <Label htmlFor="sourceUrl" className="flex items-center gap-2">
+                Source URL
+                {isFetchingMetadata && (
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                )}
+              </Label>
               <Input
                 id="sourceUrl"
                 type="url"

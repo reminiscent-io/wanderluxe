@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface AddItemDialogProps {
   isOpen: boolean;
@@ -44,6 +45,60 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
   const [sourceUrl, setSourceUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
+
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setTitle("");
+      setDescription("");
+      setCategory(selectedCategory || "");
+      setSourceUrl("");
+      setImageUrl("");
+      setIsSubmitting(false);
+      setIsFetchingMetadata(false);
+    }
+  }, [isOpen, selectedCategory]);
+
+  // Fetch metadata when URL changes
+  const fetchUrlMetadata = async (url: string) => {
+    if (!url || isFetchingMetadata) return;
+
+    setIsFetchingMetadata(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-url-metadata', {
+        body: { url }
+      });
+
+      if (error) throw error;
+
+      if (data.image_url && !imageUrl) {
+        setImageUrl(data.image_url);
+      }
+      if (data.title && !title) {
+        setTitle(data.title);
+      }
+      if (data.description && !description) {
+        setDescription(data.description);
+      }
+    } catch (error) {
+      console.error('Error fetching URL metadata:', error);
+      toast.error("Failed to fetch URL metadata");
+    } finally {
+      setIsFetchingMetadata(false);
+    }
+  };
+
+  // Debounce URL changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (sourceUrl) {
+        fetchUrlMetadata(sourceUrl);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [sourceUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +195,12 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="sourceUrl">Source URL</Label>
+              <Label htmlFor="sourceUrl" className="flex items-center gap-2">
+                Source URL
+                {isFetchingMetadata && (
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                )}
+              </Label>
               <Input
                 id="sourceUrl"
                 type="url"
