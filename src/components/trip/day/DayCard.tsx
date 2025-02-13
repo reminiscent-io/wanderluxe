@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -15,6 +16,8 @@ import { useDayCardHandlers } from './DayCardHandlers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DayActivity } from '@/types/trip';
+import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { parseISO } from 'date-fns';
 
 const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
   const [hasError, setHasError] = React.useState(false);
@@ -99,6 +102,7 @@ const DayCard: React.FC<DayCardProps> = ({
   } = useDayCardState(title);
 
   const { handleUpdateTitle, handleDeleteDay } = useDayCardHandlers(id, onDelete);
+  const { events: hotelStays } = useTimelineEvents(tripId);
 
   const formatTime = (time?: string) => {
     if (!time) return '';
@@ -107,6 +111,19 @@ const DayCard: React.FC<DayCardProps> = ({
       minute: '2-digit'
     });
   };
+
+  // Check if the day falls within any hotel stay period
+  const isWithinHotelStay = React.useMemo(() => {
+    if (!hotelStays) return false;
+    const currentDate = parseISO(date);
+    
+    return hotelStays.some(stay => {
+      if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
+      const checkinDate = parseISO(stay.hotel_checkin_date);
+      const checkoutDate = parseISO(stay.hotel_checkout_date);
+      return currentDate >= checkinDate && currentDate <= checkoutDate;
+    });
+  }, [date, hotelStays]);
 
   const handleAddActivity = async () => {
     try {
@@ -156,10 +173,12 @@ const DayCard: React.FC<DayCardProps> = ({
                 date={date}
                 dayNumber={index + 1}
                 onEdit={() => setIsEditing(true)}
+                onDelete={!isWithinHotelStay ? () => handleDeleteDay() : undefined}
                 dayId={id}
                 title={title}
                 activities={activities}
                 formatTime={formatTime}
+                canDelete={!isWithinHotelStay}
               />
             </div>
           </CollapsibleTrigger>

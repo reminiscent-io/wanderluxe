@@ -1,61 +1,72 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
+
+import React from 'react';
 import { format, parseISO } from 'date-fns';
-import { Pencil } from "lucide-react";
-import DayEditDialog from './DayEditDialog';
-import { toast } from 'sonner';
+import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DayActivity } from '@/types/trip';
 
 interface DayHeaderProps {
   date: string;
   dayNumber: number;
   onEdit: () => void;
+  onDelete?: () => void;
   dayId: string;
   title?: string;
-  activities: any[];
+  activities: DayActivity[];
   formatTime: (time?: string) => string;
+  canDelete?: boolean;
 }
 
 const DayHeader: React.FC<DayHeaderProps> = ({
   date,
   dayNumber,
   onEdit,
+  onDelete,
   dayId,
-  title = "",
+  title,
   activities,
   formatTime,
+  canDelete = false
 }) => {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const formattedDate = format(parseISO(date), 'EEEE, MMMM d');
 
   return (
-    <>
-      <div className="flex justify-between items-center p-4 bg-earth-50">
-        <div>
-          <h3 className="text-lg font-semibold">Day {dayNumber}</h3>
-          <p className="text-sm text-gray-600">
-            {format(parseISO(date), 'EEEE, MMMM do')}
-          </p>
+    <div className="flex items-center justify-between p-4 bg-sand-50/50">
+      <div>
+        <div className="flex items-baseline gap-2">
+          <h3 className="font-bold">Day {dayNumber}</h3>
+          <span className="text-sm text-gray-600">{formattedDate}</span>
         </div>
-        <div className="flex gap-2">
-          <div
-            role="button"
-            onClick={() => setIsEditDialogOpen(true)}
-            className="h-8 w-8 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md cursor-pointer flex items-center justify-center"
-          >
-            <Pencil className="h-4 w-4" />
-          </div>
-        </div>
+        {title && <p className="text-sm mt-1 text-gray-600">{title}</p>}
       </div>
-
-      <DayEditDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        dayId={dayId}
-        currentTitle={title}
-        date={date}
-        activities={activities}
-        formatTime={formatTime}
-      />
-    </>
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="h-8 w-8"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        {canDelete && onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="h-8 w-8 text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </div>
   );
 };
 
