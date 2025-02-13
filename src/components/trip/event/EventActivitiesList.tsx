@@ -23,7 +23,7 @@ interface EventActivitiesListProps {
   hotel?: string;
   isAddingActivity: boolean;
   onAddingActivityChange: (isAdding: boolean) => void;
-  newActivity: { totle: string; cost: string; currency: string };
+  newActivity: { title: string; cost: string; currency: string };
   onNewActivityChange: (activity: { title: string; cost: string; currency: string }) => void;
   onAddActivity: () => void;
   editingActivity: string | null;
