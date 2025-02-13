@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,17 +9,9 @@ import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 import { useCurrencyState } from './budget/hooks/useCurrencyState';
 import { formatCurrency } from './budget/utils/budgetCalculations';
-import { Tables } from '@/integrations/supabase/types';
 
-// Use database types directly to avoid complex type hierarchies
-type DbActivity = Tables<'day_activities'>;
-type DbAccommodation = Tables<'accommodations'>;
-type DbTransportation = Tables<'transportation_events'>;
-type DbRestaurant = Tables<'restaurant_reservations'>;
-type DbOtherExpense = Tables<'other_expenses'>;
-
-// Simplified expense interface
-interface SimplifiedExpense {
+// Define a simpler type for expenses to avoid deep type instantiation
+type ExpenseItem = {
   id: string;
   trip_id: string;
   category: string;
@@ -32,7 +23,7 @@ interface SimplifiedExpense {
   activity_id?: string;
   accommodation_id?: string;
   transportation_id?: string;
-}
+};
 
 interface AddExpenseData {
   description: string;
@@ -68,8 +59,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         supabase.from('other_expenses').select('*').eq('trip_id', tripId),
       ]);
 
-      const mappedExpenses: SimplifiedExpense[] = [
-        ...(activities || []).map((act: DbActivity) => ({
+      // Explicitly type the mapped data to avoid deep instantiation
+      const mappedExpenses: ExpenseItem[] = [
+        ...(activities || []).map((act): ExpenseItem => ({
           id: act.id,
           trip_id: act.trip_id,
           category: 'Activities',
@@ -80,7 +72,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           created_at: act.created_at,
           activity_id: act.id
         })),
-        ...(accommodations || []).map((acc: DbAccommodation) => ({
+        ...(accommodations || []).map((acc): ExpenseItem => ({
           id: acc.stay_id,
           trip_id: acc.trip_id,
           category: 'Accommodations',
@@ -91,18 +83,18 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           created_at: acc.created_at,
           accommodation_id: acc.stay_id
         })),
-        ...(transportation || []).map((trans: DbTransportation) => ({
+        ...(transportation || []).map((trans): ExpenseItem => ({
           id: trans.id,
           trip_id: trans.trip_id,
           category: 'Transportation',
           description: trans.type,
           cost: trans.cost,
           currency: trans.currency,
-          is_paid: trans.is_paid || false,
+          is_paid: Boolean(trans.is_paid), // Explicitly handle the is_paid property
           created_at: trans.created_at,
           transportation_id: trans.id
         })),
-        ...(restaurants || []).map((rest: DbRestaurant) => ({
+        ...(restaurants || []).map((rest): ExpenseItem => ({
           id: rest.id,
           trip_id: tripId,
           category: 'Dining',
@@ -112,14 +104,14 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           is_paid: rest.is_paid || false,
           created_at: rest.created_at
         })),
-        ...(otherExpenses || []).map((expense: DbOtherExpense) => ({
+        ...(otherExpenses || []).map((expense): ExpenseItem => ({
           id: expense.id,
           trip_id: expense.trip_id,
           category: 'Other',
           description: expense.description,
           cost: expense.cost,
           currency: expense.currency,
-          is_paid: expense.is_paid,
+          is_paid: expense.is_paid || false,
           created_at: expense.created_at
         }))
       ];
