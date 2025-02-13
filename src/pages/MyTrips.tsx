@@ -80,9 +80,11 @@ const MyTrips = () => {
     <div>
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8" style={{ marginTop: '1cm' }}>
           <h1 className="text-2xl font-semibold text-sand-500">My Trips</h1>
         </div>
+      </div>
+
 
         <Input
           type="search"
