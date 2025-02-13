@@ -1,14 +1,11 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import UnsplashImage from "./UnsplashImage";
-
 const Hero = () => {
   const [scrollY, setScrollY] = useState(0);
   const navigate = useNavigate();
-
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -16,16 +13,11 @@ const Hero = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  return (
-    <div className="relative h-screen w-full overflow-hidden">
+  return <div className="relative h-screen w-full overflow-hidden">
       <div className="absolute inset-0" style={{
-        transform: `translateY(${scrollY * 0.5}px)`
-      }}>
-        <UnsplashImage
-          url="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568"
-          className="w-full h-full object-cover"
-        />
+      transform: `translateY(${scrollY * 0.5}px)`
+    }}>
+        <UnsplashImage url="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/30" />
       </div>
       
@@ -76,14 +68,12 @@ const Hero = () => {
           duration: 0.8,
           delay: 1
         }} className="pt-4">
-            <Button size="lg" onClick={() => navigate("/create-trip")} className="bg-sand-500 hover:bg-sand-600 text-white text-base h-auto transform transition-all duration-300 hover:scale-110 hover:text-lg px-[20px] py-[12px] rounded-none">
+            <Button size="lg" onClick={() => navigate("/create-trip")} className="hover:bg-sand-600 text-white text-base h-auto transform transition-all duration-300 hover:scale-110 hover:text-lg rounded-xl bg-white/[0.21] px-[16px] py-[10px]">
               Start Planning Your Journey
             </Button>
           </motion.div>
         </div>
       </motion.div>
-    </div>
-  );
+    </div>;
 };
-
 export default Hero;
