@@ -3,9 +3,11 @@ import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import UnsplashImage from "./UnsplashImage";
+
 const Hero = () => {
   const [scrollY, setScrollY] = useState(0);
   const navigate = useNavigate();
+
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -13,11 +15,16 @@ const Hero = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  return <div className="relative h-screen w-full overflow-hidden">
+
+  return (
+    <div className="relative h-screen w-full overflow-hidden">
       <div className="absolute inset-0" style={{
-      transform: `translateY(${scrollY * 0.5}px)`
-    }}>
-        <UnsplashImage src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop" alt="Mountain landscape" photographer="jeremy-bishop" downloadLocation="https://api.unsplash.com/photos/rTZW4f02zY8/download" className="w-full h-full object-cover" />
+        transform: `translateY(${scrollY * 0.5}px)`
+      }}>
+        <UnsplashImage
+          url="https://unsplash.com/photos/rTZW4f02zY8"
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-black/30" />
       </div>
       
