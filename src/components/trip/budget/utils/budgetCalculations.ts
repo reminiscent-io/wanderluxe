@@ -11,7 +11,7 @@ export interface ExpenseItem {
   date?: string | null;
 }
 
-// Export the getExpensesByCategory function that was missing
+// Export the getExpensesByCategory function
 export const getExpensesByCategory = (expenses: Expense[], category: string): Expense[] => {
   return expenses.filter(expense => expense.category === category);
 };

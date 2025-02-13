@@ -140,7 +140,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   };
 
   const total = expenses?.items.reduce((sum, item) => sum + (item.cost || 0), 0) || 0;
-  const paidTotal = expenses?.items.reduce((sum, item) => sum + (item.isPaid ? (item.cost || 0) : 0), 0) || 0;
+  const paidTotal = expenses?.items.reduce((sum, item) => sum + (item.is_paid ? (item.cost || 0) : 0), 0) || 0;
 
   return (
     <div className="space-y-6">
