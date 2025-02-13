@@ -34,6 +34,71 @@ export const convertAmount = (
   return amount * toUsdRate * fromUsdRate;
 };
 
+// Map various expense types to a common ExpenseItem format
+export const mapToExpenseItems = (
+  activities: any[],
+  accommodations: any[],
+  transportation: any[],
+  restaurants: any[],
+  otherExpenses: any[]
+): ExpenseItem[] => {
+  const items: ExpenseItem[] = [
+    ...activities.map(a => ({
+      id: a.id,
+      description: a.title,
+      category: 'Activities',
+      cost: a.cost,
+      currency: a.currency || 'USD',
+      isPaid: false,
+      date: null
+    })),
+    ...accommodations.map(a => ({
+      id: a.stay_id,
+      description: a.title,
+      category: 'Accommodations',
+      cost: a.cost,
+      currency: a.currency || 'USD',
+      isPaid: a.expense_paid || false,
+      date: a.hotel_checkin_date
+    })),
+    ...transportation.map(t => ({
+      id: t.id,
+      description: `${t.type} - ${t.provider || 'Unknown'}`,
+      category: 'Transportation',
+      cost: t.cost,
+      currency: t.currency || 'USD',
+      isPaid: false,
+      date: t.start_date
+    })),
+    ...restaurants.map(r => ({
+      id: r.id,
+      description: r.restaurant_name,
+      category: 'Dining',
+      cost: r.cost,
+      currency: r.currency || 'USD',
+      isPaid: false,
+      date: null
+    })),
+    ...otherExpenses.map(e => ({
+      id: e.id,
+      description: e.description,
+      category: 'Other',
+      cost: e.cost,
+      currency: e.currency || 'USD',
+      isPaid: e.is_paid || false,
+      date: e.date
+    }))
+  ];
+
+  // Sort items by cost (highest to lowest), with null costs at the end
+  return items.sort((a, b) => {
+    if (a.cost === null && b.cost === null) return 0;
+    if (a.cost === null) return 1;
+    if (b.cost === null) return -1;
+    return b.cost - a.cost;
+  });
+};
+
 // Calculate totals for all expense categories
 export const calculateTotals = (
   expenses: ExpenseItem[], 
