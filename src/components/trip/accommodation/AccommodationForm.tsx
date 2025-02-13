@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import HotelSearchInput from './HotelSearchInput';
@@ -71,21 +72,6 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     onSubmit(formData);
   };
 
-  const formatCost = (value: string) => {
-    const numericValue = value.replace(/[^\d.]/g, '');
-    const parts = numericValue.split('.');
-    const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
-    
-    const number = parseFloat(formattedValue);
-    if (!isNaN(number)) {
-      return number.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    }
-    return formattedValue;
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-6">
       <HotelSearchInput
@@ -117,7 +103,6 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
         currency={formData.currency}
         onCostChange={(value) => setFormData({ ...formData, cost: value })}
         onCurrencyChange={(value) => setFormData({ ...formData, currency: value })}
-        formatCost={formatCost}
       />
 
       <div className="flex justify-end gap-2">

@@ -131,12 +131,9 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
               strategy={verticalListSortingStrategy}
             >
               <CategoryContainer
-                category={category}
+                id={category}
                 items={items?.filter(item => item.category === category) || []}
-                onAddItem={() => {
-                  setSelectedCategory(category);
-                  setIsAddingItem(true);
-                }}
+                title={category}
               />
             </SortableContext>
           ))}
