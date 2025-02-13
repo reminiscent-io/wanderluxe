@@ -1,12 +1,11 @@
-
 // Define the form types (string-based for form handling)
 export interface ActivityFormData {
   title: string;
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost?: string | null;  // Form type - keep as string
-  currency?: string;
+  cost: string;  // Made required
+  currency: string;  // Made required
 }
 
 // Define the database types (number-based for database storage)

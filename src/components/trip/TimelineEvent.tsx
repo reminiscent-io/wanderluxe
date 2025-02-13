@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -25,13 +24,6 @@ interface TimelineEventProps {
   tripId: string;
   onEdit: (id: string, data: any) => void;
   onDelete: (id: string) => void;
-}
-
-// Type for activity state
-interface ActivityState {
-  title: string;
-  cost?: string;
-  currency?: string;
 }
 
 const TimelineEvent: React.FC<TimelineEventProps> = ({ 
@@ -84,8 +76,11 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onAddActivity = () => {
     const formData: ActivityFormData = {
       title: newActivity.title,
-      ...(newActivity.cost && { cost: newActivity.cost }),
-      ...(newActivity.currency && { currency: newActivity.currency })
+      cost: newActivity.cost,  // Now required
+      currency: newActivity.currency,  // Now required
+      ...(newActivity.description && { description: newActivity.description }),
+      ...(newActivity.start_time && { start_time: newActivity.start_time }),
+      ...(newActivity.end_time && { end_time: newActivity.end_time })
     };
 
     handleAddActivity(formData).then(success => {
@@ -99,8 +94,11 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onEditActivity = (activityId: string) => {
     const formData: ActivityFormData = {
       title: activityEdit.title,
-      ...(activityEdit.cost && { cost: activityEdit.cost }),
-      ...(activityEdit.currency && { currency: activityEdit.currency })
+      cost: activityEdit.cost,  // Now required
+      currency: activityEdit.currency,  // Now required
+      ...(activityEdit.description && { description: activityEdit.description }),
+      ...(activityEdit.start_time && { start_time: activityEdit.start_time }),
+      ...(activityEdit.end_time && { end_time: activityEdit.end_time })
     };
 
     handleEditActivity(activityId, formData).then(success => {
