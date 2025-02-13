@@ -27,6 +27,13 @@ interface TimelineEventProps {
   onDelete: (id: string) => void;
 }
 
+// Type for activity state
+interface ActivityState {
+  title: string;
+  cost?: string;
+  currency?: string;
+}
+
 const TimelineEvent: React.FC<TimelineEventProps> = ({ 
   id,
   date, 
@@ -77,7 +84,6 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onAddActivity = () => {
     const formData: ActivityFormData = {
       title: newActivity.title,
-      // Only include cost and currency if they have values
       ...(newActivity.cost && { cost: newActivity.cost }),
       ...(newActivity.currency && { currency: newActivity.currency })
     };
@@ -93,7 +99,6 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onEditActivity = (activityId: string) => {
     const formData: ActivityFormData = {
       title: activityEdit.title,
-      // Only include cost and currency if they have values
       ...(activityEdit.cost && { cost: activityEdit.cost }),
       ...(activityEdit.currency && { currency: activityEdit.currency })
     };
