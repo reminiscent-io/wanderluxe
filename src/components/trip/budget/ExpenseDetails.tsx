@@ -6,13 +6,28 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Expense } from '@/integrations/supabase/types/models';
 
-interface ExpenseDetailsProps {
-  expense: Expense;
+// Update the props interface to include all required properties
+export interface ExpenseDetailsProps {
+  expense: {
+    id: string;
+    description: string;
+    category: string;
+    cost: number | null;
+    currency: string | null;
+    is_paid: boolean;
+  };
+  onEdit?: () => void;
+  onSave?: (cost: number, currency: string) => void;
+  onDelete?: () => void;
 }
 
-const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({ expense }) => {
+const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({ 
+  expense,
+  onEdit,
+  onSave,
+  onDelete
+}) => {
   const togglePaid = async () => {
     try {
       const { error } = await supabase

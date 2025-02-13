@@ -9,17 +9,7 @@ interface TransportType {
   description: string;
   cost: number | null;
   currency: string | null;
-}
-
-interface ExpenseDetailsProps {
-  expenseId: string; // Changed from 'id' to 'expenseId' to match ExpenseDetails component
-  cost: number;
-  currency: string;
-  description: string;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSave: (cost: number, currency: string) => void;
-  onDelete: () => void;
+  is_paid: boolean;
 }
 
 interface TransportationDetailsProps {
@@ -54,11 +44,14 @@ const TransportationDetails: React.FC<TransportationDetailsProps> = ({
         <div key={expense.id} className="flex items-center gap-2">
           {getIcon(expense.type)}
           <ExpenseDetails
-            expenseId={expense.id}
-            cost={expense.cost || 0}
-            currency={expense.currency || ''}
-            description={expense.description}
-            isEditing={false}
+            expense={{
+              id: expense.id,
+              description: expense.description,
+              category: expense.type,
+              cost: expense.cost,
+              currency: expense.currency,
+              is_paid: expense.is_paid
+            }}
             onEdit={() => {}}
             onSave={(cost, currency) => onUpdateCost(expense.id, cost, currency)}
             onDelete={() => onDeleteTransport(expense.id)}
