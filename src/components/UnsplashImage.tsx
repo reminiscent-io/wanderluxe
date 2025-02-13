@@ -25,24 +25,37 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const extractPhotoId = (url: string): string | null => {
+      try {
+        const urlObj = new URL(url);
+        
+        // Handle different Unsplash URL formats
+        if (urlObj.hostname === 'unsplash.com') {
+          // Format: https://unsplash.com/photos/{id}
+          const matches = urlObj.pathname.match(/\/photos\/([^/?]+)/);
+          return matches?.[1] || null;
+        } else if (urlObj.hostname === 'images.unsplash.com') {
+          // Format: https://images.unsplash.com/photo-{id}
+          const segments = urlObj.pathname.split('/');
+          const photoSegment = segments.find(s => s.startsWith('photo-'));
+          return photoSegment ? photoSegment.replace('photo-', '') : null;
+        }
+        return null;
+      } catch (e) {
+        console.error('Error parsing URL:', e);
+        return null;
+      }
+    };
+
     const fetchMetadata = async () => {
       try {
-        let photoId;
-        if (url.includes('unsplash.com/photos/')) {
-          photoId = url.split('/').pop()?.split('?')[0];
-        } else if (url.includes('images.unsplash.com')) {
-          photoId = url.split('/')[3].split('?')[0];
-        }
-
-        if (photoId && photoId.startsWith('photo-')) {
-          photoId = photoId.replace('photo-', '');
-        }
+        const photoId = extractPhotoId(url);
+        console.log('Extracted photo ID:', photoId); // Debug log
 
         if (!photoId) {
-          throw new Error('Invalid Unsplash URL');
+          throw new Error('Could not extract photo ID from URL: ' + url);
         }
 
-        // Track the view and fetch metadata through the Edge Function
         const { data, error } = await supabase.functions.invoke('fetch-unsplash-metadata', {
           body: { photoId }
         });
@@ -63,6 +76,7 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
       } catch (error) {
         console.error('Error fetching Unsplash metadata:', error);
         setError('Failed to load image metadata');
+        // Fallback to direct URL if metadata fetch fails
         setMetadata({
           src: url,
           alt: 'Unsplash Image',
@@ -123,4 +137,3 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
 };
 
 export default UnsplashImage;
-

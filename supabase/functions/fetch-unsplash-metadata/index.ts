@@ -16,29 +16,41 @@ serve(async (req) => {
 
   try {
     const { photoId } = await req.json();
+    console.log('Received photo ID:', photoId); // Debug log
 
     if (!photoId) {
       throw new Error('Photo ID is required');
     }
 
+    // Clean up the photo ID to ensure proper format
+    const cleanPhotoId = photoId.trim();
+    console.log('Clean photo ID:', cleanPhotoId); // Debug log
+
     // Track the view of the photo
-    await fetch(`https://api.unsplash.com/photos/${photoId}/download`, {
+    const trackResponse = await fetch(`https://api.unsplash.com/photos/${cleanPhotoId}/download`, {
       headers: {
         Authorization: `Client-ID ${Deno.env.get('UNSPLASH_ACCESS_KEY')}`,
       },
     });
 
-    const response = await fetch(`https://api.unsplash.com/photos/${photoId}`, {
+    if (!trackResponse.ok) {
+      console.error('Track view failed:', await trackResponse.text()); // Debug log
+    }
+
+    const response = await fetch(`https://api.unsplash.com/photos/${cleanPhotoId}`, {
       headers: {
         Authorization: `Client-ID ${Deno.env.get('UNSPLASH_ACCESS_KEY')}`,
       },
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Unsplash API error:', errorText); // Debug log
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
     
     const data = await response.json();
+    console.log('Unsplash API response:', data); // Debug log
     
     // Construct optimized image URL with dynamic resizing
     const width = 1200; // Default width, adjust based on your needs
@@ -64,7 +76,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in Edge Function:', error); // Debug log
     return new Response(
       JSON.stringify({ 
         error: 'Failed to fetch Unsplash metadata',
@@ -80,4 +92,3 @@ serve(async (req) => {
     );
   }
 });
-
