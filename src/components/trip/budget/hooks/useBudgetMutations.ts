@@ -11,6 +11,16 @@ interface AddExpenseData {
   isPaid: boolean;
 }
 
+// Define table types explicitly to avoid deep type inference
+type TableName = 'accommodations' | 'transportation_events' | 'day_activities' | 'restaurant_reservations' | 'other_expenses';
+type IdField = 'id' | 'stay_id';
+
+interface UpdatePaidStatusParams {
+  id: string;
+  isPaid: boolean;
+  category: string;
+}
+
 export const useBudgetMutations = (tripId: string) => {
   const queryClient = useQueryClient();
 
@@ -36,9 +46,9 @@ export const useBudgetMutations = (tripId: string) => {
   });
 
   const updatePaidStatusMutation = useMutation({
-    mutationFn: async ({ id, isPaid, category }: { id: string; isPaid: boolean; category: string }) => {
-      let table: 'accommodations' | 'transportation_events' | 'day_activities' | 'restaurant_reservations' | 'other_expenses';
-      let idField: 'id' | 'stay_id' = 'id';
+    mutationFn: async ({ id, isPaid, category }: UpdatePaidStatusParams) => {
+      let table: TableName;
+      let idField: IdField = 'id';
       
       switch (category) {
         case 'Accommodations':
