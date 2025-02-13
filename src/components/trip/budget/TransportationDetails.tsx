@@ -3,6 +3,9 @@ import React from 'react';
 import { Car, Plane, Train, Bus } from 'lucide-react';
 import ExpenseDetails from './ExpenseDetails';
 
+// Import the Expense type to maintain consistency
+import { Expense } from '@/integrations/supabase/types/models';
+
 interface TransportType {
   id: string;
   type: 'car' | 'plane' | 'train' | 'bus';
@@ -50,8 +53,9 @@ const TransportationDetails: React.FC<TransportationDetailsProps> = ({
               category: expense.type,
               cost: expense.cost,
               currency: expense.currency,
-              is_paid: expense.is_paid
-            }}
+              is_paid: expense.is_paid,
+              type: expense.type
+            } as Expense}
             onEdit={() => {}}
             onSave={(cost, currency) => onUpdateCost(expense.id, cost, currency)}
             onDelete={() => onDeleteTransport(expense.id)}

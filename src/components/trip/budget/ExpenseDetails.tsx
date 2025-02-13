@@ -6,17 +6,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Expense } from '@/integrations/supabase/types/models';
 
-// Update the props interface to include all required properties
+// Update the props interface to use the Expense type
 export interface ExpenseDetailsProps {
-  expense: {
-    id: string;
-    description: string;
-    category: string;
-    cost: number | null;
-    currency: string | null;
-    is_paid: boolean;
-  };
+  expense: Expense;
   onEdit?: () => void;
   onSave?: (cost: number, currency: string) => void;
   onDelete?: () => void;
@@ -53,7 +47,7 @@ const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({
         
         <div>
           <h3 className="font-medium text-sm text-muted-foreground">Category</h3>
-          <p>{expense.category}</p>
+          <p>{expense.category || expense.type}</p>
         </div>
         
         <div>
@@ -63,11 +57,11 @@ const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({
 
         <div className="flex items-center space-x-2">
           <Switch
-            id="paid-status"
+            id={`paid-status-${expense.id}`}
             checked={!!expense.is_paid}
             onCheckedChange={togglePaid}
           />
-          <Label htmlFor="paid-status">Marked as paid</Label>
+          <Label htmlFor={`paid-status-${expense.id}`}>Marked as paid</Label>
         </div>
       </CardContent>
     </Card>
