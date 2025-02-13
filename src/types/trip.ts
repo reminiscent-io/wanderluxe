@@ -6,7 +6,7 @@ export interface DayActivity {
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost?: number | null;
+  cost?: number | null;  // Database type - keep as number
   currency?: string;
   order_index: number;
   created_at: string;
@@ -20,7 +20,7 @@ export interface TripDay {
   description?: string;
   image_url?: string;
   created_at: string;
-  activities?: DayActivity[]; // Changed from day_activities to activities to match usage
+  activities?: DayActivity[];
 }
 
 export interface AccommodationDay {
@@ -43,7 +43,7 @@ export interface Accommodation {
   hotel_url?: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost?: number | null;
+  cost?: number | null;  // Database type - keep as number
   currency?: string;
   expense_type?: string;
   expense_paid?: boolean;
@@ -78,7 +78,7 @@ export interface AccommodationFormData {
   hotel_url: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost: string | null;
+  cost: string | null;  // Form type - keep as string
   currency: string;
   expense_type?: string;
   expense_paid?: boolean;
@@ -91,13 +91,13 @@ export interface AccommodationFormData {
 
 export interface HotelStay {
   stay_id: string;
-  trip_id: string;  // Added this required field
+  trip_id: string;
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
   hotel_details?: string;
   hotel_url?: string;
-  cost: string | null;
+  cost?: number | null;  // Database type - keep as number
   currency: string;
   hotel_address?: string;
   hotel_phone?: string;
@@ -118,7 +118,7 @@ export interface TransportationEvent {
   end_time?: string;
   departure_location?: string;
   arrival_location?: string;
-  cost?: number | null;
+  cost?: number | null;  // Database type - keep as number
   currency?: string;
   is_arrival?: boolean;
   is_departure?: boolean;
@@ -133,6 +133,7 @@ export interface RestaurantReservation {
   number_of_people: number;
   notes?: string;
   confirmation_number?: string;
+  cost?: number | null;  // Database type - keep as number
   currency?: string;
   address?: string;
   phone_number?: string;
@@ -152,7 +153,7 @@ export interface Expense {
   trip_id: string;
   category: string;
   description: string;
-  cost?: number | null;
+  cost?: number | null;  // Database type - keep as number
   currency?: string | null;
   is_paid?: boolean;
   created_at?: string;
@@ -168,12 +169,12 @@ export interface ActivityFormData {
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost: string | null;
+  cost: string | null;  // Form type - keep as string
   currency: string;
 }
 
 export interface ActivityData {
-  text: string;
-  cost: string;
+  title: string;  // Changed from 'text' to match other interfaces
+  cost: string;  // Form type - keep as string
   currency: string;
 }
