@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 
 interface UnsplashImageProps {
   url: string;
@@ -41,39 +42,23 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
           throw new Error('Invalid Unsplash URL');
         }
 
-        // Track the view of the photo
-        const trackResponse = await fetch(`https://api.unsplash.com/photos/${photoId}/download`, {
-          headers: {
-            Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
-          },
+        // Track the view and fetch metadata through the Edge Function
+        const { data, error } = await supabase.functions.invoke('fetch-unsplash-metadata', {
+          body: { photoId }
         });
 
-        const response = await fetch(`https://api.unsplash.com/photos/${photoId}`, {
-          headers: {
-            Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (error) throw error;
+
+        if (!data) {
+          throw new Error('Failed to fetch image metadata');
         }
-        
-        const data = await response.json();
-        
-        // Construct optimized image URL with dynamic resizing
-        const width = 1200; // Default width, adjust based on your needs
-        const optimizedUrl = new URL(data.urls.raw);
-        optimizedUrl.searchParams.set('w', width.toString());
-        optimizedUrl.searchParams.set('q', '80');
-        optimizedUrl.searchParams.set('fm', 'webp');
-        optimizedUrl.searchParams.set('auto', 'compress');
 
         setMetadata({
-          src: optimizedUrl.toString(),
+          src: data.optimizedUrl,
           alt: data.alt_description || 'Unsplash Image',
-          photographer: data.user.name,
-          photographerUrl: data.user.links.html,
-          unsplashUrl: data.links.html,
+          photographer: data.photographer,
+          photographerUrl: data.photographerUrl,
+          unsplashUrl: data.unsplashUrl,
         });
       } catch (error) {
         console.error('Error fetching Unsplash metadata:', error);
@@ -138,3 +123,4 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
 };
 
 export default UnsplashImage;
+
