@@ -22,7 +22,7 @@ const Hero = () => {
         transform: `translateY(${scrollY * 0.5}px)`
       }}>
         <UnsplashImage
-          url="https://unsplash.com/photos/1506929562872-bb421503ef21" // This is the URL of the main image
+          url="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568" // This is the URL of the main image
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/30" />
