@@ -11,14 +11,16 @@ interface AddExpenseData {
   isPaid: boolean;
 }
 
-// Define table types explicitly to avoid deep type inference
+// Define explicit type for category
+type ExpenseCategory = 'Accommodations' | 'Transportation' | 'Activities' | 'Dining' | 'Other';
+
+// Define table names explicitly
 type TableName = 'accommodations' | 'transportation_events' | 'day_activities' | 'restaurant_reservations' | 'other_expenses';
-type IdField = 'id' | 'stay_id';
 
 interface UpdatePaidStatusParams {
   id: string;
   isPaid: boolean;
-  category: string;
+  category: ExpenseCategory;
 }
 
 export const useBudgetMutations = (tripId: string) => {
@@ -47,32 +49,32 @@ export const useBudgetMutations = (tripId: string) => {
 
   const updatePaidStatusMutation = useMutation({
     mutationFn: async ({ id, isPaid, category }: UpdatePaidStatusParams) => {
-      let table: TableName;
-      let idField: IdField = 'id';
+      let tableName: TableName;
+      let idField: 'id' | 'stay_id' = 'id';
       
       switch (category) {
         case 'Accommodations':
-          table = 'accommodations';
+          tableName = 'accommodations';
           idField = 'stay_id';
           break;
         case 'Transportation':
-          table = 'transportation_events';
+          tableName = 'transportation_events';
           break;
         case 'Activities':
-          table = 'day_activities';
+          tableName = 'day_activities';
           break;
         case 'Dining':
-          table = 'restaurant_reservations';
+          tableName = 'restaurant_reservations';
           break;
         case 'Other':
-          table = 'other_expenses';
+          tableName = 'other_expenses';
           break;
         default:
           throw new Error('Invalid category');
       }
 
       const { error } = await supabase
-        .from(table)
+        .from(tableName)
         .update({ is_paid: isPaid })
         .eq(idField, id);
 
