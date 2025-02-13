@@ -74,7 +74,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
 
   const onAddActivity = () => {
     handleAddActivity({
-      title: newActivity.text,
+      title: newActivity.title,
       cost: newActivity.cost,  // Keep as string
       currency: newActivity.currency
     }).then(success => {
@@ -87,7 +87,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
 
   const onEditActivity = (activityId: string) => {
     handleEditActivity(activityId, {
-      title: activityEdit.text,
+      title: activityEdit.title,
       cost: activityEdit.cost,  // Keep as string
       currency: activityEdit.currency
     }).then(success => {
