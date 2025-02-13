@@ -52,11 +52,18 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
     if (!over || active.id === over.id) return;
 
     try {
+      const activeId = active.id.toString();
+      const overId = over.id.toString();
+      
+      // Get the current items in the correct order
+      const oldIndex = items?.findIndex(item => item.id === activeId) ?? 0;
+      const newIndex = items?.findIndex(item => item.id === overId) ?? 0;
+
       // Update the order in the database
       const { error } = await supabase
         .from('vision_board_items')
-        .update({ order_index: items?.findIndex(item => item.id === over.id) })
-        .eq('id', active.id);
+        .update({ order_index: newIndex })
+        .eq('id', activeId);
 
       if (error) throw error;
       toast.success('Item reordered successfully');
