@@ -1,39 +1,17 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
+import { Tables } from '@/integrations/supabase/types';
 
-interface AccommodationDay {
-  day_id: string;
-  date: string;
-}
+// Use database types directly to avoid complex type hierarchies
+type DbAccommodation = Tables<'accommodations'>;
+type DbAccommodationDay = Tables<'accommodations_days'>;
 
-interface BaseAccommodation {
-  stay_id: string;
-  trip_id: string;
-  title: string;
-  description?: string | null;
-  image_url?: string | null;
-  hotel?: string | null;
-  hotel_details?: string | null;
-  created_at: string;
-  order_index: number;
-}
-
-interface Accommodation extends BaseAccommodation {
-  hotel_checkin_date: string | null;
-  hotel_checkout_date: string | null;
-  hotel_url: string | null;
-  currency: string | null;
-  expense_type: string | null;
-  expense_cost: number | null;
-  expense_paid: boolean;
-  hotel_address: string | null;
-  hotel_phone: string | null;
-  hotel_place_id: string | null;
-  hotel_website: string | null;
-  final_accommodation_day: string | null;
-  accommodations_days?: AccommodationDay[];
+// Simplified accommodation type that matches database structure
+interface TimelineAccommodation extends DbAccommodation {
+  accommodations_days?: DbAccommodationDay[];
 }
 
 export const useTimelineEvents = (tripId: string | undefined) => {
@@ -81,21 +59,20 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     queryFn: async () => {
       if (!tripId) return [];
       
-      const { data: accommodations, error: accommodationsError } = await supabase
+      const { data, error } = await supabase
         .from('accommodations')
         .select('*, accommodations_days(day_id, date)')
         .eq('trip_id', tripId)
         .order('order_index');
 
-      if (accommodationsError) throw accommodationsError;
-
-      return (accommodations || []) as Accommodation[];
+      if (error) throw error;
+      return (data || []) as TimelineAccommodation[];
     },
     enabled: !!tripId,
   });
 
   const updateEvent = useMutation({
-    mutationFn: async (event: Partial<Accommodation> & { stay_id: string }) => {
+    mutationFn: async (event: Partial<TimelineAccommodation> & { stay_id: string }) => {
       const { data, error } = await supabase
         .from('accommodations')
         .update(event)
@@ -122,7 +99,7 @@ export const useTimelineEvents = (tripId: string | undefined) => {
       const { error: daysError } = await supabase
         .from('accommodations_days')
         .delete()
-        .eq('accommodation_id', eventId);
+        .eq('stay_id', eventId);
 
       if (daysError) throw daysError;
 
