@@ -11,9 +11,6 @@ import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
 
-// Import the ExpenseCategory type
-type ExpenseCategory = 'Accommodations' | 'Transportation' | 'Activities' | 'Dining' | 'Other';
-
 interface AddExpenseData {
   description: string;
   cost: number;
@@ -30,17 +27,27 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const { data: expenses } = useExpenses(tripId);
-  const { addExpenseMutation, updatePaidStatusMutation } = useBudgetMutations(tripId);
+  const { addExpense, updateExpense } = useBudgetMutations(tripId);
 
   const handleAddExpense = async (data: AddExpenseData) => {
-    await addExpenseMutation.mutateAsync(data);
+    await addExpense.mutateAsync({
+      trip_id: tripId,
+      description: data.description,
+      cost: data.cost,
+      currency: data.currency,
+      is_paid: data.isPaid,
+      category: 'Other' // Default category for manually added expenses
+    });
     setIsAddingExpense(false);
   };
 
   const handleUpdatePaidStatus = (id: string, isPaid: boolean, category: string) => {
-    // Convert the string category to ExpenseCategory type
-    const expenseCategory = category as ExpenseCategory;
-    updatePaidStatusMutation.mutate({ id, isPaid, category: expenseCategory });
+    updateExpense.mutate({ 
+      id, 
+      data: { 
+        is_paid: isPaid 
+      } 
+    });
   };
 
   const total = expenses?.items.reduce((sum, item) => sum + (item.cost || 0), 0) || 0;
