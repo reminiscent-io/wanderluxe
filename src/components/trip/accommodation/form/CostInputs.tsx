@@ -2,13 +2,13 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseCost, formatCost } from '@/utils/costUtils';
 
 interface CostInputsProps {
   cost: string | null;
   currency: string;
   onCostChange: (value: string | null) => void;
   onCurrencyChange: (value: string) => void;
-  formatCost?: (value: string) => string; // Added formatCost as optional prop
 }
 
 const CostInputs: React.FC<CostInputsProps> = ({
@@ -16,8 +16,8 @@ const CostInputs: React.FC<CostInputsProps> = ({
   currency,
   onCostChange,
   onCurrencyChange,
-  formatCost
 }) => {
+  // Handle the cost input change
   const handleCostChange = (value: string) => {
     // Allow empty string to be converted to null
     if (value === '') {
@@ -25,14 +25,16 @@ const CostInputs: React.FC<CostInputsProps> = ({
       return;
     }
 
-    // Only allow numbers and decimal point
-    const cleanValue = value.replace(/[^\d.]/g, '');
+    // Remove any non-numeric characters except decimal point and negative sign
+    const cleanValue = value.replace(/[^\d.-]/g, '');
     
-    // Ensure proper decimal format
-    const parts = cleanValue.split('.');
-    const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
+    // Parse the cleaned value
+    const parsedValue = parseCost(cleanValue);
     
-    onCostChange(formatCost ? formatCost(formattedValue) : formattedValue);
+    // If the value is valid, format it
+    if (parsedValue !== null) {
+      onCostChange(formatCost(parsedValue));
+    }
   };
 
   return (
@@ -45,6 +47,7 @@ const CostInputs: React.FC<CostInputsProps> = ({
           value={cost || ''}
           onChange={(e) => handleCostChange(e.target.value)}
           placeholder="0.00"
+          inputMode="decimal"
         />
       </div>
       <div>

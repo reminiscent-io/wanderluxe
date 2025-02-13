@@ -11,9 +11,21 @@ export const formatCost = (value: number | null | undefined): string => {
  * Parses a string input value to a number, handling common currency input patterns
  */
 export const parseCost = (value: string): number | null => {
-  // Remove any non-numeric characters except decimal point
+  // Remove commas and other formatting characters except decimal point and negative sign
   const cleaned = value.replace(/[^\d.-]/g, '');
-  const parsed = parseFloat(cleaned);
+  
+  // Handle special cases
+  if (!cleaned || cleaned === '-' || cleaned === '.') return null;
+  
+  // Ensure only one decimal point
+  const parts = cleaned.split('.');
+  if (parts.length > 2) return null;
+  
+  // If we have a decimal point, limit to 2 decimal places
+  const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
+  
+  // Parse the final value
+  const parsed = parseFloat(formattedValue);
   
   // Return null for invalid numbers
   if (isNaN(parsed)) return null;
