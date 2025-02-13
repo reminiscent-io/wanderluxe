@@ -34,7 +34,7 @@ const TripDetails = () => {
             hotel_url,
             hotel_checkin_date,
             hotel_checkout_date,
-            expense_cost,
+            cost,
             currency,
             hotel_address,
             hotel_phone,
