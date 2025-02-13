@@ -7,12 +7,11 @@ import HeroSection from "../components/trip/HeroSection";
 import TimelineView from "../components/trip/TimelineView";
 import BudgetView from "../components/trip/BudgetView";
 import PackingView from "../components/trip/PackingView";
+import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Calendar, BarChart2, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Calendar, BarChart2, List, Lightbulb } from 'lucide-react';
 
 const TripDetails = () => {
   const { tripId } = useParams();
@@ -99,7 +98,7 @@ const TripDetails = () => {
       <div className="relative z-10 bg-sand-50/95 backdrop-blur-sm mt-[0vh] min-h-screen -mt-1">
         <div className="container mx-auto px-4 py-8">
           <Tabs defaultValue="timeline" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 rounded-xl p-1 bg-transparent">
+            <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">
               <TabsTrigger 
                 value="timeline"
                 className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
@@ -121,6 +120,13 @@ const TripDetails = () => {
                 <List className="w-5 h-5" />
                 Packing List
               </TabsTrigger>
+              <TabsTrigger 
+                value="vision-board"
+                className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
+              >
+                <Lightbulb className="w-5 h-5" />
+                Vision Board
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="timeline">
@@ -133,6 +139,10 @@ const TripDetails = () => {
             
             <TabsContent value="packing">
               <PackingView tripId={tripId} />
+            </TabsContent>
+
+            <TabsContent value="vision-board">
+              <VisionBoardView tripId={tripId} />
             </TabsContent>
           </Tabs>
         </div>
