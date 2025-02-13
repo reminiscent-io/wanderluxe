@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import TripCard from '../components/trip/TripCard';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Trip } from '@/types/trip';
+import { useAuth } from "@/contexts/AuthContext";
 
 const MyTrips = () => {
   const navigate = useNavigate();
@@ -16,6 +18,14 @@ const MyTrips = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { session } = useAuth();
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!session) {
+      navigate('/auth');
+    }
+  }, [session, navigate]);
 
   const { data: trips, isLoading } = useQuery({
     queryKey: ['my-trips'],
@@ -33,7 +43,8 @@ const MyTrips = () => {
 
       if (error) throw error;
       return data as Trip[];
-    }
+    },
+    enabled: !!session // Only run query if user is authenticated
   });
 
   const handleDeleteTrip = async () => {
@@ -61,10 +72,21 @@ const MyTrips = () => {
     trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (!session) {
+    return null; // Don't render anything while redirecting
+  }
+
   return (
     <div>
       <Navigation />
-      
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">My Trips</h1>
+          <Button onClick={() => navigate('/trips/create')}>
+            Create New Trip
+          </Button>
+        </div>
+
         <Input
           type="search"
           placeholder="Search trips..."
@@ -93,27 +115,27 @@ const MyTrips = () => {
             ))}
           </div>
         )}
-      </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the trip
-              and all its associated data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTrip}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the trip
+                and all its associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteTrip}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 };
