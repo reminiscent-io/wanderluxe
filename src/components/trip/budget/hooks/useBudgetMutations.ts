@@ -3,94 +3,80 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface AddExpenseData {
+interface ExpenseData {
+  trip_id: string;
+  category: string;
   description: string;
-  cost: number;
-  date?: string;
-  currency: string;
-  isPaid: boolean;
-}
-
-// Define explicit type for category
-type ExpenseCategory = 'Accommodations' | 'Transportation' | 'Activities' | 'Dining' | 'Other';
-
-// Define table names explicitly
-type TableName = 'accommodations' | 'transportation_events' | 'day_activities' | 'restaurant_reservations' | 'other_expenses';
-
-interface UpdatePaidStatusParams {
-  id: string;
-  isPaid: boolean;
-  category: ExpenseCategory;
+  cost?: number;
+  currency?: string;
+  is_paid?: boolean;
+  accommodation_id?: string;
+  transportation_id?: string;
+  activity_id?: string;
 }
 
 export const useBudgetMutations = (tripId: string) => {
   const queryClient = useQueryClient();
 
-  const addExpenseMutation = useMutation({
-    mutationFn: async (data: AddExpenseData) => {
-      const { error } = await supabase.from('other_expenses').insert({
-        trip_id: tripId,
-        description: data.description,
-        cost: data.cost,
-        currency: data.currency,
-        date: data.date,
-        is_paid: data.isPaid
-      });
+  const addExpense = useMutation({
+    mutationFn: async (data: ExpenseData) => {
+      const { error } = await supabase
+        .from('expenses')
+        .insert([data]);
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
       toast.success('Expense added successfully');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error adding expense:', error);
       toast.error('Failed to add expense');
     }
   });
 
-  const updatePaidStatusMutation = useMutation({
-    mutationFn: async ({ id, isPaid, category }: UpdatePaidStatusParams) => {
-      let tableName: TableName;
-      let idField: 'id' | 'stay_id' = 'id';
-      
-      switch (category) {
-        case 'Accommodations':
-          tableName = 'accommodations';
-          idField = 'stay_id';
-          break;
-        case 'Transportation':
-          tableName = 'transportation_events';
-          break;
-        case 'Activities':
-          tableName = 'day_activities';
-          break;
-        case 'Dining':
-          tableName = 'restaurant_reservations';
-          break;
-        case 'Other':
-          tableName = 'other_expenses';
-          break;
-        default:
-          throw new Error('Invalid category');
-      }
-
+  const updateExpense = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ExpenseData> }) => {
       const { error } = await supabase
-        .from(tableName)
-        .update({ is_paid: isPaid })
-        .eq(idField, id);
+        .from('expenses')
+        .update(data)
+        .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Payment status updated');
+      toast.success('Expense updated successfully');
     },
-    onError: () => {
-      toast.error('Failed to update payment status');
+    onError: (error) => {
+      console.error('Error updating expense:', error);
+      toast.error('Failed to update expense');
+    }
+  });
+
+  const deleteExpense = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
+      toast.success('Expense deleted successfully');
+    },
+    onError: (error) => {
+      console.error('Error deleting expense:', error);
+      toast.error('Failed to delete expense');
     }
   });
 
   return {
-    addExpenseMutation,
-    updatePaidStatusMutation
+    addExpense,
+    updateExpense,
+    deleteExpense
   };
 };
