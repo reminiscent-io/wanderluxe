@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -74,7 +75,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onAddActivity = () => {
     handleAddActivity({
       title: newActivity.text,
-      cost: newActivity.cost ? Number(newActivity.cost) : undefined,
+      cost: newActivity.cost,  // Keep as string
       currency: newActivity.currency
     }).then(success => {
       if (success) {
@@ -87,7 +88,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onEditActivity = (activityId: string) => {
     handleEditActivity(activityId, {
       title: activityEdit.text,
-      cost: activityEdit.cost ? Number(activityEdit.cost) : undefined,
+      cost: activityEdit.cost,  // Keep as string
       currency: activityEdit.currency
     }).then(success => {
       if (success) {
