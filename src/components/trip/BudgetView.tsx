@@ -11,6 +11,9 @@ import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
 
+// Import the ExpenseCategory type
+type ExpenseCategory = 'Accommodations' | 'Transportation' | 'Activities' | 'Dining' | 'Other';
+
 interface AddExpenseData {
   description: string;
   cost: number;
@@ -35,7 +38,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   };
 
   const handleUpdatePaidStatus = (id: string, isPaid: boolean, category: string) => {
-    updatePaidStatusMutation.mutate({ id, isPaid, category });
+    // Convert the string category to ExpenseCategory type
+    const expenseCategory = category as ExpenseCategory;
+    updatePaidStatusMutation.mutate({ id, isPaid, category: expenseCategory });
   };
 
   const total = expenses?.items.reduce((sum, item) => sum + (item.cost || 0), 0) || 0;
