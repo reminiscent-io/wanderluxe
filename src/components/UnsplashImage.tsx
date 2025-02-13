@@ -25,10 +25,15 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
         } else if (url.includes('images.unsplash.com')) {
           photoId = url.split('/')[3].split('?')[0];
         }
-
+        
+        if (photoId && photoId.startsWith('photo-')) {
+          photoId = photoId.replace('photo-', '');
+        }
+        
         if (!photoId) {
           throw new Error('Invalid Unsplash URL');
         }
+
 
         const response = await fetch(`https://api.unsplash.com/photos/${photoId}`, {
           headers: {
