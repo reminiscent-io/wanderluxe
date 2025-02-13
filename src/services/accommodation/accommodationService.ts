@@ -18,7 +18,11 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     const accommodationData = {
       ...formData,
       trip_id: tripId,
-      cost: formData.cost ? formData.cost : null  // Keep as string
+      expense_cost: formData.cost ? parseFloat(formData.cost) : null,
+      expense_type: formData.expense_type || 'accommodation',
+      expense_paid: formData.expense_paid || false,
+      expense_date: formData.expense_date || null,
+      currency: formData.currency || 'USD'
     };
     
     await createAccommodationEvents(tripId, accommodationData, stayDates);
@@ -52,7 +56,11 @@ export const updateAccommodation = async (
       ...formData,
       stay_id,
       trip_id: tripId,
-      cost: formData.cost ? formData.cost : null  // Keep as string
+      expense_cost: formData.cost ? parseFloat(formData.cost) : null,
+      expense_type: formData.expense_type || 'accommodation',
+      expense_paid: formData.expense_paid || false,
+      expense_date: formData.expense_date || null,
+      currency: formData.currency || 'USD'
     };
     
     await updateAccommodationEvents(tripId, accommodationData, stayDates);
