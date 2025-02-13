@@ -327,6 +327,54 @@ export type Database = {
           },
         ]
       }
+      other_expenses: {
+        Row: {
+          cost: number | null
+          created_at: string
+          currency: string | null
+          date: string | null
+          description: string
+          id: string
+          is_paid: boolean | null
+          trip_id: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          date?: string | null
+          description: string
+          id?: string
+          is_paid?: boolean | null
+          trip_id: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          date?: string | null
+          description?: string
+          id?: string
+          is_paid?: boolean | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["currency"]
+          },
+          {
+            foreignKeyName: "other_expenses_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
