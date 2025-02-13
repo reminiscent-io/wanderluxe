@@ -106,12 +106,7 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
         className={className}
       />
       {showAttribution && (
-        <a
-          href={`${metadata.unsplashUrl}${utmParams}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute bottom-4 right-4 text-white text-sm bg-black/50 px-2 py-1 rounded backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
-        >
+        <div className="absolute bottom-4 right-4 text-white text-sm bg-black/50 px-2 py-1 rounded backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity">
           Photo by{' '}
           <a
             href={`${metadata.photographerUrl}${utmParams}`}
@@ -130,7 +125,7 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
           >
             Unsplash
           </a>
-        </a>
+        </div>
       )}
     </div>
   );
