@@ -1,11 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DayActivity } from '@/types/trip';
+import { DayActivity, ActivityFormData } from '@/types/trip';
 
 export const useEventHandlers = (
   id: string,
-  tripId: string, // Add tripId parameter
+  tripId: string,
   onEdit: (id: string, data: any) => void,
   editData: any,
   activities: DayActivity[]
@@ -18,16 +18,16 @@ export const useEventHandlers = (
     });
   };
 
-  const handleAddActivity = async (newActivity: { text: string; cost: string; currency: string }) => {
-    if (!newActivity.text.trim()) return;
+  const handleAddActivity = async (newActivity: ActivityFormData) => {
+    if (!newActivity.title.trim()) return false;
 
     try {
       const { data, error } = await supabase
         .from('day_activities')
         .insert([{
           day_id: id,
-          trip_id: tripId, // Add trip_id here
-          title: newActivity.text.trim(),
+          trip_id: tripId,
+          title: newActivity.title.trim(),
           cost: newActivity.cost ? Number(newActivity.cost) : null,
           currency: newActivity.currency,
           order_index: activities.length
@@ -53,13 +53,13 @@ export const useEventHandlers = (
 
   const handleEditActivity = async (
     activityId: string,
-    activityEdit: { text: string; cost: string; currency: string }
+    activityEdit: ActivityFormData
   ) => {
     try {
       const { error } = await supabase
         .from('day_activities')
         .update({
-          title: activityEdit.text,
+          title: activityEdit.title,
           cost: activityEdit.cost ? Number(activityEdit.cost) : null,
           currency: activityEdit.currency
         })
@@ -73,7 +73,7 @@ export const useEventHandlers = (
           a.id === activityId 
             ? { 
                 ...a, 
-                title: activityEdit.text,
+                title: activityEdit.title,
                 cost: activityEdit.cost ? Number(activityEdit.cost) : null,
                 currency: activityEdit.currency
               }

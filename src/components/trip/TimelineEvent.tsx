@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -6,7 +7,7 @@ import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
 import { useEventState } from './event/useEventState';
 import { useEventHandlers } from './event/useEventHandlers';
-import { DayActivity } from '@/types/trip';
+import { DayActivity, ActivityFormData } from '@/types/trip';
 
 interface TimelineEventProps {
   id: string;
@@ -21,7 +22,7 @@ interface TimelineEventProps {
   hotel_url: string;
   activities: DayActivity[];
   index: number;
-  tripId: string; // Add tripId prop
+  tripId: string;
   onEdit: (id: string, data: any) => void;
   onDelete: (id: string) => void;
 }
@@ -39,7 +40,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   hotel_url,
   activities,
   index,
-  tripId, // Add tripId parameter
+  tripId,
   onEdit,
   onDelete
 }) => {
@@ -71,17 +72,17 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     handleEdit,
     handleAddActivity,
     handleEditActivity,
-  } = useEventHandlers(id, tripId, onEdit, editData, activities); // Pass tripId here
+  } = useEventHandlers(id, tripId, onEdit, editData, activities);
 
   const onAddActivity = () => {
     handleAddActivity({
       title: newActivity.title,
-      cost: newActivity.cost,  // Keep as string
+      cost: newActivity.cost,
       currency: newActivity.currency
     }).then(success => {
       if (success) {
         setIsAddingActivity(false);
-        setNewActivity({ text: "", cost: "", currency: "USD" });
+        setNewActivity({ title: "", cost: "", currency: "USD" });
       }
     });
   };
@@ -89,12 +90,12 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   const onEditActivity = (activityId: string) => {
     handleEditActivity(activityId, {
       title: activityEdit.title,
-      cost: activityEdit.cost,  // Keep as string
+      cost: activityEdit.cost,
       currency: activityEdit.currency
     }).then(success => {
       if (success) {
         setEditingActivity(null);
-        setActivityEdit({ text: "", cost: "", currency: "USD" });
+        setActivityEdit({ title: "", cost: "", currency: "USD" });
       }
     });
   };

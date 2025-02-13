@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { ActivityData } from '@/types/trip';
+import { ActivityFormData } from '@/types/trip';
 
 export const useEventState = (
   date: string,
@@ -27,8 +27,8 @@ export const useEventState = (
     expense_currency: "USD",
   });
 
-  // Updated to match the new ActivityData interface which uses 'title' instead of 'text'
-  const [newActivity, setNewActivity] = useState<ActivityData>({
+  // Using ActivityFormData type for form state
+  const [newActivity, setNewActivity] = useState<ActivityFormData>({
     title: "",
     cost: "",
     currency: "USD"
@@ -36,7 +36,7 @@ export const useEventState = (
 
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [activityEdit, setActivityEdit] = useState<ActivityData>({
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
     title: "",
     cost: "",
     currency: "USD"
