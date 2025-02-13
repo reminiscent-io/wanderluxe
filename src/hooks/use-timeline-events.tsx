@@ -1,14 +1,40 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
-import { Accommodation, AccommodationDay } from '@/types/trip';
 
-// Define simpler types for the hook's internal use
-type AccommodationWithDays = Omit<Accommodation, 'accommodations_days'> & {
+interface AccommodationDay {
+  day_id: string;
+  date: string;
+}
+
+interface BaseAccommodation {
+  stay_id: string;
+  trip_id: string;
+  title: string;
+  description?: string | null;
+  image_url?: string | null;
+  hotel?: string | null;
+  hotel_details?: string | null;
+  created_at: string;
+  order_index: number;
+}
+
+interface Accommodation extends BaseAccommodation {
+  hotel_checkin_date: string | null;
+  hotel_checkout_date: string | null;
+  hotel_url: string | null;
+  currency: string | null;
+  expense_type: string | null;
+  expense_cost: number | null;
+  expense_paid: boolean;
+  hotel_address: string | null;
+  hotel_phone: string | null;
+  hotel_place_id: string | null;
+  hotel_website: string | null;
+  final_accommodation_day: string | null;
   accommodations_days?: AccommodationDay[];
-};
+}
 
 export const useTimelineEvents = (tripId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -63,13 +89,13 @@ export const useTimelineEvents = (tripId: string | undefined) => {
 
       if (accommodationsError) throw accommodationsError;
 
-      return accommodations as AccommodationWithDays[];
+      return (accommodations || []) as Accommodation[];
     },
     enabled: !!tripId,
   });
 
   const updateEvent = useMutation({
-    mutationFn: async (event: Partial<AccommodationWithDays> & { stay_id: string }) => {
+    mutationFn: async (event: Partial<Accommodation> & { stay_id: string }) => {
       const { data, error } = await supabase
         .from('accommodations')
         .update(event)
