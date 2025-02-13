@@ -16,7 +16,6 @@ export type Database = {
           currency: string | null
           description: string | null
           expense_date: string | null
-          expense_paid: boolean | null
           expense_type: string | null
           final_accommodation_day: string | null
           hotel: string | null
@@ -29,6 +28,7 @@ export type Database = {
           hotel_url: string | null
           hotel_website: string | null
           image_url: string | null
+          is_paid: boolean | null
           order_index: number
           stay_id: string
           title: string
@@ -40,7 +40,6 @@ export type Database = {
           currency?: string | null
           description?: string | null
           expense_date?: string | null
-          expense_paid?: boolean | null
           expense_type?: string | null
           final_accommodation_day?: string | null
           hotel?: string | null
@@ -53,6 +52,7 @@ export type Database = {
           hotel_url?: string | null
           hotel_website?: string | null
           image_url?: string | null
+          is_paid?: boolean | null
           order_index: number
           stay_id?: string
           title: string
@@ -64,7 +64,6 @@ export type Database = {
           currency?: string | null
           description?: string | null
           expense_date?: string | null
-          expense_paid?: boolean | null
           expense_type?: string | null
           final_accommodation_day?: string | null
           hotel?: string | null
@@ -77,6 +76,7 @@ export type Database = {
           hotel_url?: string | null
           hotel_website?: string | null
           image_url?: string | null
+          is_paid?: boolean | null
           order_index?: number
           stay_id?: string
           title?: string
@@ -165,9 +165,11 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: string
+          is_paid: boolean | null
           order_index: number
           start_time: string | null
           title: string
+          trip_id: string
         }
         Insert: {
           cost?: number | null
@@ -177,9 +179,11 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_paid?: boolean | null
           order_index: number
           start_time?: string | null
           title: string
+          trip_id: string
         }
         Update: {
           cost?: number | null
@@ -189,9 +193,11 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_paid?: boolean | null
           order_index?: number
           start_time?: string | null
           title?: string
+          trip_id?: string
         }
         Relationships: [
           {
@@ -207,6 +213,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trip_days"
             referencedColumns: ["day_id"]
+          },
+          {
+            foreignKeyName: "day_activities_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
           },
         ]
       }
@@ -411,6 +424,7 @@ export type Database = {
           currency: string | null
           day_id: string
           id: string
+          is_paid: boolean | null
           notes: string | null
           number_of_people: number | null
           order_index: number
@@ -419,6 +433,7 @@ export type Database = {
           rating: number | null
           reservation_time: string | null
           restaurant_name: string
+          trip_id: string
           website: string | null
         }
         Insert: {
@@ -429,6 +444,7 @@ export type Database = {
           currency?: string | null
           day_id: string
           id?: string
+          is_paid?: boolean | null
           notes?: string | null
           number_of_people?: number | null
           order_index: number
@@ -437,6 +453,7 @@ export type Database = {
           rating?: number | null
           reservation_time?: string | null
           restaurant_name: string
+          trip_id: string
           website?: string | null
         }
         Update: {
@@ -447,6 +464,7 @@ export type Database = {
           currency?: string | null
           day_id?: string
           id?: string
+          is_paid?: boolean | null
           notes?: string | null
           number_of_people?: number | null
           order_index?: number
@@ -455,6 +473,7 @@ export type Database = {
           rating?: number | null
           reservation_time?: string | null
           restaurant_name?: string
+          trip_id?: string
           website?: string | null
         }
         Relationships: [
@@ -471,6 +490,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trip_days"
             referencedColumns: ["day_id"]
+          },
+          {
+            foreignKeyName: "restaurant_reservations_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
           },
         ]
       }

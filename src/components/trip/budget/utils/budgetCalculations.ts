@@ -49,7 +49,7 @@ export const mapToExpenseItems = (
       category: 'Activities',
       cost: a.cost,
       currency: a.currency || 'USD',
-      isPaid: false,
+      isPaid: a.is_paid || false,
       date: null
     })),
     ...accommodations.map(a => ({
@@ -58,7 +58,7 @@ export const mapToExpenseItems = (
       category: 'Accommodations',
       cost: a.cost,
       currency: a.currency || 'USD',
-      isPaid: a.expense_paid || false,
+      isPaid: a.is_paid || false,
       date: a.hotel_checkin_date
     })),
     ...transportation.map(t => ({
@@ -76,7 +76,7 @@ export const mapToExpenseItems = (
       category: 'Dining',
       cost: r.cost,
       currency: r.currency || 'USD',
-      isPaid: false,
+      isPaid: r.is_paid || false,
       date: null
     })),
     ...otherExpenses.map(e => ({
