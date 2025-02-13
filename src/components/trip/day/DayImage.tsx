@@ -7,12 +7,9 @@ interface DayImageProps {
   tripId: string;
   title: string;
   imageUrl?: string | null;
-  photographer?: string;
 }
 
-const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl, photographer }) => {
-  // If no image URL is provided, show the placeholder state with reduced height
-  console.log("imageUrl:", imageUrl);
+const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl }) => {
   if (!imageUrl) {
     return (
       <div className="relative h-auto min-h-[100px] overflow-hidden rounded-l-lg bg-gray-100">
@@ -30,20 +27,10 @@ const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl, photographe
 
   return (
     <div className="relative h-full min-h-[300px] overflow-hidden rounded-l-lg">
-      {photographer ? (
-        <UnsplashImage
-          src={imageUrl}
-          alt={title}
-          photographer={photographer}
-          className="absolute inset-0 transition-transform duration-300 hover:scale-105"
-        />
-      ) : (
-        <img 
-          src={imageUrl} 
-          alt={title}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-        />
-      )}
+      <UnsplashImage
+        url={imageUrl}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6">
         <h2 className="text-white text-2xl font-bold drop-shadow-lg">

@@ -1,8 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 
 interface UnsplashImageProps {
   url: string;
   className?: string;
+  showAttribution?: boolean;
 }
 
 interface UnsplashMetadata {
@@ -13,8 +15,13 @@ interface UnsplashMetadata {
   unsplashUrl: string;
 }
 
-const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) => {
+const UnsplashImage: React.FC<UnsplashImageProps> = ({ 
+  url, 
+  className = "",
+  showAttribution = true
+}) => {
   const [metadata, setMetadata] = useState<UnsplashMetadata | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -34,6 +41,13 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
           throw new Error('Invalid Unsplash URL');
         }
 
+        // Track the view of the photo
+        const trackResponse = await fetch(`https://api.unsplash.com/photos/${photoId}/download`, {
+          headers: {
+            Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
+          },
+        });
+
         const response = await fetch(`https://api.unsplash.com/photos/${photoId}`, {
           headers: {
             Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
@@ -45,8 +59,17 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
         }
         
         const data = await response.json();
+        
+        // Construct optimized image URL with dynamic resizing
+        const width = 1200; // Default width, adjust based on your needs
+        const optimizedUrl = new URL(data.urls.raw);
+        optimizedUrl.searchParams.set('w', width.toString());
+        optimizedUrl.searchParams.set('q', '80');
+        optimizedUrl.searchParams.set('fm', 'webp');
+        optimizedUrl.searchParams.set('auto', 'compress');
+
         setMetadata({
-          src: data.urls.regular,
+          src: optimizedUrl.toString(),
           alt: data.alt_description || 'Unsplash Image',
           photographer: data.user.name,
           photographerUrl: data.user.links.html,
@@ -54,6 +77,7 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
         });
       } catch (error) {
         console.error('Error fetching Unsplash metadata:', error);
+        setError('Failed to load image metadata');
         setMetadata({
           src: url,
           alt: 'Unsplash Image',
@@ -67,25 +91,48 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
     fetchMetadata();
   }, [url]);
 
+  if (error) {
+    console.error(error);
+  }
+
   if (!metadata) return null;
 
-  const utmParams = '?utm_source=your_app_name&utm_medium=referral';
+  const utmParams = '?utm_source=travel_planner&utm_medium=referral';
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden">
       <img
         src={metadata.src}
         alt={metadata.alt}
         className={className}
       />
-      <a
-        href={`${metadata.unsplashUrl}${utmParams}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute bottom-4 right-4 text-white text-sm opacity-70 hover:opacity-100"
-      >
-        Photo by <a href={`${metadata.photographerUrl}${utmParams}`} target="_blank" rel="noopener noreferrer">{metadata.photographer}</a> on Unsplash
-      </a>
+      {showAttribution && (
+        <a
+          href={`${metadata.unsplashUrl}${utmParams}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-4 right-4 text-white text-sm bg-black/50 px-2 py-1 rounded backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
+        >
+          Photo by{' '}
+          <a
+            href={`${metadata.photographerUrl}${utmParams}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            {metadata.photographer}
+          </a>
+          {' '}on{' '}
+          <a
+            href={`https://unsplash.com${utmParams}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Unsplash
+          </a>
+        </a>
+      )}
     </div>
   );
 };

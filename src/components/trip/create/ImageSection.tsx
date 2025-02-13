@@ -18,7 +18,6 @@ interface UnsplashImage {
   id: string;
   url: string;
   description: string;
-  photographer: string;
 }
 
 const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChange }) => {
@@ -100,10 +99,9 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
                 onClick={() => selectGeneratedImage(image.url)}
               >
                 <UnsplashImage
-                  src={image.url}
-                  alt={image.description || 'Generated image'}
-                  photographer={image.photographer}
+                  url={image.url}
                   className="h-48 rounded-lg"
+                  showAttribution={true}
                 />
               </div>
             ))}
