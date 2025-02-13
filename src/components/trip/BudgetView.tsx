@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,12 +12,14 @@ import { useCurrencyState } from './budget/hooks/useCurrencyState';
 import { formatCurrency } from './budget/utils/budgetCalculations';
 import { Tables } from '@/integrations/supabase/types';
 
+// Use database types directly to avoid complex type hierarchies
 type DbActivity = Tables<'day_activities'>;
 type DbAccommodation = Tables<'accommodations'>;
 type DbTransportation = Tables<'transportation_events'>;
 type DbRestaurant = Tables<'restaurant_reservations'>;
 type DbOtherExpense = Tables<'other_expenses'>;
 
+// Simplified expense interface
 interface SimplifiedExpense {
   id: string;
   trip_id: string;
@@ -82,9 +85,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           trip_id: acc.trip_id,
           category: 'Accommodations',
           description: acc.title,
-          cost: acc.expense_cost,
+          cost: acc.cost,
           currency: acc.currency,
-          is_paid: acc.expense_paid,
+          is_paid: acc.is_paid || false,
           created_at: acc.created_at,
           accommodation_id: acc.stay_id
         })),
@@ -241,7 +244,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           <ExpenseTable
             expenses={expenses.items}
             selectedCurrency={selectedCurrency}
-            onUpdatePaidStatus={() => {}}
+            onUpdatePaidStatus={handleUpdatePaidStatus}
           />
         )}
       </div>
@@ -249,7 +252,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       <AddExpenseDialog
         open={isAddingExpense}
         onOpenChange={setIsAddingExpense}
-        onSubmit={async () => {}}
+        onSubmit={handleAddExpense}
         defaultCurrency={selectedCurrency}
       />
     </div>
