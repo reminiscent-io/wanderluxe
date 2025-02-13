@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Tables } from '@/integrations/supabase/types';
 
-type TransportationEvent = Tables<'transportation_events'>;
+import { useState } from 'react';
+import { ActivityData } from '@/types/trip';
 
 export const useEventState = (
   date: string,
@@ -27,10 +26,21 @@ export const useEventState = (
     expense_cost: "",
     expense_currency: "USD",
   });
-  const [newActivity, setNewActivity] = useState({ text: "", cost: "", currency: "USD" });
+
+  // Updated to match the new ActivityData interface which uses 'title' instead of 'text'
+  const [newActivity, setNewActivity] = useState<ActivityData>({
+    title: "",
+    cost: "",
+    currency: "USD"
+  });
+
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [activityEdit, setActivityEdit] = useState({ text: "", cost: "", currency: "USD" });
+  const [activityEdit, setActivityEdit] = useState<ActivityData>({
+    title: "",
+    cost: "",
+    currency: "USD"
+  });
 
   return {
     isEditing,
