@@ -41,9 +41,9 @@ export interface Accommodation {
   hotel?: string;
   hotel_details?: string;
   hotel_url?: string;
-  hotel_checkin_date: string; // Changed: no longer optional since it's a required date field
-  hotel_checkout_date: string; // Changed: no longer optional since it's a required date field
-  expense_cost?: number | null;
+  hotel_checkin_date: string;
+  hotel_checkout_date: string;
+  cost?: number | null;
   currency?: string;
   expense_type?: string;
   expense_paid?: boolean;
@@ -78,7 +78,7 @@ export interface AccommodationFormData {
   hotel_url: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  expense_cost: string;
+  cost: string | null;
   currency: string;
   expense_type?: string;
   expense_paid?: boolean;
@@ -91,9 +91,19 @@ export interface AccommodationFormData {
 
 export interface HotelStay {
   stay_id: string;
+  trip_id: string;  // Added this required field
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
+  hotel_details?: string;
+  hotel_url?: string;
+  cost: string | null;
+  currency: string;
+  hotel_address?: string;
+  hotel_phone?: string;
+  hotel_place_id?: string;
+  hotel_website?: string;
+  created_at?: string;
 }
 
 export interface TransportationEvent {
@@ -151,4 +161,19 @@ export interface Expense {
   accommodation_id?: string | null;
   title?: string;
   date?: string;
+}
+
+export interface ActivityFormData {
+  title: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  cost: string | null;
+  currency: string;
+}
+
+export interface ActivityData {
+  text: string;
+  cost: string;
+  currency: string;
 }
