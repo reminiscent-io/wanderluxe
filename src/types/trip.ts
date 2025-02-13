@@ -1,4 +1,3 @@
-
 // Define the form types (string-based for form handling)
 export interface ActivityFormData {
   title: string;
@@ -164,4 +163,18 @@ export interface AccommodationFormData {
   hotel_place_id?: string;
   hotel_website?: string;
   order_index?: number;
+}
+
+export interface Trip {
+  trip_id: string;
+  user_id: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  cover_image_url: string | null;
+  created_at: string;
+  hidden: boolean;
+  arrival_date: string;
+  departure_date: string;
+  accommodations?: Accommodation[];
 }
