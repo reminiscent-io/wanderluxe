@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Expense } from '@/integrations/supabase/types/models';
 
-// Update the props interface to use the Expense type
 export interface ExpenseDetailsProps {
   expense: Expense;
   onEdit?: () => void;
@@ -47,7 +46,7 @@ const ExpenseDetails: React.FC<ExpenseDetailsProps> = ({
         
         <div>
           <h3 className="font-medium text-sm text-muted-foreground">Category</h3>
-          <p>{expense.category || expense.type}</p>
+          <p>{expense.category}</p>
         </div>
         
         <div>
