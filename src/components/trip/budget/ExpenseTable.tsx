@@ -58,7 +58,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                 </TableCell>
                 <TableCell className="text-center">
                   <Switch
-                    checked={expense.isPaid}
+                    checked={expense.is_paid}
                     onCheckedChange={(checked) => onUpdatePaidStatus(expense.id, checked, category)}
                     className="data-[state=checked]:bg-green-500"
                   />

@@ -8,6 +8,7 @@ interface CostInputsProps {
   currency: string;
   onCostChange: (value: string | null) => void;
   onCurrencyChange: (value: string) => void;
+  formatCost?: (value: string) => string; // Added formatCost as optional prop
 }
 
 const CostInputs: React.FC<CostInputsProps> = ({
@@ -15,6 +16,7 @@ const CostInputs: React.FC<CostInputsProps> = ({
   currency,
   onCostChange,
   onCurrencyChange,
+  formatCost
 }) => {
   const handleCostChange = (value: string) => {
     // Allow empty string to be converted to null
@@ -30,7 +32,7 @@ const CostInputs: React.FC<CostInputsProps> = ({
     const parts = cleanValue.split('.');
     const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
     
-    onCostChange(formattedValue);
+    onCostChange(formatCost ? formatCost(formattedValue) : formattedValue);
   };
 
   return (
