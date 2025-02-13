@@ -11,7 +11,6 @@ interface UnsplashMetadata {
   photographer: string;
   photographerUrl: string;
   unsplashUrl: string;
-  downloadLocation: string;
 }
 
 const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) => {
@@ -20,7 +19,18 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const response = await fetch(`https://api.unsplash.com/photos/${url.split('/').pop()}`, {
+        let photoId;
+        if (url.includes('unsplash.com/photos/')) {
+          photoId = url.split('/').pop()?.split('?')[0];
+        } else if (url.includes('images.unsplash.com')) {
+          photoId = url.split('/')[3].split('?')[0];
+        }
+
+        if (!photoId) {
+          throw new Error('Invalid Unsplash URL');
+        }
+
+        const response = await fetch(`https://api.unsplash.com/photos/${photoId}`, {
           headers: {
             Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
           },
@@ -32,29 +42,22 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
           photographer: data.user.name,
           photographerUrl: data.user.links.html,
           unsplashUrl: data.links.html,
-          downloadLocation: data.links.download_location,
         });
       } catch (error) {
         console.error('Error fetching Unsplash metadata:', error);
+        // Fallback to using the provided URL directly if metadata fetch fails
+        setMetadata({
+          src: url,
+          alt: 'Unsplash Image',
+          photographer: 'Unknown',
+          photographerUrl: 'https://unsplash.com',
+          unsplashUrl: 'https://unsplash.com',
+        });
       }
     };
 
     fetchMetadata();
   }, [url]);
-
-  const handleImageClick = async () => {
-    if (metadata?.downloadLocation) {
-      try {
-        await fetch(metadata.downloadLocation, {
-          headers: {
-            Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
-          },
-        });
-      } catch (error) {
-        console.error('Error tracking download:', error);
-      }
-    }
-  };
 
   if (!metadata) return null;
 
@@ -64,7 +67,6 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) =>
         src={metadata.src}
         alt={metadata.alt}
         className={className}
-        onClick={handleImageClick}
       />
       <a
         href={metadata.unsplashUrl}
