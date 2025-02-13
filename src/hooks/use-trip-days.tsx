@@ -2,30 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface DayActivity {
-  id: string;
-  day_id: string;
-  title: string;
-  description?: string;
-  start_time?: string;
-  end_time?: string;
-  cost?: number;
-  currency?: string;
-  order_index: number;
-  created_at: string;
-}
-
-interface TripDay {
-  id: string;
-  trip_id: string;
-  date: string;
-  title?: string;
-  description?: string;
-  image_url?: string;
-  created_at: string;
-  activities: DayActivity[];
-}
+import { DayActivity } from '@/types/trip';
 
 export const useTripDays = (tripId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -105,7 +82,7 @@ export const useTripDays = (tripId: string | undefined) => {
           image_url: updatedDay.image_url,
           date: updatedDay.date
         })
-        .eq('id', updatedDay.id);
+        .eq('day_id', updatedDay.id);
 
       if (error) throw error;
     },
@@ -129,10 +106,13 @@ export const useTripDays = (tripId: string | undefined) => {
       currency?: string;
       orderIndex: number;
     }) => {
+      if (!tripId) throw new Error('Trip ID is required');
+
       const { data, error } = await supabase
         .from('day_activities')
         .insert([{
           day_id: newActivity.dayId,
+          trip_id: tripId, // Add the trip_id here
           title: newActivity.title,
           description: newActivity.description,
           start_time: newActivity.startTime,
@@ -161,12 +141,15 @@ export const useTripDays = (tripId: string | undefined) => {
       dayId: string;
       activities: DayActivity[];
     }) => {
+      if (!tripId) throw new Error('Trip ID is required');
+
       const { error } = await supabase
         .from('day_activities')
         .upsert(
           activities.map(activity => ({
             id: activity.id,
             day_id: dayId,
+            trip_id: tripId, // Add the trip_id here
             title: activity.title,
             description: activity.description,
             start_time: activity.start_time,

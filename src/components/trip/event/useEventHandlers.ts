@@ -1,16 +1,11 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tables } from '@/integrations/supabase/types';
-
-type DayActivity = {
-  id: string;
-  title: string;
-  cost?: number;
-  currency?: string;
-};
+import { DayActivity } from '@/types/trip';
 
 export const useEventHandlers = (
   id: string,
+  tripId: string, // Add tripId parameter
   onEdit: (id: string, data: any) => void,
   editData: any,
   activities: DayActivity[]
@@ -31,6 +26,7 @@ export const useEventHandlers = (
         .from('day_activities')
         .insert([{
           day_id: id,
+          trip_id: tripId, // Add trip_id here
           title: newActivity.text.trim(),
           cost: newActivity.cost ? Number(newActivity.cost) : null,
           currency: newActivity.currency,

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -22,6 +21,7 @@ interface TimelineEventProps {
   hotel_url: string;
   activities: DayActivity[];
   index: number;
+  tripId: string; // Add tripId prop
   onEdit: (id: string, data: any) => void;
   onDelete: (id: string) => void;
 }
@@ -39,6 +39,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   hotel_url,
   activities,
   index,
+  tripId, // Add tripId parameter
   onEdit,
   onDelete
 }) => {
@@ -70,7 +71,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     handleEdit,
     handleAddActivity,
     handleEditActivity,
-  } = useEventHandlers(id, onEdit, editData, activities);
+  } = useEventHandlers(id, tripId, onEdit, editData, activities); // Pass tripId here
 
   const onAddActivity = () => {
     handleAddActivity({
