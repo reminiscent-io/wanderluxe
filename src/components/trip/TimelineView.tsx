@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
+import { HotelStay } from '@/types/trip';
 
 interface TimelineViewProps {
   tripId: string;
@@ -125,6 +126,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     };
   }, [tripId, refreshEvents, refreshDays]);
 
+  // Convert events to HotelStay type with proper number conversion for cost
   const hotelStays = useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
@@ -134,7 +136,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       hotel_url: event.hotel_url,
       hotel_checkin_date: event.hotel_checkin_date || '',
       hotel_checkout_date: event.hotel_checkout_date || '',
-      cost: event.cost?.toString() || null,  // Convert number to string
+      cost: event.cost ? Number(event.cost) : null,  // Convert to number or null
       currency: event.currency || 'USD',
       hotel_address: event.hotel_address,
       hotel_phone: event.hotel_phone,
