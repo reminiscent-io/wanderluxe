@@ -11,6 +11,16 @@ import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 import { useCurrencyState } from './budget/hooks/useCurrencyState';
 
+// Define simpler types for the component's internal use
+type BudgetExpenseData = {
+  activities: any[];
+  accommodations: any[];
+  transportation: any[];
+  restaurants: any[];
+  otherExpenses: any[];
+  exchangeRates: any[];
+};
+
 interface BudgetViewProps {
   tripId: string;
 }
@@ -20,10 +30,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
   const [isAddingExpense, setIsAddingExpense] = useState(false);
 
-  // Fetch all expense data
   const { data: expenses } = useQuery({
     queryKey: ['expenses', tripId],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ items: ExpenseItem[]; exchangeRates: any[] }> => {
       const [
         { data: activities },
         { data: accommodations },
@@ -40,17 +49,26 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         supabase.from('exchange_rates').select('*')
       ]);
 
+      const expenseData: BudgetExpenseData = {
+        activities: activities || [],
+        accommodations: accommodations || [],
+        transportation: transportation || [],
+        restaurants: restaurants || [],
+        otherExpenses: otherExpenses || [],
+        exchangeRates: exchangeRates || []
+      };
+
       const mappedExpenses = mapToExpenseItems(
-        activities || [],
-        accommodations || [],
-        transportation || [],
-        restaurants || [],
-        otherExpenses || []
+        expenseData.activities,
+        expenseData.accommodations,
+        expenseData.transportation,
+        expenseData.restaurants,
+        expenseData.otherExpenses
       );
 
       return {
         items: mappedExpenses,
-        exchangeRates: exchangeRates || []
+        exchangeRates: expenseData.exchangeRates
       };
     }
   });
