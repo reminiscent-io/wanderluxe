@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,10 @@ import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 import { useCurrencyState } from './budget/hooks/useCurrencyState';
 import { formatCurrency } from './budget/utils/budgetCalculations';
+import { Tables } from '@/integrations/supabase/types';
+
+// Define the type for transportation events using Supabase generated types
+type TransportationEvent = Tables<'transportation_events'>;
 
 // Define a simpler type for expenses to avoid deep type instantiation
 type ExpenseItem = {
@@ -59,7 +64,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         supabase.from('other_expenses').select('*').eq('trip_id', tripId),
       ]);
 
-      // Explicitly type the mapped data to avoid deep instantiation
+      // Map the data to our simplified ExpenseItem type
       const mappedExpenses: ExpenseItem[] = [
         ...(activities || []).map((act): ExpenseItem => ({
           id: act.id,
@@ -83,14 +88,14 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           created_at: acc.created_at,
           accommodation_id: acc.stay_id
         })),
-        ...(transportation || []).map((trans): ExpenseItem => ({
+        ...((transportation || []) as TransportationEvent[]).map((trans): ExpenseItem => ({
           id: trans.id,
           trip_id: trans.trip_id,
           category: 'Transportation',
           description: trans.type,
           cost: trans.cost,
           currency: trans.currency,
-          is_paid: Boolean(trans.is_paid), // Explicitly handle the is_paid property
+          is_paid: false, // Default value since it's not in the database yet
           created_at: trans.created_at,
           transportation_id: trans.id
         })),
