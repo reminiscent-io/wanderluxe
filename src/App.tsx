@@ -1,3 +1,4 @@
+
 import React from "react"; // Add explicit React import
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,7 +11,6 @@ import Index from "./pages/Index";
 import CreateTrip from "./pages/CreateTrip";
 import NotFound from "./pages/NotFound";
 import MyTrips from "./pages/MyTrips";
-import Inspiration from "./pages/Inspiration";
 import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
 
@@ -52,7 +52,6 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/inspiration" element={<Inspiration />} />
                 <Route
                   path="/trip/:tripId"
                   element={

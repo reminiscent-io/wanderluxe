@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -9,21 +10,14 @@ const NavigationLinks = ({ isScrolled }: NavigationLinksProps) => {
   const navigate = useNavigate();
 
   const handleNavigation = (path: string) => {
-    switch (path) {
-      case "My Trips":
-        navigate("/my-trips");
-        break;
-      case "Inspiration":
-        navigate("/inspiration");
-        break;
-      default:
-        break;
+    if (path === "My Trips") {
+      navigate("/my-trips");
     }
   };
 
   return (
     <div className="hidden space-x-8 md:flex">
-      {["My Trips", "Inspiration"].map((item) => (
+      {["My Trips"].map((item) => (
         <motion.button
           key={item}
           onClick={() => handleNavigation(item)}
