@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import AccommodationForm from './AccommodationForm';
-import { AccommodationFormData } from '@/services/accommodation/accommodationService';
+import { AccommodationFormData } from '@/services/accommodation/types';
 
 interface AccommodationActionsProps {
   isAddingAccommodation: boolean;
