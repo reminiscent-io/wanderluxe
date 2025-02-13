@@ -1,13 +1,24 @@
 
 import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
+export interface ExpenseItem {
+  id: string;
+  description: string;
+  category: string;
+  cost: number | null;
+  currency: string;
+  isPaid: boolean;
+  date?: string | null;
+}
+
 // Convert amount between currencies using exchange rates
 export const convertAmount = (
-  amount: number, 
+  amount: number | null, 
   fromCurrency: string, 
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
 ): number => {
+  if (!amount) return 0;
   if (fromCurrency === selectedCurrency) return amount;
   
   const toUsdRate = exchangeRates.find(r => 
@@ -25,7 +36,7 @@ export const convertAmount = (
 
 // Calculate totals for all expense categories
 export const calculateTotals = (
-  expenses: Expense[], 
+  expenses: ExpenseItem[], 
   selectedCurrency: string, 
   exchangeRates: ExchangeRate[]
 ) => {
@@ -33,7 +44,7 @@ export const calculateTotals = (
     if (!exp.cost) return acc;
     const convertedAmount = convertAmount(
       exp.cost,
-      exp.currency || 'USD',
+      exp.currency,
       selectedCurrency,
       exchangeRates
     );
@@ -41,7 +52,7 @@ export const calculateTotals = (
     return {
       ...acc,
       [exp.category]: (acc[exp.category] || 0) + convertedAmount,
-      total: acc.total + convertedAmount
+      total: (acc.total || 0) + convertedAmount
     };
   }, {
     Transportation: 0,
@@ -49,28 +60,16 @@ export const calculateTotals = (
     Accommodations: 0,
     Other: 0,
     total: 0
-  });
-};
-
-// Filter expenses by category
-export const getExpensesByCategory = (expenses: Expense[], category: string): Expense[] => {
-  return expenses.filter(expense => expense.category.toLowerCase() === category.toLowerCase());
+  } as Record<string, number>);
 };
 
 // Format currency amount to string
-export const formatCurrency = (amount: number, currency: string): string => {
+export const formatCurrency = (amount: number | null, currency: string): string => {
+  if (amount === null) return '-';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(amount);
-};
-
-export type CategoryTotals = {
-  Transportation: number;
-  Activities: number;
-  Accommodations: number;
-  Other: number;
-  total: number;
 };
