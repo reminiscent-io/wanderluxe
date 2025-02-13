@@ -12,10 +12,14 @@ import { useCurrencyState } from './budget/hooks/useCurrencyState';
 import { formatCurrency } from './budget/utils/budgetCalculations';
 import { Tables } from '@/integrations/supabase/types';
 
-// Define the type for transportation events using Supabase generated types
+// Define specific table types to avoid deep nesting
+type DayActivity = Tables<'day_activities'>;
+type Accommodation = Tables<'accommodations'>;
 type TransportationEvent = Tables<'transportation_events'>;
+type RestaurantReservation = Tables<'restaurant_reservations'>;
+type OtherExpense = Tables<'other_expenses'>;
 
-// Define a simpler type for expenses to avoid deep type instantiation
+// Define our simplified expense item type
 type ExpenseItem = {
   id: string;
   trip_id: string;
@@ -28,6 +32,12 @@ type ExpenseItem = {
   activity_id?: string;
   accommodation_id?: string;
   transportation_id?: string;
+};
+
+// Define the query response type explicitly
+type ExpensesQueryResult = {
+  items: ExpenseItem[];
+  exchangeRates: any[]; // Simplified for now
 };
 
 interface AddExpenseData {
@@ -47,7 +57,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
   const [isAddingExpense, setIsAddingExpense] = useState(false);
 
-  const { data: expenses } = useQuery({
+  const { data: expenses } = useQuery<ExpensesQueryResult>({
     queryKey: ['expenses', tripId],
     queryFn: async () => {
       const [
@@ -66,7 +76,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
       // Map the data to our simplified ExpenseItem type
       const mappedExpenses: ExpenseItem[] = [
-        ...(activities || []).map((act): ExpenseItem => ({
+        ...((activities || []) as DayActivity[]).map((act): ExpenseItem => ({
           id: act.id,
           trip_id: act.trip_id,
           category: 'Activities',
@@ -77,7 +87,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           created_at: act.created_at,
           activity_id: act.id
         })),
-        ...(accommodations || []).map((acc): ExpenseItem => ({
+        ...((accommodations || []) as Accommodation[]).map((acc): ExpenseItem => ({
           id: acc.stay_id,
           trip_id: acc.trip_id,
           category: 'Accommodations',
@@ -95,13 +105,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           description: trans.type,
           cost: trans.cost,
           currency: trans.currency,
-          is_paid: trans.is_paid || false, // Now using the actual is_paid value from the database
+          is_paid: trans.is_paid || false,
           created_at: trans.created_at,
           transportation_id: trans.id
         })),
-        ...(restaurants || []).map((rest): ExpenseItem => ({
+        ...((restaurants || []) as RestaurantReservation[]).map((rest): ExpenseItem => ({
           id: rest.id,
-          trip_id: tripId,
+          trip_id: rest.trip_id,
           category: 'Dining',
           description: rest.restaurant_name,
           cost: rest.cost,
@@ -109,7 +119,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           is_paid: rest.is_paid || false,
           created_at: rest.created_at
         })),
-        ...(otherExpenses || []).map((expense): ExpenseItem => ({
+        ...((otherExpenses || []) as OtherExpense[]).map((expense): ExpenseItem => ({
           id: expense.id,
           trip_id: expense.trip_id,
           category: 'Other',
