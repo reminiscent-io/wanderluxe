@@ -1,3 +1,4 @@
+
 // Define the form types (string-based for form handling)
 export interface ActivityFormData {
   title: string;
@@ -130,7 +131,7 @@ export interface Currency {
   symbol: string;
 }
 
-export interface Expense {
+export interface ExpenseItem {
   id: string;
   trip_id: string;
   category: string;
@@ -139,11 +140,11 @@ export interface Expense {
   currency?: string | null;
   is_paid?: boolean;
   created_at?: string;
+  date?: string;
   transportation_id?: string | null;
   activity_id?: string | null;
   accommodation_id?: string | null;
   title?: string;
-  date?: string;
 }
 
 export interface AccommodationFormData {
