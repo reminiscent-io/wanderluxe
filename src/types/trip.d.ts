@@ -1,3 +1,4 @@
+
 export interface DayActivity {
   id: string;
   day_id: string;
@@ -5,7 +6,7 @@ export interface DayActivity {
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost: number | null;
+  cost: string | null;
   currency: string;
   order_index: number;
   created_at: string;
@@ -26,10 +27,10 @@ export interface ActivityData {
   currency: string;
 }
 
-// Updated to match the database schema
+// Updated HotelStay interface to include all required fields
 export interface HotelStay {
   stay_id: string;
-  trip_id: string;
+  trip_id: string;  // Added this required field
   hotel: string;
   hotel_details?: string;
   hotel_url?: string;

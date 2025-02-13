@@ -22,14 +22,14 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   tripArrivalDate,
   tripDepartureDate
 }) => {
-      const initialFormState = useMemo(() => ({
-        stay_id: initialData?.stay_id || '',
+  const initialFormState = useMemo(() => ({
+    stay_id: initialData?.stay_id || '',
     hotel: initialData?.hotel || '',
     hotel_details: initialData?.hotel_details || '',
     hotel_url: initialData?.hotel_url || '',
     hotel_checkin_date: initialData?.hotel_checkin_date || tripArrivalDate || '',
     hotel_checkout_date: initialData?.hotel_checkout_date || tripDepartureDate || '',
-    cost: initialData?.cost ? initialData.cost.toString() : '',
+    cost: initialData?.cost || null,
     currency: initialData?.currency || 'USD',
     hotel_address: initialData?.hotel_address || '',
     hotel_phone: initialData?.hotel_phone || '',
@@ -113,7 +113,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       />
 
       <CostInputs
-        expenseCost={formData.cost}
+        cost={formData.cost}
         currency={formData.currency}
         onCostChange={(value) => setFormData({ ...formData, cost: value })}
         onCurrencyChange={(value) => setFormData({ ...formData, currency: value })}

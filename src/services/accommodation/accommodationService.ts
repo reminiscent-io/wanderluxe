@@ -10,11 +10,6 @@ export { generateDatesArray } from './dateUtils';
 
 export const addAccommodation = async (tripId: string, formData: AccommodationFormData) => {
   try {
-    console.log('Adding accommodation with dates:', {
-      checkin: formData.hotel_checkin_date,
-      checkout: formData.hotel_checkout_date
-    });
-
     const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
 
     // Create trip days for the entire stay period
@@ -24,7 +19,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     const accommodationData = {
       ...formData,
       trip_id: tripId,
-      cost: formData.cost ? parseFloat(formData.cost.toString()) : null
+      cost: formData.cost ? formData.cost : null  // Keep as string
     };
     
     await createAccommodationEvents(tripId, accommodationData, stayDates);
@@ -47,12 +42,6 @@ export const updateAccommodation = async (
     if (!stay_id) {
       throw new Error('stay_id is required for update');
     }
-    
-    console.log('Updating accommodation with dates:', {
-      checkin: formData.hotel_checkin_date,
-      checkout: formData.hotel_checkout_date,
-      stay_id: stay_id
-    });
 
     const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
 
@@ -64,7 +53,7 @@ export const updateAccommodation = async (
       ...formData,
       stay_id,
       trip_id: tripId,
-      cost: formData.cost ? parseFloat(formData.cost.toString()) : null
+      cost: formData.cost ? formData.cost : null  // Keep as string
     };
     
     await updateAccommodationEvents(tripId, accommodationData, stayDates);

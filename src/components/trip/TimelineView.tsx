@@ -128,18 +128,19 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const hotelStays = useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
-      trip_id: tripId, // Add trip_id here
+      trip_id: tripId,
       hotel: event.hotel || '',
       hotel_details: event.hotel_details,
       hotel_url: event.hotel_url,
       hotel_checkin_date: event.hotel_checkin_date || '',
       hotel_checkout_date: event.hotel_checkout_date || '',
-      expense_cost: event.expense_cost,
-      currency: event.currency,
+      cost: event.cost?.toString() || null,  // Convert number to string
+      currency: event.currency || 'USD',
       hotel_address: event.hotel_address,
       hotel_phone: event.hotel_phone,
       hotel_place_id: event.hotel_place_id,
       hotel_website: event.hotel_website,
+      created_at: event.created_at,
     })) || []
   , [events, tripId]);
 
