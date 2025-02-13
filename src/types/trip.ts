@@ -156,8 +156,8 @@ export interface AccommodationFormData {
   hotel_url: string;  // Required to match the form data requirements
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost?: string | null;  // String for form handling
-  currency?: string;
+  cost?: string | null;  // Made optional
+  currency?: string;     // Made optional
   expense_type?: string;
   expense_paid?: boolean;
   expense_date?: string;
