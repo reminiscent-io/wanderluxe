@@ -37,13 +37,18 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
     if (stayToEdit) {
       setEditingStay({
-        ...stayToEdit,
-        cost: stayToEdit.cost?.toString() || null,
+        stay_id: stayToEdit.stay_id,
+        hotel: stayToEdit.hotel,
         hotel_details: stayToEdit.hotel_details || '',
-        currency: stayToEdit.currency || 'USD',
         hotel_url: stayToEdit.hotel_url || '',
+        hotel_checkin_date: stayToEdit.hotel_checkin_date,
+        hotel_checkout_date: stayToEdit.hotel_checkout_date,
+        cost: stayToEdit.cost?.toString() || null,  // Optional cost
+        currency: stayToEdit.currency,              // Optional currency
         hotel_address: stayToEdit.hotel_address || '',
-        hotel_phone: stayToEdit.hotel_phone || ''
+        hotel_phone: stayToEdit.hotel_phone || '',
+        hotel_place_id: stayToEdit.hotel_place_id,
+        hotel_website: stayToEdit.hotel_website
       });
     }
   };
