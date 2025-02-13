@@ -55,21 +55,44 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     enabled: !!dayId && isOpen,
   });
 
+  // Get the trip_id from the first activity or fetch it from trip_days
+  const { data: tripData } = useQuery({
+    queryKey: ['trip_id', dayId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('trip_days')
+        .select('trip_id')
+        .eq('day_id', dayId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!dayId,
+  });
+
   const handleActivitySubmit = async (activity: any) => {
     try {
+      if (!tripData?.trip_id) {
+        throw new Error('Trip ID not found');
+      }
+
+      const newActivity = {
+        day_id: dayId,
+        trip_id: tripData.trip_id,
+        title: activity.title,
+        description: activity.description || null,
+        start_time: activity.start_time || null,
+        end_time: activity.end_time || null,
+        cost: activity.cost ? Number(activity.cost) : null,
+        currency: activity.currency || 'USD',
+        order_index: localActivities.length,
+        created_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('day_activities')
-        .insert([{
-          day_id: dayId,
-          title: activity.title,
-          description: activity.description || null,
-          start_time: activity.start_time || null,
-          end_time: activity.end_time || null,
-          cost: activity.cost ? Number(activity.cost) : null,
-          currency: activity.currency,
-          order_index: localActivities.length,
-          created_at: new Date().toISOString()
-        }])
+        .insert([newActivity])
         .select()
         .single();
 
@@ -85,7 +108,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   };
 
   const handleUpdateActivity = async (activity: any) => {
-    if (!editingActivityId) return;
+    if (!editingActivityId || !tripData?.trip_id) return;
 
     try {
       const updateData = {
@@ -94,7 +117,8 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
         start_time: activity.start_time || null,
         end_time: activity.end_time || null,
         cost: activity.cost ? Number(activity.cost) : null,
-        currency: activity.currency
+        currency: activity.currency || 'USD',
+        trip_id: tripData.trip_id
       };
 
       const { error } = await supabase
