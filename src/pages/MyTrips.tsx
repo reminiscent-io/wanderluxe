@@ -47,6 +47,23 @@ const MyTrips = () => {
     enabled: !!session // Only run query if user is authenticated
   });
 
+  const handleHideTrip = async (tripId: string) => {
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .update({ hidden: true })
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+
+      toast.success('Trip hidden successfully');
+      queryClient.invalidateQueries({ queryKey: ['my-trips'] });
+    } catch (error) {
+      console.error('Error hiding trip:', error);
+      toast.error('Failed to hide trip');
+    }
+  };
+
   const handleDeleteTrip = async () => {
     if (!selectedTrip) return;
 
@@ -80,11 +97,12 @@ const MyTrips = () => {
     <div>
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8" style={{ marginTop: '1cm' }}>
-          <h1 className="text-2xl font-semibold text-sand-500">My Trips</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">My Trips</h1>
+          <Button onClick={() => navigate('/create-trip')}>
+            Create New Trip
+          </Button>
         </div>
-      </div>
-
 
         <Input
           type="search"
@@ -109,7 +127,7 @@ const MyTrips = () => {
               <TripCard
                 key={trip.trip_id}
                 trip={trip}
-                onHide={() => {}}
+                onHide={() => handleHideTrip(trip.trip_id)}
               />
             ))}
           </div>
