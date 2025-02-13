@@ -7,7 +7,7 @@ import HotelStaysList from './accommodation/HotelStaysList';
 import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDates } from './accommodation/hooks/useTripDates';
-import type { HotelStay } from '@/services/accommodation/types';
+import type { HotelStay } from '@/types/trip';
 
 interface AccommodationsSectionProps {
   tripId: string;

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import type { AccommodationFormData, HotelStay } from '@/types/trip';
+import type { AccommodationFormData } from '@/types/trip';
 import { addAccommodation, updateAccommodation, deleteAccommodation } from '@/services/accommodation/accommodationService';
 
 export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) => {
