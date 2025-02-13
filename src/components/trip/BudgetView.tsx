@@ -1,16 +1,15 @@
 
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { toast } from 'sonner';
 import ExpenseTable from './budget/ExpenseTable';
 import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 import { useCurrencyState } from './budget/hooks/useCurrencyState';
-import { formatCurrency } from './budget/utils/budgetCalculations';
-import { useExpenses, ExpenseItem } from './budget/hooks/useExpenses';
+import { useExpenses } from './budget/hooks/useExpenses';
+import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
+import BudgetSummary from './budget/components/BudgetSummary';
+import ExpenseActions from './budget/components/ExpenseActions';
 
 interface AddExpenseData {
   description: string;
@@ -25,76 +24,14 @@ interface BudgetViewProps {
 }
 
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
-  const queryClient = useQueryClient();
   const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const { data: expenses } = useExpenses(tripId);
-
-  const addExpenseMutation = useMutation({
-    mutationFn: async (data: AddExpenseData) => {
-      const { error } = await supabase.from('other_expenses').insert({
-        trip_id: tripId,
-        description: data.description,
-        cost: data.cost,
-        currency: data.currency,
-        date: data.date,
-        is_paid: data.isPaid
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Expense added successfully');
-    },
-    onError: () => {
-      toast.error('Failed to add expense');
-    }
-  });
-
-  const updatePaidStatusMutation = useMutation({
-    mutationFn: async ({ id, isPaid, category }: { id: string; isPaid: boolean; category: string }) => {
-      let table: 'accommodations' | 'transportation_events' | 'day_activities' | 'restaurant_reservations' | 'other_expenses';
-      let idField: 'id' | 'stay_id' = 'id';
-      
-      switch (category) {
-        case 'Accommodations':
-          table = 'accommodations';
-          idField = 'stay_id';
-          break;
-        case 'Transportation':
-          table = 'transportation_events';
-          break;
-        case 'Activities':
-          table = 'day_activities';
-          break;
-        case 'Dining':
-          table = 'restaurant_reservations';
-          break;
-        case 'Other':
-          table = 'other_expenses';
-          break;
-        default:
-          throw new Error('Invalid category');
-      }
-
-      const { error } = await supabase
-        .from(table)
-        .update({ is_paid: isPaid })
-        .eq(idField, id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Payment status updated');
-    },
-    onError: () => {
-      toast.error('Failed to update payment status');
-    }
-  });
+  const { addExpenseMutation, updatePaidStatusMutation } = useBudgetMutations(tripId);
 
   const handleAddExpense = async (data: AddExpenseData) => {
     await addExpenseMutation.mutateAsync(data);
+    setIsAddingExpense(false);
   };
 
   const handleUpdatePaidStatus = (id: string, isPaid: boolean, category: string) => {
@@ -112,30 +49,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         lastUpdated={null}
       />
 
-      <div className="flex justify-between items-center bg-sand-50 p-4 rounded-lg shadow">
-        <div className="space-y-1">
-          <p className="text-sm text-gray-500">Total Budget</p>
-          <p className="text-2xl font-bold text-earth-600">
-            {formatCurrency(total, selectedCurrency)}
-          </p>
-        </div>
-        <div className="space-y-1 text-right">
-          <p className="text-sm text-gray-500">Paid / Unpaid</p>
-          <p className="text-earth-600">
-            {formatCurrency(paidTotal, selectedCurrency)} / {formatCurrency(total - paidTotal, selectedCurrency)}
-          </p>
-        </div>
-      </div>
+      <BudgetSummary
+        total={total}
+        paidTotal={paidTotal}
+        selectedCurrency={selectedCurrency}
+      />
 
-      <div className="flex justify-end">
-        <Button
-          onClick={() => setIsAddingExpense(true)}
-          className="bg-earth-500 hover:bg-earth-600"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Other Expense
-        </Button>
-      </div>
+      <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {expenses?.items && (
