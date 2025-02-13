@@ -70,7 +70,7 @@ const MyTrips = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">My Trips</h1>
           <Button onClick={() => navigate('/trips/create')}>
-            Create New Trip
+            '' // Create New Trip
           </Button>
         </div>
 
