@@ -11,10 +11,21 @@ import AddExpenseDialog from './budget/AddExpenseDialog';
 import { useCurrencyState } from './budget/hooks/useCurrencyState';
 import { formatCurrency } from './budget/utils/budgetCalculations';
 import { DayActivity, Accommodation, TransportationEvent, RestaurantReservation } from '@/types/trip';
-import { Database } from '@/integrations/supabase/types/database';
 
-// Define the base expense type
-interface BaseExpense {
+// Simplify types by explicitly defining what we need
+type OtherExpense = {
+  id: string;
+  trip_id: string;
+  description: string;
+  cost: number | null;
+  currency: string | null;
+  is_paid: boolean;
+  created_at: string;
+  date?: string;
+};
+
+// Define a more focused expense type to avoid deep nesting
+interface MappedExpense {
   id: string;
   trip_id: string;
   category: string;
@@ -23,10 +34,6 @@ interface BaseExpense {
   currency: string | null;
   is_paid: boolean;
   created_at: string;
-}
-
-// Define the mapped expense type
-interface MappedExpense extends BaseExpense {
   activity_id?: string;
   accommodation_id?: string;
   transportation_id?: string;
@@ -47,7 +54,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     accommodations: Accommodation[],
     transportation: TransportationEvent[],
     restaurants: RestaurantReservation[],
-    otherExpenses: Database['public']['Tables']['other_expenses']['Row'][]
+    otherExpenses: OtherExpense[]
   ): MappedExpense[] => {
     const items: MappedExpense[] = [];
 
@@ -58,7 +65,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         trip_id: activity.trip_id,
         category: 'Activities',
         description: activity.title,
-        cost: activity.cost || null,
+        cost: activity.cost,
         currency: activity.currency || null,
         is_paid: activity.is_paid || false,
         created_at: activity.created_at,
@@ -73,7 +80,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         trip_id: accommodation.trip_id,
         category: 'Accommodations',
         description: accommodation.title,
-        cost: accommodation.cost || null,
+        cost: accommodation.cost,
         currency: accommodation.currency || null,
         is_paid: accommodation.is_paid || false,
         created_at: accommodation.created_at,
@@ -88,7 +95,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         trip_id: transport.trip_id,
         category: 'Transportation',
         description: transport.type,
-        cost: transport.cost || null,
+        cost: transport.cost,
         currency: transport.currency || null,
         is_paid: transport.is_paid || false,
         created_at: transport.created_at,
@@ -103,7 +110,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         trip_id: tripId,
         category: 'Dining',
         description: restaurant.restaurant_name,
-        cost: restaurant.cost || null,
+        cost: restaurant.cost,
         currency: restaurant.currency || null,
         is_paid: restaurant.is_paid || false,
         created_at: restaurant.created_at
@@ -117,9 +124,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         trip_id: expense.trip_id,
         category: 'Other',
         description: expense.description,
-        cost: expense.cost || null,
-        currency: expense.currency || null,
-        is_paid: expense.is_paid || false,
+        cost: expense.cost,
+        currency: expense.currency,
+        is_paid: expense.is_paid,
         created_at: expense.created_at
       });
     });
@@ -130,7 +137,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { data: expenses } = useQuery({
     queryKey: ['expenses', tripId],
     queryFn: async () => {
-      // Use type-safe table names and proper return types
+      // Fetch data from all expense-related tables
       const [
         { data: activities },
         { data: accommodations },
