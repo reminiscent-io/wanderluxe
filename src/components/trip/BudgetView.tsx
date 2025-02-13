@@ -95,7 +95,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           description: trans.type,
           cost: trans.cost,
           currency: trans.currency,
-          is_paid: false, // Default value since it's not in the database yet
+          is_paid: trans.is_paid || false, // Now using the actual is_paid value from the database
           created_at: trans.created_at,
           transportation_id: trans.id
         })),

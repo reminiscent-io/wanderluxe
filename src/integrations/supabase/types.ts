@@ -514,6 +514,7 @@ export type Database = {
           id: string
           is_arrival: boolean | null
           is_departure: boolean | null
+          is_paid: boolean | null
           provider: string | null
           start_date: string
           start_time: string | null
@@ -533,6 +534,7 @@ export type Database = {
           id?: string
           is_arrival?: boolean | null
           is_departure?: boolean | null
+          is_paid?: boolean | null
           provider?: string | null
           start_date: string
           start_time?: string | null
@@ -552,6 +554,7 @@ export type Database = {
           id?: string
           is_arrival?: boolean | null
           is_departure?: boolean | null
+          is_paid?: boolean | null
           provider?: string | null
           start_date?: string
           start_time?: string | null
