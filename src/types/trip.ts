@@ -150,13 +150,13 @@ export interface AccommodationFormData {
   stay_id?: string;
   hotel: string;
   hotel_details: string;
-  hotel_url: string;
+  hotel_url: string;  // Required to match the form data requirements
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost: string | null;  // Form type - keep as string
+  cost: string | null;  // String for form handling
   currency: string;
   expense_type?: string;
-  is_paid?: boolean;
+  expense_paid?: boolean;
   expense_date?: string;
   hotel_address?: string;
   hotel_phone?: string;

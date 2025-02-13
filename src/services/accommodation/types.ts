@@ -3,7 +3,7 @@ export interface AccommodationFormData {
   stay_id?: string;
   hotel: string;
   hotel_details: string;
-  hotel_url?: string;
+  hotel_url: string;  // Changed from optional to required to match types/trip
   hotel_checkin_date: string;
   hotel_checkout_date: string;
   cost: string | null;  // Changed to string for form handling
