@@ -37,6 +37,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       }
     }
 
+    if (activity.cost && !isValidCost(activity.cost)) {
+      newErrors.cost = 'Please enter a valid cost';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -63,10 +67,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   };
 
   const handleCostChange = (value: string) => {
-    const parsedCost = parseCost(value);
+    // Update the activity with the raw string value
     onActivityChange({
       ...activity,
-      cost: parsedCost
+      cost: value
     });
   };
 
@@ -123,10 +127,13 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <label className="block text-sm font-medium text-gray-700">Cost</label>
           <input
             type="text"
-            value={formatCost(activity.cost)}
+            value={activity.cost || ''}
             onChange={(e) => handleCostChange(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+              errors.cost ? 'border-red-500' : 'border-gray-300'
+            } focus:border-earth-500 focus:ring-earth-500`}
           />
+          {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Currency</label>
