@@ -102,6 +102,7 @@ export interface TransportationEvent {
   arrival_location?: string;
   cost?: number | null;  // Database type - keep as number
   currency?: string;
+  is_paid?: boolean;
   is_arrival?: boolean;
   is_departure?: boolean;
   created_at: string;
@@ -117,6 +118,7 @@ export interface RestaurantReservation {
   confirmation_number?: string;
   cost?: number | null;  // Database type - keep as number
   currency?: string;
+  is_paid?: boolean;
   address?: string;
   phone_number?: string;
   place_id?: string;
