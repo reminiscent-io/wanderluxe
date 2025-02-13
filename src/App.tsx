@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import MyTrips from "./pages/MyTrips";
 import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
+import Disclaimer from "./pages/Disclaimer";
 
 // Move queryClient inside the component to ensure proper React context
 const App = () => {
@@ -36,6 +37,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/disclaimer" element={<Disclaimer />} />
                 <Route
                   path="/create-trip"
                   element={
