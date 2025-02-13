@@ -7,10 +7,19 @@ interface DayImageProps {
   tripId: string;
   title: string;
   imageUrl?: string | null;
+  defaultImageUrl?: string;
 }
 
-const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl }) => {
-  if (!imageUrl) {
+const DayImage: React.FC<DayImageProps> = ({ 
+  dayId, 
+  title, 
+  imageUrl,
+  defaultImageUrl 
+}) => {
+  // Use the default image (trip cover image) if no specific image is set
+  const displayImageUrl = imageUrl || defaultImageUrl;
+
+  if (!displayImageUrl) {
     return (
       <div className="relative h-auto min-h-[100px] overflow-hidden rounded-l-lg bg-gray-100">
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
@@ -28,7 +37,7 @@ const DayImage: React.FC<DayImageProps> = ({ dayId, title, imageUrl }) => {
   return (
     <div className="relative h-full min-h-[300px] overflow-hidden rounded-l-lg">
       <UnsplashImage
-        url={imageUrl}
+        url={displayImageUrl}
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

@@ -28,6 +28,24 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
 }) => {
   const tripId = groups[0]?.days[0]?.trip_id;
 
+  // Fetch trip details to get the cover image
+  const { data: tripData } = useQuery({
+    queryKey: ['trip', tripId],
+    queryFn: async () => {
+      if (!tripId) return null;
+      
+      const { data, error } = await supabase
+        .from('trips')
+        .select('cover_image_url')
+        .eq('trip_id', tripId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tripId
+  });
+
   const { data: transportationEvents } = useQuery({
     queryKey: ['transportation-events', tripId],
     queryFn: async () => {
@@ -67,7 +85,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           const checkinDate = group.checkinDate ? new Date(group.checkinDate) : null;
           const checkoutDate = group.checkoutDate ? new Date(group.checkoutDate) : null;
           
-          // If this is a standalone group (no hotel), show flights for that day
           if (!checkinDate || !checkoutDate) {
             return group.days.some(day => {
               const dayDate = new Date(day.date);
@@ -110,12 +127,13 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   <DayCard
                     key={day.day_id}
                     id={day.day_id}
-                    tripId={tripId || ''} // Added tripId property
+                    tripId={tripId || ''}
                     date={day.date}
                     title={day.title || ''}
                     description={day.description}
                     activities={day.activities || []}
                     imageUrl={day.image_url}
+                    defaultImageUrl={tripData?.cover_image_url}
                     onAddActivity={() => {}}
                     index={dayIndexMap.get(day.day_id) || 0}
                     onDelete={handleDayDelete}
@@ -128,12 +146,13 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   <DayCard
                     key={day.day_id}
                     id={day.day_id}
-                    tripId={tripId || ''} // Added tripId property
+                    tripId={tripId || ''}
                     date={day.date}
                     title={day.title || ''}
                     description={day.description}
                     activities={day.activities || []}
                     imageUrl={day.image_url}
+                    defaultImageUrl={tripData?.cover_image_url}
                     onAddActivity={() => {}}
                     index={dayIndexMap.get(day.day_id) || 0}
                     onDelete={handleDayDelete}
