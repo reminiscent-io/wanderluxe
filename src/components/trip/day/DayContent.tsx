@@ -1,7 +1,9 @@
+
 import React from 'react';
 import HotelInfo from '../HotelInfo';
 import ActivitiesList from '../ActivitiesList';
 import DiningList from '../DiningList';
+import { DayActivity } from '@/types/trip';
 
 interface DayContentProps {
   index: number;
@@ -10,15 +12,7 @@ interface DayContentProps {
     name: string;
     details: string;
   };
-  activities: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost?: number;
-    currency?: string;
-  }>;
+  activities: DayActivity[];
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;

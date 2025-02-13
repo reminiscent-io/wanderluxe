@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -115,6 +114,7 @@ const DayCard: React.FC<DayCardProps> = ({
         .from('day_activities')
         .insert([{
           day_id: id,
+          trip_id: tripId,
           title: newActivity.title,
           description: newActivity.description || '',
           start_time: newActivity.start_time,
@@ -141,29 +141,6 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  const handleEditActivity = async (activityId: string) => {
-    try {
-      const { error } = await supabase
-        .from('day_activities')
-        .update({
-          title: activityEdit.title,
-          description: activityEdit.description || '',
-          start_time: activityEdit.start_time,
-          end_time: activityEdit.end_time,
-          cost: activityEdit.cost ? Number(activityEdit.cost) : null,
-          currency: activityEdit.currency
-        })
-        .eq('id', activityId);
-
-      if (error) throw error;
-      toast.success('Activity updated successfully');
-      setEditingActivity(null);
-    } catch (error) {
-      console.error('Error updating activity:', error);
-      toast.error('Failed to update activity');
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -187,34 +164,24 @@ const DayCard: React.FC<DayCardProps> = ({
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="p-4">
-            <ErrorBoundary>
-              <DayLayout
-                title={title || ""}
-                activities={activities}
-                hotelDetails={hotelDetails}
-                index={index}
-                onAddActivity={() => setIsAddingActivity(true)}
-                onEditActivity={(id) => {
-                  const activity = activities.find(a => a.id === id);
-                  if (activity) {
-                    setActivityEdit({
-                      title: activity.title,
-                      description: activity.description || '',
-                      start_time: activity.start_time || '',
-                      end_time: activity.end_time || '',
-                      cost: activity.cost?.toString() || '',
-                      currency: activity.currency || 'USD'
-                    });
-                    setEditingActivity(id);
-                  }
-                }}
-                formatTime={formatTime}
-                dayId={id}
-                tripId={tripId}
-                imageUrl={imageUrl || defaultImageUrl}
-                reservations={reservations}
-              />
-            </ErrorBoundary>
+            <DayLayout
+              title={title || ""}
+              activities={activities}
+              hotelDetails={hotelDetails}
+              index={index}
+              onAddActivity={() => setIsAddingActivity(true)}
+              onEditActivity={(id) => {
+                const activity = activities.find(a => a.id === id);
+                if (activity) {
+                  setEditingActivity(id);
+                }
+              }}
+              formatTime={formatTime}
+              dayId={id}
+              tripId={tripId}
+              imageUrl={imageUrl || defaultImageUrl}
+              reservations={reservations}
+            />
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -240,7 +207,7 @@ const DayCard: React.FC<DayCardProps> = ({
         activityEdit={activityEdit}
         setActivityEdit={setActivityEdit}
         onAddActivity={handleAddActivity}
-        onEditActivity={handleEditActivity}
+        onEditActivity={() => {}}
         eventId={id}
       />
     </motion.div>

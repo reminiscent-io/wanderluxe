@@ -2,24 +2,12 @@
 import React from 'react';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
-import DiningList from '../DiningList'; // Fixed import path
+import { DayActivity, RestaurantReservation } from '@/types/trip';
 
 interface DayLayoutProps {
   title: string;
-  activities: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost?: number;
-    currency?: string;
-  }>;
-  reservations?: Array<{
-    id: string;
-    restaurant: string;
-    time: string;
-  }>;
+  activities: DayActivity[];
+  reservations?: RestaurantReservation[];
   hotelDetails?: {
     name: string;
     details: string;
