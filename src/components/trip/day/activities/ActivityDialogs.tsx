@@ -58,6 +58,11 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
   onEditActivity,
   eventId,
 }) => {
+  // Helper function to handle the dialog closing
+  const handleEditActivityDialogClose = () => {
+    setEditingActivity(null);
+  };
+
   return (
     <>
       <AddActivityDialog
@@ -71,7 +76,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
 
       <EditActivityDialog
         activityId={editingActivity}
-        onOpenChange={setEditingActivity}
+        onOpenChange={handleEditActivityDialogClose}
         activity={activityEdit}
         onActivityChange={setActivityEdit}
         onSubmit={() => editingActivity && onEditActivity(editingActivity)}
