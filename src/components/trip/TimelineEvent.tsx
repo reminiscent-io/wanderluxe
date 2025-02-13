@@ -75,11 +75,14 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   } = useEventHandlers(id, tripId, onEdit, editData, activities);
 
   const onAddActivity = () => {
-    handleAddActivity({
+    const formData: ActivityFormData = {
       title: newActivity.title,
-      cost: newActivity.cost,
-      currency: newActivity.currency
-    }).then(success => {
+      // Only include cost and currency if they have values
+      ...(newActivity.cost && { cost: newActivity.cost }),
+      ...(newActivity.currency && { currency: newActivity.currency })
+    };
+
+    handleAddActivity(formData).then(success => {
       if (success) {
         setIsAddingActivity(false);
         setNewActivity({ title: "", cost: "", currency: "USD" });
@@ -88,11 +91,14 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
   };
 
   const onEditActivity = (activityId: string) => {
-    handleEditActivity(activityId, {
+    const formData: ActivityFormData = {
       title: activityEdit.title,
-      cost: activityEdit.cost,
-      currency: activityEdit.currency
-    }).then(success => {
+      // Only include cost and currency if they have values
+      ...(activityEdit.cost && { cost: activityEdit.cost }),
+      ...(activityEdit.currency && { currency: activityEdit.currency })
+    };
+
+    handleEditActivity(activityId, formData).then(success => {
       if (success) {
         setEditingActivity(null);
         setActivityEdit({ title: "", cost: "", currency: "USD" });
