@@ -1,11 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { 
   SortableContext, 
   verticalListSortingStrategy 
 } from '@dnd-kit/sortable';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import CategoryContainer from './CategoryContainer';
 import AddItemDialog from './AddItemDialog';
@@ -32,6 +32,34 @@ const CATEGORIES = ['Accommodations', 'Activities', 'Transportation', 'Restauran
 const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = React.useState(false);
+  const queryClient = useQueryClient();
+
+  // Set up Supabase realtime subscription
+  useEffect(() => {
+    // Subscribe to vision board changes
+    const channel = supabase
+      .channel('vision-board-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'vision_board_items',
+          filter: `trip_id=eq.${tripId}`
+        },
+        (payload) => {
+          console.log('Realtime update:', payload);
+          // Invalidate and refetch vision board data
+          queryClient.invalidateQueries({ queryKey: ['vision-board', tripId] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tripId, queryClient]);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['vision-board', tripId],
