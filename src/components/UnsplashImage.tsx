@@ -1,28 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface UnsplashImageProps {
+  url: string;
+  className?: string;
+}
+
+interface UnsplashMetadata {
   src: string;
   alt: string;
   photographer: string;
   photographerUrl: string;
   unsplashUrl: string;
-  className?: string;
-  downloadLocation?: string;
+  downloadLocation: string;
 }
 
-const UnsplashImage: React.FC<UnsplashImageProps> = ({
-  src,
-  alt,
-  photographer,
-  photographerUrl,
-  unsplashUrl,
-  className = "",
-  downloadLocation,
-}) => {
-  const handleImageClick = async () => {
-    if (downloadLocation) {
+const UnsplashImage: React.FC<UnsplashImageProps> = ({ url, className = "" }) => {
+  const [metadata, setMetadata] = useState<UnsplashMetadata | null>(null);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
       try {
-        await fetch(downloadLocation, {
+        const response = await fetch(`https://api.unsplash.com/photos/${url.split('/').pop()}`, {
+          headers: {
+            Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
+          },
+        });
+        const data = await response.json();
+        setMetadata({
+          src: data.urls.regular,
+          alt: data.alt_description || 'Unsplash Image',
+          photographer: data.user.name,
+          photographerUrl: data.user.links.html,
+          unsplashUrl: data.links.html,
+          downloadLocation: data.links.download_location,
+        });
+      } catch (error) {
+        console.error('Error fetching Unsplash metadata:', error);
+      }
+    };
+
+    fetchMetadata();
+  }, [url]);
+
+  const handleImageClick = async () => {
+    if (metadata?.downloadLocation) {
+      try {
+        await fetch(metadata.downloadLocation, {
           headers: {
             Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`,
           },
@@ -33,21 +56,23 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
     }
   };
 
+  if (!metadata) return null;
+
   return (
     <div className="relative">
       <img
-        src={src}
-        alt={alt}
+        src={metadata.src}
+        alt={metadata.alt}
         className={className}
         onClick={handleImageClick}
       />
       <a
-        href={unsplashUrl}
+        href={metadata.unsplashUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="absolute bottom-4 right-4 text-white text-sm opacity-70 hover:opacity-100"
       >
-        Photo by <a href={photographerUrl} target="_blank" rel="noopener noreferrer">{photographer}</a> on Unsplash
+        Photo by <a href={metadata.photographerUrl} target="_blank" rel="noopener noreferrer">{metadata.photographer}</a> on Unsplash
       </a>
     </div>
   );
