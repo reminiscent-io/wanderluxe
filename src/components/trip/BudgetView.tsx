@@ -5,21 +5,65 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from 'sonner';
-import { ExpenseItem, mapToExpenseItems, formatCurrency } from './budget/utils/budgetCalculations';
+import { ExpenseItem } from '@/types/trip';
 import ExpenseTable from './budget/ExpenseTable';
 import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 import { useCurrencyState } from './budget/hooks/useCurrencyState';
+import { formatCurrency } from './budget/utils/budgetCalculations';
 
-// Define simpler types for the component's internal use
-type BudgetExpenseData = {
-  activities: any[];
-  accommodations: any[];
-  transportation: any[];
-  restaurants: any[];
-  otherExpenses: any[];
-  exchangeRates: any[];
-};
+// Define simpler, focused types
+interface ActivityExpense {
+  id: string;
+  day_id: string;
+  trip_id: string;
+  title: string;
+  description?: string;
+  cost?: number;
+  currency?: string;
+  is_paid?: boolean;
+  created_at: string;
+}
+
+interface AccommodationExpense {
+  stay_id: string;
+  trip_id: string;
+  title: string;
+  cost?: number;
+  currency?: string;
+  is_paid?: boolean;
+  created_at: string;
+}
+
+interface TransportationExpense {
+  id: string;
+  trip_id: string;
+  type: string;
+  cost?: number;
+  currency?: string;
+  is_paid?: boolean;
+  created_at: string;
+}
+
+interface RestaurantExpense {
+  id: string;
+  day_id: string;
+  restaurant_name: string;
+  cost?: number;
+  currency?: string;
+  is_paid?: boolean;
+  created_at: string;
+}
+
+interface OtherExpense {
+  id: string;
+  trip_id: string;
+  description: string;
+  cost?: number;
+  currency?: string;
+  is_paid?: boolean;
+  created_at: string;
+}
 
 interface BudgetViewProps {
   tripId: string;
@@ -30,9 +74,95 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
   const [isAddingExpense, setIsAddingExpense] = useState(false);
 
+  // Convert database expenses to ExpenseItems
+  const mapToExpenseItems = (
+    activities: ActivityExpense[],
+    accommodations: AccommodationExpense[],
+    transportation: TransportationExpense[],
+    restaurants: RestaurantExpense[],
+    otherExpenses: OtherExpense[]
+  ): ExpenseItem[] => {
+    const items: ExpenseItem[] = [];
+
+    // Map activities
+    activities.forEach(activity => {
+      items.push({
+        id: activity.id,
+        trip_id: activity.trip_id,
+        category: 'Activities',
+        description: activity.title,
+        cost: activity.cost,
+        currency: activity.currency,
+        is_paid: activity.is_paid,
+        created_at: activity.created_at,
+        activity_id: activity.id
+      });
+    });
+
+    // Map accommodations
+    accommodations.forEach(accommodation => {
+      items.push({
+        id: accommodation.stay_id,
+        trip_id: accommodation.trip_id,
+        category: 'Accommodations',
+        description: accommodation.title,
+        cost: accommodation.cost,
+        currency: accommodation.currency,
+        is_paid: accommodation.is_paid,
+        created_at: accommodation.created_at,
+        accommodation_id: accommodation.stay_id
+      });
+    });
+
+    // Map transportation
+    transportation.forEach(transport => {
+      items.push({
+        id: transport.id,
+        trip_id: transport.trip_id,
+        category: 'Transportation',
+        description: transport.type,
+        cost: transport.cost,
+        currency: transport.currency,
+        is_paid: transport.is_paid,
+        created_at: transport.created_at,
+        transportation_id: transport.id
+      });
+    });
+
+    // Map restaurants
+    restaurants.forEach(restaurant => {
+      items.push({
+        id: restaurant.id,
+        trip_id: tripId,
+        category: 'Dining',
+        description: restaurant.restaurant_name,
+        cost: restaurant.cost,
+        currency: restaurant.currency,
+        is_paid: restaurant.is_paid,
+        created_at: restaurant.created_at
+      });
+    });
+
+    // Map other expenses
+    otherExpenses.forEach(expense => {
+      items.push({
+        id: expense.id,
+        trip_id: expense.trip_id,
+        category: 'Other',
+        description: expense.description,
+        cost: expense.cost,
+        currency: expense.currency,
+        is_paid: expense.is_paid,
+        created_at: expense.created_at
+      });
+    });
+
+    return items;
+  };
+
   const { data: expenses } = useQuery({
     queryKey: ['expenses', tripId],
-    queryFn: async (): Promise<{ items: ExpenseItem[]; exchangeRates: any[] }> => {
+    queryFn: async () => {
       const [
         { data: activities },
         { data: accommodations },
@@ -49,26 +179,17 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         supabase.from('exchange_rates').select('*')
       ]);
 
-      const expenseData: BudgetExpenseData = {
-        activities: activities || [],
-        accommodations: accommodations || [],
-        transportation: transportation || [],
-        restaurants: restaurants || [],
-        otherExpenses: otherExpenses || [],
-        exchangeRates: exchangeRates || []
-      };
-
       const mappedExpenses = mapToExpenseItems(
-        expenseData.activities,
-        expenseData.accommodations,
-        expenseData.transportation,
-        expenseData.restaurants,
-        expenseData.otherExpenses
+        activities || [],
+        accommodations || [],
+        transportation || [],
+        restaurants || [],
+        otherExpenses || []
       );
 
       return {
         items: mappedExpenses,
-        exchangeRates: expenseData.exchangeRates
+        exchangeRates: exchangeRates || []
       };
     }
   });
@@ -104,7 +225,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     mutationFn: async ({ id, isPaid, category }: { id: string; isPaid: boolean; category: string }) => {
       let table = '';
       let idField = 'id';
-      let paidField = 'is_paid';
       
       switch (category) {
         case 'Accommodations':
@@ -129,7 +249,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
       const { error } = await supabase
         .from(table)
-        .update({ [paidField]: isPaid })
+        .update({ is_paid: isPaid })
         .eq(idField, id);
 
       if (error) throw error;
