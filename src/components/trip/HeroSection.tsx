@@ -33,7 +33,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative h-[40vh] min-h-[300px] w-full">
-      <div className="fixed inset-0 h-[40vh] min-h-[300px] w-full">
+      {/* Changed from fixed to absolute positioning and adjusted z-index */}
+      <div className="absolute inset-0 h-[40vh] min-h-[300px] w-full z-10">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
             <img
@@ -69,9 +70,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             className="w-full h-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
+        {/* Increased z-index of the gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60 z-20" />
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
+      {/* Increased z-index of the title container */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center z-30">
         <h1 className="text-5xl font-bold mb-4">{title}</h1>
         {formatDateRange() && (
           <p className="text-xl">{formatDateRange()}</p>
@@ -82,4 +85,3 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
-
