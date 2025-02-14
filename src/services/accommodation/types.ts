@@ -13,7 +13,7 @@ export interface AccommodationFormData {
   hotel_place_id?: string;
   hotel_website?: string;
   expense_type?: string;
-  expense_paid?: boolean;
+  is_paid?: boolean;
   expense_date?: string;
   order_index?: number;
 }

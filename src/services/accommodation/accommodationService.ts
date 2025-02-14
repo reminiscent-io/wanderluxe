@@ -20,7 +20,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
       trip_id: tripId,
       expense_cost: formData.cost ? parseFloat(formData.cost) : null,
       expense_type: formData.expense_type || 'accommodation',
-      expense_paid: formData.expense_paid || false,
+      is_paid: formData.is_paid || false,
       expense_date: formData.expense_date || null,
       currency: formData.currency || 'USD'
     };
@@ -58,7 +58,7 @@ export const updateAccommodation = async (
       trip_id: tripId,
       expense_cost: formData.cost ? parseFloat(formData.cost) : null,
       expense_type: formData.expense_type || 'accommodation',
-      expense_paid: formData.expense_paid || false,
+      is_paid: formData.is_paid || false,
       expense_date: formData.expense_date || null,
       currency: formData.currency || 'USD'
     };

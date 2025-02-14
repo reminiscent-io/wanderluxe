@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { AccommodationFormData } from './types';
 
@@ -26,7 +27,7 @@ export const createAccommodationEvents = async (
         hotel_website: formData.hotel_website,
         order_index: 0,
         expense_type: 'accommodation',
-        expense_paid: false,
+        is_paid: formData.is_paid || false,
         created_at: new Date().toISOString()
       }])
       .select()
@@ -89,7 +90,7 @@ export const updateAccommodationEvents = async (
         hotel_place_id: formData.hotel_place_id || '',
         hotel_website: formData.hotel_website || '',
         expense_type: 'accommodation',
-        expense_paid: formData.expense_paid || false,
+        is_paid: formData.is_paid || false,
         expense_date: formData.expense_date || null
       })
       .eq('stay_id', formData.stay_id)
