@@ -34,6 +34,9 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
   };
 
   const handleClick = (e: React.MouseEvent) => {
+    // Stop event propagation to prevent category container click
+    e.stopPropagation();
+    
     // Don't open edit dialog if clicking the drag handle or external link
     if (
       (e.target as HTMLElement).closest('.drag-handle') ||
@@ -52,10 +55,10 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
         className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
         onClick={handleClick}
       >
-        <div className="flex flex-col">
-          {/* Image Section */}
+        <div className="flex flex-col h-full">
+          {/* Image Section - Fixed height */}
           {item.image_url && (
-            <div className="w-full h-48 relative">
+            <div className="w-full h-32 relative bg-gray-100">
               <UnsplashImage
                 url={item.image_url}
                 className="w-full h-full object-cover"
@@ -64,8 +67,8 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
             </div>
           )}
           
-          {/* Content Section */}
-          <div className="p-3">
+          {/* Content Section - Flex grow to fill remaining space */}
+          <div className="p-3 flex-grow">
             <div className="flex gap-3">
               <div {...attributes} {...listeners} className="flex items-center drag-handle">
                 <GripVertical className="w-4 h-4 text-gray-400" />
@@ -79,7 +82,7 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
                       href={item.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-2 text-gray-500 hover:text-gray-700 external-link"
+                      className="ml-2 text-gray-500 hover:text-gray-700 external-link shrink-0"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <ExternalLink className="w-4 h-4" />
