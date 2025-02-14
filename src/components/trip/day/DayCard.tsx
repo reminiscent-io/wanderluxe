@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import DayHeader from './DayHeader';
-import EditTitleDialog from './EditTitleDialog';
+import DayEditDialog from './DayEditDialog';
 import { useDayCardState } from './DayCardState';
 import { useDayCardHandlers } from './DayCardHandlers';
 import { DayActivity } from '@/types/trip';
@@ -135,15 +135,14 @@ const DayCard: React.FC<DayCardProps> = ({
           </Collapsible>
         </Card>
 
-        <EditTitleDialog
+        <DayEditDialog
           isOpen={isEditing}
           onOpenChange={setIsEditing}
-          title={editTitle}
-          onTitleChange={setEditTitle}
-          onSave={async () => {
-            const success = await handleUpdateTitle(editTitle);
-            if (success) setIsEditing(false);
-          }}
+          dayId={id}
+          currentTitle={editTitle}
+          date={date}
+          activities={activities}
+          formatTime={formatTime}
         />
 
         <DayActivityManager
