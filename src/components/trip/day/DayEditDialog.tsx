@@ -59,7 +59,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
 
   // Fetch restaurant reservations
-  const { data: reservations = [] } = useQuery({
+  const { data: fetchedReservations = [] } = useQuery({
     queryKey: ['reservations', dayId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -179,7 +179,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
       toast.success('Day updated successfully');
       onOpenChange(false);
-      onSave(); // Call the onSave prop after successful update
+      onSave();
     } catch (error) {
       console.error('Error updating day:', error);
       toast.error('Failed to update day');
