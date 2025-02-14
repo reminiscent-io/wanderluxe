@@ -138,7 +138,7 @@ const DayCard: React.FC<DayCardProps> = ({
         <DayEditDialog
           isOpen={isEditing}
           onOpenChange={setIsEditing}
-          title={editTitle}
+          currentTitle={editTitle}
           onTitleChange={setEditTitle}
           onSave={async () => {
             const success = await handleUpdateTitle(editTitle);
