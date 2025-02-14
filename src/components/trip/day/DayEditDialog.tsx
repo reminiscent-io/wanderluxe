@@ -16,11 +16,28 @@ interface DayEditDialogProps {
   onOpenChange: (open: boolean) => void;
   dayId: string;
   currentTitle: string;
-  onTitleChange: (title: string) => void;  // Changed to match DayCard's usage
+  onTitleChange: (title: string) => void;
   onSave: () => Promise<void>;
   date: string;
   activities: DayActivity[];
   formatTime: (time?: string) => string;
+  reservations: Array<{
+    id: string;
+    day_id: string;
+    restaurant_name: string;
+    reservation_time?: string;
+    number_of_people?: number;
+    confirmation_number?: string;
+    notes?: string;
+    cost?: number;
+    currency?: string;
+    address?: string;
+    phone_number?: string;
+    website?: string;
+    rating?: number;
+    created_at: string;
+    order_index: number;
+  }>;
 }
 
 const DayEditDialog: React.FC<DayEditDialogProps> = ({
@@ -33,6 +50,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   date,
   activities,
   formatTime,
+  reservations,
 }) => {
   const [title, setTitle] = useState(currentTitle);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -161,6 +179,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
       toast.success('Day updated successfully');
       onOpenChange(false);
+      onSave(); // Call the onSave prop after successful update
     } catch (error) {
       console.error('Error updating day:', error);
       toast.error('Failed to update day');
@@ -181,7 +200,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                onTitleChange(e.target.value);  // Propagate changes back to parent
+                onTitleChange(e.target.value);
               }}
               placeholder="Enter day title"
             />
