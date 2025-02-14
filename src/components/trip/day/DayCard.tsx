@@ -102,7 +102,7 @@ const DayCard: React.FC<DayCardProps> = ({
               <div className="cursor-pointer">
                 <DayHeader
                   date={date}
-                  dayNumber={index + 1}
+                  dayNumber={index}
                   onEdit={() => setIsEditing(true)}
                   onDelete={!isWithinHotelStay ? () => handleDeleteDay() : undefined}
                   dayId={id}
