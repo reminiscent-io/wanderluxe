@@ -71,7 +71,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center z-40">
         <h1 className="text-5xl font-bold mb-4">{title}</h1>
         {formatDateRange() && (
           <p className="text-xl">{formatDateRange()}</p>
