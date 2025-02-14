@@ -33,7 +33,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative h-[40vh] min-h-[300px] w-full">
-      <div className="fixed inset-0 h-[40vh] min-h-[300px] w-full">
+      <div className="absolute inset-0 h-full w-full">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
             <img
@@ -82,4 +82,3 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
-
