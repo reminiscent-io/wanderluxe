@@ -32,9 +32,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    // Added pt-16 to account for navigation height
-    <div className="relative h-[40vh] min-h-[300px] w-full pt-16">
-      <div className="absolute inset-0 h-full w-full">
+    <div className="relative h-[40vh] min-h-[300px] w-full">
+      <div className="fixed inset-0 h-[40vh] min-h-[300px] w-full">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
             <img
@@ -72,7 +71,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center z-40">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
         <h1 className="text-5xl font-bold mb-4">{title}</h1>
         {formatDateRange() && (
           <p className="text-xl">{formatDateRange()}</p>
@@ -83,3 +82,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
+
