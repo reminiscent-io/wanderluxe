@@ -99,7 +99,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         () => {
           if (!abortController.signal.aborted) {
             refreshEvents();
-            toast.success('Timeline updated');
+            console.log('Timeline accommodation updated');
           }
         }
       )
@@ -114,7 +114,37 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         () => {
           if (!abortController.signal.aborted) {
             refreshDays();
-            toast.success('Days updated');
+            console.log('Timeline days updated');
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'day_activities',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        () => {
+          if (!abortController.signal.aborted) {
+            refreshDays();
+            console.log('Timeline activities updated');
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodations_days',
+          filter: `stay_id=in.(select stay_id from accommodations where trip_id=eq.${tripId})`,
+        },
+        () => {
+          if (!abortController.signal.aborted) {
+            refreshEvents();
+            console.log('Timeline accommodation days updated');
           }
         }
       )
