@@ -65,7 +65,8 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
         formatTime={formatTime}
         dayId={dayId}
         tripId={tripId}
-        imageUrl={imageUrl || defaultImageUrl}
+        imageUrl={imageUrl}
+        defaultImageUrl={defaultImageUrl}
         reservations={reservations}
       />
     </CollapsibleContent>

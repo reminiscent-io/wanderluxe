@@ -43,6 +43,7 @@ const DayLayout: React.FC<DayLayoutProps> = ({
         imageUrl={imageUrl}
         dayId={dayId}
         tripId={tripId}
+        defaultImageUrl={defaultImageUrl}
       />
 
       <DayCardContent
