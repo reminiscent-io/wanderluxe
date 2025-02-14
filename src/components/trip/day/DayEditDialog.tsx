@@ -16,6 +16,8 @@ interface DayEditDialogProps {
   onOpenChange: (open: boolean) => void;
   dayId: string;
   currentTitle: string;
+  onTitleChange: (title: string) => void;  // Changed to match DayCard's usage
+  onSave: () => Promise<void>;
   date: string;
   activities: DayActivity[];
   formatTime: (time?: string) => string;
@@ -26,6 +28,8 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   onOpenChange,
   dayId,
   currentTitle,
+  onTitleChange,
+  onSave,
   date,
   activities,
   formatTime,
@@ -175,7 +179,10 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <label className="text-sm font-medium mb-2 block">Day Title</label>
             <Input
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                onTitleChange(e.target.value);  // Propagate changes back to parent
+              }}
               placeholder="Enter day title"
             />
           </div>
