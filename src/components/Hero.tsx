@@ -68,7 +68,7 @@ const Hero = () => {
           duration: 0.8,
           delay: 1
         }} className="pt-4">
-            <Button size="lg" onClick={() => navigate("/create-trip")} className="hover:bg-sand-600 text-base h-auto transform transition-all duration-300 hover:scale-110 hover:text-lg rounded-xl bg-white/[0.21] px-[16px] py-[10px] text-sand-50">
+            <Button size="lg" onClick={() => navigate("/my-trips")} className="hover:bg-sand-600 text-base h-auto transform transition-all duration-300 hover:scale-110 hover:text-lg rounded-xl bg-white/[0.21] px-[16px] py-[10px] text-sand-50">
               Start Planning Your Journey
             </Button>
           </motion.div>
