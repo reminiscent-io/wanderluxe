@@ -124,19 +124,25 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
         onDragEnd={handleDragEnd}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {CATEGORIES.map((category) => (
-            <SortableContext
-              key={category}
-              items={items?.filter(item => item.category === category) || []}
-              strategy={verticalListSortingStrategy}
-            >
-              <CategoryContainer
-                id={category}
-                items={items?.filter(item => item.category === category) || []}
-                title={category}
-              />
-            </SortableContext>
-          ))}
+          {CATEGORIES.map((category) => {
+            // Filter items for this category
+            const categoryItems = items?.filter(item => item.category === category) || [];
+            
+            return (
+              <SortableContext
+                key={category}
+                // Only pass the IDs of the items, not the category itself
+                items={categoryItems.map(item => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <CategoryContainer
+                  id={category}
+                  items={categoryItems}
+                  title={category}
+                />
+              </SortableContext>
+            );
+          })}
         </div>
       </DndContext>
 
