@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,12 +22,30 @@ export const useDayCardHandlers = (id: string, onDelete: (id: string) => void) =
 
   const handleDeleteDay = async () => {
     try {
-      const { error } = await supabase
+      // First, delete any associated accommodations_days records
+      const { error: accommodationDaysError } = await supabase
+        .from('accommodations_days')
+        .delete()
+        .eq('day_id', id);
+
+      if (accommodationDaysError) throw accommodationDaysError;
+
+      // Then delete any associated day_activities
+      const { error: activitiesError } = await supabase
+        .from('day_activities')
+        .delete()
+        .eq('day_id', id);
+
+      if (activitiesError) throw activitiesError;
+
+      // Finally delete the day itself
+      const { error: dayError } = await supabase
         .from('trip_days')
         .delete()
         .eq('day_id', id);
 
-      if (error) throw error;
+      if (dayError) throw dayError;
+
       toast.success('Day deleted successfully');
       onDelete(id);
     } catch (error) {
