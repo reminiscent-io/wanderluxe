@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
-import { ImageUpload } from '@/components/ImageUpload';
+import ImageUpload from '@/components/ImageUpload';
 import { DayActivity } from '@/types/trip';
 
 interface DayEditDialogProps {
@@ -79,7 +79,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <label className="block text-sm font-medium mb-1">
               Day Image
             </label>
-            <ImageUpload onUpload={handleImageUpload} />
+            <ImageUpload onImageUpload={handleImageUpload} />
           </div>
 
           <div className="flex justify-end gap-2">
