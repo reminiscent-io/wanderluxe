@@ -5,6 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ExternalLink, GripVertical } from 'lucide-react';
 import EditItemDialog from './EditItemDialog';
+import UnsplashImage from '@/components/UnsplashImage';
 
 interface VisionBoardItemProps {
   item: {
@@ -48,45 +49,51 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
       <Card 
         ref={setNodeRef} 
         style={style} 
-        className="p-3 cursor-pointer hover:shadow-md transition-shadow"
+        className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
         onClick={handleClick}
       >
-        <div className="flex gap-3">
-          <div {...attributes} {...listeners} className="flex items-center drag-handle">
-            <GripVertical className="w-4 h-4 text-gray-400" />
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between">
-              <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
-              {item.source_url && (
-                <a
-                  href={item.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-2 text-gray-500 hover:text-gray-700 external-link"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
+        <div className="flex flex-col">
+          {/* Image Section */}
+          {item.image_url && (
+            <div className="w-full h-48 relative">
+              <UnsplashImage
+                url={item.image_url}
+                className="w-full h-full object-cover"
+                showAttribution={false}
+              />
             </div>
-            
-            {item.image_url && (
-              <div className="mt-2 relative aspect-video">
-                <img
-                  src={item.image_url}
-                  alt={item.title}
-                  className="rounded object-cover w-full h-full"
-                />
+          )}
+          
+          {/* Content Section */}
+          <div className="p-3">
+            <div className="flex gap-3">
+              <div {...attributes} {...listeners} className="flex items-center drag-handle">
+                <GripVertical className="w-4 h-4 text-gray-400" />
               </div>
-            )}
-            
-            {item.description && (
-              <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                {item.description}
-              </p>
-            )}
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between">
+                  <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
+                  {item.source_url && (
+                    <a
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 text-gray-500 hover:text-gray-700 external-link"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+                
+                {item.description && (
+                  <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </Card>
