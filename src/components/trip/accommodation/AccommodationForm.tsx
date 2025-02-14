@@ -37,7 +37,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     hotel_place_id: initialData?.hotel_place_id || '',
     hotel_website: initialData?.hotel_website || '',
     expense_type: initialData?.expense_type || 'accommodation',
-    expense_paid: initialData?.expense_paid || false,
+    is_paid: initialData?.is_paid || false,
     expense_date: initialData?.expense_date || '',
     order_index: initialData?.order_index || 0
   }), [initialData, tripArrivalDate, tripDepartureDate]);
