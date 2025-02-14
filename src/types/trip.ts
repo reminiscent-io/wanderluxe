@@ -1,3 +1,4 @@
+
 // Define the form types (string-based for form handling)
 export interface ActivityFormData {
   title: string;
@@ -158,7 +159,7 @@ export interface AccommodationFormData {
   cost?: string | null;  // Made optional
   currency?: string;     // Made optional
   expense_type?: string;
-  expense_paid?: boolean;
+  is_paid?: boolean;     // Added is_paid field
   expense_date?: string;
   hotel_address?: string;
   hotel_phone?: string;
