@@ -32,7 +32,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <div className="relative h-[40vh] min-h-[300px] w-full">
+    // Added pt-16 to account for navigation height
+    <div className="relative h-[40vh] min-h-[300px] w-full pt-16">
       <div className="absolute inset-0 h-full w-full">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
