@@ -87,64 +87,68 @@ const TripDetails = () => {
     <div className="min-h-screen">
       <Navigation />
       
-      <HeroSection 
-        title={trip.destination}
-        date={`${trip.arrival_date} - ${trip.departure_date}`}
-        imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
-        arrivalDate={trip.arrival_date}
-        departureDate={trip.departure_date}
-      />
+      {/* Added a wrapper div with explicit z-index */}
+      <div className="relative z-0">
+        <HeroSection 
+          title={trip.destination}
+          date={`${trip.arrival_date} - ${trip.departure_date}`}
+          imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
+          arrivalDate={trip.arrival_date}
+          departureDate={trip.departure_date}
+        />
 
-      <div className="relative z-10 bg-sand-50/95 backdrop-blur-sm mt-[0vh] min-h-screen -mt-1">
-        <div className="container mx-auto px-4 py-8">
-          <Tabs defaultValue="timeline" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">
-              <TabsTrigger 
-                value="timeline"
-                className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                Timeline
-              </TabsTrigger>
-              <TabsTrigger 
-                value="budget"
-                className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
-              >
-                <BarChart2 className="w-5 h-5" />
-                Budget
-              </TabsTrigger>
-              <TabsTrigger 
-                value="packing"
-                className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
-              >
-                <List className="w-5 h-5" />
-                Packing List
-              </TabsTrigger>
-              <TabsTrigger 
-                value="vision-board"
-                className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
-              >
-                <Lightbulb className="w-5 h-5" />
-                Vision Board
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="timeline">
-              <TimelineView tripId={tripId} />
-            </TabsContent>
-            
-            <TabsContent value="budget">
-              <BudgetView tripId={tripId} />
-            </TabsContent>
-            
-            <TabsContent value="packing">
-              <PackingView tripId={tripId} />
-            </TabsContent>
+        {/* Adjusted the z-index and positioning of the content section */}
+        <div className="relative z-10 bg-sand-50/95 backdrop-blur-sm -mt-1">
+          <div className="container mx-auto px-4 py-8">
+            <Tabs defaultValue="timeline" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">
+                <TabsTrigger 
+                  value="timeline"
+                  className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
+                >
+                  <Calendar className="w-5 h-5" />
+                  Timeline
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="budget"
+                  className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
+                >
+                  <BarChart2 className="w-5 h-5" />
+                  Budget
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="packing"
+                  className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
+                >
+                  <List className="w-5 h-5" />
+                  Packing List
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="vision-board"
+                  className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
+                >
+                  <Lightbulb className="w-5 h-5" />
+                  Vision Board
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="timeline">
+                <TimelineView tripId={tripId} />
+              </TabsContent>
+              
+              <TabsContent value="budget">
+                <BudgetView tripId={tripId} />
+              </TabsContent>
+              
+              <TabsContent value="packing">
+                <PackingView tripId={tripId} />
+              </TabsContent>
 
-            <TabsContent value="vision-board">
-              <VisionBoardView tripId={tripId} />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="vision-board">
+                <VisionBoardView tripId={tripId} />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
     </div>
