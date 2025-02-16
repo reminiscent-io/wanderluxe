@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Image, Upload, X } from "lucide-react";
@@ -5,20 +6,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface ImageUploadProps {
-  onImageUpload: (url: string) => void;
-  currentImageUrl?: string;
+  value: string;
+  onChange: (url: string) => void;
+  onRemove?: () => void;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImageUrl }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string>('');
 
-  // Update preview when currentImageUrl changes
+  // Update preview when value changes
   useEffect(() => {
-    if (currentImageUrl) {
-      setPreview(currentImageUrl);
+    if (value) {
+      setPreview(value);
     }
-  }, [currentImageUrl]);
+  }, [value]);
 
   const uploadImage = async (file: File) => {
     try {
@@ -40,7 +42,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImageUr
         .getPublicUrl(filePath);
 
       setPreview(publicUrl);
-      onImageUpload(publicUrl);
+      onChange(publicUrl);
       toast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -61,9 +63,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImageUr
     }
   };
 
-  const removeImage = () => {
+  const handleRemove = () => {
     setPreview('');
-    onImageUpload('');
+    onChange('');
+    if (onRemove) {
+      onRemove();
+    }
   };
 
   return (
@@ -79,7 +84,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImageUr
             variant="destructive"
             size="icon"
             className="absolute top-2 right-2"
-            onClick={removeImage}
+            onClick={handleRemove}
           >
             <X className="h-4 w-4" />
           </Button>

@@ -2,22 +2,23 @@
 import React from 'react';
 
 interface UnsplashImageProps {
-  url: string;
+  src: string;
+  alt?: string;
   className?: string;
   showAttribution?: boolean;
 }
 
 const UnsplashImage: React.FC<UnsplashImageProps> = ({ 
-  url, 
+  src, 
+  alt = "Image",
   className = "",
   showAttribution = true
 }) => {
-  // For now, we'll just display the image directly without metadata
   return (
     <div className="relative overflow-hidden">
       <img
-        src={url}
-        alt="Unsplash Image"
+        src={src}
+        alt={alt}
         className={className}
       />
       {showAttribution && (

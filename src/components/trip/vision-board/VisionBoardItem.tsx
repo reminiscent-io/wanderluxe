@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { useSortable } from '@dnd-kit/sortable';
@@ -34,7 +35,9 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!e.target.closest('.drag-handle') && !e.target.closest('.external-link')) {
+    // Type assertion to HTMLElement since we know the event target is a DOM element
+    const target = e.target as HTMLElement;
+    if (!target.closest('.drag-handle') && !target.closest('.external-link')) {
       setIsEditing(true);
     }
   };
@@ -45,7 +48,11 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
         <div onClick={handleClick} style={{ cursor: 'pointer' }} className="flex-grow">
           {item.image_url && (
             <div className="h-40 overflow-hidden">
-              <UnsplashImage src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+              <UnsplashImage 
+                src={item.image_url} 
+                alt={item.title} 
+                className="w-full h-full object-cover" 
+              />
             </div>
           )}
           <div className="p-4 flex flex-col">
