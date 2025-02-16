@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
@@ -17,7 +16,6 @@ const TripDetails = () => {
   const { tripId } = useParams();
   const navigate = useNavigate();
 
-  // Add debug logging for tripId
   console.log('TripDetails rendering with tripId:', tripId);
 
   const { data: trip, isLoading: tripLoading } = useQuery({
@@ -59,7 +57,6 @@ const TripDetails = () => {
         throw new Error('Trip not found');
       }
 
-      // Add debug logging for trip data
       console.log('Trip data fetched:', data);
       return data;
     },
@@ -70,14 +67,11 @@ const TripDetails = () => {
     return (
       <div>
         <Navigation />
+        <div className="h-[500px] w-full bg-gray-200 animate-pulse" />
         <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-[40vh] bg-gray-200 rounded-lg mb-8"></div>
-            <div className="relative h-32 bg-gray-200 rounded-lg mb-8"></div>
-            <div className="space-y-12">
-              <div className="h-96 bg-gray-200 rounded-lg"></div>
-              <div className="h-96 bg-gray-200 rounded-lg"></div>
-            </div>
+          <div className="space-y-8">
+            <div className="h-12 bg-gray-200 rounded animate-pulse" />
+            <div className="h-96 bg-gray-200 rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -92,10 +86,9 @@ const TripDetails = () => {
     <div className="min-h-screen flex flex-col">
       <Navigation />
       
-      {/* Hero Section with debug container */}
-      <div className="w-full h-[40vh] min-h-[300px] relative isolate border-b-4 border-transparent">
+      <div className="w-full" style={{ height: '500px' }}>
         <HeroSection 
-          title={trip.destination}
+          title={trip.destination || 'No Title Available'}
           date={`${trip.arrival_date} - ${trip.departure_date}`}
           imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
           arrivalDate={trip.arrival_date}
@@ -103,8 +96,7 @@ const TripDetails = () => {
         />
       </div>
 
-      {/* Content Section with debug container */}
-      <div className="flex-1 bg-sand-50/95 w-full border-t-4 border-transparent">
+      <div className="flex-1 bg-sand-50/95 w-full">
         <div className="container mx-auto px-4 py-8">
           <Tabs defaultValue="timeline" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">

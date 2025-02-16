@@ -7,7 +7,7 @@ interface HeroSectionProps {
   title: string;
   date: string;
   imageUrl: string;
-  events?: any[]; // Remove specific type requirement since we don't use it
+  events?: any[];
   arrivalDate?: string | null;
   departureDate?: string | null;
   photographer?: string;
@@ -40,9 +40,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <div className="relative h-[40vh] min-h-[300px] w-full">
-      {/* Main hero container with debug border */}
-      <div className="absolute inset-0 h-[40vh] min-h-[300px] w-full z-10 border-4 border-transparent">
+    <div className="relative w-full" style={{ height: '500px' }}>
+      {/* Image container with fixed height */}
+      <div className="absolute inset-0 w-full h-full">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
             <UnsplashImage
@@ -78,19 +78,25 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             className="w-full h-full object-cover"
           />
         )}
-        {/* Gradient overlay with debug class */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60 z-20" />
       </div>
-      {/* Title container with debug border */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center z-30 border-4 border-transparent">
-        <h1 className="text-5xl font-bold mb-4 px-4 py-2 bg-black/20 rounded">
-          {title || 'No Title Available'}
-        </h1>
-        {formatDateRange() && (
-          <p className="text-xl px-4 py-2 bg-black/20 rounded">
-            {formatDateRange()}
-          </p>
-        )}
+
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+
+      {/* Content container */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
+        <div className="max-w-4xl w-full text-center">
+          <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
+            {title || 'No Title Available'}
+          </h1>
+          {formatDateRange() && (
+            <div className="inline-block px-6 py-3 bg-black/30 rounded-lg backdrop-blur-sm">
+              <p className="text-2xl text-white font-medium">
+                {formatDateRange()}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
