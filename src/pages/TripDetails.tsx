@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
@@ -96,7 +97,7 @@ const TripDetails = () => {
         />
       </div>
 
-      <div className="flex-1 bg-sand-50/95 w-full">
+      <div className="relative flex-1 bg-sand-50/95 w-full z-10">
         <div className="container mx-auto px-4 py-8">
           <Tabs defaultValue="timeline" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">

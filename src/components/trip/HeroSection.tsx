@@ -22,7 +22,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   photographer,
   unsplashUsername,
 }) => {
-  // Add debug logging
   console.log('HeroSection rendering with:', {
     title,
     imageUrl,
@@ -41,8 +40,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative w-full" style={{ height: '500px' }}>
-      {/* Image container with fixed height */}
-      <div className="absolute inset-0 w-full h-full">
+      {/* Image container with fixed height - lowest z-index */}
+      <div className="absolute inset-0 w-full h-full -z-10">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
             <UnsplashImage
@@ -80,11 +79,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         )}
       </div>
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+      {/* Dark overlay - middle z-index */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 -z-5" />
 
-      {/* Content container */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
+      {/* Content container - highest z-index */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-4 z-0">
         <div className="max-w-4xl w-full text-center">
           <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
             {title || 'No Title Available'}
