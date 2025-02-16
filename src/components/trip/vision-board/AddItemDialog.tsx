@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+
 interface AddItemDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -16,7 +17,9 @@ interface AddItemDialogProps {
   selectedCategory: string | null;
   onClose: () => void;
 }
+
 const CATEGORIES = ['Accommodations', 'Activities', 'Transportation', 'Restaurants'];
+
 const AddItemDialog: React.FC<AddItemDialogProps> = ({
   isOpen,
   onOpenChange,
@@ -32,7 +35,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
 
-  // Reset form when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
       setTitle("");
@@ -45,7 +47,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
     }
   }, [isOpen, selectedCategory]);
 
-  // Fetch metadata when URL changes
   const fetchUrlMetadata = async (url: string) => {
     if (!url || isFetchingMetadata) return;
     setIsFetchingMetadata(true);
@@ -76,7 +77,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
     }
   };
 
-  // Debounce URL changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (sourceUrl) {
@@ -85,6 +85,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
     }, 500);
     return () => clearTimeout(timer);
   }, [sourceUrl]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category || !title) {
@@ -93,7 +94,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
     }
     setIsSubmitting(true);
     try {
-      // Get the current highest order index for this category
       const {
         data: existingItems
       } = await supabase.from('vision_board_items').select('order_index').eq('trip_id', tripId).eq('category', category).order('order_index', {
@@ -121,7 +121,9 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
       setIsSubmitting(false);
     }
   };
-  return <Dialog open={isOpen} onOpenChange={onOpenChange}>
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Vision Board Item</DialogTitle>
@@ -163,7 +165,11 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
 
             <div>
               <Label>Image</Label>
-              <ImageUpload onImageUpload={setImageUrl} currentImageUrl={imageUrl} />
+              <ImageUpload
+                value={imageUrl}
+                onChange={setImageUrl}
+                onRemove={() => setImageUrl('')}
+              />
             </div>
           </div>
 
@@ -177,6 +183,8 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
           </div>
         </form>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
+
 export default AddItemDialog;

@@ -45,8 +45,9 @@ const DayImage: React.FC<DayImageProps> = ({
   return (
     <div className="relative min-h-[300px] overflow-hidden rounded-l-lg">
       <UnsplashImage
-        url={displayImageUrl}
+        src={displayImageUrl}
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+        alt={title}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6">

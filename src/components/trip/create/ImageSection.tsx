@@ -99,8 +99,9 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
                 onClick={() => selectGeneratedImage(image.url)}
               >
                 <UnsplashImage
-                  url={image.url}
+                  src={image.url}
                   className="h-48 rounded-lg"
+                  alt={image.description}
                   showAttribution={true}
                 />
               </div>
@@ -109,8 +110,9 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
         )}
 
         <ImageUpload
-          onImageUpload={onImageChange}
-          currentImageUrl={coverImageUrl}
+          value={coverImageUrl}
+          onChange={onImageChange}
+          onRemove={() => onImageChange('')}
         />
       </div>
     </div>
