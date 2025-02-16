@@ -22,6 +22,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   photographer,
   unsplashUsername,
 }) => {
+  // Add debug logging
+  console.log('HeroSection rendering with:', {
+    title,
+    imageUrl,
+    arrivalDate,
+    departureDate
+  });
+
   const formatDateRange = () => {
     if (arrivalDate && departureDate) {
       const arrival = parseISO(arrivalDate);
@@ -33,13 +41,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative h-[40vh] min-h-[300px] w-full">
-      {/* Changed from fixed to absolute positioning and adjusted z-index */}
-      <div className="absolute inset-0 h-[40vh] min-h-[300px] w-full z-10">
+      {/* Main hero container with debug border */}
+      <div className="absolute inset-0 h-[40vh] min-h-[300px] w-full z-10 border-4 border-transparent">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
-            <img
+            <UnsplashImage
               src={imageUrl}
-              alt={title}
+              alt={title || 'Trip cover image'}
               className="w-full h-full object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 text-white text-xs">
@@ -64,20 +72,24 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           </div>
         ) : (
-          <img
+          <UnsplashImage
             src={imageUrl}
-            alt={title}
+            alt={title || 'Trip cover image'}
             className="w-full h-full object-cover"
           />
         )}
-        {/* Increased z-index of the gradient overlay */}
+        {/* Gradient overlay with debug class */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60 z-20" />
       </div>
-      {/* Increased z-index of the title container */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center z-30">
-        <h1 className="text-5xl font-bold mb-4">{title}</h1>
+      {/* Title container with debug border */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center z-30 border-4 border-transparent">
+        <h1 className="text-5xl font-bold mb-4 px-4 py-2 bg-black/20 rounded">
+          {title || 'No Title Available'}
+        </h1>
         {formatDateRange() && (
-          <p className="text-xl">{formatDateRange()}</p>
+          <p className="text-xl px-4 py-2 bg-black/20 rounded">
+            {formatDateRange()}
+          </p>
         )}
       </div>
     </div>

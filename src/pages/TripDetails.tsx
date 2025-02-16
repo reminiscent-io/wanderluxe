@@ -17,6 +17,9 @@ const TripDetails = () => {
   const { tripId } = useParams();
   const navigate = useNavigate();
 
+  // Add debug logging for tripId
+  console.log('TripDetails rendering with tripId:', tripId);
+
   const { data: trip, isLoading: tripLoading } = useQuery({
     queryKey: ['trip', tripId],
     queryFn: async () => {
@@ -56,6 +59,8 @@ const TripDetails = () => {
         throw new Error('Trip not found');
       }
 
+      // Add debug logging for trip data
+      console.log('Trip data fetched:', data);
       return data;
     },
     retry: false
@@ -87,8 +92,8 @@ const TripDetails = () => {
     <div className="min-h-screen flex flex-col">
       <Navigation />
       
-      {/* Hero Section - Now in its own stacking context */}
-      <div className="w-full h-[40vh] min-h-[300px] relative isolate">
+      {/* Hero Section with debug container */}
+      <div className="w-full h-[40vh] min-h-[300px] relative isolate border-b-4 border-transparent">
         <HeroSection 
           title={trip.destination}
           date={`${trip.arrival_date} - ${trip.departure_date}`}
@@ -98,8 +103,8 @@ const TripDetails = () => {
         />
       </div>
 
-      {/* Content Section - Now properly separated from hero */}
-      <div className="flex-1 bg-sand-50/95 w-full">
+      {/* Content Section with debug container */}
+      <div className="flex-1 bg-sand-50/95 w-full border-t-4 border-transparent">
         <div className="container mx-auto px-4 py-8">
           <Tabs defaultValue="timeline" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">
