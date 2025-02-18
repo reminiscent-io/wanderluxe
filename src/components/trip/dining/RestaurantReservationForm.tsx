@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,7 +15,7 @@ const formSchema = z.object({
   address: z.string().optional(),
   phone_number: z.string().optional(),
   website: z.string().optional(),
-  reservation_time: z.string().optional(),
+  reservation_time: z.string().optional().nullable(),
   number_of_people: z.number().min(1).optional(),
   notes: z.string().optional(),
   cost: z.number().optional(),
@@ -39,7 +40,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       restaurant_name: '',
-      reservation_time: '',
+      reservation_time: null,
       number_of_people: undefined,
       notes: '',
       cost: undefined,
@@ -57,7 +58,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   };
 
   const handleSubmitForm = form.handleSubmit((data) => {
-    onSubmit(data);
+    // Convert empty string to null for reservation_time
+    const processedData = {
+      ...data,
+      reservation_time: data.reservation_time === '' ? null : data.reservation_time,
+    };
+    onSubmit(processedData);
   });
 
   return (
@@ -84,7 +90,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <FormItem>
                 <FormLabel>Reservation Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} className="bg-white" />
+                  <Input 
+                    type="time" 
+                    {...field} 
+                    value={field.value || ''} 
+                    onChange={(e) => field.onChange(e.target.value || null)}
+                    className="bg-white" 
+                  />
                 </FormControl>
               </FormItem>
             )}

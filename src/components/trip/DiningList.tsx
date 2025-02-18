@@ -43,10 +43,17 @@ const DiningList: React.FC<DiningListProps> = ({
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      const processedData = {
+        ...data,
+        day_id: dayId,
+        order_index: reservations.length,
+        reservation_time: data.reservation_time || null
+      };
+
       if (editingReservation) {
         const { error } = await supabase
           .from('restaurant_reservations')
-          .update(data)
+          .update(processedData)
           .eq('id', editingReservation);
 
         if (error) throw error;
@@ -54,11 +61,7 @@ const DiningList: React.FC<DiningListProps> = ({
       } else {
         const { error } = await supabase
           .from('restaurant_reservations')
-          .insert({
-            ...data,
-            day_id: dayId,
-            order_index: reservations.length
-          });
+          .insert(processedData);
 
         if (error) throw error;
         toast.success('Reservation added successfully');
