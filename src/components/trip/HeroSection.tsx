@@ -46,6 +46,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     );
   }
 
+  // Render placeholder if no title is available
+  if (!title) {
+    return (
+      <div className="relative w-full h-full bg-gray-100">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-gray-500">Loading trip details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full" style={{ height: '500px' }}>
       {/* Image container with fixed height - lowest z-index */}
