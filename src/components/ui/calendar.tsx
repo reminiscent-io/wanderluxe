@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, DayPickerDefaultProps } from "react-day-picker";
+import { DayPicker } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -52,9 +52,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Dropdown: undefined,
-        IconRight: undefined,
-        IconLeft: undefined
+        // Remove the IconRight and IconLeft properties as they don't exist in the CustomComponents type
+        Dropdown: undefined
       }}
       {...props}
     />
