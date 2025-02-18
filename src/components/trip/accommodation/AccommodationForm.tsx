@@ -7,9 +7,10 @@ import CostInputs from './form/CostInputs';
 import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 import { AccommodationFormData } from '@/services/accommodation/types';
+import { toast } from 'sonner';
 
 interface AccommodationFormProps {
-  onSubmit: (data: AccommodationFormData) => void;
+  onSubmit: (data: AccommodationFormData) => Promise<void>; // Changed to Promise
   onCancel: () => void;
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
@@ -43,8 +44,8 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   }), [initialData, tripArrivalDate, tripDepartureDate]);
 
   const [formData, setFormData] = useState(initialFormState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form when initialData changes
   useEffect(() => {
     setFormData(initialFormState);
   }, [initialFormState]);
@@ -61,15 +62,24 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (initialData && !formData.stay_id) {
       console.error('Missing stay_id for update operation');
+      toast.error('Missing accommodation ID');
       return;
     }
-    
-    onSubmit(formData);
+
+    try {
+      setIsSubmitting(true);
+      await onSubmit(formData);
+    } catch (error) {
+      console.error('Error submitting accommodation:', error);
+      toast.error('Failed to save accommodation');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -106,11 +116,20 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       />
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel}>
+        <Button 
+          type="button" 
+          variant="ghost" 
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
-        <Button type="submit" className="bg-earth-500 hover:bg-earth-600 text-white">
-          {initialData ? 'Update' : 'Add Accommodation'}
+        <Button 
+          type="submit" 
+          className="bg-earth-500 hover:bg-earth-600 text-white"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Saving...' : initialData ? 'Update' : 'Add Accommodation'}
         </Button>
       </div>
     </form>
