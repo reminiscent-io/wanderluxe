@@ -9,7 +9,7 @@ interface AccommodationActionsProps {
   isAddingAccommodation: boolean;
   setIsAddingAccommodation: (value: boolean) => void;
   editingStay: (AccommodationFormData & { stay_id: string }) | null;
-  onSubmit: (data: AccommodationFormData) => void;
+  onSubmit: (data: AccommodationFormData) => Promise<void>;  // Updated to Promise<void>
   onCancel: () => void;
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
