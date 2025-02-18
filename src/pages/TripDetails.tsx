@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
@@ -20,9 +21,6 @@ const TripDetails = () => {
 
   // Add more detailed logging
   console.log('TripDetails rendering with tripId:', tripId);
-
-  // Get the previous trip data from the cache
-  const previousTrip = queryClient.getQueryData<Trip>(['trip', tripId]);
 
   const { data: trip, isLoading: tripLoading, error: tripError } = useQuery<Trip>({
     queryKey: ['trip', tripId],
@@ -72,20 +70,17 @@ const TripDetails = () => {
       console.log('Trip data fetched successfully:', data);
       return data as Trip;
     },
-    staleTime: 1000 * 30, // 30 seconds - data considered fresh for 30 seconds
-    gcTime: 1000 * 60 * 5, // 5 minutes - keep unused data in cache for 5 minutes
-    retry: 2, // Retry failed requests twice
-    enabled: !!tripId,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    placeholderData: previousTrip, // Use previous data while loading
+    staleTime: 0, // Set to 0 to always refetch when needed
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    retry: 1, // Only retry once on failure
+    enabled: !!tripId, // Only run query if tripId exists
+    refetchOnMount: true, // Always refetch on mount
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   // Set up real-time subscription for trip updates
   React.useEffect(() => {
     if (!tripId) return;
-
-    console.log('Setting up real-time subscription for trip:', tripId);
 
     const channel = supabase
       .channel(`trip-${tripId}`)
@@ -97,8 +92,7 @@ const TripDetails = () => {
           table: 'trips',
           filter: `trip_id=eq.${tripId}`,
         },
-        (payload) => {
-          console.log('Trip update received:', payload);
+        () => {
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
         }
       )
@@ -110,21 +104,74 @@ const TripDetails = () => {
           table: 'accommodations',
           filter: `trip_id=eq.${tripId}`,
         },
-        (payload) => {
-          console.log('Accommodation update received:', payload);
+        () => {
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
         }
       )
       .subscribe();
 
     return () => {
-      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [tripId, queryClient]);
 
-  // Use the previous data while loading to prevent UI flicker
-  const displayData = trip || previousTrip;
+  // Handle loading state with skeleton UI
+  if (tripLoading) {
+    return (
+      <div>
+        <Navigation />
+        <div className="h-[500px] w-full bg-gray-200 animate-pulse" />
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-8">
+            <div className="h-12 bg-gray-200 rounded animate-pulse" />
+            <div className="h-96 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (tripError) {
+    return (
+      <div>
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800">Error Loading Trip</h2>
+            <p className="text-gray-600 mt-2">Unable to load trip details. Please try again later.</p>
+            <button 
+              onClick={() => navigate('/my-trips')}
+              className="mt-4 px-4 py-2 bg-earth-500 text-white rounded hover:bg-earth-600"
+            >
+              Return to My Trips
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle no trip data
+  if (!trip) {
+    return (
+      <div>
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800">Trip Not Found</h2>
+            <p className="text-gray-600 mt-2">The requested trip could not be found.</p>
+            <button 
+              onClick={() => navigate('/my-trips')}
+              className="mt-4 px-4 py-2 bg-earth-500 text-white rounded hover:bg-earth-600"
+            >
+              Return to My Trips
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -132,11 +179,10 @@ const TripDetails = () => {
       
       <div className="w-full" style={{ height: '500px' }}>
         <HeroSection 
-          title={displayData?.destination || ''}
-          imageUrl={displayData?.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
-          arrivalDate={displayData?.arrival_date}
-          departureDate={displayData?.departure_date}
-          isLoading={tripLoading && !displayData}
+          title={trip.destination}
+          imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
+          arrivalDate={trip.arrival_date}
+          departureDate={trip.departure_date}
         />
       </div>
 
@@ -178,8 +224,8 @@ const TripDetails = () => {
               <TimelineView 
                 tripId={tripId}
                 tripDates={{
-                  arrival_date: displayData?.arrival_date || null,
-                  departure_date: displayData?.departure_date || null
+                  arrival_date: trip.arrival_date,
+                  departure_date: trip.departure_date
                 }}
               />
             </TabsContent>

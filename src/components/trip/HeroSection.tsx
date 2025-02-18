@@ -12,7 +12,6 @@ interface HeroSectionProps {
   departureDate?: string | null;
   photographer?: string;
   unsplashUsername?: string;
-  isLoading?: boolean;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({
@@ -21,41 +20,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   arrivalDate,
   departureDate,
   photographer,
-  unsplashUsername,
-  isLoading = false
+  unsplashUsername
 }) => {
-  // Cache formatted date string using useMemo to prevent unnecessary recalculations
-  const formattedDateRange = React.useMemo(() => {
+  console.log('HeroSection rendering with:', {
+    title,
+    imageUrl,
+    arrivalDate,
+    departureDate
+  });
+
+  const formatDateRange = () => {
     if (arrivalDate && departureDate) {
       const arrival = parseISO(arrivalDate);
       const departure = parseISO(departureDate);
       return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
     }
     return null;
-  }, [arrivalDate, departureDate]);
-
-  // If loading, show skeleton UI
-  if (isLoading) {
-    return (
-      <div className="relative w-full h-full bg-gray-200 animate-pulse">
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
-          <div className="w-1/2 h-12 bg-gray-300 rounded mb-4"></div>
-          <div className="w-1/3 h-6 bg-gray-300 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Render placeholder if no title is available
-  if (!title) {
-    return (
-      <div className="relative w-full h-full bg-gray-100">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-gray-500">Loading trip details...</p>
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
     <div className="relative w-full" style={{ height: '500px' }}>
@@ -107,10 +88,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
             {title}
           </h1>
-          {formattedDateRange && (
+          {formatDateRange() && (
             <div className="inline-block rounded-lg backdrop-blur-sm bg-[#000a00]/0 px-[10px] py-px">
               <p className="text-2xl text-white font-medium">
-                {formattedDateRange}
+                {formatDateRange()}
               </p>
             </div>
           )}
@@ -120,4 +101,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   );
 };
 
-export default React.memo(HeroSection);
+export default HeroSection;
