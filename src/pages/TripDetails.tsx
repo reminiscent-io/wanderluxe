@@ -8,7 +8,7 @@ import TimelineView from "../components/trip/TimelineView";
 import BudgetView from "../components/trip/BudgetView";
 import PackingView from "../components/trip/PackingView";
 import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, BarChart2, List, Lightbulb } from 'lucide-react';
@@ -16,9 +16,11 @@ import { Calendar, BarChart2, List, Lightbulb } from 'lucide-react';
 const TripDetails = () => {
   const { tripId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   console.log('TripDetails rendering with tripId:', tripId);
 
+  // Use stale time to prevent unnecessary refetches
   const { data: trip, isLoading: tripLoading } = useQuery({
     queryKey: ['trip', tripId],
     queryFn: async () => {
@@ -61,8 +63,14 @@ const TripDetails = () => {
       console.log('Trip data fetched:', data);
       return data;
     },
-    retry: false
+    staleTime: 5000, // Add stale time to prevent unnecessary refetches
+    cacheTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
+
+  // Function to manually invalidate the query
+  const refreshTripData = () => {
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+  };
 
   if (tripLoading) {
     return (
@@ -131,7 +139,7 @@ const TripDetails = () => {
             </TabsList>
               
             <TabsContent value="timeline">
-              <TimelineView tripId={tripId} />
+              <TimelineView tripId={tripId} onSuccess={refreshTripData} />
             </TabsContent>
               
             <TabsContent value="budget">
