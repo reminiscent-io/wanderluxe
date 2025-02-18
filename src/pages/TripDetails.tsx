@@ -19,8 +19,9 @@ const TripDetails = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Add more detailed logging
   console.log('TripDetails rendering with tripId:', tripId);
+
+  const previousTrip = queryClient.getQueryData<Trip>(['trip', tripId]);
 
   const { data: trip, isLoading: tripLoading, error: tripError } = useQuery<Trip>({
     queryKey: ['trip', tripId],
@@ -70,17 +71,19 @@ const TripDetails = () => {
       console.log('Trip data fetched successfully:', data);
       return data as Trip;
     },
-    staleTime: 0, // Set to 0 to always refetch when needed
-    gcTime: 1000 * 60 * 10, // 10 minutes
-    retry: 1, // Only retry once on failure
-    enabled: !!tripId, // Only run query if tripId exists
-    refetchOnMount: true, // Always refetch on mount
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 5,
+    retry: 2,
+    enabled: !!tripId,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    placeholderData: previousTrip,
   });
 
-  // Set up real-time subscription for trip updates
   React.useEffect(() => {
     if (!tripId) return;
+
+    console.log('Setting up real-time subscription for trip:', tripId);
 
     const channel = supabase
       .channel(`trip-${tripId}`)
@@ -92,7 +95,8 @@ const TripDetails = () => {
           table: 'trips',
           filter: `trip_id=eq.${tripId}`,
         },
-        () => {
+        (payload) => {
+          console.log('Trip update received:', payload);
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
         }
       )
@@ -104,19 +108,21 @@ const TripDetails = () => {
           table: 'accommodations',
           filter: `trip_id=eq.${tripId}`,
         },
-        () => {
+        (payload) => {
+          console.log('Accommodation update received:', payload);
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [tripId, queryClient]);
 
   // Handle loading state with skeleton UI
-  if (tripLoading) {
+  if (tripLoading && !previousTrip) {
     return (
       <div>
         <Navigation />
@@ -152,8 +158,9 @@ const TripDetails = () => {
     );
   }
 
-  // Handle no trip data
-  if (!trip) {
+  const displayData = trip || previousTrip;
+
+  if (!displayData) {
     return (
       <div>
         <Navigation />
@@ -179,10 +186,11 @@ const TripDetails = () => {
       
       <div className="w-full" style={{ height: '500px' }}>
         <HeroSection 
-          title={trip.destination}
-          imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
-          arrivalDate={trip.arrival_date}
-          departureDate={trip.departure_date}
+          title={displayData.destination}
+          imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
+          arrivalDate={displayData.arrival_date}
+          departureDate={displayData.departure_date}
+          isLoading={tripLoading && !previousTrip}
         />
       </div>
 
@@ -224,8 +232,8 @@ const TripDetails = () => {
               <TimelineView 
                 tripId={tripId}
                 tripDates={{
-                  arrival_date: trip.arrival_date,
-                  departure_date: trip.departure_date
+                  arrival_date: displayData?.arrival_date || null,
+                  departure_date: displayData?.departure_date || null
                 }}
               />
             </TabsContent>
