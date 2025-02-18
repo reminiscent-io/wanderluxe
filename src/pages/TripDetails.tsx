@@ -52,7 +52,7 @@ const TripDetails = () => {
           )
         `)
         .eq('trip_id', tripId)
-        .maybeSingle(); // Use maybeSingle instead of single for better error handling
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching trip:', error);
@@ -70,23 +70,69 @@ const TripDetails = () => {
       console.log('Trip data fetched successfully:', data);
       return data as Trip;
     },
-    staleTime: 5000, // 5 seconds
+    staleTime: 0, // Set to 0 to always refetch when needed
     gcTime: 1000 * 60 * 10, // 10 minutes
     retry: 1, // Only retry once on failure
     enabled: !!tripId, // Only run query if tripId exists
+    refetchOnMount: true, // Always refetch on mount
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
-  // Function to manually invalidate the query
-  const refreshTripData = () => {
-    if (tripId) {
-      console.log('Refreshing trip data for ID:', tripId);
-      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-    }
-  };
+  // Set up real-time subscription for trip updates
+  React.useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel(`trip-${tripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trips',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodations',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tripId, queryClient]);
+
+  // Handle loading state with skeleton UI
+  if (tripLoading) {
+    return (
+      <div>
+        <Navigation />
+        <div className="h-[500px] w-full bg-gray-200 animate-pulse" />
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-8">
+            <div className="h-12 bg-gray-200 rounded animate-pulse" />
+            <div className="h-96 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Handle error state
   if (tripError) {
-    console.error('Error in trip query:', tripError);
     return (
       <div>
         <Navigation />
@@ -100,22 +146,6 @@ const TripDetails = () => {
             >
               Return to My Trips
             </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle loading state
-  if (tripLoading) {
-    return (
-      <div>
-        <Navigation />
-        <div className="h-[500px] w-full bg-gray-200 animate-pulse" />
-        <div className="container mx-auto px-4 py-8">
-          <div className="space-y-8">
-            <div className="h-12 bg-gray-200 rounded animate-pulse" />
-            <div className="h-96 bg-gray-200 rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -142,14 +172,6 @@ const TripDetails = () => {
       </div>
     );
   }
-
-  // Log the data being passed to HeroSection
-  console.log('Rendering HeroSection with:', {
-    title: trip.destination,
-    imageUrl: trip.cover_image_url,
-    arrivalDate: trip.arrival_date,
-    departureDate: trip.departure_date
-  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -201,6 +223,10 @@ const TripDetails = () => {
             <TabsContent value="timeline">
               <TimelineView 
                 tripId={tripId}
+                tripDates={{
+                  arrival_date: trip.arrival_date,
+                  departure_date: trip.departure_date
+                }}
               />
             </TabsContent>
               
