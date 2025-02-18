@@ -15,16 +15,22 @@ import { Calendar, BarChart2, List, Lightbulb } from 'lucide-react';
 import { Trip } from '@/types/trip';
 
 const TripDetails = () => {
-  const { tripId } = useParams();
+  const { tripId } = useParams<{ tripId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Add more detailed logging
   console.log('TripDetails rendering with tripId:', tripId);
 
-  const { data: trip, isLoading: tripLoading } = useQuery<Trip>({
+  const { data: trip, isLoading: tripLoading, error: tripError } = useQuery<Trip>({
     queryKey: ['trip', tripId],
     queryFn: async () => {
-      if (!tripId) throw new Error('No trip ID provided');
+      if (!tripId) {
+        console.error('No trip ID provided');
+        throw new Error('No trip ID provided');
+      }
+      
+      console.log('Fetching trip data for ID:', tripId);
       
       const { data, error } = await supabase
         .from('trips')
@@ -46,7 +52,7 @@ const TripDetails = () => {
           )
         `)
         .eq('trip_id', tripId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single for better error handling
 
       if (error) {
         console.error('Error fetching trip:', error);
@@ -55,23 +61,52 @@ const TripDetails = () => {
       }
       
       if (!data) {
+        console.error('Trip not found:', tripId);
         toast.error('Trip not found');
         navigate('/my-trips');
         throw new Error('Trip not found');
       }
 
-      console.log('Trip data fetched:', data);
+      console.log('Trip data fetched successfully:', data);
       return data as Trip;
     },
     staleTime: 5000, // 5 seconds
     gcTime: 1000 * 60 * 10, // 10 minutes
+    retry: 1, // Only retry once on failure
+    enabled: !!tripId, // Only run query if tripId exists
   });
 
   // Function to manually invalidate the query
   const refreshTripData = () => {
-    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    if (tripId) {
+      console.log('Refreshing trip data for ID:', tripId);
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    }
   };
 
+  // Handle error state
+  if (tripError) {
+    console.error('Error in trip query:', tripError);
+    return (
+      <div>
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800">Error Loading Trip</h2>
+            <p className="text-gray-600 mt-2">Unable to load trip details. Please try again later.</p>
+            <button 
+              onClick={() => navigate('/my-trips')}
+              className="mt-4 px-4 py-2 bg-earth-500 text-white rounded hover:bg-earth-600"
+            >
+              Return to My Trips
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle loading state
   if (tripLoading) {
     return (
       <div>
@@ -87,9 +122,34 @@ const TripDetails = () => {
     );
   }
 
+  // Handle no trip data
   if (!trip) {
-    return null;
+    return (
+      <div>
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800">Trip Not Found</h2>
+            <p className="text-gray-600 mt-2">The requested trip could not be found.</p>
+            <button 
+              onClick={() => navigate('/my-trips')}
+              className="mt-4 px-4 py-2 bg-earth-500 text-white rounded hover:bg-earth-600"
+            >
+              Return to My Trips
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  // Log the data being passed to HeroSection
+  console.log('Rendering HeroSection with:', {
+    title: trip.destination,
+    imageUrl: trip.cover_image_url,
+    arrivalDate: trip.arrival_date,
+    departureDate: trip.departure_date
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -140,8 +200,7 @@ const TripDetails = () => {
               
             <TabsContent value="timeline">
               <TimelineView 
-                tripId={tripId} 
-                // Remove onSuccess prop since it's not defined in TimelineViewProps
+                tripId={tripId}
               />
             </TabsContent>
               
