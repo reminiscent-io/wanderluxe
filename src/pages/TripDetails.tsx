@@ -89,8 +89,7 @@ const TripDetails = () => {
       
       <div className="w-full" style={{ height: '500px' }}>
         <HeroSection 
-          title={trip.destination || 'No Title Available'}
-          date={`${trip.arrival_date} - ${trip.departure_date}`}
+          title={trip.destination}
           imageUrl={trip.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
           arrivalDate={trip.arrival_date}
           departureDate={trip.departure_date}
