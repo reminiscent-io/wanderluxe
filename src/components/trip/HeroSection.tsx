@@ -47,7 +47,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             <UnsplashImage 
               src={imageUrl} 
               alt={title || 'Trip cover image'} 
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover object-center" 
             />
             <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 text-white text-xs">
               Photo by{' '}
@@ -74,7 +74,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <UnsplashImage 
             src={imageUrl} 
             alt={title || 'Trip cover image'} 
-            className="w-full h-full object-cover" 
+            className="w-full h-full object-cover object-center" 
           />
         )}
       </div>
