@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, BarChart2, List, Lightbulb } from 'lucide-react';
+import { Trip } from '@/types/trip';
 
 const TripDetails = () => {
   const { tripId } = useParams();
@@ -20,8 +21,7 @@ const TripDetails = () => {
 
   console.log('TripDetails rendering with tripId:', tripId);
 
-  // Use stale time to prevent unnecessary refetches
-  const { data: trip, isLoading: tripLoading } = useQuery({
+  const { data: trip, isLoading: tripLoading } = useQuery<Trip>({
     queryKey: ['trip', tripId],
     queryFn: async () => {
       if (!tripId) throw new Error('No trip ID provided');
@@ -61,10 +61,10 @@ const TripDetails = () => {
       }
 
       console.log('Trip data fetched:', data);
-      return data;
+      return data as Trip;
     },
-    staleTime: 5000, // Add stale time to prevent unnecessary refetches
-    cacheTime: 1000 * 60 * 10, // Cache for 10 minutes
+    staleTime: 5000, // 5 seconds
+    gcTime: 1000 * 60 * 10, // 10 minutes
   });
 
   // Function to manually invalidate the query
@@ -139,7 +139,10 @@ const TripDetails = () => {
             </TabsList>
               
             <TabsContent value="timeline">
-              <TimelineView tripId={tripId} onSuccess={refreshTripData} />
+              <TimelineView 
+                tripId={tripId} 
+                // Remove onSuccess prop since it's not defined in TimelineViewProps
+              />
             </TabsContent>
               
             <TabsContent value="budget">
