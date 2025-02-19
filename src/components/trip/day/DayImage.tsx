@@ -35,7 +35,7 @@ const DayImage: React.FC<DayImageProps> = ({
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
           <h2 className="text-white text-xl font-bold drop-shadow-lg">
-            {title}
+            {title || "Untitled Day"}
           </h2>
         </div>
       </div>
@@ -47,12 +47,12 @@ const DayImage: React.FC<DayImageProps> = ({
       <UnsplashImage
         src={displayImageUrl}
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-        alt={title}
+        alt={title || "Day Image"}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6">
         <h2 className="text-white text-2xl font-bold drop-shadow-lg">
-          {title}
+          {title || "Untitled Day"}
         </h2>
       </div>
     </div>
