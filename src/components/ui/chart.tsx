@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -44,8 +45,14 @@ const ChartContainer = React.forwardRef<
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = React.useMemo(
+    () => ({ config }),
+    [config]
+  )
+
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={contextValue}>
       <div
         data-chart={chartId}
         ref={ref}
@@ -141,7 +148,7 @@ const ChartTooltipContent = React.forwardRef<
       const itemConfig = getPayloadConfigFromPayload(config, item, key)
       const value =
         !labelKey && typeof label === "string"
-          ? config[label as keyof typeof config]?.label || label
+          ? config[label]?.label || label
           : itemConfig?.label
 
       if (labelFormatter) {
@@ -343,14 +350,10 @@ function getPayloadConfigFromPayload(
     key in payloadPayload &&
     typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
   ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string
+    configLabelKey = payloadPayload[key as keyof typeof payloadPayload] as string
   }
 
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config]
+  return config[configLabelKey]
 }
 
 export {
