@@ -45,7 +45,11 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
   return (
     <>
       <Card ref={setNodeRef} style={style} className="flex flex-col h-full">
-        <div onClick={handleClick} style={{ cursor: 'pointer' }} className="flex-grow">
+        <button
+          onClick={handleClick}
+          className="flex-grow text-left w-full focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-offset-2 rounded-lg"
+          aria-label={`Edit ${item.title}`}
+        >
           {item.image_url && (
             <div className="h-40 overflow-hidden">
               <UnsplashImage 
@@ -77,7 +81,7 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
             </div>
             {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
           </div>
-        </div>
+        </button>
       </Card>
       <EditItemDialog
         isOpen={isEditing}
