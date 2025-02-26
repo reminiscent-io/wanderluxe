@@ -1,10 +1,9 @@
 
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ExpenseItem } from './utils/budgetCalculations';
+import { ExpenseItem, formatCurrency} from './utils/budgetCalculations';
 import { format } from 'date-fns';
 import { Switch } from "@/components/ui/switch";
-import { formatCurrency } from './utils/budgetCalculations';
 
 interface ExpenseTableProps {
   expenses: ExpenseItem[];
