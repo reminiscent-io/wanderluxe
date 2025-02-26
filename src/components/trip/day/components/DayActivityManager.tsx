@@ -49,8 +49,8 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
         }]);
 
       if (error) throw error;
-      toast.success('Activity added successfully');
-      setIsAddingActivity(false);
+
+      // Clear the form and close the dialog
       setNewActivity({
         title: '',
         description: '',
@@ -59,6 +59,8 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
         cost: '',
         currency: 'USD'
       });
+      setIsAddingActivity(false);
+      toast.success('Activity added successfully');
     } catch (error) {
       console.error('Error adding activity:', error);
       toast.error('Failed to add activity');
