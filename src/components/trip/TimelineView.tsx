@@ -20,7 +20,7 @@ interface TimelineViewProps {
 
 const TimelineView: React.FC<TimelineViewProps> = ({
   tripId,
-  tripDates
+  tripDates: initialTripDates
 }) => {
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
@@ -68,8 +68,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       <div className="grid gap-4">
         <TripDates
           tripId={tripId}
-          arrivalDate={tripDates.arrival_date}
-          departureDate={tripDates.departure_date}
+          arrivalDate={initialTripDates.arrival_date}
+          departureDate={initialTripDates.departure_date}
           onDatesChange={handleRefresh}
         />
         <AccommodationsSection
