@@ -32,25 +32,39 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
   setActivityEdit,
   activitiesLength
 }) => {
-  const handleAddActivity = async () => {
-    if (!newActivity.title) {
+  // This function is called when the form is submitted
+  const handleAddActivity = async (activity: ActivityFormData) => {
+    console.log('Attempting to add activity:', activity);
+    
+    if (!activity.title) {
       toast.error('Title is required');
       return;
     }
 
     try {
-      // First try to insert the activity
+      console.log('Inserting activity into database:', {
+        day_id: id,
+        trip_id: tripId,
+        title: activity.title,
+        description: activity.description || '',
+        start_time: activity.start_time || null,
+        end_time: activity.end_time || null,
+        cost: activity.cost ? Number(activity.cost) : null,
+        currency: activity.currency,
+        order_index: activitiesLength
+      });
+
       const { data, error } = await supabase
         .from('day_activities')
         .insert([{
           day_id: id,
           trip_id: tripId,
-          title: newActivity.title,
-          description: newActivity.description || '',
-          start_time: newActivity.start_time || null,
-          end_time: newActivity.end_time || null,
-          cost: newActivity.cost ? Number(newActivity.cost) : null,
-          currency: newActivity.currency,
+          title: activity.title,
+          description: activity.description || '',
+          start_time: activity.start_time || null,
+          end_time: activity.end_time || null,
+          cost: activity.cost ? Number(activity.cost) : null,
+          currency: activity.currency,
           order_index: activitiesLength
         }])
         .select()
@@ -61,9 +75,7 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
         throw error;
       }
 
-      if (!data) {
-        throw new Error('No data returned from insert');
-      }
+      console.log('Activity saved successfully:', data);
 
       // Only clear the form and close the dialog if the insert was successful
       setNewActivity({
