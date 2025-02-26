@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { format, parseISO } from 'date-fns';
-import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DayActivity } from '@/types/trip';
