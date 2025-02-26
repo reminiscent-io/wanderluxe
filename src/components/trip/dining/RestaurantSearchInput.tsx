@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,7 +88,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         const place = autoCompleteRef.current.getPlace();
         console.log('Selected restaurant:', place);
 
-        if (!place || !place.name) {
+        if (!place?.name) {
           toast.error('Please select a valid restaurant from the dropdown');
           return;
         }
