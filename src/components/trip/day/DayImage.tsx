@@ -4,7 +4,6 @@ import UnsplashImage from '@/components/UnsplashImage';
 
 interface DayImageProps {
   dayId: string;
-  tripId: string;
   title: string;
   imageUrl?: string | null;
   defaultImageUrl?: string;

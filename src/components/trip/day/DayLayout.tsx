@@ -8,11 +8,6 @@ interface DayLayoutProps {
   title: string;
   activities: DayActivity[];
   reservations?: RestaurantReservation[];
-  hotelDetails?: {
-    name: string;
-    details: string;
-    imageUrl?: string;
-  };
   index: number;
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
@@ -42,7 +37,6 @@ const DayLayout: React.FC<DayLayoutProps> = ({
         title={title}
         imageUrl={imageUrl}
         dayId={dayId}
-        tripId={tripId}
         defaultImageUrl={defaultImageUrl}
       />
 
