@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tables } from '@/integrations/supabase/types';
 import { Car, Plane, Train, Bus, Ship } from 'lucide-react';
@@ -45,9 +46,11 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   };
 
   return (
-    <div
+    <button
       onClick={() => onClick(event)}
-      className="flex items-start gap-4 p-4 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+      className="w-full text-left flex items-start gap-4 p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-offset-2"
+      type="button"
+      aria-label={`${event.type.replace('_', ' ')} details from ${event.departure_location} to ${event.arrival_location}`}
     >
       {getIcon(event.type)}
       <div className="flex-1">
@@ -83,7 +86,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
           </p>
         )}
       </div>
-    </div>
+    </button>
   );
 };
 
