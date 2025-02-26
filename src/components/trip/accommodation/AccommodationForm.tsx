@@ -10,7 +10,7 @@ import { AccommodationFormData } from '@/services/accommodation/types';
 import { toast } from 'sonner';
 
 interface AccommodationFormProps {
-  onSubmit: (data: AccommodationFormData) => Promise<void>; // Changed to Promise
+  onSubmit: (data: AccommodationFormData) => Promise<void>;
   onCancel: () => void;
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
@@ -60,6 +60,14 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       hotel_website: placeDetails?.website || prev.hotel_website,
       hotel_url: placeDetails?.website || prev.hotel_url
     }));
+  };
+
+  // Get the button text based on form state
+  const getButtonText = () => {
+    if (isSubmitting) {
+      return 'Saving...';
+    }
+    return initialData ? 'Update' : 'Add Accommodation';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,7 +137,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
           className="bg-earth-500 hover:bg-earth-600 text-white"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Saving...' : initialData ? 'Update' : 'Add Accommodation'}
+          {getButtonText()}
         </Button>
       </div>
     </form>
