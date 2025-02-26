@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -20,9 +21,10 @@ const AccommodationGaps: React.FC<AccommodationGapsProps> = ({
     <div className="space-y-4 mt-8">
       <h3 className="text-lg font-semibold text-earth-500">Missing Accommodations</h3>
       <div className="space-y-2">
-        {gaps.map((gap, index) => (
+        {gaps.map((gap) => (
           <div
-            key={index}
+            // Create a unique key using the start and end dates
+            key={`gap-${gap.startDate}-${gap.endDate}`}
             className="flex items-center justify-between p-4 bg-sand-50 rounded-lg"
           >
             <div>
