@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { 
   DndContext, 
@@ -94,8 +95,7 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
       const activeId = active.id.toString();
       const overId = over.id.toString();
       
-      // Get the current items in the correct order
-      const oldIndex = items?.findIndex(item => item.id === activeId) ?? 0;
+      // Find the new index for the dragged item
       const newIndex = items?.findIndex(item => item.id === overId) ?? 0;
 
       // Update the order in the database
