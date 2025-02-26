@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -6,7 +7,7 @@ import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
 import { useEventState } from './event/useEventState';
 import { useEventHandlers } from './event/useEventHandlers';
-import { DayActivity, ActivityFormData } from '@/types/trip';
+import { DayActivity } from '@/types/trip';
 
 interface TimelineEventProps {
   id: string;
@@ -56,7 +57,7 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     setEditingActivity,
     activityEdit,
     setActivityEdit,
-  } = useEventState(
+  } = useEventState({
     date,
     title,
     description,
@@ -65,49 +66,13 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     hotel_checkin_date,
     hotel_checkout_date,
     hotel_url
-  );
+  });
 
   const {
     handleEdit,
     handleAddActivity,
     handleEditActivity,
-  } = useEventHandlers(id, tripId, onEdit, editData, activities);
-
-  const onAddActivity = () => {
-    const formData: ActivityFormData = {
-      title: newActivity.title,
-      cost: newActivity.cost,  // Now required
-      currency: newActivity.currency,  // Now required
-      ...(newActivity.description && { description: newActivity.description }),
-      ...(newActivity.start_time && { start_time: newActivity.start_time }),
-      ...(newActivity.end_time && { end_time: newActivity.end_time })
-    };
-
-    handleAddActivity(formData).then(success => {
-      if (success) {
-        setIsAddingActivity(false);
-        setNewActivity({ title: "", cost: "", currency: "USD" });
-      }
-    });
-  };
-
-  const onEditActivity = (activityId: string) => {
-    const formData: ActivityFormData = {
-      title: activityEdit.title,
-      cost: activityEdit.cost,  // Now required
-      currency: activityEdit.currency,  // Now required
-      ...(activityEdit.description && { description: activityEdit.description }),
-      ...(activityEdit.start_time && { start_time: activityEdit.start_time }),
-      ...(activityEdit.end_time && { end_time: activityEdit.end_time })
-    };
-
-    handleEditActivity(activityId, formData).then(success => {
-      if (success) {
-        setEditingActivity(null);
-        setActivityEdit({ title: "", cost: "", currency: "USD" });
-      }
-    });
-  };
+  } = useEventHandlers(id, tripId, onEdit);
 
   return (
     <motion.div
@@ -123,8 +88,8 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
             <DayImage 
               title={title} 
               imageUrl={image} 
-              dayId={id} 
-              tripId={id} 
+              dayId={id}
+              defaultImageUrl={undefined}
             />
             <EventContent
               date={date}
