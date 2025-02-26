@@ -22,6 +22,36 @@ interface RestaurantCardProps {
   onDelete: () => void;
 }
 
+// Reusable component for links with icons
+const IconLink: React.FC<{
+  href: string;
+  icon: React.ReactNode;
+  text: string;
+  className?: string;
+}> = ({ href, icon, text, className = "" }) => (
+  <a 
+    href={href}
+    target={href.startsWith('tel:') ? undefined : "_blank"}
+    rel={href.startsWith('tel:') ? undefined : "noopener noreferrer"}
+    className={`flex items-center gap-1 hover:text-earth-500 ${className}`}
+  >
+    {icon}
+    {text}
+  </a>
+);
+
+// Reusable component for info items with icons
+const InfoItem: React.FC<{
+  icon: React.ReactNode;
+  text: string | number;
+  className?: string;
+}> = ({ icon, text, className = "" }) => (
+  <div className={`flex items-center gap-1 ${className}`}>
+    {icon}
+    <span>{text}</span>
+  </div>
+);
+
 const RestaurantCard: React.FC<RestaurantCardProps> = ({
   reservation,
   formatTime,
@@ -30,6 +60,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
 }) => {
   return (
     <div className="p-4 bg-sand-50 rounded-lg space-y-3 hover:bg-sand-100 transition-colors">
+      {/* Header section */}
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <h5 className="font-medium flex items-center gap-2">
@@ -44,33 +75,28 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
           </h5>
           
           {reservation.address && (
-            <p className="text-sm text-gray-600 flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-earth-400" />
-              {reservation.address}
-            </p>
+            <InfoItem
+              icon={<MapPin className="h-4 w-4 text-earth-400" />}
+              text={reservation.address}
+              className="text-sm text-gray-600"
+            />
           )}
           
           <div className="flex flex-wrap gap-4 text-sm text-gray-600">
             {reservation.phone_number && (
-              <a 
+              <IconLink
                 href={`tel:${reservation.phone_number}`}
-                className="flex items-center gap-1 hover:text-earth-500"
-              >
-                <Phone className="h-4 w-4" />
-                {reservation.phone_number}
-              </a>
+                icon={<Phone className="h-4 w-4" />}
+                text={reservation.phone_number}
+              />
             )}
             
             {reservation.website && (
-              <a 
+              <IconLink
                 href={reservation.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-earth-500"
-              >
-                <LinkIcon className="h-4 w-4" />
-                Website
-              </a>
+                icon={<LinkIcon className="h-4 w-4" />}
+                text="Website"
+              />
             )}
           </div>
         </div>
@@ -95,30 +121,32 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
         </div>
       </div>
 
+      {/* Details section */}
       <div className="flex flex-wrap gap-4 text-sm text-gray-600 border-t border-sand-200 pt-2">
         {reservation.reservation_time && (
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4 text-earth-400" />
-            <span>{formatTime(reservation.reservation_time)}</span>
-          </div>
+          <InfoItem
+            icon={<Clock className="h-4 w-4 text-earth-400" />}
+            text={formatTime(reservation.reservation_time)}
+          />
         )}
         
         {reservation.number_of_people && (
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4 text-earth-400" />
-            <span>{reservation.number_of_people} people</span>
-          </div>
+          <InfoItem
+            icon={<Users className="h-4 w-4 text-earth-400" />}
+            text={`${reservation.number_of_people} people`}
+          />
         )}
         
         {reservation.cost && (
-          <div className="flex items-center gap-1">
-            <span className="font-medium">
-              {reservation.cost} {reservation.currency || 'USD'}
-            </span>
-          </div>
+          <InfoItem
+            icon={null}
+            text={`${reservation.cost} ${reservation.currency || 'USD'}`}
+            className="font-medium"
+          />
         )}
       </div>
 
+      {/* Notes section */}
       {reservation.notes && (
         <p className="text-sm text-gray-600 border-t border-sand-200 pt-2">
           {reservation.notes}
