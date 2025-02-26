@@ -26,7 +26,7 @@ interface DayCardContentProps {
   }>;
   title: string;
   activities: DayActivity[];
-  onAddActivity: () => void;
+  onAddActivity: (activity: ActivityFormData) => Promise<void>;
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
   dayId: string;
