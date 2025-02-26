@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,7 +26,6 @@ interface DiningListProps {
     rating?: number;
     created_at: string;   
   }>;
-  onAddReservation: () => void;
   formatTime: (time?: string) => string;
   dayId: string;
 }
@@ -252,7 +252,7 @@ const DiningList: React.FC<DiningListProps> = ({
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </Dialog>
     </div>
   );
 };
