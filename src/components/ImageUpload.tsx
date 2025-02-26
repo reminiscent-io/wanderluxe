@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Image, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -15,7 +14,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) 
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string>('');
 
-  // Update preview when value changes
   useEffect(() => {
     if (value) {
       setPreview(value);
