@@ -33,7 +33,7 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
   activitiesLength
 }) => {
   // This function is called when the form is submitted
-  const handleAddActivity = async (activity: ActivityFormData) => {
+  const handleAddActivity = async (activity: ActivityFormData): Promise<void> => {
     console.log('Attempting to add activity:', activity);
     
     if (!activity.title) {

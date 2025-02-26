@@ -7,17 +7,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ActivityForm from '../ActivityForm';
+import { ActivityFormData } from '@/types/trip';
 
 interface ActivityDialogsProps {
   isAddingActivity: boolean;
   setIsAddingActivity: (value: boolean) => void;
   editingActivity: string | null;
   setEditingActivity: (value: string | null) => void;
-  newActivity: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string };
-  setNewActivity: (activity: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string }) => void;
-  activityEdit: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string };
-  setActivityEdit: (activity: { title: string; description?: string; start_time?: string; end_time?: string; cost: string; currency: string }) => void;
-  onAddActivity: () => void;
+  newActivity: ActivityFormData;
+  setNewActivity: (activity: ActivityFormData) => void;
+  activityEdit: ActivityFormData;
+  setActivityEdit: (activity: ActivityFormData) => void;
+  onAddActivity: (activity: ActivityFormData) => Promise<void>;
   onEditActivity: (id: string) => void;
   eventId: string;
 }
