@@ -4,9 +4,16 @@ import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
 import { DayActivity, RestaurantReservation } from '@/types/trip';
 
+interface HotelDetails {
+  name: string;
+  details: string;
+  imageUrl?: string;
+}
+
 interface DayLayoutProps {
   title: string;
   activities: DayActivity[];
+  hotelDetails?: HotelDetails;  // Added this to match the expected type
   reservations?: RestaurantReservation[];
   index: number;
   onAddActivity: () => void;
@@ -21,6 +28,7 @@ interface DayLayoutProps {
 const DayLayout: React.FC<DayLayoutProps> = ({
   title,
   activities,
+  hotelDetails,
   index,
   onAddActivity,
   onEditActivity,

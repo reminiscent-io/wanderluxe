@@ -56,7 +56,7 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   return (
     <CollapsibleContent className="p-4">
       <DayLayout
-        title={title || ""}
+        title={title}
         activities={activities}
         hotelDetails={hotelDetails}
         index={index}

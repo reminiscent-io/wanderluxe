@@ -2,7 +2,7 @@
 import React from 'react';
 import UnsplashImage from '@/components/UnsplashImage';
 
-interface DayImageProps {
+export interface DayImageProps {
   dayId: string;
   title: string;
   imageUrl?: string | null;
