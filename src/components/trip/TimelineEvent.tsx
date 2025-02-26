@@ -7,7 +7,7 @@ import EventContent from './event/EventContent';
 import EventEditDialog from './event/EventEditDialog';
 import { useEventState } from './event/useEventState';
 import { useEventHandlers } from './event/useEventHandlers';
-import { DayActivity } from '@/types/trip';
+import { DayActivity, ActivityFormData } from '@/types/trip';
 
 interface TimelineEventProps {
   id: string;
@@ -62,17 +62,54 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     title,
     description,
     hotel,
-    hotel_details,
-    hotel_checkin_date,
-    hotel_checkout_date,
-    hotel_url
+    hotelDetails: hotel_details, // Fixed property name
+    hotelCheckinDate: hotel_checkin_date,
+    hotelCheckoutDate: hotel_checkout_date,
+    hotelUrl: hotel_url
   });
 
   const {
     handleEdit,
     handleAddActivity,
     handleEditActivity,
-  } = useEventHandlers(id, tripId, onEdit);
+  } = useEventHandlers(id, tripId, onEdit, editData, activities);
+
+  // Implement the activity handlers
+  const onAddActivity = () => {
+    const formData: ActivityFormData = {
+      title: newActivity.title,
+      cost: newActivity.cost,
+      currency: newActivity.currency,
+      ...(newActivity.description && { description: newActivity.description }),
+      ...(newActivity.start_time && { start_time: newActivity.start_time }),
+      ...(newActivity.end_time && { end_time: newActivity.end_time })
+    };
+
+    handleAddActivity(formData).then(success => {
+      if (success) {
+        setIsAddingActivity(false);
+        setNewActivity({ title: "", cost: "", currency: "USD" });
+      }
+    });
+  };
+
+  const onEditActivity = (activityId: string) => {
+    const formData: ActivityFormData = {
+      title: activityEdit.title,
+      cost: activityEdit.cost,
+      currency: activityEdit.currency,
+      ...(activityEdit.description && { description: activityEdit.description }),
+      ...(activityEdit.start_time && { start_time: activityEdit.start_time }),
+      ...(activityEdit.end_time && { end_time: activityEdit.end_time })
+    };
+
+    handleEditActivity(activityId, formData).then(success => {
+      if (success) {
+        setEditingActivity(null);
+        setActivityEdit({ title: "", cost: "", currency: "USD" });
+      }
+    });
+  };
 
   return (
     <motion.div
