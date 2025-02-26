@@ -6,8 +6,8 @@ import UnsplashImage from '@/components/UnsplashImage';
 interface HeroSectionProps {
   title: string;
   imageUrl: string;
-  arrivalDate?: string | null;
-  departureDate?: string | null;
+  arrivalDate: string;  // Removed optional
+  departureDate: string;  // Removed optional
   photographer?: string;
   unsplashUsername?: string;
   isLoading?: boolean;
@@ -24,21 +24,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   // Cache formatted date string using useMemo to prevent unnecessary recalculations
   const formattedDateRange = React.useMemo(() => {
-    // Check if both dates exist and are not null or undefined
-    if (arrivalDate && departureDate) {
-      try {
-        const arrival = parseISO(arrivalDate);
-        const departure = parseISO(departureDate);
-        if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
-          return null;
-        }
-        return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
-      } catch (error) {
-        console.error('Error formatting dates:', error);
+    try {
+      const arrival = parseISO(arrivalDate);
+      const departure = parseISO(departureDate);
+      if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
+        console.error('Invalid date format received:', { arrivalDate, departureDate });
         return null;
       }
+      return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
+    } catch (error) {
+      console.error('Error formatting dates:', error);
+      return null;
     }
-    return null;
   }, [arrivalDate, departureDate]);
 
   // If loading, show skeleton UI
