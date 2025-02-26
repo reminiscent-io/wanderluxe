@@ -93,18 +93,19 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
         {generatedImages.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {generatedImages.map((image) => (
-              <div 
-                key={image.id} 
-                className="relative cursor-pointer"
+              <Button
+                key={image.id}
+                variant="ghost"
+                className="p-0 h-auto w-full hover:opacity-90 transition-opacity"
                 onClick={() => selectGeneratedImage(image.url)}
               >
                 <UnsplashImage
                   src={image.url}
-                  className="h-48 rounded-lg"
-                  alt={image.description}
+                  className="h-48 rounded-lg w-full"
+                  alt={image.description || "Generated image"}
                   showAttribution={true}
                 />
-              </div>
+              </Button>
             ))}
           </div>
         )}
