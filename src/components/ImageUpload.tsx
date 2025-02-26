@@ -28,7 +28,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) 
       if (!items) return;
 
       for (const item of items) {
-        if (item.type.indexOf('image') === 0) {
+        if (item.type.startsWith('image')) {
           const file = item.getAsFile();
           if (file) {
             await uploadImage(file);
