@@ -21,7 +21,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
   onClose
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
+  const [isFetchingMetadata] = useState(false);
 
   const handleSubmit = async (formData: any) => {
     setIsSubmitting(true);
