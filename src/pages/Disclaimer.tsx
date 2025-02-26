@@ -80,11 +80,8 @@ const Disclaimer = () => {
             <div className="bg-gray-50 p-6 rounded-lg">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">Contact Information</h2>
               <p className="text-muted-foreground">
-                If you have any questions about this disclaimer, please contact us at
-                <a 
-                  href="mailto:info@wanderluxe.io" 
-                  className="text-primary hover:underline ml-1"
-                >
+                If you have any questions about this disclaimer, please contact us at{' '}
+                <a href="mailto:info@wanderluxe.io" className="text-primary hover:underline">
                   info@wanderluxe.io
                 </a>.
               </p>
