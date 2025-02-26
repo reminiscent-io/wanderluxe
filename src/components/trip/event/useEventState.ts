@@ -2,26 +2,37 @@
 import { useState } from 'react';
 import { ActivityFormData } from '@/types/trip';
 
-export const useEventState = (
-  date: string,
-  title: string,
-  description: string,
-  hotel: string,
-  hotel_details: string,
-  hotel_checkin_date: string,
-  hotel_checkout_date: string,
-  hotel_url: string
-) => {
+interface EventStateParams {
+  date: string;
+  title: string;
+  description: string;
+  hotel: string;
+  hotelDetails: string;
+  hotelCheckinDate: string;
+  hotelCheckoutDate: string;
+  hotelUrl: string;
+}
+
+export const useEventState = ({
+  date,
+  title,
+  description,
+  hotel,
+  hotelDetails,
+  hotelCheckinDate,
+  hotelCheckoutDate,
+  hotelUrl
+}: EventStateParams) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     date,
     title,
     description,
     hotel,
-    hotel_details,
-    hotel_checkin_date,
-    hotel_checkout_date,
-    hotel_url,
+    hotel_details: hotelDetails,
+    hotel_checkin_date: hotelCheckinDate,
+    hotel_checkout_date: hotelCheckoutDate,
+    hotel_url: hotelUrl,
     expense_type: "",
     expense_cost: "",
     expense_currency: "USD",
