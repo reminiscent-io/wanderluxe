@@ -6,7 +6,7 @@ interface ErrorBoundaryProps {
 }
 
 const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children }) => {
-  const [hasError, setHasError] = React.useState(false);
+  const [hasError] = React.useState(false);
 
   React.useEffect(() => {
     //Optional: Log the error to a service like Sentry or LogRocket
