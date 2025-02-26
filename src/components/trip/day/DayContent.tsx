@@ -10,6 +10,9 @@ interface DayContentProps {
   activities: DayActivity[];
   formatTime: (time?: string) => string;
   dayId: string;
+  date: string;
+  dayNumber: number;
+  onEdit: () => void;
 }
 
 const DayContent: React.FC<DayContentProps> = ({
@@ -17,10 +20,21 @@ const DayContent: React.FC<DayContentProps> = ({
   activities,
   formatTime,
   dayId,
+  date,
+  dayNumber,
+  onEdit,
 }) => {
   return (
     <Card className="p-4">
-      <DayHeader title={title} activities={activities} />
+      <DayHeader 
+        title={title}
+        activities={activities}
+        date={date}
+        dayNumber={dayNumber}
+        onEdit={onEdit}
+        dayId={dayId}
+        formatTime={formatTime}
+      />
       <div className="mt-4">
         <DiningList
           reservations={[]}

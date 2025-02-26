@@ -63,13 +63,17 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     currency: 'USD'
   });
 
+  const handleEditActivityWrapper = (activity: DayActivity) => {
+    onEditActivity(activity.id);
+  };
+
   return (
     <div className="p-6 space-y-4">
       <ActivitiesList
         activities={activities}
         formatTime={formatTime}
         onAddActivity={() => setIsAddingActivity(true)}
-        onEditActivity={onEditActivity}
+        onEditActivity={handleEditActivityWrapper}
       />
 
       <div className="mt-8">

@@ -6,7 +6,6 @@ import UnsplashImage from '@/components/UnsplashImage';
 interface HeroSectionProps {
   title: string;
   imageUrl: string;
-  events?: any[];
   arrivalDate?: string | null;
   departureDate?: string | null;
   photographer?: string;
