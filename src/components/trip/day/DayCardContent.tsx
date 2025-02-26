@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../dining/DiningList';
-import { DayActivity } from '@/types/trip';
+import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
 
 interface DayCardContentProps {
@@ -46,7 +46,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [newActivity, setNewActivity] = useState<ActivityState>({
+  const [newActivity, setNewActivity] = useState<ActivityFormData>({
     title: '',
     description: '',
     start_time: '',
@@ -54,7 +54,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     cost: '',
     currency: 'USD'
   });
-  const [activityEdit, setActivityEdit] = useState<ActivityState>({
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
     title: '',
     description: '',
     start_time: '',
@@ -69,7 +69,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         activities={activities}
         formatTime={formatTime}
         onAddActivity={() => setIsAddingActivity(true)}
-        onEditActivity={handleEditActivity}
+        onEditActivity={onEditActivity}
       />
 
       <div className="mt-8">

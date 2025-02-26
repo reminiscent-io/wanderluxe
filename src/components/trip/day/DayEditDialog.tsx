@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import DiningList from '../DiningList';
+import DiningList from '../dining/DiningList';
 import { useQuery } from '@tanstack/react-query';
 import { DayActivity } from '@/types/trip';
 import ImageGenerationSection from './dialogs/ImageGenerationSection';
@@ -228,7 +227,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
               reservations={reservations}
               formatTime={formatTime}
               dayId={dayId}
-              onAddReservation={() => {}}
             />
           </div>
 
