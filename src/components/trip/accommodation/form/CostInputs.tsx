@@ -24,8 +24,9 @@ const CostInputs: React.FC<CostInputsProps> = ({
       return;
     }
 
-    // Only allow numbers and decimal point
-    if (!/^\d*\.?\d*$/.test(value)) {
+    // Use a more secure regex pattern that prevents backtracking
+    // This pattern anchors the match at the start and end, and uses non-capturing groups
+    if (!/^(?:[0-9]*|[0-9]+\.[0-9]*)$/.test(value)) {
       return;
     }
 
@@ -78,3 +79,4 @@ const CostInputs: React.FC<CostInputsProps> = ({
 };
 
 export default CostInputs;
+
