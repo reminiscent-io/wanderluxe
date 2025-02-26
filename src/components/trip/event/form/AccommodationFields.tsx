@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +73,7 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
             type="date"
             value={checkinDate}
             onChange={(e) => onCheckinDateChange(e.target.value)}
-            required={hotel ? true : false}
+            required={!!hotel}
             disabled={isExistingStay}
             className={isExistingStay ? "bg-gray-100" : ""}
           />
@@ -84,7 +85,7 @@ const AccommodationFields: React.FC<AccommodationFieldsProps> = ({
             type="date"
             value={checkoutDate}
             onChange={(e) => onCheckoutDateChange(e.target.value)}
-            required={hotel ? true : false}
+            required={!!hotel}
             disabled={isExistingStay}
             className={isExistingStay ? "bg-gray-100" : ""}
           />
