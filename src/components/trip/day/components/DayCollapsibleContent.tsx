@@ -2,7 +2,7 @@
 import React from 'react';
 import { CollapsibleContent } from "@/components/ui/collapsible";
 import DayLayout from '../DayLayout';
-import { DayActivity } from '@/types/trip';
+import { DayActivity, ActivityFormData } from '@/types/trip';
 
 interface DayCollapsibleContentProps {
   title: string;
@@ -13,7 +13,7 @@ interface DayCollapsibleContentProps {
     imageUrl?: string;
   };
   index: number;
-  onAddActivity: () => void;
+  onAddActivity: (activity: ActivityFormData) => Promise<void>;
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
   dayId: string;
