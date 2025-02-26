@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -11,7 +12,23 @@ const Table = React.forwardRef<
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
       {...props}
-    />
+    >
+      {!props.children && (
+        <>
+          <thead>
+            <tr>
+              <th>Header</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>No data available</td>
+            </tr>
+          </tbody>
+        </>
+      )}
+      {props.children}
+    </table>
   </div>
 ))
 Table.displayName = "Table"

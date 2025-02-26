@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { OTPInput, OTPInputContext } from "input-otp"
 import { Dot } from "lucide-react"
@@ -57,12 +58,16 @@ const InputOTPSlot = React.forwardRef<
 InputOTPSlot.displayName = "InputOTPSlot"
 
 const InputOTPSeparator = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div">
->(({ ...props }, ref) => (
-  <div ref={ref} role="separator" {...props}>
-    <Dot />
-  </div>
+  HTMLHRElement,
+  React.ComponentPropsWithoutRef<"hr">
+>(({ className, ...props }, ref) => (
+  <hr 
+    ref={ref} 
+    className={cn("inline-block h-6 w-px bg-muted align-middle", className)}
+    {...props}
+  >
+    <Dot className="h-4 w-4" aria-hidden="true" />
+  </hr>
 ))
 InputOTPSeparator.displayName = "InputOTPSeparator"
 
