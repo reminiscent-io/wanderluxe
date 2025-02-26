@@ -6,7 +6,7 @@ import DayImage from './day/DayImage';
 import EventEditDialog from './event/EventEditDialog';
 import { useEventState } from './event/useEventState';
 import { useEventHandlers } from './event/useEventHandlers';
-import { DayActivity, ActivityFormData } from '@/types/trip';
+import { DayActivity } from '@/types/trip';
 
 interface TimelineEventProps {
   id: string;
