@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { formatCost, parseCost, isValidCost } from '@/utils/costUtils';
+import {  isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
 
 interface ActivityFormProps {
