@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DayActivity } from '@/types/trip';
 import ImageGenerationSection from './dialogs/ImageGenerationSection';
 import DayActivitiesSection from './dialogs/DayActivitiesSection';
+import { Label } from "@/components/ui/label";
 
 interface DayEditDialogProps {
   isOpen: boolean;
@@ -58,7 +58,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
 
-  // Fetch restaurant reservations
   const { data: fetchedReservations = [] } = useQuery({
     queryKey: ['reservations', dayId],
     queryFn: async () => {
@@ -77,7 +76,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     enabled: !!dayId && isOpen,
   });
 
-  // Get the trip_id from the first activity or fetch it from trip_days
   const { data: tripData } = useQuery({
     queryKey: ['trip_id', dayId],
     queryFn: async () => {
@@ -194,10 +192,8 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          <div>
-            <label htmlFor="day-title" className="text-sm font-medium mb-2 block">
-              Day Title
-            </label>
+          <div className="space-y-2">
+            <Label htmlFor="day-title">Day Title</Label>
             <Input
               id="day-title"
               value={title}
