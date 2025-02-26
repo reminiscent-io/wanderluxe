@@ -15,7 +15,7 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   showAttribution = true
 }) => {
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative h-[300px] overflow-hidden">
       <img
         src={src}
         alt={alt}
