@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -194,8 +195,11 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
         <div className="space-y-6">
           <div>
-            <label className="text-sm font-medium mb-2 block">Day Title</label>
+            <label htmlFor="day-title" className="text-sm font-medium mb-2 block">
+              Day Title
+            </label>
             <Input
+              id="day-title"
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
