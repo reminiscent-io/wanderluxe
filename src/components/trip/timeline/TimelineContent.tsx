@@ -96,11 +96,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
         });
 
         return (
-          <motion.div
+          <motion.fieldset
             key={`${group.hotel || 'standalone'}-${groupIndex}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: groupIndex * 0.1 }}
+            className="border-0 p-0 m-0"
           >
             {group.hotel ? (
               <AccommodationGroup
@@ -139,7 +140,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 ))}
               </AccommodationGroup>
             ) : (
-              <div className="space-y-6">
+              <fieldset className="space-y-6 border-0 p-0 m-0">
                 {group.days.map((day) => (
                   <DayCard
                     key={day.day_id}
@@ -154,9 +155,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     onDelete={handleDayDelete}
                   />
                 ))}
-              </div>
+              </fieldset>
             )}
-          </motion.div>
+          </motion.fieldset>
         );
       })}
     </div>
