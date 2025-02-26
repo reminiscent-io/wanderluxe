@@ -25,16 +25,31 @@ const CostInputs: React.FC<CostInputsProps> = ({
       return;
     }
 
-    // Remove any non-numeric characters except decimal point and negative sign
-    const cleanValue = value.replace(/[^\d.-]/g, '');
-    
-    // Parse the cleaned value
-    const parsedValue = parseCost(cleanValue);
-    
-    // If the value is valid, format it
-    if (parsedValue !== null) {
-      onCostChange(formatCost(parsedValue));
+    // Only allow numbers and decimal point
+    if (!/^\d*\.?\d*$/.test(value)) {
+      return;
     }
+
+    // If it's just a decimal point, add a leading zero
+    if (value === '.') {
+      onCostChange('0.');
+      return;
+    }
+
+    // Prevent multiple decimal points
+    const decimalCount = (value.match(/\./g) || []).length;
+    if (decimalCount > 1) {
+      return;
+    }
+
+    // Limit to two decimal places
+    const parts = value.split('.');
+    if (parts[1] && parts[1].length > 2) {
+      return;
+    }
+
+    // Update the value
+    onCostChange(value);
   };
 
   return (
