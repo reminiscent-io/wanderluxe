@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RestaurantReservationDialog from './RestaurantReservationDialog';
 import RestaurantCard from './RestaurantCard';
 import DeleteReservationDialog from './DeleteReservationDialog';
@@ -41,57 +40,67 @@ const DiningList: React.FC<DiningListProps> = ({
   const [editingReservation, setEditingReservation] = useState<string | null>(null);
   const [deletingReservation, setDeletingReservation] = useState<string | null>(null);
 
+  // Helper function to handle database operations and error handling
+  const handleDatabaseOperation = async (
+    operation: () => Promise<{ error: any }>,
+    successMessage: string,
+    errorMessage: string
+  ) => {
+    try {
+      const { error } = await operation();
+      if (error) throw error;
+      toast.success(successMessage);
+      return true;
+    } catch (error) {
+      console.error(errorMessage, error);
+      toast.error(errorMessage);
+      return false;
+    }
+  };
+
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
-    try {
-      const processedData = {
-        ...data,
-        day_id: dayId,
-        order_index: reservations.length,
-        reservation_time: data.reservation_time || null
-      };
+    const processedData = {
+      ...data,
+      day_id: dayId,
+      order_index: reservations.length,
+      reservation_time: data.reservation_time || null
+    };
 
-      if (editingReservation) {
-        const { error } = await supabase
-          .from('restaurant_reservations')
-          .update(processedData)
-          .eq('id', editingReservation);
+    const success = await handleDatabaseOperation(
+      () => editingReservation
+        ? supabase
+            .from('restaurant_reservations')
+            .update(processedData)
+            .eq('id', editingReservation)
+        : supabase
+            .from('restaurant_reservations')
+            .insert(processedData),
+      editingReservation ? 'Reservation updated successfully' : 'Reservation added successfully',
+      editingReservation ? 'Failed to update reservation' : 'Failed to save reservation'
+    );
 
-        if (error) throw error;
-        toast.success('Reservation updated successfully');
-      } else {
-        const { error } = await supabase
-          .from('restaurant_reservations')
-          .insert(processedData);
-
-        if (error) throw error;
-        toast.success('Reservation added successfully');
-      }
+    if (success) {
       setIsDialogOpen(false);
       setEditingReservation(null);
-    } catch (error) {
-      console.error('Error saving reservation:', error);
-      toast.error('Failed to save reservation');
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   const handleDelete = async () => {
     if (!deletingReservation) return;
     
-    try {
-      const { error } = await supabase
+    const success = await handleDatabaseOperation(
+      () => supabase
         .from('restaurant_reservations')
         .delete()
-        .eq('id', deletingReservation);
+        .eq('id', deletingReservation),
+      'Reservation deleted successfully',
+      'Failed to delete reservation'
+    );
 
-      if (error) throw error;
-      toast.success('Reservation deleted successfully');
+    if (success) {
       setDeletingReservation(null);
-    } catch (error) {
-      console.error('Error deleting reservation:', error);
-      toast.error('Failed to delete reservation');
     }
   };
 
