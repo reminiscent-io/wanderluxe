@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
@@ -20,9 +21,36 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) 
     }
   }, [value]);
 
+  // Handle paste events globally when the component is mounted
+  useEffect(() => {
+    const handlePaste = async (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.indexOf('image') === 0) {
+          const file = item.getAsFile();
+          if (file) {
+            await uploadImage(file);
+          }
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, []);
+
   const uploadImage = async (file: File) => {
     try {
       setUploading(true);
+
+      // Validate file size
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
 
       const fileExt = file.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
@@ -53,10 +81,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
-        return;
-      }
       uploadImage(file);
     }
   };
@@ -109,7 +133,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) 
             ) : (
               <div className="flex flex-col items-center">
                 <Upload className="h-8 w-8 text-gray-500 mb-2" />
-                <p className="text-sm text-gray-500">Click to upload an image</p>
+                <p className="text-sm text-gray-500">Click to upload or paste an image</p>
                 <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
               </div>
             )}
