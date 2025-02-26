@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { ChevronRight, MoreHorizontal } from "lucide-react"
@@ -61,13 +62,13 @@ const BreadcrumbPage = React.forwardRef<
   HTMLSpanElement,
   React.ComponentPropsWithoutRef<"span">
 >(({ className, ...props }, ref) => (
-  <span
+  <a
     ref={ref}
-    role="link"
-    aria-disabled="true"
+    className={cn("font-normal text-foreground cursor-default", className)}
     aria-current="page"
-    className={cn("font-normal text-foreground", className)}
     {...props}
+    onClick={(e) => e.preventDefault()}
+    href="#"
   />
 ))
 BreadcrumbPage.displayName = "BreadcrumbPage"
@@ -78,12 +79,11 @@ const BreadcrumbSeparator = ({
   ...props
 }: React.ComponentProps<"li">) => (
   <li
-    role="presentation"
-    aria-hidden="true"
     className={cn("[&>svg]:size-3.5", className)}
     {...props}
+    aria-hidden="true"
   >
-    {children ?? <ChevronRight />}
+    {children ?? <ChevronRight aria-hidden="true" />}
   </li>
 )
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
@@ -92,17 +92,16 @@ const BreadcrumbEllipsis = ({
   className,
   ...props
 }: React.ComponentProps<"span">) => (
-  <span
-    role="presentation"
-    aria-hidden="true"
+  <li
     className={cn("flex h-9 w-9 items-center justify-center", className)}
     {...props}
+    aria-hidden="true"
   >
-    <MoreHorizontal className="h-4 w-4" />
+    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
     <span className="sr-only">More</span>
-  </span>
+  </li>
 )
-BreadcrumbEllipsis.displayName = "BreadcrumbElipssis"
+BreadcrumbEllipsis.displayName = "BreadcrumbElipsis"
 
 export {
   Breadcrumb,
