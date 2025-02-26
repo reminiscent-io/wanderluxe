@@ -17,9 +17,7 @@ interface DayCardProps {
   id: string;
   date: string;
   title?: string;
-  description?: string;
   activities: DayActivity[];
-  onAddActivity: () => void;
   index: number;
   hotelDetails?: {
     name: string;
