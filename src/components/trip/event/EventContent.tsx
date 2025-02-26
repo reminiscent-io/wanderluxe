@@ -1,6 +1,4 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
 import EventHeader from './EventHeader';
 import EventAccommodation from './EventAccommodation';
 import EventActivitiesList from './EventActivitiesList';
