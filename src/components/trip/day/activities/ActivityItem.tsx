@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { DayActivity } from '@/types/trip';
+import { Button } from "@/components/ui/button";
 
 interface ActivityItemProps {
   activity: DayActivity;
@@ -14,16 +15,19 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   onEditClick,
 }) => {
   return (
-    <li 
-      className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-      onClick={() => onEditClick(activity)}
-    >
-      <span>{activity.title}</span>
-      {activity.start_time && (
-        <span className="text-sm text-gray-500">
-          {formatTime(activity.start_time)}
-        </span>
-      )}
+    <li className="flex justify-between items-center p-2">
+      <Button
+        variant="ghost"
+        className="w-full flex justify-between items-center hover:bg-gray-50 rounded"
+        onClick={() => onEditClick(activity)}
+      >
+        <span>{activity.title}</span>
+        {activity.start_time && (
+          <span className="text-sm text-gray-500">
+            {formatTime(activity.start_time)}
+          </span>
+        )}
+      </Button>
     </li>
   );
 };
