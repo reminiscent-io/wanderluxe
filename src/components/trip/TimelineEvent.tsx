@@ -48,14 +48,6 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
     setIsEditing,
     editData,
     setEditData,
-    newActivity,
-    setNewActivity,
-    isAddingActivity,
-    setIsAddingActivity,
-    editingActivity,
-    setEditingActivity,
-    activityEdit,
-    setActivityEdit,
   } = useEventState({
     date,
     title,
@@ -69,8 +61,6 @@ const TimelineEvent: React.FC<TimelineEventProps> = ({
 
   const {
     handleEdit,
-    handleAddActivity,
-    handleEditActivity,
   } = useEventHandlers(id, tripId, onEdit, editData, activities);
 
   return (
