@@ -33,24 +33,39 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
   activitiesLength
 }) => {
   const handleAddActivity = async () => {
+    if (!newActivity.title) {
+      toast.error('Title is required');
+      return;
+    }
+
     try {
-      const { error } = await supabase
+      // First try to insert the activity
+      const { data, error } = await supabase
         .from('day_activities')
         .insert([{
           day_id: id,
           trip_id: tripId,
           title: newActivity.title,
           description: newActivity.description || '',
-          start_time: newActivity.start_time,
-          end_time: newActivity.end_time,
+          start_time: newActivity.start_time || null,
+          end_time: newActivity.end_time || null,
           cost: newActivity.cost ? Number(newActivity.cost) : null,
           currency: newActivity.currency,
           order_index: activitiesLength
-        }]);
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
-      // Clear the form and close the dialog
+      if (!data) {
+        throw new Error('No data returned from insert');
+      }
+
+      // Only clear the form and close the dialog if the insert was successful
       setNewActivity({
         title: '',
         description: '',
