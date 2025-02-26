@@ -61,7 +61,7 @@ BreadcrumbLink.displayName = "BreadcrumbLink"
 const BreadcrumbPage = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a">
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <a
     ref={ref}
     className={cn("font-normal text-foreground cursor-default", className)}
@@ -69,7 +69,9 @@ const BreadcrumbPage = React.forwardRef<
     {...props}
     onClick={(e) => e.preventDefault()}
     href="#"
-  />
+  >
+    {children}
+  </a>
 ))
 BreadcrumbPage.displayName = "BreadcrumbPage"
 
