@@ -6,7 +6,7 @@ import AccommodationActions from './accommodation/AccommodationActions';
 import HotelStaysList from './accommodation/HotelStaysList';
 import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
-import { useTripDates } from './accommodation/hooks/useTripDates';
+import { useTripDays } from '@/hooks/use-trip-days';
 import type { HotelStay } from '@/types/trip';
 
 interface AccommodationsSectionProps {
@@ -21,7 +21,13 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   hotelStays
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const tripDates = useTripDates(tripId);
+  
+  // Use the main useTripDays hook and get dates from its data
+  const { days } = useTripDays(tripId);
+  const tripDates = {
+    arrival_date: days?.[0]?.date || null,
+    departure_date: days?.[days?.length - 1]?.date || null
+  };
   
   const {
     isAddingAccommodation,
