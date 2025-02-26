@@ -63,7 +63,11 @@ const TripCard = ({
         </div>
         <CardContent className="p-6">
           <div className="flex justify-between items-start">
-            <div className="cursor-pointer flex-grow" onClick={() => navigate(`/trip/${trip.trip_id}`)}>
+            <Button 
+              variant="ghost" 
+              className="flex-grow text-left h-auto p-0 hover:bg-transparent"
+              onClick={() => navigate(`/trip/${trip.trip_id}`)}
+            >
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-semibold text-gray-900">
                   {trip.destination}
@@ -84,7 +88,7 @@ const TripCard = ({
               <p className="text-sm text-gray-500 mt-2">
                 {formatDateRange(trip)}
               </p>
-            </div>
+            </Button>
             
             {!isExample && (
               <AlertDialog>
