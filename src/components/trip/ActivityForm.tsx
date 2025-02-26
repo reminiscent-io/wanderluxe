@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import {  isValidCost } from '@/utils/costUtils';
+import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
 
 interface ActivityFormProps {
@@ -67,7 +67,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   };
 
   const handleCostChange = (value: string) => {
-    // Update the activity with the raw string value
     onActivityChange({
       ...activity,
       cost: value
@@ -77,8 +76,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700">Title</label>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
         <input
+          id="title"
           type="text"
           value={activity.title}
           onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
@@ -91,8 +91,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
         <textarea
+          id="description"
           value={activity.description || ''}
           onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
@@ -102,8 +103,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Start Time</label>
+          <label htmlFor="start_time" className="block text-sm font-medium text-gray-700">Start Time</label>
           <input
+            id="start_time"
             type="time"
             value={activity.start_time || ''}
             onChange={(e) => onActivityChange({ ...activity, start_time: e.target.value })}
@@ -111,8 +113,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">End Time</label>
+          <label htmlFor="end_time" className="block text-sm font-medium text-gray-700">End Time</label>
           <input
+            id="end_time"
             type="time"
             value={activity.end_time || ''}
             onChange={(e) => onActivityChange({ ...activity, end_time: e.target.value })}
@@ -124,8 +127,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Cost</label>
+          <label htmlFor="cost" className="block text-sm font-medium text-gray-700">Cost</label>
           <input
+            id="cost"
             type="text"
             value={activity.cost || ''}
             onChange={(e) => handleCostChange(e.target.value)}
@@ -136,8 +140,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Currency</label>
+          <label htmlFor="currency" className="block text-sm font-medium text-gray-700">Currency</label>
           <select
+            id="currency"
             value={activity.currency}
             onChange={(e) => onActivityChange({ ...activity, currency: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
