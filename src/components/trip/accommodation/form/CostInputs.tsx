@@ -2,7 +2,6 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { parseCost, formatCost } from '@/utils/costUtils';
 
 interface CostInputsProps {
   cost: string | null;
