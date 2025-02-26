@@ -58,10 +58,10 @@ const VisionBoardItemForm: React.FC<VisionBoardItemFormProps> = ({
       <div>
         <Label htmlFor="category">Category *</Label>
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             {CATEGORIES.map(cat => (
               <SelectItem key={cat} value={cat}>
                 {cat}
