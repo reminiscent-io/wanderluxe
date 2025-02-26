@@ -1,70 +1,46 @@
+
 import { Database } from './database';
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">];
+
+// Generic helper type to extract table/view row types
+type ExtractRowType<T> = T extends { Row: infer R } ? R : never;
+
+// Helper type to handle schema selection
+type SchemaType<T extends { schema: keyof Database } | string> = T extends { schema: keyof Database }
+  ? Database[T["schema"]]
+  : PublicSchema;
+
+// Helper type to get table name based on schema
+type TableName<T extends { schema: keyof Database } | string> = T extends { schema: keyof Database }
+  ? keyof (Database[T["schema"]]["Tables"] & Database[T["schema"]]["Views"])
+  : T;
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  SchemaTableNameOrOptions extends keyof PublicSchema["Tables"] | { schema: keyof Database },
+  TableNameType extends SchemaTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[SchemaTableNameOrOptions["schema"]]["Tables"] & 
+        Database[SchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+> = ExtractRowType<
+  (SchemaType<SchemaTableNameOrOptions>["Tables"] & 
+   SchemaType<SchemaTableNameOrOptions>["Views"])[TableName<SchemaTableNameOrOptions>]
+>;
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  SchemaTableNameOrOptions extends keyof PublicSchema["Tables"] | { schema: keyof Database },
+  TableNameType extends SchemaTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[SchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+> = ExtractRowType<
+  SchemaType<SchemaTableNameOrOptions>["Tables"][TableName<SchemaTableNameOrOptions>] & { Insert: any }
+>;
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  SchemaTableNameOrOptions extends keyof PublicSchema["Tables"] | { schema: keyof Database },
+  TableNameType extends SchemaTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[SchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+> = ExtractRowType<
+  SchemaType<SchemaTableNameOrOptions>["Tables"][TableName<SchemaTableNameOrOptions>] & { Update: any }
+>;
