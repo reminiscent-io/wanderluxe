@@ -24,10 +24,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   // Cache formatted date string using useMemo to prevent unnecessary recalculations
   const formattedDateRange = React.useMemo(() => {
+    // Check if both dates exist and are not null or undefined
     if (arrivalDate && departureDate) {
-      const arrival = parseISO(arrivalDate);
-      const departure = parseISO(departureDate);
-      return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
+      try {
+        const arrival = parseISO(arrivalDate);
+        const departure = parseISO(departureDate);
+        if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
+          return null;
+        }
+        return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
+      } catch (error) {
+        console.error('Error formatting dates:', error);
+        return null;
+      }
     }
     return null;
   }, [arrivalDate, departureDate]);
