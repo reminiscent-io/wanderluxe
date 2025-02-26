@@ -130,11 +130,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     tripId={tripId || ''}
                     date={day.date}
                     title={day.title || ''}
-                    description={day.description}
                     activities={day.activities || []}
                     imageUrl={day.image_url}
                     defaultImageUrl={tripData?.cover_image_url}
-                    onAddActivity={() => {}}
                     index={dayIndexMap.get(day.day_id) || 0}
                     onDelete={handleDayDelete}
                   />
@@ -149,11 +147,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     tripId={tripId || ''}
                     date={day.date}
                     title={day.title || ''}
-                    description={day.description}
                     activities={day.activities || []}
                     imageUrl={day.image_url}
                     defaultImageUrl={tripData?.cover_image_url}
-                    onAddActivity={() => {}}
                     index={dayIndexMap.get(day.day_id) || 0}
                     onDelete={handleDayDelete}
                   />
