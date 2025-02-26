@@ -59,8 +59,8 @@ const BreadcrumbLink = React.forwardRef<
 BreadcrumbLink.displayName = "BreadcrumbLink"
 
 const BreadcrumbPage = React.forwardRef<
-  HTMLSpanElement,
-  React.ComponentPropsWithoutRef<"span">
+  HTMLAnchorElement,
+  React.ComponentPropsWithoutRef<"a">
 >(({ className, ...props }, ref) => (
   <a
     ref={ref}
@@ -91,7 +91,7 @@ BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
 const BreadcrumbEllipsis = ({
   className,
   ...props
-}: React.ComponentProps<"span">) => (
+}: React.ComponentProps<"li">) => (
   <li
     className={cn("flex h-9 w-9 items-center justify-center", className)}
     {...props}
