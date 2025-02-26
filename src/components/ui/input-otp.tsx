@@ -65,9 +65,7 @@ const InputOTPSeparator = React.forwardRef<
     ref={ref} 
     className={cn("inline-block h-6 w-px bg-muted align-middle", className)}
     {...props}
-  >
-    <Dot className="h-4 w-4" aria-hidden="true" />
-  </hr>
+  />
 ))
 InputOTPSeparator.displayName = "InputOTPSeparator"
 

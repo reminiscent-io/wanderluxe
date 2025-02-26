@@ -13,21 +13,23 @@ const Table = React.forwardRef<
       className={cn("w-full caption-bottom text-sm", className)}
       {...props}
     >
-      {!props.children && (
+      {/* Ensure there's always a header present */}
+      {!props.children ? (
         <>
           <thead>
             <tr>
-              <th>Header</th>
+              <th className="h-12 px-4 text-left align-middle font-medium">Data</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>No data available</td>
+              <td className="p-4 align-middle">No data available</td>
             </tr>
           </tbody>
         </>
+      ) : (
+        props.children
       )}
-      {props.children}
     </table>
   </div>
 ))
