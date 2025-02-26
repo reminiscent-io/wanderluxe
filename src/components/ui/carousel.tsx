@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -42,8 +41,8 @@ function useCarousel() {
 }
 
 const Carousel = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & CarouselProps
+  HTMLElement,
+  React.HTMLAttributes<HTMLElement> & CarouselProps
 >(
   (
     {
@@ -85,7 +84,7 @@ const Carousel = React.forwardRef<
     }, [api])
 
     const handleKeyDown = React.useCallback(
-      (event: React.KeyboardEvent<HTMLDivElement>) => {
+      (event: React.KeyboardEvent<HTMLElement>) => {
         if (event.key === "ArrowLeft") {
           event.preventDefault()
           scrollPrev()
@@ -119,7 +118,6 @@ const Carousel = React.forwardRef<
       }
     }, [api, onSelect])
 
-    // Memoize the context value to prevent unnecessary re-renders
     const contextValue = React.useMemo(
       () => ({
         carouselRef,
@@ -145,16 +143,15 @@ const Carousel = React.forwardRef<
 
     return (
       <CarouselContext.Provider value={contextValue}>
-        <div
+        <section
           ref={ref}
           onKeyDownCapture={handleKeyDown}
           className={cn("relative", className)}
-          role="region"
-          aria-roledescription="carousel"
+          aria-label="Carousel"
           {...props}
         >
           {children}
-        </div>
+        </section>
       </CarouselContext.Provider>
     )
   }
@@ -169,7 +166,7 @@ const CarouselContent = React.forwardRef<
 
   return (
     <div ref={carouselRef} className="overflow-hidden">
-      <div
+      <fieldset
         ref={ref}
         className={cn(
           "flex",
