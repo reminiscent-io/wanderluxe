@@ -2,7 +2,6 @@
 import React from 'react';
 import { Car, Plane, Train, Bus } from 'lucide-react';
 import ExpenseDetails from './ExpenseDetails';
-import { Expense } from '@/integrations/supabase/types/models';
 
 interface TransportType {
   id: string;
