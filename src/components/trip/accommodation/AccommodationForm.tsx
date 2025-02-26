@@ -8,6 +8,7 @@ import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 import { AccommodationFormData } from '@/services/accommodation/types';
 import { toast } from 'sonner';
+import { useTripDays } from '@/hooks/use-trip-days'; // Updated import
 
 interface AccommodationFormProps {
   onSubmit: (data: AccommodationFormData) => Promise<void>;
