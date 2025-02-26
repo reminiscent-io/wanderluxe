@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
@@ -21,10 +22,6 @@ serve(async (req) => {
     const { destination, date, description } = await req.json() as RequestBody;
     
     console.log('Generating content for:', { destination, date, description });
-
-    const prompt = description 
-      ? `Generate a detailed, high-quality travel photo of ${description} in ${destination}.`
-      : `Generate a beautiful, high-quality travel photo of ${destination}, focusing on its most iconic and picturesque locations.`;
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
