@@ -13,7 +13,7 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
       console.log('Submitting accommodation data:', formData);
       await addAccommodation(tripId, formData);
       setIsAddingAccommodation(false);
-      await onSuccess();
+      onSuccess();
       toast.success('Accommodation added successfully');
     } catch (error) {
       console.error('Error saving accommodation:', error);
@@ -30,7 +30,7 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
       }
       await updateAccommodation(tripId, stayId, formData);
       setEditingStay(null);
-      await onSuccess();
+      onSuccess();
       toast.success('Accommodation updated successfully');
     } catch (error) {
       console.error('Error updating accommodation:', error);
@@ -43,7 +43,7 @@ export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) 
     try {
       console.log('Deleting accommodation:', stayId);
       await deleteAccommodation(stayId);
-      await onSuccess();
+      onSuccess();
       toast.success('Accommodation deleted successfully');
     } catch (error) {
       console.error('Error deleting accommodation:', error);
