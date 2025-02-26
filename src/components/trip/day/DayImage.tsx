@@ -28,7 +28,7 @@ const DayImage: React.FC<DayImageProps> = ({
 
   if (!displayImageUrl) {
     return (
-      <div className="relative min-h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
+      <div className="relative h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
           No image selected
         </div>
@@ -42,7 +42,7 @@ const DayImage: React.FC<DayImageProps> = ({
   }
 
   return (
-    <div className="relative min-h-[300px] overflow-hidden rounded-l-lg">
+    <div className="relative h-[300px] overflow-hidden rounded-l-lg">
       <UnsplashImage
         src={displayImageUrl}
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
