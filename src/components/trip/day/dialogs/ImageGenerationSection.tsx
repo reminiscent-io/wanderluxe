@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Loader, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
 
 interface ImageGenerationSectionProps {
   onImageSelect: (image: string) => void;
@@ -16,7 +17,7 @@ const ImageGenerationSection: React.FC<ImageGenerationSectionProps> = ({
   selectedImage
 }) => {
   const [imagePrompt, setImagePrompt] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<Array<{ id: string; url: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGenerateImages = async () => {
@@ -41,7 +42,11 @@ const ImageGenerationSection: React.FC<ImageGenerationSectionProps> = ({
         return;
       }
 
-      setImages(response.images.map((img: any) => img.url));
+      // Add unique IDs to images
+      setImages(response.images.map((img: any) => ({
+        id: crypto.randomUUID(),
+        url: img.url
+      })));
     } catch (error) {
       console.error('Error generating images:', error);
       toast.error('Failed to generate images');
@@ -52,10 +57,11 @@ const ImageGenerationSection: React.FC<ImageGenerationSectionProps> = ({
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="text-sm font-medium mb-2 block">Generate Image</label>
+      <div className="space-y-2">
+        <Label htmlFor="image-prompt">Generate Image</Label>
         <div className="flex gap-2">
           <Input
+            id="image-prompt"
             value={imagePrompt}
             onChange={(e) => setImagePrompt(e.target.value)}
             placeholder="Where will you be today?"
@@ -76,20 +82,21 @@ const ImageGenerationSection: React.FC<ImageGenerationSectionProps> = ({
 
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {images.map((image, index) => (
-            <div
-              key={index}
-              className={`relative aspect-video cursor-pointer rounded-lg overflow-hidden ${
-                selectedImage === image ? 'ring-2 ring-primary' : ''
+          {images.map((image) => (
+            <Button
+              key={image.id}
+              variant="ghost"
+              className={`p-0 h-auto aspect-video relative rounded-lg overflow-hidden ${
+                selectedImage === image.url ? 'ring-2 ring-primary' : ''
               }`}
-              onClick={() => onImageSelect(image)}
+              onClick={() => onImageSelect(image.url)}
             >
               <img
-                src={image}
-                alt={`Option ${index + 1}`}
+                src={image.url}
+                alt={`Generated option`}
                 className="object-cover w-full h-full"
               />
-            </div>
+            </Button>
           ))}
         </div>
       )}
