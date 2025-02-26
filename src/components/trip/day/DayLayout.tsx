@@ -2,7 +2,7 @@
 import React from 'react';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
-import { DayActivity, RestaurantReservation } from '@/types/trip';
+import { DayActivity, RestaurantReservation, ActivityFormData } from '@/types/trip';
 
 interface HotelDetails {
   name: string;
@@ -13,10 +13,10 @@ interface HotelDetails {
 interface DayLayoutProps {
   title: string;
   activities: DayActivity[];
-  hotelDetails?: HotelDetails;  // Added this to match the expected type
+  hotelDetails?: HotelDetails;
   reservations?: RestaurantReservation[];
   index: number;
-  onAddActivity: () => void;
+  onAddActivity: (activity: ActivityFormData) => Promise<void>;
   onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
   dayId: string;
