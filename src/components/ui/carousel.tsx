@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -159,8 +160,8 @@ const Carousel = React.forwardRef<
 Carousel.displayName = "Carousel"
 
 const CarouselContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLFieldSetElement,
+  React.HTMLAttributes<HTMLFieldSetElement>
 >(({ className, ...props }, ref) => {
   const { carouselRef, orientation } = useCarousel()
 
