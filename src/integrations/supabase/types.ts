@@ -705,13 +705,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_expenses_by_category: {
-        Args: {
-          expenses: Json
-          category: string
-        }
-        Returns: Json
-      }
+      get_expenses_by_category:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: {
+              category: string
+              total: number
+            }[]
+          }
+        | {
+            Args: {
+              expenses: Json
+              category: string
+            }
+            Returns: Json
+          }
     }
     Enums: {
       transportation_type:
