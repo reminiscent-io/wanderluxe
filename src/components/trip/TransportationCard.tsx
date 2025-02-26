@@ -12,8 +12,19 @@ interface TransportationCardProps {
 }
 
 const TransportationCard = ({ type, details, duration, index }: TransportationCardProps) => {
-  // Extract icon selection logic to a separate constant
-  const Icon = type === "car" ? Car : (type === "plane" ? Plane : LogOut);
+  // Extract icon selection logic to a more readable format
+  const getIcon = () => {
+    switch (type) {
+      case "car":
+        return Car;
+      case "plane":
+        return Plane;
+      default:
+        return LogOut;
+    }
+  };
+  
+  const Icon = getIcon();
 
   return (
     <motion.div
