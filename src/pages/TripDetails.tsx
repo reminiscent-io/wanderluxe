@@ -196,8 +196,15 @@ const TripDetails = () => {
 
       <div className="relative flex-1 bg-sand-50/95 w-full z-10">
         <div className="container mx-auto px-4 py-8">
-          <Tabs defaultValue="timeline" className="w-full">
+          <Tabs defaultValue="vision-board" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">
+              <TabsTrigger 
+                value="vision-board"
+                className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
+              >
+                <Lightbulb className="w-5 h-5" />
+                Vision Board
+              </TabsTrigger>
               <TabsTrigger 
                 value="timeline"
                 className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
@@ -219,15 +226,12 @@ const TripDetails = () => {
                 <List className="w-5 h-5" />
                 Packing List
               </TabsTrigger>
-              <TabsTrigger 
-                value="vision-board"
-                className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
-              >
-                <Lightbulb className="w-5 h-5" />
-                Vision Board
-              </TabsTrigger>
             </TabsList>
               
+            <TabsContent value="vision-board">
+              <VisionBoardView tripId={tripId} />
+            </TabsContent>
+
             <TabsContent value="timeline">
               <TimelineView 
                 tripId={tripId}
@@ -244,10 +248,6 @@ const TripDetails = () => {
               
             <TabsContent value="packing">
               <PackingView tripId={tripId} />
-            </TabsContent>
-
-            <TabsContent value="vision-board">
-              <VisionBoardView tripId={tripId} />
             </TabsContent>
           </Tabs>
         </div>
