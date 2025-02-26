@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -11,7 +12,8 @@ interface TransportationCardProps {
 }
 
 const TransportationCard = ({ type, details, duration, index }: TransportationCardProps) => {
-  const Icon = type === "car" ? Car : type === "plane" ? Plane : LogOut;
+  // Extract icon selection logic to a separate constant
+  const Icon = type === "car" ? Car : (type === "plane" ? Plane : LogOut);
 
   return (
     <motion.div
