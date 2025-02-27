@@ -1,244 +1,76 @@
+
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import DiningList from '../dining/DiningList';
-import { useQuery } from '@tanstack/react-query';
-import { DayActivity } from '@/types/trip';
-import ImageGenerationSection from './dialogs/ImageGenerationSection';
-import DayActivitiesSection from './dialogs/DayActivitiesSection';
-import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface DayEditDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onOpenChange: (open: boolean) => void;
-  dayId: string;
-  currentTitle: string;
-  onTitleChange: (title: string) => void;
-  onSave: () => Promise<void>;
-  date: string;
-  activities: DayActivity[];
-  formatTime: (time?: string) => string;
-  reservations: Array<{
-    id: string;
-    day_id: string;
-    restaurant_name: string;
-    reservation_time?: string;
-    number_of_people?: number;
-    confirmation_number?: string;
-    notes?: string;
-    cost?: number;
-    currency?: string;
-    address?: string;
-    phone_number?: string;
-    website?: string;
-    rating?: number;
-    created_at: string;
-    order_index: number;
-  }>;
+  initialTitle: string;
+  initialImageUrl: string;
+  onSave: (data: { title?: string; imageUrl?: string }) => Promise<void>;
 }
 
 const DayEditDialog: React.FC<DayEditDialogProps> = ({
-  isOpen,
+  open,
   onOpenChange,
-  dayId,
-  currentTitle,
-  onTitleChange,
-  onSave,
-  date,
-  activities,
-  formatTime,
-  reservations,
+  initialTitle,
+  initialImageUrl,
+  onSave
 }) => {
-  const [title, setTitle] = useState(currentTitle);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [localActivities, setLocalActivities] = useState<DayActivity[]>(activities);
-  const [isAddingActivity, setIsAddingActivity] = useState(false);
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
-
-  const { data: fetchedReservations = [] } = useQuery({
-    queryKey: ['reservations', dayId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('restaurant_reservations')
-        .select('*')
-        .eq('day_id', dayId)
-        .order('order_index');
-
-      if (error) {
-        console.error('Error fetching reservations:', error);
-        throw error;
-      }
-      return data;
-    },
-    enabled: !!dayId && isOpen,
-  });
-
-  const { data: tripData } = useQuery({
-    queryKey: ['trip_id', dayId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('trip_days')
-        .select('trip_id')
-        .eq('day_id', dayId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!dayId,
-  });
-
-  const handleActivitySubmit = async (activity: any) => {
-    try {
-      if (!tripData?.trip_id) {
-        throw new Error('Trip ID not found');
-      }
-
-      const newActivity = {
-        day_id: dayId,
-        trip_id: tripData.trip_id,
-        title: activity.title,
-        description: activity.description || null,
-        start_time: activity.start_time || null,
-        end_time: activity.end_time || null,
-        cost: activity.cost ? Number(activity.cost) : null,
-        currency: activity.currency || 'USD',
-        order_index: localActivities.length,
-        created_at: new Date().toISOString()
-      };
-
-      const { data, error } = await supabase
-        .from('day_activities')
-        .insert([newActivity])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setLocalActivities(prev => [...prev, data]);
-      setIsAddingActivity(false);
-      toast.success('Activity added successfully');
-    } catch (error) {
-      console.error('Error adding activity:', error);
-      toast.error('Failed to add activity');
-    }
-  };
-
-  const handleUpdateActivity = async (activity: any) => {
-    if (!editingActivityId || !tripData?.trip_id) return;
-
-    try {
-      const updateData = {
-        title: activity.title,
-        description: activity.description || null,
-        start_time: activity.start_time || null,
-        end_time: activity.end_time || null,
-        cost: activity.cost ? Number(activity.cost) : null,
-        currency: activity.currency || 'USD',
-        trip_id: tripData.trip_id
-      };
-
-      const { error } = await supabase
-        .from('day_activities')
-        .update(updateData)
-        .eq('id', editingActivityId);
-
-      if (error) throw error;
-
-      setLocalActivities(prev =>
-        prev.map(act =>
-          act.id === editingActivityId
-            ? { ...act, ...updateData }
-            : act
-        )
-      );
-      setEditingActivityId(null);
-      toast.success('Activity updated successfully');
-    } catch (error) {
-      console.error('Error updating activity:', error);
-      toast.error('Failed to update activity');
-    }
-  };
+  const [title, setTitle] = useState(initialTitle);
+  const [imageUrl, setImageUrl] = useState(initialImageUrl);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
-      const updateData: { title: string; image_url?: string } = { title };
-      if (selectedImage) updateData.image_url = selectedImage;
-
-      const { error } = await supabase
-        .from('trip_days')
-        .update(updateData)
-        .eq('day_id', dayId);
-
-      if (error) throw error;
-
-      toast.success('Day updated successfully');
+      await onSave({ title, imageUrl });
       onOpenChange(false);
-      onSave();
     } catch (error) {
-      console.error('Error updating day:', error);
-      toast.error('Failed to update day');
+      console.error('Error saving day:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Day Details</DialogTitle>
+          <DialogTitle>Edit Day</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="day-title">Day Title</Label>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Title
+            </Label>
             <Input
-              id="day-title"
+              id="title"
               value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                onTitleChange(e.target.value);
-              }}
-              placeholder="Enter day title"
+              onChange={(e) => setTitle(e.target.value)}
+              className="col-span-3"
             />
           </div>
-
-          <ImageGenerationSection
-            onImageSelect={setSelectedImage}
-            selectedImage={selectedImage}
-          />
-
-          <DayActivitiesSection
-            activities={localActivities}
-            isAddingActivity={isAddingActivity}
-            setIsAddingActivity={setIsAddingActivity}
-            editingActivityId={editingActivityId}
-            setEditingActivityId={setEditingActivityId}
-            onAddActivity={handleActivitySubmit}
-            onUpdateActivity={handleUpdateActivity}
-            formatTime={formatTime}
-            dayId={dayId}
-          />
-
-          <div>
-            <DiningList
-              reservations={reservations}
-              formatTime={formatTime}
-              dayId={dayId}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="image" className="text-right">
+              Image URL
+            </Label>
+            <Input
+              id="image"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="col-span-3"
             />
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} className="bg-sand-500 hover:bg-sand-600 text-white">
-              Save Changes
-            </Button>
           </div>
         </div>
+        <DialogFooter>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save changes'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

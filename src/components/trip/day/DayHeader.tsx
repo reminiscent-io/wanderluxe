@@ -1,45 +1,37 @@
 
 import React from 'react';
 import { format, parseISO } from 'date-fns';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DayActivity } from '@/types/trip';
+import { CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 interface DayHeaderProps {
+  title: string;
   date: string;
-  dayNumber: number;
+  isOpen?: boolean;
   onEdit: () => void;
   onDelete?: () => void;
-  dayId: string;
-  title?: string;
-  activities: DayActivity[];
-  formatTime: (time?: string) => string;
-  canDelete?: boolean;
 }
 
 const DayHeader: React.FC<DayHeaderProps> = ({
-  date,
-  dayNumber,
-  onEdit,
-  onDelete,
-  dayId,
   title,
-  activities,
-  formatTime,
-  canDelete = false
+  date,
+  isOpen = false,
+  onEdit,
+  onDelete
 }) => {
   const formattedDate = format(parseISO(date), 'EEEE, MMMM d');
 
   return (
-    <div className="flex items-center justify-between p-4 bg-sand-50/50">
+    <CollapsibleTrigger className="w-full px-4 py-3 flex items-center justify-between bg-sand-50/50 hover:bg-sand-100/70 transition-colors">
       <div>
         <div className="flex items-baseline gap-2">
-          <h3 className="font-bold">Day {dayNumber}</h3>
+          <h3 className="font-medium text-lg">{title}</h3>
           <span className="text-sm text-gray-600">{formattedDate}</span>
         </div>
-        {title && <p className="text-sm mt-1 text-gray-600">{title}</p>}
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
@@ -51,7 +43,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
         >
           <Pencil className="h-4 w-4" />
         </Button>
-        {canDelete && onDelete && (
+        {onDelete && (
           <Button
             variant="ghost"
             size="icon"
@@ -64,8 +56,12 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
+        <ChevronDown className={cn(
+          "h-4 w-4 transition-transform duration-200",
+          isOpen && "transform rotate-180"
+        )} />
       </div>
-    </div>
+    </CollapsibleTrigger>
   );
 };
 

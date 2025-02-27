@@ -2,43 +2,31 @@
 import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import ActivityDialogs from '../ActivityDialogs';
-import { ActivityFormData } from '@/types/trip';
+import { ActivityFormData, DayActivity } from '@/types/trip';
 
+// Define the return type of the component to fix type errors
+interface DayActivityManagerReturn {
+  handleAddActivity: (activity: ActivityFormData) => Promise<void>;
+  handleDeleteActivity: (id: string) => Promise<void>;
+  handleEditActivity: (id: string) => Promise<void>;
+}
+
+// Props needed for the DayActivityManager
 interface DayActivityManagerProps {
   id: string;
   tripId: string;
-  isAddingActivity: boolean;
-  setIsAddingActivity: (value: boolean) => void;
-  editingActivity: string | null;
-  setEditingActivity: (value: string | null) => void;
-  newActivity: ActivityFormData;
-  setNewActivity: (activity: ActivityFormData) => void;
-  activityEdit: ActivityFormData;
-  setActivityEdit: (activity: ActivityFormData) => void;
-  activitiesLength: number;
+  activities: DayActivity[];
 }
 
-const DayActivityManager: React.FC<DayActivityManagerProps> = ({
-  id,
-  tripId,
-  isAddingActivity,
-  setIsAddingActivity,
-  editingActivity,
-  setEditingActivity,
-  newActivity,
-  setNewActivity,
-  activityEdit,
-  setActivityEdit,
-  activitiesLength
-}) => {
+// Update the component to return an object with the required functions
+const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps): DayActivityManagerReturn => {
   // This function is called when the form is submitted
   const handleAddActivity = async (activity: ActivityFormData): Promise<void> => {
     console.log('Attempting to add activity:', activity);
     
     if (!activity.title) {
       toast.error('Title is required');
-      return;
+      return Promise.reject(new Error('Title is required'));
     }
 
     try {
@@ -51,7 +39,7 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
         end_time: activity.end_time || null,
         cost: activity.cost ? Number(activity.cost) : null,
         currency: activity.currency,
-        order_index: activitiesLength
+        order_index: activities.length
       });
 
       const { data, error } = await supabase
@@ -65,7 +53,7 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
           end_time: activity.end_time || null,
           cost: activity.cost ? Number(activity.cost) : null,
           currency: activity.currency,
-          order_index: activitiesLength
+          order_index: activities.length
         }])
         .select()
         .single();
@@ -76,39 +64,46 @@ const DayActivityManager: React.FC<DayActivityManagerProps> = ({
       }
 
       console.log('Activity saved successfully:', data);
-
-      // Only clear the form and close the dialog if the insert was successful
-      setNewActivity({
-        title: '',
-        description: '',
-        start_time: '',
-        end_time: '',
-        cost: '',
-        currency: 'USD'
-      });
-      setIsAddingActivity(false);
       toast.success('Activity added successfully');
+      return Promise.resolve();
     } catch (error) {
       console.error('Error adding activity:', error);
       toast.error('Failed to add activity');
+      return Promise.reject(error);
     }
   };
 
-  return (
-    <ActivityDialogs
-      isAddingActivity={isAddingActivity}
-      setIsAddingActivity={setIsAddingActivity}
-      editingActivity={editingActivity}
-      setEditingActivity={setEditingActivity}
-      newActivity={newActivity}
-      setNewActivity={setNewActivity}
-      activityEdit={activityEdit}
-      setActivityEdit={setActivityEdit}
-      onAddActivity={handleAddActivity}
-      onEditActivity={() => {}}
-      eventId={id}
-    />
-  );
+  // Add delete activity functionality
+  const handleDeleteActivity = async (id: string): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('day_activities')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Activity deleted successfully');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error('Failed to delete activity');
+      return Promise.reject(error);
+    }
+  };
+
+  // Add edit activity functionality (placeholder for now)
+  const handleEditActivity = async (id: string): Promise<void> => {
+    // Implementation will be added later
+    console.log('Edit activity with ID:', id);
+    return Promise.resolve();
+  };
+
+  return {
+    handleAddActivity,
+    handleDeleteActivity,
+    handleEditActivity,
+  };
 };
 
 export default DayActivityManager;

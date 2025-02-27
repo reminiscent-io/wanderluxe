@@ -61,42 +61,38 @@ const DayCard: React.FC<DayCardProps> = ({
     return time.substring(0, 5);
   };
 
-  // Get activity manager functions
-  const {
-    handleAddActivity: addActivity,
-    handleDeleteActivity,
-    handleEditActivity,
-  } = DayActivityManager({ id, tripId, activities });
+  // Get activity manager functions - fixed by using proper TypeScript approach
+  const activityManager = DayActivityManager({ 
+    id, 
+    tripId, 
+    activities 
+  });
 
-  // Create a Promise-returning wrapper to satisfy the type requirement
-  const handleAddActivity = async (activity: ActivityFormData): Promise<void> => {
-    await addActivity(activity);
-    return Promise.resolve();
-  };
+  // Extract the functions from the returned object
+  const handleAddActivity = activityManager.handleAddActivity;
+  const handleDeleteActivity = activityManager.handleDeleteActivity;
+  const handleEditActivity = activityManager.handleEditActivity;
 
-  const handleDayUpdate = (updatedData: { title?: string; imageUrl?: string }) => {
-    return new Promise<void>(async (resolve, reject) => {
-      try {
-        const { error } = await supabase
-          .from('trip_days')
-          .update({
-            title: updatedData.title,
-            image_url: updatedData.imageUrl
-          })
-          .eq('day_id', id);
-        
-        if (error) throw error;
-        
-        toast.success('Day updated successfully');
-        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-        setIsEditing(false);
-        resolve();
-      } catch (error) {
-        console.error('Error updating day:', error);
-        toast.error('Failed to update day');
-        reject(error);
-      }
-    });
+  const handleDayUpdate = async (updatedData: { title?: string; imageUrl?: string }) => {
+    try {
+      const { error } = await supabase
+        .from('trip_days')
+        .update({
+          title: updatedData.title,
+          image_url: updatedData.imageUrl
+        })
+        .eq('day_id', id);
+      
+      if (error) throw error;
+      
+      toast.success('Day updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating day:', error);
+      toast.error('Failed to update day');
+      throw error;
+    }
   };
 
   return (
