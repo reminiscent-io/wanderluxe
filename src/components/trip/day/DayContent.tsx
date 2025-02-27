@@ -28,12 +28,8 @@ const DayContent: React.FC<DayContentProps> = ({
     <Card className="p-4">
       <DayHeader 
         title={title}
-        activities={activities}
         date={date}
-        dayNumber={dayNumber}
         onEdit={onEdit}
-        dayId={dayId}
-        formatTime={formatTime}
       />
       <div className="mt-4">
         <DiningList
