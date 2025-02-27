@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
+import { Plus } from 'lucide-react';
 
 const MyTrips = () => {
   const navigate = useNavigate();
@@ -99,8 +100,8 @@ const MyTrips = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">My Trips</h1>
-          <Button onClick={() => navigate('/create-trip')}>
-            Create New Trip
+          <Button onClick={() => navigate('/create-trip')} size="icon">
+            <Plus className="h-5 w-5" />
           </Button>
         </div>
 
