@@ -31,6 +31,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   
   // Keep tripDates state in sync with props
   useEffect(() => {
+    console.log('Initial trip dates received:', initialTripDates);
     setTripDates(initialTripDates);
   }, [initialTripDates]);
 
@@ -88,6 +89,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       )}
 
       <div className="grid gap-4">
+        {console.log('Rendering TripDates with:', { 
+          tripId, 
+          arrivalDate: tripDates.arrival_date, 
+          departureDate: tripDates.departure_date 
+        })}
         <TripDates
           tripId={tripId}
           arrivalDate={tripDates.arrival_date}
