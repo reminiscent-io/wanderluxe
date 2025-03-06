@@ -69,7 +69,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
     } catch (error) {
       console.error('Error adding activity:', error);
       toast.error('Failed to add activity');
-      return Promise.reject(error);
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -88,7 +88,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
     } catch (error) {
       console.error('Error deleting activity:', error);
       toast.error('Failed to delete activity');
-      return Promise.reject(error);
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
     }
   };
 
