@@ -5,7 +5,7 @@ import DayHeader from './DayHeader';
 import DayCollapsibleContent from './components/DayCollapsibleContent';
 import DayActivityManager from './components/DayActivityManager';
 import { format, parseISO } from 'date-fns';
-import { DayActivity, ActivityFormData } from '@/types/trip';
+import { DayActivity } from '@/types/trip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
