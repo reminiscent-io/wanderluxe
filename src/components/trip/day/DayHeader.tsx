@@ -27,7 +27,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
       <div>
         <div className="flex flex-col gap-2">
           <span className="text-lg font-medium text-gray-600">{formattedDate}</span>
-          <h3 className="font-medium text-base">{title}</h3>
+          <h3 className="font-medium text-base text-gray-600">{title}</h3>
         </div>
       </div>
       <div className="flex items-center gap-2">
