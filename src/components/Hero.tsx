@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import UnsplashImage from "./UnsplashImage";
+import LogoFromSupabase from "./LogoFromSupabase";
 
 const Hero = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -38,24 +39,19 @@ const Hero = () => {
         className="relative flex h-full items-center justify-center text-center"
       >
         <div className="space-y-6 px-4">
-          <motion.h1
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
+            className="flex justify-center"
           >
-            Travel Planning
-            <br />
-            Reimagined
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="mx-auto max-w-2xl text-lg text-white/80"
-          >
-            Create unforgettable journeys with our intelligent travel companion
-          </motion.p>
+            <LogoFromSupabase 
+              logoName="full-black" 
+              className="max-w-[600px] w-full h-auto mx-auto"
+              fallbackClassName="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
+              fallbackText="WanderLuxe"
+            />
+          </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
