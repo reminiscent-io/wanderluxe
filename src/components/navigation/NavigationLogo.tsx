@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchLogosFromSupabase, Logo } from '@/utils/storageUtils';
+import { fetchLogosFromSupabase } from '@/utils/storageUtils';
 
-export const NavigationLogo: React.FC = () => {
+export const NavigationLogo: React.FC<{isScrolled?: boolean}> = ({ isScrolled }) => {
   const [logo, setLogo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -11,10 +11,13 @@ export const NavigationLogo: React.FC = () => {
     const loadLogo = async () => {
       try {
         const logos = await fetchLogosFromSupabase();
-        // Look for full logo variants first
-        const fullLogo = logos.find(l => l.name.includes('full'));
-        // Default to any logo if no full logo is found
-        setLogo(fullLogo?.url || (logos.length > 0 ? logos[0].url : null));
+        // Specifically look for the black simple logo
+        const blackSimpleLogo = logos.find(l => 
+          l.name.toLowerCase().includes('simple') && 
+          l.name.toLowerCase().includes('black')
+        );
+        // Default to any logo if black simple logo is not found
+        setLogo(blackSimpleLogo?.url || (logos.length > 0 ? logos[0].url : null));
       } catch (error) {
         console.error('Failed to load logo:', error);
       } finally {
@@ -36,7 +39,11 @@ export const NavigationLogo: React.FC = () => {
           className="h-8 object-contain"
         />
       ) : (
-        <span className="text-xl font-bold">WanderLuxe</span>
+        <span className={`text-xl font-bold ${
+          isScrolled ? "text-earth-500" : "text-white"
+        }`}>
+          WanderLuxe
+        </span>
       )}
     </Link>
   );
