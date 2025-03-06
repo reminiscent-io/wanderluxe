@@ -20,6 +20,13 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
 
   useEffect(() => {
     const loadLogo = async () => {
+      // Use direct URL for Black Full logo if that's what we're looking for
+      if (logoName === "Black Full") {
+        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Black%20Full.png");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const logos = await fetchLogosFromSupabase();
         console.log("Available logos:", logos.map(l => l.name)); // Debugging
