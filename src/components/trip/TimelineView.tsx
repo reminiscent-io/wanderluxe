@@ -1,8 +1,9 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTimelineGroups } from '@/hooks/use-timeline-groups';
 import { useTripDays } from '@/hooks/use-trip-days';
+import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import AccommodationGaps from './timeline/AccommodationGaps';
 import AccommodationsSection from './AccommodationsSection';
@@ -26,11 +27,32 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [tripDates, setTripDates] = useState(initialTripDates);
+  
+  // Keep tripDates state in sync with props
+  useEffect(() => {
+    setTripDates(initialTripDates);
+  }, [initialTripDates]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
       await Promise.all([refreshEvents(), refreshDays()]);
+      
+      // Fetch updated trip dates
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
+        
+      if (!error && data) {
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date
+        });
+      }
+      
       toast.success('Timeline updated successfully');
     } catch (error) {
       console.error('Error refreshing timeline:', error);
@@ -38,7 +60,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     } finally {
       setIsRefreshing(false);
     }
-  }, [refreshEvents, refreshDays]);
+  }, [refreshEvents, refreshDays, tripId]);
 
   // Convert events to hotel stays
   const hotelStays = React.useMemo(() => 
@@ -68,8 +90,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       <div className="grid gap-4">
         <TripDates
           tripId={tripId}
-          arrivalDate={initialTripDates.arrival_date}
-          departureDate={initialTripDates.departure_date}
+          arrivalDate={tripDates.arrival_date}
+          departureDate={tripDates.departure_date}
           onDatesChange={handleRefresh}
         />
         <AccommodationsSection
