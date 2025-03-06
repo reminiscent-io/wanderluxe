@@ -43,6 +43,7 @@ const Auth = () => {
         variant: "destructive",
         title: "Error",
         description: error.message,
+        className: "bg-earth-100/50 border-destructive",
       });
     } finally {
       setLoading(false);
@@ -68,6 +69,7 @@ const Auth = () => {
         variant: "destructive",
         title: "Error",
         description: error.message,
+        className: "bg-earth-100/50 border-destructive",
       });
       setLoading(false);
     }
@@ -87,6 +89,7 @@ const Auth = () => {
         variant: "destructive",
         title: "Error",
         description: error.message,
+        className: "bg-earth-100/50 border-destructive",
       });
     }
   };
