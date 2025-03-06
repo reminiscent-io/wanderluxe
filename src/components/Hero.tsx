@@ -46,7 +46,7 @@ const Hero = () => {
             className="flex justify-center"
           >
             <LogoFromSupabase 
-              logoName="Black Full" 
+              logoName="White Full" 
               className="max-w-[600px] w-full h-auto mx-auto"
               fallbackClassName="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
               fallbackText="WanderLuxe"
