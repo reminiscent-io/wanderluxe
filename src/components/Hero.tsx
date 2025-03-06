@@ -45,12 +45,25 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex justify-center"
           >
-            <LogoFromSupabase 
-              logoName="White Full" 
-              className="max-w-[600px] w-full h-auto mx-auto"
-              fallbackClassName="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
-              fallbackText="WanderLuxe"
-            />
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              transition={{ 
+                duration: 1.2,
+                ease: "easeOut"
+              }}
+              whileHover={{ 
+                scale: 1.05,
+                transition: { duration: 0.3 }
+              }}
+            >
+              <LogoFromSupabase 
+                logoName="White Full" 
+                className="max-w-[600px] w-full h-auto mx-auto"
+                fallbackClassName="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
+                fallbackText="WanderLuxe"
+              />
+            </motion.div>
           </motion.div>
           {/* Button hidden as requested */}
         </div>
