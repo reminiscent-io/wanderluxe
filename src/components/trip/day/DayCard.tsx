@@ -61,17 +61,12 @@ const DayCard: React.FC<DayCardProps> = ({
     return time.substring(0, 5);
   };
 
-  // Get activity manager functions - fixed by using proper TypeScript approach
+  // Get activity manager functions
   const activityManager = DayActivityManager({ 
     id, 
     tripId, 
     activities 
   });
-
-  // Extract the functions from the returned object
-  const handleAddActivity = activityManager.handleAddActivity;
-  const handleDeleteActivity = activityManager.handleDeleteActivity;
-  const handleEditActivity = activityManager.handleEditActivity;
 
   const handleDayUpdate = async (updatedData: { title?: string; imageUrl?: string }) => {
     try {
@@ -113,8 +108,8 @@ const DayCard: React.FC<DayCardProps> = ({
         title={dayTitle}
         activities={activities}
         index={index}
-        onAddActivity={handleAddActivity}
-        onEditActivity={handleEditActivity}
+        onAddActivity={activityManager.handleAddActivity}
+        onEditActivity={activityManager.handleEditActivity}
         formatTime={formatTime}
         dayId={id}
         tripId={tripId}
