@@ -22,10 +22,23 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
     const loadLogo = async () => {
       try {
         const logos = await fetchLogosFromSupabase();
-        const targetLogo = logos.find(l => 
+        console.log("Available logos:", logos.map(l => l.name)); // Debugging
+        
+        // Try exact match with dashes, then partial match
+        const exactMatch = logos.find(l => 
+          l.name.toLowerCase() === `wanderluxe-${logoName.toLowerCase()}.png` ||
+          l.name.toLowerCase() === `${logoName.toLowerCase()}.png`
+        );
+        
+        const partialMatch = logos.find(l => 
           l.name.toLowerCase().includes(logoName.toLowerCase())
         );
-        setLogoUrl(targetLogo?.url || null);
+        
+        setLogoUrl(exactMatch?.url || partialMatch?.url || null);
+        
+        if (!exactMatch && !partialMatch) {
+          console.warn(`No logo found matching "${logoName}"`);
+        }
       } catch (error) {
         console.error('Failed to load logo:', error);
       } finally {
