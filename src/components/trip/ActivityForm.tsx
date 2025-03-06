@@ -11,6 +11,7 @@ interface ActivityFormProps {
   onCancel: () => void;
   submitLabel: string;
   eventId: string;
+  isSubmitting?: boolean;
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -19,10 +20,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   onSubmit,
   onCancel,
   submitLabel,
-  eventId
+  eventId,
+  isSubmitting: externalIsSubmitting = false
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [internalIsSubmitting, setInternalIsSubmitting] = useState(false);
+  const isSubmitting = externalIsSubmitting || internalIsSubmitting;
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -53,7 +56,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
+    setInternalIsSubmitting(true);
     try {
       await onSubmit(activity);
       toast.success('Activity saved successfully');
@@ -62,7 +65,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       toast.error('Failed to save activity');
       console.error('Error saving activity:', error);
     } finally {
-      setIsSubmitting(false);
+      setInternalIsSubmitting(false);
     }
   };
 
@@ -82,10 +85,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="text"
           value={activity.title}
           onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
-          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border-2 py-4 px-6 ${
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border ${
             errors.title ? 'border-red-500' : 'border-gray-300'
-          } focus:border-earth-500 focus:ring-earth-500`}
+          } px-3 py-2 focus:border-earth-500 focus:ring-earth-500`}
           required
+          placeholder="Enter activity title"
         />
         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
       </div>
@@ -97,7 +101,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="text"
           value={activity.description || ''}
           onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
-          className="mt-1 block w-full rounded-md border-2 border-gray-300 h-[1.5rem] px-6 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+          placeholder="Add a description (optional)"
         />
       </div>
 
@@ -109,7 +114,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="time"
             value={activity.start_time || ''}
             onChange={(e) => onActivityChange({ ...activity, start_time: e.target.value })}
-            className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           />
         </div>
         <div>
@@ -119,7 +124,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="time"
             value={activity.end_time || ''}
             onChange={(e) => onActivityChange({ ...activity, end_time: e.target.value })}
-            className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           />
         </div>
         {errors.time && <p className="col-span-2 text-xs text-red-500">{errors.time}</p>}
@@ -133,9 +138,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="text"
             value={activity.cost || ''}
             onChange={(e) => handleCostChange(e.target.value)}
-            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border-2 ${
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border ${
               errors.cost ? 'border-red-500' : 'border-gray-300'
-            } focus:border-earth-500 focus:ring-earth-500`}
+            } px-3 py-2 focus:border-earth-500 focus:ring-earth-500`}
+            placeholder="0.00"
           />
           {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
         </div>
@@ -145,7 +151,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             id="currency"
             value={activity.currency}
             onChange={(e) => onActivityChange({ ...activity, currency: e.target.value })}
-            className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm appearance-none bg-white"
           >
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
@@ -154,18 +160,18 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 mt-6">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
+          className="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
           disabled={isSubmitting}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border-2 border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50"
+          className="px-6 py-3 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50 w-full"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Saving...' : submitLabel}
