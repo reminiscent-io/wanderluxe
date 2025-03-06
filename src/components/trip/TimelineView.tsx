@@ -29,10 +29,12 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tripDates, setTripDates] = useState(initialTripDates);
   
-  // Keep tripDates state in sync with props
+  // Keep tripDates state in sync with props, but only if initialTripDates has valid dates
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
-    setTripDates(initialTripDates);
+    if (initialTripDates?.arrival_date && initialTripDates?.departure_date) {
+      setTripDates(initialTripDates);
+    }
   }, [initialTripDates]);
 
   const handleRefresh = useCallback(async () => {
@@ -48,10 +50,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         .single();
         
       if (!error && data) {
-        setTripDates({
-          arrival_date: data.arrival_date,
-          departure_date: data.departure_date
-        });
+        // Only update if we actually have dates
+        if (data.arrival_date && data.departure_date) {
+          console.log('Setting trip dates from refresh:', data);
+          setTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date
+          });
+        } else {
+          console.log('Skipping trip dates update - missing dates in data:', data);
+        }
       }
       
       toast.success('Timeline updated successfully');

@@ -27,10 +27,15 @@ const TripDateDisplay: React.FC<TripDateDisplayProps> = ({ label, date }) => {
         return 'Invalid date';
       }
       
-      // Format the date
-      return format(parsedDate, 'MMM dd, yyyy');
+      try {
+        // Format the date
+        return format(parsedDate, 'MMM dd, yyyy');
+      } catch (formatError) {
+        console.error('Error in format() function:', dateStr, formatError);
+        return 'Date error';
+      }
     } catch (error) {
-      console.error('Error formatting date:', dateString, error);
+      console.error('Error parsing date:', dateString, error);
       return 'Invalid date';
     }
   };
