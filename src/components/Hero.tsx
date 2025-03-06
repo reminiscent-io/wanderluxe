@@ -56,6 +56,10 @@ const Hero = () => {
                 scale: 1.05,
                 transition: { duration: 0.3 }
               }}
+              onClick={() => navigate('/my-trips')}
+              style={{ cursor: 'pointer' }}
+              role="button"
+              aria-label="Go to My Trips"
             >
               <LogoFromSupabase 
                 logoName="White Full" 
