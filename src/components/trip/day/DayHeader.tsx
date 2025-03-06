@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, parseISO } from 'date-fns';
 import { Pencil, Trash2, ChevronDown } from 'lucide-react';
@@ -26,9 +25,9 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   return (
     <CollapsibleTrigger className="w-full px-4 py-3 flex items-center justify-between bg-sand-50/50 hover:bg-sand-100/70 transition-colors">
       <div>
-        <div className="flex items-baseline gap-2">
-          <h3 className="font-medium text-lg">{title}</h3>
-          <span className="text-sm text-gray-600">{formattedDate}</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-lg font-medium text-gray-600">{formattedDate}</span>
+          <h3 className="font-medium text-base">{title}</h3>
         </div>
       </div>
       <div className="flex items-center gap-2">
