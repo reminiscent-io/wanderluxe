@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchLogosFromSupabase } from '@/utils/storageUtils';
@@ -27,23 +28,33 @@ export const NavigationLogo: React.FC<{isScrolled?: boolean}> = ({ isScrolled })
     loadLogo();
   }, []);
 
-  return (
-    <Link to="/" className="flex items-center">
-      {isLoading ? (
-        <div className="h-8 w-32 bg-gray-200 animate-pulse rounded"></div>
-      ) : logo ? (
+  const renderLogo = () => {
+    if (isLoading) {
+      return <div className="h-8 w-32 bg-gray-200 animate-pulse rounded"></div>;
+    }
+
+    if (logo) {
+      return (
         <img 
           src={logo} 
           alt="WanderLuxe Logo" 
           className="h-8 object-contain"
         />
-      ) : (
-        <span className={`text-xl font-bold ${
-          isScrolled ? "text-earth-500" : "text-white"
-        }`}>
-          WanderLuxe
-        </span>
-      )}
+      );
+    }
+
+    return (
+      <span className={`text-xl font-bold ${
+        isScrolled ? "text-earth-500" : "text-white"
+      }`}>
+        WanderLuxe
+      </span>
+    );
+  };
+
+  return (
+    <Link to="/" className="flex items-center">
+      {renderLogo()}
     </Link>
   );
 };
