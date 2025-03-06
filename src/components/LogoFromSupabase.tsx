@@ -27,6 +27,31 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
         return;
       }
       
+      // Use direct URLs for other logos
+      if (logoName === "Black Simple") {
+        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Black%20Simple.png");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (logoName === "White Full") {
+        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//White%20Full.png");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (logoName === "White Simple") {
+        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//White%20Simple.png");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (logoName === "Sand Simple") {
+        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Sand%20Simple.png");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const logos = await fetchLogosFromSupabase();
         console.log("Available logos:", logos.map(l => l.name)); // Debugging

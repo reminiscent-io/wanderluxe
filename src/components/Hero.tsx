@@ -47,7 +47,7 @@ const Hero = () => {
           >
             <LogoFromSupabase 
               logoName="Black Full" 
-              className="max-w-[600px] w-full h-auto mx-auto bg-white/70 p-4 rounded-lg"
+              className="max-w-[600px] w-full h-auto mx-auto"
               fallbackClassName="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
               fallbackText="WanderLuxe"
             />
