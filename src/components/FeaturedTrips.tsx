@@ -6,6 +6,10 @@ import TripCard from './trip/TripCard';
 import { Trip } from '@/types/trip';
 
 const FeaturedTrips = () => {
+  // Return null to hide the featured trips as requested
+  return null;
+  
+  /* Original implementation commented out
   const { data: trips, isLoading } = useQuery({
     queryKey: ['featured-trips'],
     queryFn: async () => {
@@ -60,6 +64,7 @@ const FeaturedTrips = () => {
       ))}
     </div>
   );
+  */
 };
 
 export default FeaturedTrips;
