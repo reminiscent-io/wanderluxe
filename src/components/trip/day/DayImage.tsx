@@ -9,6 +9,15 @@ export interface DayImageProps {
   defaultImageUrl?: string;
 }
 
+// Helper function to extract photographer info from Unsplash URL
+// In a real implementation, you would need to parse the actual photographer name
+// from the URL or store it when you initially fetch the image
+const extractPhotographerFromUrl = (url: string): string => {
+  // Placeholder for demonstration - in a real app, you'd have the actual photographer data
+  // or make an API call to get it based on image ID
+  return "photographer";
+}
+
 const DayImage: React.FC<DayImageProps> = ({ 
   dayId, 
   title, 
@@ -53,6 +62,21 @@ const DayImage: React.FC<DayImageProps> = ({
         <h2 className="text-white text-2xl font-bold drop-shadow-lg">
           {title || "Untitled Day"}
         </h2>
+        {displayImageUrl && displayImageUrl.includes('unsplash.com') && (
+          <div className="text-white text-xs opacity-70 mt-1">
+            <a 
+              href={`https://unsplash.com/?utm_source=wanderluxe&utm_medium=referral`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              Photo via Unsplash
+            </a>
+            {displayImageUrl.includes('ixid=') && (
+              <span> by {extractPhotographerFromUrl(displayImageUrl)}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
