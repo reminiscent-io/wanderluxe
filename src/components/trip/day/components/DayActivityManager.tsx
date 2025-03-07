@@ -92,11 +92,37 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
     }
   };
 
-  // Add edit activity functionality (placeholder for now)
-  const handleEditActivity = async (id: string): Promise<void> => {
-    // Implementation will be added later
-    console.log('Edit activity with ID:', id);
-    return Promise.resolve();
+  // Update activity functionality
+  const handleEditActivity = async (id: string, updatedData?: ActivityFormData): Promise<void> => {
+    try {
+      console.log('Updating activity with ID:', id);
+      
+      if (!updatedData) {
+        console.log('No updated data provided');
+        return Promise.resolve();
+      }
+      
+      const { error } = await supabase
+        .from('day_activities')
+        .update({
+          title: updatedData.title,
+          description: updatedData.description || '',
+          start_time: updatedData.start_time || null,
+          end_time: updatedData.end_time || null,
+          cost: updatedData.cost ? Number(updatedData.cost) : null,
+          currency: updatedData.currency
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Activity updated successfully');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error('Failed to update activity');
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    }
   };
 
   return {
