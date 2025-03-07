@@ -6,7 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import DayImage from './DayImage';
 import { DayActivity, ActivityFormData } from '@/types/trip';
-import { DayActivityManager } from '@/hooks/useDayActivities';
+import DayActivityManager from './components/DayActivityManager';
 import DayCardContent from './DayCardContent';
 import DayImageEditDialog from './DayImageEditDialog';
 
