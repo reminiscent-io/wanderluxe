@@ -4,11 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
-import DayImage from './DayImage';
 import { DayActivity, ActivityFormData } from '@/types/trip';
-import DayActivityManager from './components/DayActivityManager';
 import DayCardContent from './DayCardContent';
 import DayImageEditDialog from './DayImageEditDialog';
+// Import the DayImage component directly from its file path
+import DayImage from './DayImage';
 
 interface DayCardProps {
   id: string;
