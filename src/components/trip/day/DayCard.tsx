@@ -12,6 +12,7 @@ import DayEditDialog from './DayEditDialog';
 import EditActivityDialog from './activities/EditActivityDialog';
 import { EditIcon } from 'lucide-react';
 import DayImageEditDialog from './DayImageEditDialog';
+import DayImage from './DayImage'; // Added import for DayImage
 
 interface DayCardProps {
   id: string;
@@ -191,7 +192,7 @@ const DayCard: React.FC<DayCardProps> = ({
       </div>
 
       {isEditing && (
-        <EditDayDialog 
+        <DayEditDialog 
           dayId={id}
           tripId={tripId}
           date={date}

@@ -10,12 +10,29 @@ export interface DayImageProps {
 }
 
 // Helper function to extract photographer info from Unsplash URL
-// In a real implementation, you would need to parse the actual photographer name
-// from the URL or store it when you initially fetch the image
 const extractPhotographerFromUrl = (url: string): string => {
-  // Placeholder for demonstration - in a real app, you'd have the actual photographer data
-  // or make an API call to get it based on image ID
-  return "photographer";
+  try {
+    // Try to extract user info from Unsplash URL pattern
+    // Unsplash URLs sometimes contain user information in the query parameters
+    const urlObj = new URL(url);
+    const user = urlObj.searchParams.get('user');
+    if (user) return user;
+    
+    // If using the Unsplash API directly, photo IDs may be in the path
+    // Example URL format: https://images.unsplash.com/photo-{id}?...
+    const pathMatch = urlObj.pathname.match(/photo-([a-zA-Z0-9-]+)/);
+    if (pathMatch) {
+      // In a production app, you'd make an API call to get photographer name
+      // Using photo ID from pathMatch[1]
+      // For now, just display "Unsplash Photographer"
+      return "Unsplash Photographer";
+    }
+    
+    return "Unsplash Photographer";
+  } catch (e) {
+    console.error("Error parsing Unsplash URL", e);
+    return "Unsplash Photographer";
+  }
 }
 
 const DayImage: React.FC<DayImageProps> = ({ 

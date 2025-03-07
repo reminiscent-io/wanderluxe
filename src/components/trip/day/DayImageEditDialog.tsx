@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -34,7 +33,7 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedImageUrl) {
       toast.error('Please select an image');
       return;
@@ -51,11 +50,11 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
       if (error) throw error;
 
       toast.success('Day image updated successfully');
-      
+
       // Invalidate the day and trip queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ['day', dayId] });
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      
+
       onClose();
     } catch (error) {
       console.error('Error updating day image:', error);
@@ -67,12 +66,13 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" aria-describedby="day-image-edit-description">
         <DialogTitle>Edit Day Image</DialogTitle>
         <DialogDescription>
           Search for an image on Unsplash or enter an image URL
         </DialogDescription>
-        
+        <div id="day-image-edit-description" className="sr-only">Dialog to edit or change the day image</div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="searchQuery">Search Unsplash</Label>
@@ -85,13 +85,13 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
               />
             </div>
           </div>
-          
+
           <UnsplashImageSearch 
             searchQuery={searchQuery}
             onImageSelect={handleImageSelect}
             selectedImageUrl={selectedImageUrl}
           />
-          
+
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
