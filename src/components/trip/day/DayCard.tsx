@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/integrations/supabase/client";
 import DayImage from './DayImage';
 import { DayActivity, ActivityFormData } from '@/types/trip';
 import { DayActivityManager } from '@/hooks/useDayActivities';
