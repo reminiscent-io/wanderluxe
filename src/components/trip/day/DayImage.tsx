@@ -1,58 +1,66 @@
-
 import React from 'react';
-import UnsplashImage from '@/components/UnsplashImage';
+import { cn } from '@/lib/utils';
 
-export interface DayImageProps {
+interface DayImageProps {
   dayId: string;
   title: string;
-  imageUrl?: string | null;
+  imageUrl: string | null;
   defaultImageUrl?: string;
+  className?: string;
+  onClick?: () => void;
 }
 
-const DayImage: React.FC<DayImageProps> = ({ 
-  dayId, 
-  title, 
+const DayImage: React.FC<DayImageProps> = ({
+  dayId,
+  title,
   imageUrl,
-  defaultImageUrl 
+  defaultImageUrl = '',
+  className,
+  onClick
 }) => {
-  // Use the day's specific image if available, otherwise fallback to trip's default image
+  // For debugging
+  console.log('DayImage rendering with:', { dayId, title, imageUrl, defaultImageUrl, displayImageUrl: imageUrl || defaultImageUrl });
+
+  // Determine which image to display
   const displayImageUrl = imageUrl || defaultImageUrl;
 
-  console.log('DayImage rendering with:', {
-    dayId,
-    title,
-    imageUrl,
-    defaultImageUrl,
-    displayImageUrl
-  });
-
+  // If no image is available, show a placeholder with just the title
   if (!displayImageUrl) {
     return (
-      <div className="relative h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          No image selected
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-          <h2 className="text-white text-xl font-bold drop-shadow-lg">
-            {title || "Untitled Day"}
-          </h2>
+      <div 
+        className={cn(
+          "relative h-40 w-full bg-gray-100 rounded-t-md flex items-center justify-center",
+          className
+        )}
+        onClick={onClick}
+      >
+        <div className="text-gray-500 text-center p-4">
+          <p>No image selected</p>
+          <p className="text-xl font-medium mt-2">{title}</p>
         </div>
       </div>
     );
   }
 
+  // Otherwise, show the image with overlay text
   return (
-    <div className="relative h-[300px] overflow-hidden rounded-l-lg">
-      <UnsplashImage
-        src={displayImageUrl}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-        alt={title || "Day Image"}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-6">
-        <h2 className="text-white text-2xl font-bold drop-shadow-lg">
-          {title || "Untitled Day"}
-        </h2>
+    <div 
+      className={cn(
+        "relative h-40 w-full bg-cover bg-center rounded-t-md",
+        className
+      )}
+      style={{ backgroundImage: `url(${displayImageUrl})` }}
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 bg-black/30 rounded-t-md">
+        <div className="absolute bottom-0 left-0 p-4 text-white">
+          <h3 className="text-xl font-medium">{title}</h3>
+          {imageUrl && (
+            <div className="flex items-center text-sm mt-1">
+              <span>Photo via Unsplash by Unsplash Photographer</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
