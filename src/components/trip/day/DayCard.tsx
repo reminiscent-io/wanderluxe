@@ -1,14 +1,15 @@
+
 import React, { useState } from 'react';
+import { Collapsible } from "@/components/ui/collapsible";
+import DayHeader from './DayHeader';
+import DayCollapsibleContent from './components/DayCollapsibleContent';
+import DayActivityManager from './components/DayActivityManager';
 import { format, parseISO } from 'date-fns';
-import { useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { supabase } from "@/integrations/supabase/client";
-import { DayActivity, ActivityFormData } from '@/types/trip';
-import DayCardContent from './DayCardContent';
-import DayImageEditDialog from './DayImageEditDialog';
-// Import the DayImage component directly from its file path
-import DayImage from './DayImage';
+import { DayActivity } from '@/types/trip';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import DayEditDialog from './DayEditDialog';
 
 interface DayCardProps {
   id: string;
@@ -34,16 +35,7 @@ const DayCard: React.FC<DayCardProps> = ({
   defaultImageUrl
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isEditingDayImage, setIsEditingDayImage] = useState(false);
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
-  const [activityEditData, setActivityEditData] = useState<ActivityFormData>({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD'
-  });
+  const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch restaurant reservations for this day
@@ -55,7 +47,7 @@ const DayCard: React.FC<DayCardProps> = ({
         .select('*')
         .eq('day_id', id)
         .order('order_index');
-
+        
       if (error) throw error;
       return data;
     },
@@ -76,64 +68,63 @@ const DayCard: React.FC<DayCardProps> = ({
     activities 
   });
 
+  const handleDayUpdate = async (updatedData: { title?: string; imageUrl?: string }) => {
+    try {
+      const { error } = await supabase
+        .from('trip_days')
+        .update({
+          title: updatedData.title,
+          image_url: updatedData.imageUrl
+        })
+        .eq('day_id', id);
+      
+      if (error) throw error;
+      
+      toast.success('Day updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating day:', error);
+      toast.error('Failed to update day');
+      throw error;
+    }
+  };
+
   return (
-    <Collapsible 
-      open={isOpen} 
+    <Collapsible
+      open={isOpen}
       onOpenChange={setIsOpen}
-      className="border rounded-lg overflow-hidden bg-white shadow-sm"
+      className="rounded-lg overflow-hidden bg-white shadow-md"
     >
-      <div className="flex flex-col">
-        {/* Image section - contained to the top */}
-        <CollapsibleTrigger asChild>
-          <div className="cursor-pointer relative h-[300px] overflow-hidden">
-            <DayImage 
-              dayId={id}
-              title={dayTitle}
-              imageUrl={imageUrl}
-              defaultImageUrl={defaultImageUrl}
-            />
-          </div>
-        </CollapsibleTrigger>
+      <DayHeader
+        title={dayTitle}
+        date={date}
+        isOpen={isOpen}
+        onEdit={() => setIsEditing(true)}
+        onDelete={() => onDelete(id)}
+      />
 
-        {/* Content section */}
-        <CollapsibleContent className="flex-1">
-          <div className="p-4">
-            <DayCardContent
-              index={index}
-              title={dayTitle}
-              activities={activities}
-              reservations={reservations}
-              onAddActivity={activityManager.handleAddActivity}
-              onEditActivity={(activityId) => {
-                const activity = activities.find(a => a.id === activityId);
-                if (activity) {
-                  setEditingActivityId(activityId);
-                  setActivityEditData({
-                    title: activity.title || '',
-                    description: activity.description || '',
-                    start_time: activity.start_time || '',
-                    end_time: activity.end_time || '',
-                    cost: activity.cost ? activity.cost.toString() : '',
-                    currency: activity.currency || 'USD'
-                  });
-                }
-              }}
-              formatTime={formatTime}
-              dayId={id}
-              eventId={id}
-            />
-          </div>
-        </CollapsibleContent>
-      </div>
+      <DayCollapsibleContent
+        title={dayTitle}
+        activities={activities}
+        index={index}
+        onAddActivity={activityManager.handleAddActivity}
+        onEditActivity={activityManager.handleEditActivity}
+        formatTime={formatTime}
+        dayId={id}
+        tripId={tripId}
+        imageUrl={imageUrl}
+        defaultImageUrl={defaultImageUrl}
+        reservations={reservations}
+      />
 
-      {isEditingDayImage && (
-        <DayImageEditDialog
-          dayId={id}
-          tripId={tripId}
-          currentImageUrl={imageUrl}
-          onClose={() => setIsEditingDayImage(false)}
-        />
-      )}
+      <DayEditDialog
+        open={isEditing}
+        onOpenChange={setIsEditing}
+        initialTitle={title || ''}
+        initialImageUrl={imageUrl || ''}
+        onSave={handleDayUpdate}
+      />
     </Collapsible>
   );
 };

@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface UnsplashImageProps {
@@ -13,15 +14,10 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   className = "",
   showAttribution = true
 }) => {
-  // Add UTM parameters to the image URL if it's from Unsplash and doesn't already have them
-  const processedSrc = src && src.includes('unsplash.com') && !src.includes('utm_source=')
-    ? `${src}${src.includes('?') ? '&' : '?'}utm_source=wanderluxe&utm_medium=referral`
-    : src;
-
   return (
     <div className="relative min-h-[300px] overflow-hidden">
       <img
-        src={processedSrc}
+        src={src}
         alt={alt}
         className={className}
       />
