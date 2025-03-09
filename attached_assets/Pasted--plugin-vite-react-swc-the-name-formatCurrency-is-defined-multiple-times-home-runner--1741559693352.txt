@@ -1,0 +1,166 @@
+[plugin:vite:react-swc] × the name `formatCurrency` is defined multiple times
+     ╭─[/home/runner/workspace/src/components/trip/budget/utils/budgetCalculations.ts:15:1]
+  12 │   is_paid: boolean;
+  13 │ }
+  14 │ 
+  15 │ export function formatCurrency(amount: number, currency: string): string {
+     ·                 ───────┬──────
+     ·                        ╰── previous definition of `formatCurrency` here
+  16 │   const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] || currency;
+  17 │ 
+  18 │   if (currency === 'JPY') {
+  19 │     return `${symbol}${Math.round(amount)}`;
+  20 │   }
+  21 │ 
+  22 │   if (symbol === currency) {
+  23 │     return `${amount.toFixed(2)} ${currency}`;
+  24 │   } else {
+  25 │     return `${symbol}${amount.toFixed(2)}`;
+  26 │   }
+  27 │ }
+  28 │ 
+  29 │ import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
+  30 │ 
+  31 │ export interface ExpenseItem {
+  32 │   id: string;
+  33 │   description: string;
+  34 │   category: string;
+  35 │   cost: number | null;
+  36 │   currency: string;
+  37 │   is_paid: boolean;
+  38 │   date?: string | null;
+  39 │ }
+  40 │ 
+  41 │ // Export the getExpensesByCategory function
+  42 │ export const getExpensesByCategory = (expenses: Expense[], category: string): Expense[] => {
+  43 │   return expenses.filter(expense => expense.category === category);
+  44 │ };
+  45 │ 
+  46 │ // Map different expense types to a unified ExpenseItem format
+  47 │ export const mapToExpenseItems = (
+  48 │   activities: any[],
+  49 │   accommodations: any[],
+  50 │   transportation: any[],
+  51 │   restaurants: any[],
+  52 │   otherExpenses: any[]
+  53 │ ): ExpenseItem[] => {
+  54 │   const items: ExpenseItem[] = [];
+  55 │ 
+  56 │   // Map activities
+  57 │   activities.forEach(activity => {
+  58 │     if (activity.cost) {
+  59 │       items.push({
+  60 │         id: activity.id,
+  61 │         description: activity.title,
+  62 │         category: 'Activities',
+  63 │         cost: activity.cost,
+  64 │         currency: activity.currency || 'USD',
+  65 │         is_paid: activity.is_paid || false,
+  66 │         date: activity.created_at
+  67 │       });
+  68 │     }
+  69 │   });
+  70 │ 
+  71 │   // Map accommodations
+  72 │   accommodations.forEach(accommodation => {
+  73 │     if (accommodation.cost) {
+  74 │       items.push({
+  75 │         id: accommodation.stay_id,
+  76 │         description: accommodation.hotel || 'Accommodation',
+  77 │         category: 'Accommodations',
+  78 │         cost: accommodation.cost,
+  79 │         currency: accommodation.currency || 'USD',
+  80 │         is_paid: accommodation.is_paid || false,
+  81 │         date: accommodation.hotel_checkin_date
+  82 │       });
+  83 │     }
+  84 │   });
+  85 │ 
+  86 │   // Map transportation
+  87 │   transportation.forEach(transport => {
+  88 │     if (transport.cost) {
+  89 │       items.push({
+  90 │         id: transport.id,
+  91 │         description: `${transport.type} - ${transport.provider || ''}`,
+  92 │         category: 'Transportation',
+  93 │         cost: transport.cost,
+  94 │         currency: transport.currency || 'USD',
+  95 │         is_paid: transport.is_paid || false,
+  96 │         date: transport.start_date
+  97 │       });
+  98 │     }
+  99 │   });
+ 100 │ 
+ 101 │   // Map restaurant reservations
+ 102 │   restaurants.forEach(reservation => {
+ 103 │     if (reservation.cost) {
+ 104 │       items.push({
+ 105 │         id: reservation.id,
+ 106 │         description: reservation.restaurant_name,
+ 107 │         category: 'Dining',
+ 108 │         cost: reservation.cost,
+ 109 │         currency: reservation.currency || 'USD',
+ 110 │         is_paid: reservation.is_paid || false,
+ 111 │         date: reservation.created_at
+ 112 │       });
+ 113 │     }
+ 114 │   });
+ 115 │ 
+ 116 │   // Map other expenses
+ 117 │   otherExpenses.forEach(expense => {
+ 118 │     if (expense.cost) {
+ 119 │       items.push({
+ 120 │         id: expense.id,
+ 121 │         description: expense.description,
+ 122 │         category: 'Other',
+ 123 │         cost: expense.cost,
+ 124 │         currency: expense.currency || 'USD',
+ 125 │         is_paid: expense.is_paid || false,
+ 126 │         date: expense.date || expense.created_at
+ 127 │       });
+ 128 │     }
+ 129 │   });
+ 130 │ 
+ 131 │   return items;
+ 132 │ };
+ 133 │ 
+ 134 │ // Convert amount between currencies using exchange rates
+ 135 │ export const convertAmount = (
+ 136 │   amount: number | null, 
+ 137 │   fromCurrency: string, 
+ 138 │   selectedCurrency: string, 
+ 139 │   exchangeRates: ExchangeRate[]
+ 140 │ ): number => {
+ 141 │   if (!amount) return 0;
+ 142 │   if (fromCurrency === selectedCurrency) return amount;
+ 143 │ 
+ 144 │   const toUsdRate = exchangeRates.find(r => 
+ 145 │     r.currency_from === fromCurrency && 
+ 146 │     r.currency_to === 'USD'
+ 147 │   )?.rate || 1;
+ 148 │ 
+ 149 │   const fromUsdRate = exchangeRates.find(r => 
+ 150 │     r.currency_from === 'USD' && 
+ 151 │     r.currency_to === selectedCurrency
+ 152 │   )?.rate || 1;
+ 153 │ 
+ 154 │   return amount * toUsdRate * fromUsdRate;
+ 155 │ };
+ 156 │ 
+ 157 │ // Format currency amount to string
+ 158 │ export const formatCurrency = (amount: number | null, currency: string): string => {
+     ·              ───────┬──────
+     ·                     ╰── `formatCurrency` redefined here
+ 159 │   if (amount === null) return '-';
+ 160 │   return new Intl.NumberFormat('en-US', {
+ 161 │     style: 'currency',
+     ╰────
+/home/runner/workspace/src/components/trip/budget/utils/budgetCalculations.ts:15:1
+104|        items.push({
+105|          id: reservation.id,
+106|          description: reservation.restaurant_name,
+   |                                     ^
+107|          category: 'Dining',
+108|          cost: reservation.cost,
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.
