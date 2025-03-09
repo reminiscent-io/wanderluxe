@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { EditIcon, TrashIcon } from 'lucide-react';
+import { EditIcon, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
 import DayHeader from './DayHeader';
 import DayCollapsibleContent from './components/DayCollapsibleContent';
@@ -9,9 +10,8 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DayActivityManager from './components/DayActivityManager';
 import DayImage from './DayImage';
-import DayImageEditDialog from './DayImageEditDialog';
-import { ChevronDown } from '@radix-ui/react-icons'
-
+import DayImageEditDialog from './DayImageEditDialog.tsx';
+import UnsplashImage from '@/components/UnsplashImage';
 
 interface DayCardProps {
   id: string;
@@ -84,7 +84,8 @@ const DayCard: React.FC<DayCardProps> = ({
     activities
   });
 
-  const handleEditImage = () => {
+  const handleEditImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsEditingDayImage(true);
   };
 
@@ -102,12 +103,6 @@ const DayCard: React.FC<DayCardProps> = ({
       });
     }
   };
-
-  const UnsplashImage = ({ imageUrl, photographer, unsplashUsername, altText, className }: { imageUrl: string, photographer?: string | null, unsplashUsername?: string | null, altText: string, className: string }) => {
-    return (
-      <img src={imageUrl} alt={altText} className={className} />
-    )
-  }
 
   return (
     <Collapsible
@@ -131,54 +126,61 @@ const DayCard: React.FC<DayCardProps> = ({
         </div>
       </CollapsibleTrigger>
 
-      {/* Day image with title that appears in the card body */}
-      <div className="mt-4">
+      {/* Card Content Section */}
+      <div className="p-4">
+        {/* Image Section */}
         {imageUrl && (
-          <div className="relative h-40 rounded-md overflow-hidden">
-            <UnsplashImage
-              imageUrl={imageUrl}
-              photographer={photographer}
-              unsplashUsername={unsplashUsername}
-              altText={dayTitle}
-              className="h-full w-full object-cover"
-            />
+          <div className="relative h-40 rounded-md overflow-hidden mb-4">
+            {photographer && unsplashUsername ? (
+              <UnsplashImage
+                imageUrl={imageUrl}
+                photographer={photographer}
+                unsplashUsername={unsplashUsername}
+                altText={dayTitle}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <img 
+                src={imageUrl} 
+                alt={dayTitle} 
+                className="h-full w-full object-cover" 
+              />
+            )}
             <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4">
               <div className="flex justify-between items-end">
                 <div>
                   <h3 className="text-white text-xl font-bold">{dayTitle}</h3>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditImage();
-                  }}
-                  className="text-white bg-black/50 rounded-full p-1"
+                <div 
+                  onClick={handleEditImage}
+                  className="text-white bg-black/50 rounded-full p-1 cursor-pointer"
                 >
                   <EditIcon className="h-4 w-4" />
-                </button>
+                </div>
               </div>
             </div>
           </div>
         )}
-        <div className="grid md:grid-cols-2 gap-4 p-4">
 
-          <div className="flex flex-col">
-            <DayCollapsibleContent
-              title={dayTitle}
-              activities={activities}
-              index={index}
-              onAddActivity={activityManager.handleAddActivity}
-              onEditActivity={handleActivityClick}
-              formatTime={formatTime}
-              dayId={id}
-              tripId={tripId}
-              imageUrl={imageUrl}
-              defaultImageUrl={defaultImageUrl}
-              reservations={reservations}
-              onActivityClick={handleActivityClick}
-            />
-          </div>
+        {/* Activities and Reservations Section */}
+        <div className="grid md:grid-cols-1 gap-4">
+          <DayCollapsibleContent
+            title={dayTitle}
+            activities={activities}
+            index={index}
+            onAddActivity={activityManager.handleAddActivity}
+            onEditActivity={handleActivityClick}
+            formatTime={formatTime}
+            dayId={id}
+            tripId={tripId}
+            imageUrl={imageUrl}
+            defaultImageUrl={defaultImageUrl}
+            reservations={reservations}
+            onActivityClick={handleActivityClick}
+          />
         </div>
+
+        {/* Image Edit Dialog */}
         {isEditingDayImage && (
           <DayImageEditDialog
             dayId={id}
@@ -186,7 +188,7 @@ const DayCard: React.FC<DayCardProps> = ({
             currentImageUrl={imageUrl}
             onClose={() => setIsEditingDayImage(false)}
             photographer={photographer}
-            unsplashUsername={unsplashUsername} // Pass photographer and unsplashUsername to the dialog
+            unsplashUsername={unsplashUsername}
           />
         )}
       </div>
