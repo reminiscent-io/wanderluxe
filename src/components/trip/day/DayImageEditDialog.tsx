@@ -9,6 +9,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
+interface UnsplashImageData {
+  id: string;
+  url: string;
+  description: string;
+  photographer: string;
+  unsplashUsername: string;
+}
+
 interface DayImageEditDialogProps {
   dayId: string;
   tripId: string;
@@ -35,9 +43,16 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
     
     setIsLoading(true);
     try {
+      // When saving, we should update the image_url along with photographer and username
+      // For now we're only saving the URL, but in a production app you'd save the attribution too
       const { error } = await supabase
         .from('days')
-        .update({ image_url: imageUrl })
+        .update({ 
+          image_url: imageUrl,
+          // Ideally, these fields would be added to your database schema
+          // photographer: selectedImage?.photographer,
+          // unsplash_username: selectedImage?.unsplashUsername
+        })
         .eq('id', dayId);
 
       if (error) throw error;
