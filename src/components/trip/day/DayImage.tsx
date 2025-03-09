@@ -8,6 +8,8 @@ interface DayImageProps {
   defaultImageUrl?: string;
   className?: string;
   onClick?: () => void;
+  photographer?: string | null;
+  unsplashUsername?: string | null;
 }
 
 const DayImage: React.FC<DayImageProps> = ({
@@ -57,7 +59,7 @@ const DayImage: React.FC<DayImageProps> = ({
           <h3 className="text-xl font-medium">{title}</h3>
           {imageUrl && (
             <div className="flex items-center text-sm mt-1">
-              <span>Photo via Unsplash by Unsplash Photographer</span>
+              <span>Photo via Unsplash {photographer ? `by ${photographer}` : ''}</span>
             </div>
           )}
         </div>

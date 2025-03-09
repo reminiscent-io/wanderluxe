@@ -5,7 +5,7 @@ import UnsplashImage from './UnsplashImage';
 
 interface UnsplashImageSearchProps {
   searchQuery: string;
-  onSelectImage: (imageUrl: string) => void;
+  onSelectImage: (imageUrl: string, imageData?: UnsplashImageData) => void;
   showAttribution?: boolean;
 }
 
@@ -97,13 +97,15 @@ const UnsplashImageSearch: React.FC<UnsplashImageSearchProps> = ({
         <div 
           key={image.id} 
           className="cursor-pointer border hover:border-primary transition-all rounded-md overflow-hidden"
-          onClick={() => onSelectImage(image.url)}
+          onClick={() => onSelectImage(image.url, image)}
         >
           <UnsplashImage 
             src={image.url} 
             alt={image.description || 'Unsplash image'} 
             className="w-full h-40 object-cover"
             showAttribution={showAttribution}
+            photographer={image.photographer}
+            unsplashUsername={image.unsplashUsername}
           />
         </div>
       ))}

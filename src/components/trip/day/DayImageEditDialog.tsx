@@ -33,9 +33,13 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
   const [imageUrl, setImageUrl] = useState(currentImageUrl || '');
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedImage, setSelectedImage] = useState<UnsplashImageData | null>(null);
 
-  const handleSelectImage = (selected: string) => {
+  const handleSelectImage = (selected: string, imageData?: UnsplashImageData) => {
     setImageUrl(selected);
+    if (imageData) {
+      setSelectedImage(imageData);
+    }
   };
 
   const handleSave = async () => {
@@ -43,15 +47,13 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
     
     setIsLoading(true);
     try {
-      // When saving, we should update the image_url along with photographer and username
-      // For now we're only saving the URL, but in a production app you'd save the attribution too
+      // Update the day with image URL and attribution data
       const { error } = await supabase
         .from('days')
         .update({ 
           image_url: imageUrl,
-          // Ideally, these fields would be added to your database schema
-          // photographer: selectedImage?.photographer,
-          // unsplash_username: selectedImage?.unsplashUsername
+          photographer: selectedImage?.photographer || null,
+          unsplash_username: selectedImage?.unsplashUsername || null
         })
         .eq('id', dayId);
 
@@ -74,32 +76,19 @@ const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="imageUrl" className="text-right">
-              Image URL
-            </Label>
-            <Input
-              id="imageUrl"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="col-span-3"
-              placeholder="Enter image URL or search below"
-            />
-          </div>
-          
           <div className="grid gap-2">
-            <Label>Search Unsplash</Label>
+            <Label>Search Unsplash for images</Label>
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for images..."
+              placeholder="Search for images (e.g., mountains, beach, city)..."
               className="mb-4"
             />
             
-            <div className="h-[300px] overflow-y-auto border rounded-md p-2">
+            <div className="h-[400px] overflow-y-auto border rounded-md p-2">
               <UnsplashImageSearch 
                 searchQuery={searchQuery} 
-                onSelectImage={handleSelectImage}
+                onSelectImage={(url, imageData) => handleSelectImage(url, imageData)}
                 showAttribution={true}
               />
             </div>

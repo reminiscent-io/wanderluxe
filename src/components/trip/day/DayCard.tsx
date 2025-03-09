@@ -18,6 +18,8 @@ interface DayCardProps {
   title?: string;
   activities?: DayActivity[];
   imageUrl?: string | null;
+  photographer?: string | null; // Added photographer prop
+  unsplashUsername?: string | null; // Added unsplashUsername prop
   index: number;
   onDelete: (id: string) => void;
   defaultImageUrl?: string;
@@ -30,6 +32,8 @@ const DayCard: React.FC<DayCardProps> = ({
   title,
   activities = [],
   imageUrl,
+  photographer, // Added photographer prop
+  unsplashUsername, // Added unsplashUsername prop
   index,
   onDelete,
   defaultImageUrl
@@ -119,6 +123,8 @@ const DayCard: React.FC<DayCardProps> = ({
               dayId={id} 
               title={title || format(parseISO(date), 'EEEE')} 
               imageUrl={imageUrl}
+              photographer={photographer}
+              unsplashUsername={unsplashUsername}
               defaultImageUrl={defaultImageUrl}
               className="h-full rounded-md"
             />
@@ -158,6 +164,7 @@ const DayCard: React.FC<DayCardProps> = ({
             tripId={tripId}
             currentImageUrl={imageUrl}
             onClose={() => setIsEditingDayImage(false)}
+            // Add unsplash search functionality here -  This requires significant additional code and assumptions about existing Supabase functions and state management.
           />
         )}
       </>
