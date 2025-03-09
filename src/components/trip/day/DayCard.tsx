@@ -5,12 +5,11 @@ import DayHeader from './DayHeader';
 import DayCollapsibleContent from './components/DayCollapsibleContent';
 import DayActivityManager from './components/DayActivityManager';
 import { format, parseISO } from 'date-fns';
-import { ActivityFormData, DayActivity } from '@/types/trip';
+import { DayActivity } from '@/types/trip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DayEditDialog from './DayEditDialog';
-import EditActivityDialog from './activities/EditActivityDialog';
 
 interface DayCardProps {
   id: string;
@@ -37,15 +36,6 @@ const DayCard: React.FC<DayCardProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
-  const [activityEditData, setActivityEditData] = useState<ActivityFormData>({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD'
-  });
   const queryClient = useQueryClient();
 
   // Fetch restaurant reservations for this day
@@ -100,32 +90,6 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  const handleActivityClick = (activity: DayActivity) => {
-    // Prepare the activity data for the edit form
-    setActivityEditData({
-      title: activity.title || '',
-      description: activity.description || '',
-      start_time: activity.start_time || '',
-      end_time: activity.end_time || '',
-      cost: activity.cost ? activity.cost.toString() : '',
-      currency: activity.currency || 'USD'
-    });
-    setEditingActivityId(activity.id);
-  };
-
-  const handleUpdateActivity = async () => {
-    if (editingActivityId) {
-      try {
-        await activityManager.handleEditActivity(editingActivityId, activityEditData);
-        setEditingActivityId(null);
-        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      } catch (error) {
-        console.error('Error updating activity:', error);
-        toast.error('Failed to update activity');
-      }
-    }
-  };
-
   return (
     <Collapsible
       open={isOpen}
@@ -152,7 +116,6 @@ const DayCard: React.FC<DayCardProps> = ({
         imageUrl={imageUrl}
         defaultImageUrl={defaultImageUrl}
         reservations={reservations}
-        onActivityClick={handleActivityClick}
       />
 
       <DayEditDialog
@@ -161,15 +124,6 @@ const DayCard: React.FC<DayCardProps> = ({
         initialTitle={title || ''}
         initialImageUrl={imageUrl || ''}
         onSave={handleDayUpdate}
-      />
-
-      <EditActivityDialog
-        activityId={editingActivityId}
-        onOpenChange={() => setEditingActivityId(null)}
-        activity={activityEditData}
-        onActivityChange={setActivityEditData}
-        onSubmit={handleUpdateActivity}
-        eventId={id}
       />
     </Collapsible>
   );

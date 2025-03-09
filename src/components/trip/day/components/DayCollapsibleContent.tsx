@@ -1,23 +1,42 @@
+
 import React from 'react';
 import { CollapsibleContent } from "@/components/ui/collapsible";
 import DayLayout from '../DayLayout';
 import { DayActivity, ActivityFormData } from '@/types/trip';
-import Button from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 
 interface DayCollapsibleContentProps {
   title: string;
   activities: DayActivity[];
+  hotelDetails?: {
+    name: string;
+    details: string;
+    imageUrl?: string;
+  };
   index: number;
   onAddActivity: (activity: ActivityFormData) => Promise<void>;
-  onEditActivity: (id: string) => Promise<void>;
+  onEditActivity: (id: string) => void;
   formatTime: (time?: string) => string;
   dayId: string;
   tripId: string;
   imageUrl?: string | null;
   defaultImageUrl?: string;
-  reservations?: any[];
-  onActivityClick?: (activity: DayActivity) => void;
+  reservations?: Array<{
+    id: string;
+    day_id: string;
+    restaurant_name: string;
+    reservation_time?: string;
+    number_of_people?: number;
+    confirmation_number?: string;
+    notes?: string;
+    cost?: number;
+    currency?: string;
+    address?: string;
+    phone_number?: string;
+    website?: string;
+    rating?: number;
+    created_at: string;
+    order_index: number;
+  }>;
 }
 
 const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
@@ -32,13 +51,8 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   tripId,
   imageUrl,
   defaultImageUrl,
-  reservations,
-  onActivityClick
+  reservations
 }) => {
-  const handleDeleteActivity = async (id: string) => {
-    //Implementation for deleting activity
-  };
-
   return (
     <CollapsibleContent className="p-4">
       <DayLayout
@@ -54,7 +68,6 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
         imageUrl={imageUrl}
         defaultImageUrl={defaultImageUrl}
         reservations={reservations}
-        onActivityClick={onActivityClick}
       />
     </CollapsibleContent>
   );

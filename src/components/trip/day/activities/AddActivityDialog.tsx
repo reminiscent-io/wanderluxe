@@ -29,8 +29,6 @@ interface AddActivityDialogProps {
   }) => void;
   onSubmit: () => void;
   eventId: string;
-  title?: string;
-  isSubmitting?: boolean;
 }
 
 const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
@@ -40,14 +38,12 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
   onActivityChange,
   onSubmit,
   eventId,
-  title = "Add New Activity",
-  isSubmitting = false,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>Add New Activity</DialogTitle>
         </DialogHeader>
         <ActivityForm
           activity={activity}
@@ -56,7 +52,6 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
           onCancel={() => onOpenChange(false)}
           submitLabel="Add Activity"
           eventId={eventId}
-          isSubmitting={isSubmitting}
         />
       </DialogContent>
     </Dialog>
