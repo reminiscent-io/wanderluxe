@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,91 +21,131 @@ interface DayImageEditDialogProps {
   tripId: string;
   currentImageUrl: string | null;
   onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const DayImageEditDialog: React.FC<DayImageEditDialogProps> = ({
   dayId,
   tripId,
   currentImageUrl,
-  onClose
+  onClose,
+  open,
+  onOpenChange
 }) => {
-  const [imageUrl, setImageUrl] = useState(currentImageUrl || '');
-  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedImage, setSelectedImage] = useState<UnsplashImageData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [unsplashImage, setUnsplashImage] = useState<UnsplashImageData | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState('');
 
-  const handleSelectImage = (selected: string, imageData?: UnsplashImageData) => {
-    setImageUrl(selected);
-    if (imageData) {
-      setSelectedImage(imageData);
-    }
-  };
+  useEffect(() => {
+    const fetchExistingImage = async () => {
+      if (!dayId || !open) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('days')
+          .select('image_url')
+          .eq('id', dayId) // Corrected to 'id' from 'day_id'
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data?.image_url) {
+          setSelectedImageUrl(data.image_url);
+        } else {
+          setSelectedImageUrl('');
+        }
+      } catch (error) {
+        console.error('Error fetching day image:', error);
+        toast.error('Failed to load image information');
+      }
+    };
+
+    fetchExistingImage();
+  }, [dayId, open]);
 
   const handleSave = async () => {
     if (!dayId) return;
-    
+
     setIsLoading(true);
     try {
-      // Update the day with image URL and attribution data
       const { error } = await supabase
         .from('days')
-        .update({ 
-          image_url: imageUrl,
-          photographer: selectedImage?.photographer || null,
-          unsplash_username: selectedImage?.unsplashUsername || null
+        .update({
+          image_url: selectedImageUrl,
+          // Save attribution data if we have it
+          photographer: unsplashImage?.photographer || null,
+          unsplash_username: unsplashImage?.unsplashUsername || null
         })
-        .eq('id', dayId);
+        .eq('id', dayId); // Corrected to 'id' from 'day_id'
 
-      if (error) throw error;
-      toast.success('Day image updated successfully');
-      onClose();
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Image updated successfully');
+      onOpenChange(false);
     } catch (error) {
       console.error('Error updating day image:', error);
-      toast.error('Failed to update day image');
+      toast.error('Failed to update image');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleUnsplashSelect = (url: string, imageData?: UnsplashImageData) => {
+    setSelectedImageUrl(url);
+    setUnsplashImage(imageData || null);
+  };
+
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Edit Day Image</DialogTitle>
         </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label>Search Unsplash for images</Label>
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for images (e.g., mountains, beach, city)..."
-              className="mb-4"
-            />
-            
-            <div className="h-[400px] overflow-y-auto border rounded-md p-2">
-              <UnsplashImageSearch 
-                searchQuery={searchQuery} 
-                onSelectImage={(url, imageData) => handleSelectImage(url, imageData)}
-                showAttribution={true}
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="searchQuery">Search Unsplash</Label>
+            <div className="flex space-x-2">
+              <Input
+                id="searchQuery"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="e.g., mountains, beach, city"
               />
             </div>
           </div>
+
+          {selectedImageUrl && (
+            <div className="mt-4 border rounded-md overflow-hidden h-40">
+              <img 
+                src={selectedImageUrl} 
+                alt="Selected image" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          <div className="mt-4 max-h-[300px] overflow-y-auto">
+            <UnsplashImageSearch
+              searchQuery={searchQuery}
+              onSelectImage={handleUnsplashSelect}
+            />
+          </div>
         </div>
-        
+
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-              </>
-            ) : (
-              'Save Image'
-            )}
+          <Button
+            onClick={handleSave}
+            disabled={isLoading}
+          >
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>

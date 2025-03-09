@@ -15,9 +15,12 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   alt = 'Unsplash image',
   className,
   showAttribution = true,
-  photographer = 'Unsplash Photographer',
-  unsplashUsername = 'unsplash'
+  photographer,
+  unsplashUsername
 }) => {
+  const displayPhotographer = photographer || 'Unsplash Photographer';
+  const displayUsername = unsplashUsername || 'unsplash';
+  
   return (
     <div className="relative w-full h-full">
       <img 
@@ -28,16 +31,16 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
       {showAttribution && (
         <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-1 text-white text-xs">
           <p>
-            Photo via Unsplash by {photographer}
-            {unsplashUsername && (
+            Photo via Unsplash by {displayPhotographer}
+            {displayUsername && (
               <a 
-                href={`https://unsplash.com/@${unsplashUsername}`} 
+                href={`https://unsplash.com/@${displayUsername}`} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="ml-1 underline"
                 onClick={(e) => e.stopPropagation()}
               >
-                @{unsplashUsername}
+                @{displayUsername}
               </a>
             )}
           </p>

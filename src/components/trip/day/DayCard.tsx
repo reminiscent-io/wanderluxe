@@ -18,22 +18,22 @@ interface DayCardProps {
   title?: string;
   activities?: DayActivity[];
   imageUrl?: string | null;
-  photographer?: string | null; // Added photographer prop
-  unsplashUsername?: string | null; // Added unsplashUsername prop
+  photographer?: string | null;
+  unsplashUsername?: string | null;
   index: number;
   onDelete: (id: string) => void;
   defaultImageUrl?: string;
 }
 
-const DayCard: React.FC<DayCardProps> = ({ 
+const DayCard: React.FC<DayCardProps> = ({
   id,
   tripId,
   date,
   title,
   activities = [],
   imageUrl,
-  photographer, // Added photographer prop
-  unsplashUsername, // Added unsplashUsername prop
+  photographer,
+  unsplashUsername,
   index,
   onDelete,
   defaultImageUrl
@@ -76,10 +76,10 @@ const DayCard: React.FC<DayCardProps> = ({
   };
 
   // Get activity manager functions
-  const activityManager = DayActivityManager({ 
-    id, 
-    tripId, 
-    activities 
+  const activityManager = DayActivityManager({
+    id,
+    tripId,
+    activities
   });
 
   const handleEditImage = () => {
@@ -119,16 +119,16 @@ const DayCard: React.FC<DayCardProps> = ({
       <>
         <div className="grid md:grid-cols-2 gap-4 p-4">
           <div className="relative group h-full">
-            <DayImage 
-              dayId={id} 
-              title={title || format(parseISO(date), 'EEEE')} 
+            <DayImage
+              dayId={id}
+              title={title || format(parseISO(date), 'EEEE')}
               imageUrl={imageUrl}
               photographer={photographer}
               unsplashUsername={unsplashUsername}
               defaultImageUrl={defaultImageUrl}
               className="h-full rounded-md"
             />
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleEditImage();
@@ -164,7 +164,8 @@ const DayCard: React.FC<DayCardProps> = ({
             tripId={tripId}
             currentImageUrl={imageUrl}
             onClose={() => setIsEditingDayImage(false)}
-            // Add unsplash search functionality here -  This requires significant additional code and assumptions about existing Supabase functions and state management.
+            photographer={photographer}
+            unsplashUsername={unsplashUsername} // Pass photographer and unsplashUsername to the dialog
           />
         )}
       </>
