@@ -1,3 +1,30 @@
+import { format } from 'date-fns';
+import { CURRENCY_SYMBOLS } from './currencyConverter';
+
+export interface ExpenseItem {
+  id: string;
+  description: string;
+  cost: number;
+  convertedCost?: number;
+  currency: string;
+  date?: string;
+  category?: string;
+  is_paid: boolean;
+}
+
+export function formatCurrency(amount: number, currency: string): string {
+  const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] || currency;
+
+  if (currency === 'JPY') {
+    return `${symbol}${Math.round(amount)}`;
+  }
+
+  if (symbol === currency) {
+    return `${amount.toFixed(2)} ${currency}`;
+  } else {
+    return `${symbol}${amount.toFixed(2)}`;
+  }
+}
 
 import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
@@ -113,12 +140,12 @@ export const convertAmount = (
 ): number => {
   if (!amount) return 0;
   if (fromCurrency === selectedCurrency) return amount;
-  
+
   const toUsdRate = exchangeRates.find(r => 
     r.currency_from === fromCurrency && 
     r.currency_to === 'USD'
   )?.rate || 1;
-  
+
   const fromUsdRate = exchangeRates.find(r => 
     r.currency_from === 'USD' && 
     r.currency_to === selectedCurrency
@@ -127,8 +154,8 @@ export const convertAmount = (
   return amount * toUsdRate * fromUsdRate;
 };
 
-// Format currency amount to string
-export const formatCurrency = (amount: number | null, currency: string): string => {
+// Format currency amount to string (This function is now redundant, but kept for backward compatibility)
+export const formatCurrencyOld = (amount: number | null, currency: string): string => {
   if (amount === null) return '-';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

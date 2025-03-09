@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ExpenseTable from './budget/ExpenseTable';
 import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
@@ -7,6 +7,7 @@ import { useExpenses } from './budget/hooks/useExpenses';
 import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
+import { convertCurrency } from './budget/utils/currencyConverter';
 
 interface AddExpenseData {
   description: string;
@@ -21,10 +22,25 @@ interface BudgetViewProps {
 }
 
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
-  const { selectedCurrency, handleCurrencyChange } = useCurrencyState();
+  const { selectedCurrency, handleCurrencyChange, rates, lastUpdated } = useCurrencyState();
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const { data: expenses } = useExpenses(tripId);
   const { addExpense, updateExpense } = useBudgetMutations(tripId);
+
+  // Convert expenses to selected currency
+  const convertedExpenses = useMemo(() => {
+    if (!expenses?.items) return [];
+    
+    return expenses.items.map(expense => ({
+      ...expense,
+      convertedCost: convertCurrency(
+        expense.cost || 0,
+        expense.currency || 'USD',
+        selectedCurrency,
+        rates
+      )
+    }));
+  }, [expenses?.items, selectedCurrency, rates]);
 
   const handleAddExpense = async (data: AddExpenseData) => {
     await addExpense.mutateAsync({
@@ -47,15 +63,17 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     });
   };
 
-  const total = expenses?.items.reduce((sum, item) => sum + (item.cost || 0), 0) || 0;
-  const paidTotal = expenses?.items.reduce((sum, item) => sum + (item.is_paid ? (item.cost || 0) : 0), 0) || 0;
+  // Calculate totals using converted values
+  const total = convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0);
+  const paidTotal = convertedExpenses.reduce((sum, item) => 
+    sum + (item.is_paid ? item.convertedCost : 0), 0);
 
   return (
     <div className="space-y-6">
       <BudgetHeader
         selectedCurrency={selectedCurrency}
         onCurrencyChange={handleCurrencyChange}
-        lastUpdated={null}
+        lastUpdated={lastUpdated}
       />
 
       <BudgetSummary
@@ -67,9 +85,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        {expenses?.items && (
+        {convertedExpenses.length > 0 && (
           <ExpenseTable
-            expenses={expenses.items}
+            expenses={convertedExpenses}
             selectedCurrency={selectedCurrency}
             onUpdatePaidStatus={handleUpdatePaidStatus}
           />
