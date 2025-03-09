@@ -9,7 +9,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DayActivityManager from './components/DayActivityManager';
 import DayImage from './DayImage';
-import DayImageEditDialog from './DayImageEditDialog';
+import DayImageEditDialog from './DayImageEditDialog.tsx';
 
 interface DayCardProps {
   id: string;
