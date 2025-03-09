@@ -154,7 +154,18 @@ export const convertAmount = (
   return amount * toUsdRate * fromUsdRate;
 };
 
-// Format currency amount to string (This function is now redundant, but kept for backward compatibility)
+// Format currency amount to string
+export const formatCurrency = (amount: number | null, currency: string): string => {
+  if (amount === null) return '-';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};
+
+// Keeping old format for backward compatibility
 export const formatCurrencyOld = (amount: number | null, currency: string): string => {
   if (amount === null) return '-';
   return new Intl.NumberFormat('en-US', {
