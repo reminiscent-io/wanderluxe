@@ -12,7 +12,7 @@ export interface ExpenseItem {
   is_paid: boolean;
 }
 
-export function formatCurrency(amount: number, currency: string): string {
+export function formatCurrencyWithSymbol(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] || currency;
 
   if (currency === 'JPY') {
@@ -159,6 +159,8 @@ export const formatCurrency = (amount: number | null, currency: string): string 
   if (amount === null) return '-';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
