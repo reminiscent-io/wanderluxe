@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import DayActivityManager from './components/DayActivityManager';
 import DayImage from './DayImage';
 import DayImageEditDialog from './DayImageEditDialog';
+import { ChevronDown } from '@radix-ui/react-icons'
+
 
 interface DayCardProps {
   id: string;
@@ -101,44 +103,64 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
+  const UnsplashImage = ({ imageUrl, photographer, unsplashUsername, altText, className }: { imageUrl: string, photographer?: string | null, unsplashUsername?: string | null, altText: string, className: string }) => {
+    return (
+      <img src={imageUrl} alt={altText} className={className} />
+    )
+  }
+
   return (
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
       className="border rounded-md shadow-sm mb-4 bg-white"
     >
-      <CollapsibleTrigger className="w-full text-left">
-        <DayHeader
-          date={date}
-          title={title}
-          index={index}
-          onDelete={() => onDelete(id)}
-        />
+      <CollapsibleTrigger asChild>
+        <div className="relative flex justify-between items-center p-4 rounded-lg bg-background border hover:border-primary transition-colors">
+          <div className="flex-1">
+            <div className="flex items-center">
+              <h3 className="font-medium text-lg">{dayTitle}</h3>
+              <span className="ml-2 text-sm text-muted-foreground">
+                {format(parseISO(date), 'MMM d')}
+              </span>
+            </div>
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
+          />
+        </div>
       </CollapsibleTrigger>
 
-      <>
-        <div className="grid md:grid-cols-2 gap-4 p-4">
-          <div className="relative group h-full">
-            <DayImage
-              dayId={id}
-              title={title || format(parseISO(date), 'EEEE')}
+      {/* Day image with title that appears in the card body */}
+      <div className="mt-4">
+        {imageUrl && (
+          <div className="relative h-40 rounded-md overflow-hidden">
+            <UnsplashImage
               imageUrl={imageUrl}
               photographer={photographer}
               unsplashUsername={unsplashUsername}
-              defaultImageUrl={defaultImageUrl}
-              className="h-full rounded-md"
+              altText={dayTitle}
+              className="h-full w-full object-cover"
             />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditImage();
-              }}
-              className="absolute top-3 right-3 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Edit day image"
-            >
-              <EditIcon className="h-4 w-4" />
-            </button>
+            <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h3 className="text-white text-xl font-bold">{dayTitle}</h3>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditImage();
+                  }}
+                  className="text-white bg-black/50 rounded-full p-1"
+                >
+                  <EditIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
+        )}
+        <div className="grid md:grid-cols-2 gap-4 p-4">
 
           <div className="flex flex-col">
             <DayCollapsibleContent
@@ -157,7 +179,6 @@ const DayCard: React.FC<DayCardProps> = ({
             />
           </div>
         </div>
-
         {isEditingDayImage && (
           <DayImageEditDialog
             dayId={id}
@@ -168,7 +189,7 @@ const DayCard: React.FC<DayCardProps> = ({
             unsplashUsername={unsplashUsername} // Pass photographer and unsplashUsername to the dialog
           />
         )}
-      </>
+      </div>
     </Collapsible>
   );
 };

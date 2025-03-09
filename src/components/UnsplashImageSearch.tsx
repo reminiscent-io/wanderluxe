@@ -1,114 +1,83 @@
-
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
-import UnsplashImage from './UnsplashImage';
+
+export interface UnsplashImageData {
+  url: string;
+  photographer: string;
+  unsplashUsername: string;
+}
 
 interface UnsplashImageSearchProps {
   searchQuery: string;
-  onSelectImage: (imageUrl: string, imageData?: UnsplashImageData) => void;
-  showAttribution?: boolean;
-}
-
-interface UnsplashImageData {
-  id: string;
-  url: string;
-  description: string;
-  photographer: string;
-  unsplashUsername: string;
+  onSelectImage: (url: string, imageData?: UnsplashImageData) => void;
 }
 
 const UnsplashImageSearch: React.FC<UnsplashImageSearchProps> = ({
   searchQuery,
   onSelectImage,
-  showAttribution = true
 }) => {
   const [images, setImages] = useState<UnsplashImageData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchImages = async () => {
-      if (!searchQuery || searchQuery.trim().length < 2) {
+      if (!searchQuery.trim()) {
+        setImages([]);
         return;
       }
 
       setLoading(true);
-      setError(null);
-
       try {
         const response = await fetch(`/api/unsplash-search?query=${encodeURIComponent(searchQuery)}`);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch images: ${response.statusText}`);
-        }
-        
         const data = await response.json();
-        setImages(data.images || []);
-      } catch (err) {
-        console.error('Error fetching Unsplash images:', err);
-        setError('Failed to load images. Please try again.');
+        setImages(data);
+      } catch (error) {
+        console.error('Error fetching Unsplash images:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    const debounceTimer = setTimeout(() => {
-      fetchImages();
-    }, 500);
-
-    return () => clearTimeout(debounceTimer);
+    fetchImages();
   }, [searchQuery]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center p-4 text-destructive">
-        <p>{error}</p>
-      </div>
-    );
-  }
-
-  if (images.length === 0 && searchQuery.trim().length > 1) {
-    return (
-      <div className="text-center p-4 text-muted-foreground">
-        <p>No images found. Try a different search term.</p>
-      </div>
-    );
-  }
-
-  if (images.length === 0) {
-    return (
-      <div className="text-center p-4 text-muted-foreground">
-        <p>Enter a search term to find images</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {images.map((image) => (
-        <div 
-          key={image.id} 
-          className="cursor-pointer border hover:border-primary transition-all rounded-md overflow-hidden"
-          onClick={() => onSelectImage(image.url, image)}
-        >
-          <UnsplashImage 
-            src={image.url} 
-            alt={image.description || 'Unsplash image'} 
-            className="w-full h-40 object-cover"
-            showAttribution={showAttribution}
-            photographer={image.photographer}
-            unsplashUsername={image.unsplashUsername}
-          />
+    <div>
+      {loading && (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      ))}
+      )}
+
+      {!loading && images.length > 0 && (
+        <div className="grid grid-cols-2 gap-4">
+          {images.map((image, index) => (
+            <Card 
+              key={index} 
+              className="cursor-pointer overflow-hidden"
+              onClick={() => onSelectImage(image.url, image)}
+            >
+              <CardContent className="p-0">
+                <img
+                  src={image.url}
+                  alt={`Photo by ${image.photographer}`}
+                  className="h-32 w-full object-cover"
+                />
+                <div className="p-2 text-xs text-muted-foreground truncate">
+                  {image.photographer}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {!loading && searchQuery && images.length === 0 && (
+        <p className="text-center py-4 text-muted-foreground">
+          No images found for "{searchQuery}"
+        </p>
+      )}
     </div>
   );
 };

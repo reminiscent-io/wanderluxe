@@ -1,49 +1,43 @@
+
 import React from 'react';
-import { cn } from '@/lib/utils';
 
 interface UnsplashImageProps {
-  src: string;
-  alt?: string;
+  imageUrl: string;
+  photographer: string | null;
+  unsplashUsername: string | null;
+  altText?: string;
   className?: string;
-  showAttribution?: boolean;
-  photographer?: string;
-  unsplashUsername?: string;
 }
 
 const UnsplashImage: React.FC<UnsplashImageProps> = ({
-  src,
-  alt = 'Unsplash image',
-  className,
-  showAttribution = true,
+  imageUrl,
   photographer,
-  unsplashUsername
+  unsplashUsername,
+  altText = "Unsplash image",
+  className = ""
 }) => {
-  const displayPhotographer = photographer || 'Unsplash Photographer';
-  const displayUsername = unsplashUsername || 'unsplash';
-  
+  if (!imageUrl) return null;
+
   return (
-    <div className="relative w-full h-full">
+    <div className={`relative ${className}`}>
       <img 
-        src={src} 
-        alt={alt} 
-        className={cn("w-full h-full object-cover", className)} 
+        src={imageUrl} 
+        alt={altText} 
+        className="w-full h-full object-cover"
       />
-      {showAttribution && (
-        <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-1 text-white text-xs">
-          <p>
-            Photo via Unsplash by {displayPhotographer}
-            {displayUsername && (
-              <a 
-                href={`https://unsplash.com/@${displayUsername}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="ml-1 underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                @{displayUsername}
-              </a>
-            )}
-          </p>
+      {(photographer || unsplashUsername) && (
+        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-1 text-xs">
+          Photo via Unsplash by {photographer || 'Unsplash Photographer'}
+          {unsplashUsername && (
+            <a 
+              href={`https://unsplash.com/@${unsplashUsername}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="underline ml-1"
+            >
+              @{unsplashUsername}
+            </a>
+          )}
         </div>
       )}
     </div>

@@ -16,6 +16,12 @@ interface UnsplashImageData {
   unsplashUsername: string;
 }
 
+interface UnsplashImageData {
+  url: string;
+  photographer: string;
+  unsplashUsername: string;
+}
+
 interface DayImageEditDialogProps {
   dayId: string;
   tripId: string;
