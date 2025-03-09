@@ -1,46 +1,58 @@
+
 import React from 'react';
 import UnsplashImage from '@/components/UnsplashImage';
 
-interface DayImageProps {
+export interface DayImageProps {
   dayId: string;
   title: string;
-  imageUrl: string | null;
+  imageUrl?: string | null;
   defaultImageUrl?: string;
-  photographer?: string | null;
-  unsplashUsername?: string | null;
-  onEditImage?: () => void;
-  customClass?: string;
 }
 
-const DayImage: React.FC<DayImageProps> = ({
-  dayId,
-  title,
+const DayImage: React.FC<DayImageProps> = ({ 
+  dayId, 
+  title, 
   imageUrl,
-  defaultImageUrl = '',
-  photographer = null,
-  unsplashUsername = null,
-  onEditImage,
-  customClass = '',
+  defaultImageUrl 
 }) => {
-  console.log('DayImage rendering with:', { dayId, title, imageUrl, defaultImageUrl, displayImageUrl: imageUrl || defaultImageUrl });
-
+  // Use the day's specific image if available, otherwise fallback to trip's default image
   const displayImageUrl = imageUrl || defaultImageUrl;
 
+  console.log('DayImage rendering with:', {
+    dayId,
+    title,
+    imageUrl,
+    defaultImageUrl,
+    displayImageUrl
+  });
+
   if (!displayImageUrl) {
-    return null;
+    return (
+      <div className="relative h-[300px] overflow-hidden rounded-l-lg bg-gray-100">
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          No image selected
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+          <h2 className="text-white text-xl font-bold drop-shadow-lg">
+            {title || "Untitled Day"}
+          </h2>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={`relative w-full h-40 mb-4 ${customClass}`}>
+    <div className="relative h-[300px] overflow-hidden rounded-l-lg">
       <UnsplashImage
-        imageUrl={displayImageUrl}
-        photographer={photographer}
-        unsplashUsername={unsplashUsername}
-        altText={title}
-        className="w-full h-full rounded-md"
+        src={displayImageUrl}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+        alt={title || "Day Image"}
       />
-      <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 rounded-md">
-        <h3 className="text-white text-xl font-bold">{title}</h3>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-6">
+        <h2 className="text-white text-2xl font-bold drop-shadow-lg">
+          {title || "Untitled Day"}
+        </h2>
       </div>
     </div>
   );

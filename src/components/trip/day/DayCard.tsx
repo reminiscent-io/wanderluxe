@@ -1,17 +1,16 @@
 
 import React, { useState } from 'react';
-import { format, parseISO } from 'date-fns';
-import { EditIcon, ChevronDown } from 'lucide-react';
-import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible } from "@/components/ui/collapsible";
 import DayHeader from './DayHeader';
 import DayCollapsibleContent from './components/DayCollapsibleContent';
-import { DayActivity, ActivityFormData } from '@/types/trip';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import DayActivityManager from './components/DayActivityManager';
-import DayImage from './DayImage';
-import DayImageEditDialog from './DayImageEditDialog.tsx';
-import UnsplashImage from '@/components/UnsplashImage';
+import { format, parseISO } from 'date-fns';
+import { ActivityFormData, DayActivity } from '@/types/trip';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import DayEditDialog from './DayEditDialog';
+import EditActivityDialog from './activities/EditActivityDialog';
 
 interface DayCardProps {
   id: string;
@@ -20,29 +19,24 @@ interface DayCardProps {
   title?: string;
   activities?: DayActivity[];
   imageUrl?: string | null;
-  photographer?: string | null;
-  unsplashUsername?: string | null;
   index: number;
   onDelete: (id: string) => void;
   defaultImageUrl?: string;
 }
 
-const DayCard: React.FC<DayCardProps> = ({
+const DayCard: React.FC<DayCardProps> = ({ 
   id,
   tripId,
   date,
   title,
   activities = [],
   imageUrl,
-  photographer,
-  unsplashUsername,
   index,
   onDelete,
   defaultImageUrl
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isEditingDayImage, setIsEditingDayImage] = useState(false);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [activityEditData, setActivityEditData] = useState<ActivityFormData>({
     title: '',
@@ -63,7 +57,7 @@ const DayCard: React.FC<DayCardProps> = ({
         .select('*')
         .eq('day_id', id)
         .order('order_index');
-
+        
       if (error) throw error;
       return data;
     },
@@ -78,29 +72,57 @@ const DayCard: React.FC<DayCardProps> = ({
   };
 
   // Get activity manager functions
-  const activityManager = DayActivityManager({
-    id,
-    tripId,
-    activities
+  const activityManager = DayActivityManager({ 
+    id, 
+    tripId, 
+    activities 
   });
 
-  const handleEditImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditingDayImage(true);
+  const handleDayUpdate = async (updatedData: { title?: string; imageUrl?: string }) => {
+    try {
+      const { error } = await supabase
+        .from('trip_days')
+        .update({
+          title: updatedData.title,
+          image_url: updatedData.imageUrl
+        })
+        .eq('day_id', id);
+      
+      if (error) throw error;
+      
+      toast.success('Day updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating day:', error);
+      toast.error('Failed to update day');
+      throw error;
+    }
   };
 
-  const handleActivityClick = (activityId: string) => {
-    const activity = activities.find(a => a.id === activityId);
-    if (activity) {
-      setEditingActivityId(activityId);
-      setActivityEditData({
-        title: activity.title,
-        description: activity.description || '',
-        start_time: activity.start_time || '',
-        end_time: activity.end_time || '',
-        cost: activity.cost ? activity.cost.toString() : '',
-        currency: activity.currency || 'USD'
-      });
+  const handleActivityClick = (activity: DayActivity) => {
+    // Prepare the activity data for the edit form
+    setActivityEditData({
+      title: activity.title || '',
+      description: activity.description || '',
+      start_time: activity.start_time || '',
+      end_time: activity.end_time || '',
+      cost: activity.cost ? activity.cost.toString() : '',
+      currency: activity.currency || 'USD'
+    });
+    setEditingActivityId(activity.id);
+  };
+
+  const handleUpdateActivity = async () => {
+    if (editingActivityId) {
+      try {
+        await activityManager.handleEditActivity(editingActivityId, activityEditData);
+        setEditingActivityId(null);
+        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      } catch (error) {
+        console.error('Error updating activity:', error);
+        toast.error('Failed to update activity');
+      }
     }
   };
 
@@ -108,90 +130,47 @@ const DayCard: React.FC<DayCardProps> = ({
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="border rounded-md shadow-sm mb-4 bg-white"
+      className="rounded-lg overflow-hidden bg-white shadow-md"
     >
-      <CollapsibleTrigger asChild>
-        <div className="relative flex justify-between items-center p-4 rounded-lg bg-background border hover:border-primary transition-colors">
-          <div className="flex-1">
-            <div className="flex items-center">
-              <h3 className="font-medium text-lg">{dayTitle}</h3>
-              <span className="ml-2 text-sm text-muted-foreground">
-                {format(parseISO(date), 'MMM d')}
-              </span>
-            </div>
-          </div>
-          <ChevronDown
-            className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
-          />
-        </div>
-      </CollapsibleTrigger>
+      <DayHeader
+        title={dayTitle}
+        date={date}
+        isOpen={isOpen}
+        onEdit={() => setIsEditing(true)}
+        onDelete={() => onDelete(id)}
+      />
 
-      {/* Card Content Section */}
-      <div className="p-4">
-        {/* Image Section */}
-        {imageUrl && (
-          <div className="relative h-40 rounded-md overflow-hidden mb-4">
-            {photographer && unsplashUsername ? (
-              <UnsplashImage
-                imageUrl={imageUrl}
-                photographer={photographer}
-                unsplashUsername={unsplashUsername}
-                altText={dayTitle}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <img 
-                src={imageUrl} 
-                alt={dayTitle} 
-                className="h-full w-full object-cover" 
-              />
-            )}
-            <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4">
-              <div className="flex justify-between items-end">
-                <div>
-                  <h3 className="text-white text-xl font-bold">{dayTitle}</h3>
-                </div>
-                <div 
-                  onClick={handleEditImage}
-                  className="text-white bg-black/50 rounded-full p-1 cursor-pointer"
-                >
-                  <EditIcon className="h-4 w-4" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+      <DayCollapsibleContent
+        title={dayTitle}
+        activities={activities}
+        index={index}
+        onAddActivity={activityManager.handleAddActivity}
+        onEditActivity={activityManager.handleEditActivity}
+        formatTime={formatTime}
+        dayId={id}
+        tripId={tripId}
+        imageUrl={imageUrl}
+        defaultImageUrl={defaultImageUrl}
+        reservations={reservations}
+        onActivityClick={handleActivityClick}
+      />
 
-        {/* Activities and Reservations Section */}
-        <div className="grid md:grid-cols-1 gap-4">
-          <DayCollapsibleContent
-            title={dayTitle}
-            activities={activities}
-            index={index}
-            onAddActivity={activityManager.handleAddActivity}
-            onEditActivity={handleActivityClick}
-            formatTime={formatTime}
-            dayId={id}
-            tripId={tripId}
-            imageUrl={imageUrl}
-            defaultImageUrl={defaultImageUrl}
-            reservations={reservations}
-            onActivityClick={handleActivityClick}
-          />
-        </div>
+      <DayEditDialog
+        open={isEditing}
+        onOpenChange={setIsEditing}
+        initialTitle={title || ''}
+        initialImageUrl={imageUrl || ''}
+        onSave={handleDayUpdate}
+      />
 
-        {/* Image Edit Dialog */}
-        {isEditingDayImage && (
-          <DayImageEditDialog
-            dayId={id}
-            tripId={tripId}
-            currentImageUrl={imageUrl}
-            onClose={() => setIsEditingDayImage(false)}
-            photographer={photographer}
-            unsplashUsername={unsplashUsername}
-          />
-        )}
-      </div>
+      <EditActivityDialog
+        activityId={editingActivityId}
+        onOpenChange={() => setEditingActivityId(null)}
+        activity={activityEditData}
+        onActivityChange={setActivityEditData}
+        onSubmit={handleUpdateActivity}
+        eventId={id}
+      />
     </Collapsible>
   );
 };

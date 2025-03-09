@@ -2,42 +2,35 @@
 import React from 'react';
 
 interface UnsplashImageProps {
-  imageUrl: string;
-  photographer: string | null;
-  unsplashUsername: string | null;
-  altText?: string;
+  src: string;
+  alt?: string;
   className?: string;
+  showAttribution?: boolean;
 }
 
-const UnsplashImage: React.FC<UnsplashImageProps> = ({
-  imageUrl,
-  photographer,
-  unsplashUsername,
-  altText = "Unsplash image",
-  className = ""
+const UnsplashImage: React.FC<UnsplashImageProps> = ({ 
+  src, 
+  alt = "Image",
+  className = "",
+  showAttribution = true
 }) => {
-  if (!imageUrl) return null;
-
   return (
-    <div className={`relative ${className}`}>
-      <img 
-        src={imageUrl} 
-        alt={altText} 
-        className="w-full h-full object-cover"
+    <div className="relative min-h-[300px] overflow-hidden">
+      <img
+        src={src}
+        alt={alt}
+        className={className}
       />
-      {(photographer || unsplashUsername) && (
-        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-1 text-xs">
-          Photo via Unsplash by {photographer || 'Unsplash Photographer'}
-          {unsplashUsername && (
-            <a 
-              href={`https://unsplash.com/@${unsplashUsername}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="underline ml-1"
-            >
-              @{unsplashUsername}
-            </a>
-          )}
+      {showAttribution && (
+        <div className="absolute bottom-4 right-4 text-white text-sm bg-black/50 px-2 py-1 rounded backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity">
+          <a
+            href="https://unsplash.com?utm_source=travel_planner&utm_medium=referral"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Unsplash
+          </a>
         </div>
       )}
     </div>
