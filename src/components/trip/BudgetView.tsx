@@ -30,7 +30,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   // Convert expenses to selected currency
   const convertedExpenses = useMemo(() => {
     if (!expenses?.items) return [];
-    
+
     return expenses.items.map(expense => ({
       ...expense,
       convertedCost: convertCurrency(
@@ -85,13 +85,15 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        {convertedExpenses.length > 0 && (
-          <ExpenseTable
-            expenses={convertedExpenses}
-            selectedCurrency={selectedCurrency}
-            onUpdatePaidStatus={handleUpdatePaidStatus}
-          />
-        )}
+        <div data-lov-id="budget-card"> {/* Added div to wrap the Card */}
+          {convertedExpenses.length > 0 && (
+            <ExpenseTable
+              expenses={convertedExpenses}
+              selectedCurrency={selectedCurrency}
+              onUpdatePaidStatus={handleUpdatePaidStatus}
+            />
+          )}
+        </div> {/* Closing div */}
       </div>
 
       <AddExpenseDialog
