@@ -55,8 +55,8 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
         <TimelineView 
           tripId={tripId}
           tripDates={{
-            arrival_date: displayData && displayData.arrival_date ? displayData.arrival_date : null,
-            departure_date: displayData && displayData.departure_date ? displayData.departure_date : null
+            arrival_date: displayData?.arrival_date || null,
+            departure_date: displayData?.departure_date || null
           }}
         />
       </TabsContent>

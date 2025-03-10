@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTimelineGroups } from '@/hooks/use-timeline-groups';
@@ -26,22 +27,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [tripDates, setTripDates] = useState<{
-    arrival_date: string | null;
-    departure_date: string | null;
-  }>({
-    arrival_date: initialTripDates?.arrival_date || null,
-    departure_date: initialTripDates?.departure_date || null
-  });
-
-  // Keep tripDates state in sync with props
+  const [tripDates, setTripDates] = useState(initialTripDates);
+  
+  // Keep tripDates state in sync with props, but only if initialTripDates has valid dates
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
-    if (initialTripDates) {
-      setTripDates({
-        arrival_date: initialTripDates.arrival_date || null,
-        departure_date: initialTripDates.departure_date || null
-      });
+    if (initialTripDates?.arrival_date && initialTripDates?.departure_date) {
+      setTripDates(initialTripDates);
     }
   }, [initialTripDates]);
 
@@ -49,14 +41,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     setIsRefreshing(true);
     try {
       await Promise.all([refreshEvents(), refreshDays()]);
-
+      
       // Fetch updated trip dates
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
         .eq('trip_id', tripId)
         .single();
-
+        
       if (!error && data) {
         // Only update if we actually have dates
         if (data.arrival_date && data.departure_date) {
@@ -69,7 +61,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           console.log('Skipping trip dates update - missing dates in data:', data);
         }
       }
-
+      
       toast.success('Timeline updated successfully');
     } catch (error) {
       console.error('Error refreshing timeline:', error);
