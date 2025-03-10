@@ -7,20 +7,28 @@ interface TripDateDisplayProps {
 }
 
 const TripDateDisplay: React.FC<TripDateDisplayProps> = ({ label, date }) => {
-  let formattedDate = 'Not set';
+  const formattedDate = React.useMemo(() => {
+    console.log(`TripDateDisplay for ${label}:`, { date });
+    if (!date) return 'Not set';
 
-  try {
-    if (date) {
-      formattedDate = format(parseISO(date), 'MMM d, yyyy');
+    try {
+      const parsedDate = parseISO(date);
+      if (isNaN(parsedDate.getTime())) {
+        console.warn(`Invalid date in TripDateDisplay for ${label}:`, date);
+        return 'Invalid date';
+      }
+      return format(parsedDate, 'MMMM do, yyyy');
+    } catch (error) {
+      console.error(`Error formatting date in TripDateDisplay for ${label}:`, error);
+      return 'Invalid date';
     }
-  } catch (err) {
-    console.error("Error formatting date:", err);
-  }
+  }, [date, label]);
 
   return (
-    <div className="trip-date-display">
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold">{formattedDate}</p>
+    <div className="flex flex-col">
+      <span className="text-xs text-earth-600 font-medium">{label}</span>
+      <span className="text-sm font-medium">{formattedDate}</span>
+      {!date && <span className="text-xs text-red-500">Please set a date</span>}
     </div>
   );
 };

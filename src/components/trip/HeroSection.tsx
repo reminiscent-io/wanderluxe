@@ -4,49 +4,48 @@ import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
 
 interface HeroSectionProps {
-  title?: string;
-  imageUrl?: string;
-  arrivalDate?: string;
-  departureDate?: string;
+  title: string;
+  imageUrl: string;
+  arrivalDate: string;  // Removed optional
+  departureDate: string;  // Removed optional
   photographer?: string;
   unsplashUsername?: string;
   isLoading?: boolean;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({
-  title = '',
-  imageUrl = '',
+  title,
+  imageUrl,
   arrivalDate,
   departureDate,
   photographer,
   unsplashUsername,
   isLoading = false
 }) => {
-  // Debug log to track title value
-  React.useEffect(() => {
-    console.log('HeroSection rendering with title:', title);
-  }, [title]);
   // Cache formatted date string using useMemo to prevent unnecessary recalculations
   const formattedDateRange = React.useMemo(() => {
     try {
+      console.log('HeroSection date formatting with:', { arrivalDate, departureDate });
+      
       // First check if we have both dates
       if (!arrivalDate || !departureDate) {
-        console.log('Missing date values:', { arrivalDate, departureDate });
+        console.log('Missing date values in HeroSection:', { arrivalDate, departureDate });
         return null;
       }
       
-      const arrival = parseISO(arrivalDate);
-      const departure = parseISO(departureDate);
+      // Convert strings to dates carefully
+      const arrival = typeof arrivalDate === 'string' ? parseISO(arrivalDate) : null;
+      const departure = typeof departureDate === 'string' ? parseISO(departureDate) : null;
       
-      if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
-        console.error('Invalid date format received:', { arrivalDate, departureDate });
+      if (!arrival || !departure || isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
+        console.error('Invalid date format received in HeroSection:', { arrivalDate, departureDate });
         return null;
       }
       
-      console.log('Successfully formatted dates:', { arrival, departure });
+      console.log('Successfully formatted dates in HeroSection:', { arrival, departure });
       return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
     } catch (error) {
-      console.error('Error formatting dates:', error, { arrivalDate, departureDate });
+      console.error('Error formatting dates in HeroSection:', error, { arrivalDate, departureDate });
       return null;
     }
   }, [arrivalDate, departureDate]);

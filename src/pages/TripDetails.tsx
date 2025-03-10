@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
@@ -10,67 +11,43 @@ import TripTabs from '@/components/trip/details/TripTabs';
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
-
+  
   console.log('TripDetails rendering with tripId:', tripId);
-
-  // Add state to preserve trip data across renders
-  const [cachedTripData, setCachedTripData] = useState(null);
-
+  
   // Use the custom hook for trip data fetching
-  const { data: tripData, isLoading, isError, error } = useTripQuery(tripId);
-
+  const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
+  
   // Use the custom hook for real-time subscriptions
   useTripSubscription(tripId);
 
-  // Update cached data when new data arrives, but only if it has valid values
-  useEffect(() => {
-    if (tripData) {
-      console.log('New trip data received:', tripData);
-      // Only update cached data if the new data has valid values
-      if (tripData.destination && tripData.arrival_date && tripData.departure_date) {
-        console.log('Updating cached trip data with valid new data');
-        setCachedTripData(tripData);
-      } else {
-        console.log('New trip data is missing essential fields, keeping cached data');
-      }
-    }
-  }, [tripData]);
-
-  // Use cached data if available, otherwise use the latest trip data
-  const displayData = cachedTripData || tripData;
-
   // Handle loading state with skeleton UI
-  if (isLoading && !displayData) {
+  if (tripLoading && !previousTrip) {
     return <TripDetailsSkeleton />;
   }
 
   // Handle error state
-  if (isError) {
-    return <TripDetailsError error={error} />;
+  if (tripError) {
+    return <TripDetailsError />;
   }
 
-  // Don't render if we don't have data yet
+  const displayData = trip || previousTrip;
+
+  // If no data is available
   if (!displayData) {
-    return <TripDetailsSkeleton />;
+    return <TripDetailsError message="The requested trip could not be found." />;
   }
-
-  console.log('Rendering TripDetails with data:', {
-    destination: displayData.destination,
-    arrival_date: displayData.arrival_date,
-    departure_date: displayData.departure_date
-  });
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-
+      
       <div className="w-full" style={{ height: '500px' }}>
         <HeroSection 
           title={displayData.destination}
           imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
           arrivalDate={displayData.arrival_date}
           departureDate={displayData.departure_date}
-          isLoading={isLoading && !cachedTripData}
+          isLoading={tripLoading && !previousTrip}
         />
       </div>
 
