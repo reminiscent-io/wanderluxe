@@ -13,6 +13,10 @@ interface TransportationFormFieldsProps {
   formatCost: (value: number | undefined | null) => string;
 }
 
+const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
+  <Label>{children} <span style={{ color: 'red' }}>*</span></Label>
+);
+
 const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   formData,
   setFormData,
@@ -21,11 +25,11 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   const handleCostChange = (value: string) => {
     // Remove any non-numeric characters except decimal point
     const numericValue = value.replace(/[^\d.]/g, '');
-    
+
     // Ensure only one decimal point
     const parts = numericValue.split('.');
     const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
-    
+
     // Convert to number for the formData
     const numberValue = parseFloat(formattedValue);
     if (!isNaN(numberValue)) {
@@ -39,7 +43,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Type</Label>
+          <RequiredLabel>Type</RequiredLabel>
           <Select
             value={formData.type || 'flight'}
             onValueChange={(value: any) => setFormData({ ...formData, type: value })}
@@ -106,7 +110,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Start Date</Label>
+          <RequiredLabel>Start Date</RequiredLabel>
           <Input
             type="date"
             value={formData.start_date || ''}

@@ -1,7 +1,17 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
+interface RequiredLabelProps extends React.HTMLAttributes<HTMLLabelElement> {
+  children: React.ReactNode;
+}
+
+const RequiredLabel: React.FC<RequiredLabelProps> = ({ children, ...props }) => (
+  <label {...props}>
+    {children}
+    <span style={{ color: 'red' }}>*</span>
+  </label>
+);
+
 
 interface DateInputsProps {
   checkinDate: string;
@@ -19,7 +29,7 @@ const DateInputs: React.FC<DateInputsProps> = ({
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <Label htmlFor="hotel_checkin_date">Check-in Date *</Label>
+        <RequiredLabel htmlFor="hotel_checkin_date">Check-in Date</RequiredLabel>
         <Input
           id="hotel_checkin_date"
           type="date"
@@ -29,7 +39,7 @@ const DateInputs: React.FC<DateInputsProps> = ({
         />
       </div>
       <div>
-        <Label htmlFor="hotel_checkout_date">Check-out Date *</Label>
+        <RequiredLabel htmlFor="hotel_checkout_date">Check-out Date</RequiredLabel>
         <Input
           id="hotel_checkout_date"
           type="date"
