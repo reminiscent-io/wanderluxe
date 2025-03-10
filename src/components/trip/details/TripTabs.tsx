@@ -56,7 +56,9 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
           tripId={tripId}
           tripDates={{
             arrival_date: displayData.arrival_date,
-            departure_date: displayData.departure_date
+            departure_date: displayData.departure_date,
+            arrivalDate: displayData.arrival_date,
+            departureDate: displayData.departure_date
           }}
         />
       </TabsContent>
