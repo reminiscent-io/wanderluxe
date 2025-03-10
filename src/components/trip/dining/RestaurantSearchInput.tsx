@@ -31,6 +31,13 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Focus the input field when component mounts
+    if (inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+    
     const loadGooglePlacesAPI = async () => {
       try {
         const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
