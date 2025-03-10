@@ -37,10 +37,12 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   // Keep tripDates state in sync with props
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
-    setTripDates({
-      arrival_date: initialTripDates?.arrival_date || null,
-      departure_date: initialTripDates?.departure_date || null
-    });
+    if (initialTripDates) {
+      setTripDates({
+        arrival_date: initialTripDates.arrival_date || null,
+        departure_date: initialTripDates.departure_date || null
+      });
+    }
   }, [initialTripDates]);
 
   const handleRefresh = useCallback(async () => {
