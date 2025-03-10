@@ -51,7 +51,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }
 
   return (
-    <div className="relative w-full" style={{ height: '250px' }}>
+    <div className="relative w-full mt-0" style={{ height: '250px', marginTop: '-1px' }}>
       {/* Image container with fixed height - lowest z-index */}
       <div className="absolute inset-0 w-full h-full -z-10 overflow-hidden">
         {photographer && unsplashUsername ? (
