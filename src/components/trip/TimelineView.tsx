@@ -29,26 +29,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
-    arrivalDate: string | null;
-    departureDate: string | null;
   }>({
     arrival_date: initialTripDates?.arrival_date || null,
-    departure_date: initialTripDates?.departure_date || null,
-    arrivalDate: initialTripDates?.arrival_date || null,
-    departureDate: initialTripDates?.departure_date || null
+    departure_date: initialTripDates?.departure_date || null
   });
 
-  // Keep tripDates state in sync with props, but only if initialTripDates has valid dates
+  // Keep tripDates state in sync with props
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
-    if (initialTripDates?.arrival_date && initialTripDates?.departure_date) {
-      setTripDates({
-        arrival_date: initialTripDates.arrival_date,
-        departure_date: initialTripDates.departure_date,
-        arrivalDate: initialTripDates.arrival_date,
-        departureDate: initialTripDates.departure_date
-      });
-    }
+    setTripDates({
+      arrival_date: initialTripDates?.arrival_date || null,
+      departure_date: initialTripDates?.departure_date || null
+    });
   }, [initialTripDates]);
 
   const handleRefresh = useCallback(async () => {
@@ -69,9 +61,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           console.log('Setting trip dates from refresh:', data);
           setTripDates({
             arrival_date: data.arrival_date,
-            departure_date: data.departure_date,
-            arrivalDate: data.arrival_date,
-            departureDate: data.departure_date
+            departure_date: data.departure_date
           });
         } else {
           console.log('Skipping trip dates update - missing dates in data:', data);
@@ -115,13 +105,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       <div className="grid gap-4">
         {console.log('Rendering TripDates with:', { 
           tripId, 
-          arrivalDate: tripDates.arrivalDate, 
-          departureDate: tripDates.departureDate 
+          arrivalDate: tripDates.arrival_date, 
+          departureDate: tripDates.departure_date 
         })}
         <TripDates
           tripId={tripId}
-          arrivalDate={tripDates.arrivalDate}
-          departureDate={tripDates.departureDate}
+          arrivalDate={tripDates.arrival_date}
+          departureDate={tripDates.departure_date}
           onDatesChange={handleRefresh}
         />
         <AccommodationsSection
