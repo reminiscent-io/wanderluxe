@@ -31,6 +31,29 @@ interface RestaurantReservationFormProps {
   tripId: string; // Added tripId prop
 }
 
+// Generate time options in 15-minute increments
+const generateTimeOptions = () => {
+  const options = [];
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const formattedHour = hour.toString().padStart(2, '0');
+      const formattedMinute = minute.toString().padStart(2, '0');
+      options.push(`${formattedHour}:${formattedMinute}`);
+    }
+  }
+  return options;
+};
+
+// Format time for display (converts 24h to 12h format)
+const formatTimeOption = (time: string) => {
+  const [hourStr, minuteStr] = time.split(':');
+  const hour = parseInt(hourStr, 10);
+  const minute = minuteStr;
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+  return `${displayHour}:${minute} ${period}`;
+};
+
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   onSubmit,
   defaultValues,
@@ -93,13 +116,18 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <FormItem>
                 <FormLabel>Reservation Time</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="time" 
-                    {...field} 
-                    value={field.value || ''} 
+                  <select
+                    className="w-full h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
+                    value={field.value || ''}
                     onChange={(e) => field.onChange(e.target.value || null)}
-                    className="bg-white" 
-                  />
+                  >
+                    <option value="">Select a time</option>
+                    {generateTimeOptions().map((time) => (
+                      <option key={time} value={time}>
+                        {formatTimeOption(time)}
+                      </option>
+                    ))}
+                  </select>
                 </FormControl>
               </FormItem>
             )}
