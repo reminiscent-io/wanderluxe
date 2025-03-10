@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Label } from "@/components/ui/label";
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
-import { loadGoogleMapsApi } from '@/utils/loadGoogleMapsApi';
 
 declare global {
   interface Window {
@@ -19,11 +18,6 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
   value,
   onChange
 }) => {
-  useEffect(() => {
-    if (!window.google) {
-      loadGoogleMapsApi().catch(console.error);
-    }
-  }, []);
 
   return (
     <div className="space-y-2">

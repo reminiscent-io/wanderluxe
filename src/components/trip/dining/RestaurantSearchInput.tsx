@@ -54,41 +54,24 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         timers.forEach(timer => clearTimeout(timer));
       };
     }
-    
-    const loadGooglePlacesAPI = async () => {
+  }, []);
+  
+  useEffect(() => {
+    const loadAPI = async () => {
       try {
-        const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
-
-        if (error || !key) {
-          console.error('Error fetching API key:', error);
+        // Import the shared Google Maps loader
+        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
+        
+        // Load Google Maps API
+        const isLoaded = await loadGoogleMapsAPI();
+        
+        if (isLoaded) {
+          setIsLoading(false);
+          initializeAutocomplete();
+        } else {
+          setIsLoading(false);
           toast.error('Failed to initialize restaurant search');
-          setIsLoading(false);
-          return;
         }
-
-        // Check if Google Maps API is already loaded
-        if (window.google && window.google.maps) {
-          setIsLoading(false);
-          initializeAutocomplete();
-          return;
-        }
-
-        // Load the Google Places script
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          setIsLoading(false);
-          initializeAutocomplete();
-        };
-        document.head.appendChild(script);
-
-        return () => {
-          if (script.parentNode) {
-            script.parentNode.removeChild(script);
-          }
-        };
       } catch (error) {
         console.error('Error initializing Google Places:', error);
         toast.error('Failed to initialize restaurant search');
@@ -96,7 +79,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
       }
     };
 
-    loadGooglePlacesAPI();
+    loadAPI();
   }, []);
 
   const initializeAutocomplete = () => {

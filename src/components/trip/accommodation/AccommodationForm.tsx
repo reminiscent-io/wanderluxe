@@ -8,6 +8,7 @@ import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 import { AccommodationFormData } from '@/services/accommodation/types';
 import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
 
 interface AccommodationFormProps {
   onSubmit: (data: AccommodationFormData) => Promise<void>;
@@ -45,10 +46,34 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   useEffect(() => {
     setFormData(initialFormState);
   }, [initialFormState]);
+  
+  useEffect(() => {
+    const loadAPI = async () => {
+      try {
+        // Import the shared Google Maps loader
+        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
+        
+        // Load Google Maps API
+        const isLoaded = await loadGoogleMapsAPI();
+        
+        if (isLoaded) {
+          setIsGoogleMapsLoaded(true);
+        } else {
+          toast.error('Failed to initialize hotel search');
+        }
+      } catch (error) {
+        console.error('Error initializing Google Places:', error);
+        toast.error('Failed to initialize hotel search');
+      }
+    };
+
+    loadAPI();
+  }, []);
 
   const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => {
     setFormData(prev => ({
