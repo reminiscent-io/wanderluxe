@@ -29,12 +29,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tripDates, setTripDates] = useState(initialTripDates);
   
-  // Keep tripDates state in sync with props, but only if initialTripDates has valid dates
+  // Keep tripDates state in sync with props, but only update if initialTripDates has valid dates
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
     if (initialTripDates?.arrival_date && initialTripDates?.departure_date) {
       setTripDates(initialTripDates);
     }
+    // Don't reset to null if initialTripDates doesn't have valid dates
   }, [initialTripDates]);
 
   const handleRefresh = useCallback(async () => {
@@ -59,6 +60,20 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           });
         } else {
           console.log('Skipping trip dates update - missing dates in data:', data);
+          // Make an additional query to ensure we have the latest trip data
+          const { data: fullTripData, error: fullTripError } = await supabase
+            .from('trips')
+            .select('*')
+            .eq('trip_id', tripId)
+            .single();
+            
+          if (!fullTripError && fullTripData && fullTripData.arrival_date && fullTripData.departure_date) {
+            console.log('Found dates in full trip data:', fullTripData);
+            setTripDates({
+              arrival_date: fullTripData.arrival_date,
+              departure_date: fullTripData.departure_date
+            });
+          }
         }
       }
       
