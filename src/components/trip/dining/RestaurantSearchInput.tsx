@@ -31,11 +31,28 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Focus the input field when component mounts
+    // Focus the input field when component mounts with a higher priority
     if (inputRef.current) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+      // Use a shorter timeout and try multiple times to ensure focus
+      const focusAttempt = () => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      };
+      
+      // Try immediately
+      focusAttempt();
+      
+      // And also with timeouts to handle dialog transition
+      const timers = [
+        setTimeout(focusAttempt, 10),
+        setTimeout(focusAttempt, 50),
+        setTimeout(focusAttempt, 100)
+      ];
+      
+      return () => {
+        timers.forEach(timer => clearTimeout(timer));
+      };
     }
     
     const loadGooglePlacesAPI = async () => {
