@@ -31,10 +31,22 @@ interface RestaurantReservationFormProps {
   tripId: string; // Added tripId prop
 }
 
-// Generate time options in 15-minute increments
+// Generate time options in 15-minute increments, starting from noon
 const generateTimeOptions = () => {
   const options = [];
-  for (let hour = 0; hour < 24; hour++) {
+  // Start with noon (12:00) - 12 hours earlier
+  const hours = [];
+  
+  // Add hours in order: 12, 13, 14... 23, 0, 1... 11
+  for (let hour = 12; hour < 24; hour++) {
+    hours.push(hour);
+  }
+  for (let hour = 0; hour < 12; hour++) {
+    hours.push(hour);
+  }
+  
+  // Generate all time options
+  for (const hour of hours) {
     for (let minute = 0; minute < 60; minute += 15) {
       const formattedHour = hour.toString().padStart(2, '0');
       const formattedMinute = minute.toString().padStart(2, '0');
