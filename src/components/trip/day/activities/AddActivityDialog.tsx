@@ -6,7 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import ActivityForm from '../../ActivityForm';
+import ActivityForm from '../../activity/ActivityForm';
+import RequiredLabel from '@/components/ui/RequiredLabel';
 
 interface AddActivityDialogProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Activity</DialogTitle>
+          <DialogTitle>Add New Activity <RequiredLabel className="inline">Title</RequiredLabel></DialogTitle>
         </DialogHeader>
         <ActivityForm
           activity={activity}
