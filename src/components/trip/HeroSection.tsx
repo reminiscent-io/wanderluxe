@@ -51,9 +51,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }
 
   return (
-    <div className="relative w-full" style={{ height: '500px' }}>
+    <div className="relative w-full" style={{ height: '250px' }}>
       {/* Image container with fixed height - lowest z-index */}
-      <div className="absolute inset-0 w-full h-full -z-10">
+      <div className="absolute inset-0 w-full h-full -z-10 overflow-hidden">
         {photographer && unsplashUsername ? (
           <div className="relative h-full">
             <UnsplashImage 
@@ -86,7 +86,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <UnsplashImage 
             src={imageUrl} 
             alt={title || 'Trip cover image'} 
-            className="w-full h-full object-cover object-center" 
+            className="w-full h-full object-cover object-center transition-transform" 
           />
         )}
       </div>
@@ -97,12 +97,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       {/* Content container - highest z-index */}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-4 z-0">
         <div className="max-w-4xl w-full text-center">
-          <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-4xl font-bold text-white mb-3 leading-tight">
             {title}
           </h1>
           {formattedDateRange && (
             <div className="inline-block rounded-lg backdrop-blur-sm bg-[#000a00]/0 px-[10px] py-px">
-              <p className="text-2xl text-white font-medium">
+              <p className="text-lg text-white font-medium">
                 {formattedDateRange}
               </p>
             </div>
