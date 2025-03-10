@@ -56,7 +56,7 @@ const TripCard = ({
           <img 
             src={trip.cover_image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'} 
             alt={trip.destination} 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-center"
           />
           {/* Updated overlay to match hero section style */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
