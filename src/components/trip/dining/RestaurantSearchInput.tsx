@@ -117,7 +117,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           formatted_phone_number: place.formatted_phone_number,
           website: place.website,
           rating: place.rating,
-          trip_id: tripId // Now correctly using the tripId from props
+          trip_id: tripId // Must match the database column name (trip_id)
         };
 
         setInputValue(place.name);
@@ -202,15 +202,20 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   );
 };
 
-// Added handleSaveReservation function to address database issues.  supabaseClient needs to be defined elsewhere.
+// Added handleSaveReservation function to address database issues
 const handleSaveReservation = async (reservationData, tripId) => {
   try {
+    if (!tripId) {
+      console.error("Missing trip_id - cannot save reservation");
+      throw new Error("Missing trip_id");
+    }
+    
     const dataWithTripId = {
       ...reservationData,
       trip_id: tripId,
     };
 
-    const result = await supabaseClient
+    const result = await supabase
       .from('restaurant_reservations')
       .insert(dataWithTripId);
 
@@ -219,7 +224,7 @@ const handleSaveReservation = async (reservationData, tripId) => {
       throw result.error; // Re-throw for proper error handling
     }
 
-    // Handle success -  Add success logic here.
+    // Handle success
     return result.data;
   } catch (error) {
     console.error("Error saving reservation:", error);
