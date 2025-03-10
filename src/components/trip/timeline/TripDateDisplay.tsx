@@ -1,51 +1,26 @@
-
 import React from 'react';
-import { format, isValid, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface TripDateDisplayProps {
   label: string;
-  date?: string | null;
+  date: string | null | undefined;
 }
 
 const TripDateDisplay: React.FC<TripDateDisplayProps> = ({ label, date }) => {
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'Not set';
+  let formattedDate = 'Not set';
 
-    try {
-      // Ensure we're working with a string
-      const dateStr = String(dateString).trim();
-      
-      // Skip empty strings
-      if (!dateStr) return 'Not set';
-      
-      // Try to parse the date
-      const parsedDate = parseISO(dateStr);
-      
-      // Validate the date
-      if (!isValid(parsedDate)) {
-        console.warn('Invalid date format:', dateStr);
-        return 'Invalid date';
-      }
-      
-      try {
-        // Format the date
-        return format(parsedDate, 'MMM dd, yyyy');
-      } catch (formatError) {
-        console.error('Error in format() function:', dateStr, formatError);
-        return 'Date error';
-      }
-    } catch (error) {
-      console.error('Error parsing date:', dateString, error);
-      return 'Invalid date';
+  try {
+    if (date) {
+      formattedDate = format(parseISO(date), 'MMM d, yyyy');
     }
-  };
+  } catch (err) {
+    console.error("Error formatting date:", err);
+  }
 
   return (
-    <div>
-      <p className="text-sm text-gray-500 italic mb-1">{label}</p>
-      <p className="font-medium">
-        {formatDate(date)}
-      </p>
+    <div className="trip-date-display">
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold">{formattedDate}</p>
     </div>
   );
 };

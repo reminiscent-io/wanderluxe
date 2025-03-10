@@ -22,9 +22,12 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [newArrival, setNewArrival] = React.useState('');
   const [newDeparture, setNewDeparture] = React.useState('');
-
+  
+  console.log("Rendering TripDates with:", { tripId, arrivalDate, departureDate });
+  
   // Initialize state when component mounts and when props change
   React.useEffect(() => {
+    console.log("Initial trip dates received:", { arrival_date: arrivalDate, departure_date: departureDate });
     setNewArrival(arrivalDate || '');
     setNewDeparture(departureDate || '');
   }, [arrivalDate, departureDate]);

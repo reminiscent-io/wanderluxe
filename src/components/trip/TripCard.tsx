@@ -24,25 +24,30 @@ const TripCard = ({
   const navigate = useNavigate();
 
   const formatDateRange = (trip: Trip) => {
-    // If arrival and departure dates are available, use those
-    if (trip.arrival_date && trip.departure_date) {
-      const arrivalDate = parseISO(trip.arrival_date);
-      const departureDate = parseISO(trip.departure_date);
-      const startYear = getYear(arrivalDate);
-      const endYear = getYear(departureDate);
-      
-      const formatDate = (date: Date, includeYear: boolean) => {
-        const day = format(date, "do");
-        const month = format(date, "MMMM");
-        return includeYear ? `${month} ${day} ${format(date, "yyyy")}` : `${month} ${day}`;
-      };
+    try {
+      // If arrival and departure dates are available, use those
+      if (trip.arrival_date && trip.departure_date) {
+        const arrivalDate = parseISO(trip.arrival_date);
+        const departureDate = parseISO(trip.departure_date);
+        const startYear = getYear(arrivalDate);
+        const endYear = getYear(departureDate);
+        
+        const formatDate = (date: Date, includeYear: boolean) => {
+          const day = format(date, "do");
+          const month = format(date, "MMMM");
+          return includeYear ? `${month} ${day} ${format(date, "yyyy")}` : `${month} ${day}`;
+        };
 
-      if (startYear === endYear) {
-        return `${formatDate(arrivalDate, false)} - ${formatDate(departureDate, true)}`;
+        if (startYear === endYear) {
+          return `${formatDate(arrivalDate, false)} - ${formatDate(departureDate, true)}`;
+        }
+        return `${formatDate(arrivalDate, true)} - ${formatDate(departureDate, true)}`;
       }
-      return `${formatDate(arrivalDate, true)} - ${formatDate(departureDate, true)}`;
+      return ''; // Return empty string if no dates available
+    } catch (err) {
+      console.error("Error formatting dates:", err);
+      return ''; // Return empty if dates can't be parsed
     }
-    return ''; // Return empty string if no dates available
   };
 
   return (
