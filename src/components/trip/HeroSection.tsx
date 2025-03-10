@@ -4,24 +4,28 @@ import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
 
 interface HeroSectionProps {
-  title: string;
-  imageUrl: string;
-  arrivalDate: string;  // Removed optional
-  departureDate: string;  // Removed optional
+  title?: string;
+  imageUrl?: string;
+  arrivalDate?: string;
+  departureDate?: string;
   photographer?: string;
   unsplashUsername?: string;
   isLoading?: boolean;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({
-  title,
-  imageUrl,
+  title = '',
+  imageUrl = '',
   arrivalDate,
   departureDate,
   photographer,
   unsplashUsername,
   isLoading = false
 }) => {
+  // Debug log to track title value
+  React.useEffect(() => {
+    console.log('HeroSection rendering with title:', title);
+  }, [title]);
   // Cache formatted date string using useMemo to prevent unnecessary recalculations
   const formattedDateRange = React.useMemo(() => {
     try {

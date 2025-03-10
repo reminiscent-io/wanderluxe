@@ -33,7 +33,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
     if (initialTripDates?.arrival_date && initialTripDates?.departure_date) {
+      console.log('Setting trip dates from valid initial data');
       setTripDates(initialTripDates);
+    } else {
+      console.log('Initial trip dates missing or invalid, keeping current state:', tripDates);
     }
     // Don't reset to null if initialTripDates doesn't have valid dates
   }, [initialTripDates]);
