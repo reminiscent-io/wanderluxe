@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -26,15 +25,17 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
-  onSubmit: (data: FormValues) => void;
+  onSubmit: (data: FormValues & { tripId: string }) => void; // Added tripId to onSubmit data
   defaultValues?: Partial<FormValues>;
   isSubmitting?: boolean;
+  tripId: string; // Added tripId prop
 }
 
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   onSubmit,
   defaultValues,
   isSubmitting = false,
+  tripId, // Using tripId prop
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,6 +63,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
+      tripId: tripId // Adding tripId to the data
     };
     onSubmit(processedData);
   });
@@ -77,6 +79,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <RestaurantSearchInput
                 onPlaceSelect={handlePlaceSelect}
                 defaultValue={field.value}
+                tripId={tripId} // Passing tripId to RestaurantSearchInput
               />
             </FormItem>
           )}
