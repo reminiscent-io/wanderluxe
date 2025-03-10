@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTimelineGroups } from '@/hooks/use-timeline-groups';
@@ -27,37 +28,40 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tripDates, setTripDates] = useState(initialTripDates);
-
-  // Keep tripDates state in sync with props, ensuring dates are properly set.
+  
+  // Keep tripDates state in sync with props, but only if initialTripDates has valid dates
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
-    setTripDates({
-      arrival_date: initialTripDates?.arrival_date || null,
-      departure_date: initialTripDates?.departure_date || null
-    });
+    if (initialTripDates?.arrival_date && initialTripDates?.departure_date) {
+      setTripDates(initialTripDates);
+    }
   }, [initialTripDates]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
       await Promise.all([refreshEvents(), refreshDays()]);
-
+      
       // Fetch updated trip dates
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
         .eq('trip_id', tripId)
         .single();
-
+        
       if (!error && data) {
-        setTripDates({
-          arrival_date: data.arrival_date || null,
-          departure_date: data.departure_date || null
-        });
-      } else {
-        console.error('Error fetching trip dates:', error);
+        // Only update if we actually have dates
+        if (data.arrival_date && data.departure_date) {
+          console.log('Setting trip dates from refresh:', data);
+          setTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date
+          });
+        } else {
+          console.log('Skipping trip dates update - missing dates in data:', data);
+        }
       }
-
+      
       toast.success('Timeline updated successfully');
     } catch (error) {
       console.error('Error refreshing timeline:', error);
