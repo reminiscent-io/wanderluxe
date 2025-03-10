@@ -40,6 +40,13 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           return;
         }
 
+        // Check if Google Maps API is already loaded
+        if (window.google && window.google.maps) {
+          setIsLoading(false);
+          initializeAutocomplete();
+          return;
+        }
+
         // Load the Google Places script
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
@@ -82,6 +89,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
 
+      // Ensure the Autocomplete dropdown is positioned correctly
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
         
@@ -127,16 +135,39 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="restaurant">Restaurant Name</Label>
-      <Input
-        ref={inputRef}
-        type="text"
-        id="restaurant"
-        value={inputValue}
-        onChange={handleInputChange}
-        placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
-        className="w-full bg-white"
-        disabled={isLoading}
-      />
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          type="text"
+          id="restaurant"
+          value={inputValue}
+          onChange={handleInputChange}
+          placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
+          className="w-full bg-white"
+          disabled={isLoading}
+          autoComplete="off" // Prevent browser autocomplete interfering
+        />
+      </div>
+      {/* This ensures the Google autocomplete dropdown renders properly */}
+      <style jsx global>{`
+        .pac-container {
+          z-index: 10000;
+          width: auto !important;
+          position: absolute !important;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          border-radius: 6px;
+          overflow: hidden;
+        }
+        
+        .pac-item {
+          padding: 8px 12px;
+          cursor: pointer;
+        }
+        
+        .pac-item:hover {
+          background-color: #f9fafb;
+        }
+      `}</style>
     </div>
   );
 };
