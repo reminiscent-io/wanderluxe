@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +34,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
     const loadGooglePlacesAPI = async () => {
       try {
         const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
-        
+
         if (error || !key) {
           console.error('Error fetching API key:', error);
           toast.error('Failed to initialize restaurant search');
@@ -95,7 +94,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
       // Ensure the Autocomplete dropdown is positioned correctly
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
-        
+
         const place = autoCompleteRef.current.getPlace();
         console.log('Selected restaurant:', place);
 
@@ -126,7 +125,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    
+
     // Allow direct input without requiring selection
     if (newValue === '') {
       onPlaceSelect({
@@ -152,7 +151,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           autoComplete="off" // Prevent browser autocomplete interfering
         />
       </div>
-      
+
       {/* This ensures the Google autocomplete dropdown renders properly */}
       <style jsx global>{`
         .pac-container {
@@ -164,22 +163,22 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           overflow: hidden;
           margin-top: 2px;
         }
-        
+
         .pac-item {
           padding: 8px 12px;
           cursor: pointer;
           font-family: inherit;
           font-size: 14px;
         }
-        
+
         .pac-item:hover {
           background-color: #f9fafb;
         }
-        
+
         .pac-item-selected {
           background-color: #f3f4f6;
         }
-        
+
         /* Make sure dropdown is visible and interactive */
         .pac-container:after {
           content: "";
@@ -194,6 +193,31 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
       `}</style>
     </div>
   );
+};
+
+// Added handleSaveReservation function to address database issues.  supabaseClient needs to be defined elsewhere.
+const handleSaveReservation = async (reservationData, tripId) => {
+  try {
+    const dataWithTripId = {
+      ...reservationData,
+      trip_id: tripId,
+    };
+
+    const result = await supabaseClient
+      .from('restaurant_reservations')
+      .insert(dataWithTripId);
+
+    if (result.error) {
+      console.error("Error saving reservation:", result.error);
+      throw result.error; // Re-throw for proper error handling
+    }
+
+    // Handle success -  Add success logic here.
+    return result.data;
+  } catch (error) {
+    console.error("Error saving reservation:", error);
+    throw error; // Re-throw for proper error handling
+  }
 };
 
 export default RestaurantSearchInput;
