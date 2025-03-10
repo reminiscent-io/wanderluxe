@@ -17,6 +17,7 @@ interface RestaurantDetails {
 interface RestaurantSearchInputProps {
   onPlaceSelect: (place: RestaurantDetails) => void;
   defaultValue?: string;
+  tripId?: string;
 }
 
 const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
@@ -107,7 +108,8 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           formatted_address: place.formatted_address,
           formatted_phone_number: place.formatted_phone_number,
           website: place.website,
-          rating: place.rating
+          rating: place.rating,
+          trip_id: props.tripId // Include the tripId in the restaurant details
         };
 
         setInputValue(place.name);
