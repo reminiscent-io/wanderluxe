@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TimelineView from "../TimelineView";
@@ -15,7 +16,7 @@ interface TripTabsProps {
 const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
     <Tabs defaultValue="timeline" className="w-full">
-      <TabsList className="grid w-full grid-cols-4 rounded-xl p-1 bg-transparent">
+      <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">
         <TabsTrigger 
           value="vision-board"
           className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2"
@@ -45,7 +46,7 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
           Packing List
         </TabsTrigger>
       </TabsList>
-
+        
       <TabsContent value="vision-board">
         <VisionBoardView tripId={tripId} />
       </TabsContent>
@@ -59,11 +60,11 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
           }}
         />
       </TabsContent>
-
+        
       <TabsContent value="budget">
         <BudgetView tripId={tripId} />
       </TabsContent>
-
+        
       <TabsContent value="packing">
         <PackingView tripId={tripId} />
       </TabsContent>
