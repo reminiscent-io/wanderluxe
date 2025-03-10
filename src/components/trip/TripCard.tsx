@@ -51,7 +51,14 @@ const TripCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+      <Card 
+        className="hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
+        onClick={(e) => {
+          // Prevent navigation if the hide button is clicked
+          if (e.defaultPrevented) return;
+          navigate(`/trip/${trip.trip_id}`);
+        }}
+      >
         <div className="relative h-48">
           <img 
             src={trip.cover_image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'} 
@@ -63,11 +70,7 @@ const TripCard = ({
         </div>
         <CardContent className="p-6">
           <div className="flex justify-between items-start">
-            <Button 
-              variant="ghost" 
-              className="flex-grow text-left h-auto p-0 hover:bg-transparent"
-              onClick={() => navigate(`/trip/${trip.trip_id}`)}
-            >
+            <div className="flex-grow">
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-semibold text-gray-900">
                   {trip.destination}
@@ -88,12 +91,21 @@ const TripCard = ({
               <p className="text-sm text-gray-500 mt-2">
                 {formatDateRange(trip)}
               </p>
-            </Button>
+            </div>
             
             {!isExample && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-600">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-gray-500 hover:text-gray-600"
+                    onClick={(e) => {
+                      // Stop event propagation to prevent card click
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
                     <EyeOff className="h-5 w-5" />
                   </Button>
                 </AlertDialogTrigger>
