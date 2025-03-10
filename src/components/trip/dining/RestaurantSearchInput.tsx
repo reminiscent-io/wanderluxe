@@ -12,6 +12,7 @@ interface RestaurantDetails {
   website?: string;
   place_id: string;
   rating?: number;
+  trip_id?: string;
 }
 
 interface RestaurantSearchInputProps {
@@ -22,7 +23,8 @@ interface RestaurantSearchInputProps {
 
 const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   onPlaceSelect,
-  defaultValue = ''
+  defaultValue = '',
+  tripId
 }) => {
   const [inputValue, setInputValue] = useState(defaultValue);
   const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +111,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           formatted_phone_number: place.formatted_phone_number,
           website: place.website,
           rating: place.rating,
-          trip_id: props.tripId // Include the tripId in the restaurant details
+          trip_id: tripId // Now correctly using the tripId from props
         };
 
         setInputValue(place.name);
@@ -150,6 +152,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           autoComplete="off" // Prevent browser autocomplete interfering
         />
       </div>
+      
       {/* This ensures the Google autocomplete dropdown renders properly */}
       <style jsx global>{`
         .pac-container {
@@ -159,15 +162,34 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
           border-radius: 6px;
           overflow: hidden;
+          margin-top: 2px;
         }
         
         .pac-item {
           padding: 8px 12px;
           cursor: pointer;
+          font-family: inherit;
+          font-size: 14px;
         }
         
         .pac-item:hover {
           background-color: #f9fafb;
+        }
+        
+        .pac-item-selected {
+          background-color: #f3f4f6;
+        }
+        
+        /* Make sure dropdown is visible and interactive */
+        .pac-container:after {
+          content: "";
+          position: absolute;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          pointer-events: auto;
+          z-index: -1;
         }
       `}</style>
     </div>
