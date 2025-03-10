@@ -41,7 +41,7 @@ const TripDetails = () => {
     <div className="min-h-screen flex flex-col">
       <Navigation />
       
-      <div className="w-full" style={{ height: '500px' }}>
+      <div className="w-full" style={{ height: '250px' }}>
         <HeroSection 
           title={displayData.destination}
           imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
