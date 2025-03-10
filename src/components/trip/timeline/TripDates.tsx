@@ -27,27 +27,9 @@ const TripDates: React.FC<TripDatesProps> = ({
   
   // Initialize state when component mounts and when props change
   React.useEffect(() => {
-    console.log("TripDates effect - dates received:", { arrival_date: arrivalDate, departure_date: departureDate });
-    
-    if (arrivalDate) {
-      console.log("Setting new arrival date:", arrivalDate);
-      setNewArrival(arrivalDate);
-    }
-    
-    if (departureDate) {
-      console.log("Setting new departure date:", departureDate);
-      setNewDeparture(departureDate);
-    }
-    
-    // Don't reset to empty strings if we have valid values in state already
-    if (!arrivalDate && !newArrival) {
-      console.warn("No arrival date provided and state is empty");
-    }
-    
-    if (!departureDate && !newDeparture) {
-      console.warn("No departure date provided and state is empty");
-    }
-    
+    console.log("Initial trip dates received:", { arrival_date: arrivalDate, departure_date: departureDate });
+    setNewArrival(arrivalDate || '');
+    setNewDeparture(departureDate || '');
   }, [arrivalDate, departureDate]);
 
   const handleSave = async () => {
