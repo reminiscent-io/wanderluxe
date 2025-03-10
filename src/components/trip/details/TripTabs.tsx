@@ -15,7 +15,7 @@ interface TripTabsProps {
 
 const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
-    <Tabs defaultValue="vision-board" className="w-full">
+    <Tabs defaultValue="timeline" className="w-full">
       <TabsList className="grid w-full grid-cols-4 mb-8 rounded-xl p-1 bg-transparent">
         <TabsTrigger 
           value="vision-board"
