@@ -25,24 +25,27 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // Cache formatted date string using useMemo to prevent unnecessary recalculations
   const formattedDateRange = React.useMemo(() => {
     try {
+      console.log('HeroSection date formatting with:', { arrivalDate, departureDate });
+      
       // First check if we have both dates
       if (!arrivalDate || !departureDate) {
-        console.log('Missing date values:', { arrivalDate, departureDate });
+        console.log('Missing date values in HeroSection:', { arrivalDate, departureDate });
         return null;
       }
       
-      const arrival = parseISO(arrivalDate);
-      const departure = parseISO(departureDate);
+      // Convert strings to dates carefully
+      const arrival = typeof arrivalDate === 'string' ? parseISO(arrivalDate) : null;
+      const departure = typeof departureDate === 'string' ? parseISO(departureDate) : null;
       
-      if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
-        console.error('Invalid date format received:', { arrivalDate, departureDate });
+      if (!arrival || !departure || isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
+        console.error('Invalid date format received in HeroSection:', { arrivalDate, departureDate });
         return null;
       }
       
-      console.log('Successfully formatted dates:', { arrival, departure });
+      console.log('Successfully formatted dates in HeroSection:', { arrival, departure });
       return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
     } catch (error) {
-      console.error('Error formatting dates:', error, { arrivalDate, departureDate });
+      console.error('Error formatting dates in HeroSection:', error, { arrivalDate, departureDate });
       return null;
     }
   }, [arrivalDate, departureDate]);
