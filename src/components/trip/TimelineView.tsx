@@ -36,29 +36,34 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     departure_date: initialTripDates?.departure_date || null
   });
 
-  // Keep tripDates state in sync with props
+  // Keep tripDates state in sync with props - only update on meaningful changes
   useEffect(() => {
-    console.log('TimelineView received initialTripDates:', initialTripDates);
+    // Only update state if we receive valid dates AND they're different from current state
+    if (initialTripDates) {
+      const newArrival = initialTripDates.arrival_date || null;
+      const newDeparture = initialTripDates.departure_date || null;
 
-    // Strong protection against invalid/null data overriding valid data
-    if (initialTripDates?.arrival_date || initialTripDates?.departure_date) {
-      // Only update if we're getting valid data
-      const safeTrip = {
-        arrival_date: initialTripDates.arrival_date || tripDates.arrival_date || null,
-        departure_date: initialTripDates.departure_date || tripDates.departure_date || null
-      };
+      // Only update if we have both valid new dates AND they differ from current state
+      const shouldUpdate = 
+        (newArrival && newDeparture) && 
+        (newArrival !== tripDates.arrival_date || newDeparture !== tripDates.departure_date);
 
-      console.log('Setting trip dates with valid data:', safeTrip);  
-      setTripDates(safeTrip);
-
-      if (!safeTrip.arrival_date || !safeTrip.departure_date) {
-        console.warn('Missing trip dates detected:', {
-          arrival_date: safeTrip.arrival_date,
-          departure_date: safeTrip.departure_date
+      if (shouldUpdate) {
+        console.log('Updating trip dates from props:', { newArrival, newDeparture });
+        setTripDates({
+          arrival_date: newArrival,
+          departure_date: newDeparture
         });
       }
+
+      // Only fetch if we're missing dates and aren't already loading
+      if ((!tripDates.arrival_date || !tripDates.departure_date) && !isLoadingDates) {
+        console.log('Trip dates incomplete, fetching fresh data');
+        setIsLoadingDates(true);
+        fetchTripData().finally(() => setIsLoadingDates(false));
+      }
     }
-  }, [initialTripDates, tripDates]);
+  }, [initialTripDates, tripDates.arrival_date, tripDates.departure_date, isLoadingDates]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -93,6 +98,44 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       setIsRefreshing(false);
     }
   }, [refreshEvents, refreshDays, tripId]);
+
+  // Fetch trip data directly from Supabase
+  const fetchTripData = async () => {
+    if (!tripId) return;
+
+    console.log('Fetching trip data for ID:', tripId);
+
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('trip_id', tripId)
+        .single();
+
+      if (error) throw error;
+
+      console.log('Trip data fetched successfully:', data);
+
+      // Only update trip dates with fetched data if they exist
+      // This prevents overriding valid dates with null values
+      if (data.arrival_date && data.departure_date) {
+        console.log('Setting valid dates from DB:', {
+          arrival: data.arrival_date, 
+          departure: data.departure_date
+        });
+
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date
+        });
+      } else {
+        console.log('DB returned incomplete date data, not updating state');
+      }
+
+    } catch (error) {
+      console.error('Error fetching trip details:', error);
+    }
+  };
 
   // Convert events to hotel stays
   const hotelStays = React.useMemo(() => 

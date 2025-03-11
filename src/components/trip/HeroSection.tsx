@@ -21,52 +21,43 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   unsplashUsername,
   isLoading = false,
 }) => {
-  // Format the date range string when both dates are available
+  // Format the date range with defensive handling of missing dates
   const formattedDateRange = React.useMemo(() => {
-    if (!arrivalDate || !departureDate) {
-      console.log('Missing date information for formatting', { arrivalDate, departureDate });
+    // Early return if dates are missing or invalid
+    if (!arrivalDate || !departureDate || typeof arrivalDate !== 'string' || typeof departureDate !== 'string') {
+      console.log('Missing or invalid date information for formatting', { arrivalDate, departureDate });
       return null;
     }
 
     try {
-      // Additional validation to prevent errors with invalid dates
-      if (typeof arrivalDate !== 'string' || typeof departureDate !== 'string') {
-        console.error('Invalid date types:', { 
-          arrivalType: typeof arrivalDate, 
-          departureType: typeof departureDate 
-        });
+      // Validate date strings before parsing
+      if (arrivalDate.trim() === '' || departureDate.trim() === '') {
+        console.log('Empty date strings provided');
         return null;
       }
 
-      if (!arrivalDate.match(/^\d{4}-\d{2}-\d{2}/) || !departureDate.match(/^\d{4}-\d{2}-\d{2}/)) {
-        console.error('Invalid date format:', { arrivalDate, departureDate });
+      const start = parseISO(arrivalDate);
+      const end = parseISO(departureDate);
+
+      // Validate parsed dates
+      if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+        console.log('Invalid date objects after parsing');
         return null;
       }
 
-      const arrivalISO = parseISO(arrivalDate);
-      const departureISO = parseISO(departureDate);
+      // Format dates
+      const formattedStart = format(start, 'LLL d, yyyy');
+      const formattedEnd = format(end, 'LLL d, yyyy');
 
-      // Check if dates parsed successfully
-      if (isNaN(arrivalISO.getTime()) || isNaN(departureISO.getTime())) {
-        console.error('Dates could not be parsed:', { arrivalDate, departureDate });
-        return null;
-      }
-
-      return `${format(arrivalISO, 'MMM d')} - ${format(departureISO, 'MMM d, yyyy')}`;
+      return `${formattedStart} - ${formattedEnd}`;
     } catch (error) {
-      console.error('Error formatting date range:', error);
+      console.error('Error formatting dates:', error);
       return null;
     }
   }, [arrivalDate, departureDate]);
 
-  // Debug render - helps trace the lifecycle
-  console.log('HeroSection rendering with:', { 
-    title, 
-    imageUrl: imageUrl ? 'has image' : 'no image',
-    arrivalDate, 
-    departureDate,
-    formattedDateRange 
-  });
+  // Prevent unnecessary renders with placeholder
+  console.log('HeroSection rendering with:', { formattedDateRange });
 
   return (
     <div className="relative w-full">

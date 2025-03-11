@@ -10,7 +10,7 @@ interface TripDatesProps {
   tripId: string;
   arrivalDate?: string | null;
   departureDate?: string | null;
-  onDatesChange: () => void;
+  onDatesChange: (dates: { arrival_date?: string; departure_date?: string }) => void; // Updated callback type
 }
 
 const TripDates: React.FC<TripDatesProps> = ({ 
@@ -22,6 +22,9 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [newArrival, setNewArrival] = React.useState('');
   const [newDeparture, setNewDeparture] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false); // Added state variable
+  const [isEditing, setIsEditing] = React.useState(false);     // Added state variable
+
 
   // Enhanced state management with persistence of valid dates
   React.useEffect(() => {
@@ -29,7 +32,7 @@ const TripDates: React.FC<TripDatesProps> = ({
     // Check current state to avoid unnecessary updates
     const isValidNewArrival = arrivalDate && arrivalDate.trim() !== '';
     const isValidNewDeparture = departureDate && departureDate.trim() !== '';
-    
+
     // Only update if the new value is valid AND different from current state
     if (isValidNewArrival && newArrival !== arrivalDate) {
       console.log('Setting valid arrival date:', arrivalDate);
@@ -39,7 +42,7 @@ const TripDates: React.FC<TripDatesProps> = ({
       // If values are now coming in as null but we had a valid date before,
       // we don't update the state, preserving the good value
     }
-    
+
     if (isValidNewDeparture && newDeparture !== departureDate) {
       console.log('Setting valid departure date:', departureDate);
       setNewDeparture(departureDate);
@@ -47,28 +50,57 @@ const TripDates: React.FC<TripDatesProps> = ({
       console.log('Ignoring invalid departure date:', departureDate);
       // Same protection for departure date
     }
-    
+
     console.log('TripDates received prop update:', { arrivalDate, departureDate });
   }, [arrivalDate, departureDate]);
 
   const handleSave = async () => {
-    const { error } = await supabase
-      .from('trips')
-      .update({
-        arrival_date: newArrival,
-        departure_date: newDeparture
-      })
-      .eq('trip_id', tripId);
-
-    if (error) {
-      console.error('Error updating trip dates:', error);
-      toast.error('Failed to update trip dates');
+    // Validate dates before saving
+    if (!newArrival || !newDeparture) {
+      toast({
+        title: 'Invalid dates',
+        description: 'Both arrival and departure dates are required',
+        variant: 'destructive'
+      });
       return;
     }
 
-    toast.success('Trip dates updated');
-    onDatesChange();
-    setIsOpen(false);
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .update({
+          arrival_date: newArrival,
+          departure_date: newDeparture
+        })
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Trip dates updated',
+        variant: 'success'
+      });
+
+      // Only notify parent if callback exists and dates are valid
+      if (onDatesChange && newArrival && newDeparture) {
+        onDatesChange({
+          arrival_date: newArrival,
+          departure_date: newDeparture
+        });
+      }
+    } catch (error) {
+      console.error('Error updating trip dates:', error);
+      toast({
+        title: 'Failed to update trip dates',
+        description: 'Please try again',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsEditing(false);
+    }
   };
 
   return (
