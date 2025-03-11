@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -49,7 +48,7 @@ const ActivitiesList: React.FC<ActivitiesListProps> = ({
               key={activity.id}
               activity={activity}
               formatTime={formatTime}
-              onEditClick={onEditActivity}
+              onEditActivity={onEditActivity} // Added onEditActivity prop
             />
           ))}
         </ul>

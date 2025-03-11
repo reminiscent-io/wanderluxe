@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CollapsibleContent } from "@/components/ui/collapsible";
 import DayLayout from '../DayLayout';

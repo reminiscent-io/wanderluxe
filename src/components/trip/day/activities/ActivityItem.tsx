@@ -16,7 +16,10 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   return (
     <li 
       className="bg-white p-3 rounded-md border border-gray-100 shadow-sm hover:bg-gray-50 cursor-pointer transition-colors"
-      onClick={() => onEditClick(activity)}
+      onClick={() => {
+        console.log("Activity item clicked:", activity);
+        onEditClick(activity);
+      }}
     >
       <div className="flex justify-between">
         <h5 className="font-medium text-gray-900">{activity.title}</h5>

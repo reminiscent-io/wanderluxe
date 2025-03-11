@@ -67,6 +67,12 @@ const DayCard: React.FC<DayCardProps> = ({
     tripId, 
     activities 
   });
+  
+  // Log when edit activity is triggered
+  const handleEditActivity = (activityId: string) => {
+    console.log("DayCard handleEditActivity called with ID:", activityId);
+    activityManager.handleEditActivity(activityId);
+  };
 
   const handleDayUpdate = async (updatedData: { title?: string; imageUrl?: string }) => {
     try {
@@ -109,7 +115,7 @@ const DayCard: React.FC<DayCardProps> = ({
         activities={activities}
         index={index}
         onAddActivity={activityManager.handleAddActivity}
-        onEditActivity={activityManager.handleEditActivity}
+        onEditActivity={handleEditActivity}
         formatTime={formatTime}
         dayId={id}
         tripId={tripId}
