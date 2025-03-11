@@ -48,7 +48,7 @@ const ActivitiesList: React.FC<ActivitiesListProps> = ({
               key={activity.id}
               activity={activity}
               formatTime={formatTime}
-              onEditActivity={onEditActivity} // Added onEditActivity prop
+              onEditClick={onEditActivity} // Fix prop name to match what ActivityItem expects
             />
           ))}
         </ul>

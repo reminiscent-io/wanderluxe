@@ -18,7 +18,11 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
       className="bg-white p-3 rounded-md border border-gray-100 shadow-sm hover:bg-gray-50 cursor-pointer transition-colors"
       onClick={() => {
         console.log("Activity item clicked:", activity);
-        onEditClick(activity);
+        if (typeof onEditClick === 'function') {
+          onEditClick(activity);
+        } else {
+          console.error('onEditClick is not a function', { onEditClick });
+        }
       }}
     >
       <div className="flex justify-between">
