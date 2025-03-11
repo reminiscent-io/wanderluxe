@@ -13,7 +13,7 @@ interface DayCollapsibleContentProps {
   };
   index: number;
   onAddActivity: (activity: ActivityFormData) => Promise<void>;
-  onEditActivity: (id: string) => void;
+  onEditActivity?: (activityId: string) => void; //onEditActivity made optional
   formatTime: (time?: string) => string;
   dayId: string;
   tripId: string;

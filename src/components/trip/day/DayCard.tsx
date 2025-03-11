@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Collapsible } from "@/components/ui/collapsible";
 import DayHeader from './DayHeader';
@@ -47,7 +46,7 @@ const DayCard: React.FC<DayCardProps> = ({
         .select('*')
         .eq('day_id', id)
         .order('order_index');
-        
+
       if (error) throw error;
       return data;
     },
@@ -67,7 +66,7 @@ const DayCard: React.FC<DayCardProps> = ({
     tripId, 
     activities 
   });
-  
+
   // Log when edit activity is triggered
   const handleEditActivity = (activityId: string) => {
     console.log("DayCard handleEditActivity called with ID:", activityId);
@@ -83,9 +82,9 @@ const DayCard: React.FC<DayCardProps> = ({
           image_url: updatedData.imageUrl
         })
         .eq('day_id', id);
-      
+
       if (error) throw error;
-      
+
       toast.success('Day updated successfully');
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
       setIsEditing(false);
