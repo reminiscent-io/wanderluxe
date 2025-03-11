@@ -5,11 +5,10 @@
   )}
   onClick={() => {
     console.log("Activity item clicked:", activity);
-    if (onActivityClick && activity && activity.id) {
-      console.log('Sending activity ID for click:', activity.id);
+    if (activity && activity.id) {
       onActivityClick(activity.id);
     } else {
-      console.error("Missing activity ID or onActivityClick handler");
+      console.error("Activity or activity ID is missing");
     }
   }}
 >
