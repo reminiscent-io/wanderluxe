@@ -19,7 +19,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
       onClick={() => {
         console.log("Activity item clicked:", activity);
         if (typeof onEditClick === 'function') {
-          onEditClick(activity);
+          onEditClick();
         } else {
           console.error('onEditClick is not a function', { onEditClick });
         }
