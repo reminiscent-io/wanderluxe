@@ -66,13 +66,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         .single();
 
       if (!error && data) {
-        // Only update if we actually have dates
+        // Only update if we actually have valid dates
         if (data.arrival_date && data.departure_date) {
           console.log('Setting trip dates from refresh:', data);
-          setTripDates({
+          setTripDates(prevDates => ({
             arrival_date: data.arrival_date,
             departure_date: data.departure_date
-          });
+          }));
         } else {
           console.log('Skipping trip dates update - missing dates in data:', data);
         }

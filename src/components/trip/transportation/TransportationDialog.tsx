@@ -41,10 +41,16 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         .single();
 
       if (!error && data) {
-        setTripDates({
-          arrival_date: data.arrival_date,
-          departure_date: data.departure_date
-        });
+        // Only update if we have valid dates
+        if (data.arrival_date && data.departure_date) {
+          console.log('TransportationDialog: Setting trip dates', data);
+          setTripDates(prevDates => ({
+            arrival_date: data.arrival_date || prevDates.arrival_date,
+            departure_date: data.departure_date || prevDates.departure_date
+          }));
+        } else {
+          console.log('TransportationDialog: Skipping update - missing dates', data);
+        }
       }
     };
 

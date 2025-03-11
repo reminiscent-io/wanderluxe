@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
@@ -19,23 +20,26 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   departureDate,
   photographer,
   unsplashUsername,
-  isLoading = false
+  isLoading = false,
 }) => {
   // Cache formatted date string using useMemo to prevent unnecessary recalculations
   const formattedDateRange = React.useMemo(() => {
+    // Skip formatting if either date is missing
     if (!arrivalDate || !departureDate) {
+      console.log('Missing date information for formatting', { arrivalDate, departureDate });
       return null;
     }
-
+    
     try {
       const arrival = parseISO(arrivalDate);
       const departure = parseISO(departureDate);
-
+      
+      // Validate parsed dates
       if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
         console.error('Invalid date format received:', { arrivalDate, departureDate });
         return null;
       }
-
+      
       return `${format(arrival, 'MMMM d, yyyy')} - ${format(departure, 'MMMM d, yyyy')}`;
     } catch (error) {
       console.error('Error formatting dates:', error);
@@ -43,46 +47,45 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [arrivalDate, departureDate]);
 
-  // If loading, show skeleton UI
-  if (isLoading) {
-    return (
-      <div className="relative w-full h-full bg-gray-200 animate-pulse">
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
-          <div className="w-1/2 h-12 bg-gray-300 rounded mb-4"></div>
-          <div className="w-1/3 h-6 bg-gray-300 rounded"></div>
-        </div>
-      </div>
-    );
-  }
+  // This effect logs current state for debugging
+  React.useEffect(() => {
+    console.log('HeroSection rendering with:', { title, arrivalDate, departureDate, formattedDateRange });
+  }, [title, arrivalDate, departureDate, formattedDateRange]);
 
   return (
-    <div className="relative h-96 w-full overflow-hidden">
-      {/* Background image - lowest z-index */}
-      <UnsplashImage
-        src={imageUrl}
-        alt={title}
-        className="absolute inset-0 w-full h-full object-cover -z-10"
-        photographer={photographer}
-        unsplashUsername={unsplashUsername}
-      />
-
-      {/* Dark overlay - middle z-index */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 -z-5" />
-
-      {/* Content container - highest z-index */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-4 z-0">
-        <div className="max-w-4xl w-full text-center">
-          {title && (
-            <h1 className="text-4xl font-bold text-white mb-3 leading-tight">
-              {title}
-            </h1>
-          )}
-          {formattedDateRange && (
-            <div className="inline-block rounded-lg backdrop-blur-sm bg-[#000a00]/0 px-[10px] py-px">
-              <p className="text-lg text-white font-medium">
-                {formattedDateRange}
-              </p>
-            </div>
+    <div className="relative w-full">
+      <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg">
+        {imageUrl ? (
+          <UnsplashImage
+            src={imageUrl}
+            alt={title}
+            className="h-full w-full object-cover"
+            photographer={photographer}
+            unsplashUsername={unsplashUsername}
+          />
+        ) : (
+          <div className="h-full w-full bg-gray-200 animate-pulse"></div>
+        )}
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        
+        {/* Title and date overlay */}
+        <div className="absolute bottom-0 left-0 p-4 md:p-6 text-white z-10">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 drop-shadow-md">
+            {isLoading ? (
+              <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
+            ) : (
+              title
+            )}
+          </h1>
+          
+          {isLoading ? (
+            <div className="h-6 w-64 bg-gray-300/30 animate-pulse rounded"></div>
+          ) : formattedDateRange ? (
+            <p className="text-lg md:text-xl font-medium drop-shadow-md">{formattedDateRange}</p>
+          ) : (
+            <p className="text-lg md:text-xl font-medium drop-shadow-md opacity-75">Dates not set</p>
           )}
         </div>
       </div>
@@ -90,4 +93,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   );
 };
 
-export default React.memo(HeroSection);
+export default HeroSection;

@@ -23,10 +23,18 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [newArrival, setNewArrival] = React.useState('');
   const [newDeparture, setNewDeparture] = React.useState('');
 
-  // Initialize state when component mounts and when props change
+  // Initialize state when component mounts and only update when valid dates come in
   React.useEffect(() => {
-    setNewArrival(arrivalDate || '');
-    setNewDeparture(departureDate || '');
+    // Only update the state with new arrival/departure dates if they are valid
+    if (arrivalDate) {
+      setNewArrival(arrivalDate);
+    }
+    
+    if (departureDate) {
+      setNewDeparture(departureDate);
+    }
+    
+    console.log('TripDates received prop update:', { arrivalDate, departureDate });
   }, [arrivalDate, departureDate]);
 
   const handleSave = async () => {
