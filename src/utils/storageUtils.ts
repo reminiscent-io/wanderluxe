@@ -56,6 +56,14 @@ export const fetchLogosFromSupabase = async (retries = 2): Promise<Logo[]> => {
   } catch (error) {
     console.error('Error in fetchLogosFromSupabase:', error);
     if (retries > 0) {
+      console.log(`Retrying fetch logos after error (${retries} attempts left)...`);
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(fetchLogosFromSupabase(retries - 1));
+        }, 1000);
+      });
+    }
+    return []; // Return empty array on error
       console.log(`Retrying fetch logos (${retries} attempts left)...`);
       return new Promise(resolve => {
         setTimeout(() => {

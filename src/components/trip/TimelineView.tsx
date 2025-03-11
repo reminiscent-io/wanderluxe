@@ -32,14 +32,23 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
     if (initialTripDates) {
-      // Always update state but log if dates are missing
-      setTripDates(initialTripDates);
+      try {
+        // Create a safe copy with null/undefined handling
+        const safeTrip = {
+          arrival_date: initialTripDates.arrival_date || null,
+          departure_date: initialTripDates.departure_date || null
+        };
+        
+        setTripDates(safeTrip);
 
-      if (!initialTripDates.arrival_date || !initialTripDates.departure_date) {
-        console.warn('Missing trip dates detected:', {
-          arrival_date: initialTripDates.arrival_date,
-          departure_date: initialTripDates.departure_date
-        });
+        if (!safeTrip.arrival_date || !safeTrip.departure_date) {
+          console.warn('Missing trip dates detected:', {
+            arrival_date: safeTrip.arrival_date,
+            departure_date: safeTrip.departure_date
+          });
+        }
+      } catch (error) {
+        console.error('Error processing trip dates:', error);
       }
     }
   }, [initialTripDates]);
