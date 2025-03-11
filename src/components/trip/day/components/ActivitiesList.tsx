@@ -2,9 +2,9 @@
 
 const handleActivityClick = (activity: DayActivity) => {
     console.log("Activity clicked in list with ID:", activity.id);
-    if (typeof onEditActivity === 'function' && activity?.id) {
-      onEditActivity(activity);
+    if (onEditActivity && activity.id) {
+      onEditActivity(activity.id);
     } else {
-      console.error('onEditActivity is not a function in ActivitiesList or activity is missing');
+      console.error("Cannot edit activity: missing ID or edit handler");
     }
   };

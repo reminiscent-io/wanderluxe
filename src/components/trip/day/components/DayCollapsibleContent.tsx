@@ -72,24 +72,32 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   const handleEditActivityWrapper = (activityId: string) => {
     console.log("Activity edit requested in DayCollapsibleContent with ID:", activityId);
     
-    if (typeof onEditActivity === 'function' && activityId) {
-      onEditActivity(activityId);
-      setEditingActivity(activityId);
-      
-      // Find the activity and populate the edit form
-      const activity = activities.find(a => a.id === activityId);
-      if (activity) {
-        setActivityEdit({
-          title: activity.title || '',
-          description: activity.description || '',
-          start_time: activity.start_time || '',
-          end_time: activity.end_time || '',
-          cost: activity.cost ? String(activity.cost) : '',
-          currency: activity.currency || 'USD'
-        });
-      }
+    if (!activityId) {
+      console.error('Activity ID is missing in DayCollapsibleContent');
+      return;
+    }
+    
+    // Set the editing state regardless of the parent handler
+    setEditingActivity(activityId);
+    
+    // Find the activity and populate the edit form
+    const activity = activities.find(a => a.id === activityId);
+    if (activity) {
+      setActivityEdit({
+        title: activity.title || '',
+        description: activity.description || '',
+        start_time: activity.start_time || '',
+        end_time: activity.end_time || '',
+        cost: activity.cost ? String(activity.cost) : '',
+        currency: activity.currency || 'USD'
+      });
     } else {
-      console.error('onEditActivity is not a function or activityId is missing in DayCollapsibleContent');
+      console.error('Activity not found for ID:', activityId);
+    }
+    
+    // Call the parent handler if it exists
+    if (typeof onEditActivity === 'function') {
+      onEditActivity(activityId);
     }
   };
 
