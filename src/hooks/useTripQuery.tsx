@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -21,9 +20,9 @@ export const useTripQuery = (tripId: string | undefined) => {
         console.error('No trip ID provided');
         throw new Error('No trip ID provided');
       }
-      
+
       console.log('Fetching trip data for ID:', tripId);
-      
+
       const { data, error } = await supabase
         .from('trips')
         .select(`
@@ -51,12 +50,36 @@ export const useTripQuery = (tripId: string | undefined) => {
         toast.error('Failed to load trip details');
         throw error;
       }
-      
-      if (!data) {
-        console.error('Trip not found:', tripId);
-        toast.error('Trip not found');
-        navigate('/my-trips');
-        throw new Error('Trip not found');
+
+      // Data validation - protect against null dates overriding valid ones
+      if (data) {
+        // Only if the trip record exists
+        const validatedData = { ...data };
+
+        // If data has null dates but we have previous valid dates, preserve them
+        if (previousTrip) {
+          // Check arrival date
+          if (!validatedData.arrival_date && previousTrip.arrival_date) {
+            console.log('Protecting arrival_date from being nullified:', previousTrip.arrival_date);
+            validatedData.arrival_date = previousTrip.arrival_date;
+          }
+
+          // Check departure date
+          if (!validatedData.departure_date && previousTrip.departure_date) {
+            console.log('Protecting departure_date from being nullified:', previousTrip.departure_date);
+            validatedData.departure_date = previousTrip.departure_date;
+          }
+        }
+
+        // Log detailed state for debugging
+        console.log('Trip data fetched successfully:', validatedData);
+        return validatedData as Trip;
+      }
+
+      // Fall back to previous data if the new data is completely null
+      if (!data && previousTrip) {
+        console.log('New data is null, using previous trip data:', previousTrip);
+        return previousTrip;
       }
 
       console.log('Trip data fetched successfully:', data);

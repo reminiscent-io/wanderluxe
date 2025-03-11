@@ -23,7 +23,19 @@ export const useTripSubscription = (tripId: string | undefined) => {
         },
         (payload) => {
           console.log('Trip update received:', payload);
-          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+          // Analyze the payload for critical changes
+          const newData = payload.new;
+          
+          // Only invalidate the query if we're getting meaningful data
+          // This prevents null values from being pulled in erroneously
+          if (newData && 
+              (newData.arrival_date !== null || 
+               newData.departure_date !== null)) {
+            console.log('Valid trip update detected, invalidating query');
+            queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+          } else {
+            console.log('Ignoring subscription update with null dates');
+          }
         }
       )
       .on(

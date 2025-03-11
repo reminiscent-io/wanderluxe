@@ -38,28 +38,27 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
   // Keep tripDates state in sync with props
   useEffect(() => {
-    console.log('Initial trip dates received:', initialTripDates);
-    if (initialTripDates) {
-      try {
-        // Create a safe copy with null/undefined handling
-        const safeTrip = {
-          arrival_date: initialTripDates.arrival_date || null,
-          departure_date: initialTripDates.departure_date || null
-        };
+    console.log('TimelineView received initialTripDates:', initialTripDates);
 
-        setTripDates(safeTrip);
+    // Strong protection against invalid/null data overriding valid data
+    if (initialTripDates?.arrival_date || initialTripDates?.departure_date) {
+      // Only update if we're getting valid data
+      const safeTrip = {
+        arrival_date: initialTripDates.arrival_date || tripDates.arrival_date || null,
+        departure_date: initialTripDates.departure_date || tripDates.departure_date || null
+      };
 
-        if (!safeTrip.arrival_date || !safeTrip.departure_date) {
-          console.warn('Missing trip dates detected:', {
-            arrival_date: safeTrip.arrival_date,
-            departure_date: safeTrip.departure_date
-          });
-        }
-      } catch (error) {
-        console.error('Error processing trip dates:', error);
+      console.log('Setting trip dates with valid data:', safeTrip);  
+      setTripDates(safeTrip);
+
+      if (!safeTrip.arrival_date || !safeTrip.departure_date) {
+        console.warn('Missing trip dates detected:', {
+          arrival_date: safeTrip.arrival_date,
+          departure_date: safeTrip.departure_date
+        });
       }
     }
-  }, [initialTripDates]);
+  }, [initialTripDates, tripDates]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);

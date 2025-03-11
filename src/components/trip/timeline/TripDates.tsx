@@ -26,18 +26,26 @@ const TripDates: React.FC<TripDatesProps> = ({
   // Enhanced state management with persistence of valid dates
   React.useEffect(() => {
     // Only update local state when receiving valid dates
-    if (arrivalDate && arrivalDate.trim() !== '') {
+    // Check current state to avoid unnecessary updates
+    const isValidNewArrival = arrivalDate && arrivalDate.trim() !== '';
+    const isValidNewDeparture = departureDate && departureDate.trim() !== '';
+    
+    // Only update if the new value is valid AND different from current state
+    if (isValidNewArrival && newArrival !== arrivalDate) {
       console.log('Setting valid arrival date:', arrivalDate);
       setNewArrival(arrivalDate);
-    } else {
+    } else if (!isValidNewArrival) {
       console.log('Ignoring invalid arrival date:', arrivalDate);
+      // If values are now coming in as null but we had a valid date before,
+      // we don't update the state, preserving the good value
     }
     
-    if (departureDate && departureDate.trim() !== '') {
+    if (isValidNewDeparture && newDeparture !== departureDate) {
       console.log('Setting valid departure date:', departureDate);
       setNewDeparture(departureDate);
-    } else {
+    } else if (!isValidNewDeparture) {
       console.log('Ignoring invalid departure date:', departureDate);
+      // Same protection for departure date
     }
     
     console.log('TripDates received prop update:', { arrivalDate, departureDate });
