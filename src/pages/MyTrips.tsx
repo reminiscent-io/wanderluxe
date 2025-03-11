@@ -127,7 +127,11 @@ const MyTrips = () => {
             {filteredTrips?.map((trip) => (
               <TripCard
                 key={trip.trip_id}
-                trip={trip}
+                trip={{
+                  ...trip,
+                  // Ensure cover_image_url is properly passed
+                  cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'
+                }}
                 onHide={() => handleHideTrip(trip.trip_id)}
               />
             ))}
