@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../dining/DiningList';
@@ -63,12 +64,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   });
 
   const handleEditActivityWrapper = (activity: DayActivity) => {
-    console.log("Editing activity with ID:", activity.id);
-    if (typeof onEditActivity === 'function' && activity?.id) {
-      onEditActivity(activity.id);
-    } else {
-      console.error('onEditActivity is not a function in DayCardContent or activity ID is missing');
-    }
+    onEditActivity(activity.id);
   };
 
   return (
