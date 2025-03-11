@@ -62,10 +62,10 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
         onAddActivity={onAddActivity}
         onEditActivity={(activityId) => {
           console.log('Activity edit requested in DayCollapsibleContent with ID:', activityId);
-          if (typeof onEditActivity === 'function') {
+          if (activityId && typeof onEditActivity === 'function') {
             onEditActivity(activityId);
           } else {
-            console.error('onEditActivity is not a function in DayCollapsibleContent');
+            console.error('onEditActivity is not a function or activityId is missing in DayCollapsibleContent');
           }
         }}
         formatTime={formatTime}

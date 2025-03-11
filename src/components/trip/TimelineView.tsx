@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTimelineGroups } from '@/hooks/use-timeline-groups';
@@ -28,12 +27,20 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tripDates, setTripDates] = useState(initialTripDates);
-  
-  // Keep tripDates state in sync with props, but only if initialTripDates has valid dates
+
+  // Keep tripDates state in sync with props
   useEffect(() => {
     console.log('Initial trip dates received:', initialTripDates);
-    if (initialTripDates?.arrival_date && initialTripDates?.departure_date) {
+    if (initialTripDates) {
+      // Always update state but log if dates are missing
       setTripDates(initialTripDates);
+
+      if (!initialTripDates.arrival_date || !initialTripDates.departure_date) {
+        console.warn('Missing trip dates detected:', {
+          arrival_date: initialTripDates.arrival_date,
+          departure_date: initialTripDates.departure_date
+        });
+      }
     }
   }, [initialTripDates]);
 
@@ -41,14 +48,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     setIsRefreshing(true);
     try {
       await Promise.all([refreshEvents(), refreshDays()]);
-      
+
       // Fetch updated trip dates
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
         .eq('trip_id', tripId)
         .single();
-        
+
       if (!error && data) {
         // Only update if we actually have dates
         if (data.arrival_date && data.departure_date) {
@@ -61,7 +68,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           console.log('Skipping trip dates update - missing dates in data:', data);
         }
       }
-      
+
       toast.success('Timeline updated successfully');
     } catch (error) {
       console.error('Error refreshing timeline:', error);
