@@ -16,12 +16,18 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   return (
     <li 
       className="bg-white p-3 rounded-md border border-gray-100 shadow-sm hover:bg-gray-50 cursor-pointer transition-colors"
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
         console.log("Activity item clicked:", activity);
-        if (typeof onEditClick === 'function') {
-          onEditClick();
-        } else {
-          console.error('onEditClick is not a function', { onEditClick });
+        try {
+          if (typeof onEditClick === 'function') {
+            onEditClick();
+          } else {
+            console.error('onEditClick is not a function', { onEditClick });
+          }
+        } catch (error) {
+          console.error('Error in activity click handler:', error);
         }
       }}
     >

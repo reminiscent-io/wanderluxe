@@ -48,7 +48,14 @@ const ActivitiesList: React.FC<ActivitiesListProps> = ({
               key={activity.id}
               activity={activity}
               formatTime={formatTime}
-              onEditClick={() => onEditActivity && onEditActivity(activity.id)}
+              onEditClick={() => {
+                console.log('Activity clicked in list with ID:', activity.id);
+                if (typeof onEditActivity === 'function') {
+                  onEditActivity(activity.id);
+                } else {
+                  console.error('onEditActivity is not a function in ActivitiesList');
+                }
+              }}
             />
           ))}
         </ul>
