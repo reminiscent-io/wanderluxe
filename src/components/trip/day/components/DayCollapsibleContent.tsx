@@ -1,24 +1,14 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { CollapsibleContent } from "@/components/ui/collapsible";
 import DayLayout from '../DayLayout';
 import { DayActivity, ActivityFormData } from '@/types/trip';
+import DayCardContent from '../DayCardContent';
+import ActivityDialogs from '../ActivityDialogs';
 
 interface DayCollapsibleContentProps {
   title: string;
   activities: DayActivity[];
-  hotelDetails?: {
-    name: string;
-    details: string;
-    imageUrl?: string;
-  };
-  index: number;
-  onAddActivity: (activity: ActivityFormData) => Promise<void>;
-  onEditActivity?: (activityId: string) => void; //onEditActivity made optional
-  formatTime: (time?: string) => string;
-  dayId: string;
-  tripId: string;
-  imageUrl?: string | null;
-  defaultImageUrl?: string;
   reservations?: Array<{
     id: string;
     day_id: string;
@@ -36,12 +26,20 @@ interface DayCollapsibleContentProps {
     created_at: string;
     order_index: number;
   }>;
+  index: number;
+  onAddActivity: (activity: ActivityFormData) => Promise<void>;
+  onEditActivity?: (activityId: string) => void;
+  formatTime: (time?: string) => string;
+  dayId: string;
+  tripId: string;
+  imageUrl?: string;
+  defaultImageUrl?: string;
 }
 
 const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   title,
   activities,
-  hotelDetails,
+  reservations,
   index,
   onAddActivity,
   onEditActivity,
@@ -50,30 +48,83 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   tripId,
   imageUrl,
   defaultImageUrl,
-  reservations
 }) => {
+  // State for managing activity operations
+  const [isAddingActivity, setIsAddingActivity] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<string | null>(null);
+  const [newActivity, setNewActivity] = useState<ActivityFormData>({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
+
+  const handleEditActivityWrapper = (activityId: string) => {
+    console.log("Activity edit requested in DayCollapsibleContent with ID:", activityId);
+    
+    if (typeof onEditActivity === 'function' && activityId) {
+      onEditActivity(activityId);
+      setEditingActivity(activityId);
+      
+      // Find the activity and populate the edit form
+      const activity = activities.find(a => a.id === activityId);
+      if (activity) {
+        setActivityEdit({
+          title: activity.title || '',
+          description: activity.description || '',
+          start_time: activity.start_time || '',
+          end_time: activity.end_time || '',
+          cost: activity.cost ? String(activity.cost) : '',
+          currency: activity.currency || 'USD'
+        });
+      }
+    } else {
+      console.error('onEditActivity is not a function or activityId is missing in DayCollapsibleContent');
+    }
+  };
+
   return (
-    <CollapsibleContent className="p-4">
-      <DayLayout
-        title={title}
-        activities={activities}
-        hotelDetails={hotelDetails}
-        index={index}
+    <CollapsibleContent className="border-t">
+      <DayLayout imageUrl={imageUrl} defaultImageUrl={defaultImageUrl || ''} dayId={dayId} title={title}>
+        <DayCardContent
+          index={index}
+          title={title}
+          activities={activities}
+          reservations={reservations}
+          onAddActivity={onAddActivity}
+          onEditActivity={handleEditActivityWrapper}
+          formatTime={formatTime}
+          dayId={dayId}
+          eventId={tripId}
+        />
+      </DayLayout>
+      
+      <ActivityDialogs
+        isAddingActivity={isAddingActivity}
+        setIsAddingActivity={setIsAddingActivity}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
+        newActivity={newActivity}
+        setNewActivity={setNewActivity}
+        activityEdit={activityEdit}
+        setActivityEdit={setActivityEdit}
         onAddActivity={onAddActivity}
-        onEditActivity={(activityId) => {
-          console.log('Activity edit requested in DayCollapsibleContent with ID:', activityId);
-          if (activityId && typeof onEditActivity === 'function') {
-            onEditActivity(activityId);
-          } else {
-            console.error('onEditActivity is not a function or activityId is missing in DayCollapsibleContent');
+        onEditActivity={(id: string) => {
+          if (typeof onEditActivity === 'function' && id) {
+            onEditActivity(id);
           }
         }}
-        formatTime={formatTime}
-        dayId={dayId}
-        tripId={tripId}
-        imageUrl={imageUrl}
-        defaultImageUrl={defaultImageUrl}
-        reservations={reservations}
+        eventId={tripId}
       />
     </CollapsibleContent>
   );

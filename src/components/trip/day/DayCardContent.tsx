@@ -64,7 +64,12 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   });
 
   const handleEditActivityWrapper = (activity: DayActivity) => {
-    onEditActivity(activity.id);
+    console.log("Editing activity with ID:", activity.id);
+    if (typeof onEditActivity === 'function' && activity?.id) {
+      onEditActivity(activity.id);
+    } else {
+      console.error('onEditActivity is not a function in DayCardContent or activity ID is missing');
+    }
   };
 
   return (
