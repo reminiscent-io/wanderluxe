@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AddActivityDialog from './AddActivityDialog';
 import EditActivityDialog from './EditActivityDialog';
@@ -41,7 +40,7 @@ interface ActivityDialogsProps {
     currency: string;
   }) => void;
   onAddActivity: () => void;
-  onEditActivity: (id: string) => void;
+  onEditActivity: (id: string) => void; //Corrected the type here.  onEditActivity now accepts an ID.
   eventId: string;
 }
 

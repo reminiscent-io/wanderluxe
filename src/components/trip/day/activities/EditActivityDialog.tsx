@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +39,13 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
   onSubmit,
   eventId,
 }) => {
+  // Log the activity data when it changes for debugging
+  useEffect(() => {
+    if (activityId) {
+      console.log('Editing activity with data:', activity);
+    }
+  }, [activityId, activity]);
+  
   return (
     <Dialog open={!!activityId} onOpenChange={() => onOpenChange(null)}>
       <DialogContent>
