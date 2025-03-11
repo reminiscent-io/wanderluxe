@@ -55,8 +55,13 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
         <TimelineView 
           tripId={tripId}
           tripDates={{
-            arrival_date: displayData?.arrival_date || null,
-            departure_date: displayData?.departure_date || null
+            // Only pass valid dates, never empty strings
+            arrival_date: displayData?.arrival_date && displayData.arrival_date.trim() !== '' 
+              ? displayData.arrival_date 
+              : null,
+            departure_date: displayData?.departure_date && displayData.departure_date.trim() !== '' 
+              ? displayData.departure_date 
+              : null
           }}
         />
       </TabsContent>

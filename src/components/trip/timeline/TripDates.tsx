@@ -23,15 +23,21 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [newArrival, setNewArrival] = React.useState('');
   const [newDeparture, setNewDeparture] = React.useState('');
 
-  // Initialize state when component mounts and only update when valid dates come in
+  // Enhanced state management with persistence of valid dates
   React.useEffect(() => {
-    // Only update the state with new arrival/departure dates if they are valid
-    if (arrivalDate) {
+    // Only update local state when receiving valid dates
+    if (arrivalDate && arrivalDate.trim() !== '') {
+      console.log('Setting valid arrival date:', arrivalDate);
       setNewArrival(arrivalDate);
+    } else {
+      console.log('Ignoring invalid arrival date:', arrivalDate);
     }
     
-    if (departureDate) {
+    if (departureDate && departureDate.trim() !== '') {
+      console.log('Setting valid departure date:', departureDate);
       setNewDeparture(departureDate);
+    } else {
+      console.log('Ignoring invalid departure date:', departureDate);
     }
     
     console.log('TripDates received prop update:', { arrivalDate, departureDate });

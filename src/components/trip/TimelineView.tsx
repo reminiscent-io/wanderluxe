@@ -26,7 +26,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [tripDates, setTripDates] = useState(initialTripDates);
+  const [isLoadingDates, setIsLoadingDates] = useState(true);
+  // Initialize with empty but well-typed state, will be populated when we have valid data
+  const [tripDates, setTripDates] = useState<{
+    arrival_date: string | null;
+    departure_date: string | null;
+  }>({
+    arrival_date: initialTripDates?.arrival_date || null,
+    departure_date: initialTripDates?.departure_date || null
+  });
 
   // Keep tripDates state in sync with props
   useEffect(() => {
@@ -38,7 +46,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           arrival_date: initialTripDates.arrival_date || null,
           departure_date: initialTripDates.departure_date || null
         };
-        
+
         setTripDates(safeTrip);
 
         if (!safeTrip.arrival_date || !safeTrip.departure_date) {
