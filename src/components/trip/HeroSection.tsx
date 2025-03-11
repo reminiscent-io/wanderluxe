@@ -6,8 +6,8 @@ import UnsplashImage from '@/components/UnsplashImage';
 interface HeroSectionProps {
   title: string;
   imageUrl: string;
-  arrivalDate: string;  // Removed optional
-  departureDate: string;  // Removed optional
+  arrivalDate: string | null;  // Made optional with null type
+  departureDate: string | null;  // Made optional with null type
   photographer?: string;
   unsplashUsername?: string;
   isLoading?: boolean;
@@ -24,14 +24,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   // Cache formatted date string using useMemo to prevent unnecessary recalculations
   const formattedDateRange = React.useMemo(() => {
+    if (!arrivalDate || !departureDate) {
+      return null;
+    }
+    
     try {
       const arrival = parseISO(arrivalDate);
       const departure = parseISO(departureDate);
+      
       if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
         console.error('Invalid date format received:', { arrivalDate, departureDate });
         return null;
       }
-      return `${format(arrival, 'MMMM do, yyyy')} - ${format(departure, 'MMMM do, yyyy')}`;
+      
+      return `${format(arrival, 'MMMM d, yyyy')} - ${format(departure, 'MMMM d, yyyy')}`;
     } catch (error) {
       console.error('Error formatting dates:', error);
       return null;
