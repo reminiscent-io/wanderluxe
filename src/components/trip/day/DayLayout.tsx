@@ -1,7 +1,6 @@
-
 import React from 'react';
 import DayImage from './DayImage';
-import DayCardContent from './DayCardContent';
+// Added import for DayActivity
 import { DayActivity, RestaurantReservation, ActivityFormData } from '@/types/trip';
 
 interface HotelDetails {
@@ -64,3 +63,46 @@ const DayLayout: React.FC<DayLayoutProps> = ({
 };
 
 export default DayLayout;
+
+
+// Added DayCardContent component based on context clues from the problem description.
+const DayCardContent: React.FC<{
+  index: number;
+  title: string;
+  activities: DayActivity[];
+  onAddActivity: (activity: ActivityFormData) => Promise<void>;
+  onEditActivity: (id: string) => void;
+  formatTime: (time?: string) => string;
+  dayId: string;
+  eventId: string;
+  reservations?: RestaurantReservation[];
+}> = ({
+  index,
+  title,
+  activities,
+  onAddActivity,
+  onEditActivity,
+  formatTime,
+  dayId,
+  eventId,
+  reservations,
+}) => {
+  return (
+    <div>
+      {/* Content for DayCardContent */}
+      {activities.map((activity) => (
+        <div key={activity.id}>
+          <button onClick={() => {
+            console.log('Activity edit requested in DayCardContent for activity:', activity.id);
+            if (typeof onEditActivity === 'function') {
+              onEditActivity(activity.id);
+            } else {
+              console.error('onEditActivity is not a function in DayCardContent');
+            }
+          }}>Edit {activity.title}</button>
+        </div>
+      ))}
+
+    </div>
+  );
+};
