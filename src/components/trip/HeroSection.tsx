@@ -1,6 +1,6 @@
 import React from 'react';
 import { format, parseISO } from 'date-fns';
-import { UnsplashImage } from './UnsplashImage';
+import UnsplashImage from '@/components/UnsplashImage';
 
 interface HeroSectionProps {
   title: string;
