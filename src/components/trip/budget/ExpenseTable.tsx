@@ -44,8 +44,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
       </TableHeader>
       <TableBody>
         {Object.entries(expensesByCategory).map(([category, items]) => (
-          // Replace React.Fragment with a div that supports extra props.
-          <div key={category} style={{ display: 'contents' }} data-lov-id={category}>
+          <React.Fragment key={category}>
             {items.map((expense) => (
               <TableRow key={expense.id} className="group hover:bg-sand-50">
                 <TableCell>
@@ -63,9 +62,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>
-                            Original: {formatCurrency(expense.cost || 0, expense.currency || 'USD')}
-                          </p>
+                          <p>Original: {formatCurrency(expense.cost || 0, expense.currency || 'USD')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -76,9 +73,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                 <TableCell className="text-center">
                   <Switch
                     checked={expense.is_paid}
-                    onCheckedChange={(checked) =>
-                      onUpdatePaidStatus(expense.id, checked, category)
-                    }
+                    onCheckedChange={(checked) => onUpdatePaidStatus(expense.id, checked, category)}
                     className="data-[state=checked]:bg-green-500"
                   />
                 </TableCell>
@@ -93,7 +88,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
               </TableCell>
               <TableCell />
             </TableRow>
-          </div>
+          </React.Fragment>
         ))}
       </TableBody>
     </Table>
