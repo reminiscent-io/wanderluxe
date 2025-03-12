@@ -87,8 +87,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
-        {/* Title and date overlay */}
-        <div className="absolute bottom-0 left-0 p-4 md:p-6 text-white z-10">
+        {/* Title and date overlay - centered */}
+        <div className="absolute inset-0 flex flex-col items-start justify-center p-4 md:p-6 text-white z-10">
           <h1 className="text-3xl md:text-4xl font-bold mb-2 drop-shadow-md">
             {isLoading ? (
               <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
