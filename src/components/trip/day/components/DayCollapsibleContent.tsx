@@ -13,7 +13,7 @@ interface DayCollapsibleContentProps {
   };
   index: number;
   onAddActivity: (activity: ActivityFormData) => Promise<void>;
-  onEditActivity?: (activityId: string) => void; //onEditActivity made optional
+  onEditActivity?: (activityId: string) => void; // onEditActivity remains optional
   formatTime: (time?: string) => string;
   dayId: string;
   tripId: string;
@@ -44,7 +44,7 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   hotelDetails,
   index,
   onAddActivity,
-  onEditActivity,
+  onEditActivity, // the prop function
   formatTime,
   dayId,
   tripId,
@@ -52,6 +52,16 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   defaultImageUrl,
   reservations
 }) => {
+  // Renamed local callback to avoid shadowing issues.
+  const handleEditActivity = (activityId: string) => {
+    console.log('Activity edit requested in DayCollapsibleContent with ID:', activityId);
+    if (activityId && typeof onEditActivity === 'function') {
+      onEditActivity(activityId);
+    } else {
+      console.error('onEditActivity is not a function or activityId is missing in DayCollapsibleContent');
+    }
+  };
+
   return (
     <CollapsibleContent className="p-4">
       <DayLayout
@@ -60,14 +70,7 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
         hotelDetails={hotelDetails}
         index={index}
         onAddActivity={onAddActivity}
-        onEditActivity={(activityId) => {
-          console.log('Activity edit requested in DayCollapsibleContent with ID:', activityId);
-          if (activityId && typeof onEditActivity === 'function') {
-            onEditActivity(activityId);
-          } else {
-            console.error('onEditActivity is not a function or activityId is missing in DayCollapsibleContent');
-          }
-        }}
+        onEditActivity={handleEditActivity}
         formatTime={formatTime}
         dayId={dayId}
         tripId={tripId}
