@@ -21,42 +21,52 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   unsplashUsername,
   isLoading = false,
 }) => {
-  // Format the date range with defensive handling of missing dates
+  // State to remember the last valid dates
+  const [lastValidDates, setLastValidDates] = React.useState({
+    arrivalDate,
+    departureDate,
+  });
+
+  React.useEffect(() => {
+    // Update only if both dates are valid and non-empty
+    if (
+      arrivalDate &&
+      departureDate &&
+      arrivalDate.trim() !== '' &&
+      departureDate.trim() !== ''
+    ) {
+      setLastValidDates({ arrivalDate, departureDate });
+    }
+  }, [arrivalDate, departureDate]);
+
+  // Compute formatted date range using the last valid dates
   const formattedDateRange = React.useMemo(() => {
-    // Early return if dates are missing or invalid
-    if (!arrivalDate || !departureDate || typeof arrivalDate !== 'string' || typeof departureDate !== 'string') {
-      console.log('Missing or invalid date information for formatting', { arrivalDate, departureDate });
+    const safeArrival = lastValidDates.arrivalDate;
+    const safeDeparture = lastValidDates.departureDate;
+
+    if (!safeArrival || !safeDeparture) {
+      console.log('Missing or invalid date information for formatting', { arrivalDate: safeArrival, departureDate: safeDeparture });
       return null;
     }
 
     try {
-      // Validate date strings before parsing
-      if (arrivalDate.trim() === '' || departureDate.trim() === '') {
-        console.log('Empty date strings provided');
-        return null;
-      }
+      const start = parseISO(safeArrival);
+      const end = parseISO(safeDeparture);
 
-      const start = parseISO(arrivalDate);
-      const end = parseISO(departureDate);
-
-      // Validate parsed dates
-      if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         console.log('Invalid date objects after parsing');
         return null;
       }
 
-      // Format dates
       const formattedStart = format(start, 'LLL d, yyyy');
       const formattedEnd = format(end, 'LLL d, yyyy');
-
       return `${formattedStart} - ${formattedEnd}`;
     } catch (error) {
       console.error('Error formatting dates:', error);
       return null;
     }
-  }, [arrivalDate, departureDate]);
+  }, [lastValidDates]);
 
-  // Prevent unnecessary renders with placeholder
   console.log('HeroSection rendering with:', { formattedDateRange });
 
   return (
