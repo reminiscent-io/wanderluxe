@@ -61,7 +61,7 @@ const TripCard = ({
       >
         <div className="relative h-48">
           <img 
-            src={trip.cover_image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'} 
+            src={trip.cover_image_url} //|| 'https://images.unsplash.com/photo-1501854140801-50d01698950b'
             alt={trip.destination} 
             className="w-full h-full object-cover object-center"
           />
@@ -75,18 +75,6 @@ const TripCard = ({
                 <h3 className="text-xl font-semibold text-gray-900">
                   {trip.destination}
                 </h3>
-                {isExample && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-5 w-5 text-gray-500" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Example Trip
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
               </div>
               <p className="text-sm text-gray-500 mt-2">
                 {formatDateRange(trip)}
