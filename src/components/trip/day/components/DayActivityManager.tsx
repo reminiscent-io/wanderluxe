@@ -1,26 +1,21 @@
-
 import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ActivityFormData, DayActivity } from '@/types/trip';
 
-// Define the return type of the component to fix type errors
 interface DayActivityManagerReturn {
   handleAddActivity: (activity: ActivityFormData) => Promise<void>;
   handleDeleteActivity: (id: string) => Promise<void>;
-  handleEditActivity: (id: string) => Promise<void>;
+  handleEditActivity: (id: string, updatedActivity: ActivityFormData) => Promise<void>;
 }
 
-// Props needed for the DayActivityManager
 interface DayActivityManagerProps {
   id: string;
   tripId: string;
   activities: DayActivity[];
 }
 
-// Update the component to return an object with the required functions
 const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps): DayActivityManagerReturn => {
-  // This function is called when the form is submitted
   const handleAddActivity = async (activity: ActivityFormData): Promise<void> => {
     console.log('Attempting to add activity:', activity);
     
@@ -73,7 +68,6 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
     }
   };
 
-  // Add delete activity functionality
   const handleDeleteActivity = async (id: string): Promise<void> => {
     try {
       const { error } = await supabase
@@ -92,11 +86,31 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
     }
   };
 
-  // Add edit activity functionality (placeholder for now)
-  const handleEditActivity = async (id: string): Promise<void> => {
-    // Implementation will be added later
-    console.log('Edit activity with ID:', id);
-    return Promise.resolve();
+  // Updated edit activity function that accepts new activity data
+  const handleEditActivity = async (activityId: string, updatedActivity: ActivityFormData): Promise<void> => {
+    console.log('Editing activity with ID:', activityId, 'and new data:', updatedActivity);
+    try {
+      const { data, error } = await supabase
+        .from('day_activities')
+        .update({
+          title: updatedActivity.title,
+          description: updatedActivity.description,
+          start_time: updatedActivity.start_time || null,
+          end_time: updatedActivity.end_time || null,
+          cost: updatedActivity.cost ? Number(updatedActivity.cost) : null,
+          currency: updatedActivity.currency,
+        })
+        .eq('id', activityId)
+        .single();
+
+      if (error) throw error;
+      toast.success('Activity updated successfully');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error editing activity:', error);
+      toast.error('Failed to update activity');
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    }
   };
 
   return {
