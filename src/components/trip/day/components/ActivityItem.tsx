@@ -5,8 +5,8 @@
   )}
   onClick={() => {
     console.log("Activity item clicked:", activity);
-    if (activity && activity.id) {
-      onActivityClick(activity.id);
+    if (activity?.id) {
+      onActivityClick?.(activity.id);
     } else {
       console.error("Activity or activity ID is missing");
     }
