@@ -26,8 +26,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingDates, setIsLoadingDates] = useState(true);
-  // Initialize with empty but well-typed state, will be populated when we have valid data
+  const [isLoadingDates, setIsLoadingDates] = useState(false);
+
+  // State for trip dates; initialized from props if available.
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
@@ -36,41 +37,36 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     departure_date: initialTripDates?.departure_date || null
   });
 
-  // Keep tripDates state in sync with props - only update on meaningful changes
+  // Sync trip dates from props when they are valid.
   useEffect(() => {
-    // Only update state if we receive valid dates AND they're different from current state
-    if (initialTripDates) {
-      const newArrival = initialTripDates.arrival_date || null;
-      const newDeparture = initialTripDates.departure_date || null;
-
-      // Only update if we have both valid new dates AND they differ from current state
-      const shouldUpdate = 
-        (newArrival && newDeparture) && 
-        (newArrival !== tripDates.arrival_date || newDeparture !== tripDates.departure_date);
-
-      if (shouldUpdate) {
+    const newArrival = initialTripDates?.arrival_date;
+    const newDeparture = initialTripDates?.departure_date;
+    if (newArrival && newDeparture) {
+      if (newArrival !== tripDates.arrival_date || newDeparture !== tripDates.departure_date) {
         console.log('Updating trip dates from props:', { newArrival, newDeparture });
         setTripDates({
           arrival_date: newArrival,
           departure_date: newDeparture
         });
       }
-
-      // Only fetch if we're missing dates and aren't already loading
-      if ((!tripDates.arrival_date || !tripDates.departure_date) && !isLoadingDates) {
-        console.log('Trip dates incomplete, fetching fresh data');
-        setIsLoadingDates(true);
-        fetchTripData().finally(() => setIsLoadingDates(false));
-      }
     }
-  }, [initialTripDates, tripDates.arrival_date, tripDates.departure_date, isLoadingDates]);
+  }, [initialTripDates]);
+
+  // On mount, if dates are missing, fetch from DB.
+  useEffect(() => {
+    if (!tripDates.arrival_date || !tripDates.departure_date) {
+      console.log('Trip dates missing on mount, fetching fresh data');
+      setIsLoadingDates(true);
+      fetchTripData().finally(() => setIsLoadingDates(false));
+    }
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
       await Promise.all([refreshEvents(), refreshDays()]);
 
-      // Fetch updated trip dates
+      // Fetch updated trip dates.
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
@@ -78,18 +74,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         .single();
 
       if (!error && data) {
-        // Only update if we actually have valid dates
         if (data.arrival_date && data.departure_date) {
           console.log('Setting trip dates from refresh:', data);
-          setTripDates(prevDates => ({
+          setTripDates({
             arrival_date: data.arrival_date,
             departure_date: data.departure_date
-          }));
+          });
         } else {
           console.log('Skipping trip dates update - missing dates in data:', data);
         }
       }
-
       toast.success('Timeline updated successfully');
     } catch (error) {
       console.error('Error refreshing timeline:', error);
@@ -99,31 +93,22 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   }, [refreshEvents, refreshDays, tripId]);
 
-  // Fetch trip data directly from Supabase
   const fetchTripData = async () => {
     if (!tripId) return;
-
     console.log('Fetching trip data for ID:', tripId);
-
     try {
       const { data, error } = await supabase
         .from('trips')
         .select('*')
         .eq('trip_id', tripId)
         .single();
-
       if (error) throw error;
-
       console.log('Trip data fetched successfully:', data);
-
-      // Only update trip dates with fetched data if they exist
-      // This prevents overriding valid dates with null values
       if (data.arrival_date && data.departure_date) {
         console.log('Setting valid dates from DB:', {
-          arrival: data.arrival_date, 
+          arrival: data.arrival_date,
           departure: data.departure_date
         });
-
         setTripDates({
           arrival_date: data.arrival_date,
           departure_date: data.departure_date
@@ -131,13 +116,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       } else {
         console.log('DB returned incomplete date data, not updating state');
       }
-
     } catch (error) {
       console.error('Error fetching trip details:', error);
     }
   };
 
-  // Convert events to hotel stays
   const hotelStays = React.useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
@@ -168,12 +151,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           arrivalDate: tripDates.arrival_date, 
           departureDate: tripDates.departure_date 
         })}
-        <TripDates
-          tripId={tripId}
-          arrivalDate={tripDates.arrival_date}
-          departureDate={tripDates.departure_date}
-          onDatesChange={handleRefresh}
-        />
+        {tripDates.arrival_date && tripDates.departure_date ? (
+          <TripDates
+            tripId={tripId}
+            arrivalDate={tripDates.arrival_date}
+            departureDate={tripDates.departure_date}
+            onDatesChange={handleRefresh}
+          />
+        ) : (
+          <p>Loading dates...</p>
+        )}
         <AccommodationsSection
           tripId={tripId}
           onAccommodationChange={handleRefresh}
