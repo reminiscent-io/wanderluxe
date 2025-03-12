@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { 
   DndContext, 
@@ -94,7 +93,7 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
     try {
       const activeId = active.id.toString();
       const overId = over.id.toString();
-      
+
       // Find the new index for the dragged item
       const newIndex = items?.findIndex(item => item.id === overId) ?? 0;
 
@@ -135,11 +134,11 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-col space-y-8">
           {CATEGORIES.map((category) => {
             // Filter items for this category
             const categoryItems = items?.filter(item => item.category === category) || [];
-            
+
             return (
               <SortableContext
                 key={category}
