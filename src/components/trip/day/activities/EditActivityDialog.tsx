@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import {
   Dialog,
@@ -7,27 +6,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ActivityForm from '../../ActivityForm';
+import { ActivityFormData } from '@/types/trip';
 
 interface EditActivityDialogProps {
   activityId: string | null;
   onOpenChange: (open: boolean) => void;
-  activity: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  };
-  onActivityChange: (activity: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  }) => void;
-  onSubmit: () => void;
+  activity: ActivityFormData;
+  onActivityChange: (activity: ActivityFormData) => void;
+  onSubmit: (updatedActivity: ActivityFormData) => void;
   eventId: string;
 }
 
@@ -39,15 +25,14 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
   onSubmit,
   eventId,
 }) => {
-  // Log the activity data when it changes for debugging
   useEffect(() => {
     if (activityId) {
       console.log('Editing activity with data:', activity);
     }
   }, [activityId, activity]);
-  
+
   return (
-    <Dialog open={!!activityId} onOpenChange={() => onOpenChange(null)}>
+    <Dialog open={!!activityId} onOpenChange={(open) => { if (!open) onOpenChange(false) }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Activity</DialogTitle>
@@ -55,8 +40,8 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
         <ActivityForm
           activity={activity}
           onActivityChange={onActivityChange}
-          onSubmit={onSubmit}
-          onCancel={() => onOpenChange(null)}
+          onSubmit={() => onSubmit(activity)}
+          onCancel={() => onOpenChange(false)}
           submitLabel="Save Changes"
           eventId={eventId}
         />
