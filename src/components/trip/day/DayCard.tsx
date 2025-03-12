@@ -4,11 +4,12 @@ import DayHeader from './DayHeader';
 import DayCollapsibleContent from './components/DayCollapsibleContent';
 import DayActivityManager from './components/DayActivityManager';
 import { format, parseISO } from 'date-fns';
-import { DayActivity } from '@/types/trip';
+import { DayActivity, ActivityFormData } from '@/types/trip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DayEditDialog from './DayEditDialog';
+import EditActivityDialog from './components/EditActivityDialog';
 
 interface DayCardProps {
   id: string;
@@ -34,7 +35,9 @@ const DayCard: React.FC<DayCardProps> = ({
   defaultImageUrl
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingDay, setIsEditingDay] = useState(false);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editingActivityData, setEditingActivityData] = useState<ActivityFormData | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch restaurant reservations for this day
@@ -67,10 +70,39 @@ const DayCard: React.FC<DayCardProps> = ({
     activities 
   });
 
-  // Log when edit activity is triggered
+  // When an activity is clicked for editing, find its data and open the edit dialog.
   const handleEditActivity = (activityId: string) => {
     console.log("DayCard handleEditActivity called with ID:", activityId);
-    activityManager.handleEditActivity(activityId);
+    const activity = activities.find(act => act.id === activityId);
+    if (!activity) {
+      console.error("Activity not found for ID:", activityId);
+      return;
+    }
+    setEditingActivityId(activityId);
+    setEditingActivityData({
+      title: activity.title,
+      description: activity.description || '',
+      start_time: activity.start_time || '',
+      end_time: activity.end_time || '',
+      cost: activity.cost ? String(activity.cost) : '',
+      currency: activity.currency || ''
+    });
+  };
+
+  // Handle submission from the EditActivityDialog.
+  const handleActivityEditSubmit = async (updatedActivity: ActivityFormData) => {
+    if (editingActivityId) {
+      try {
+        await activityManager.handleEditActivity(editingActivityId, updatedActivity);
+        toast.success('Activity updated successfully');
+        setEditingActivityId(null);
+        setEditingActivityData(null);
+        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      } catch (error) {
+        console.error('Error updating activity:', error);
+        toast.error('Failed to update activity');
+      }
+    }
   };
 
   const handleDayUpdate = async (updatedData: { title?: string; imageUrl?: string }) => {
@@ -87,7 +119,7 @@ const DayCard: React.FC<DayCardProps> = ({
 
       toast.success('Day updated successfully');
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      setIsEditing(false);
+      setIsEditingDay(false);
     } catch (error) {
       console.error('Error updating day:', error);
       toast.error('Failed to update day');
@@ -96,41 +128,59 @@ const DayCard: React.FC<DayCardProps> = ({
   };
 
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      className="rounded-lg overflow-hidden bg-white shadow-md"
-    >
-      <DayHeader
-        title={dayTitle}
-        date={date}
-        isOpen={isOpen}
-        onEdit={() => setIsEditing(true)}
-        onDelete={() => onDelete(id)}
-      />
+    <>
+      <Collapsible
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        className="rounded-lg overflow-hidden bg-white shadow-md"
+      >
+        <DayHeader
+          title={dayTitle}
+          date={date}
+          isOpen={isOpen}
+          onEdit={() => setIsEditingDay(true)}
+          onDelete={() => onDelete(id)}
+        />
 
-      <DayCollapsibleContent
-        title={dayTitle}
-        activities={activities}
-        index={index}
-        onAddActivity={activityManager.handleAddActivity}
-        onEditActivity={handleEditActivity}
-        formatTime={formatTime}
-        dayId={id}
-        tripId={tripId}
-        imageUrl={imageUrl}
-        defaultImageUrl={defaultImageUrl}
-        reservations={reservations}
-      />
+        <DayCollapsibleContent
+          title={dayTitle}
+          activities={activities}
+          index={index}
+          onAddActivity={activityManager.handleAddActivity}
+          onEditActivity={handleEditActivity}
+          formatTime={formatTime}
+          dayId={id}
+          tripId={tripId}
+          imageUrl={imageUrl}
+          defaultImageUrl={defaultImageUrl}
+          reservations={reservations}
+        />
+      </Collapsible>
 
       <DayEditDialog
-        open={isEditing}
-        onOpenChange={setIsEditing}
+        open={isEditingDay}
+        onOpenChange={setIsEditingDay}
         initialTitle={title || ''}
         initialImageUrl={imageUrl || ''}
         onSave={handleDayUpdate}
       />
-    </Collapsible>
+
+      {editingActivityId && editingActivityData && (
+        <EditActivityDialog
+          activityId={editingActivityId}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingActivityId(null);
+              setEditingActivityData(null);
+            }
+          }}
+          activity={editingActivityData}
+          onActivityChange={(newData) => setEditingActivityData(newData)}
+          onSubmit={handleActivityEditSubmit}
+          eventId={editingActivityId}
+        />
+      )}
+    </>
   );
 };
 
