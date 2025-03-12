@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../dining/DiningList';
@@ -45,16 +44,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   eventId,
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
-  const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [newActivity, setNewActivity] = useState<ActivityFormData>({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD'
-  });
-  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
     title: '',
     description: '',
     start_time: '',
@@ -64,6 +54,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   });
 
   const handleEditActivityWrapper = (activity: DayActivity) => {
+    // Pass the valid activity id to the parent callback.
     onEditActivity(activity.id);
   };
 
@@ -87,14 +78,9 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
         setIsAddingActivity={setIsAddingActivity}
-        editingActivity={editingActivity}
-        setEditingActivity={setEditingActivity}
         newActivity={newActivity}
         setNewActivity={setNewActivity}
-        activityEdit={activityEdit}
-        setActivityEdit={setActivityEdit}
         onAddActivity={onAddActivity}
-        onEditActivity={onEditActivity}
         eventId={eventId}
       />
     </div>
