@@ -1,4 +1,3 @@
-
 import React from 'react';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
