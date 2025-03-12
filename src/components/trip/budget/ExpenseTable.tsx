@@ -1,29 +1,15 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ExpenseItem, formatCurrency} from './utils/budgetCalculations';
+import { ExpenseItem, formatCurrency } from './utils/budgetCalculations';
 import { format } from 'date-fns';
 import { Switch } from "@/components/ui/switch";
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ExpenseTableProps {
   expenses: ExpenseItem[];
   selectedCurrency: string;
   onUpdatePaidStatus: (id: string, isPaid: boolean, category: string) => void;
 }
-
-// Added currency conversion rate (replace with actual implementation)
-const conversionRates = {
-  USD: { EUR: 0.92, GBP: 0.79 },
-  EUR: { USD: 1.09, GBP: 0.86 },
-  GBP: { USD: 1.27, EUR: 1.16 },
-};
-
-const convertCurrency = (amount: number, from: string, to: string): number => {
-  if (from === to) return amount;
-  const rate = conversionRates[from]?.[to];
-  return rate ? amount * rate : amount; // Handle missing rates gracefully
-};
 
 const ExpenseTable: React.FC<ExpenseTableProps> = ({
   expenses,
@@ -58,7 +44,8 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
       </TableHeader>
       <TableBody>
         {Object.entries(expensesByCategory).map(([category, items]) => (
-          <React.Fragment key={category}>
+          // Replace React.Fragment with a div that supports extra props.
+          <div key={category} style={{ display: 'contents' }} data-lov-id={category}>
             {items.map((expense) => (
               <TableRow key={expense.id} className="group hover:bg-sand-50">
                 <TableCell>
@@ -76,7 +63,9 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Original: {formatCurrency(expense.cost || 0, expense.currency || 'USD')}</p>
+                          <p>
+                            Original: {formatCurrency(expense.cost || 0, expense.currency || 'USD')}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -87,7 +76,9 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                 <TableCell className="text-center">
                   <Switch
                     checked={expense.is_paid}
-                    onCheckedChange={(checked) => onUpdatePaidStatus(expense.id, checked, category)}
+                    onCheckedChange={(checked) =>
+                      onUpdatePaidStatus(expense.id, checked, category)
+                    }
                     className="data-[state=checked]:bg-green-500"
                   />
                 </TableCell>
@@ -102,7 +93,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
               </TableCell>
               <TableCell />
             </TableRow>
-          </React.Fragment>
+          </div>
         ))}
       </TableBody>
     </Table>
