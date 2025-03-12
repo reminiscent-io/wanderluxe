@@ -31,21 +31,10 @@ interface RestaurantReservationFormProps {
   tripId: string; // Added tripId prop
 }
 
-// Generate time options in 15-minute increments
-const generateTimeOptions = () => {
-  const options = [];
-  for (let hour = 0; hour < 24; hour++) {
-    for (let minute = 0; minute < 60; minute += 15) {
-      const formattedHour = hour.toString().padStart(2, '0');
-      const formattedMinute = minute.toString().padStart(2, '0');
-      options.push(`${formattedHour}:${formattedMinute}`);
-    }
-  }
-  return options;
-};
-
 // Format time for display (converts 24h to 12h format)
-const formatTimeOption = (time: string) => {
+const formatTimeOption = (time: string | null) => {
+  if (!time) return '';
+  
   const [hourStr, minuteStr] = time.split(':');
   const hour = parseInt(hourStr, 10);
   const minute = minuteStr;
@@ -112,25 +101,81 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           <FormField
             control={form.control}
             name="reservation_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reservation Time</FormLabel>
-                <FormControl>
-                  <select
-                    className="w-full h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
-                    value={field.value || ''}
-                    onChange={(e) => field.onChange(e.target.value || null)}
-                  >
-                    <option value="">Select a time</option>
-                    {generateTimeOptions().map((time) => (
-                      <option key={time} value={time}>
-                        {formatTimeOption(time)}
-                      </option>
-                    ))}
-                  </select>
-                </FormControl>
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Parse current time value if it exists
+              const [hour, minute, period] = React.useMemo(() => {
+                if (!field.value) return [12, 0, 'AM'];
+                
+                const [hourStr, minuteStr] = field.value.split(':');
+                const hourNum = parseInt(hourStr, 10);
+                const minuteNum = parseInt(minuteStr, 10);
+                
+                // Convert 24-hour format to 12-hour format
+                const period = hourNum >= 12 ? 'PM' : 'AM';
+                const hour12 = hourNum % 12 || 12;
+                
+                return [hour12, minuteNum, period];
+              }, [field.value]);
+              
+              // Handle time changes
+              const handleTimeChange = (newHour, newMinute, newPeriod) => {
+                // Convert back to 24-hour format for storage
+                let hour24 = newHour;
+                if (newPeriod === 'PM' && newHour < 12) {
+                  hour24 = newHour + 12;
+                } else if (newPeriod === 'AM' && newHour === 12) {
+                  hour24 = 0;
+                }
+                
+                const timeString = `${hour24.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`;
+                field.onChange(timeString);
+              };
+              
+              return (
+                <FormItem>
+                  <FormLabel>Reservation Time</FormLabel>
+                  <div className="flex items-center space-x-2">
+                    {/* Hour selection */}
+                    <select
+                      className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
+                      value={hour}
+                      onChange={(e) => handleTimeChange(parseInt(e.target.value, 10), minute, period)}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    <span>:</span>
+                    
+                    {/* Minute selection */}
+                    <select
+                      className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
+                      value={minute}
+                      onChange={(e) => handleTimeChange(hour, parseInt(e.target.value, 10), period)}
+                    >
+                      {[0, 15, 30, 45].map((m) => (
+                        <option key={m} value={m}>
+                          {m.toString().padStart(2, '0')}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    {/* AM/PM selection */}
+                    <select
+                      className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
+                      value={period}
+                      onChange={(e) => handleTimeChange(hour, minute, e.target.value)}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </FormItem>
+              );
+            }}
           />
 
           <FormField
