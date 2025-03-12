@@ -65,8 +65,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
   // Calculate totals using converted values
   const total = convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0);
-  const paidTotal = convertedExpenses.reduce((sum, item) => 
-    sum + (item.is_paid ? item.convertedCost : 0), 0);
+  const paidTotal = convertedExpenses.reduce((sum, item) => sum + (item.is_paid ? item.convertedCost : 0), 0);
 
   return (
     <div className="space-y-6">
@@ -85,7 +84,8 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div data-lov-id="budget-card"> {/* Added div to wrap the Card */}
+        {/* Use a real div (not a Fragment) to hold the data-lov-id attribute */}
+        <div data-lov-id="budget-card">
           {convertedExpenses.length > 0 && (
             <ExpenseTable
               expenses={convertedExpenses}
@@ -93,7 +93,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               onUpdatePaidStatus={handleUpdatePaidStatus}
             />
           )}
-        </div> {/* Closing div */}
+        </div>
       </div>
 
       <AddExpenseDialog
