@@ -13,7 +13,7 @@ interface DayCollapsibleContentProps {
   };
   index: number;
   onAddActivity: (activity: ActivityFormData) => Promise<void>;
-  onEditActivity?: (activityId: string) => void; // onEditActivity remains optional
+  onEditActivity?: (activityId: string) => void;
   formatTime: (time?: string) => string;
   dayId: string;
   tripId: string;
@@ -44,7 +44,7 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   hotelDetails,
   index,
   onAddActivity,
-  onEditActivity, // the prop function
+  onEditActivity,
   formatTime,
   dayId,
   tripId,
@@ -52,14 +52,13 @@ const DayCollapsibleContent: React.FC<DayCollapsibleContentProps> = ({
   defaultImageUrl,
   reservations
 }) => {
-  // Renamed local callback to avoid shadowing issues.
   const handleEditActivity = (activityId: string) => {
-    console.log('Activity edit requested in DayCollapsibleContent with ID:', activityId);
-    if (activityId && typeof onEditActivity === 'function') {
-      onEditActivity(activityId);
-    } else {
-      console.error('onEditActivity is not a function or activityId is missing in DayCollapsibleContent');
+    if (!activityId) {
+      console.error('Activity id is missing in DayCollapsibleContent');
+      return;
     }
+    console.log('Activity edit requested in DayCollapsibleContent with ID:', activityId);
+    onEditActivity?.(activityId);
   };
 
   return (
