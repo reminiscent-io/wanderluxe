@@ -27,6 +27,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     departureDate,
   });
 
+  // State to remember the last valid destination (title)
+  const [lastValidTitle, setLastValidTitle] = React.useState(title);
+
   React.useEffect(() => {
     // Update only if both dates are valid and non-empty
     if (
@@ -38,6 +41,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setLastValidDates({ arrivalDate, departureDate });
     }
   }, [arrivalDate, departureDate]);
+
+  React.useEffect(() => {
+    // Update the destination only if the title is non-empty
+    if (title && title.trim() !== '') {
+      setLastValidTitle(title);
+    }
+  }, [title]);
 
   // Compute formatted date range using the last valid dates
   const formattedDateRange = React.useMemo(() => {
@@ -75,7 +85,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         {imageUrl ? (
           <UnsplashImage
             src={imageUrl}
-            alt={title}
+            alt={lastValidTitle}
             className="h-full w-full object-cover"
             photographer={photographer}
             unsplashUsername={unsplashUsername}
@@ -93,7 +103,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             {isLoading ? (
               <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
             ) : (
-              title
+              lastValidTitle
             )}
           </h1>
 
