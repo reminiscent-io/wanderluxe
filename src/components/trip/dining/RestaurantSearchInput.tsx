@@ -33,38 +33,28 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   useEffect(() => {
     // Focus the input field when component mounts with a higher priority
     if (inputRef.current) {
-      // Use a shorter timeout and try multiple times to ensure focus
       const focusAttempt = () => {
         if (inputRef.current) {
           inputRef.current.focus();
         }
       };
-      
-      // Try immediately
       focusAttempt();
-      
-      // And also with timeouts to handle dialog transition
       const timers = [
         setTimeout(focusAttempt, 10),
         setTimeout(focusAttempt, 50),
         setTimeout(focusAttempt, 100)
       ];
-      
       return () => {
         timers.forEach(timer => clearTimeout(timer));
       };
     }
   }, []);
-  
+
   useEffect(() => {
     const loadAPI = async () => {
       try {
-        // Import the shared Google Maps loader
         const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
-        
-        // Load Google Maps API
         const isLoaded = await loadGoogleMapsAPI();
-        
         if (isLoaded) {
           setIsLoading(false);
           initializeAutocomplete();
@@ -98,7 +88,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
 
-      // Ensure the Autocomplete dropdown is positioned correctly
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
 
@@ -117,7 +106,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           formatted_phone_number: place.formatted_phone_number,
           website: place.website,
           rating: place.rating,
-          trip_id: tripId // Must match the database column name (trip_id)
+          trip_id: tripId
         };
 
         setInputValue(place.name);
@@ -155,14 +144,14 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
           className="w-full bg-white"
           disabled={isLoading}
-          autoComplete="off" // Prevent browser autocomplete interfering
+          autoComplete="off"
         />
       </div>
 
-      {/* This ensures the Google autocomplete dropdown renders properly */}
+      {/* Updated styles for Google autocomplete dropdown */}
       <style jsx global>{`
         .pac-container {
-          z-index: 10000;
+          z-index: 15000 !important;
           width: auto !important;
           position: absolute !important;
           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -186,7 +175,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           background-color: #f3f4f6;
         }
 
-        /* Make sure dropdown is visible and interactive */
+        /* Remove interfering pseudo-element by disabling pointer events on it */
         .pac-container:after {
           content: "";
           position: absolute;
@@ -194,7 +183,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           right: 0;
           bottom: 0;
           left: 0;
-          pointer-events: auto;
+          pointer-events: none;
           z-index: -1;
         }
       `}</style>
@@ -202,7 +191,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   );
 };
 
-// Added handleSaveReservation function to address database issues
 const handleSaveReservation = async (reservationData, tripId) => {
   try {
     if (!tripId) {
@@ -221,14 +209,13 @@ const handleSaveReservation = async (reservationData, tripId) => {
 
     if (result.error) {
       console.error("Error saving reservation:", result.error);
-      throw result.error; // Re-throw for proper error handling
+      throw result.error;
     }
 
-    // Handle success
     return result.data;
   } catch (error) {
     console.error("Error saving reservation:", error);
-    throw error; // Re-throw for proper error handling
+    throw error;
   }
 };
 
