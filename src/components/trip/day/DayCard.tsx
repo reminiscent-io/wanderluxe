@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DayEditDialog from './DayEditDialog';
-import EditActivityDialog from './EditActivityDialog';  // Updated import path
+import EditActivityDialog from './activities/EditActivityDialog'; // Updated import path
 
 interface DayCardProps {
   id: string;
