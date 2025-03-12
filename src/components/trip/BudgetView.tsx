@@ -8,6 +8,7 @@ import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
 import { convertCurrency } from './budget/utils/currencyConverter';
+import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
 
 interface AddExpenseData {
   description: string;
@@ -22,25 +23,41 @@ interface BudgetViewProps {
 }
 
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
-  const { selectedCurrency, handleCurrencyChange, rates, lastUpdated } = useCurrencyState();
-  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const { selectedCurrency, handleCurrencyChange, lastUpdated: currencyLastUpdated } = useCurrencyState();
   const { data: expenses } = useExpenses(tripId);
   const { addExpense, updateExpense } = useBudgetMutations(tripId);
+  // Use the hook that provides expenses and exchange rates
+  const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
 
-  // Convert expenses to selected currency
+  // Transform the exchangeRates array into an object: { fromCurrency: { toCurrency: rate, ... }, ... }
+  const ratesObject = useMemo(() => {
+    if (!exchangeRates || exchangeRates.length === 0) return {};
+    const obj: Record<string, Record<string, number>> = {};
+    exchangeRates.forEach((rate) => {
+      // Assuming each exchange rate row has: from_currency, to_currency, and rate
+      const from = rate.from_currency;
+      const to = rate.to_currency;
+      if (!obj[from]) {
+        obj[from] = {};
+      }
+      obj[from][to] = rate.rate;
+    });
+    return obj;
+  }, [exchangeRates]);
+
+  // Convert expenses to selected currency using the rates from the hook
   const convertedExpenses = useMemo(() => {
-    if (!expenses?.items) return [];
-
+    if (!expenses?.items || !Object.keys(ratesObject).length) return [];
     return expenses.items.map(expense => ({
       ...expense,
       convertedCost: convertCurrency(
         expense.cost || 0,
         expense.currency || 'USD',
         selectedCurrency,
-        rates
+        ratesObject
       )
     }));
-  }, [expenses?.items, selectedCurrency, rates]);
+  }, [expenses?.items, selectedCurrency, ratesObject]);
 
   const handleAddExpense = async (data: AddExpenseData) => {
     await addExpense.mutateAsync({
@@ -67,12 +84,14 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const total = convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0);
   const paidTotal = convertedExpenses.reduce((sum, item) => sum + (item.is_paid ? item.convertedCost : 0), 0);
 
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
+
   return (
     <div className="space-y-6">
       <BudgetHeader
         selectedCurrency={selectedCurrency}
         onCurrencyChange={handleCurrencyChange}
-        lastUpdated={lastUpdated}
+        lastUpdated={lastUpdated || currencyLastUpdated}
       />
 
       <BudgetSummary
@@ -84,7 +103,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        {/* Use a real div (not a Fragment) to hold the data-lov-id attribute */}
         <div data-lov-id="budget-card">
           {convertedExpenses.length > 0 && (
             <ExpenseTable
