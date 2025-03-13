@@ -10,7 +10,7 @@ const Footer = () => {
             to="/TermsOfService" 
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            TermsOfService
+            Terms Of Service
           </Link>
         </div>
       </div>
