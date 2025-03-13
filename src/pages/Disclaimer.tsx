@@ -1,93 +1,122 @@
-
 import React from 'react';
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
 
-const Disclaimer = () => {
+const TermsOfService: React.FC = () => {
   return (
     <main className="min-h-screen flex flex-col">
       <Navigation />
       <div className="container mx-auto px-4 md:px-6 py-12 flex-grow">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6 md:p-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">Disclaimer for WanderLuxe</h1>
+        <div className="max-w-4xl mx-auto p-6 md:p-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
+            Terms of Service for WanderLuxe
+          </h1>
           
-          <section className="space-y-10 prose prose-neutral max-w-none">
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">General Information</h2>
-              <p className="text-muted-foreground">
-                This website is owned and operated by Reminiscent Technologies LLC, a limited liability company registered in New York ("we," "us," or "our").
+          <section className="space-y-10">
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">1. Overview of Services</h2>
+              <p>
+                Welcome to <strong>WanderLuxe</strong> (the “Site”), owned and operated by <strong>Reminiscent Technologies LLC</strong> (“we,” “us,” or “our”). By accessing or using the Site, you agree to be bound by these Terms of Service (“Terms”). If you do not agree, please do not use the Site.
               </p>
-              <p className="text-muted-foreground mt-2">
-                The information provided on WanderLuxe (the "Website") is for general informational purposes only. All content on this Website is published in good faith and is not intended to be a substitute for professional advice.
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">Development Status</h2>
-              <p className="text-muted-foreground mb-4">
-                Please note that this Website is currently in development mode and is considered a side project for exploration purposes. As such:
-              </p>
-              <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-                <li>We do not guarantee the accuracy, completeness, or reliability of any information presented on this Website.</li>
-                <li>The functionality of the Website may change without notice and may contain errors or inaccuracies.</li>
-                <li>We are not responsible for any decisions made based on the information provided on this Website.</li>
-              </ul>
-            </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">Third-Party Services and Content</h2>
-              <p className="text-muted-foreground mb-4">
-                Our Website utilizes various third-party services and APIs, including but not limited to:
-              </p>
-              <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-                <li>Supabase for user authentication</li>
-                <li>Google API for hotel and restaurant information</li>
-                <li>Unsplash API for photographs</li>
-              </ul>
-              <p className="text-muted-foreground mt-4">
-                While we strive to ensure the integrity of data pulled from these sources, we cannot guarantee its accuracy or timeliness. Users should verify any critical information independently.
+              <p>
+                WanderLuxe provides travel-related services, content, and features including trip planning tools, travel itineraries, and integration with third‑party services. We use <strong>Supabase</strong> for authentication and data storage, and offer <strong>Google Sign‑In</strong> as an option. Additional third‑party APIs (such as weather data and location services) may also be used.
               </p>
             </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">Affiliate Links</h2>
-              <p className="text-muted-foreground">
-                In the future, this Website may contain affiliate links. We may earn a commission if you make a purchase through these links. However, this will not result in any additional cost to you.
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">2. Eligibility and Accounts</h2>
+              <p>
+                You must be at least the age of majority in your jurisdiction to use the Site. By creating an account, you represent that all information provided is accurate and complete. You are responsible for maintaining the confidentiality of your account credentials and for any activities that occur under your account.
+              </p>
+              <p>
+                If you sign in via Google, you agree to Google’s terms and authorize us to access your basic account information.
               </p>
             </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">Limitation of Liability</h2>
-              <p className="text-muted-foreground">
-                To the fullest extent permitted by applicable law, Reminiscent Technologies LLC and its officers, employees, agents, and affiliates shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising out of or relating to your use of, or inability to use, this Website.
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">3. Privacy and Data Collection</h2>
+              <p>
+                We collect only the data necessary to provide our services, including basic account details and standard analytics via Google Analytics. We do not sell your personal information. For more details, please review our <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
               </p>
             </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">No Warranties</h2>
-              <p className="text-muted-foreground">
-                This Website and all information, content, materials, products, and services included on or otherwise made available to you through this Website are provided on an "as is" and "as available" basis. We make no representations or warranties of any kind, express or implied, as to the operation of this Website or the information, content, materials, products, or services included on or otherwise made available to you through this Website.
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">4. Third‑Party APIs and Services</h2>
+              <p>
+                Our Site integrates with various third‑party services and APIs. Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services.
               </p>
             </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">Changes to This Disclaimer</h2>
-              <p className="text-muted-foreground">
-                We reserve the right to modify this disclaimer at any time without prior notice. Your continued use of the Website after any changes indicates your acceptance of the modified disclaimer.
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">5. User Conduct</h2>
+              <p>
+                You agree to use the Site in a lawful manner and not to engage in any activity that could harm the Site or other users. We reserve the right to suspend or terminate your account for violations of these Terms.
               </p>
             </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">Contact Information</h2>
-              <p className="text-muted-foreground">
-                If you have any questions about this disclaimer, please contact us at{' '}
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">6. Intellectual Property</h2>
+              <p>
+                All content on the Site, excluding user‑submitted content, is owned by or licensed to Reminiscent Technologies LLC. You may not reproduce, distribute, or create derivative works without our explicit permission.
+              </p>
+              <p>
+                “WanderLuxe” and associated logos are trademarks of Reminiscent Technologies LLC.
+              </p>
+            </div>
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">7. Disclaimer of Warranties</h2>
+              <p>
+                The Site and all its services are provided on an “AS IS” and “AS AVAILABLE” basis without warranties of any kind. We do not guarantee the accuracy, reliability, or availability of the Site.
+              </p>
+            </div>
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">8. Limitation of Liability</h2>
+              <p>
+                To the fullest extent permitted by law, Reminiscent Technologies LLC shall not be liable for any direct, indirect, incidental, or consequential damages arising out of your use of the Site. Our total liability is limited to any fees paid by you in the six months preceding the claim, if any.
+              </p>
+            </div>
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">9. Indemnification</h2>
+              <p>
+                You agree to indemnify and hold harmless Reminiscent Technologies LLC and its affiliates from any claims, damages, or expenses arising from your use of the Site or breach of these Terms.
+              </p>
+            </div>
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">10. Termination</h2>
+              <p>
+                We reserve the right to suspend or terminate your access to the Site at any time, without notice, for any reason including violation of these Terms. Upon termination, you must immediately cease using the Site.
+              </p>
+            </div>
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">11. Changes to These Terms</h2>
+              <p>
+                We may modify these Terms at any time. Changes will be posted on the Site, and your continued use of the Site after such changes constitutes your acceptance of the updated Terms.
+              </p>
+            </div>
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">12. Governing Law</h2>
+              <p>
+                These Terms shall be governed by and construed in accordance with the laws of [Your Jurisdiction], without regard to conflict of laws principles.
+              </p>
+            </div>
+            
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">13. Contact Us</h2>
+              <p>
+                If you have any questions or concerns regarding these Terms, please contact us at{' '}
                 <a href="mailto:info@wanderluxe.io" className="text-primary hover:underline">
                   info@wanderluxe.io
                 </a>.
               </p>
             </div>
-
-            <div className="text-sm text-muted-foreground pt-8 border-t text-center">
+            
+            <div className="pt-8 border-t text-center text-sm text-muted-foreground">
               Last updated: February 2025
             </div>
           </section>
@@ -98,4 +127,4 @@ const Disclaimer = () => {
   );
 };
 
-export default Disclaimer;
+export default TermsOfService;
