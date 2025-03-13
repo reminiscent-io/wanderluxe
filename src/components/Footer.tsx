@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,10 +7,10 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-center">
           <Link 
-            to="/disclaimer" 
+            to="/TermsOfService" 
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            Disclaimer
+            TermsOfService
           </Link>
         </div>
       </div>
