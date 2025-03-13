@@ -13,7 +13,7 @@ import NotFound from "./pages/NotFound";
 import MyTrips from "./pages/MyTrips";
 import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
-import Disclaimer from "./pages/Disclaimer";
+import TermsOfService from "./pages/Disclaimer";
 
 // Move queryClient inside the component to ensure proper React context
 const App = () => {
