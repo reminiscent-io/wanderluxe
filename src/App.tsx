@@ -37,7 +37,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/disclaimer" element={<Disclaimer />} />
+                <Route path="/TermsOfService" element={<TermsOfService />} />
                 <Route
                   path="/create-trip"
                   element={
