@@ -102,7 +102,7 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">12. Governing Law</h2>
               <p>
-                These Terms shall be governed by and construed in accordance with the laws of [Your Jurisdiction], without regard to conflict of laws principles.
+                These Terms shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law provisions. Any disputes arising under or in connection with these Terms shall be subject to the exclusive jurisdiction of the state and federal courts located in Albany County, New York.
               </p>
             </div>
             
