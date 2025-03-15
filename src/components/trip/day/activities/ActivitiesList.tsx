@@ -1,67 +1,65 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { DayActivity } from '@/types/trip';
 import ActivityItem from './ActivityItem';
 
 interface ActivitiesListProps {
-  activities: DayActivity[];
-  formatTime: (time?: string) => string;
+  activities: Array<{
+    id: string;
+    day_id: string;
+    title: string;
+    description?: string;
+    start_time?: string;
+    end_time?: string;
+    cost?: number;
+    currency?: string;
+    order_index: number;
+    created_at: string;
+  }>;
   onAddActivity: () => void;
-  onEditActivity: (activity: DayActivity) => void;
+  onEditActivity: (id: string) => void;
+  formatTime: (time?: string) => string;
 }
 
 const ActivitiesList: React.FC<ActivitiesListProps> = ({
   activities,
-  formatTime,
   onAddActivity,
   onEditActivity,
+  formatTime,
 }) => {
-  const sortedActivities = activities.sort((a, b) => {
-    const timeA = a.start_time || '';
-    const timeB = b.start_time || '';
-    if (timeA === '' && timeB === '') return 0;
-    if (timeA === '') return 1;
-    if (timeB === '') return -1;
-    return new Date(`2000-01-01T${timeA}`).getTime() - new Date(`2000-01-01T${timeB}`).getTime();
-  });
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h4 className="text-base font-semibold text-earth-700">Activities</h4>
+        <h4 className="text-sm font-medium text-earth-500">Activities</h4>
         <Button
-          onClick={onAddActivity}
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
+          onClick={onAddActivity}
+          className="text-earth-500"
         >
-          <Plus className="w-4 h-4 mr-1" />
+          <Plus className="h-4 w-4 mr-2" />
           Add Activity
         </Button>
       </div>
-
-      {activities.length > 0 ? (
-        <ul className="space-y-1">
-          {sortedActivities.map((activity) => (
+      <div className="space-y-2">
+        {activities.map((activity) => {
+          if (!activity.id) {
+            console.error("Activity id is missing for activity:", activity);
+            return null;
+          }
+          return (
             <ActivityItem
               key={activity.id}
               activity={activity}
-              formatTime={formatTime}
-              onEditClick={() => {
-                console.log('Activity clicked in list with ID:', activity.id);
-                if (typeof onEditActivity === 'function') {
-                  onEditActivity(activity.id);
-                } else {
-                  console.error('onEditActivity is not a function in ActivitiesList');
-                }
+              onEdit={() => {
+                console.log("Activity item clicked:", activity);
+                onEditActivity(activity.id);
               }}
+              formatTime={formatTime}
             />
-          ))}
-        </ul>
-      ) : (
-        <p className="text-gray-500 text-center py-4">No activities planned yet</p>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 };
