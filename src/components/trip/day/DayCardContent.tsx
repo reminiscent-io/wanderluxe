@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../dining/DiningList';
 import { DayActivity, ActivityFormData } from '@/types/trip';
@@ -54,7 +54,27 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     currency: 'USD'
   });
 
-  // The wrapper now passes the entire activity object
+  // Sort activities:
+  // - Those with a start_time come first, sorted by start_time (lexicographically).
+  // - Those without a start_time come later, sorted by created_at.
+  const sortedActivities = useMemo(() => {
+    return [...activities].sort((a, b) => {
+      const aTime = a.start_time && a.start_time.trim() !== '' ? a.start_time : null;
+      const bTime = b.start_time && b.start_time.trim() !== '' ? b.start_time : null;
+      if (aTime && bTime) {
+        return aTime.localeCompare(bTime);
+      } else if (aTime && !bTime) {
+        return -1;
+      } else if (!aTime && bTime) {
+        return 1;
+      } else {
+        // Both times missing: sort by creation time.
+        return a.created_at.localeCompare(b.created_at);
+      }
+    });
+  }, [activities]);
+
+  // Updated handler passes the full activity object.
   const handleEditActivityWrapper = (activity: DayActivity) => {
     if (!activity.id) {
       console.error("Activity id is missing in DayCardContent", activity);
@@ -68,7 +88,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   return (
     <div className="p-6 space-y-4">
       <ActivitiesList
-        activities={activities}
+        activities={sortedActivities}
         formatTime={formatTime}
         onAddActivity={() => setIsAddingActivity(true)}
         onEditActivity={handleEditActivityWrapper}
