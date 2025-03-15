@@ -83,7 +83,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="restaurant">Restaurant Name *</Label>
       <div className="relative">
         <Input
           ref={inputRef}
