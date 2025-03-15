@@ -60,9 +60,11 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Edit Day Details</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="day-title" className="text-right">
+
+        <div className="space-y-4 py-4">
+          {/* Title Row */}
+          <div className="space-y-1">
+            <Label htmlFor="day-title" className="text-sm font-medium text-gray-700">
               Title
             </Label>
             <Input
@@ -72,17 +74,22 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                 setTitle(e.target.value);
                 onTitleChange(e.target.value);
               }}
-              className="col-span-3"
               placeholder="Enter day title"
             />
           </div>
-          <div>
+
+          {/* Image Generation Section */}
+          <div className="space-y-1">
+            <Label className="text-sm font-medium text-gray-700">
+              Generate Image
+            </Label>
             <ImageGenerationSection
               onImageSelect={setSelectedImage}
               selectedImage={selectedImage}
             />
           </div>
         </div>
+
         <DialogFooter>
           <Button
             type="button"
