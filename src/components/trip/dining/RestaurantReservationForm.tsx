@@ -119,6 +119,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       form.setValue('phone_number', placeDetails.formatted_phone_number || '');
                       form.setValue('website', placeDetails.website || '');
                       form.setValue('place_id', placeDetails.place_id || '');
+                      form.setValue('rating', placeDetails.rating || 0);
                     }
                   }}
                 />
