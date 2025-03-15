@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import { Loader } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast"; // Added useToast import
+
 
 const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
@@ -25,21 +27,20 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
-  onSubmit: (data: FormValues & { tripId: string }) => void; // Added tripId to onSubmit data
+  onSubmit: (data: FormValues & { tripId: string }) => void; 
   defaultValues?: Partial<FormValues>;
   isSubmitting?: boolean;
-  tripId: string; // Added tripId prop
+  tripId: string; 
 }
 
-// Format time for display (converts 24h to 12h format)
 const formatTimeOption = (time: string | null) => {
   if (!time) return '';
-  
+
   const [hourStr, minuteStr] = time.split(':');
   const hour = parseInt(hourStr, 10);
   const minute = minuteStr;
   const period = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+  const displayHour = hour % 12 || 12; 
   return `${displayHour}:${minute} ${period}`;
 };
 
@@ -47,8 +48,29 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   onSubmit,
   defaultValues,
   isSubmitting = false,
-  tripId, // Using tripId prop
+  tripId,
 }) => {
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+  const toast = useToast(); // Initialize toast
+
+  useEffect(() => {
+    const loadAPI = async () => {
+      try {
+        const isLoaded = await loadGoogleMapsAPI(); // Assuming loadGoogleMapsAPI is defined elsewhere
+        if (isLoaded) {
+          setIsGoogleMapsLoaded(true);
+        } else {
+          toast.error('Failed to initialize restaurant search');
+        }
+      } catch (error) {
+        console.error('Error initializing Google Places:', error);
+        toast.error('Failed to initialize restaurant search');
+      }
+    };
+
+    loadAPI();
+  }, []);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -71,11 +93,10 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   };
 
   const handleSubmitForm = form.handleSubmit((data) => {
-    // Convert empty string to null for reservation_time
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      tripId: tripId // Adding tripId to the data
+      tripId: tripId 
     };
     onSubmit(processedData);
   });
@@ -88,11 +109,22 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           name="restaurant_name"
           render={({ field }) => (
             <FormItem>
-              <RestaurantSearchInput
-                onPlaceSelect={handlePlaceSelect}
-                defaultValue={field.value}
-                tripId={tripId} // Passing tripId to RestaurantSearchInput
-              />
+              {isGoogleMapsLoaded ? (
+                <RestaurantSearchInput
+                  value={field.value}
+                  onChange={(restaurantName, placeDetails) => {
+                    field.onChange(restaurantName);
+                    if (placeDetails) {
+                      form.setValue('address', placeDetails.formatted_address || '');
+                      form.setValue('phone_number', placeDetails.formatted_phone_number || '');
+                      form.setValue('website', placeDetails.website || '');
+                      form.setValue('place_id', placeDetails.place_id || '');
+                    }
+                  }}
+                />
+              ) : (
+                <div>Loading restaurant search...</div>
+              )}
             </FormItem>
           )}
         />
@@ -102,40 +134,35 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="reservation_time"
             render={({ field }) => {
-              // Parse current time value if it exists
               const [hour, minute, period] = React.useMemo(() => {
                 if (!field.value) return [12, 0, 'AM'];
-                
+
                 const [hourStr, minuteStr] = field.value.split(':');
                 const hourNum = parseInt(hourStr, 10);
                 const minuteNum = parseInt(minuteStr, 10);
-                
-                // Convert 24-hour format to 12-hour format
+
                 const period = hourNum >= 12 ? 'PM' : 'AM';
                 const hour12 = hourNum % 12 || 12;
-                
+
                 return [hour12, minuteNum, period];
               }, [field.value]);
-              
-              // Handle time changes
+
               const handleTimeChange = (newHour, newMinute, newPeriod) => {
-                // Convert back to 24-hour format for storage
                 let hour24 = newHour;
                 if (newPeriod === 'PM' && newHour < 12) {
                   hour24 = newHour + 12;
                 } else if (newPeriod === 'AM' && newHour === 12) {
                   hour24 = 0;
                 }
-                
+
                 const timeString = `${hour24.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`;
                 field.onChange(timeString);
               };
-              
+
               return (
                 <FormItem>
                   <FormLabel>Reservation Time</FormLabel>
                   <div className="flex items-center space-x-2">
-                    {/* Hour selection */}
                     <select
                       className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
                       value={hour}
@@ -147,10 +174,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                         </option>
                       ))}
                     </select>
-                    
+
                     <span>:</span>
-                    
-                    {/* Minute selection */}
+
                     <select
                       className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
                       value={minute}
@@ -162,8 +188,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                         </option>
                       ))}
                     </select>
-                    
-                    {/* AM/PM selection */}
+
                     <select
                       className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
                       value={period}
@@ -248,3 +273,10 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 };
 
 export default RestaurantReservationForm;
+
+// Placeholder for the Google Maps API loading function.  Replace with your actual implementation.
+const loadGoogleMapsAPI = async (): Promise<boolean> => {
+  // Your Google Maps API loading logic here.  Return true if successful, false otherwise.
+  // Example:  Check if the google maps script is already loaded or load it.
+  return true; // Replace with your actual API loading and success check.
+};
