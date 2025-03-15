@@ -41,24 +41,16 @@ const ActivitiesList: React.FC<ActivitiesListProps> = ({
           Add Activity
         </Button>
       </div>
+
       <div className="space-y-2">
-        {activities.map((activity) => {
-          if (!activity.id) {
-            console.error("Activity id is missing for activity:", activity);
-            return null;
-          }
-          return (
-            <ActivityItem
-              key={activity.id}
-              activity={activity}
-              onEdit={() => {
-                console.log("Activity item clicked:", activity);
-                onEditActivity(activity.id);
-              }}
-              formatTime={formatTime}
-            />
-          );
-        })}
+        {activities.map((activity) => (
+          <ActivityItem
+            key={activity.id}
+            activity={activity}
+            onEditClick={() => onEditActivity(activity.id)}
+            formatTime={formatTime}
+          />
+        ))}
       </div>
     </div>
   );
