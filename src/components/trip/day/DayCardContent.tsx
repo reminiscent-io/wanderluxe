@@ -3,6 +3,7 @@ import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../dining/DiningList';
 import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
+import { toast } from 'sonner';
 
 interface DayCardContentProps {
   index: number;
@@ -26,7 +27,7 @@ interface DayCardContentProps {
   title: string;
   activities: DayActivity[];
   onAddActivity: (activity: ActivityFormData) => Promise<void>;
-  onEditActivity: (id: string) => void;
+  onEditActivity: (activity: DayActivity) => void;
   formatTime: (time?: string) => string;
   dayId: string;
   eventId: string;
@@ -53,13 +54,15 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     currency: 'USD'
   });
 
+  // The wrapper now passes the entire activity object
   const handleEditActivityWrapper = (activity: DayActivity) => {
     if (!activity.id) {
       console.error("Activity id is missing in DayCardContent", activity);
+      toast.error("This activity hasn't been saved yet. Please save it before editing.");
       return;
     }
     console.log("DayCardContent: Editing activity with id", activity.id);
-    onEditActivity(activity.id);
+    onEditActivity(activity);
   };
 
   return (
