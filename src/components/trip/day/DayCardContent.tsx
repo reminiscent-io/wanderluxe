@@ -54,7 +54,11 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   });
 
   const handleEditActivityWrapper = (activity: DayActivity) => {
-    // Pass the valid activity id to the parent callback.
+    if (!activity.id) {
+      console.error("Activity id is missing in DayCardContent", activity);
+      return;
+    }
+    console.log("DayCardContent: Editing activity with id", activity.id);
     onEditActivity(activity.id);
   };
 
