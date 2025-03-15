@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DayEditDialog from './DayEditDialog';
-import EditActivityDialog from './activities/EditActivityDialog'; // Updated import path
+import EditActivityDialog from './activities/EditActivityDialog';
 
 interface DayCardProps {
   id: string;
@@ -36,7 +36,7 @@ const DayCard: React.FC<DayCardProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditingDay, setIsEditingDay] = useState(false);
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
   const [editingActivityData, setEditingActivityData] = useState<ActivityFormData | null>(null);
   const queryClient = useQueryClient();
 
@@ -70,15 +70,15 @@ const DayCard: React.FC<DayCardProps> = ({
     activities 
   });
 
-  // When an activity is clicked for editing, find its data and open the edit dialog.
-  const handleEditActivity = (activityId: string) => {
-    console.log("DayCard handleEditActivity called with ID:", activityId);
-    const activity = activities.find(act => act.id === activityId);
-    if (!activity) {
-      console.error("Activity not found for ID:", activityId);
+  // Update the edit handler to accept the full activity object.
+  const handleEditActivity = (activity: DayActivity) => {
+    console.log("DayCard handleEditActivity called with activity:", activity);
+    if (!activity.id) {
+      console.error("Activity id is missing for the selected activity", activity);
+      toast.error("This activity hasn't been saved yet. Please save it before editing.");
       return;
     }
-    setEditingActivityId(activityId);
+    setEditingActivity(activity);
     setEditingActivityData({
       title: activity.title,
       description: activity.description || '',
@@ -91,11 +91,11 @@ const DayCard: React.FC<DayCardProps> = ({
 
   // Handle submission from the EditActivityDialog.
   const handleActivityEditSubmit = async (updatedActivity: ActivityFormData) => {
-    if (editingActivityId) {
+    if (editingActivity && editingActivity.id) {
       try {
-        await activityManager.handleEditActivity(editingActivityId, updatedActivity);
+        await activityManager.handleEditActivity(editingActivity.id, updatedActivity);
         toast.success('Activity updated successfully');
-        setEditingActivityId(null);
+        setEditingActivity(null);
         setEditingActivityData(null);
         queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
       } catch (error) {
@@ -145,6 +145,7 @@ const DayCard: React.FC<DayCardProps> = ({
         <DayCollapsibleContent
           title={dayTitle}
           activities={activities}
+          hotelDetails={undefined}
           index={index}
           onAddActivity={activityManager.handleAddActivity}
           onEditActivity={handleEditActivity}
@@ -165,19 +166,19 @@ const DayCard: React.FC<DayCardProps> = ({
         onSave={handleDayUpdate}
       />
 
-      {editingActivityId && editingActivityData && (
+      {editingActivity && editingActivityData && (
         <EditActivityDialog
-          activityId={editingActivityId}
+          activityId={editingActivity.id}
           onOpenChange={(open) => {
             if (!open) {
-              setEditingActivityId(null);
+              setEditingActivity(null);
               setEditingActivityData(null);
             }
           }}
           activity={editingActivityData}
           onActivityChange={(newData) => setEditingActivityData(newData)}
           onSubmit={handleActivityEditSubmit}
-          eventId={editingActivityId}
+          eventId={editingActivity.id}
         />
       )}
     </>
