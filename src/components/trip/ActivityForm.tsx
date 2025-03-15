@@ -12,34 +12,39 @@ interface ActivityFormProps {
   eventId: string;
 }
 
-const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-const ampmOptions = ['AM', 'PM'];
+/** We include a null option in each array to represent "no selection" (dash). */
+const hours = [null, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const minutes = [null, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+const ampmOptions = [null, 'AM', 'PM'];
 
-/** 
- * Converts a 12-hour time selection to a "HH:MM" 24-hour string.
+/**
+ * Converts a 12-hour time selection to "HH:MM" (24-hour) or "" if any part is null.
  */
-function to24HourString(h: number, m: number, ampm: string): string {
+function to24HourString(h: number | null, m: number | null, ampm: string | null): string {
+  if (h === null || m === null || ampm === null) {
+    return ""; // user selected "–" in at least one dropdown => no time
+  }
+
   let hour24 = h;
   if (ampm === 'PM' && h !== 12) hour24 += 12;
   if (ampm === 'AM' && h === 12) hour24 = 0;
+
   const hh = String(hour24).padStart(2, '0');
   const mm = String(m).padStart(2, '0');
   return `${hh}:${mm}`;
 }
 
-/** 
- * Parses a 24-hour "HH:MM" string into [hour, minute, ampm].
- * Returns defaults if the string is empty or invalid.
+/**
+ * Parses a "HH:MM" string (24-hour) into local states [hour, minute, ampm].
+ * Returns null for each if the string is empty or invalid => "–" in the dropdowns.
  */
 function parse24HourString(timeStr?: string) {
   if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) {
-    // default to 12:00 AM
-    return { hour: 12, minute: 0, ampm: 'AM' };
+    return { hour: null, minute: null, ampm: null };
   }
   const [hh, mm] = timeStr.split(':').map(Number);
   let hour = hh;
-  let ampm = 'AM';
+  let ampm: string = 'AM';
 
   if (hh === 0) {
     hour = 12;
@@ -66,14 +71,14 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Local states for start time
-  const [startHour, setStartHour] = useState<number>(12);
-  const [startMinute, setStartMinute] = useState<number>(0);
-  const [startAmPm, setStartAmPm] = useState<string>('AM');
+  const [startHour, setStartHour] = useState<number | null>(null);
+  const [startMinute, setStartMinute] = useState<number | null>(null);
+  const [startAmPm, setStartAmPm] = useState<string | null>(null);
 
   // Local states for end time
-  const [endHour, setEndHour] = useState<number>(12);
-  const [endMinute, setEndMinute] = useState<number>(0);
-  const [endAmPm, setEndAmPm] = useState<string>('AM');
+  const [endHour, setEndHour] = useState<number | null>(null);
+  const [endMinute, setEndMinute] = useState<number | null>(null);
+  const [endAmPm, setEndAmPm] = useState<string | null>(null);
 
   // On mount or when activity changes, parse the start/end time into local states.
   useEffect(() => {
@@ -106,8 +111,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       newErrors.title = 'Title is required';
     }
 
+    // If both start_time and end_time are not empty strings, check ordering
     if (activity.start_time && activity.end_time) {
-      // Compare "HH:MM" strings directly might be tricky, but it works if they're zero-padded.
       if (activity.start_time > activity.end_time) {
         newErrors.time = 'End time must be after start time';
       }
@@ -189,35 +194,52 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700">Start Time</label>
           <div className="flex items-center gap-2 mt-1">
+            {/* Hour */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={startHour}
-              onChange={(e) => setStartHour(Number(e.target.value))}
+              value={startHour !== null ? startHour : ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? null : Number(e.target.value);
+                setStartHour(val);
+              }}
             >
-              {hours.map(h => (
+              <option value="">–</option>
+              {hours.slice(1).map(h => (
                 <option key={h} value={h}>{h}</option>
               ))}
             </select>
+
             <span>:</span>
+
+            {/* Minute */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={startMinute}
-              onChange={(e) => setStartMinute(Number(e.target.value))}
+              value={startMinute !== null ? startMinute : ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? null : Number(e.target.value);
+                setStartMinute(val);
+              }}
             >
-              {minutes.map(m => (
+              <option value="">–</option>
+              {minutes.slice(1).map(m => (
                 <option key={m} value={m}>
                   {m.toString().padStart(2, '0')}
                 </option>
               ))}
             </select>
+
+            {/* AM/PM */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={startAmPm}
-              onChange={(e) => setStartAmPm(e.target.value)}
+              value={startAmPm !== null ? startAmPm : ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? null : e.target.value;
+                setStartAmPm(val);
+              }}
             >
-              {ampmOptions.map(ampm => (
-                <option key={ampm} value={ampm}>{ampm}</option>
-              ))}
+              <option value="">–</option>
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
             </select>
           </div>
         </div>
@@ -226,35 +248,52 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700">End Time</label>
           <div className="flex items-center gap-2 mt-1">
+            {/* Hour */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={endHour}
-              onChange={(e) => setEndHour(Number(e.target.value))}
+              value={endHour !== null ? endHour : ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? null : Number(e.target.value);
+                setEndHour(val);
+              }}
             >
-              {hours.map(h => (
+              <option value="">–</option>
+              {hours.slice(1).map(h => (
                 <option key={h} value={h}>{h}</option>
               ))}
             </select>
+
             <span>:</span>
+
+            {/* Minute */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={endMinute}
-              onChange={(e) => setEndMinute(Number(e.target.value))}
+              value={endMinute !== null ? endMinute : ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? null : Number(e.target.value);
+                setEndMinute(val);
+              }}
             >
-              {minutes.map(m => (
+              <option value="">–</option>
+              {minutes.slice(1).map(m => (
                 <option key={m} value={m}>
                   {m.toString().padStart(2, '0')}
                 </option>
               ))}
             </select>
+
+            {/* AM/PM */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={endAmPm}
-              onChange={(e) => setEndAmPm(e.target.value)}
+              value={endAmPm !== null ? endAmPm : ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? null : e.target.value;
+                setEndAmPm(val);
+              }}
             >
-              {ampmOptions.map(ampm => (
-                <option key={ampm} value={ampm}>{ampm}</option>
-              ))}
+              <option value="">–</option>
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
             </select>
           </div>
         </div>
