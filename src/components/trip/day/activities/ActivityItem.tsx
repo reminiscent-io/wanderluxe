@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DayActivity } from '@/types/trip';
 
@@ -20,14 +19,11 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
         e.preventDefault();
         e.stopPropagation();
         console.log("Activity item clicked:", activity);
-        try {
-          if (typeof onEditClick === 'function') {
-            onEditClick();
-          } else {
-            console.error('onEditClick is not a function', { onEditClick });
-          }
-        } catch (error) {
-          console.error('Error in activity click handler:', error);
+        if (typeof onEditClick === 'function') {
+          // Pass the activity so that the caller can extract the ID if needed.
+          onEditClick(activity);
+        } else {
+          console.error('onEditClick is not a function', { onEditClick });
         }
       }}
     >
