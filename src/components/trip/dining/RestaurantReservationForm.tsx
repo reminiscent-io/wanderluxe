@@ -109,23 +109,19 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           name="restaurant_name"
           render={({ field }) => (
             <FormItem>
-              {isGoogleMapsLoaded ? (
-                <RestaurantSearchInput
-                  value={field.value}
-                  onChange={(restaurantName, placeDetails) => {
-                    field.onChange(restaurantName);
-                    if (placeDetails) {
-                      form.setValue('address', placeDetails.formatted_address || '');
-                      form.setValue('phone_number', placeDetails.formatted_phone_number || '');
-                      form.setValue('website', placeDetails.website || '');
-                      form.setValue('place_id', placeDetails.place_id || '');
-                      form.setValue('rating', placeDetails.rating || 0);
-                    }
-                  }}
-                />
-              ) : (
-                <div>Loading restaurant search...</div>
-              )}
+              <RestaurantSearchInput
+                value={field.value}
+                onChange={(name, details) => {
+                  field.onChange(name);
+                  if (details) {
+                    form.setValue('address', details.formatted_address || '');
+                    form.setValue('phone_number', details.formatted_phone_number || '');
+                    form.setValue('website', details.website || '');
+                    form.setValue('place_id', details.place_id || '');
+                    form.setValue('rating', details.rating || 0);
+                  }
+                }}
+              />
             </FormItem>
           )}
         />
