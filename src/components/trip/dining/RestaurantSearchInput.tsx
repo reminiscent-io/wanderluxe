@@ -220,29 +220,3 @@ const handleSaveReservation = async (reservationData, tripId) => {
 };
 
 export default RestaurantSearchInput;
-import React from 'react';
-import { Label } from "@/components/ui/label";
-import GooglePlacesAutocomplete from '../accommodation/GooglePlacesAutocomplete';
-
-interface RestaurantSearchInputProps {
-  value: string;
-  onChange: (restaurantName: string, placeDetails?: google.maps.places.PlaceResult) => void;
-}
-
-const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
-  value,
-  onChange
-}) => {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor="restaurant">Restaurant Name *</Label>
-      <GooglePlacesAutocomplete
-        value={value}
-        onChange={onChange}
-        placeholder="Start typing to search for restaurants..."
-      />
-    </div>
-  );
-};
-
-export default RestaurantSearchInput;
