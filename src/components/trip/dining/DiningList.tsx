@@ -104,12 +104,12 @@ const DiningList: React.FC<DiningListProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h4 className="text-base font-semibold text-earth-700">Dining</h4>
+        <h4 className="text-sm font-medium text-earth-500">Dining</h4>
         <Button
           onClick={() => setIsDialogOpen(true)}
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
+          className="text-earth-500"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Reservation
