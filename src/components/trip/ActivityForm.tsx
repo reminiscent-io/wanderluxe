@@ -12,31 +12,34 @@ interface ActivityFormProps {
   eventId: string;
 }
 
-/** We include a null option in each array to represent "no selection" (dash). */
+// Include a null option for "no selection" (displayed as a dash)
 const hours = [null, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const minutes = [null, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 const ampmOptions = [null, 'AM', 'PM'];
 
 /**
- * Converts a 12-hour time selection to "HH:MM" (24-hour) or "" if any part is null.
+ * Converts a 12-hour selection to a 24-hour "HH:MM" string.
+ * If any part is null, returns an empty string.
  */
-function to24HourString(h: number | null, m: number | null, ampm: string | null): string {
+function to24HourString(
+  h: number | null,
+  m: number | null,
+  ampm: string | null
+): string {
   if (h === null || m === null || ampm === null) {
-    return ""; // user selected "–" in at least one dropdown => no time
+    return ""; // indicates no time selected
   }
-
   let hour24 = h;
   if (ampm === 'PM' && h !== 12) hour24 += 12;
   if (ampm === 'AM' && h === 12) hour24 = 0;
-
   const hh = String(hour24).padStart(2, '0');
   const mm = String(m).padStart(2, '0');
   return `${hh}:${mm}`;
 }
 
 /**
- * Parses a "HH:MM" string (24-hour) into local states [hour, minute, ampm].
- * Returns null for each if the string is empty or invalid => "–" in the dropdowns.
+ * Parses a "HH:MM" 24-hour string into { hour, minute, ampm }.
+ * Returns nulls if the string is empty or invalid.
  */
 function parse24HourString(timeStr?: string) {
   if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) {
@@ -44,8 +47,7 @@ function parse24HourString(timeStr?: string) {
   }
   const [hh, mm] = timeStr.split(':').map(Number);
   let hour = hh;
-  let ampm: string = 'AM';
-
+  let ampm = 'AM';
   if (hh === 0) {
     hour = 12;
     ampm = 'AM';
@@ -70,17 +72,18 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Local states for start time
-  const [startHour, setStartHour] = useState<number | null>(null);
-  const [startMinute, setStartMinute] = useState<number | null>(null);
-  const [startAmPm, setStartAmPm] = useState<string | null>(null);
+  // Initialize local states using parsed values from activity times
+  const initialStart = parse24HourString(activity.start_time);
+  const [startHour, setStartHour] = useState<number | null>(initialStart.hour);
+  const [startMinute, setStartMinute] = useState<number | null>(initialStart.minute);
+  const [startAmPm, setStartAmPm] = useState<string | null>(initialStart.ampm);
 
-  // Local states for end time
-  const [endHour, setEndHour] = useState<number | null>(null);
-  const [endMinute, setEndMinute] = useState<number | null>(null);
-  const [endAmPm, setEndAmPm] = useState<string | null>(null);
+  const initialEnd = parse24HourString(activity.end_time);
+  const [endHour, setEndHour] = useState<number | null>(initialEnd.hour);
+  const [endMinute, setEndMinute] = useState<number | null>(initialEnd.minute);
+  const [endAmPm, setEndAmPm] = useState<string | null>(initialEnd.ampm);
 
-  // On mount or when activity changes, parse the start/end time into local states.
+  // Update local states when activity times change
   useEffect(() => {
     const start = parse24HourString(activity.start_time);
     setStartHour(start.hour);
@@ -93,12 +96,13 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     setEndAmPm(end.ampm);
   }, [activity.start_time, activity.end_time]);
 
-  // Whenever local time states change, update the activity
+  // Update activity start_time whenever local start time state changes
   useEffect(() => {
     const newStart = to24HourString(startHour, startMinute, startAmPm);
     onActivityChange({ ...activity, start_time: newStart });
   }, [startHour, startMinute, startAmPm]);
 
+  // Update activity end_time whenever local end time state changes
   useEffect(() => {
     const newEnd = to24HourString(endHour, endMinute, endAmPm);
     onActivityChange({ ...activity, end_time: newEnd });
@@ -111,7 +115,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       newErrors.title = 'Title is required';
     }
 
-    // If both start_time and end_time are not empty strings, check ordering
     if (activity.start_time && activity.end_time) {
       if (activity.start_time > activity.end_time) {
         newErrors.time = 'End time must be after start time';
@@ -166,9 +169,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="text"
           value={activity.title}
           onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
-          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-gray-300 p-2 focus:border-earth-500 focus:ring-earth-500 ${
-            errors.title ? 'border-red-500' : ''
-          }`}
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-gray-300 p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.title ? 'border-red-500' : ''}`}
           required
         />
         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
