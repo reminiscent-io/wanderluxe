@@ -71,7 +71,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         onEditActivity={handleEditActivityWrapper}
       />
 
-      <div className="mt-8">
+      <div className="mt-8 space-y-4">
         <DiningList
           reservations={reservations || []}
           formatTime={formatTime}
