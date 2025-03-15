@@ -77,7 +77,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             />
           </div>
           <div>
-            <Label className="mb-2 block">Select an Image</Label>
             <ImageGenerationSection
               onImageSelect={setSelectedImage}
               selectedImage={selectedImage}
