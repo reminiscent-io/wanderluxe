@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import { Loader } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast"; // Added useToast import
+import { useToast } from "@/components/ui/use-toast";
 
-
+// Define your form schema
 const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
   address: z.string().optional(),
@@ -20,6 +20,7 @@ const formSchema = z.object({
   number_of_people: z.number().min(1).optional(),
   notes: z.string().optional(),
   cost: z.number().optional(),
+  currency: z.string().optional(),
   place_id: z.string().optional(),
   rating: z.number().optional(),
 });
@@ -35,7 +36,6 @@ interface RestaurantReservationFormProps {
 
 const formatTimeOption = (time: string | null) => {
   if (!time) return '';
-
   const [hourStr, minuteStr] = time.split(':');
   const hour = parseInt(hourStr, 10);
   const minute = minuteStr;
@@ -51,12 +51,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   tripId,
 }) => {
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
-  const toast = useToast(); // Initialize toast
+  const toast = useToast();
 
   useEffect(() => {
     const loadAPI = async () => {
       try {
-        const isLoaded = await loadGoogleMapsAPI(); // Assuming loadGoogleMapsAPI is defined elsewhere
+        const isLoaded = await loadGoogleMapsAPI(); // Replace with your actual API loader
         if (isLoaded) {
           setIsGoogleMapsLoaded(true);
         } else {
@@ -79,6 +79,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       number_of_people: undefined,
       notes: '',
       cost: undefined,
+      currency: '', // default empty string for optional currency
       ...defaultValues,
     },
   });
@@ -101,14 +102,29 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     onSubmit(processedData);
   });
 
+  // Format cost on blur: remove non-digit characters, then format as a number with commas.
+  const handleCostBlur = (value: string) => {
+    const numericValue = Number(value.replace(/,/g, ''));
+    if (!isNaN(numericValue)) {
+      const formatted = new Intl.NumberFormat('en-US').format(numericValue);
+      form.setValue('cost', numericValue);
+      return formatted;
+    }
+    return value;
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitForm} className="space-y-4">
+        {/* Restaurant Name with red asterisk */}
         <FormField
           control={form.control}
           name="restaurant_name"
           render={({ field }) => (
             <FormItem>
+              <FormLabel>
+                Restaurant Name <span className="text-red-500">*</span>
+              </FormLabel>
               <RestaurantSearchInput
                 value={field.value}
                 onChange={(name, details) => {
@@ -126,99 +142,98 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="reservation_time"
-            render={({ field }) => {
-              const [hour, minute, period] = React.useMemo(() => {
-                if (!field.value) return [12, 0, 'AM'];
+        {/* Reservation Time with red asterisk */}
+        <FormField
+          control={form.control}
+          name="reservation_time"
+          render={({ field }) => {
+            const [hour, minute, period] = React.useMemo(() => {
+              if (!field.value) return [12, 0, 'AM'];
+              const [hourStr, minuteStr] = field.value.split(':');
+              const hourNum = parseInt(hourStr, 10);
+              const minuteNum = parseInt(minuteStr, 10);
+              const period = hourNum >= 12 ? 'PM' : 'AM';
+              const hour12 = hourNum % 12 || 12;
+              return [hour12, minuteNum, period];
+            }, [field.value]);
 
-                const [hourStr, minuteStr] = field.value.split(':');
-                const hourNum = parseInt(hourStr, 10);
-                const minuteNum = parseInt(minuteStr, 10);
+            const handleTimeChange = (newHour: number, newMinute: number, newPeriod: string) => {
+              let hour24 = newHour;
+              if (newPeriod === 'PM' && newHour < 12) {
+                hour24 = newHour + 12;
+              } else if (newPeriod === 'AM' && newHour === 12) {
+                hour24 = 0;
+              }
+              const timeString = `${hour24.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`;
+              field.onChange(timeString);
+            };
 
-                const period = hourNum >= 12 ? 'PM' : 'AM';
-                const hour12 = hourNum % 12 || 12;
-
-                return [hour12, minuteNum, period];
-              }, [field.value]);
-
-              const handleTimeChange = (newHour, newMinute, newPeriod) => {
-                let hour24 = newHour;
-                if (newPeriod === 'PM' && newHour < 12) {
-                  hour24 = newHour + 12;
-                } else if (newPeriod === 'AM' && newHour === 12) {
-                  hour24 = 0;
-                }
-
-                const timeString = `${hour24.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`;
-                field.onChange(timeString);
-              };
-
-              return (
-                <FormItem>
-                  <FormLabel>Reservation Time</FormLabel>
-                  <div className="flex items-center space-x-2">
-                    <select
-                      className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
-                      value={hour}
-                      onChange={(e) => handleTimeChange(parseInt(e.target.value, 10), minute, period)}
-                    >
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                        <option key={h} value={h}>
-                          {h}
-                        </option>
-                      ))}
-                    </select>
-
-                    <span>:</span>
-
-                    <select
-                      className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
-                      value={minute}
-                      onChange={(e) => handleTimeChange(hour, parseInt(e.target.value, 10), period)}
-                    >
-                      {[0, 15, 30, 45].map((m) => (
-                        <option key={m} value={m}>
-                          {m.toString().padStart(2, '0')}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
-                      value={period}
-                      onChange={(e) => handleTimeChange(hour, minute, e.target.value)}
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </FormItem>
-              );
-            }}
-          />
-
-          <FormField
-            control={form.control}
-            name="number_of_people"
-            render={({ field }) => (
+            return (
               <FormItem>
-                <FormLabel>Number of People</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                    className="bg-white"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
+                <FormLabel>
+                  Reservation Time <span className="text-red-500">*</span>
+                </FormLabel>
+                <div className="flex items-center space-x-2">
+                  <select
+                    className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
+                    value={hour}
+                    onChange={(e) => handleTimeChange(parseInt(e.target.value, 10), minute, period)}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
 
+                  <span>:</span>
+
+                  <select
+                    className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
+                    value={minute}
+                    onChange={(e) => handleTimeChange(hour, parseInt(e.target.value, 10), period)}
+                  >
+                    {[0, 15, 30, 45].map((m) => (
+                      <option key={m} value={m}>
+                        {m.toString().padStart(2, '0')}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
+                    value={period}
+                    onChange={(e) => handleTimeChange(hour, minute, e.target.value)}
+                  >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+              </FormItem>
+            );
+          }}
+        />
+
+        {/* Number of People */}
+        <FormField
+          control={form.control}
+          name="number_of_people"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Number of People</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  className="bg-white"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {/* Notes (smaller textarea) */}
         <FormField
           control={form.control}
           name="notes"
@@ -226,12 +241,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} className="bg-white" />
+                <Textarea {...field} className="bg-white" rows={1} />
               </FormControl>
             </FormItem>
           )}
         />
 
+        {/* Cost Input as text (formatted on blur) */}
         <FormField
           control={form.control}
           name="cost"
@@ -240,11 +256,38 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <FormLabel>Cost</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
+                  type="text"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={(e) => {
+                    const formatted = handleCostBlur(e.target.value);
+                    // We call field.onChange with the numeric value if possible
+                    field.onChange(Number(formatted.replace(/,/g, '')));
+                  }}
                   className="bg-white"
                 />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {/* Currency Field (optional) */}
+        <FormField
+          control={form.control}
+          name="currency"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Currency</FormLabel>
+              <FormControl>
+                <select
+                  {...field}
+                  className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+                >
+                  <option value="">Select currency (optional)</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                </select>
               </FormControl>
             </FormItem>
           )}
@@ -270,10 +313,3 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 };
 
 export default RestaurantReservationForm;
-
-// Placeholder for the Google Maps API loading function.  Replace with your actual implementation.
-const loadGoogleMapsAPI = async (): Promise<boolean> => {
-  // Your Google Maps API loading logic here.  Return true if successful, false otherwise.
-  // Example:  Check if the google maps script is already loaded or load it.
-  return true; // Replace with your actual API loading and success check.
-};
