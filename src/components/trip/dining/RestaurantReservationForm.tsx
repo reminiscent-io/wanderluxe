@@ -34,16 +34,6 @@ interface RestaurantReservationFormProps {
   tripId: string; 
 }
 
-const formatTimeOption = (time: string | null) => {
-  if (!time) return '';
-  const [hourStr, minuteStr] = time.split(':');
-  const hour = parseInt(hourStr, 10);
-  const minute = minuteStr;
-  const period = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12; 
-  return `${displayHour}:${minute} ${period}`;
-};
-
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   onSubmit,
   defaultValues,
@@ -53,10 +43,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
   const toast = useToast();
 
+  // (Replace this with your actual Google Maps loader)
   useEffect(() => {
     const loadAPI = async () => {
       try {
-        const isLoaded = await loadGoogleMapsAPI(); // Replace with your actual API loader
+        const isLoaded = await loadGoogleMapsAPI(); 
         if (isLoaded) {
           setIsGoogleMapsLoaded(true);
         } else {
@@ -67,7 +58,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         toast.error('Failed to initialize restaurant search');
       }
     };
-
     loadAPI();
   }, []);
 
@@ -79,30 +69,30 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       number_of_people: undefined,
       notes: '',
       cost: undefined,
-      currency: '', // default empty string for optional currency
+      currency: '', // default empty string
       ...defaultValues,
     },
   });
 
-  const handlePlaceSelect = (place: any) => {
-    form.setValue('restaurant_name', place.name);
-    form.setValue('address', place.formatted_address);
-    form.setValue('phone_number', place.formatted_phone_number);
-    form.setValue('website', place.website);
-    form.setValue('place_id', place.place_id);
-    form.setValue('rating', place.rating);
+  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+    form.setValue('restaurant_name', place.name || '');
+    form.setValue('address', place.formatted_address || '');
+    form.setValue('phone_number', place.formatted_phone_number || '');
+    form.setValue('website', place.website || '');
+    form.setValue('place_id', place.place_id || '');
+    form.setValue('rating', place.rating || 0);
   };
 
   const handleSubmitForm = form.handleSubmit((data) => {
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      tripId: tripId 
+      trip_id: tripId 
     };
     onSubmit(processedData);
   });
 
-  // Format cost on blur: remove non-digit characters, then format as a number with commas.
+  // Format cost on blur: remove commas, parse as number, then store numeric cost in form state
   const handleCostBlur = (value: string) => {
     const numericValue = Number(value.replace(/,/g, ''));
     if (!isNaN(numericValue)) {
@@ -116,6 +106,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitForm} className="space-y-4">
+        
         {/* Restaurant Name with red asterisk */}
         <FormField
           control={form.control}
@@ -233,7 +224,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           )}
         />
 
-        {/* Notes (smaller textarea) */}
+        {/* Notes (1 line) */}
         <FormField
           control={form.control}
           name="notes"
@@ -247,51 +238,54 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           )}
         />
 
-        {/* Cost Input as text (formatted on blur) */}
-        <FormField
-          control={form.control}
-          name="cost"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Cost</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  onBlur={(e) => {
-                    const formatted = handleCostBlur(e.target.value);
-                    // We call field.onChange with the numeric value if possible
-                    field.onChange(Number(formatted.replace(/,/g, '')));
-                  }}
-                  className="bg-white"
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        {/* Cost & Currency in one row */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Cost Input */}
+          <FormField
+            control={form.control}
+            name="cost"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cost</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={(e) => {
+                      const formatted = handleCostBlur(e.target.value);
+                      // We call field.onChange with the numeric value if possible
+                      field.onChange(Number(formatted.replace(/,/g, '')));
+                    }}
+                    className="bg-white"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-        {/* Currency Field (optional) */}
-        <FormField
-          control={form.control}
-          name="currency"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Currency</FormLabel>
-              <FormControl>
-                <select
-                  {...field}
-                  className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
-                >
-                  <option value="">Select currency (optional)</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                </select>
-              </FormControl>
-            </FormItem>
-          )}
-        />
+          {/* Currency */}
+          <FormField
+            control={form.control}
+            name="currency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Currency</FormLabel>
+                <FormControl>
+                  <select
+                    {...field}
+                    className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+                  >
+                    <option value="">Select currency</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                  </select>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button 
           type="submit" 
