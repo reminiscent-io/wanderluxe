@@ -29,6 +29,7 @@ const ActivitiesList: React.FC<ActivitiesListProps> = ({
 }) => {
   return (
     <div className="space-y-4">
+      {/* Header Row */}
       <div className="flex justify-between items-center">
         <h4 className="text-sm font-medium text-earth-500">Activities</h4>
         <Button
@@ -42,12 +43,13 @@ const ActivitiesList: React.FC<ActivitiesListProps> = ({
         </Button>
       </div>
 
-      <div className="space-y-2">
+      {/* Activity Cards */}
+      <div className="space-y-2 list-none">
         {activities.map((activity) => (
           <ActivityItem
             key={activity.id}
             activity={activity}
-            onEditClick={() => onEditActivity(activity.id)}
+            onEditClick={(clickedActivity) => onEditActivity(clickedActivity.id)}
             formatTime={formatTime}
           />
         ))}
