@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader'; // Added import
 
 // Define your form schema
 const formSchema = z.object({
@@ -43,7 +44,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
   const toast = useToast();
 
-  // Replace this with your actual Google Maps API loader
+  // Load Google Maps API
   useEffect(() => {
     const loadAPI = async () => {
       try {
@@ -51,11 +52,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         if (isLoaded) {
           setIsGoogleMapsLoaded(true);
         } else {
-          toast.error('Failed to initialize restaurant search');
+          toast('Failed to initialize restaurant search', { variant: 'error' });
         }
       } catch (error) {
         console.error('Error initializing Google Places:', error);
-        toast.error('Failed to initialize restaurant search');
+        toast('Failed to initialize restaurant search', { variant: 'error' });
       }
     };
     loadAPI();
@@ -69,7 +70,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       number_of_people: undefined,
       notes: '',
       cost: undefined,
-      currency: '', // default empty string
+      currency: '',
       ...defaultValues,
     },
   });
@@ -92,7 +93,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     onSubmit(processedData);
   });
 
-  // Format cost on blur: remove commas, parse as number, format as a string with commas, and update form state.
+  // Format cost on blur
   const handleCostBlur = (value: string) => {
     const numericValue = Number(value.replace(/,/g, ''));
     if (!isNaN(numericValue)) {
@@ -223,7 +224,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           )}
         />
 
-        {/* Notes (1 line) */}
+        {/* Notes */}
         <FormField
           control={form.control}
           name="notes"
@@ -237,9 +238,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           )}
         />
 
-        {/* Cost & Currency in one row */}
+        {/* Cost & Currency */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Cost Input */}
           <FormField
             control={form.control}
             name="cost"
@@ -253,7 +253,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     onChange={(e) => field.onChange(e.target.value)}
                     onBlur={(e) => {
                       const formatted = handleCostBlur(e.target.value);
-                      // We call field.onChange with the numeric value if possible
                       field.onChange(Number(formatted.replace(/,/g, '')));
                     }}
                     className="bg-white"
@@ -263,7 +262,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             )}
           />
 
-          {/* Currency Field */}
           <FormField
             control={form.control}
             name="currency"
