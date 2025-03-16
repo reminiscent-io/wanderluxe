@@ -43,7 +43,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
   const toast = useToast();
 
-  // (Replace this with your actual Google Maps loader)
+  // Replace this with your actual Google Maps API loader
   useEffect(() => {
     const loadAPI = async () => {
       try {
@@ -87,12 +87,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: tripId 
+      trip_id: tripId // Use the correct key for your database schema
     };
     onSubmit(processedData);
   });
 
-  // Format cost on blur: remove commas, parse as number, then store numeric cost in form state
+  // Format cost on blur: remove commas, parse as number, format as a string with commas, and update form state.
   const handleCostBlur = (value: string) => {
     const numericValue = Number(value.replace(/,/g, ''));
     if (!isNaN(numericValue)) {
@@ -106,7 +106,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitForm} className="space-y-4">
-        
         {/* Restaurant Name with red asterisk */}
         <FormField
           control={form.control}
@@ -264,7 +263,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             )}
           />
 
-          {/* Currency */}
+          {/* Currency Field */}
           <FormField
             control={form.control}
             name="currency"
