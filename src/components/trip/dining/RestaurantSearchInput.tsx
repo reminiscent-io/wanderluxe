@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +67,8 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         if (!autoCompleteRef.current) return;
 
         const place = autoCompleteRef.current.getPlace();
+        console.log('Selected restaurant:', place);
+
         if (!place?.name) {
           toast.error('Please select a valid restaurant from the dropdown');
           return;
@@ -83,6 +84,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
   return (
     <div className="space-y-2">
+      <Label htmlFor="restaurant">Restaurant Name *</Label>
       <div className="relative">
         <Input
           ref={inputRef}
@@ -98,12 +100,13 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
       </div>
       <style jsx global>{`
         .pac-container {
-          z-index: 9999;
+          z-index: 9999 !important;
           border-radius: 0.5rem;
           border: 1px solid #e2e8f0;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
           margin-top: 4px;
           background-color: white;
+          pointer-events: auto;
         }
         .pac-item {
           padding: 8px 12px;
