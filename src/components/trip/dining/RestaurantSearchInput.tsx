@@ -36,11 +36,11 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           initializeAutocomplete();
         } else {
           setIsLoading(false);
-          toast.error('Failed to initialize restaurant search');
+          toast('Failed to initialize restaurant search', { variant: 'error' });
         }
       } catch (error) {
         console.error('Error initializing Google Places:', error);
-        toast.error('Failed to initialize restaurant search');
+        toast('Failed to initialize restaurant search', { variant: 'error' });
         setIsLoading(false);
       }
     };
@@ -70,7 +70,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         console.log('Selected restaurant:', place);
 
         if (!place?.name) {
-          toast.error('Please select a valid restaurant from the dropdown');
+          toast('Please select a valid restaurant from the dropdown', { variant: 'error' });
           return;
         }
 
@@ -78,7 +78,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
       });
     } catch (error) {
       console.error('Error initializing autocomplete:', error);
-      toast.error('Failed to initialize restaurant search');
+      toast('Failed to initialize restaurant search', { variant: 'error' });
     }
   };
 
