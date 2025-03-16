@@ -29,9 +29,9 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   useEffect(() => {
     const loadAPI = async () => {
       try {
-        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
-        const isLoaded = await loadGoogleMapsAPI();
-        if (isLoaded) {
+        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader'); // Updated import name.
+        const loaded = await loadGoogleMapsAPI();
+        if (loaded) {
           setIsLoading(false);
           initializeAutocomplete();
         } else {
