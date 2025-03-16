@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RestaurantReservationForm from './RestaurantReservationForm';
@@ -22,10 +21,13 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby="restaurant-reservation-description">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
+        <p id="restaurant-reservation-description" className="sr-only">
+          Please fill out the restaurant reservation form.
+        </p>
         <RestaurantReservationForm
           onSubmit={onSubmit}
           isSubmitting={isSubmitting}
