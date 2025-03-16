@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader'; // Added import
+import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader'; // Updated import
 
 // Define your form schema
 const formSchema = z.object({
@@ -44,12 +44,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
   const toast = useToast();
 
-  // Load Google Maps API
+  // Load Google Maps API and check its return value.
   useEffect(() => {
     const loadAPI = async () => {
       try {
-        const isLoaded = await loadGoogleMapsAPI(); 
-        if (isLoaded) {
+        const loaded = await loadGoogleMapsAPI();
+        if (loaded) {
           setIsGoogleMapsLoaded(true);
         } else {
           toast('Failed to initialize restaurant search', { variant: 'error' });
@@ -88,12 +88,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: tripId // Use the correct key for your database schema
+      trip_id: tripId
     };
     onSubmit(processedData);
   });
 
-  // Format cost on blur
+  // Format cost on blur.
   const handleCostBlur = (value: string) => {
     const numericValue = Number(value.replace(/,/g, ''));
     if (!isNaN(numericValue)) {
@@ -107,7 +107,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitForm} className="space-y-4">
-        {/* Restaurant Name with red asterisk */}
+        {/* Restaurant Name */}
         <FormField
           control={form.control}
           name="restaurant_name"
@@ -133,7 +133,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           )}
         />
 
-        {/* Reservation Time with red asterisk */}
+        {/* Reservation Time */}
         <FormField
           control={form.control}
           name="reservation_time"
