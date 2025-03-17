@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
@@ -17,8 +18,6 @@ interface DateRangeDisplayProps {
   formattedDateRange: string | null;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({
-
 const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
   isLoading,
   formattedDateRange
@@ -34,7 +33,7 @@ const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
   return <p className="text-lg md:text-xl font-medium drop-shadow-md opacity-75 text-center">Dates not set</p>;
 };
 
-
+const HeroSection: React.FC<HeroSectionProps> = ({
   title,
   imageUrl,
   arrivalDate,
@@ -43,33 +42,29 @@ const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
   unsplashUsername,
   isLoading = false,
 }) => {
-  // State to remember the last valid dates
+  // Keep track of the last valid title for smooth transitions
+  const [lastValidTitle, setLastValidTitle] = React.useState(title);
   const [lastValidDates, setLastValidDates] = React.useState({
     arrivalDate,
-    departureDate,
+    departureDate
   });
 
-  // State to remember the last valid destination (title)
-  const [lastValidTitle, setLastValidTitle] = React.useState(title);
-
+  // Update last valid title when a new valid title is received
   React.useEffect(() => {
-    // Update only if both dates are valid and non-empty
-    if (
-      arrivalDate &&
-      departureDate &&
-      arrivalDate.trim() !== '' &&
-      departureDate.trim() !== ''
-    ) {
-      setLastValidDates({ arrivalDate, departureDate });
-    }
-  }, [arrivalDate, departureDate]);
-
-  React.useEffect(() => {
-    // Update the destination only if the title is non-empty
     if (title && title.trim() !== '') {
       setLastValidTitle(title);
     }
   }, [title]);
+
+  // Update last valid dates when new valid dates are received
+  React.useEffect(() => {
+    if (arrivalDate && departureDate) {
+      setLastValidDates({
+        arrivalDate,
+        departureDate
+      });
+    }
+  }, [arrivalDate, departureDate]);
 
   // Compute formatted date range using the last valid dates
   const formattedDateRange = React.useMemo(() => {
