@@ -1,14 +1,9 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import HotelSearchInput from './HotelSearchInput';
-import DateInputs from './form/DateInputs';
-import CostInputs from './form/CostInputs';
-import HotelOptionalDetails from './form/HotelOptionalDetails';
-import HotelContactInfo from './form/HotelContactInfo';
-import { AccommodationFormData } from '@/services/accommodation/types';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
+import { AccommodationFormData } from '@/services/accommodation/types';
+
 
 interface AccommodationFormProps {
   onSubmit: (data: AccommodationFormData) => Promise<void>;
@@ -51,16 +46,16 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   useEffect(() => {
     setFormData(initialFormState);
   }, [initialFormState]);
-  
+
   useEffect(() => {
     const loadAPI = async () => {
       try {
         // Import the shared Google Maps loader
         const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
-        
+
         // Load Google Maps API
         const isLoaded = await loadGoogleMapsAPI();
-        
+
         if (isLoaded) {
           setIsGoogleMapsLoaded(true);
         } else {
@@ -75,15 +70,15 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     loadAPI();
   }, []);
 
-  const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.Place) => {
+  const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => {
     setFormData(prev => ({
       ...prev,
       hotel: hotelName,
-      hotel_address: placeDetails?.formattedAddress || prev.hotel_address,
-      hotel_phone: placeDetails?.globalLocationNumber || prev.hotel_phone,
-      hotel_place_id: placeDetails?.id || prev.hotel_place_id,
-      hotel_website: placeDetails?.websiteURI || prev.hotel_website,
-      hotel_url: placeDetails?.websiteURI || prev.hotel_url
+      hotel_address: placeDetails?.formatted_address || prev.hotel_address,
+      hotel_phone: placeDetails?.international_phone_number || prev.hotel_phone,
+      hotel_place_id: placeDetails?.place_id || prev.hotel_place_id,
+      hotel_website: placeDetails?.website || prev.hotel_website,
+      hotel_url: placeDetails?.website || prev.hotel_url
     }));
   };
 
@@ -97,7 +92,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (initialData && !formData.stay_id) {
       console.error('Missing stay_id for update operation');
       toast.error('Missing accommodation ID');
