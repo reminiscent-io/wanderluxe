@@ -10,7 +10,7 @@ const Footer = () => {
             to="/terms" 
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            Terms Of Service
+            Terms of Service
           </Link>
           <Link 
             to="/privacy" 
