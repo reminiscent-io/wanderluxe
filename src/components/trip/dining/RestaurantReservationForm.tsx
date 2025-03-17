@@ -75,12 +75,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     },
   });
 
-  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
-    form.setValue('restaurant_name', place.name || '');
-    form.setValue('address', place.formatted_address || '');
-    form.setValue('phone_number', place.formatted_phone_number || '');
-    form.setValue('website', place.website || '');
-    form.setValue('place_id', place.place_id || '');
+  const handlePlaceSelect = (place: google.maps.places.Place) => {
+    form.setValue('restaurant_name', place.displayName?.text || '');
+    form.setValue('address', place.formattedAddress || '');
+    form.setValue('phone_number', place.globalLocationNumber || '');
+    form.setValue('website', place.websiteURI || '');
+    form.setValue('place_id', place.id || '');
     form.setValue('rating', place.rating || 0);
   };
 

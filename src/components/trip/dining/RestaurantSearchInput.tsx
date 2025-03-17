@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 interface RestaurantDetails {
@@ -15,7 +14,7 @@ interface RestaurantDetails {
 
 interface RestaurantSearchInputProps {
   value: string;
-  onChange: (restaurantName: string, placeDetails?: google.maps.places.PlaceResult) => void;
+  onChange: (restaurantName: string, placeDetails?: google.maps.places.Place) => void;
   autoFocus?: boolean;
 }
 
@@ -24,24 +23,24 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   onChange
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const placesWidgetRef = useRef<google.maps.places.PlacesWidget | null>(null);
 
   useEffect(() => {
     const loadAPI = async () => {
       try {
-        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader'); // Updated import name.
+        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
         const loaded = await loadGoogleMapsAPI();
         if (loaded) {
           setIsLoading(false);
           initializeAutocomplete();
         } else {
           setIsLoading(false);
-          toast('Failed to initialize restaurant search', { variant: 'error' });
+          toast.error('Failed to initialize restaurant search');
         }
       } catch (error) {
         console.error('Error initializing Google Places:', error);
-        toast('Failed to initialize restaurant search', { variant: 'error' });
+        toast.error('Failed to initialize restaurant search');
         setIsLoading(false);
       }
     };
@@ -53,34 +52,32 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
     if (!inputRef.current || !window.google) return;
 
     try {
-      if (autoCompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autoCompleteRef.current);
+      // Clean up previous instance if it exists
+      if (placesWidgetRef.current) {
+        placesWidgetRef.current.dispose();
       }
 
-      const options: google.maps.places.AutocompleteOptions = {
-        fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
-        types: ['establishment'],
-        strictBounds: false
+      const placeOptions: google.maps.places.PlaceOptions = {
+        fields: ['name', 'id', 'formattedAddress', 'globalLocationNumber', 'websiteURI', 'rating'],
+        types: ['restaurant']
       };
 
-      autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
+      const widget = new window.google.maps.places.PlacesWidget(inputRef.current, placeOptions);
+      placesWidgetRef.current = widget;
 
-      autoCompleteRef.current.addListener('place_changed', () => {
-        if (!autoCompleteRef.current) return;
-
-        const place = autoCompleteRef.current.getPlace();
+      widget.addListener('placeSelect', (place: google.maps.places.Place) => {
         console.log('Selected restaurant:', place);
 
-        if (!place?.name) {
-          toast('Please select a valid restaurant from the dropdown', { variant: 'error' });
+        if (!place?.displayName) {
+          toast.error('Please select a valid restaurant from the dropdown');
           return;
         }
 
-        onChange(place.name, place);
+        onChange(place.displayName.text, place);
       });
     } catch (error) {
       console.error('Error initializing autocomplete:', error);
-      toast('Failed to initialize restaurant search', { variant: 'error' });
+      toast.error('Failed to initialize restaurant search');
     }
   };
 
@@ -100,28 +97,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           autoFocus={true}
         />
       </div>
-      <style>{`
-        .pac-container {
-          z-index: 9999 !important;
-          border-radius: 0.5rem;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          margin-top: 4px;
-          background-color: white;
-          pointer-events: auto;
-        }
-        .pac-item {
-          padding: 8px 12px;
-          cursor: pointer;
-          font-family: inherit;
-        }
-        .pac-item:hover {
-          background-color: #f7fafc;
-        }
-        .pac-item-selected {
-          background-color: #edf2f7;
-        }
-      `}</style>
     </div>
   );
 };
