@@ -50,37 +50,39 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   }, []);
 
   const initializeAutocomplete = () => {
-    if (!inputRef.current || !window.google) return;
+    if (!inputRef.current || !window.google?.maps?.places) {
+      console.error('Google Maps Places API not loaded');
+      return;
+    }
 
     try {
+      // Clear existing listeners
       if (autoCompleteRef.current) {
         google.maps.event.clearInstanceListeners(autoCompleteRef.current);
       }
 
       const options: google.maps.places.AutocompleteOptions = {
         fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
-        types: ['establishment'],
+        types: ['restaurant', 'food'],
         strictBounds: false
       };
 
-      autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
+      // Create new autocomplete instance
+      const autocomplete = new google.maps.places.Autocomplete(inputRef.current, options);
+      autoCompleteRef.current = autocomplete;
 
-      autoCompleteRef.current.addListener('place_changed', () => {
-        if (!autoCompleteRef.current) return;
-
-        const place = autoCompleteRef.current.getPlace();
-        console.log('Selected restaurant:', place);
-
+      // Add place_changed listener
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
         if (!place?.name) {
-          toast('Please select a valid restaurant from the dropdown', { variant: 'error' });
+          toast.error('Please select a valid restaurant from the dropdown');
           return;
         }
-
         onChange(place.name, place);
       });
     } catch (error) {
       console.error('Error initializing autocomplete:', error);
-      toast('Failed to initialize restaurant search', { variant: 'error' });
+      toast.error('Failed to initialize restaurant search');
     }
   };
 
