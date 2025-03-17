@@ -80,8 +80,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   console.log('HeroSection rendering with:', { formattedDateRange });
 
   return (
-    <div className="relative w-full">
-      <div className="relative aspect-[21/13.5] w-full overflow-hidden rounded-lg">
+    <div className="relative w-full mb-0">
+      <div className="relative aspect-[21/13.5] w-full overflow-hidden rounded-lg rounded-b-none">
         {imageUrl ? (
           <UnsplashImage
             src={imageUrl}
