@@ -26,7 +26,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingDates, setIsLoadingDates] = useState(false);
+  const [setIsLoadingDates] = useState(false);
 
   // State for trip dates; initialized from props if available.
   const [tripDates, setTripDates] = useState<{
