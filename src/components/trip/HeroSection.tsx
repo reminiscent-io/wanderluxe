@@ -12,12 +12,12 @@ interface HeroSectionProps {
   isLoading?: boolean;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({
-
 interface DateRangeDisplayProps {
   isLoading: boolean;
   formattedDateRange: string | null;
 }
+
+const HeroSection: React.FC<HeroSectionProps> = ({
 
 const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
   isLoading,
