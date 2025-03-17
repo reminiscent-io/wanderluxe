@@ -65,46 +65,27 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize local states using parsed values from activity times
-  const [startHour, setStartHour] = useState<number | null>(() => {
-    const start = parse24HourString(activity.start_time);
-    return start.hour;
-  });
-  const [startMinute, setStartMinute] = useState<number | null>(() => {
-    const start = parse24HourString(activity.start_time);
-    return start.minute;
-  });
-  const [startAmPm, setStartAmPm] = useState<string | null>(() => {
-    const start = parse24HourString(activity.start_time);
-    return start.ampm;
-  });
+  const initialStart = parse24HourString(activity.start_time);
+  const [startHour, setStartHour] = useState<number | null>(initialStart.hour);
+  const [startMinute, setStartMinute] = useState<number | null>(initialStart.minute);
+  const [startAmPm, setStartAmPm] = useState<string | null>(initialStart.ampm);
 
-  const [endHour, setEndHour] = useState<number | null>(() => {
-    const end = parse24HourString(activity.end_time);
-    return end.hour;
-  });
-  const [endMinute, setEndMinute] = useState<number | null>(() => {
-    const end = parse24HourString(activity.end_time);
-    return end.minute;
-  });
-  const [endAmPm, setEndAmPm] = useState<string | null>(() => {
-    const end = parse24HourString(activity.end_time);
-    return end.ampm;
-  });
+  const initialEnd = parse24HourString(activity.end_time);
+  const [endHour, setEndHour] = useState<number | null>(initialEnd.hour);
+  const [endMinute, setEndMinute] = useState<number | null>(initialEnd.minute);
+  const [endAmPm, setEndAmPm] = useState<string | null>(initialEnd.ampm);
 
+  // Update local states when activity times change
   useEffect(() => {
-    if (activity.start_time) {
-      const start = parse24HourString(activity.start_time);
-      setStartHour(start.hour);
-      setStartMinute(start.minute);
-      setStartAmPm(start.ampm);
-    }
+    const start = parse24HourString(activity.start_time);
+    setStartHour(start.hour);
+    setStartMinute(start.minute);
+    setStartAmPm(start.ampm);
 
-    if (activity.end_time) {
-      const end = parse24HourString(activity.end_time);
-      setEndHour(end.hour);
-      setEndMinute(end.minute);
-      setEndAmPm(end.ampm);
-    }
+    const end = parse24HourString(activity.end_time);
+    setEndHour(end.hour);
+    setEndMinute(end.minute);
+    setEndAmPm(end.ampm);
   }, [activity.start_time, activity.end_time]);
 
   // Update activity start_time whenever local start time state changes
