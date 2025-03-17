@@ -73,7 +73,7 @@ const DayCard: React.FC<DayCardProps> = ({
   // Update the edit handler to accept the full activity object.
   const handleEditActivity = (activity: DayActivity) => {
     console.log("DayCard handleEditActivity called with activity:", activity);
-    if (!activity.id) {
+    if (!activity?.id) {
       console.error("Activity id is missing for the selected activity", activity);
       toast.error("This activity hasn't been saved yet. Please save it before editing.");
       return;
