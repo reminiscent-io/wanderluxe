@@ -46,15 +46,10 @@ function parse24HourString(timeStr?: string) {
     return { hour: null, minute: null, ampm: null };
   }
   const [hh, mm] = timeStr.split(':').map(Number);
-  let hour = hh;
-  let ampm = 'AM';
-  if (hh >= 12) {
-    hour = hh === 12 ? 12 : hh - 12;
-    ampm = 'PM';
-  } else {
-    hour = hh === 0 ? 12 : hh;
-    ampm = 'AM';
-  }
+  const hour = hh >= 12 
+    ? (hh === 12 ? 12 : hh - 12) 
+    : (hh === 0 ? 12 : hh);
+  const ampm = hh >= 12 ? 'PM' : 'AM';
   return { hour, minute: mm, ampm };
 }
 
