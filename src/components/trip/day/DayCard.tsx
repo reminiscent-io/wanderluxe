@@ -34,7 +34,7 @@ const DayCard: React.FC<DayCardProps> = ({
   onDelete,
   defaultImageUrl
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [isEditingDay, setIsEditingDay] = useState(false);
   const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
   const [editingActivityData, setEditingActivityData] = useState<ActivityFormData | null>(null);
