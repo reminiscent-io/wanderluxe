@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,7 @@ const NavigationAuth = () => {
             onClick={() => navigate("/create-trip")}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="rounded-full px-4 py-2 text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
+            className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
           >
             Create Trip
           </motion.button>
@@ -54,7 +53,7 @@ const NavigationAuth = () => {
           onClick={() => navigate("/auth")}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="rounded-full px-4 py-2 text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
+          className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
         >
           Sign In
         </motion.button>

@@ -12,7 +12,7 @@ const Navigation = () => {
       transition={{ duration: 0.6 }}
       className="fixed left-0 right-0 top-0 z-50 bg-white/80 backdrop-blur-lg"
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4 lg:px-8">
         <NavigationLogo />
         <NavigationLinks />
         <NavigationAuth />
