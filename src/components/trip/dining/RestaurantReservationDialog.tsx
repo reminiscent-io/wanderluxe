@@ -22,8 +22,8 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <div aria-describedby="restaurant-reservation-description">
+      <DialogContent className="sm:max-w-[425px]" aria-describedby="restaurant-reservation-description">
+        <div>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
