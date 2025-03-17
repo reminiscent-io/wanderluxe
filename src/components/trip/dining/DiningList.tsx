@@ -135,6 +135,7 @@ const DiningList: React.FC<DiningListProps> = ({
         isSubmitting={isSubmitting}
         editingReservation={editingReservation ? reservations.find(r => r.id === editingReservation) : undefined}
         title={editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
+        tripId={dayId}
       />
 
       <DeleteReservationDialog
