@@ -34,7 +34,7 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">3. Privacy and Data Collection</h2>
               <p>
-                We collect only the data necessary to provide our services, including basic account details and standard analytics via Google Analytics. We do not sell your personal information. For more details, please review our <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
+                We collect only the data necessary to provide our services, including basic account details and standard analytics via Google Analytics. We do not sell your personal information. For more details, please review our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
               </p>
             </div>
             <div className="pb-6 border-b">
