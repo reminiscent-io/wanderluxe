@@ -41,7 +41,7 @@ const TripDetails = () => {
     <div className="min-h-screen flex flex-col">
       <Navigation />
       
-      <div className="w-full" style={{ height: '250px' }}>
+      <div className="w-full">
         <HeroSection 
           title={displayData.destination}
           imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
@@ -51,7 +51,7 @@ const TripDetails = () => {
         />
       </div>
 
-      <div className="relative flex-1 bg-sand-50/95 w-full z-10">
+      <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
         <div className="container mx-auto px-4 py-8">
           <TripTabs tripId={tripId} displayData={displayData} />
         </div>
