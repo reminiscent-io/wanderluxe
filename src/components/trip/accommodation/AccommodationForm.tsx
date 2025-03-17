@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { AccommodationFormData } from '@/services/accommodation/types';
+import GooglePlacesAutocomplete from './GooglePlacesAutocomplete'; // Fixed import
 
 
 interface AccommodationFormProps {
@@ -112,7 +113,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-6">
-      <HotelSearchInput
+      <GooglePlacesAutocomplete // Replaced HotelSearchInput
         value={formData.hotel}
         onChange={handleHotelSelect}
       />
