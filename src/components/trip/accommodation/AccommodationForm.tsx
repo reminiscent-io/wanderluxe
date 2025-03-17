@@ -8,6 +8,7 @@ import { DialogDescription } from "@/components/ui/dialog";
 import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 import DateInputs from './form/DateInputs';
+import CostInputs from './form/CostInputs';
 
 
 interface AccommodationFormProps {
