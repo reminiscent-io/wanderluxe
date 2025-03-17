@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, isValid, parseISO } from 'date-fns';
 
@@ -14,19 +13,19 @@ const TripDateDisplay: React.FC<TripDateDisplayProps> = ({ label, date }) => {
     try {
       // Ensure we're working with a string
       const dateStr = String(dateString).trim();
-      
+
       // Skip empty strings
       if (!dateStr) return 'Not set';
-      
+
       // Try to parse the date
       const parsedDate = parseISO(dateStr);
-      
+
       // Validate the date
       if (!isValid(parsedDate)) {
         console.warn('Invalid date format:', dateStr);
         return 'Invalid date';
       }
-      
+
       try {
         // Format the date
         return format(parsedDate, 'MMM dd, yyyy');

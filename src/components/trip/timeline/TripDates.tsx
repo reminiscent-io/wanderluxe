@@ -104,7 +104,7 @@ const TripDates: React.FC<TripDatesProps> = ({
   };
 
   return (
-    <div className="mb-8 flex items-center justify-between bg-white/80 backdrop-blur-sm p-4 rounded-lg shadow-sm">
+    <div className="mb-8 flex items-center justify-between bg-white/80 backdrop-blur-sm p-4 rounded-lg shadow-sm text-base sm:text-lg">
       <div className="flex items-center gap-4">
         <CalendarDays className="h-5 w-5 text-earth-600" />
         <div className="grid grid-cols-2 gap-8">
