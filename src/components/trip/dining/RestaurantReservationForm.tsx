@@ -88,7 +88,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: tripId
+      tripId: tripId // Ensure tripId is passed with correct property name
     };
     onSubmit(processedData);
   });

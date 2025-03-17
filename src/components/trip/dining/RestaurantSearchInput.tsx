@@ -97,7 +97,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           autoComplete="off"
         />
       </div>
-      <style jsx global>{`
+      <style jsx>{`
         .pac-container {
           z-index: 9999 !important;
           border-radius: 0.5rem;
