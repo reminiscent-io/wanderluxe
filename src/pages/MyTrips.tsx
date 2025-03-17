@@ -97,12 +97,9 @@ const MyTrips = () => {
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
       <div className="container mx-auto px-4 pt-16 pb-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">My Trips</h1>
-          <Button onClick={() => navigate('/create-trip')} variant="outline" className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Create Trip
-          </Button>
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-light tracking-tight text-earth-900">My Trips</h1>
+          <div className="mt-2 h-1 w-24 bg-earth-500/20 mx-auto rounded-full"></div>
         </div>
 
         <Input
