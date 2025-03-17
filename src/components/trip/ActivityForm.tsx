@@ -48,15 +48,12 @@ function parse24HourString(timeStr?: string) {
   const [hh, mm] = timeStr.split(':').map(Number);
   let hour = hh;
   let ampm = 'AM';
-  if (hh === 0) {
-    hour = 12;
+  if (hh >= 12) {
+    hour = hh === 12 ? 12 : hh - 12;
+    ampm = 'PM';
+  } else {
+    hour = hh === 0 ? 12 : hh;
     ampm = 'AM';
-  } else if (hh === 12) {
-    hour = 12;
-    ampm = 'PM';
-  } else if (hh > 12) {
-    hour = hh - 12;
-    ampm = 'PM';
   }
   return { hour, minute: mm, ampm };
 }
@@ -193,10 +190,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       <div className="grid grid-cols-2 gap-4">
         {/* Start Time */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Start Time</label>
+          <label htmlFor="start-hour" className="block text-sm font-medium text-gray-700">Start Time</label>
           <div className="flex items-center gap-2 mt-1">
             {/* Hour */}
             <select
+              id="start-hour"
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
               value={startHour !== null ? startHour : ''}
               onChange={(e) => {
@@ -247,10 +245,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
         {/* End Time */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">End Time</label>
+          <label htmlFor="end-hour" className="block text-sm font-medium text-gray-700">End Time</label>
           <div className="flex items-center gap-2 mt-1">
             {/* Hour */}
             <select
+              id="end-hour"
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
               value={endHour !== null ? endHour : ''}
               onChange={(e) => {
