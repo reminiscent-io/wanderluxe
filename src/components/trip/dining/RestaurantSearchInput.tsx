@@ -58,7 +58,8 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
       const options: google.maps.places.AutocompleteOptions = {
         fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
-        types: ['restaurant', 'food']
+        types: ['establishment'],
+        strictBounds: false
       };
 
       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
@@ -97,7 +98,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           autoComplete="off"
         />
       </div>
-      <style jsx>{`
+      <style global jsx>{`
         .pac-container {
           z-index: 9999 !important;
           border-radius: 0.5rem;
