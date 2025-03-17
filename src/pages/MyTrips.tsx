@@ -96,7 +96,7 @@ const MyTrips = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-16 pb-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">My Trips</h1>
           <Button onClick={() => navigate('/create-trip')} variant="outline" className="flex items-center gap-2">
