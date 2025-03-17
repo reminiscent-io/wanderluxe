@@ -16,6 +16,7 @@ interface RestaurantDetails {
 interface RestaurantSearchInputProps {
   value: string;
   onChange: (restaurantName: string, placeDetails?: google.maps.places.PlaceResult) => void;
+  autoFocus?: boolean;
 }
 
 const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
@@ -96,6 +97,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           className="w-full bg-white"
           disabled={isLoading}
           autoComplete="off"
+          autoFocus={true}
         />
       </div>
       <style>{`
