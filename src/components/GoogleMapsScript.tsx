@@ -1,1 +1,18 @@
-<script async defer src="https://maps.googleapis.com/maps/api/js?key={GOOGLE_MAPS_API_KEY}&libraries=places"></script>
+
+import React from 'react';
+
+interface GoogleMapsScriptProps {
+  apiKey: string;
+}
+
+const GoogleMapsScript: React.FC<GoogleMapsScriptProps> = ({ apiKey }) => {
+  return (
+    <script 
+      async 
+      defer 
+      src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
+    />
+  );
+};
+
+export default GoogleMapsScript;
