@@ -13,6 +13,28 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({
+
+interface DateRangeDisplayProps {
+  isLoading: boolean;
+  formattedDateRange: string | null;
+}
+
+const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
+  isLoading,
+  formattedDateRange
+}) => {
+  if (isLoading) {
+    return <div className="h-6 w-64 bg-gray-300/30 animate-pulse rounded"></div>;
+  }
+
+  if (formattedDateRange) {
+    return <p className="text-lg md:text-xl font-medium drop-shadow-md text-center">{formattedDateRange}</p>;
+  }
+
+  return <p className="text-lg md:text-xl font-medium drop-shadow-md opacity-75 text-center">Dates not set</p>;
+};
+
+
   title,
   imageUrl,
   arrivalDate,
@@ -107,13 +129,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             )}
           </h1>
 
-          {isLoading ? (
-            <div className="h-6 w-64 bg-gray-300/30 animate-pulse rounded"></div>
-          ) : formattedDateRange ? (
-            <p className="text-lg md:text-xl font-medium drop-shadow-md text-center">{formattedDateRange}</p>
-          ) : (
-            <p className="text-lg md:text-xl font-medium drop-shadow-md opacity-75 text-center">Dates not set</p>
-          )}
+          <DateRangeDisplay 
+            isLoading={isLoading}
+            formattedDateRange={formattedDateRange}
+          />
         </div>
       </div>
     </div>
