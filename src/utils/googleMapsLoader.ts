@@ -12,7 +12,9 @@ export const loadGoogleMapsAPI = async (): Promise<boolean> => {
   if (document.getElementById(SCRIPT_ID)) return true;
 
   try {
-    const { data, error } = await supabase.functions.invoke('get-google-places-key');
+    const { data, error } = await supabase.functions.invoke('get-google-places-key', {
+      method: 'POST'
+    });
     
     if (error || !data?.key) {
       console.error('Error fetching Google Places API key:', error);
