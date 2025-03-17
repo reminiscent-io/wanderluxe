@@ -98,8 +98,9 @@ const MyTrips = () => {
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="mb-12 text-center">
+          <div className="h-px bg-earth-200 max-w-[1024px] mx-auto mb-8"></div>
           <h1 className="text-4xl font-light tracking-tight text-earth-900">My Trips</h1>
-          <div className="mt-2 h-1 w-24 bg-earth-500/20 mx-auto rounded-full"></div>
+          <div className="h-px bg-earth-200 max-w-[1024px] mx-auto mt-8"></div>
         </div>
 
         <Input
