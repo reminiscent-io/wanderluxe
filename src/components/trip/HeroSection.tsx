@@ -81,7 +81,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative w-full">
-      <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg">
+      <div className="relative aspect-[21/13.5] w-full overflow-hidden rounded-lg">
         {imageUrl ? (
           <UnsplashImage
             src={imageUrl}
