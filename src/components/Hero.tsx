@@ -21,12 +21,12 @@ const Hero = () => {
   return (
     <div className="relative h-screen w-full overflow-hidden">
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 min-h-[100vh]"
         style={{ transform: `translateY(${scrollY * 0.5}px)` }}
       >
         <UnsplashImage
           src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover min-h-[100vh]"
           alt="Travel background"
         />
         <div className="absolute inset-0 bg-black/30" />
@@ -43,7 +43,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex justify-center"
+            className="flex justify-center items-center w-full px-4"
           >
             <motion.div
               initial={{ scale: 0.95 }}
