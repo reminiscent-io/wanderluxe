@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -12,16 +13,28 @@ export const loadGoogleMapsAPI = async (): Promise<boolean> => {
   if (window.google?.maps) return true;
   if (document.getElementById(SCRIPT_ID)) return true;
 
-  return new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.id = SCRIPT_ID;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
-    script.async = true;
-    script.defer = true;
+  try {
+    const { data, error } = await supabase.functions.invoke('get-google-places-key');
+    
+    if (error) {
+      console.error('Error fetching Google Places API key:', error);
+      return false;
+    }
 
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.id = SCRIPT_ID;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.key}&libraries=places&loading=async`;
+      script.async = true;
+      script.defer = true;
 
-    document.head.appendChild(script);
-  });
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+
+      document.head.appendChild(script);
+    });
+  } catch (error) {
+    console.error('Error loading Google Maps API:', error);
+    return false;
+  }
 };
