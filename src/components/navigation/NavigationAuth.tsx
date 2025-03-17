@@ -1,15 +1,12 @@
+
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { Button } from "../ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/components/ui/use-toast";
 
-interface NavigationAuthProps {
-  isScrolled: boolean;
-}
-
-const NavigationAuth = ({ isScrolled }: NavigationAuthProps) => {
+const NavigationAuth = () => {
   const navigate = useNavigate();
   const { session, signOut } = useAuth();
   const { toast } = useToast();
@@ -47,9 +44,7 @@ const NavigationAuth = ({ isScrolled }: NavigationAuthProps) => {
             variant="ghost"
             size="icon"
             onClick={handleSignOut}
-            className={`${
-              isScrolled ? "text-earth-500" : "text-white"
-            } hover:bg-transparent`}
+            className="text-earth-500 hover:bg-transparent"
           >
             <LogOut className="h-5 w-5" />
           </Button>
@@ -59,11 +54,7 @@ const NavigationAuth = ({ isScrolled }: NavigationAuthProps) => {
           onClick={() => navigate("/auth")}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            isScrolled
-              ? "bg-earth-500 text-white hover:bg-earth-600"
-              : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-          }`}
+          className="rounded-full px-4 py-2 text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
         >
           Sign In
         </motion.button>
