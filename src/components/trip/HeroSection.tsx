@@ -81,7 +81,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative w-full">
-      <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg">
+      <div className="relative aspect-[21/6] w-full overflow-hidden rounded-lg">
         {imageUrl ? (
           <UnsplashImage
             src={imageUrl}
@@ -98,8 +98,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
         {/* Title and date overlay - centered */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 text-white z-10">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 drop-shadow-md text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-8 md:p-12 text-white z-10">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg text-center">
             {isLoading ? (
               <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
             ) : (
