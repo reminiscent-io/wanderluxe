@@ -7,6 +7,7 @@ import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
 import { DialogDescription } from "@/components/ui/dialog";
 import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
+import DateInputs from './form/DateInputs';
 
 
 interface AccommodationFormProps {
