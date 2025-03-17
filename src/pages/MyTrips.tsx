@@ -96,7 +96,7 @@ const MyTrips = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-16 pb-8">
+      <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-light tracking-tight text-earth-900">My Trips</h1>
           <div className="mt-2 h-1 w-24 bg-earth-500/20 mx-auto rounded-full"></div>
