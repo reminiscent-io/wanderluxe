@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-center gap-4">
           <Link 
-            to="/TermsOfService" 
+            to="/terms" 
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Terms Of Service
