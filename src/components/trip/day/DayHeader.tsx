@@ -24,17 +24,37 @@ const DayHeader: React.FC<DayHeaderProps> = ({
 
   return (
     <CollapsibleTrigger asChild>
-      <div className="w-full px-4 py-3 flex items-center justify-between bg-sand-50/50 hover:bg-sand-100/70 transition-colors cursor-pointer">
+      <div 
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+          }
+        }}
+        className="w-full px-4 py-3 flex items-center justify-between bg-sand-50/50 hover:bg-sand-100/70 transition-colors cursor-pointer"
+      >
         <div>
           <div className="flex flex-col gap-2">
             <span className="text-lg font-medium text-gray-600">{formattedDate}</span>
             <h3 className="font-medium text-base text-gray-600">{title}</h3>
           </div>
         </div>
-        <div onClick={(e) => {
-          e.stopPropagation();
-          onEdit();
-        }}>
+        <div 
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              onEdit();
+            }
+          }}
+        >
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
