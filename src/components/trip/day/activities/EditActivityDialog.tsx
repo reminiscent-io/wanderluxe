@@ -40,7 +40,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
         <ActivityForm
           activity={activity}
           onActivityChange={onActivityChange}
-          onSubmit={() => onSubmit(activity)}
+          onSubmit={onSubmit}
           onCancel={() => onOpenChange(false)}
           submitLabel="Save Changes"
           eventId={eventId}
