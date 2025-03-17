@@ -39,11 +39,7 @@ const NavigationAuth = ({ isScrolled }: NavigationAuthProps) => {
             onClick={() => navigate("/create-trip")}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              isScrolled
-                ? "bg-earth-500 text-white hover:bg-earth-600"
-                : "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-            }`}
+            className="rounded-full px-4 py-2 text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
           >
             Create Trip
           </motion.button>

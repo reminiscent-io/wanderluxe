@@ -26,9 +26,7 @@ const NavigationLinks = ({
           whileHover={{
             y: -2
           }}
-          className={`${
-            isScrolled ? "text-sand-500" : "text-sand-50"
-          } transition-colors`}
+          className="text-sand-500 transition-colors"
         >
           {item}
         </motion.button>
