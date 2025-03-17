@@ -75,15 +75,15 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     loadAPI();
   }, []);
 
-  const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => {
+  const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.Place) => {
     setFormData(prev => ({
       ...prev,
       hotel: hotelName,
-      hotel_address: placeDetails?.formatted_address || prev.hotel_address,
-      hotel_phone: placeDetails?.formatted_phone_number || prev.hotel_phone,
-      hotel_place_id: placeDetails?.place_id || prev.hotel_place_id,
-      hotel_website: placeDetails?.website || prev.hotel_website,
-      hotel_url: placeDetails?.website || prev.hotel_url
+      hotel_address: placeDetails?.formattedAddress || prev.hotel_address,
+      hotel_phone: placeDetails?.globalLocationNumber || prev.hotel_phone,
+      hotel_place_id: placeDetails?.id || prev.hotel_place_id,
+      hotel_website: placeDetails?.websiteURI || prev.hotel_website,
+      hotel_url: placeDetails?.websiteURI || prev.hotel_url
     }));
   };
 
