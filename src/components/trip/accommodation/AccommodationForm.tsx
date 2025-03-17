@@ -46,7 +46,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+  const [setIsGoogleMapsLoaded] = useState(false);
 
   useEffect(() => {
     setFormData(initialFormState);
