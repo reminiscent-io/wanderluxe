@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { AccommodationFormData } from '@/services/accommodation/types';
-import GooglePlacesAutocomplete from './GooglePlacesAutocomplete'; // Fixed import
+import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
+import { DialogDescription } from "@/components/ui/dialog";
 
 
 interface AccommodationFormProps {
@@ -113,10 +114,49 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-6">
-      <GooglePlacesAutocomplete // Replaced HotelSearchInput
+      <DialogDescription>
+        Enter accommodation details for your stay
+      </DialogDescription>
+      
+      <GooglePlacesAutocomplete
         value={formData.hotel}
         onChange={handleHotelSelect}
       />
+      
+      <div className="space-y-4">
+        <div className="grid gap-4">
+          <div>
+            <label className="text-sm font-medium" htmlFor="hotel_address">Address</label>
+            <input
+              type="text"
+              id="hotel_address"
+              value={formData.hotel_address}
+              readOnly
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium" htmlFor="hotel_phone">Phone</label>
+            <input
+              type="text"
+              id="hotel_phone"
+              value={formData.hotel_phone}
+              readOnly
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium" htmlFor="hotel_website">Website</label>
+            <input
+              type="text"
+              id="hotel_website"
+              value={formData.hotel_website}
+              readOnly
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
 
       <HotelContactInfo
         address={formData.hotel_address}
