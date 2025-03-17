@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AccommodationFormData } from '@/services/accommodation/types';
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
 import { DialogDescription } from "@/components/ui/dialog";
+import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 
 
