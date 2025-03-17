@@ -161,9 +161,7 @@ export const formatCurrency = (amount: number | null, currency: string): string 
     style: 'currency',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    currency: currency
   }).format(amount);
 };
 
