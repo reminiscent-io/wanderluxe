@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { AccommodationFormData } from '@/services/accommodation/types';
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
-import { DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 import DateInputs from './form/DateInputs';
@@ -118,93 +118,99 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-6">
-      <DialogDescription>
-        Enter accommodation details for your stay
-      </DialogDescription>
-      
-      <GooglePlacesAutocomplete
-        value={formData.hotel}
-        onChange={handleHotelSelect}
-      />
-      
-      <div className="space-y-4">
-        <div className="grid gap-4">
-          <div>
-            <label className="text-sm font-medium" htmlFor="hotel_address">Address</label>
-            <input
-              type="text"
-              id="hotel_address"
-              value={formData.hotel_address}
-              readOnly
-              className="w-full p-2 border rounded"
-            />
+      <Dialog>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Accommodation</DialogTitle>
+            <DialogDescription className="text-center">
+              Enter accommodation details for your stay
+            </DialogDescription>
+          </DialogHeader>
+          <GooglePlacesAutocomplete
+            value={formData.hotel}
+            onChange={handleHotelSelect}
+          />
+
+          <div className="space-y-4">
+            <div className="grid gap-4">
+              <div>
+                <label className="text-sm font-medium" htmlFor="hotel_address">Address</label>
+                <input
+                  type="text"
+                  id="hotel_address"
+                  value={formData.hotel_address}
+                  readOnly
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium" htmlFor="hotel_phone">Phone</label>
+                <input
+                  type="text"
+                  id="hotel_phone"
+                  value={formData.hotel_phone}
+                  readOnly
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium" htmlFor="hotel_website">Website</label>
+                <input
+                  type="text"
+                  id="hotel_website"
+                  value={formData.hotel_website}
+                  readOnly
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="text-sm font-medium" htmlFor="hotel_phone">Phone</label>
-            <input
-              type="text"
-              id="hotel_phone"
-              value={formData.hotel_phone}
-              readOnly
-              className="w-full p-2 border rounded"
-            />
+
+          <HotelContactInfo
+            address={formData.hotel_address}
+            phone={formData.hotel_phone}
+          />
+
+          <HotelOptionalDetails
+            hotelDetails={formData.hotel_details}
+            hotelUrl={formData.hotel_url}
+            onDetailsChange={(value) => setFormData({ ...formData, hotel_details: value })}
+            onUrlChange={(value) => setFormData({ ...formData, hotel_url: value })}
+          />
+
+          <DateInputs
+            checkinDate={formData.hotel_checkin_date}
+            checkoutDate={formData.hotel_checkout_date}
+            onCheckinChange={(value) => setFormData({ ...formData, hotel_checkin_date: value })}
+            onCheckoutChange={(value) => setFormData({ ...formData, hotel_checkout_date: value })}
+          />
+
+          <CostInputs
+            cost={formData.cost}
+            currency={formData.currency}
+            onCostChange={(value) => setFormData({ ...formData, cost: value })}
+            onCurrencyChange={(value) => setFormData({ ...formData, currency: value })}
+          />
+
+          <div className="flex justify-end gap-2">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              className="bg-earth-500 hover:bg-earth-600 text-white"
+              disabled={isSubmitting}
+            >
+              {getButtonText()}
+            </Button>
           </div>
-          <div>
-            <label className="text-sm font-medium" htmlFor="hotel_website">Website</label>
-            <input
-              type="text"
-              id="hotel_website"
-              value={formData.hotel_website}
-              readOnly
-              className="w-full p-2 border rounded"
-            />
-          </div>
-        </div>
-      </div>
-
-      <HotelContactInfo
-        address={formData.hotel_address}
-        phone={formData.hotel_phone}
-      />
-
-      <HotelOptionalDetails
-        hotelDetails={formData.hotel_details}
-        hotelUrl={formData.hotel_url}
-        onDetailsChange={(value) => setFormData({ ...formData, hotel_details: value })}
-        onUrlChange={(value) => setFormData({ ...formData, hotel_url: value })}
-      />
-
-      <DateInputs
-        checkinDate={formData.hotel_checkin_date}
-        checkoutDate={formData.hotel_checkout_date}
-        onCheckinChange={(value) => setFormData({ ...formData, hotel_checkin_date: value })}
-        onCheckoutChange={(value) => setFormData({ ...formData, hotel_checkout_date: value })}
-      />
-
-      <CostInputs
-        cost={formData.cost}
-        currency={formData.currency}
-        onCostChange={(value) => setFormData({ ...formData, cost: value })}
-        onCurrencyChange={(value) => setFormData({ ...formData, currency: value })}
-      />
-
-      <div className="flex justify-end gap-2">
-        <Button 
-          type="button" 
-          variant="ghost" 
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          className="bg-earth-500 hover:bg-earth-600 text-white"
-          disabled={isSubmitting}
-        >
-          {getButtonText()}
-        </Button>
-      </div>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };
