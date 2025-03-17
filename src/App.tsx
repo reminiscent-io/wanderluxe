@@ -1,4 +1,3 @@
-
 import React from "react"; // Add explicit React import
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,6 +13,7 @@ import MyTrips from "./pages/MyTrips";
 import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
 import TermsOfService from "./pages/Disclaimer";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 // Move queryClient inside the component to ensure proper React context
 const App = () => {
@@ -38,6 +38,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/TermsOfService" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route
                   path="/create-trip"
                   element={
