@@ -1,12 +1,14 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
-import { supabase } from '@/integrations/supabase/client';
+import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
+import { toast } from 'sonner';
 
 interface GooglePlacesAutocompleteProps {
   value: string;
   onChange: (
     name: string, 
-    details?: google.maps.places.PlaceResult
+    details?: google.maps.places.Place
   ) => void;
   className?: string;
   placeholder?: string;
@@ -20,36 +22,23 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(value);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const placesWidgetRef = useRef<google.maps.places.PlacesWidget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initializeGooglePlaces = async () => {
       try {
-        // Get the API key from Supabase Edge Function
-        const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
-        
-        if (error) {
-          console.error('Error fetching Google Places API key:', error);
-          return;
-        }
-
-        // Load the Google Places script
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
+        const loaded = await loadGoogleMapsAPI();
+        if (loaded) {
           setIsLoading(false);
           initializeAutocomplete();
-        };
-        document.head.appendChild(script);
-
-        return () => {
-          document.head.removeChild(script);
-        };
+        } else {
+          setIsLoading(false);
+          toast.error('Failed to initialize hotel search');
+        }
       } catch (error) {
         console.error('Error initializing Google Places:', error);
+        toast.error('Failed to initialize hotel search');
         setIsLoading(false);
       }
     };
@@ -62,33 +51,32 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 
     try {
       // Clean up previous instance if it exists
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      if (placesWidgetRef.current) {
+        placesWidgetRef.current.dispose();
       }
 
-      const options: google.maps.places.AutocompleteOptions = {
-        types: ['lodging'],
-        fields: ['name', 'formatted_address', 'place_id', 'international_phone_number', 'website', 'formatted_phone_number']
+      const placeOptions: google.maps.places.PlaceOptions = {
+        fields: ['displayName', 'formattedAddress', 'globalLocationNumber', 'websiteURI'],
+        types: ['lodging']
       };
 
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        inputRef.current,
-        options
-      );
+      const widget = new window.google.maps.places.PlacesWidget(inputRef.current, placeOptions);
+      placesWidgetRef.current = widget;
 
-      autocompleteRef.current.addListener('place_changed', () => {
-        if (!autocompleteRef.current) return;
+      widget.addListener('placeSelect', (place: google.maps.places.Place) => {
+        console.log('Selected hotel:', place);
         
-        const place = autocompleteRef.current.getPlace();
-        console.log('Selected place:', place);
-        
-        if (place.name) {
-          setInputValue(place.name);
-          onChange(place.name, place);
+        if (!place?.displayName) {
+          toast.error('Please select a valid hotel from the dropdown');
+          return;
         }
+
+        setInputValue(place.displayName.text);
+        onChange(place.displayName.text, place);
       });
     } catch (error) {
-      console.error('Error initializing Google Places Autocomplete:', error);
+      console.error('Error initializing autocomplete:', error);
+      toast.error('Failed to initialize hotel search');
     }
   };
 
@@ -99,8 +87,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    // Only trigger onChange with the text value when user is typing
-    if (!autocompleteRef.current) {
+    if (!placesWidgetRef.current) {
       onChange(newValue);
     }
   };
