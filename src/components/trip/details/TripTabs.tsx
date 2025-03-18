@@ -15,8 +15,8 @@ interface TripTabsProps {
 const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
     <Tabs defaultValue="timeline" className="w-full h-[calc(100vh-24rem)] flex flex-col mt-0">
-      {/* Update TabsList: use min-w-max instead of w-full */}
-      <TabsList className="flex min-w-max overflow-x-auto no-scrollbar mb-8 rounded-xl p-1 bg-transparent gap-2 pl-4 md:pl-1">
+      <div className="w-full overflow-x-auto no-scrollbar">
+        <TabsList className="flex w-fit mb-8 rounded-xl p-1 bg-transparent gap-2 px-4">
         <TabsTrigger 
           value="timeline"
           className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0"
@@ -46,6 +46,7 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
           Packing List
         </TabsTrigger>
       </TabsList>
+      </div>
 
       <TabsContent value="vision-board" className="flex-1 overflow-auto">
         <VisionBoardView tripId={tripId} />
