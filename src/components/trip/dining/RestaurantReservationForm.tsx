@@ -45,7 +45,22 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const toast = useToast();
 
   // Load Google Maps API and check its return value.
-  // Google Maps is now managed by the GoogleMapsContext
+  useEffect(() => {
+    const loadAPI = async () => {
+      try {
+        const loaded = await loadGoogleMapsAPI();
+        if (loaded) {
+          setIsGoogleMapsLoaded(true);
+        } else {
+          toast('Failed to initialize restaurant search', { variant: 'error' });
+        }
+      } catch (error) {
+        console.error('Error initializing Google Places:', error);
+        toast('Failed to initialize restaurant search', { variant: 'error' });
+      }
+    };
+    loadAPI();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,12 +75,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     },
   });
 
-  const handlePlaceSelect = (place: google.maps.places.Place) => {
-    form.setValue('restaurant_name', place.displayName?.text || '');
-    form.setValue('address', place.formattedAddress || '');
-    form.setValue('phone_number', place.globalLocationNumber || '');
-    form.setValue('website', place.websiteURI || '');
-    form.setValue('place_id', place.id || '');
+  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+    form.setValue('restaurant_name', place.name || '');
+    form.setValue('address', place.formatted_address || '');
+    form.setValue('phone_number', place.formatted_phone_number || '');
+    form.setValue('website', place.website || '');
+    form.setValue('place_id', place.place_id || '');
     form.setValue('rating', place.rating || 0);
   };
 

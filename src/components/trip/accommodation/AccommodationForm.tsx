@@ -52,17 +52,38 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     setFormData(initialFormState);
   }, [initialFormState]);
   
-  // Google Maps is now managed by the GoogleMapsContext
+  useEffect(() => {
+    const loadAPI = async () => {
+      try {
+        // Import the shared Google Maps loader
+        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
+        
+        // Load Google Maps API
+        const isLoaded = await loadGoogleMapsAPI();
+        
+        if (isLoaded) {
+          setIsGoogleMapsLoaded(true);
+        } else {
+          toast.error('Failed to initialize hotel search');
+        }
+      } catch (error) {
+        console.error('Error initializing Google Places:', error);
+        toast.error('Failed to initialize hotel search');
+      }
+    };
 
-  const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.Place) => {
+    loadAPI();
+  }, []);
+
+  const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => {
     setFormData(prev => ({
       ...prev,
       hotel: hotelName,
-      hotel_address: placeDetails?.formattedAddress || prev.hotel_address,
-      hotel_phone: placeDetails?.globalLocationNumber || prev.hotel_phone,
-      hotel_place_id: placeDetails?.id || prev.hotel_place_id,
-      hotel_website: placeDetails?.websiteURI || prev.hotel_website,
-      hotel_url: placeDetails?.websiteURI || prev.hotel_url
+      hotel_address: placeDetails?.formatted_address || prev.hotel_address,
+      hotel_phone: placeDetails?.formatted_phone_number || prev.hotel_phone,
+      hotel_place_id: placeDetails?.place_id || prev.hotel_place_id,
+      hotel_website: placeDetails?.website || prev.hotel_website,
+      hotel_url: placeDetails?.website || prev.hotel_url
     }));
   };
 

@@ -17,13 +17,12 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   onSubmit,
   isSubmitting,
   editingReservation,
-  title,
-  tripId
+  title
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" aria-describedby="restaurant-reservation-description">
-        <div>
+      <DialogContent>
+        <div aria-describedby="restaurant-reservation-description">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
@@ -34,7 +33,6 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
             defaultValues={editingReservation}
-            tripId={tripId}
           />
         </div>
       </DialogContent>
