@@ -67,16 +67,24 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   };
 
   return (
-    <Input
-      ref={inputRef}
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`${className} relative`}
-      placeholder={placeholder}
-      disabled={isLoading}
-      autoFocus={autoFocus}
-    />
+    <>
+      <Input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${className} relative z-50`}
+        placeholder={placeholder}
+        disabled={isLoading}
+        autoFocus={autoFocus}
+      />
+      <style jsx global>{`
+        .pac-container {
+          z-index: 9999 !important;
+          pointer-events: auto !important;
+        }
+      `}</style>
+    </>
   );
 };
 
