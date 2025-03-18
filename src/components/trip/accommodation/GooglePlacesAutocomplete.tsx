@@ -1,93 +1,81 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
+import { toast } from 'sonner';
 
 interface GooglePlacesAutocompleteProps {
   value: string;
   onChange: (name: string, details?: google.maps.places.PlaceResult) => void;
   className?: string;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
 const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   value,
   onChange,
   className,
-  placeholder = "Search for hotels..."
+  placeholder = "Search for hotels...",
+  autoFocus
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [inputValue, setInputValue] = useState(value);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const initializeGooglePlaces = async () => {
-      const loaded = await loadGoogleMapsAPI();
-      if (loaded) {
+    const loadAPI = async () => {
+      try {
+        const loaded = await loadGoogleMapsAPI();
+        if (loaded) {
+          setIsLoading(false);
+          initializeAutocomplete();
+        } else {
+          setIsLoading(false);
+          toast('Failed to initialize hotel search');
+        }
+      } catch (error) {
+        console.error('Error initializing Google Places:', error);
         setIsLoading(false);
-        initializeAutocomplete();
-      } else {
-        console.error('Failed to load Google Maps API');
+        toast('Failed to initialize hotel search');
       }
     };
-    initializeGooglePlaces();
+    loadAPI();
   }, []);
 
   const initializeAutocomplete = () => {
     if (!inputRef.current || !window.google) return;
-    try {
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
-      }
-      const options: google.maps.places.AutocompleteOptions = {
+
+    if (autoCompleteRef.current) {
+      google.maps.event.clearInstanceListeners(autoCompleteRef.current);
+    }
+
+    autoCompleteRef.current = new window.google.maps.places.Autocomplete(
+      inputRef.current,
+      {
         types: ['lodging'],
-        fields: [
-          'name', 
-          'formatted_address', 
-          'place_id', 
-          'international_phone_number', 
-          'website', 
-          'formatted_phone_number'
-        ]
-      };
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        inputRef.current,
-        options
-      );
-      autocompleteRef.current.addListener('place_changed', () => {
-        if (!autocompleteRef.current) return;
-        const place = autocompleteRef.current.getPlace();
-        if (place.name) {
-          setInputValue(place.name);
-          onChange(place.name, place);
-        }
-      });
-    } catch (error) {
-      console.error('Error initializing Google Places Autocomplete:', error);
-    }
-  };
+        fields: ['name', 'formatted_address', 'place_id', 'website', 'formatted_phone_number']
+      }
+    );
 
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    if (!autocompleteRef.current) {
-      onChange(newValue);
-    }
+    autoCompleteRef.current.addListener('place_changed', () => {
+      if (!autoCompleteRef.current) return;
+      const place = autoCompleteRef.current.getPlace();
+      if (place) {
+        onChange(place.name || '', place);
+      }
+    });
   };
 
   return (
     <Input
       ref={inputRef}
       type="text"
-      value={inputValue}
-      onChange={handleInputChange}
-      className={`${className} relative z-50`}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`${className} relative`}
       placeholder={placeholder}
       disabled={isLoading}
+      autoFocus={autoFocus}
     />
   );
 };
