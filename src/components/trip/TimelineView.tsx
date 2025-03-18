@@ -18,11 +18,17 @@ interface TimelineViewProps {
   };
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
-  const [isLoadingDates, setIsLoadingDates] = useState(false);
-  const { groups, dayIndexMap } = useTimelineGroups(tripId);
-  const { data: events, isLoading: isLoadingEvents } = useTimelineEvents(tripId);
-  const { tripDays } = useTripDays(tripId);
+const TimelineView: React.FC<TimelineViewProps> = ({
+  tripId,
+  tripDates: initialTripDates
+}) => {
+  const { days, refreshDays } = useTripDays(tripId);
+  const { events, refreshEvents } = useTimelineEvents(tripId);
+  const { groups, gaps } = useTimelineGroups(days, events);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [setIsLoadingDates] = useState(false);
+
+  // State for trip dates; initialized from props if available.
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
@@ -31,36 +37,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     departure_date: initialTripDates?.departure_date || null
   });
 
-
-  useEffect(() => {
-    const fetchTripData = async () => {
-      if (!tripDates.arrival_date || !tripDates.departure_date) {
-        setIsLoadingDates(true);
-        const { data, error } = await supabase
-          .from('trips')
-          .select('arrival_date, departure_date')
-          .eq('trip_id', tripId)
-          .single();
-
-        if (error) {
-          console.error('Error fetching trip dates:', error);
-          toast.error('Failed to load trip dates');
-        } else if (data) {
-          setTripDates({
-            arrival_date: data.arrival_date,
-            departure_date: data.departure_date
-          });
-        }
-        setIsLoadingDates(false);
-      }
-    };
-
-    if (!tripDates.arrival_date || !tripDates.departure_date) {
-      console.log('Trip dates missing on mount, fetching fresh data');
-      fetchTripData();
-    }
-  }, [tripId, setTripDates, tripDates]);
-
+  // Sync trip dates from props when they are valid.
   useEffect(() => {
     const newArrival = initialTripDates?.arrival_date;
     const newDeparture = initialTripDates?.departure_date;
@@ -73,10 +50,78 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         });
       }
     }
-  }, [initialTripDates, tripDates, setTripDates]);
+  }, [initialTripDates]);
 
+  // On mount, if dates are missing, fetch from DB.
+  useEffect(() => {
+    if (!tripDates.arrival_date || !tripDates.departure_date) {
+      console.log('Trip dates missing on mount, fetching fresh data');
+      setIsLoadingDates(true);
+      fetchTripData().finally(() => setIsLoadingDates(false));
+    }
+  }, []);
 
-  const hotelStays = React.useMemo(() =>
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshEvents(), refreshDays()]);
+
+      // Fetch updated trip dates.
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
+
+      if (!error && data) {
+        if (data.arrival_date && data.departure_date) {
+          console.log('Setting trip dates from refresh:', data);
+          setTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date
+          });
+        } else {
+          console.log('Skipping trip dates update - missing dates in data:', data);
+        }
+      }
+      toast.success('Timeline updated successfully');
+    } catch (error) {
+      console.error('Error refreshing timeline:', error);
+      toast.error('Failed to refresh timeline');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshEvents, refreshDays, tripId]);
+
+  const fetchTripData = async () => {
+    if (!tripId) return;
+    console.log('Fetching trip data for ID:', tripId);
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('trip_id', tripId)
+        .single();
+      if (error) throw error;
+      console.log('Trip data fetched successfully:', data);
+      if (data.arrival_date && data.departure_date) {
+        console.log('Setting valid dates from DB:', {
+          arrival: data.arrival_date,
+          departure: data.departure_date
+        });
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date
+        });
+      } else {
+        console.log('DB returned incomplete date data, not updating state');
+      }
+    } catch (error) {
+      console.error('Error fetching trip details:', error);
+    }
+  };
+
+  const hotelStays = React.useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
       trip_id: tripId,
@@ -94,21 +139,47 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     })) || []
   , [events, tripId]);
 
-  if (isLoadingEvents || isLoadingDates) {
-    return <div>Loading timeline...</div>;
-  }
-
   return (
     <div className="relative space-y-8">
-      <TripDates
-        tripId={tripId}
-        arrivalDate={tripDates.arrival_date}
-        departureDate={tripDates.departure_date}
+      {isRefreshing && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
+      )}
+
+      <div className="grid gap-4">
+        {console.log('Rendering TripDates with:', { 
+          tripId, 
+          arrivalDate: tripDates.arrival_date, 
+          departureDate: tripDates.departure_date 
+        })}
+        {tripDates.arrival_date && tripDates.departure_date ? (
+          <TripDates
+            tripId={tripId}
+            arrivalDate={tripDates.arrival_date}
+            departureDate={tripDates.departure_date}
+            onDatesChange={handleRefresh}
+          />
+        ) : (
+          <p>Loading dates...</p>
+        )}
+        <AccommodationsSection
+          tripId={tripId}
+          onAccommodationChange={handleRefresh}
+          hotelStays={hotelStays}
+        />
+        <TransportationSection
+          tripId={tripId}
+          onTransportationChange={handleRefresh}
+        />
+      </div>
+
+      <TimelineContent 
+        groups={groups} 
+        dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
       />
-      <TimelineContent groups={groups} dayIndexMap={dayIndexMap} />
-      <AccommodationGaps tripId={tripId} />
-      <AccommodationsSection tripId={tripId} hotelStays={hotelStays} />
-      <TransportationSection tripId={tripId} />
+      <AccommodationGaps 
+        gaps={gaps} 
+        onAddAccommodation={() => {}}
+      />
     </div>
   );
 };
