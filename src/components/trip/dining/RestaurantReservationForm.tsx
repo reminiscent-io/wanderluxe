@@ -41,6 +41,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   isSubmitting = false,
   tripId,
 }) => {
+  console.log("RestaurantReservationForm received tripId:", tripId);
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
   const toast = useToast();
 

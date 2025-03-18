@@ -21,6 +21,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   title,
   tripId,
 }) => {
+  console.log("RestaurantReservationDialog received tripId:", tripId);
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>

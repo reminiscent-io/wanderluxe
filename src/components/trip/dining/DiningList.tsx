@@ -44,13 +44,15 @@ const DiningList: React.FC<DiningListProps> = ({
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      console.log("DiningList processing data with tripId:", tripId);
       const processedData = {
         ...data,
         day_id: dayId,
-        trip_id: tripId, // include trip_id in the insert/update payload
+        trip_id: tripId,
         order_index: reservations.length,
         reservation_time: data.reservation_time || null
       };
+      console.log("ProcessedData:", processedData);
 
       if (editingReservation) {
         const { error } = await supabase
