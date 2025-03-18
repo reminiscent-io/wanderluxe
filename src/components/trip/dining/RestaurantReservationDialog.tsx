@@ -9,6 +9,7 @@ interface RestaurantReservationDialogProps {
   isSubmitting: boolean;
   editingReservation?: any;
   title: string;
+  tripId: string; // added tripId prop
 }
 
 const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = ({
@@ -17,7 +18,8 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   onSubmit,
   isSubmitting,
   editingReservation,
-  title
+  title,
+  tripId,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -33,6 +35,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
             defaultValues={editingReservation}
+            tripId={tripId}  // pass tripId down
           />
         </div>
       </DialogContent>
