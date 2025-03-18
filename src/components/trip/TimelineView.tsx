@@ -38,6 +38,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     departure_date: initialTripDates?.departure_date || null
   });
 
+  const [hasLoadedStays, setHasLoadedStays] = useState(false);
+  const [isDateExpanded, setIsDateExpanded] = useState(false);
+
   // Preload Google Maps API when Timeline view mounts.
   useEffect(() => {
     loadGoogleMapsAPI();
@@ -127,7 +130,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
-  const hotelStays = React.useMemo(() => 
+  const processedHotelStays = React.useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
       trip_id: tripId,
@@ -171,7 +174,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           <AccommodationsSection
             tripId={tripId}
             onAccommodationChange={handleRefresh}
-            hotelStays={hotelStays}
+            hotelStays={processedHotelStays}
           />
           <TransportationSection
             tripId={tripId}
