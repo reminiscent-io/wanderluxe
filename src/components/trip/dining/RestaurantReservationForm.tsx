@@ -85,10 +85,14 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   };
 
   const handleSubmitForm = form.handleSubmit((data) => {
+    if (!tripId) {
+      toast.error('Trip ID is required');
+      return;
+    }
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: tripId // updated to match your DB column name
+      trip_id: tripId
     };
     onSubmit(processedData);
   });
