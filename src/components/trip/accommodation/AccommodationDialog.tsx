@@ -13,7 +13,7 @@ interface AccommodationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: AccommodationFormData & { stay_id?: string };
-  onSuccess: () => void;
+  onSave: (data: AccommodationFormData) => Promise<void>; // Updated to accept AccommodationFormData
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
 }
@@ -23,10 +23,23 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   open,
   onOpenChange,
   initialData,
-  onSuccess,
+  onSave,
   tripArrivalDate,
   tripDepartureDate
 }) => {
+  const handleSubmit = async (formData: AccommodationFormData) => {
+    try {
+      if (!formData) {
+        throw new Error('Form data is required');
+      }
+      await onSave(formData);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving accommodation:', error);
+      // Consider adding more user-friendly error handling here.
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Prevent closing when clicking on outside elements (like the autocomplete dropdown) */}
@@ -37,10 +50,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         <AccommodationForm
-          onSubmit={async (data) => {
-            await onSuccess();
-            onOpenChange(false);
-          }}
+          onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
           initialData={initialData}
           tripArrivalDate={tripArrivalDate}
