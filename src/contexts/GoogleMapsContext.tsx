@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
+import { toast } from 'sonner';
 
 interface GoogleMapsContextType {
   isLoaded: boolean;
@@ -20,11 +21,16 @@ export const GoogleMapsProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const initializeGoogleMaps = async () => {
       try {
         const loaded = await loadGoogleMapsAPI();
-        setIsLoaded(loaded);
-        setHasError(!loaded);
+        if (!loaded) {
+          throw new Error('Failed to load Google Maps API');
+        }
+        setIsLoaded(true);
+        setHasError(false);
       } catch (error) {
         console.error('Error loading Google Maps:', error);
+        toast.error('Failed to load Google Maps API');
         setHasError(true);
+        setIsLoaded(false);
       }
     };
 
