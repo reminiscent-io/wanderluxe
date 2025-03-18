@@ -9,6 +9,7 @@ import AccommodationsSection from './AccommodationsSection';
 import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
 import { toast } from 'sonner';
+import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 
 interface TimelineViewProps {
   tripId: string;
@@ -36,6 +37,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     arrival_date: initialTripDates?.arrival_date || null,
     departure_date: initialTripDates?.departure_date || null
   });
+
+  // Preload Google Maps API when Timeline view mounts.
+  useEffect(() => {
+    loadGoogleMapsAPI();
+  }, []);
 
   // Sync trip dates from props when they are valid.
   useEffect(() => {
