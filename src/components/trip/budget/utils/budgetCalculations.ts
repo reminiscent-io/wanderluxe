@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import { CURRENCY_SYMBOLS } from './currencyConverter';
 
 export interface ExpenseItem {
