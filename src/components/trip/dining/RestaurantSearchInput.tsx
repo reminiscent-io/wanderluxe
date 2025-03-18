@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 
 interface RestaurantDetails {
   name: string;

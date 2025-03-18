@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { toast } from 'sonner';
+import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 
 interface GooglePlacesAutocompleteProps {
   value: string;
