@@ -35,7 +35,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
             defaultValues={editingReservation}
-            tripId={tripId}  // pass tripId down
+            tripId={tripId}
           />
         </div>
       </DialogContent>

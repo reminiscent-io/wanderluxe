@@ -47,7 +47,7 @@ const DiningList: React.FC<DiningListProps> = ({
       const processedData = {
         ...data,
         day_id: dayId,
-        trip_id: tripId,
+        trip_id: tripId, // Added trip_id here
         order_index: reservations.length,
         reservation_time: data.reservation_time || null
       };
@@ -57,14 +57,14 @@ const DiningList: React.FC<DiningListProps> = ({
           .from('restaurant_reservations')
           .update(processedData)
           .eq('id', editingReservation);
-        
+
         if (error) throw error;
         toast.success('Reservation updated successfully');
       } else {
         const { error } = await supabase
           .from('restaurant_reservations')
           .insert([processedData]);
-        
+
         if (error) throw error;
         toast.success('Reservation added successfully');
       }
@@ -81,7 +81,7 @@ const DiningList: React.FC<DiningListProps> = ({
 
   const handleDelete = async () => {
     if (!deletingReservation) return;
-    
+
     try {
       const { error } = await supabase
         .from('restaurant_reservations')
@@ -89,7 +89,7 @@ const DiningList: React.FC<DiningListProps> = ({
         .eq('id', deletingReservation);
 
       if (error) throw error;
-      
+
       toast.success('Reservation deleted successfully');
       setDeletingReservation(null);
     } catch (error) {

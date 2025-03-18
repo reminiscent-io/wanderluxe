@@ -92,7 +92,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: tripId // updated to match your DB column name
+      trip_id: tripId
     };
     onSubmit(processedData);
   });
