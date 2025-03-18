@@ -1,0 +1,110 @@
+[plugin:vite:react-swc] × the name `hotelStays` is defined multiple times
+     ╭─[/home/runner/workspace/src/components/trip/TimelineView.tsx:42:1]
+  39 │     arrival_date: initialTripDates?.arrival_date || null,
+  40 │     departure_date: initialTripDates?.departure_date || null
+  41 │   });
+  42 │   const [hotelStays, setHotelStays] = useState<HotelStay[]>([]);
+     ·          ─────┬────
+     ·               ╰── previous definition of `hotelStays` here
+  43 │   const [hasLoadedStays, setHasLoadedStays] = useState(false);
+  44 │   const [isDateExpanded, setIsDateExpanded] = useState(false);
+  45 │ 
+  46 │   // Preload Google Maps API when Timeline view mounts.
+  47 │   useEffect(() => {
+  48 │     loadGoogleMapsAPI();
+  49 │   }, []);
+  50 │ 
+  51 │   // Sync trip dates from props when they are valid.
+  52 │   useEffect(() => {
+  53 │     const newArrival = initialTripDates?.arrival_date;
+  54 │     const newDeparture = initialTripDates?.departure_date;
+  55 │     if (newArrival && newDeparture) {
+  56 │       if (newArrival !== tripDates.arrival_date || newDeparture !== tripDates.departure_date) {
+  57 │         console.log('Updating trip dates from props:', { newArrival, newDeparture });
+  58 │         setTripDates({
+  59 │           arrival_date: newArrival,
+  60 │           departure_date: newDeparture
+  61 │         });
+  62 │       }
+  63 │     }
+  64 │   }, [initialTripDates]);
+  65 │ 
+  66 │   // On mount, if dates are missing, fetch from DB.
+  67 │   useEffect(() => {
+  68 │     if (!tripDates.arrival_date || !tripDates.departure_date) {
+  69 │       console.log('Trip dates missing on mount, fetching fresh data');
+  70 │       setIsLoadingDates(true);
+  71 │       fetchTripData().finally(() => setIsLoadingDates(false));
+  72 │     }
+  73 │   }, []);
+  74 │ 
+  75 │   const handleRefresh = useCallback(async () => {
+  76 │     setIsRefreshing(true);
+  77 │     try {
+  78 │       await Promise.all([refreshEvents(), refreshDays()]);
+  79 │ 
+  80 │       // Fetch updated trip dates.
+  81 │       const { data, error } = await supabase
+  82 │         .from('trips')
+  83 │         .select('arrival_date, departure_date')
+  84 │         .eq('trip_id', tripId)
+  85 │         .single();
+  86 │ 
+  87 │       if (!error && data) {
+  88 │         if (data.arrival_date && data.departure_date) {
+  89 │           console.log('Setting trip dates from refresh:', data);
+  90 │           setTripDates({
+  91 │             arrival_date: data.arrival_date,
+  92 │             departure_date: data.departure_date
+  93 │           });
+  94 │         } else {
+  95 │           console.log('Skipping trip dates update - missing dates in data:', data);
+  96 │         }
+  97 │       }
+  98 │       toast.success('Timeline updated successfully');
+  99 │     } catch (error) {
+ 100 │       console.error('Error refreshing timeline:', error);
+ 101 │       toast.error('Failed to refresh timeline');
+ 102 │     } finally {
+ 103 │       setIsRefreshing(false);
+ 104 │     }
+ 105 │   }, [refreshEvents, refreshDays, tripId]);
+ 106 │ 
+ 107 │   const fetchTripData = async () => {
+ 108 │     if (!tripId) return;
+ 109 │     console.log('Fetching trip data for ID:', tripId);
+ 110 │     try {
+ 111 │       const { data, error } = await supabase
+ 112 │         .from('trips')
+ 113 │         .select('*')
+ 114 │         .eq('trip_id', tripId)
+ 115 │         .single();
+ 116 │       if (error) throw error;
+ 117 │       console.log('Trip data fetched successfully:', data);
+ 118 │       if (data.arrival_date && data.departure_date) {
+ 119 │         console.log('Setting valid dates from DB:', {
+ 120 │           arrival: data.arrival_date,
+ 121 │           departure: data.departure_date
+ 122 │         });
+ 123 │         setTripDates({
+ 124 │           arrival_date: data.arrival_date,
+ 125 │           departure_date: data.departure_date
+ 126 │         });
+ 127 │       } else {
+ 128 │         console.log('DB returned incomplete date data, not updating state');
+ 129 │       }
+ 130 │     } catch (error) {
+ 131 │       console.error('Error fetching trip details:', error);
+ 132 │     }
+ 133 │   };
+ 134 │ 
+ 135 │   const hotelStays = React.useMemo(() => 
+     ·         ─────┬────
+     ·              ╰── `hotelStays` redefined here
+ 136 │     events?.filter(event => event.hotel && event.stay_id).map(event => ({
+ 137 │       stay_id: event.stay_id,
+ 138 │       trip_id: tripId,
+     ╰────
+/home/runner/workspace/src/components/trip/TimelineView.tsx:42:1
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.
