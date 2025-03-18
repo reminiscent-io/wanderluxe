@@ -60,10 +60,18 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     autoCompleteRef.current.addListener('place_changed', () => {
       if (!autoCompleteRef.current) return;
       const place = autoCompleteRef.current.getPlace();
-      if (place) {
-        onChange(place.name || '', place);
+      if (!place?.name) {
+        toast('Please select a valid hotel from the dropdown', { variant: 'error' });
+        return;
       }
+      onChange(place.name, place);
     });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
   };
 
   return (
@@ -73,6 +81,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
         className={`${className} relative z-50`}
         placeholder={placeholder}
         disabled={isLoading}
