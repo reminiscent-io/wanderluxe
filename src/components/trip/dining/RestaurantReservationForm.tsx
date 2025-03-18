@@ -71,7 +71,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       number_of_people: undefined,
       notes: '',
       cost: undefined,
-      currency: '',
+      currency: 'USD',
       ...defaultValues,
     },
   });
