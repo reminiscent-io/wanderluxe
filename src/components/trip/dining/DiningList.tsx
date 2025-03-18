@@ -122,7 +122,13 @@ const DiningList: React.FC<DiningListProps> = ({
       </div>
 
       <div className="space-y-3">
-        {reservations.map((reservation) => (
+        {[...reservations]
+          .sort((a, b) => {
+            const timeA = a.reservation_time || '';
+            const timeB = b.reservation_time || '';
+            return timeA.localeCompare(timeB);
+          })
+          .map((reservation) => (
           <RestaurantCard
             key={reservation.id}
             reservation={reservation}
