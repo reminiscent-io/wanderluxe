@@ -42,7 +42,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   tripId,
 }) => {
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
-  const toast = useToast();
+  const { toast } = useToast();
 
   // Load Google Maps API and check its return value.
   useEffect(() => {
@@ -86,7 +86,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
   const handleSubmitForm = form.handleSubmit((data) => {
     if (!tripId) {
-      toast.error('Trip ID is required');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Trip ID is required"
+      });
       return;
     }
     const processedData = {
