@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -28,12 +27,14 @@ interface DiningListProps {
   }>;
   formatTime: (time?: string) => string;
   dayId: string;
+  tripId: string; // added tripId prop
 }
 
 const DiningList: React.FC<DiningListProps> = ({
   reservations,
   formatTime,
-  dayId
+  dayId,
+  tripId, // added
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,6 +136,7 @@ const DiningList: React.FC<DiningListProps> = ({
         isSubmitting={isSubmitting}
         editingReservation={editingReservation ? reservations.find(r => r.id === editingReservation) : undefined}
         title={editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
+        tripId={tripId}  // pass tripId to dialog
       />
 
       <DeleteReservationDialog
