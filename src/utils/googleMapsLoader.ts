@@ -1,6 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
 const SCRIPT_ID = 'google-maps-script';
 
@@ -9,18 +8,16 @@ export const loadGoogleMapsAPI = async (): Promise<boolean> => {
   if (document.getElementById(SCRIPT_ID)) return true;
 
   try {
-    const { data, error } = await supabase.functions.invoke('get-google-places-key');
+    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
     
-    if (error) {
-      console.error('Error fetching Google Places API key:', error);
-      toast.error('Failed to fetch API key');
-      return false;
+    if (!apiKey) {
+      throw new Error('Google Places API key not found in environment variables');
     }
 
     return new Promise((resolve) => {
       const script = document.createElement('script');
       script.id = SCRIPT_ID;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.key}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
       script.async = true;
       script.defer = true;
 
