@@ -20,9 +20,9 @@ interface TimelineViewProps {
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
   const [isLoadingDates, setIsLoadingDates] = useState(false);
-  const { groups, dayIndexMap } = useTimelineGroups(tripId);
+  const { days } = useTripDays(tripId);
   const { data: events, isLoading: isLoadingEvents } = useTimelineEvents(tripId);
-  const { tripDays } = useTripDays(tripId);
+  const { groups, gaps } = useTimelineGroups(days, events);
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
@@ -105,8 +105,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         arrivalDate={tripDates.arrival_date}
         departureDate={tripDates.departure_date}
       />
-      <TimelineContent groups={groups} dayIndexMap={dayIndexMap} />
-      <AccommodationGaps tripId={tripId} />
+      <TimelineContent groups={groups} dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])} />
+      <AccommodationGaps gaps={gaps || []} onAddAccommodation={() => {}} />
       <AccommodationsSection tripId={tripId} hotelStays={hotelStays} />
       <TransportationSection tripId={tripId} />
     </div>
