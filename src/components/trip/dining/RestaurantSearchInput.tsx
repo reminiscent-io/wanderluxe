@@ -72,6 +72,11 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           id="restaurant"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
           placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
           className="w-full bg-white"
           disabled={isLoading}
