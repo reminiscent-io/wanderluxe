@@ -15,7 +15,8 @@ interface TripTabsProps {
 const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
     <Tabs defaultValue="timeline" className="w-full mt-0">
-      <TabsList className="flex w-full overflow-x-auto no-scrollbar mb-8 rounded-xl p-1 bg-transparent gap-2 pl-4 md:pl-1">
+      {/* Update TabsList: use min-w-max instead of w-full */}
+      <TabsList className="flex min-w-max overflow-x-auto no-scrollbar mb-8 rounded-xl p-1 bg-transparent gap-2 pl-4 md:pl-1">
         <TabsTrigger 
           value="timeline"
           className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0"
@@ -54,7 +55,6 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
         <TimelineView 
           tripId={tripId}
           tripDates={{
-            // Only pass valid dates, never empty strings
             arrival_date: displayData?.arrival_date && displayData.arrival_date.trim() !== '' 
               ? displayData.arrival_date 
               : null,
