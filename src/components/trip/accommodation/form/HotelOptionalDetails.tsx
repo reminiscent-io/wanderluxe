@@ -20,7 +20,7 @@ const HotelOptionalDetails: React.FC<HotelOptionalDetailsProps> = ({
   return (
     <>
       <div>
-        <Label htmlFor="hotel_details">Details (Optional)</Label>
+        <Label htmlFor="hotel_details">Details</Label>
         <Textarea
           id="hotel_details"
           value={hotelDetails}
@@ -28,7 +28,7 @@ const HotelOptionalDetails: React.FC<HotelOptionalDetailsProps> = ({
         />
       </div>
       <div>
-        <Label htmlFor="hotel_url">URL (Optional)</Label>
+        <Label htmlFor="hotel_url">URL</Label>
         <Input
           id="hotel_url"
           type="url"
