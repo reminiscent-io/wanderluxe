@@ -11,6 +11,7 @@ interface DiningListProps {
   reservations: Array<{
     id: string;
     day_id: string; 
+    trip_id: string; // include trip_id if stored
     restaurant_name: string;
     reservation_time?: string;
     number_of_people?: number;
@@ -20,21 +21,20 @@ interface DiningListProps {
     currency?: string;
     address?: string;
     phone_number?: string;
-    phone_id?: string;    
     website?: string;
     rating?: number;
     created_at: string;   
   }>;
   formatTime: (time?: string) => string;
   dayId: string;
-  tripId: string; // added tripId prop
+  tripId: string; // required prop for trip context
 }
 
 const DiningList: React.FC<DiningListProps> = ({
   reservations,
   formatTime,
   dayId,
-  tripId, // added
+  tripId,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,7 +47,7 @@ const DiningList: React.FC<DiningListProps> = ({
       const processedData = {
         ...data,
         day_id: dayId,
-        trip_id: tripId, // Added trip_id here
+        trip_id: tripId, // include trip_id in the insert/update payload
         order_index: reservations.length,
         reservation_time: data.reservation_time || null
       };
@@ -137,7 +137,7 @@ const DiningList: React.FC<DiningListProps> = ({
         isSubmitting={isSubmitting}
         editingReservation={editingReservation ? reservations.find(r => r.id === editingReservation) : undefined}
         title={editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
-        tripId={tripId}  // pass tripId to dialog
+        tripId={tripId}  // pass tripId to the dialog
       />
 
       <DeleteReservationDialog
