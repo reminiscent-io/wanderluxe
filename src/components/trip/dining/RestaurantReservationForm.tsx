@@ -42,7 +42,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   tripId,
 }) => {
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
-  const { toast } = useToast();
+  const toast = useToast();
 
   // Load Google Maps API and check its return value.
   useEffect(() => {
@@ -52,19 +52,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         if (loaded) {
           setIsGoogleMapsLoaded(true);
         } else {
-          toast({
-            title: "Error",
-            description: "Failed to initialize restaurant search",
-            variant: "destructive"
-          });
+          toast('Failed to initialize restaurant search', { variant: 'error' });
         }
       } catch (error) {
         console.error('Error initializing Google Places:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize restaurant search",
-          variant: "destructive"
-        });
+        toast('Failed to initialize restaurant search', { variant: 'error' });
       }
     };
     loadAPI();
@@ -94,11 +86,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
   const handleSubmitForm = form.handleSubmit((data) => {
     if (!tripId) {
-      toast({
-        title: "Error",
-        description: "Trip ID is required",
-        variant: "destructive"
-      });
+      toast.error('Trip ID is required');
       return;
     }
     const processedData = {
