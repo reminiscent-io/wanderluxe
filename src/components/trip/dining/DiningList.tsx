@@ -7,11 +7,13 @@ import DeleteReservationDialog from './DeleteReservationDialog';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { useParams } from 'react-router-dom';
+
 interface DiningListProps {
   reservations: Array<{
     id: string;
     day_id: string; 
-    trip_id: string; // include trip_id if stored
+    trip_id: string;
     restaurant_name: string;
     reservation_time?: string;
     number_of_people?: number;
@@ -27,15 +29,14 @@ interface DiningListProps {
   }>;
   formatTime: (time?: string) => string;
   dayId: string;
-  tripId: string; // required prop for trip context
 }
 
 const DiningList: React.FC<DiningListProps> = ({
   reservations,
   formatTime,
   dayId,
-  tripId,
 }) => {
+  const { tripId } = useParams<{ tripId: string }>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingReservation, setEditingReservation] = useState<string | null>(null);
