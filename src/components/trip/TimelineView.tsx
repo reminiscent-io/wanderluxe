@@ -151,7 +151,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
       )}
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4">
         {console.log('Rendering TripDates with:', { 
           tripId, 
           arrivalDate: tripDates.arrival_date, 
@@ -167,15 +167,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         ) : (
           <p>Loading dates...</p>
         )}
-        <AccommodationsSection
-          tripId={tripId}
-          onAccommodationChange={handleRefresh}
-          hotelStays={hotelStays}
-        />
-        <TransportationSection
-          tripId={tripId}
-          onTransportationChange={handleRefresh}
-        />
+        <div className="flex gap-4">
+          <AccommodationsSection
+            tripId={tripId}
+            onAccommodationChange={handleRefresh}
+            hotelStays={hotelStays}
+          />
+          <TransportationSection
+            tripId={tripId}
+            onTransportationChange={handleRefresh}
+          />
+        </div>
       </div>
 
       <TimelineContent 
