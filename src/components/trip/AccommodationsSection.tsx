@@ -13,9 +13,11 @@ interface AccommodationsSectionProps {
   tripId: string;
   onAccommodationChange: () => void;
   hotelStays: HotelStay[];
+  className?: string;
 }
 
 const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
+  className,
   tripId,
   onAccommodationChange,
   hotelStays

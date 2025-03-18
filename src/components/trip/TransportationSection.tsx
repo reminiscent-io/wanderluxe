@@ -13,9 +13,11 @@ type TransportationEvent = Tables<'transportation_events'>;
 interface TransportationSectionProps {
   tripId: string;
   onTransportationChange: () => void;
+  className?: string;
 }
 
 const TransportationSection: React.FC<TransportationSectionProps> = ({
+  className,
   tripId,
   onTransportationChange
 }) => {
