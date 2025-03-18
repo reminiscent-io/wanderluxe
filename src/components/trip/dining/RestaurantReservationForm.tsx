@@ -30,7 +30,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
   onSubmit: (data: FormValues & { trip_id: string }) => void; 
-  defaultValues?: Partial<FormValues>;
+  defaultValues?: Partial<FormValues> & { trip_id?: string };
   isSubmitting?: boolean;
   tripId: string; 
 }
@@ -44,7 +44,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
   const toast = useToast();
 
-  // Load Google Maps API and check its return value.
+  // Load Google Maps API.
   useEffect(() => {
     const loadAPI = async () => {
       try {
@@ -85,14 +85,16 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   };
 
   const handleSubmitForm = form.handleSubmit((data) => {
-    if (!tripId) {
+    // Use the tripId prop or a default from editing values if available.
+    const effectiveTripId = tripId || defaultValues?.trip_id;
+    if (!effectiveTripId) {
       console.error('Trip ID is required');
       return;
     }
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: tripId
+      trip_id: effectiveTripId
     };
     onSubmit(processedData);
   });
