@@ -5,12 +5,14 @@ import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 
 interface RestaurantSearchInputProps {
   value: string;
-  onChange: (restaurantName: string, placeDetails?: google.maps.places.PlaceResult) => void;
+  onChange: (value: string, details?: google.maps.places.PlaceResult) => void;
+  autoFocus?: boolean;
 }
 
 const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   value,
-  onChange
+  onChange,
+  autoFocus
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -78,8 +80,9 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
             }
           }}
           placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
-          className="w-full bg-white"
+          className="bg-white"
           disabled={isLoading}
+          autoFocus={autoFocus}
           autoComplete="off"
         />
       </div>
