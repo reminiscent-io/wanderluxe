@@ -10,7 +10,7 @@ const GoogleMapsScript: React.FC<GoogleMapsScriptProps> = ({ apiKey }) => {
     <script 
       async 
       defer 
-      src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&v=weekly`}
+      src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
     />
   );
 };

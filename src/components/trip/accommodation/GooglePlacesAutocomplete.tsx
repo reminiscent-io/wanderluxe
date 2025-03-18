@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { supabase } from '@/integrations/supabase/client';
@@ -21,12 +20,13 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(value);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken>();
 
   useEffect(() => {
     const initializeGooglePlaces = async () => {
       try {
+        // Get the API key from Supabase Edge Function
         const { data: { key }, error } = await supabase.functions.invoke('get-google-places-key');
         
         if (error) {
@@ -36,7 +36,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 
         // Load the Google Places script
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&v=weekly`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
         script.async = true;
         script.defer = true;
         script.onload = () => {
@@ -61,46 +61,30 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     if (!inputRef.current || !window.google) return;
 
     try {
-      sessionTokenRef.current = new google.maps.places.AutocompleteSessionToken();
-      
-      const autocompleteService = new google.maps.places.AutocompleteService();
-      const placesService = new google.maps.places.PlacesService(document.createElement('div'));
+      // Clean up previous instance if it exists
+      if (autocompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
 
-      inputRef.current.addEventListener('input', async (e: Event) => {
-        const input = (e.target as HTMLInputElement).value;
-        if (!input) return;
+      const options: google.maps.places.AutocompleteOptions = {
+        types: ['lodging'],
+        fields: ['name', 'formatted_address', 'place_id', 'international_phone_number', 'website', 'formatted_phone_number']
+      };
 
-        try {
-          const request = {
-            input,
-            types: ['lodging'],
-            sessionToken: sessionTokenRef.current,
-          };
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        options
+      );
 
-          const predictions = await autocompleteService.getPlacePredictions(request);
-          
-          if (predictions?.predictions?.[0]) {
-            const placeResult = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
-              placesService.getDetails(
-                {
-                  placeId: predictions.predictions[0].place_id,
-                  fields: ['name', 'formatted_address', 'place_id', 'international_phone_number', 'website']
-                },
-                (result, status) => {
-                  if (status === google.maps.places.PlacesServiceStatus.OK && result) {
-                    resolve(result);
-                  } else {
-                    reject(status);
-                  }
-                }
-              );
-            });
-
-            setInputValue(placeResult.name || input);
-            onChange(placeResult.name || input, placeResult);
-          }
-        } catch (error) {
-          console.error('Error getting place predictions:', error);
+      autocompleteRef.current.addListener('place_changed', () => {
+        if (!autocompleteRef.current) return;
+        
+        const place = autocompleteRef.current.getPlace();
+        console.log('Selected place:', place);
+        
+        if (place.name) {
+          setInputValue(place.name);
+          onChange(place.name, place);
         }
       });
     } catch (error) {
@@ -115,7 +99,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    if (!sessionTokenRef.current) {
+    // Only trigger onChange with the text value when user is typing
+    if (!autocompleteRef.current) {
       onChange(newValue);
     }
   };

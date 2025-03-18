@@ -57,39 +57,23 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         placesWidgetRef.current.dispose();
       }
 
-      const sessionToken = new google.maps.places.AutocompleteSessionToken();
-      
-      const autocomplete = new google.maps.places.AutocompleteService();
-      
-      inputRef.current.addEventListener('input', async (e: Event) => {
-        const input = (e.target as HTMLInputElement).value;
-        
-        if (!input) return;
+      const placeOptions: google.maps.places.PlaceOptions = {
+        fields: ['name', 'id', 'formattedAddress', 'globalLocationNumber', 'websiteURI', 'rating'],
+        types: ['restaurant']
+      };
 
-        try {
-          const request = {
-            input,
-            types: ['restaurant'],
-            sessionToken,
-            fields: ['name', 'formatted_address', 'place_id', 'phone_number', 'website', 'rating'],
-          };
+      const widget = new window.google.maps.places.PlacesWidget(inputRef.current, placeOptions);
+      placesWidgetRef.current = widget;
 
-          const predictions = await autocomplete.getPlacePredictions(request);
-          
-          if (predictions?.predictions) {
-            // Get details for the first prediction
-            const placeId = predictions.predictions[0].place_id;
-            const placeResult = await new google.maps.places.PlacesService(document.createElement('div'))
-              .getDetails({ placeId, fields: request.fields });
+      widget.addListener('placeSelect', (place: google.maps.places.Place) => {
+        console.log('Selected restaurant:', place);
 
-            if (placeResult) {
-              onChange(placeResult.name || input, placeResult);
-            }
-          }
-        } catch (error) {
-          console.error('Error getting place predictions:', error);
-          toast.error('Error searching for restaurants');
+        if (!place?.displayName) {
+          toast.error('Please select a valid restaurant from the dropdown');
+          return;
         }
+
+        onChange(place.displayName.text, place);
       });
     } catch (error) {
       console.error('Error initializing autocomplete:', error);
