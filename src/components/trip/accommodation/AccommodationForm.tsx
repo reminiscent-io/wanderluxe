@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import HotelSearchInput from './HotelSearchInput';
@@ -8,7 +7,7 @@ import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 import { AccommodationFormData } from '@/services/accommodation/types';
 import { toast } from 'sonner';
-import { supabase } from "@/integrations/supabase/client";
+import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 
 interface AccommodationFormProps {
   onSubmit: (data: AccommodationFormData) => Promise<void>;
@@ -46,7 +45,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [setIsGoogleMapsLoaded] = useState(false);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
 
   useEffect(() => {
     setFormData(initialFormState);
@@ -54,24 +53,13 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   
   useEffect(() => {
     const loadAPI = async () => {
-      try {
-        // Import the shared Google Maps loader
-        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
-        
-        // Load Google Maps API
-        const isLoaded = await loadGoogleMapsAPI();
-        
-        if (isLoaded) {
-          setIsGoogleMapsLoaded(true);
-        } else {
-          toast.error('Failed to initialize hotel search');
-        }
-      } catch (error) {
-        console.error('Error initializing Google Places:', error);
+      const isLoaded = await loadGoogleMapsAPI();
+      if (isLoaded) {
+        setIsGoogleLoaded(true);
+      } else {
         toast.error('Failed to initialize hotel search');
       }
     };
-
     loadAPI();
   }, []);
 
@@ -87,23 +75,15 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     }));
   };
 
-  // Get the button text based on form state
-  const getButtonText = () => {
-    if (isSubmitting) {
-      return 'Saving...';
-    }
-    return initialData ? 'Update' : 'Add Accommodation';
-  };
+  const getButtonText = () => isSubmitting ? 'Saving...' : (initialData ? 'Update' : 'Add Accommodation');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (initialData && !formData.stay_id) {
       console.error('Missing stay_id for update operation');
       toast.error('Missing accommodation ID');
       return;
     }
-
     try {
       setIsSubmitting(true);
       await onSubmit(formData);
@@ -121,40 +101,30 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
         value={formData.hotel}
         onChange={handleHotelSelect}
       />
-
       <HotelContactInfo
         address={formData.hotel_address}
         phone={formData.hotel_phone}
       />
-
       <HotelOptionalDetails
         hotelDetails={formData.hotel_details}
         hotelUrl={formData.hotel_url}
         onDetailsChange={(value) => setFormData({ ...formData, hotel_details: value })}
         onUrlChange={(value) => setFormData({ ...formData, hotel_url: value })}
       />
-
       <DateInputs
         checkinDate={formData.hotel_checkin_date}
         checkoutDate={formData.hotel_checkout_date}
         onCheckinChange={(value) => setFormData({ ...formData, hotel_checkin_date: value })}
         onCheckoutChange={(value) => setFormData({ ...formData, hotel_checkout_date: value })}
       />
-
       <CostInputs
         cost={formData.cost}
         currency={formData.currency}
         onCostChange={(value) => setFormData({ ...formData, cost: value })}
         onCurrencyChange={(value) => setFormData({ ...formData, currency: value })}
       />
-
       <div className="flex justify-end gap-2">
-        <Button 
-          type="button" 
-          variant="ghost" 
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button 
