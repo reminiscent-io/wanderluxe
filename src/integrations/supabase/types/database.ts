@@ -278,73 +278,83 @@ export type Database = {
       }
       restaurant_reservations: {
         Row: {
-          id: string
-          day_id: string
-          restaurant_name: string
-          reservation_time: string | null
-          number_of_people: number | null
-          confirmation_number: string | null
-          notes: string | null
-          cost: number | null
-          currency: string
-          created_at: string
-          order_index: number
-          address: string | null
-          phone_number: string | null
-          website: string | null
-          place_id: string | null
-          rating: number | null
-        }
+          id: string;
+          day_id: string;
+          trip_id: string; // added trip_id
+          restaurant_name: string;
+          reservation_time: string | null;
+          number_of_people: number | null;
+          confirmation_number: string | null;
+          notes: string | null;
+          cost: number | null;
+          currency: string;
+          created_at: string;
+          order_index: number;
+          address: string | null;
+          phone_number: string | null;
+          website: string | null;
+          place_id: string | null;
+          rating: number | null;
+        };
         Insert: {
-          id?: string
-          day_id: string
-          restaurant_name: string
-          reservation_time?: string | null
-          number_of_people?: number | null
-          confirmation_number?: string | null
-          notes?: string | null
-          cost?: number | null
-          currency?: string
-          created_at?: string
-          order_index: number
-          address?: string | null
-          phone_number?: string | null
-          website?: string | null
-          place_id?: string | null
-          rating?: number | null
-        }
+          id?: string;
+          day_id: string;
+          trip_id: string; // added trip_id (required)
+          restaurant_name: string;
+          reservation_time?: string | null;
+          number_of_people?: number | null;
+          confirmation_number?: string | null;
+          notes?: string | null;
+          cost?: number | null;
+          currency?: string;
+          created_at?: string;
+          order_index: number;
+          address?: string | null;
+          phone_number?: string | null;
+          website?: string | null;
+          place_id?: string | null;
+          rating?: number | null;
+        };
         Update: {
-          id?: string
-          day_id?: string
-          restaurant_name?: string
-          reservation_time?: string | null
-          number_of_people?: number | null
-          confirmation_number?: string | null
-          notes?: string | null
-          cost?: number | null
-          currency?: string
-          created_at?: string
-          order_index?: number
-          address?: string | null
-          phone_number?: string | null
-          website?: string | null
-          place_id?: string | null
-          rating?: number | null
-        }
+          id?: string;
+          day_id?: string;
+          trip_id?: string; // added trip_id (optional)
+          restaurant_name?: string;
+          reservation_time?: string | null;
+          number_of_people?: number | null;
+          confirmation_number?: string | null;
+          notes?: string | null;
+          cost?: number | null;
+          currency?: string;
+          created_at?: string;
+          order_index?: number;
+          address?: string | null;
+          phone_number?: string | null;
+          website?: string | null;
+          place_id?: string | null;
+          rating?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "restaurant_reservations_currency_fkey"
-            columns: ["currency"]
-            isOneToOne: false
-            referencedRelation: "currencies"
-            referencedColumns: ["currency"]
+            foreignKeyName: "restaurant_reservations_currency_fkey";
+            columns: ["currency"];
+            isOneToOne: false;
+            referencedRelation: "currencies";
+            referencedColumns: ["currency"];
           },
           {
-            foreignKeyName: "restaurant_reservations_day_id_fkey"
-            columns: ["day_id"]
-            isOneToOne: false
-            referencedRelation: "trip_days"
-            referencedColumns: ["day_id"]
+            foreignKeyName: "restaurant_reservations_day_id_fkey";
+            columns: ["day_id"];
+            isOneToOne: false;
+            referencedRelation: "trip_days";
+            referencedColumns: ["day_id"];
+          },
+          {
+            foreignKeyName: "restaurant_reservations_trip_id_fkey";
+            columns: ["trip_id"];
+            isOneToOne: false;
+            referencedRelation: "trips";
+            referencedColumns: ["trip_id"];
           }
         ]
       }
