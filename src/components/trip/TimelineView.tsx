@@ -10,8 +10,6 @@ import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
-import { Card } from "@/components/ui/card";
-import { CalendarDays } from "lucide-react";
 
 interface TimelineViewProps {
   tripId: string;
@@ -39,9 +37,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     arrival_date: initialTripDates?.arrival_date || null,
     departure_date: initialTripDates?.departure_date || null
   });
-  const [hotelStays, setHotelStays] = useState<HotelStay[]>([]);
-  const [hasLoadedStays, setHasLoadedStays] = useState(false);
-  const [isDateExpanded, setIsDateExpanded] = useState(false);
 
   // Preload Google Maps API when Timeline view mounts.
   useEffect(() => {
@@ -132,7 +127,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
-  const memoizedHotelStays = React.useMemo(() => 
+  const hotelStays = React.useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
       trip_id: tripId,
@@ -157,6 +152,21 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       )}
 
       <div className="flex flex-col gap-4">
+        {console.log('Rendering TripDates with:', { 
+          tripId, 
+          arrivalDate: tripDates.arrival_date, 
+          departureDate: tripDates.departure_date 
+        })}
+        {tripDates.arrival_date && tripDates.departure_date ? (
+          <TripDates
+            tripId={tripId}
+            arrivalDate={tripDates.arrival_date}
+            departureDate={tripDates.departure_date}
+            onDatesChange={handleRefresh}
+          />
+        ) : (
+          <p>Loading dates...</p>
+        )}
         <div className="flex gap-4">
           <AccommodationsSection
             tripId={tripId}
@@ -167,20 +177,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             tripId={tripId}
             onTransportationChange={handleRefresh}
           />
-          <Card className="bg-sand-50 shadow-md flex-1">
-            {tripDates.arrival_date && tripDates.departure_date ? (
-              <TripDates
-                tripId={tripId}
-                arrivalDate={tripDates.arrival_date}
-                departureDate={tripDates.departure_date}
-                onDatesChange={handleRefresh}
-                isExpanded={isDateExpanded}
-                onExpandChange={setIsDateExpanded}
-              />
-            ) : (
-              <p className="p-6">Loading dates...</p>
-            )}
-          </Card>
         </div>
       </div>
 
