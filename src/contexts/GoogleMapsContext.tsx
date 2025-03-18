@@ -20,6 +20,11 @@ export const GoogleMapsProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     const initializeGoogleMaps = async () => {
       try {
+        if (window.google?.maps) {
+          setIsLoaded(true);
+          return;
+        }
+
         const loaded = await loadGoogleMapsAPI();
         if (!loaded) {
           throw new Error('Failed to load Google Maps API');
