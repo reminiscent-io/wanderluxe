@@ -79,11 +79,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (initialData && !formData.stay_id) {
-      console.error('Missing stay_id for update operation');
-      toast.error('Missing accommodation ID');
-      return;
-    }
+    // Removed the check for missing stay_id to allow submission
     try {
       setIsSubmitting(true);
       await onSubmit(formData);
