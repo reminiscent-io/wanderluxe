@@ -45,22 +45,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const toast = useToast();
 
   // Load Google Maps API and check its return value.
-  useEffect(() => {
-    const loadAPI = async () => {
-      try {
-        const loaded = await loadGoogleMapsAPI();
-        if (loaded) {
-          setIsGoogleMapsLoaded(true);
-        } else {
-          toast('Failed to initialize restaurant search', { variant: 'error' });
-        }
-      } catch (error) {
-        console.error('Error initializing Google Places:', error);
-        toast('Failed to initialize restaurant search', { variant: 'error' });
-      }
-    };
-    loadAPI();
-  }, []);
+  // Google Maps is now managed by the GoogleMapsContext
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

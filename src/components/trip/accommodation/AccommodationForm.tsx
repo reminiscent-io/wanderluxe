@@ -52,28 +52,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     setFormData(initialFormState);
   }, [initialFormState]);
   
-  useEffect(() => {
-    const loadAPI = async () => {
-      try {
-        // Import the shared Google Maps loader
-        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
-        
-        // Load Google Maps API
-        const isLoaded = await loadGoogleMapsAPI();
-        
-        if (isLoaded) {
-          setIsGoogleMapsLoaded(true);
-        } else {
-          toast.error('Failed to initialize hotel search');
-        }
-      } catch (error) {
-        console.error('Error initializing Google Places:', error);
-        toast.error('Failed to initialize hotel search');
-      }
-    };
-
-    loadAPI();
-  }, []);
+  // Google Maps is now managed by the GoogleMapsContext
 
   const handleHotelSelect = (hotelName: string, placeDetails?: google.maps.places.Place) => {
     setFormData(prev => ({
