@@ -14,7 +14,7 @@ interface TripTabsProps {
 
 const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
-    <Tabs defaultValue="timeline" className="w-full mt-0">
+    <Tabs defaultValue="timeline" className="w-full h-[calc(100vh-24rem)] flex flex-col mt-0">
       {/* Update TabsList: use min-w-max instead of w-full */}
       <TabsList className="flex min-w-max overflow-x-auto no-scrollbar mb-8 rounded-xl p-1 bg-transparent gap-2 pl-4 md:pl-1">
         <TabsTrigger 
@@ -47,11 +47,11 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="vision-board">
+      <TabsContent value="vision-board" className="flex-1 overflow-auto">
         <VisionBoardView tripId={tripId} />
       </TabsContent>
 
-      <TabsContent value="timeline">
+      <TabsContent value="timeline" className="flex-1 overflow-auto">
         <TimelineView 
           tripId={tripId}
           tripDates={{
@@ -65,11 +65,11 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
         />
       </TabsContent>
 
-      <TabsContent value="budget">
+      <TabsContent value="budget" className="flex-1 overflow-auto">
         <BudgetView tripId={tripId} />
       </TabsContent>
 
-      <TabsContent value="packing">
+      <TabsContent value="packing" className="flex-1 overflow-auto">
         <PackingView tripId={tripId} />
       </TabsContent>
     </Tabs>
