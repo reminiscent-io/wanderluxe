@@ -151,7 +151,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
       )}
 
-      <div className="grid gap-4">
+      <div className="flex gap-4">
         {console.log('Rendering TripDates with:', { 
           tripId, 
           arrivalDate: tripDates.arrival_date, 
