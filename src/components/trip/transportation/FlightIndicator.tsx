@@ -4,15 +4,22 @@ import { Plane } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
+import { useState } from 'react';
+import TransportationDialog from './TransportationDialog';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
 interface FlightIndicatorProps {
   event: TransportationEvent;
-  onClick: () => void;
+  tripId: string;
 }
 
-const FlightIndicator: React.FC<FlightIndicatorProps> = ({ event, onClick }) => {
+const FlightIndicator: React.FC<FlightIndicatorProps> = ({ event, tripId }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleClick = () => {
+    setDialogOpen(true);
+  };
   const formatTime = (time?: string | null) => {
     if (!time) return '';
     const [hours, minutes] = time.split(':');
@@ -28,7 +35,7 @@ const FlightIndicator: React.FC<FlightIndicatorProps> = ({ event, onClick }) => 
       className="mb-4 w-full max-w-md mx-auto"
     >
       <Card
-        onClick={onClick}
+        onClick={handleClick}
         className="p-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3 bg-white/80 backdrop-blur-sm shadow-md"
       >
         <div className="bg-earth-50 p-2 rounded-full">
@@ -44,6 +51,13 @@ const FlightIndicator: React.FC<FlightIndicatorProps> = ({ event, onClick }) => 
           </p>
         </div>
       </Card>
+      <TransportationDialog
+        tripId={tripId}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initialData={event}
+        onSuccess={() => setDialogOpen(false)}
+      />
     </motion.div>
   );
 };
