@@ -47,6 +47,7 @@ const DiningList: React.FC<DiningListProps> = ({
       const processedData = {
         ...data,
         day_id: dayId,
+        trip_id: tripId,
         order_index: reservations.length,
         reservation_time: data.reservation_time || null
       };
