@@ -15,10 +15,10 @@ interface TripTabsProps {
 const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
     <Tabs defaultValue="timeline" className="w-full mt-0">
-      <TabsList className="flex w-full overflow-x-auto mb-8 rounded-xl p-1 bg-transparent gap-2">
+      <TabsList className="flex w-full overflow-x-auto no-scrollbar mb-8 rounded-xl p-1 bg-transparent gap-2">
         <TabsTrigger 
           value="vision-board"
-          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0 min-w-max"
+          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0"
         >
           <Lightbulb className="w-5 h-5" />
           Vision Board
