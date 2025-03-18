@@ -132,7 +132,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
-  const hotelStays = React.useMemo(() => 
+  const memoizedHotelStays = React.useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
       trip_id: tripId,
