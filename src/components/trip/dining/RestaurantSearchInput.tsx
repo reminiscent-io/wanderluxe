@@ -26,27 +26,17 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const placesWidgetRef = useRef<google.maps.places.PlacesWidget | null>(null);
 
-  useEffect(() => {
-    const loadAPI = async () => {
-      try {
-        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
-        const loaded = await loadGoogleMapsAPI();
-        if (loaded) {
-          setIsLoading(false);
-          initializeAutocomplete();
-        } else {
-          setIsLoading(false);
-          toast.error('Failed to initialize restaurant search');
-        }
-      } catch (error) {
-        console.error('Error initializing Google Places:', error);
-        toast.error('Failed to initialize restaurant search');
-        setIsLoading(false);
-      }
-    };
+  const { isLoaded, hasError } = useGoogleMaps();
 
-    loadAPI();
-  }, []);
+  useEffect(() => {
+    if (isLoaded) {
+      setIsLoading(false);
+      initializeAutocomplete();
+    } else if (hasError) {
+      setIsLoading(false);
+      toast.error('Failed to initialize restaurant search');
+    }
+  }, [isLoaded, hasError]);
 
   const initializeAutocomplete = () => {
     if (!inputRef.current || !window.google) return;
