@@ -27,7 +27,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingDates, setIsLoadingDates] = useState(false);
+  const [setIsLoadingDates] = useState(false);
 
   // State for trip dates; initialized from props if available.
   const [tripDates, setTripDates] = useState<{
@@ -37,9 +37,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     arrival_date: initialTripDates?.arrival_date || null,
     departure_date: initialTripDates?.departure_date || null
   });
-
-  const [hasLoadedStays, setHasLoadedStays] = useState(false);
-  const [isDateExpanded, setIsDateExpanded] = useState(false);
 
   // Preload Google Maps API when Timeline view mounts.
   useEffect(() => {
