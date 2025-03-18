@@ -85,7 +85,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       type="text"
       value={inputValue}
       onChange={handleInputChange}
-      className={className}
+      className={`${className} relative z-50`}
       placeholder={placeholder}
       disabled={isLoading}
     />
