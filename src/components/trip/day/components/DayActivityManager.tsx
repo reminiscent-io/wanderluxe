@@ -90,7 +90,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
   const handleEditActivity = async (activityId: string, updatedActivity: ActivityFormData): Promise<void> => {
     console.log('Editing activity with ID:', activityId, 'and new data:', updatedActivity);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('day_activities')
         .update({
           title: updatedActivity.title,
