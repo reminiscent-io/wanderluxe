@@ -279,8 +279,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   <select
                     {...field}
                     className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+                    defaultValue="USD"
                   >
-                    <option value="">Select currency</option>
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                     <option value="GBP">GBP</option>
