@@ -11,7 +11,9 @@ export const loadGoogleMapsAPI = async (): Promise<boolean> => {
     const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
     
     if (!apiKey) {
-      throw new Error('Google Places API key not found in environment variables');
+      console.error('Google Places API key not found in environment variables');
+      toast.error('Failed to load Google Maps API key');
+      return false;
     }
 
     return new Promise((resolve) => {
