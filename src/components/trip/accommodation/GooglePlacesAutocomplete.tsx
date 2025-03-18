@@ -27,7 +27,9 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
-    if (isLoaded && inputRef.current && !autocompleteRef.current) {
+    const initializeAutocomplete = () => {
+      if (!inputRef.current || autocompleteRef.current) return;
+      
       try {
         const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
           fields: ['name', 'formatted_address', 'place_id', 'website', 'formatted_phone_number', 'rating'],
@@ -56,6 +58,12 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
         toast.error('Failed to initialize hotel search');
         setIsLoading(false);
       }
+    };
+
+    if (isLoaded) {
+      initializeAutocomplete();
+    } else {
+      setIsLoading(true);
     }
 
     return () => {

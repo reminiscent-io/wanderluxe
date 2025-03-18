@@ -4,12 +4,7 @@ import { toast } from "sonner";
 
 const SCRIPT_ID = 'google-maps-script';
 
-/**
- * Loads the Google Maps API with the Places library.
- * Returns a promise that resolves to true when loaded, or false if it fails.
- */
 export const loadGoogleMapsAPI = async (): Promise<boolean> => {
-  // If Google Maps is already loaded, return immediately.
   if (window.google?.maps) return true;
   if (document.getElementById(SCRIPT_ID)) return true;
 
@@ -18,23 +13,33 @@ export const loadGoogleMapsAPI = async (): Promise<boolean> => {
     
     if (error) {
       console.error('Error fetching Google Places API key:', error);
+      toast.error('Failed to fetch API key');
       return false;
     }
 
     return new Promise((resolve) => {
       const script = document.createElement('script');
       script.id = SCRIPT_ID;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.key}&libraries=places&loading=async`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.key}&libraries=places`;
       script.async = true;
       script.defer = true;
 
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
+      script.onload = () => {
+        console.log('Google Maps API loaded successfully');
+        resolve(true);
+      };
+
+      script.onerror = (error) => {
+        console.error('Google Maps API failed to load:', error);
+        toast.error('Failed to load Google Maps');
+        resolve(false);
+      };
 
       document.head.appendChild(script);
     });
   } catch (error) {
-    console.error('Error loading Google Maps API:', error);
+    console.error('Error initializing Google Maps API:', error);
+    toast.error('Failed to initialize Google Maps');
     return false;
   }
 };
