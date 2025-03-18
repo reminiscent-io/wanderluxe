@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -30,7 +29,8 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      {/* Prevent closing when clicking on outside elements (like the autocomplete dropdown) */}
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
             {initialData?.stay_id ? 'Edit Accommodation' : 'Add Accommodation'}
