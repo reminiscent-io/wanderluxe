@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader'; // Updated import
+import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 
 // Define your form schema
 const formSchema = z.object({
@@ -29,7 +29,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
-  onSubmit: (data: FormValues & { tripId: string }) => void; 
+  onSubmit: (data: FormValues & { trip_id: string }) => void; 
   defaultValues?: Partial<FormValues>;
   isSubmitting?: boolean;
   tripId: string; 
@@ -88,7 +88,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      tripId: tripId // Ensure tripId is passed with correct property name
+      trip_id: tripId // updated to match your DB column name
     };
     onSubmit(processedData);
   });
