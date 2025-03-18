@@ -21,7 +21,7 @@ const formSchema = z.object({
   number_of_people: z.number().optional().nullable(),
   notes: z.string().optional(),
   cost: z.number().optional().nullable(),
-  currency: z.string().optional(),
+  currency: z.string().optional().nullable(),
   place_id: z.string().optional(),
   rating: z.number().optional(),
 });
