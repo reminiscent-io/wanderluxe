@@ -27,7 +27,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     confirmation_number: '',
     start_date: initialData?.start_date || tripArrivalDate || '',
     start_time: '',
-    end_date: initialData?.end_date || tripDepartureDate || '',
+    end_date: initialData?.end_date || tripArrivalDate || '',
     end_time: '',
     departure_location: '',
     arrival_location: '',
