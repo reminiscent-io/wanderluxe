@@ -124,7 +124,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 Restaurant Name <span className="text-red-500">*</span>
               </FormLabel>
               <RestaurantSearchInput
-                autoFocus
                 value={field.value}
                 onChange={(name, details) => {
                   field.onChange(name);
