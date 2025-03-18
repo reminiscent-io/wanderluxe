@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import RestaurantReservationForm from './RestaurantReservationForm';
 
 interface RestaurantReservationDialogProps {
@@ -28,6 +28,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
         <div aria-describedby="restaurant-reservation-description">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>Enter the details for your restaurant reservation.</DialogDescription>
           </DialogHeader>
           <p id="restaurant-reservation-description" className="sr-only">
             Please fill out the restaurant reservation form.
