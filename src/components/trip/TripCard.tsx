@@ -1,13 +1,11 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
-import { EyeOff, Info } from 'lucide-react';
+import { EyeOff } from 'lucide-react';
 import { format, getYear, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Trip } from '@/types/trip';
 
 interface TripCardProps {
