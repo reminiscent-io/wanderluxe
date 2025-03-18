@@ -1,17 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-
-interface RestaurantDetails {
-  name: string;
-  place_id?: string;
-  formatted_address?: string;
-  formatted_phone_number?: string;
-  website?: string;
-  rating?: number;
-  trip_id?: string;
-}
+import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 
 interface RestaurantSearchInputProps {
   value: string;
@@ -28,52 +18,43 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 
   useEffect(() => {
     const loadAPI = async () => {
-      try {
-        const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader'); // Updated import name.
-        const loaded = await loadGoogleMapsAPI();
-        if (loaded) {
-          setIsLoading(false);
-          initializeAutocomplete();
-        } else {
-          setIsLoading(false);
-          toast('Failed to initialize restaurant search', { variant: 'error' });
-        }
-      } catch (error) {
-        console.error('Error initializing Google Places:', error);
-        toast('Failed to initialize restaurant search', { variant: 'error' });
+      const loaded = await loadGoogleMapsAPI();
+      if (loaded) {
         setIsLoading(false);
+        initializeAutocomplete();
+      } else {
+        setIsLoading(false);
+        toast('Failed to initialize restaurant search', { variant: 'error' });
       }
     };
-
     loadAPI();
   }, []);
 
   const initializeAutocomplete = () => {
     if (!inputRef.current || !window.google) return;
-
     try {
       if (autoCompleteRef.current) {
         google.maps.event.clearInstanceListeners(autoCompleteRef.current);
       }
-
       const options: google.maps.places.AutocompleteOptions = {
-        fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
+        fields: [
+          'name', 
+          'place_id', 
+          'formatted_address', 
+          'formatted_phone_number', 
+          'website', 
+          'rating'
+        ],
         types: ['restaurant', 'food']
       };
-
       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
-
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
-
         const place = autoCompleteRef.current.getPlace();
-        console.log('Selected restaurant:', place);
-
         if (!place?.name) {
           toast('Please select a valid restaurant from the dropdown', { variant: 'error' });
           return;
         }
-
         onChange(place.name, place);
       });
     } catch (error) {
