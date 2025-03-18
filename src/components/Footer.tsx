@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 const Footer = () => {
   return (
     <footer className="py-6 border-t mt-auto">
-      <div className="container mx-auto px-4">
+      <div className="w-full">
         <div className="flex flex-col items-center space-y-4">
-          <div className="max-w-2xl text-center mb-4 bg-[#f5f0e6] p-4 rounded-lg">
+          <div className="w-full text-center mb-4 bg-[#f5f0e6] p-4">
             <h2 className="text-sm font-semibold mb-2">About WanderLuxe</h2>
             <p className="text-sm text-muted-foreground">
               WanderLuxe is your all-in-one travel planning companion that lets you create, customize, and share detailed trip itineraries. Plan your accommodations, activities, dining experiences, and transportation seamlessly. Collaborate with fellow travelers and keep all your travel details organized in one place.
