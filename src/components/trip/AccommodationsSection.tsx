@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
@@ -20,22 +19,20 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   className,
   tripId,
   onAccommodationChange,
-  hotelStays
+  hotelStays = []
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+  const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
+  const [editingStay, setEditingStay] = useState<HotelStay | null>(null);
+
   // Use the main useTripDays hook and get dates from its data
   const { days } = useTripDays(tripId);
   const tripDates = {
     arrival_date: days?.[0]?.date || null,
     departure_date: days?.[days?.length - 1]?.date || null
   };
-  
+
   const {
-    isAddingAccommodation,
-    setIsAddingAccommodation,
-    editingStay,
-    setEditingStay,
     handleSubmit,
     handleUpdate,
     handleDelete
@@ -44,25 +41,13 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   const handleEdit = (stayId: string) => {
     const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
     if (stayToEdit) {
-      setEditingStay({
-        stay_id: stayToEdit.stay_id,
-        hotel: stayToEdit.hotel,
-        hotel_details: stayToEdit.hotel_details || '',
-        hotel_url: stayToEdit.hotel_url || '',
-        hotel_checkin_date: stayToEdit.hotel_checkin_date,
-        hotel_checkout_date: stayToEdit.hotel_checkout_date,
-        cost: stayToEdit.cost?.toString() || null,  // Optional cost
-        currency: stayToEdit.currency,              // Optional currency
-        hotel_address: stayToEdit.hotel_address || '',
-        hotel_phone: stayToEdit.hotel_phone || '',
-        hotel_place_id: stayToEdit.hotel_place_id,
-        hotel_website: stayToEdit.hotel_website
-      });
+      setEditingStay(stayToEdit);
+      setIsAddingAccommodation(true);
     }
   };
 
   // Sort hotel stays by check-in date in ascending order
-  const sortedHotelStays = hotelStays.sort((a, b) =>
+  const sortedHotelStays = [...hotelStays].sort((a, b) =>
     new Date(a.hotel_checkin_date).getTime() - new Date(b.hotel_checkin_date).getTime()
   );
 
@@ -74,7 +59,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       />
 
       {isExpanded && (
-        <>
+        <div className="p-6 pt-0 space-y-6">
           <HotelStaysList
             hotelStays={sortedHotelStays}
             onEdit={handleEdit}
@@ -89,12 +74,15 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             onSubmit={editingStay ? 
               (formData) => handleUpdate(editingStay.stay_id, formData)
               : handleSubmit}
-            onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
+            onCancel={() => {
+              setEditingStay(null);
+              setIsAddingAccommodation(false);
+            }}
             initialData={editingStay}
             tripArrivalDate={tripDates.arrival_date}
             tripDepartureDate={tripDates.departure_date}
           />
-        </>
+        </div>
       )}
     </Card>
   );
