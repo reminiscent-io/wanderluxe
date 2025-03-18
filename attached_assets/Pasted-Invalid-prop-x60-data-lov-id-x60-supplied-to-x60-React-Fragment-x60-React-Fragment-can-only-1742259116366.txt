@@ -1,0 +1,23 @@
+Invalid prop &#x60;data-lov-id&#x60; supplied to &#x60;React.Fragment&#x60;. React.Fragment can only have &#x60;key&#x60; and &#x60;children&#x60; props.
+setIsLoadingDates is not a function
+at https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/src/components/trip/TimelineView.tsx:57:13
+at react-stack-bottom-frame (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:16242:20)
+at runWithFiberInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:726:18)
+at commitHookEffectListMount (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:7767:122)
+at commitHookPassiveMountEffects (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:7825:60)
+at commitPassiveMountOnFiber (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:9182:29)
+at recursivelyTraversePassiveMountEffects (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:9163:13)
+at commitPassiveMountOnFiber (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:9265:13)
+at recursivelyTraversePassiveMountEffects (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:9163:13)
+at commitPassiveMountOnFiber (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:9176:13)
+setIsLoadingDates is not a function
+at https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/src/components/trip/TimelineView.tsx:57:13
+at react-stack-bottom-frame (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:16242:20)
+at runWithFiberInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:726:18)
+at commitHookEffectListMount (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:7767:122)
+at commitHookPassiveMountEffects (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:7825:60)
+at reconnectPassiveEffects (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:9297:13)
+at doubleInvokeEffectsOnFiber (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:11282:207)
+at runWithFiberInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:726:18)
+at recursivelyTraverseAndDoubleInvokeEffectsInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:11253:78)
+at recursivelyTraverseAndDoubleInvokeEffectsInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=9ad95a71:11259:17)
