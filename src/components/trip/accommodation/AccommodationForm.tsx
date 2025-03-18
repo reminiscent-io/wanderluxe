@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Button, Label, Input } from "@/components/ui/button"; // Assuming Button and Label are from a UI library
+import { Button} from "@/components/ui/button"; // Assuming Button and Label are from a UI library
 import HotelSearchInput from './HotelSearchInput';
 import DateInputs from './form/DateInputs';
 import CostInputs from './form/CostInputs';
@@ -45,7 +45,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const [setIsGoogleLoaded] = useState(false);
 
   useEffect(() => {
     setFormData(initialFormState);
