@@ -152,21 +152,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       )}
 
       <div className="flex flex-col gap-4">
-        {console.log('Rendering TripDates with:', { 
-          tripId, 
-          arrivalDate: tripDates.arrival_date, 
-          departureDate: tripDates.departure_date 
-        })}
-        {tripDates.arrival_date && tripDates.departure_date ? (
-          <TripDates
-            tripId={tripId}
-            arrivalDate={tripDates.arrival_date}
-            departureDate={tripDates.departure_date}
-            onDatesChange={handleRefresh}
-          />
-        ) : (
-          <p>Loading dates...</p>
-        )}
         <div className="flex gap-4">
           <AccommodationsSection
             tripId={tripId}
@@ -177,6 +162,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             tripId={tripId}
             onTransportationChange={handleRefresh}
           />
+          <Card className="bg-sand-50 shadow-md flex-1">
+            {tripDates.arrival_date && tripDates.departure_date ? (
+              <TripDates
+                tripId={tripId}
+                arrivalDate={tripDates.arrival_date}
+                departureDate={tripDates.departure_date}
+                onDatesChange={handleRefresh}
+              />
+            ) : (
+              <p className="p-6">Loading dates...</p>
+            )}
+          </Card>
         </div>
       </div>
 
