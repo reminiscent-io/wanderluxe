@@ -21,7 +21,7 @@ const formSchema = z.object({
   number_of_people: z.number().min(1).optional(),
   notes: z.string().optional(),
   cost: z.number().optional(),
-  currency: z.string().optional(),
+  currency: z.string().optional().nullable(),
   place_id: z.string().optional(),
   rating: z.number().optional(),
 });
@@ -281,7 +281,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     value={field.value || ''}
                     className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
                   >
-                    <option value="">Select currency</option>
+                    <option value="">No currency</option>
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                     <option value="GBP">GBP</option>
