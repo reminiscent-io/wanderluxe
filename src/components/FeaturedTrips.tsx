@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+/*import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from './trip/TripCard';
 import { Trip } from '@/types/trip';
-
+*/
 const FeaturedTrips = () => {
   // Return null to hide the featured trips as requested
   return null;
