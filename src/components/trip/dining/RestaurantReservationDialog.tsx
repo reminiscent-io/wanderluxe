@@ -9,7 +9,7 @@ interface RestaurantReservationDialogProps {
   isSubmitting: boolean;
   editingReservation?: any;
   title: string;
-  tripId: string; // added tripId prop
+  tripId: string; // must be provided
 }
 
 const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = ({
