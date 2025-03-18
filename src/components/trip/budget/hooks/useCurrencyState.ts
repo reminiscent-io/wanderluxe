@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCurrencyRates } from '../utils/currencyConverter';
 
 export function useCurrencyState(initialCurrency = 'USD') {
