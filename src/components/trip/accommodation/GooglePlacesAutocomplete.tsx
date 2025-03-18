@@ -1,7 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
-import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { toast } from 'sonner';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 
@@ -23,54 +22,48 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(value);
-  const placesWidgetRef = useRef<google.maps.places.PlacesWidget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
   const { isLoaded, hasError } = useGoogleMaps();
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
-    if (isLoaded) {
-      setIsLoading(false);
-      initializeAutocomplete();
-    } else if (hasError) {
-      setIsLoading(false);
-      toast.error('Failed to initialize hotel search');
-    }
-  }, [isLoaded, hasError]);
+    if (isLoaded && inputRef.current && !autocompleteRef.current) {
+      try {
+        const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
+          fields: ['name', 'formatted_address', 'place_id', 'website', 'formatted_phone_number', 'rating'],
+          types: ['lodging']
+        });
 
-  const initializeAutocomplete = () => {
-    if (!inputRef.current || !window.google) return;
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place.name) {
+            setInputValue(place.name);
+            onChange(place.name, {
+              id: place.place_id,
+              displayName: { text: place.name },
+              formattedAddress: place.formatted_address,
+              globalLocationNumber: place.formatted_phone_number,
+              websiteURI: place.website,
+              rating: place.rating
+            } as google.maps.places.Place);
+          }
+        });
 
-    try {
-      // Clean up previous instance if it exists
-      if (placesWidgetRef.current) {
-        placesWidgetRef.current.dispose();
+        autocompleteRef.current = autocomplete;
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error initializing autocomplete:', error);
+        toast.error('Failed to initialize hotel search');
+        setIsLoading(false);
       }
-
-      const placeOptions: google.maps.places.PlaceOptions = {
-        fields: ['displayName', 'formattedAddress', 'globalLocationNumber', 'websiteURI'],
-        types: ['lodging']
-      };
-
-      const widget = new window.google.maps.places.PlacesWidget(inputRef.current, placeOptions);
-      placesWidgetRef.current = widget;
-
-      widget.addListener('placeSelect', (place: google.maps.places.Place) => {
-        console.log('Selected hotel:', place);
-        
-        if (!place?.displayName) {
-          toast.error('Please select a valid hotel from the dropdown');
-          return;
-        }
-
-        setInputValue(place.displayName.text);
-        onChange(place.displayName.text, place);
-      });
-    } catch (error) {
-      console.error('Error initializing autocomplete:', error);
-      toast.error('Failed to initialize hotel search');
     }
-  };
+
+    return () => {
+      if (autocompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+    };
+  }, [isLoaded, onChange]);
 
   useEffect(() => {
     setInputValue(value);
@@ -79,9 +72,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    if (!placesWidgetRef.current) {
-      onChange(newValue);
-    }
+    onChange(newValue);
   };
 
   return (
@@ -91,8 +82,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       value={inputValue}
       onChange={handleInputChange}
       className={className}
-      placeholder={placeholder}
-      disabled={isLoading}
+      placeholder={isLoading ? "Loading..." : placeholder}
+      disabled={isLoading || hasError}
     />
   );
 };

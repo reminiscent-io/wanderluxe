@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -25,52 +26,46 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
-  const placesWidgetRef = useRef<google.maps.places.PlacesWidget | null>(null);
-
   const { isLoaded, hasError } = useGoogleMaps();
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
-    if (isLoaded) {
-      setIsLoading(false);
-      initializeAutocomplete();
-    } else if (hasError) {
-      setIsLoading(false);
-      toast.error('Failed to initialize restaurant search');
-    }
-  }, [isLoaded, hasError]);
+    if (isLoaded && inputRef.current && !autocompleteRef.current) {
+      try {
+        const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
+          fields: ['name', 'formatted_address', 'place_id', 'website', 'formatted_phone_number', 'rating'],
+          types: ['restaurant']
+        });
 
-  const initializeAutocomplete = () => {
-    if (!inputRef.current || !window.google) return;
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place.name) {
+            onChange(place.name, {
+              id: place.place_id,
+              displayName: { text: place.name },
+              formattedAddress: place.formatted_address,
+              globalLocationNumber: place.formatted_phone_number,
+              websiteURI: place.website,
+              rating: place.rating
+            } as google.maps.places.Place);
+          }
+        });
 
-    try {
-      // Clean up previous instance if it exists
-      if (placesWidgetRef.current) {
-        placesWidgetRef.current.dispose();
+        autocompleteRef.current = autocomplete;
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error initializing autocomplete:', error);
+        toast.error('Failed to initialize restaurant search');
+        setIsLoading(false);
       }
-
-      const placeOptions: google.maps.places.PlaceOptions = {
-        fields: ['name', 'id', 'formattedAddress', 'globalLocationNumber', 'websiteURI', 'rating'],
-        types: ['restaurant']
-      };
-
-      const widget = new window.google.maps.places.PlacesWidget(inputRef.current, placeOptions);
-      placesWidgetRef.current = widget;
-
-      widget.addListener('placeSelect', (place: google.maps.places.Place) => {
-        console.log('Selected restaurant:', place);
-
-        if (!place?.displayName) {
-          toast.error('Please select a valid restaurant from the dropdown');
-          return;
-        }
-
-        onChange(place.displayName.text, place);
-      });
-    } catch (error) {
-      console.error('Error initializing autocomplete:', error);
-      toast.error('Failed to initialize restaurant search');
     }
-  };
+
+    return () => {
+      if (autocompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+    };
+  }, [isLoaded, onChange]);
 
   return (
     <div className="space-y-2">
@@ -83,7 +78,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
           className="w-full bg-white"
-          disabled={isLoading}
+          disabled={isLoading || hasError}
           autoComplete="off"
           autoFocus={true}
         />
