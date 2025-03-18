@@ -10,6 +10,8 @@ import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
+import { Card } from "@/components/ui/card";
+import { CalendarDays } from "lucide-react";
 
 interface TimelineViewProps {
   tripId: string;
