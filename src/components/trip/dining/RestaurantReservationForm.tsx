@@ -71,7 +71,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       number_of_people: undefined,
       notes: '',
       cost: undefined,
-      currency: null,
+      currency: 'USD',
       ...defaultValues,
     },
   });
@@ -278,7 +278,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 <FormControl>
                   <select
                     {...field}
-                    value={field.value || ''}
+                    value={field.value || 'USD'}
                     className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
                   >
                     <option value="USD">USD</option>
