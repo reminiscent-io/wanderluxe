@@ -94,11 +94,15 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
+      if (typeof onSubmit !== 'function') {
+        throw new Error('onSubmit prop must be a function');
+      }
       setIsSubmitting(true);
       await onSubmit(data);
     } catch (error) {
       console.error('Error submitting accommodation:', error);
       toast.error('Failed to save accommodation');
+      throw error; // Re-throw to be handled by parent
     } finally {
       setIsSubmitting(false);
     }
