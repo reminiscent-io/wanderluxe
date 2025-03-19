@@ -76,15 +76,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     },
   });
 
-  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
-    form.setValue('restaurant_name', place.name || '');
-    form.setValue('address', place.formatted_address || '');
-    form.setValue('phone_number', place.formatted_phone_number || '');
-    form.setValue('website', place.website || '');
-    form.setValue('place_id', place.place_id || '');
-    form.setValue('rating', place.rating || 0);
-  };
-
   const handleSubmitForm = form.handleSubmit((data) => {
     // Use the tripId prop or a default from editing values if available.
     const effectiveTripId = tripId || defaultValues?.trip_id;
@@ -146,15 +137,17 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           control={form.control}
           name="reservation_time"
           render={({ field }) => {
-            const [hour, minute, period] = React.useMemo(() => {
-              if (!field.value) return [12, 0, 'AM'];
-              const [hourStr, minuteStr] = field.value.split(':');
+            const parseTime = (value: string | null): [number, number, string] => {
+              if (!value) return [12, 0, 'AM'];
+              const [hourStr, minuteStr] = value.split(':');
               const hourNum = parseInt(hourStr, 10);
               const minuteNum = parseInt(minuteStr, 10);
               const period = hourNum >= 12 ? 'PM' : 'AM';
               const hour12 = hourNum % 12 || 12;
               return [hour12, minuteNum, period];
-            }, [field.value]);
+            };
+            
+            const [hour, minute, period] = parseTime(field.value);
 
             const handleTimeChange = (newHour: number, newMinute: number, newPeriod: string) => {
               let hour24 = newHour;
