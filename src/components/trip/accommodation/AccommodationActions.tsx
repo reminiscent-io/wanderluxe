@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -22,7 +23,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <>
+    <div>
       <Button
         onClick={() => setDialogOpen(true)}
         variant="outline"
@@ -37,11 +38,11 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         initialData={initialData}
-        onSave={onSubmit} {/* Updated prop name */}
+        onSave={onSubmit}
         tripArrivalDate={tripArrivalDate}
         tripDepartureDate={tripDepartureDate}
       />
-    </>
+    </div>
   );
 };
 
