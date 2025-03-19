@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -38,7 +37,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         initialData={initialData}
-        onSuccess={onSubmit}
+        onSave={onSubmit} {/* Updated prop name */}
         tripArrivalDate={tripArrivalDate}
         tripDepartureDate={tripDepartureDate}
       />
