@@ -42,7 +42,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   tripId,
 }) => {
   console.log("RestaurantReservationForm received tripId:", tripId);
-  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+  const [setIsGoogleMapsLoaded] = useState(false);
   const toast = useToast();
 
   // Load Google Maps API.
