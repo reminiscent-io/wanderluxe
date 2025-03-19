@@ -21,7 +21,6 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="hotel">Hotel Name *</Label>
       <GooglePlacesAutocomplete
         value={value}
         onChange={onChange}
