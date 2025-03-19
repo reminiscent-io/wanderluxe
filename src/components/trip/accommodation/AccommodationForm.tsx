@@ -54,9 +54,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   useEffect(() => {
     const loadAPI = async () => {
       const isLoaded = await loadGoogleMapsAPI();
-      if (isLoaded) {
-        setIsGoogleLoaded(true);
-      } else {
+      if (!isLoaded) {
         toast.error('Failed to initialize hotel search');
       }
     };
