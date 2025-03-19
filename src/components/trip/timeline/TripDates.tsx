@@ -22,8 +22,8 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [newArrival, setNewArrival] = React.useState('');
   const [newDeparture, setNewDeparture] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false); // Added state variable
-  const [isEditing, setIsEditing] = React.useState(false);     // Added state variable
+  const [setIsSubmitting] = React.useState(false); // Added state variable
+  const [setIsEditing] = React.useState(false);     // Added state variable
 
 
   // Enhanced state management with persistence of valid dates
