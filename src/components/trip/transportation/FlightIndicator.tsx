@@ -1,10 +1,9 @@
-import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Plane } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { React, useState } from 'react';
 import TransportationDialog from './TransportationDialog';
 
 type TransportationEvent = Tables<'transportation_events'>;
