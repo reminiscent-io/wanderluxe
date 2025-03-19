@@ -27,7 +27,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [setIsLoadingDates] = useState(false);
 
   // State for trip dates; initialized from props if available.
   const [tripDates, setTripDates] = useState<{
@@ -62,8 +61,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   useEffect(() => {
     if (!tripDates.arrival_date || !tripDates.departure_date) {
       console.log('Trip dates missing on mount, fetching fresh data');
-      setIsLoadingDates(true);
-      fetchTripData().finally(() => setIsLoadingDates(false));
+      fetchTripData();
     }
   }, []);
 
