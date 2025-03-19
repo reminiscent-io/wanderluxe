@@ -32,11 +32,14 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
       if (!formData) {
         throw new Error('Form data is required');
       }
+      if (typeof onSave !== 'function') {
+        throw new Error('onSave prop must be a function');
+      }
       await onSave(formData);
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving accommodation:', error);
-      // Consider adding more user-friendly error handling here.
+      throw error; // Re-throw to be handled by the form
     }
   };
 
