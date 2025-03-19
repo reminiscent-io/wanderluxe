@@ -12,7 +12,7 @@ interface HotelStayCardProps {
     hotel_checkin_date: string;
     hotel_checkout_date: string;
   };
-  onEdit: (stayId: string) => void;
+  onEdit: (stay: HotelStay) => void;
   onDelete: (stayId: string) => void;
   formatDateRange: (checkinDate: string, checkoutDate: string) => string;
 }
@@ -94,7 +94,7 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onEdit(stay.stay_id)}
+              onClick={() => onEdit(stay)}
               className="text-gray-500 hover:text-gray-700"
             >
               <Pencil className="h-4 w-4" />
