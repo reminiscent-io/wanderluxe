@@ -86,7 +86,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   };
 
   return (
-    <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
+    <div className="p-6 space-y-4">
       <ActivitiesList
         activities={sortedActivities}
         formatTime={formatTime}
