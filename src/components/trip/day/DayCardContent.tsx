@@ -98,7 +98,6 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 
       <div className="mt-8">
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-base font-semibold text-earth-700">Reservations</h4>
           {onAddReservation && (
             <Button
               onClick={() => onAddReservation?.()}
