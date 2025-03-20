@@ -60,6 +60,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
+              onClick={onEdit} // Added onClick handler to the Pencil button
             >
               <Pencil className="h-4 w-4" />
             </Button>
