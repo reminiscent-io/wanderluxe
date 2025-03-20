@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +16,6 @@ const DayImage: React.FC<DayImageProps> = ({
   defaultImageUrl,
   className
 }) => {
-  // Use the provided image URL or fallback to defaultImageUrl
   const displayImageUrl = imageUrl || defaultImageUrl;
   
   // For debugging
@@ -30,8 +28,8 @@ const DayImage: React.FC<DayImageProps> = ({
   });
 
   return (
-    <div className={cn('relative w-full h-full bg-black', className)}>
-      {displayImageUrl ? (
+    <div className={cn('relative w-full h-full bg-gray-200', className)}>
+      {displayImageUrl && (
         <img
           src={displayImageUrl}
           alt={title || 'Day image'}
@@ -41,9 +39,10 @@ const DayImage: React.FC<DayImageProps> = ({
             e.currentTarget.style.display = 'none';
           }}
         />
-      ) : (
+      )}
+      {!displayImageUrl && (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          No Image Selected
+          No image available
         </div>
       )}
     </div>
