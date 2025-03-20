@@ -32,7 +32,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             e.preventDefault();
           }
         }}
-        className="w-full px-4 py-3 flex items-center justify-between bg-sand-50/50 hover:bg-sand-100/70 transition-colors cursor-pointer"
+        className="w-full px-4 py-3 flex items-center justify-between bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-colors cursor-pointer"
       >
         <div>
           <div className="flex flex-col gap-2">
