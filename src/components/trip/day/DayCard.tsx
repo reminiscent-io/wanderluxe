@@ -62,33 +62,29 @@ const DayCard: React.FC<DayCardProps> = ({
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
-      {/* Header with onToggle to expand/collapse */}
-      <div className="z-30">
-        <DayHeader
-          title={dayTitle}
-          date={date}
-          isOpen={isExpanded}
-          onEdit={handleEdit}
-          onDelete={() => onDelete(id)}
-          onToggle={() => setIsExpanded((prev) => !prev)}
-        />
-      </div>
-
-      {/* Collapsible container with controlled open state */}
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <CollapsibleContent className="relative max-h-[600px] overflow-hidden">
-          {/* Stationary background image */}
+        <div className="relative h-[600px] w-full">
           <DayImage
             dayId={id}
             title={title}
             imageUrl={imageUrl}
             defaultImageUrl={defaultImageUrl}
-            className="absolute inset-0 w-full h-full object-cover z-0"
+            className="object-cover"
           />
-
-          {/* Scrolling overlay content */}
-          <div className="absolute inset-0 z-10 overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4 p-4 min-h-[600px]">
+          <div className="absolute inset-x-0 top-0 z-30">
+            <DayHeader
+              title={dayTitle}
+              date={date}
+              isOpen={isExpanded}
+              onEdit={handleEdit}
+              onDelete={() => onDelete(id)}
+              onToggle={() => setIsExpanded((prev) => !prev)}
+            />
+          </div>
+        </div>
+        <CollapsibleContent className="absolute inset-0 pt-16">
+          <div className="h-full overflow-y-auto">
+            <div className="pt-4 grid grid-cols-2 gap-4 p-4">
               {/* Left column: Stay & Transport */}
               <div className="space-y-4">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
@@ -165,8 +161,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-        </CollapsibleContent>
+          </CollapsibleContent>
       </Collapsible>
     </div>
   );
