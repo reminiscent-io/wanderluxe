@@ -41,16 +41,22 @@ function to24HourString(
  * Parses a "HH:MM" 24-hour string into { hour, minute, ampm }.
  * Returns nulls if the string is empty or invalid.
  */
-function parse24HourString(timeStr?: string) {
-  if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) {
+function parse24HourString(time?: string) {
+  if (!time || typeof time !== 'string') {
     return { hour: null, minute: null, ampm: null };
   }
-  const [hh, mm] = timeStr.split(':').map(Number);
-  const hour = hh >= 12 
-    ? (hh === 12 ? 12 : hh - 12) 
-    : (hh === 0 ? 12 : hh);
-  const ampm = hh >= 12 ? 'PM' : 'AM';
-  return { hour, minute: mm, ampm };
+  try {
+    // Handle potential seconds in the time string
+    const [timeWithoutSeconds] = time.split('.');
+    const [hours24, minutes] = timeWithoutSeconds.split(':').map(Number);
+    let hour = hours24 % 12;
+    if (hour === 0) hour = 12;
+    const ampm = hours24 >= 12 ? 'PM' : 'AM';
+    return { hour, minute: minutes, ampm };
+  } catch (error) {
+    console.error('Invalid time format:', time);
+    return { hour: null, minute: null, ampm: null };
+  }
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -172,7 +178,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error('Please fix the form errors');
       return;
