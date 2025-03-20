@@ -57,11 +57,7 @@ const TripDates: React.FC<TripDatesProps> = ({
   const handleSave = async () => {
     // Validate dates before saving
     if (!newArrival || !newDeparture) {
-      toast({
-        title: 'Invalid dates',
-        description: 'Both arrival and departure dates are required',
-        variant: 'destructive'
-      });
+      toast.error('Both arrival and departure dates are required');
       return;
     }
 
@@ -78,10 +74,7 @@ const TripDates: React.FC<TripDatesProps> = ({
 
       if (error) throw error;
 
-      toast({
-        title: 'Trip dates updated',
-        variant: 'success'
-      });
+      toast.success('Trip dates updated');
 
       // Only notify parent if callback exists and dates are valid
       if (onDatesChange && newArrival && newDeparture) {
@@ -92,11 +85,7 @@ const TripDates: React.FC<TripDatesProps> = ({
       }
     } catch (error) {
       console.error('Error updating trip dates:', error);
-      toast({
-        title: 'Failed to update trip dates',
-        description: 'Please try again',
-        variant: 'destructive'
-      });
+      toast.error('Failed to update trip dates. Please try again');
     } finally {
       setIsSubmitting(false);
       setIsEditing(false);
