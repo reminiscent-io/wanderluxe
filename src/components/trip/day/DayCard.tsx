@@ -95,9 +95,9 @@ const DayCard: React.FC<DayCardProps> = ({
             />
 
             {/* Overlay content */}
-            <div className="relative z-10 w-full h-full p-4 grid grid-cols-2 gap-4">
-              {/* Left column: Stay & Flights/Transport */}
-              <div className="space-y-4">
+            <div className="relative z-10 w-full h-full p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Column: Stay & Flights/Transport */}
+              <div className="space-y-4 order-1">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
                   {hotelStays.map((stay) => (
@@ -120,8 +120,8 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
 
-              {/* Right column: Activities & Reservations */}
-              <div className="space-y-4">
+              {/* Column: Activities & Reservations */}
+              <div className="space-y-4 order-2">
                 {/* Activities */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
