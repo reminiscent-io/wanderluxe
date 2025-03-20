@@ -17,6 +17,15 @@ const DayImage: React.FC<DayImageProps> = ({
   className
 }) => {
   const displayImageUrl = imageUrl || defaultImageUrl;
+  
+  // For debugging
+  console.log('DayImage rendering:', {
+    dayId,
+    title,
+    imageUrl,
+    defaultImageUrl,
+    displayImageUrl
+  });
 
   return (
     <div className={cn('relative w-full h-full bg-gray-200', className)}>
@@ -25,7 +34,16 @@ const DayImage: React.FC<DayImageProps> = ({
           src={displayImageUrl}
           alt={title || 'Day image'}
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => {
+            console.error('Image failed to load:', displayImageUrl);
+            e.currentTarget.style.display = 'none';
+          }}
         />
+      )}
+      {!displayImageUrl && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          No image available
+        </div>
       )}
     </div>
   );

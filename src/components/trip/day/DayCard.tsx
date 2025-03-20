@@ -66,9 +66,21 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const handleSaveEdit = async (data) => {
     try {
+      // Update local state immediately for better UX
+      if (data.title) {
+        setEditTitle(data.title);
+      }
+      
+      // Update image URL locally
+      if (data.image_url) {
+        // This would normally be handled by the API, but for now we'll just log it
+        console.log('New image URL:', data.image_url);
+      }
+      
       // You would typically call an API to save the changes here
       console.log('Saving day edit:', data);
-      // For now, we'll just close the dialog
+      
+      // Close the dialog
       setIsEditing(false);
     } catch (error) {
       console.error('Error saving day edit:', error);
