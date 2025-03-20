@@ -66,29 +66,59 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
   // Initialize local states using parsed values from activity times
   const [startHour, setStartHour] = useState<number | null>(() => {
-    const start = parse24HourString(activity.start_time);
-    return start.hour;
+    if (!activity?.start_time) return null;
+    try {
+      const start = parse24HourString(activity.start_time);
+      return start.hour;
+    } catch (e) {
+      return null;
+    }
   });
   const [startMinute, setStartMinute] = useState<number | null>(() => {
-    const start = parse24HourString(activity.start_time);
-    return start.minute;
+    if (!activity?.start_time) return null;
+    try {
+      const start = parse24HourString(activity.start_time);
+      return start.minute;
+    } catch (e) {
+      return null;
+    }
   });
   const [startAmPm, setStartAmPm] = useState<string | null>(() => {
-    const start = parse24HourString(activity.start_time);
-    return start.ampm;
+    if (!activity?.start_time) return null;
+    try {
+      const start = parse24HourString(activity.start_time);
+      return start.ampm;
+    } catch (e) {
+      return null;
+    }
   });
 
   const [endHour, setEndHour] = useState<number | null>(() => {
-    const end = parse24HourString(activity.end_time);
-    return end.hour;
+    if (!activity?.end_time) return null;
+    try {
+      const end = parse24HourString(activity.end_time);
+      return end.hour;
+    } catch (e) {
+      return null;
+    }
   });
   const [endMinute, setEndMinute] = useState<number | null>(() => {
-    const end = parse24HourString(activity.end_time);
-    return end.minute;
+    if (!activity?.end_time) return null;
+    try {
+      const end = parse24HourString(activity.end_time);
+      return end.minute;
+    } catch (e) {
+      return null;
+    }
   });
   const [endAmPm, setEndAmPm] = useState<string | null>(() => {
-    const end = parse24HourString(activity.end_time);
-    return end.ampm;
+    if (!activity?.end_time) return null;
+    try {
+      const end = parse24HourString(activity.end_time);
+      return end.ampm;
+    } catch (e) {
+      return null;
+    }
   });
 
   useEffect(() => {
