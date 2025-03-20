@@ -56,10 +56,6 @@ const TripDetails = () => {
       <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
         <div className="container mx-auto px-4 py-8">
           <TripTabs tripId={tripId} displayData={displayData} />
-          <div className="space-y-4">
-            <AccommodationsSection tripId={tripId} hotelStays={trip?.accommodations} />
-            <TransportationSection tripId={tripId} /> {/* Added TransportationSection */}
-          </div>
         </div>
       </div>
     </div>
