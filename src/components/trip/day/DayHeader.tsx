@@ -35,7 +35,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
         }
       }}
       className="w-full px-4 py-3 flex items-center justify-between 
-                 bg-black/30 backdrop-blur-sm hover:bg-black/40 
+                 bg-black/20 backdrop-blur-sm hover:bg-black/30 
                  transition-colors cursor-pointer"
     >
       <div>
