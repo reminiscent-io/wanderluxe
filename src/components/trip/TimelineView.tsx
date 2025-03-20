@@ -4,7 +4,6 @@ import { useTimelineGroups } from '@/hooks/use-timeline-groups';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
-import AccommodationGaps from './timeline/AccommodationGaps';
 import AccommodationsSection from './AccommodationsSection';
 import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
@@ -186,11 +185,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         groups={groups} 
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
       />
-      <AccommodationGaps 
-        gaps={gaps} 
-        onAddAccommodation={() => {}}
-      />
-    </div>
+      </div>
   );
 };
 
