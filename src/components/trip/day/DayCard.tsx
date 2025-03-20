@@ -57,12 +57,12 @@ const DayCard: React.FC<DayCardProps> = ({
   const dayTitle = title || format(parseISO(date), 'EEEE');
 
   const handleEdit = () => {
-    console.log("Edit DayCard", id);
+    console.log('Edit DayCard', id);
   };
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
-      {/* Header stays at top, outside of collapsible */}
+      {/* Fixed header at the top */}
       <div className="z-30">
         <DayHeader
           title={dayTitle}
@@ -70,30 +70,26 @@ const DayCard: React.FC<DayCardProps> = ({
           isOpen={isExpanded}
           onEdit={handleEdit}
           onDelete={() => onDelete(id)}
-          onToggle={() => setIsExpanded(prev => !prev)}
+          onToggle={() => setIsExpanded((prev) => !prev)}
         />
       </div>
 
-      {/* Collapsible content includes both the image and the overlay sections */}
+      {/* Collapsible area: image + scrolling overlay */}
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <CollapsibleContent className="max-h-[600px] overflow-y-auto">
-          {/* 
-            A single container that:
-            1) Fixes height to 600px (adjust as needed).
-            2) Positions the DayImage absolutely behind everything.
-            3) Positions the content relatively on top (z-10).
-          */}
-          <div className="relative w-full h-[600px]">
-            <DayImage
-              dayId={id}
-              title={title}
-              imageUrl={imageUrl}
-              defaultImageUrl={defaultImageUrl}
-              className="absolute top-0 left-0 w-full h-full object-cover z-0"
-            />
+        <CollapsibleContent className="relative max-h-[600px] overflow-hidden">
+          {/* Background image, absolutely positioned behind everything */}
+          <DayImage
+            dayId={id}
+            title={title}
+            imageUrl={imageUrl}
+            defaultImageUrl={defaultImageUrl}
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
 
-            <div className="relative z-10 w-full h-full p-4 grid grid-cols-2 gap-4">
-              {/* Left column: Stay & Flights/Transport */}
+          {/* Overlay content container, scrolls on top of the image */}
+          <div className="absolute inset-0 z-10 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4 p-4 min-h-[600px]">
+              {/* Left column: Stay & Transport */}
               <div className="space-y-4">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
@@ -104,6 +100,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     </div>
                   ))}
                 </div>
+
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">
                     Flights and Transport
@@ -130,6 +127,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     eventId={null}
                   />
                 </div>
+
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-white">Reservations</h3>
