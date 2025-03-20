@@ -1,6 +1,6 @@
+
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,7 +40,7 @@ const DayCard: React.FC<DayCardProps> = ({
   const [isOpen, setIsOpen] = useState(true);
   const [isEditingDay, setIsEditingDay] = useState(false);
   const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
-  const [isExpanded, setIsExpanded] = useState(true); // Added collapse state
+  const [isExpanded, setIsExpanded] = useState(true);
   const queryClient = useQueryClient();
 
   const { data: reservations } = useQuery({
@@ -62,7 +62,6 @@ const DayCard: React.FC<DayCardProps> = ({
   const formattedDate = format(parseISO(date), 'MMMM d, yyyy');
 
   const onEdit = () => {
-    // Implement edit logic here
     console.log("Edit DayCard", id);
   };
 
@@ -71,8 +70,6 @@ const DayCard: React.FC<DayCardProps> = ({
       <div className="relative h-[600px] w-full">
         <DayImage 
           dayId={id}
-          title={title}
-          imageUrl={imageUrl}
           defaultImageUrl={defaultImageUrl}
           className="object-cover"
         />
