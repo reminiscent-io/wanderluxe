@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import AccommodationGroup from '../accommodation/AccommodationGroup';
 import DayCard from '../day/DayCard';
 import { TripDay } from '@/types/trip';
 import { useQuery } from '@tanstack/react-query';
