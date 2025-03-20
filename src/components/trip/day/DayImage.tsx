@@ -19,15 +19,13 @@ const DayImage: React.FC<DayImageProps> = ({
   const displayImageUrl = imageUrl || defaultImageUrl;
 
   return (
-    <div className={cn('relative w-full h-full', className)}>
-      {displayImageUrl ? (
+    <div className={cn('relative w-full h-full bg-gray-200', className)}>
+      {displayImageUrl && (
         <img
           src={displayImageUrl}
           alt={title || 'Day image'}
           className="absolute inset-0 w-full h-full object-cover"
         />
-      ) : (
-        <div className="absolute inset-0 bg-gray-200" />
       )}
     </div>
   );

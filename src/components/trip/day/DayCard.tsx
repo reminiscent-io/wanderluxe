@@ -65,6 +65,7 @@ const DayCard: React.FC<DayCardProps> = ({
           title={title}
           imageUrl={imageUrl}
           defaultImageUrl={defaultImageUrl}
+          className="object-cover"
         />
       </div>
 
