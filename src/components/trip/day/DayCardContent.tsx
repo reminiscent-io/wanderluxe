@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import ActivityDialogs from './ActivityDialogs';
-import DiningList from '../dining/DiningList';
+import DiningList from '@/components/trip/dining/DiningList';
 import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
 import { toast } from 'sonner';
