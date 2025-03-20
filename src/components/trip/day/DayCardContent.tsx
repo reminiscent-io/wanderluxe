@@ -29,6 +29,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   eventId,
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
   const [newActivity, setNewActivity] = useState<ActivityFormData>({
     title: '',
     description: '',
@@ -73,7 +74,10 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         activities={sortedActivities}
         formatTime={formatTime}
         onAddActivity={() => setIsAddingActivity(true)}
-        onEditActivity={handleEditActivityWrapper}
+        onEditActivity={(activity) => {
+          setEditingActivity(activity);
+          handleEditActivityWrapper(activity);
+        }}
       />
 
       {/* 
@@ -89,6 +93,9 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         setNewActivity={setNewActivity}
         onAddActivity={onAddActivity}
         eventId={eventId}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
+        onEditActivity={onEditActivity}
       />
     </div>
   );
