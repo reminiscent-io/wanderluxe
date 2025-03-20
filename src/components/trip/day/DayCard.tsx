@@ -70,55 +70,90 @@ const DayCard: React.FC<DayCardProps> = ({
       <div className="relative h-[600px] w-full">
         <DayImage 
           dayId={id}
+          title={title}
+          imageUrl={imageUrl}
           defaultImageUrl={defaultImageUrl}
           className="object-cover"
         />
-        <div className="absolute top-0 left-0 right-0 bg-black/30 backdrop-blur-sm p-4 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-semibold text-white">{title}</h2>
-            <p className="text-white/90">{formattedDate}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-white hover:bg-white/20"
-              onClick={onEdit}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-white hover:bg-white/20"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              <ChevronDown className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                isExpanded && "transform rotate-180"
-              )} />
-            </Button>
-          </div>
-        </div>
-        {isExpanded && (
-          <div className="absolute inset-0 pt-16 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-            <div className="space-y-4">
-              <DayCardContent
-                index={index}
-                title={title}
-                activities={activities}
-                reservations={reservations}
-                hotelStays={hotelStays}
-                transportations={transportations}
-                onAddActivity={async () => {}}
-                onEditActivity={() => {}}
-                formatTime={(time) => time || ''}
-                dayId={id}
-                eventId={id}
-              />
+        <div className="absolute inset-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+          <div className="absolute top-0 left-0 right-0 bg-black/10 backdrop-blur-sm p-4 flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">{dayTitle}</h2>
+              <p className="text-white/90">{formattedDate}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onEdit}
+                className="text-white hover:bg-white/20"
+              >
+                <Pencil className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className={cn(
+                  "text-white hover:bg-white/20 transition-transform",
+                  !isExpanded && "rotate-180"
+                )}
+              >
+                <ChevronDown className="h-5 w-5" />
+              </Button>
             </div>
           </div>
-        )}
+
+          {isExpanded && (
+            <div className="absolute inset-0 pt-20 grid grid-cols-2 gap-4 p-4">
+              <div className="space-y-4">
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
+                  {hotelStays.map(stay => (
+                    <div key={stay.stay_id} className="text-white">
+                      <p className="font-medium">{stay.hotel}</p>
+                      <p className="text-sm">{stay.hotel_address}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Flights and Transport</h3>
+                  {transportations.map((transport, idx) => (
+                    <div key={idx} className="text-white">
+                      <p className="font-medium">{transport.route}</p>
+                      <p className="text-sm">{transport.details}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
+                  <DayCardContent
+                    activities={activities}
+                    onAddActivity={() => {}}
+                    onEditActivity={() => {}}
+                    formatTime={(time) => time}
+                    dayId={id}
+                    eventId={null}
+                  />
+                </div>
+
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Reservations</h3>
+                  {reservations?.map((reservation, idx) => (
+                    <div key={idx} className="text-white">
+                      <p className="font-medium">{reservation.restaurant_name}</p>
+                      <p className="text-sm">{reservation.time}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
