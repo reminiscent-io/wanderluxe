@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import DayCard from '../day/DayCard';
@@ -28,7 +27,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     queryKey: ['trip', tripId],
     queryFn: async () => {
       if (!tripId) return null;
-      
+
       const { data, error } = await supabase
         .from('trips')
         .select('cover_image_url')

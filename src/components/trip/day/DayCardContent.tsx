@@ -18,7 +18,7 @@ interface DayCardContentProps {
   dayId: string;
   eventId: string;
   date: string;
-  accommodation?: HotelStay | null;
+  accommodation?: any; // Updated to accept any accommodation type
 }
 
 const DayCardContent: React.FC<DayCardContentProps> = ({
@@ -77,6 +77,8 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   const isCheckOutDay = accommodation && accommodation.hotel_checkout_date === date;
   const hasAccommodation = accommodation && (isCheckInDay || isCheckOutDay || 
     (date > accommodation.hotel_checkin_date && date < accommodation.hotel_checkout_date));
+  
+  console.log('DayCardContent date:', date, 'accommodation:', accommodation, 'hasAccommodation:', hasAccommodation);
 
   return (
     <div className="p-6 space-y-6">
