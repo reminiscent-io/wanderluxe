@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import ActivityDialogs from './ActivityDialogs';
-import { DayActivity, ActivityFormData, HotelStay } from '@/types/trip';
+import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BedDouble, Calendar, MapPin } from 'lucide-react';
 
 interface DayCardContentProps {
   index: number;
@@ -16,8 +14,8 @@ interface DayCardContentProps {
   formatTime: (time?: string) => string;
   dayId: string;
   eventId: string;
-  date: string;
-  accommodation?: HotelStay | null;
+  // Removed reservations, onAddReservation, onEditReservation 
+  // to ensure reservations are handled only in DayCard
 }
 
 const DayCardContent: React.FC<DayCardContentProps> = ({
@@ -29,8 +27,6 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   formatTime,
   dayId,
   eventId,
-  date,
-  accommodation,
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
@@ -71,54 +67,8 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     onEditActivity(activity);
   };
 
-  // Determine if this is check-in or check-out day for the accommodation
-  const isCheckInDay = accommodation && accommodation.hotel_checkin_date === date;
-  const isCheckOutDay = accommodation && accommodation.hotel_checkout_date === date;
-  const hasAccommodation = accommodation && (isCheckInDay || isCheckOutDay || 
-    (date > accommodation.hotel_checkin_date && date < accommodation.hotel_checkout_date));
-
   return (
-    <div className="p-6 space-y-6">
-      {/* Accommodation Stay Section */}
-      {hasAccommodation && (
-        <Card className="bg-sand-50 border-sand-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              <BedDouble className="h-5 w-5 mr-2 text-sand-700" />
-              Stay
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <h3 className="font-semibold text-base">{accommodation.hotel}</h3>
-              {accommodation.hotel_address && (
-                <p className="text-sm text-gray-600 flex items-start">
-                  <MapPin className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0 text-sand-600" />
-                  {accommodation.hotel_address}
-                </p>
-              )}
-              {isCheckInDay && (
-                <p className="text-sm text-emerald-600 flex items-center">
-                  <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
-                  Check-in day
-                </p>
-              )}
-              {isCheckOutDay && (
-                <p className="text-sm text-amber-600 flex items-center">
-                  <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
-                  Check-out day
-                </p>
-              )}
-              {!isCheckInDay && !isCheckOutDay && (
-                <p className="text-sm text-gray-600">
-                  Continuing stay
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
+    <div className="p-6 space-y-4">
       {/* Activities */}
       <ActivitiesList
         activities={sortedActivities}
@@ -129,6 +79,11 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
           handleEditActivityWrapper(activity);
         }}
       />
+
+      {/* 
+        Removed the reservations block from here,
+        so they no longer appear under Activities.
+      */}
 
       {/* Add / Edit Activity Dialog */}
       <ActivityDialogs
