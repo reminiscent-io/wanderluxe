@@ -10,7 +10,8 @@ export const accommodationService = {
     const checkoutDate = new Date(formData.hotel_checkout_date);
     const dates: string[] = [];
     
-    // Generate dates array
+    // Generate dates array for the entire duration of the stay
+    // The array includes all dates from check-in (inclusive) to checkout (exclusive)
     const currentDate = new Date(checkinDate);
     while (currentDate < checkoutDate) {
       dates.push(currentDate.toISOString().split('T')[0]);
@@ -18,6 +19,7 @@ export const accommodationService = {
     }
     
     try {
+      // Pass the generated dates array to create accommodation_days entries
       const accommodation = await timelineEventsService.createAccommodationEvents(tripId, formData, dates);
       return accommodation;
     } catch (error) {
@@ -32,7 +34,8 @@ export const accommodationService = {
     const checkoutDate = new Date(formData.hotel_checkout_date);
     const dates: string[] = [];
     
-    // Generate dates array
+    // Generate dates array for the entire duration of the stay
+    // The array includes all dates from check-in (inclusive) to checkout (exclusive)
     const currentDate = new Date(checkinDate);
     while (currentDate < checkoutDate) {
       dates.push(currentDate.toISOString().split('T')[0]);
