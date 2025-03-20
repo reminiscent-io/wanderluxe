@@ -1,30 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import ActivityDialogs from './ActivityDialogs';
-import DiningList from '@/components/trip/dining/DiningList';
 import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
 import { toast } from 'sonner';
 
 interface DayCardContentProps {
   index: number;
-  reservations?: Array<{
-    id: string;
-    day_id: string;
-    restaurant_name: string;
-    reservation_time?: string;
-    number_of_people?: number;
-    confirmation_number?: string;
-    notes?: string;
-    cost?: number;
-    currency?: string;
-    address?: string;
-    phone_number?: string;
-    website?: string;
-    rating?: number;
-    created_at: string;
-    order_index: number;
-  }>;
   title: string;
   activities: DayActivity[];
   onAddActivity: (activity: ActivityFormData) => Promise<void>;
@@ -32,22 +14,19 @@ interface DayCardContentProps {
   formatTime: (time?: string) => string;
   dayId: string;
   eventId: string;
-  onAddReservation?: () => void;
-  onEditReservation?: (reservation: any) => void;
+  // Removed reservations, onAddReservation, onEditReservation 
+  // to ensure reservations are handled only in DayCard
 }
 
 const DayCardContent: React.FC<DayCardContentProps> = ({
   index,
   title,
   activities,
-  reservations,
   onAddActivity,
   onEditActivity,
   formatTime,
   dayId,
   eventId,
-  onAddReservation,
-  onEditReservation,
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [newActivity, setNewActivity] = useState<ActivityFormData>({
@@ -89,6 +68,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 
   return (
     <div className="p-6 space-y-4">
+      {/* Activities */}
       <ActivitiesList
         activities={sortedActivities}
         formatTime={formatTime}
@@ -96,40 +76,12 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         onEditActivity={handleEditActivityWrapper}
       />
 
-      <div className="mt-8">
-        <div className="flex justify-between items-center mb-4">
-          {onAddReservation && (
-            <Button
-              onClick={() => onAddReservation?.()}
-              variant="ghost"
-              size="sm"
-              className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
-            >
-              <span className="h-4 w-4 mr-2">+</span>
-              Add Reservation
-            </Button>
-          )}
-        </div>
-        <div className="space-y-2">
-          {(reservations || []).map((reservation) => (
-            <div
-              key={reservation.id}
-              className="flex justify-between items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
-              onClick={() => onEditReservation?.(reservation)}
-            >
-              <div>
-                <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
-                {reservation.reservation_time && (
-                  <p className="text-xs text-gray-500">
-                    {formatTime(reservation.reservation_time)}
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* 
+        Removed the reservations block from here,
+        so they no longer appear under Activities.
+      */}
 
+      {/* Add / Edit Activity Dialog */}
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
         setIsAddingActivity={setIsAddingActivity}
