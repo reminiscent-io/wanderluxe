@@ -3,7 +3,7 @@ import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
 import { format, parseISO } from 'date-fns';
 import { DayActivity, HotelStay } from '@/types/trip';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DayCardProps {

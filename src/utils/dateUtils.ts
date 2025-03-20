@@ -20,13 +20,8 @@ export const formatDateRange = (startDate: string, endDate: string) => {
 export const getDaysBetweenDates = (startDate: string, endDate: string): string[] => {
   const start = parseISO(startDate);
   const end = parseISO(endDate);
-  const days: string[] = [];
   
-  let currentDate = start;
-  while (currentDate <= end) {
-    days.push(format(currentDate, 'yyyy-MM-dd'));
-    currentDate = addDays(currentDate, 1);
-  }
-  
-  return days;
+  return eachDayOfInterval({ start, end }).map(date => 
+    format(date, 'yyyy-MM-dd')
+  );
 };
