@@ -67,7 +67,7 @@ const DayCard: React.FC<DayCardProps> = ({
           defaultImageUrl={defaultImageUrl}
           className="object-cover"
         />
-      </div>
+        <div className="absolute inset-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
 
       {/* Header - Semi-transparent overlay */}
       <div className="absolute top-0 left-0 right-0 bg-black/10 backdrop-blur-sm p-4">
