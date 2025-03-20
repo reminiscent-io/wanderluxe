@@ -45,26 +45,28 @@ function parse24HourString(time?: string) {
   if (!time || typeof time !== 'string') {
     return { hour: null, minute: null, ampm: null };
   }
-  // Split on ':' to handle either "HH:MM" or "HH:MM:SS"
-  const parts = time.split(':');
-  if (parts.length < 2) {
-    console.error('Invalid time format:', time);
+  try {
+    // Remove any seconds portion and only keep HH:MM
+    const timeWithoutSeconds = time.split('.')[0].split(':').slice(0, 2).join(':');
+    const [hoursStr, minutesStr] = timeWithoutSeconds.split(':');
+    
+    const hours24 = parseInt(hoursStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+
+    if (isNaN(hours24) || isNaN(minutes) || hours24 < 0 || hours24 > 23 || minutes < 0 || minutes > 59) {
+      return { hour: null, minute: null, ampm: null };
+    }
+
+    // Convert 24-hour to 12-hour format
+    let hour12 = hours24 % 12;
+    if (hour12 === 0) hour12 = 12;
+    const ampm = hours24 >= 12 ? 'PM' : 'AM';
+
+    return { hour: hour12, minute: minutes, ampm };
+  } catch (error) {
+    console.error('Error parsing time:', time);
     return { hour: null, minute: null, ampm: null };
   }
-  const hours24 = parseInt(parts[0], 10);
-  const minutes = parseInt(parts[1], 10);
-
-  if (isNaN(hours24) || isNaN(minutes)) {
-    console.error('Invalid time format:', time);
-    return { hour: null, minute: null, ampm: null };
-  }
-
-  // Convert 24-hour to 12-hour
-  let hour12 = hours24 % 12;
-  if (hour12 === 0) hour12 = 12;
-  const ampm = hours24 >= 12 ? 'PM' : 'AM';
-
-  return { hour: hour12, minute: minutes, ampm };
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
