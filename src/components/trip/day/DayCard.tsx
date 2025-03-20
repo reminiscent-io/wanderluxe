@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
 import { DayActivity, HotelStay } from '@/types/trip';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
+import DayEditDialog from './DayEditDialog';
 
 interface DayCardProps {
   id: string;
@@ -37,7 +38,9 @@ const DayCard: React.FC<DayCardProps> = ({
   hotelStays = [],
   transportations = []
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(title);
   const queryClient = useQueryClient();
 
   const { data: reservations } = useQuery({
@@ -58,6 +61,18 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const handleEdit = () => {
     console.log("Edit DayCard", id);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async (data) => {
+    try {
+      // You would typically call an API to save the changes here
+      console.log('Saving day edit:', data);
+      // For now, we'll just close the dialog
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving day edit:', error);
+    }
   };
 
   const formatTime = (time?: string) => {
@@ -69,6 +84,15 @@ const DayCard: React.FC<DayCardProps> = ({
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
+      <DayEditDialog
+        open={isEditing}
+        onOpenChange={setIsEditing}
+        dayId={id}
+        currentTitle={title}
+        onTitleChange={setEditTitle}
+        onSave={handleSaveEdit}
+      />
+
       {/* Header stays at top, outside of collapsible */}
       <div className="z-30">
         <DayHeader
