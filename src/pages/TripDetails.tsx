@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Navigation from "../components/Navigation";
@@ -8,15 +7,18 @@ import { useTripSubscription } from '@/components/trip/details/useTripSubscripti
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
 import TripDetailsError from '@/components/trip/details/TripDetailsError';
 import TripTabs from '@/components/trip/details/TripTabs';
+import AccommodationsSection from '@/components/trip/details/AccommodationsSection'; // Import AccommodationsSection
+import TransportationSection from '@/components/trip/details/TransportationSection'; // Import the new component
+
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
-  
+
   console.log('TripDetails rendering with tripId:', tripId);
-  
+
   // Use the custom hook for trip data fetching
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
-  
+
   // Use the custom hook for real-time subscriptions
   useTripSubscription(tripId);
 
@@ -40,7 +42,7 @@ const TripDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-      
+
       <div className="w-full">
         <HeroSection 
           title={displayData.destination}
@@ -54,6 +56,10 @@ const TripDetails = () => {
       <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
         <div className="container mx-auto px-4 py-8">
           <TripTabs tripId={tripId} displayData={displayData} />
+          <div className="space-y-4">
+            <AccommodationsSection tripId={tripId} hotelStays={trip?.accommodations} />
+            <TransportationSection tripId={tripId} /> {/* Added TransportationSection */}
+          </div>
         </div>
       </div>
     </div>

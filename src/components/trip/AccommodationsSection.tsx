@@ -70,19 +70,10 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
   return (
     <Card className="bg-sand-50 shadow-md">
-      <div className="flex"> {/* Added div for flexbox layout */}
-        <div className="flex-1"> {/* Added div to make elements take equal width */}
-          <AccommodationHeader 
-            isExpanded={isExpanded}
-            onToggle={() => setIsExpanded(!isExpanded)}
-          />
-        </div>
-        <div className="flex-1"> {/* Added div to make elements take equal width */}
-          <TransportationHeader 
-            isExpanded={isExpanded} 
-            onToggle={() => setIsExpanded(!isExpanded)} /> {/* Added TransportationHeader */}
-        </div>
-      </div>
+      <AccommodationHeader 
+        isExpanded={isExpanded}
+        onToggle={() => setIsExpanded(!isExpanded)}
+      />
 
       {isExpanded && (
         <>
