@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -16,9 +17,8 @@ const DayImage: React.FC<DayImageProps> = ({
   defaultImageUrl,
   className
 }) => {
-  // Fallback to a generic image if both imageUrl and defaultImageUrl are empty
-  const fallbackImage = 'https://images.unsplash.com/photo-1527489377706-5bf97e608852?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80';
-  const displayImageUrl = imageUrl || defaultImageUrl || fallbackImage;
+  // Use the provided image URL or fallback to defaultImageUrl
+  const displayImageUrl = imageUrl || defaultImageUrl;
   
   // For debugging
   console.log('DayImage rendering:', {
@@ -30,8 +30,8 @@ const DayImage: React.FC<DayImageProps> = ({
   });
 
   return (
-    <div className={cn('relative w-full h-full bg-gray-200', className)}>
-      {displayImageUrl && (
+    <div className={cn('relative w-full h-full bg-black', className)}>
+      {displayImageUrl ? (
         <img
           src={displayImageUrl}
           alt={title || 'Day image'}
@@ -41,10 +41,9 @@ const DayImage: React.FC<DayImageProps> = ({
             e.currentTarget.style.display = 'none';
           }}
         />
-      )}
-      {!displayImageUrl && (
+      ) : (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          No image available
+          No Image Selected
         </div>
       )}
     </div>
