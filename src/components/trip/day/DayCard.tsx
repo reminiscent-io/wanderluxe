@@ -158,13 +158,17 @@ const DayCard: React.FC<DayCardProps> = ({
                     {reservations?.map((reservation, idx) => (
                       <div
                         key={reservation.id || idx}
-                        className="flex justify-between items-center p-3 bg-black/20 backdrop-blur-sm rounded-lg cursor-pointer hover:bg-black/30"
+                        className="flex justify-between items-center p-3
+                                   bg-white rounded-lg shadow-sm 
+                                   hover:bg-gray-50 cursor-pointer"
                         onClick={() => {}}
                       >
                         <div>
-                          <h4 className="font-medium text-white">{reservation.restaurant_name}</h4>
+                          <h4 className="font-medium text-gray-900">
+                            {reservation.restaurant_name}
+                          </h4>
                           {reservation.reservation_time && (
-                            <p className="text-sm text-white/70">
+                            <p className="text-sm text-gray-500">
                               {formatTime(reservation.reservation_time)}
                             </p>
                           )}
@@ -173,7 +177,7 @@ const DayCard: React.FC<DayCardProps> = ({
                           variant="ghost"
                           size="icon"
                           onClick={() => {}}
-                          className="text-white hover:bg-white/20"
+                          className="text-gray-600 hover:bg-gray-200"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
