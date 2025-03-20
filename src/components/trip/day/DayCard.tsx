@@ -23,6 +23,7 @@ interface DayCardProps {
   defaultImageUrl?: string;
   hotelStays?: HotelStay[];
   transportations?: any[];
+  accommodations?: any[]; // Added accommodations prop
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -36,7 +37,8 @@ const DayCard: React.FC<DayCardProps> = ({
   onDelete,
   defaultImageUrl,
   hotelStays = [],
-  transportations = []
+  transportations = [],
+  accommodations = [] // Added accommodations prop
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -70,16 +72,16 @@ const DayCard: React.FC<DayCardProps> = ({
       if (data.title) {
         setEditTitle(data.title);
       }
-      
+
       // Update image URL locally
       if (data.image_url) {
         // This would normally be handled by the API, but for now we'll just log it
         console.log('New image URL:', data.image_url);
       }
-      
+
       // You would typically call an API to save the changes here
       console.log('Saving day edit:', data);
-      
+
       // Close the dialog
       setIsEditing(false);
     } catch (error) {
@@ -162,7 +164,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <DayCardContent
-                    index={0}
+                    index={index}
                     title={dayTitle}
                     activities={activities}
                     onAddActivity={() => {}}
@@ -170,6 +172,8 @@ const DayCard: React.FC<DayCardProps> = ({
                     formatTime={formatTime}
                     dayId={id}
                     eventId={id}
+                    date={date}
+                    accommodation={accommodations && accommodations.length > 0 ? accommodations[0] : null}
                   />
                 </div>
 
