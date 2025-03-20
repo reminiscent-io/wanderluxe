@@ -1,4 +1,5 @@
-import { parseISO, eachDayOfInterval, format } from 'date-fns';
+
+import { parseISO, eachDayOfInterval, format, addDays } from 'date-fns';
 
 export const generateDaysBetweenDates = (startDate: Date | string, endDate: Date | string) => {
   const start = typeof startDate === 'string' ? parseISO(startDate) : startDate;
@@ -14,4 +15,18 @@ export const formatDateRange = (startDate: string, endDate: string) => {
   const start = parseISO(startDate);
   const end = parseISO(endDate);
   return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
+};
+
+export const getDaysBetweenDates = (startDate: string, endDate: string): string[] => {
+  const start = parseISO(startDate);
+  const end = parseISO(endDate);
+  const days: string[] = [];
+  
+  let currentDate = start;
+  while (currentDate <= end) {
+    days.push(format(currentDate, 'yyyy-MM-dd'));
+    currentDate = addDays(currentDate, 1);
+  }
+  
+  return days;
 };

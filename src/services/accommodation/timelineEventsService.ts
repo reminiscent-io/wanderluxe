@@ -4,7 +4,7 @@ import { AccommodationFormData } from './types';
 
 // Helper function to create accommodation days entries
 const createAccommodationDays = async (stay_id: string, tripId: string, dates: string[]) => {
-  // Get all trip days for this period
+  // Get existing trip days for this period
   const { data: tripDays, error: tripDaysError } = await supabase
     .from('trip_days')
     .select('day_id, date')
@@ -12,8 +12,9 @@ const createAccommodationDays = async (stay_id: string, tripId: string, dates: s
     .in('date', dates);
 
   if (tripDaysError) throw tripDaysError;
+  if (!tripDays?.length) return [];
 
-  // Create accommodation_days entries
+  // Create accommodation_days entries only for existing trip days
   const accommodationDays = tripDays.map(day => ({
     stay_id,
     day_id: day.day_id,
