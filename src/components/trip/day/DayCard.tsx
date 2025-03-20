@@ -57,8 +57,13 @@ const DayCard: React.FC<DayCardProps> = ({
   const dayTitle = title || format(parseISO(date), 'EEEE');
 
   const formatTime = (time?: string) => {
-    if (!time) return '';
-    return format(parseISO(time), 'h:mm a');
+    if (!time || typeof time !== 'string') return '';
+    try {
+      return format(parseISO(time), 'h:mm a');
+    } catch (error) {
+      console.error('Invalid time format:', time);
+      return '';
+    }
   };
 
   const handleEdit = () => {
