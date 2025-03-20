@@ -62,7 +62,7 @@ const DayCard: React.FC<DayCardProps> = ({
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
-      {/* Fixed header at the top */}
+      {/* Header with onToggle to expand/collapse */}
       <div className="z-30">
         <DayHeader
           title={dayTitle}
@@ -74,10 +74,10 @@ const DayCard: React.FC<DayCardProps> = ({
         />
       </div>
 
-      {/* Collapsible area: image + scrolling overlay */}
+      {/* Collapsible container with controlled open state */}
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleContent className="relative max-h-[600px] overflow-hidden">
-          {/* Background image, absolutely positioned behind everything */}
+          {/* Stationary background image */}
           <DayImage
             dayId={id}
             title={title}
@@ -86,7 +86,7 @@ const DayCard: React.FC<DayCardProps> = ({
             className="absolute inset-0 w-full h-full object-cover z-0"
           />
 
-          {/* Overlay content container, scrolls on top of the image */}
+          {/* Scrolling overlay content */}
           <div className="absolute inset-0 z-10 overflow-y-auto">
             <div className="grid grid-cols-2 gap-4 p-4 min-h-[600px]">
               {/* Left column: Stay & Transport */}
@@ -100,7 +100,6 @@ const DayCard: React.FC<DayCardProps> = ({
                     </div>
                   ))}
                 </div>
-
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">
                     Flights and Transport
