@@ -60,6 +60,13 @@ const DayCard: React.FC<DayCardProps> = ({
     console.log("Edit DayCard", id);
   };
 
+  const formatTime = (time?: string) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    if (!hours || !minutes) return '';
+    return `${hours}:${minutes}`;
+  };
+
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
       {/* Header stays at top, outside of collapsible */}
@@ -124,7 +131,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     activities={activities}
                     onAddActivity={() => {}}
                     onEditActivity={() => {}}
-                    formatTime={(time) => time}
+                    formatTime={formatTime}
                     dayId={id}
                     eventId={id}
                   />
