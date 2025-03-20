@@ -7,8 +7,8 @@ import { useTripSubscription } from '@/components/trip/details/useTripSubscripti
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
 import TripDetailsError from '@/components/trip/details/TripDetailsError';
 import TripTabs from '@/components/trip/details/TripTabs';
-import AccommodationsSection from '@/components/trip/details/AccommodationsSection'; // Import AccommodationsSection
-import TransportationSection from '@/components/trip/details/TransportationSection'; // Import the new component
+import AccommodationsSection from '@/components/trip/AccommodationsSection';
+import TransportationSection from '@/components/trip/TransportationSection';
 
 
 const TripDetails = () => {
