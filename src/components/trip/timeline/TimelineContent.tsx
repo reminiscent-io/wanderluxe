@@ -71,66 +71,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       console.error('Error deleting day:', error);
     }
   };
-
-  return (
-    <div className="space-y-8">
-      {groups.map((group, groupIndex) => {
-        
-
-        return (
-          <motion.fieldset
-            key={`${group.hotel || 'standalone'}-${groupIndex}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: groupIndex * 0.1 }}
-            className="border-0 p-0 m-0"
-          >
-            {group.hotel ? (
-              <AccommodationGroup
-                hotel={group.hotel}
-                hotelDetails={group.hotelDetails}
-                checkinDate={group.checkinDate!}
-                checkoutDate={group.checkoutDate!}
-              >
-                
-                {group.days.map((day) => (
-                  <DayCard
-                    key={day.day_id}
-                    id={day.day_id}
-                    tripId={tripId || ''}
-                    date={day.date}
-                    title={day.title || ''}
-                    activities={day.activities || []}
-                    imageUrl={day.image_url}
-                    defaultImageUrl={tripData?.cover_image_url}
-                    index={dayIndexMap.get(day.day_id) || 0}
-                    onDelete={handleDayDelete}
-                  />
-                ))}
-              </AccommodationGroup>
-            ) : (
-              <fieldset className="space-y-6 border-0 p-0 m-0">
-                {group.days.map((day) => (
-                  <DayCard
-                    key={day.day_id}
-                    id={day.day_id}
-                    tripId={tripId || ''}
-                    date={day.date}
-                    title={day.title || ''}
-                    activities={day.activities || []}
-                    imageUrl={day.image_url}
-                    defaultImageUrl={tripData?.cover_image_url}
-                    index={dayIndexMap.get(day.day_id) || 0}
-                    onDelete={handleDayDelete}
-                  />
-                ))}
-              </fieldset>
-            )}
-          </motion.fieldset>
-        );
-      })}
-    </div>
-  );
 };
 
 export default TimelineContent;
