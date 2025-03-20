@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
+import DayHeader from './DayHeader';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Pencil, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -71,33 +72,13 @@ const DayCard: React.FC<DayCardProps> = ({
           defaultImageUrl={defaultImageUrl}
           className="object-cover"
         />
-        <div className="absolute top-0 left-0 right-0 z-10 bg-black/30 backdrop-blur-sm p-4 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-semibold text-white">{dayTitle}</h2>
-            <p className="text-white/90">{formattedDate}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onEdit}
-              className="text-white hover:bg-white/20"
-            >
-              <Pencil className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={cn(
-                "text-white hover:bg-white/20 transition-transform",
-                !isExpanded && "rotate-180"
-              )}
-            >
-              <ChevronDown className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        <DayHeader
+          title={dayTitle}
+          date={date}
+          isOpen={isExpanded}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
 
         {isExpanded && (
           <div className="absolute inset-0 pt-20 grid grid-cols-2 gap-4 p-4 overflow-y-auto">
