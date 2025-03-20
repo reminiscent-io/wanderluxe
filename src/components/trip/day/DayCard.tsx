@@ -135,7 +135,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     activities={activities}
                     onAddActivity={() => {}}
                     onEditActivity={() => {}}
-                    formatTime={formatTime}
+                    formatTime={(time) => time}
                     dayId={id}
                     eventId={id}
                   />
