@@ -73,8 +73,9 @@ const DayCard: React.FC<DayCardProps> = ({
       
       // Update image URL locally
       if (data.image_url) {
-        // This would normally be handled by the API, but for now we'll just log it
+        // Update the local imageUrl state
         console.log('New image URL:', data.image_url);
+        setImageUrl(data.image_url); // This will update the image URL in the local state
       }
       
       // You would typically call an API to save the changes here
