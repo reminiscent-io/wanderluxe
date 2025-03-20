@@ -41,43 +41,29 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           </div>
         </div>
         <div 
-          role="button"
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              e.stopPropagation();
-              onEdit();
-            }
-          }}
+          className="flex items-center gap-2"
         >
-          <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onEdit} 
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          {onDelete && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
-              onClick={onEdit} // Added onClick handler to the Pencil button
+              className="h-8 w-8 text-red-500 hover:text-red-700"
             >
-              <Pencil className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" />
             </Button>
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-red-500 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-            <ChevronDown className={cn(
-              "h-4 w-4 transition-transform duration-200",
-              isOpen && "transform rotate-180"
-            )} />
-          </div>
+          )}
+          <ChevronDown className={cn(
+            "h-4 w-4 transition-transform duration-200",
+            isOpen && "transform rotate-180"
+          )} />
         </div>
       </div>
     </CollapsibleTrigger>
