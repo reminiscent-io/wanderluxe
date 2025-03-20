@@ -73,10 +73,11 @@ const DayCard: React.FC<DayCardProps> = ({
           defaultImageUrl={defaultImageUrl}
           className="object-cover"
         />
-        <div className="absolute inset-x-0 top-0 z-30">
+        <div className="absolute inset-0 z-20">
           <DayHeader
             title={dayTitle}
             date={date}
+            isOpen={isExpanded}
             onEdit={onEdit}
             onDelete={onDelete}
           />
@@ -85,9 +86,9 @@ const DayCard: React.FC<DayCardProps> = ({
           open={isExpanded}
           onOpenChange={setIsExpanded}
         >
-          <CollapsibleContent className="h-[600px] overflow-y-auto relative">
+          <CollapsibleContent className="max-h-[600px] overflow-y-auto">
             {isExpanded && (
-              <div className="pt-20 grid grid-cols-2 gap-4 p-4 relative">
+              <div className="absolute inset-0 pt-20 grid grid-cols-2 gap-4 p-4">
                 <div className="space-y-4">
                   <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
