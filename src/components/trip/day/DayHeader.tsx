@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, parseISO } from 'date-fns';
 import { Pencil, Trash2, ChevronDown } from 'lucide-react';
@@ -28,14 +27,16 @@ const DayHeader: React.FC<DayHeaderProps> = ({
     <div 
       role="button"
       tabIndex={0}
-      onClick={onToggle}
+      onClick={() => onToggle?.()}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if ((e.key === 'Enter' || e.key === ' ') && onToggle) {
           e.preventDefault();
-          onToggle?.();
+          onToggle();
         }
       }}
-      className="w-full px-4 py-3 flex items-center justify-between bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-colors cursor-pointer"
+      className="w-full px-4 py-3 flex items-center justify-between 
+                 bg-black/30 backdrop-blur-sm hover:bg-black/40 
+                 transition-colors cursor-pointer"
     >
       <div>
         <div className="flex flex-col gap-2">
@@ -43,10 +44,9 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           <h3 className="font-medium text-base text-white">{title}</h3>
         </div>
       </div>
-      <div 
-        className="flex items-center gap-2"
-        onClick={e => e.stopPropagation()}
-      >
+
+      {/* We stop propagation only on the icon buttons, not the entire header */}
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <Button
           variant="ghost"
           size="icon"
@@ -65,10 +65,12 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
-        <ChevronDown className={cn(
-          "h-4 w-4 transition-transform duration-200 text-white",
-          isOpen && "transform rotate-180"
-        )} />
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 transition-transform duration-200 text-white',
+            isOpen && 'rotate-180'
+          )}
+        />
       </div>
     </div>
   );
