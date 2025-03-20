@@ -3,7 +3,7 @@ import ImageSection from "./ImageSection";
 import TimingSection from "./TimingSection";
 import DestinationInput from "./DestinationInput";
 import FormActions from "./FormActions";
-import { supabase } from '../../../supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { getDaysBetweenDates } from '../../../utils/dateUtils';
 import { createTripDays } from '../../../services/tripDaysService';
 
