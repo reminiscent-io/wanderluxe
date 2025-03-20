@@ -56,6 +56,16 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const dayTitle = title || format(parseISO(date), 'EEEE');
 
+  const formatTime = (time?: string) => {
+    if (!time || typeof time !== 'string') return '';
+    try {
+      return format(parseISO(time), 'h:mm a');
+    } catch (error) {
+      console.error('Invalid time format:', time);
+      return '';
+    }
+  };
+
   const handleEdit = () => {
     console.log("Edit DayCard", id);
   };
@@ -122,13 +132,17 @@ const DayCard: React.FC<DayCardProps> = ({
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <DayCardContent
+                    index={0}
+                    title={dayTitle}
                     activities={activities}
-                    reservations={reservations || []}
+                    reservations={reservations}
                     onAddActivity={() => {}}
                     onEditActivity={() => {}}
-                    formatTime={(time) => time}
+                    formatTime={formatTime}
                     dayId={id}
                     eventId={id}
+                    onAddReservation={() => {}}
+                    onEditReservation={() => {}}
                   />
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
