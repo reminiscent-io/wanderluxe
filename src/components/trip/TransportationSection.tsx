@@ -1,36 +1,102 @@
-
 import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import TransportationHeader from './transportation/TransportationHeader';
+import { Plus, Plane } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import TransportationDialog from './transportation/TransportationDialog';
-import { useTripDays } from '@/hooks/use-trip-days';
+import TransportationListItem from './transportation/TransportationListItem';
+import { Tables } from '@/integrations/supabase/types';
+
+type TransportationEvent = Tables<'transportation_events'>;
 
 interface TransportationSectionProps {
   tripId: string;
+  onTransportationChange: () => void;
+  className?: string;
 }
 
-const TransportationSection = ({ tripId }: TransportationSectionProps) => {
+const TransportationSection: React.FC<TransportationSectionProps> = ({
+  className,
+  tripId,
+  onTransportationChange
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isAddingTransportation, setIsAddingTransportation] = useState(false);
-  const { days } = useTripDays(tripId);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<TransportationEvent | undefined>();
+
+  const { data: transportationEvents, refetch } = useQuery({
+    queryKey: ['transportation-events', tripId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transportation_events')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('start_date', { ascending: true });
+
+      if (error) throw error;
+      return data as TransportationEvent[];
+    }
+  });
+
+  const handleEventClick = (event: TransportationEvent) => {
+    setSelectedEvent(event);
+    setDialogOpen(true);
+  };
+
+  const handleSuccess = () => {
+    refetch();
+    onTransportationChange();
+    setSelectedEvent(undefined);
+  };
 
   return (
     <Card className="bg-sand-50 shadow-md">
-      <TransportationHeader 
-        isExpanded={isExpanded}
-        onToggle={() => setIsExpanded(!isExpanded)}
-      />
+      <Button
+        onClick={() => setIsExpanded(!isExpanded)}
+        variant="ghost"
+        className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Plane className="h-5 w-5" />
+          <span className="text-lg font-medium">Flight and Transportation</span>
+        </div>
+        <Plus className="h-5 w-5" />
+      </Button>
 
       {isExpanded && (
-        <TransportationDialog
-          tripId={tripId}
-          open={isAddingTransportation}
-          onOpenChange={setIsAddingTransportation}
-          onSuccess={() => {
-            setIsAddingTransportation(false);
-          }}
-        />
+        <div className="p-6 pt-0 space-y-6">
+          <div className="space-y-4">
+            {transportationEvents?.map((event) => (
+              <TransportationListItem
+                key={event.id}
+                event={event}
+                onClick={handleEventClick}
+              />
+            ))}
+          </div>
+
+          <Button
+            onClick={() => {
+              setSelectedEvent(undefined);
+              setDialogOpen(true);
+            }}
+            variant="outline"
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transportation
+          </Button>
+        </div>
       )}
+
+      <TransportationDialog
+        tripId={tripId}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initialData={selectedEvent}
+        onSuccess={handleSuccess}
+      />
     </Card>
   );
 };
