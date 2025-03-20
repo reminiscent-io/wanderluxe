@@ -32,16 +32,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   onSubmit,
   onCancel
 }) => {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Create trip days between arrival and departure dates
-    const days = getDaysBetweenDates(startDate, endDate);
-    await createTripDays(tripId, days);
-    onSubmit(e);
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6">
       <DestinationInput
         destination={destination}
         setDestination={setDestination}
