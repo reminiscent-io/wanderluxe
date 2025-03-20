@@ -62,7 +62,7 @@ const DayCard: React.FC<DayCardProps> = ({
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
-      {/* Fixed header */}
+      {/* Header stays at top, outside of collapsible */}
       <div className="z-30">
         <DayHeader
           title={dayTitle}
@@ -74,26 +74,30 @@ const DayCard: React.FC<DayCardProps> = ({
         />
       </div>
 
-      {/* Collapsible content now includes the image and the container */}
+      {/* Collapsible content includes both the image and the overlay sections */}
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleContent className="max-h-[600px] overflow-y-auto">
-          <div>
-            {/* Image container */}
-            <div className="w-full h-[300px]">
-              <DayImage 
-                dayId={id}
-                title={title}
-                imageUrl={imageUrl}
-                defaultImageUrl={defaultImageUrl}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            {/* Content container */}
-            <div className="p-4 grid grid-cols-2 gap-4">
+          {/* 
+            A single container that:
+            1) Fixes height to 600px (adjust as needed).
+            2) Positions the DayImage absolutely behind everything.
+            3) Positions the content relatively on top (z-10).
+          */}
+          <div className="relative w-full h-[600px]">
+            <DayImage
+              dayId={id}
+              title={title}
+              imageUrl={imageUrl}
+              defaultImageUrl={defaultImageUrl}
+              className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            />
+
+            <div className="relative z-10 w-full h-full p-4 grid grid-cols-2 gap-4">
+              {/* Left column: Stay & Flights/Transport */}
               <div className="space-y-4">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
-                  {hotelStays.map(stay => (
+                  {hotelStays.map((stay) => (
                     <div key={stay.stay_id} className="text-white">
                       <p className="font-medium">{stay.hotel}</p>
                       <p className="text-sm">{stay.hotel_address}</p>
@@ -101,7 +105,9 @@ const DayCard: React.FC<DayCardProps> = ({
                   ))}
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">Flights and Transport</h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    Flights and Transport
+                  </h3>
                   {transportations.map((transport, idx) => (
                     <div key={idx} className="text-white">
                       <p className="font-medium">{transport.route}</p>
@@ -110,6 +116,8 @@ const DayCard: React.FC<DayCardProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* Right column: Activities & Reservations */}
               <div className="space-y-4">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
@@ -141,7 +149,9 @@ const DayCard: React.FC<DayCardProps> = ({
                         className="flex justify-between items-center p-3 bg-black/20 backdrop-blur-sm rounded-lg"
                       >
                         <div>
-                          <h4 className="font-medium text-white">{reservation.restaurant_name}</h4>
+                          <h4 className="font-medium text-white">
+                            {reservation.restaurant_name}
+                          </h4>
                           <p className="text-sm text-white/70">{reservation.time}</p>
                         </div>
                         <Button
