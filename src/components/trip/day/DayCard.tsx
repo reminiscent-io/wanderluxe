@@ -59,7 +59,7 @@ const DayCard: React.FC<DayCardProps> = ({
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
       {/* Background Image Container */}
-      <div className="relative h-[600px] w-full">
+      <div className="relative min-h-[600px] w-full">
         <DayImage 
           dayId={id}
           title={title}
