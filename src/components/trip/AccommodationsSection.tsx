@@ -64,7 +64,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   };
 
   // Sort hotel stays by check-in date in ascending order
-  const sortedHotelStays = hotelStays.sort((a, b) =>
+  const sortedHotelStays = (hotelStays || []).sort((a, b) =>
     new Date(a.hotel_checkin_date).getTime() - new Date(b.hotel_checkin_date).getTime()
   );
 
