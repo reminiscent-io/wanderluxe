@@ -35,7 +35,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           onToggle?.();
         }
       }}
-      className="w-full px-4 py-3 flex items-center justify-between bg-black/30 backdrop-blur-sm hover:bg-black/40 transition-colors cursor-pointer z-10 relative"
+      className="w-full px-4 py-3 flex items-center justify-between bg-black/50 backdrop-blur-sm hover:bg-black/60 transition-colors cursor-pointer sticky top-0"
     >
       <div>
         <div className="flex flex-col gap-2">
