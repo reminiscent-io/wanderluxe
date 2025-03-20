@@ -167,6 +167,21 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         )}
       </div>
 
+      <div className="flex flex-col md:flex-row gap-6 mb-6">
+        <div className="w-full md:w-1/2">
+          <AccommodationsSection
+            tripId={tripId}
+            onAccommodationChange={handleRefresh}
+            hotelStays={processedHotelStays}
+          />
+        </div>
+        <div className="w-full md:w-1/2">
+          <TransportationSection
+            tripId={tripId}
+            onTransportationChange={handleRefresh}
+          />
+        </div>
+      </div>
       <TimelineContent 
         groups={groups} 
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
