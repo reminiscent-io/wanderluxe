@@ -3,13 +3,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import AccommodationGroup from '../accommodation/AccommodationGroup';
 import DayCard from '../day/DayCard';
-import FlightIndicator from '../transportation/FlightIndicator';
 import { TripDay } from '@/types/trip';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Tables } from '@/integrations/supabase/types';
-
-type TransportationEvent = Tables<'transportation_events'>;
 
 interface TimelineContentProps {
   groups: Array<{
@@ -80,20 +76,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   return (
     <div className="space-y-8">
       {groups.map((group, groupIndex) => {
-        const relevantFlights = transportationEvents?.filter(flight => {
-          const flightDate = new Date(flight.start_date);
-          const checkinDate = group.checkinDate ? new Date(group.checkinDate) : null;
-          const checkoutDate = group.checkoutDate ? new Date(group.checkoutDate) : null;
-          
-          if (!checkinDate || !checkoutDate) {
-            return group.days.some(day => {
-              const dayDate = new Date(day.date);
-              return flightDate.toDateString() === dayDate.toDateString();
-            });
-          }
-          
-          return flightDate >= checkinDate && flightDate <= checkoutDate;
-        });
+        
 
         return (
           <motion.fieldset
@@ -110,20 +93,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 checkinDate={group.checkinDate!}
                 checkoutDate={group.checkoutDate!}
               >
-                {relevantFlights?.map((event, index) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="flex justify-center mb-6"
-                  >
-                    <FlightIndicator
-                      event={event}
-                      onClick={() => {}}
-                    />
-                  </motion.div>
-                ))}
+                
                 {group.days.map((day) => (
                   <DayCard
                     key={day.day_id}
