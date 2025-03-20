@@ -157,8 +157,25 @@ const DayCard: React.FC<DayCardProps> = ({
                       <Plus className="h-5 w-5" />
                     </Button>
                   </div>
-                  {/*This div is removed because reservations are now handled in DayCardContent*/}
+                  <div className="space-y-2">
+                    {(reservations || []).map((reservation) => (
+                      <div
+                        key={reservation.id}
+                        className="flex justify-between items-center p-3 bg-white/10 backdrop-blur-sm rounded-lg cursor-pointer hover:bg-white/20"
+                        onClick={() => {}}
+                      >
+                        <div>
+                          <h4 className="font-medium text-white">{reservation.restaurant_name}</h4>
+                          {reservation.reservation_time && (
+                            <p className="text-sm text-white/70">
+                              {formatTime(reservation.reservation_time)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                </div>
               </div>
             </div>
           </div>
