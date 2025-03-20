@@ -48,7 +48,6 @@ const DayCard: React.FC<DayCardProps> = ({
         .select('*')
         .eq('day_id', id)
         .order('order_index');
-
       if (error) throw error;
       return data;
     },
@@ -63,58 +62,44 @@ const DayCard: React.FC<DayCardProps> = ({
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
-      {/* 
-        Outer container ensures a fixed height for the “card.”
-        The image is placed absolutely with a lower z-index. 
-      */}
-      <div className="relative w-full h-[600px]">
-        {/* Background image behind everything (z-0). */}
-        <DayImage
-          dayId={id}
-          title={title}
-          imageUrl={imageUrl}
-          defaultImageUrl={defaultImageUrl}
-          className="absolute top-0 left-0 w-full h-full object-cover z-0"
+      {/* Fixed header */}
+      <div className="z-30">
+        <DayHeader
+          title={dayTitle}
+          date={date}
+          isOpen={isExpanded}
+          onEdit={handleEdit}
+          onDelete={() => onDelete(id)}
+          onToggle={() => setIsExpanded(prev => !prev)}
         />
+      </div>
 
-        {/* DayHeader absolutely positioned at the top (z-30). */}
-        <div className="absolute top-0 left-0 right-0 z-30">
-          <DayHeader
-            title={dayTitle}
-            date={date}
-            isOpen={isExpanded}
-            onEdit={handleEdit}
-            onDelete={() => onDelete(id)}
-            onToggle={() => setIsExpanded((prev) => !prev)}
-          />
-        </div>
-
-        {/* Collapsible content has a slightly lower z-index than the header, 
-            but higher than the image, so it’s visible in front of the image. */}
-        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-          <CollapsibleContent
-            className="
-              relative
-              z-20
-              max-h-[600px]
-              overflow-y-auto
-              pt-20   /* Enough padding so it sits below the header */
-          "
-          >
-            <div className="grid grid-cols-2 gap-4 p-4">
+      {/* Collapsible content now includes the image and the container */}
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <CollapsibleContent className="max-h-[600px] overflow-y-auto">
+          <div>
+            {/* Image container */}
+            <div className="w-full h-[300px]">
+              <DayImage 
+                dayId={id}
+                title={title}
+                imageUrl={imageUrl}
+                defaultImageUrl={defaultImageUrl}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* Content container */}
+            <div className="p-4 grid grid-cols-2 gap-4">
               <div className="space-y-4">
-                {/* Hotel / Stay Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
-                  {hotelStays.map((stay) => (
+                  {hotelStays.map(stay => (
                     <div key={stay.stay_id} className="text-white">
                       <p className="font-medium">{stay.hotel}</p>
                       <p className="text-sm">{stay.hotel_address}</p>
                     </div>
                   ))}
                 </div>
-
-                {/* Transport Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Flights and Transport</h3>
                   {transportations.map((transport, idx) => (
@@ -125,9 +110,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   ))}
                 </div>
               </div>
-
               <div className="space-y-4">
-                {/* Activities Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <DayCardContent
@@ -139,8 +122,6 @@ const DayCard: React.FC<DayCardProps> = ({
                     eventId={null}
                   />
                 </div>
-
-                {/* Reservations Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-white">Reservations</h3>
@@ -177,9 +158,9 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
             </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };
