@@ -10,9 +10,7 @@ type DbAccommodation = Tables<'accommodations'>;
 type DbAccommodationDay = Tables<'accommodations_days'>;
 
 // Simplified accommodation type that matches database structure
-interface TimelineAccommodation extends DbAccommodation {
-  accommodations_days?: DbAccommodationDay[];
-}
+// Accommodation interfaces have been removed
 
 export const useTimelineEvents = (tripId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -57,31 +55,20 @@ export const useTimelineEvents = (tripId: string | undefined) => {
   const { data: events = [], isLoading, refetch: refreshEvents } = useQuery({
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
-      if (!tripId) return [];
-      
-      const { data, error } = await supabase
-        .from('accommodations')
-        .select('*, accommodations_days(day_id, date)')
-        .eq('trip_id', tripId)
-        .order('order_index');
+      // Accommodation data fetching has been removed
+      return [];
 
       if (error) throw error;
-      return (data || []) as TimelineAccommodation[];
+      // Accommodation functionality has been removed
+      return [];
     },
     enabled: !!tripId,
   });
 
   const updateEvent = useMutation({
-    mutationFn: async (event: Partial<TimelineAccommodation> & { stay_id: string }) => {
-      const { data, error } = await supabase
-        .from('accommodations')
-        .update(event)
-        .eq('stay_id', event.stay_id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+    mutationFn: async () => {
+      toast.error('Accommodation functionality has been removed');
+      throw new Error('Accommodation functionality has been removed');
     },
     onSuccess: () => {
       toast.success('Event updated successfully');
@@ -95,19 +82,9 @@ export const useTimelineEvents = (tripId: string | undefined) => {
 
   const deleteEvent = useMutation({
     mutationFn: async (eventId: string) => {
-      // First delete all accommodation_days
-      const { error: daysError } = await supabase
-        .from('accommodations_days')
-        .delete()
-        .eq('stay_id', eventId);
-
-      if (daysError) throw daysError;
-
-      // Then delete the accommodation
-      const { error } = await supabase
-        .from('accommodations')
-        .delete()
-        .eq('stay_id', eventId);
+      // Accommodation functionality has been removed
+      toast.error('Accommodation functionality has been removed');
+      throw new Error('Accommodation functionality has been removed');
 
       if (error) throw error;
     },
