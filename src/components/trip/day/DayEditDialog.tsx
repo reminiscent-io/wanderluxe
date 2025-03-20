@@ -80,9 +80,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
           {/* Image Generation Section */}
           <div className="space-y-1">
-            <Label className="text-sm font-medium text-gray-700">
-              Generate Image
-            </Label>
             <ImageGenerationSection
               onImageSelect={setSelectedImage}
               selectedImage={selectedImage}
