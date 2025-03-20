@@ -3,6 +3,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { timelineEventsService } from './timelineEventsService';
 import { AccommodationFormData } from '@/types/trip';
 
+// Export individual functions for direct import
+export const addAccommodation = async (tripId: string, formData: AccommodationFormData) => {
+  return accommodationService.createAccommodation(tripId, formData);
+};
+
+export const updateAccommodation = async (tripId: string, stayId: string, formData: AccommodationFormData) => {
+  const updatedFormData = { ...formData, stay_id: stayId };
+  return accommodationService.updateAccommodation(tripId, updatedFormData);
+};
+
+export const deleteAccommodation = async (stayId: string) => {
+  return accommodationService.deleteAccommodation(stayId);
+};
+
 export const accommodationService = {
   createAccommodation: async (tripId: string, formData: AccommodationFormData) => {
     // Calculate the dates between check-in and checkout
