@@ -21,7 +21,6 @@ export const getDaysBetweenDates = (startDate: string, endDate: string): string[
   const start = parseISO(startDate);
   const end = parseISO(endDate);
   
-  return eachDayOfInterval({ start, end }).map(date => 
-    format(date, 'yyyy-MM-dd')
-  );
+  return eachDayOfInterval({ start, end })
+    .map(date => format(date, 'yyyy-MM-dd'));
 };
