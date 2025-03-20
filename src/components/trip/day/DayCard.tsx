@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import DayHeader from './DayHeader';
+import DayImage from './DayImage';
+import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
+import { DayActivity, HotelStay } from '@/types/trip';
 import { Button } from '@/components/ui/button';
 import { Pencil, Plus } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
-import { DayActivity, HotelStay } from '@/types/trip';
-import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
 
 interface DayCardProps {
@@ -69,7 +69,7 @@ const DayCard: React.FC<DayCardProps> = ({
             title={title}
             imageUrl={imageUrl}
             defaultImageUrl={defaultImageUrl}
-            className="object-cover"
+            className="object-cover absolute inset-0 w-full h-full"
           />
           <div className="absolute inset-x-0 top-0 z-30">
             <DayHeader
@@ -82,10 +82,9 @@ const DayCard: React.FC<DayCardProps> = ({
             />
           </div>
         </div>
-        <CollapsibleContent className="absolute inset-0 pt-16">
+        <CollapsibleContent className="relative pt-16">
           <div className="h-full overflow-y-auto">
             <div className="pt-4 grid grid-cols-2 gap-4 p-4">
-              {/* Left column: Stay & Transport */}
               <div className="space-y-4">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
@@ -97,19 +96,15 @@ const DayCard: React.FC<DayCardProps> = ({
                   ))}
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Flights and Transport
-                  </h3>
-                  {transportations.map((transport, idx) => (
-                    <div key={idx} className="text-white">
-                      <p className="font-medium">{transport.route}</p>
+                  <h3 className="text-lg font-semibold text-white mb-2">Transport</h3>
+                  {transportations.map((transport) => (
+                    <div key={transport.id} className="text-white">
+                      <p className="font-medium">{transport.title}</p>
                       <p className="text-sm">{transport.details}</p>
                     </div>
                   ))}
                 </div>
               </div>
-
-              {/* Right column: Activities & Reservations */}
               <div className="space-y-4">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
@@ -122,7 +117,6 @@ const DayCard: React.FC<DayCardProps> = ({
                     eventId={null}
                   />
                 </div>
-
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-white">Reservations</h3>
@@ -161,7 +155,8 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
             </div>
-          </CollapsibleContent>
+          </div>
+        </CollapsibleContent>
       </Collapsible>
     </div>
   );
