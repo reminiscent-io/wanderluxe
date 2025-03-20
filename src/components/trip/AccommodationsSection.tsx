@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
@@ -8,6 +7,9 @@ import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDays } from '@/hooks/use-trip-days';
 import type { HotelStay } from '@/types/trip';
+import TransportationHeader from "./transportation/TransportationHeader"; // Added import
+import TransportationDialog from "./transportation/TransportationDialog"; // Added import
+
 
 interface AccommodationsSectionProps {
   tripId: string;
@@ -23,14 +25,14 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   hotelStays
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // Use the main useTripDays hook and get dates from its data
   const { days } = useTripDays(tripId);
   const tripDates = {
     arrival_date: days?.[0]?.date || null,
     departure_date: days?.[days?.length - 1]?.date || null
   };
-  
+
   const {
     isAddingAccommodation,
     setIsAddingAccommodation,
@@ -68,10 +70,19 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
   return (
     <Card className="bg-sand-50 shadow-md">
-      <AccommodationHeader 
-        isExpanded={isExpanded}
-        onToggle={() => setIsExpanded(!isExpanded)}
-      />
+      <div className="flex"> {/* Added div for flexbox layout */}
+        <div className="flex-1"> {/* Added div to make elements take equal width */}
+          <AccommodationHeader 
+            isExpanded={isExpanded}
+            onToggle={() => setIsExpanded(!isExpanded)}
+          />
+        </div>
+        <div className="flex-1"> {/* Added div to make elements take equal width */}
+          <TransportationHeader 
+            isExpanded={isExpanded} 
+            onToggle={() => setIsExpanded(!isExpanded)} /> {/* Added TransportationHeader */}
+        </div>
+      </div>
 
       {isExpanded && (
         <>
