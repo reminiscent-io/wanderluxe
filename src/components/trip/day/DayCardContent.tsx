@@ -96,7 +96,39 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         onEditActivity={handleEditActivityWrapper}
       />
 
-      
+      <div className="mt-8">
+        <div className="flex justify-between items-center mb-4">
+          {onAddReservation && (
+            <Button
+              onClick={() => onAddReservation?.()}
+              variant="ghost"
+              size="sm"
+              className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
+            >
+              <span className="h-4 w-4 mr-2">+</span>
+              Add Reservation
+            </Button>
+          )}
+        </div>
+        <div className="space-y-2">
+          {(reservations || []).map((reservation) => (
+            <div
+              key={reservation.id}
+              className="flex justify-between items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+              onClick={() => onEditReservation?.(reservation)}
+            >
+              <div>
+                <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
+                {reservation.reservation_time && (
+                  <p className="text-xs text-gray-500">
+                    {formatTime(reservation.reservation_time)}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
