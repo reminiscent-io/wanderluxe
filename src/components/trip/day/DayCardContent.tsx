@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
 import ActivityDialogs from './ActivityDialogs';
 import DiningList from '../dining/DiningList';
 import { DayActivity, ActivityFormData } from '@/types/trip';
@@ -31,6 +32,8 @@ interface DayCardContentProps {
   formatTime: (time?: string) => string;
   dayId: string;
   eventId: string;
+  onAddReservation?: () => void;
+  onEditReservation?: (reservation: any) => void;
 }
 
 const DayCardContent: React.FC<DayCardContentProps> = ({
@@ -43,6 +46,8 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   formatTime,
   dayId,
   eventId,
+  onAddReservation,
+  onEditReservation,
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [newActivity, setNewActivity] = useState<ActivityFormData>({
@@ -97,15 +102,17 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       <div className="mt-8">
         <div className="flex justify-between items-center mb-4">
           <h4 className="text-base font-semibold text-earth-700">Reservations</h4>
-          <Button
-            onClick={() => onAddReservation?.()}
-            variant="ghost"
-            size="sm"
-            className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Reservation
-          </Button>
+          {onAddReservation && (
+            <Button
+              onClick={() => onAddReservation?.()}
+              variant="ghost"
+              size="sm"
+              className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
+            >
+              <span className="h-4 w-4 mr-2">+</span> {/* Replaced Plus with '+' */}
+              Add Reservation
+            </Button>
+          )}
         </div>
         <div className="space-y-2">
           {(reservations || []).map((reservation) => (
