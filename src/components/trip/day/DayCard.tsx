@@ -88,7 +88,7 @@ const DayCard: React.FC<DayCardProps> = ({
         >
           <CollapsibleContent className="max-h-[600px] overflow-y-auto">
             {isExpanded && (
-              <div className="absolute inset-0 pt-20 grid grid-cols-2 gap-4 p-4">
+              <div className="absolute inset-0 pt-20 grid grid-cols-2 gap-4 p-4 z-20">
                 <div className="space-y-4">
                   <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
