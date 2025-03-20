@@ -123,11 +123,12 @@ const DayCard: React.FC<DayCardProps> = ({
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <DayCardContent
                     activities={activities}
+                    reservations={reservations || []}
                     onAddActivity={() => {}}
                     onEditActivity={() => {}}
                     formatTime={(time) => time}
                     dayId={id}
-                    eventId={null}
+                    eventId={id}
                   />
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
@@ -142,30 +143,8 @@ const DayCard: React.FC<DayCardProps> = ({
                       <Plus className="h-5 w-5" />
                     </Button>
                   </div>
-                  <div className="space-y-2">
-                    {reservations?.map((reservation, idx) => (
-                      <div
-                        key={reservation.id || idx}
-                        className="flex justify-between items-center p-3 bg-black/20 backdrop-blur-sm rounded-lg"
-                      >
-                        <div>
-                          <h4 className="font-medium text-white">
-                            {reservation.restaurant_name}
-                          </h4>
-                          <p className="text-sm text-white/70">{reservation.time}</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {}}
-                          className="text-white hover:bg-white/20"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                  {/*This div is removed because reservations are now handled in DayCardContent*/}
                   </div>
-                </div>
               </div>
             </div>
           </div>
