@@ -56,17 +56,6 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const dayTitle = title || format(parseISO(date), 'EEEE');
 
-  // Utility to format reservation times
-  const formatTime = (time?: string) => {
-    if (!time || typeof time !== 'string') return '';
-    try {
-      return format(parseISO(time), 'h:mm a');
-    } catch (error) {
-      console.error('Invalid time format:', time);
-      return '';
-    }
-  };
-
   const handleEdit = () => {
     console.log("Edit DayCard", id);
   };
