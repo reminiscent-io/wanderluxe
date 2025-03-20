@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import AccommodationGaps from './timeline/AccommodationGaps';
 import AccommodationsSection from './AccommodationsSection';
-import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
@@ -171,12 +170,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
               tripId={tripId}
               onAccommodationChange={handleRefresh}
               hotelStays={processedHotelStays}
-            />
-          </div>
-          <div className="w-full md:w-1/2">
-            <TransportationSection
-              tripId={tripId}
-              onTransportationChange={handleRefresh}
             />
           </div>
         </div>
