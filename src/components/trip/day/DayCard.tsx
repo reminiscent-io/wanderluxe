@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import DayHeader from './DayHeader';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Pencil, Plus } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import DayImage from './DayImage';
-import DayCardContent from './DayCardContent';
-import { DayActivity, HotelStay } from '@/types/trip';
+import { Pencil, Plus } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
+import { DayActivity, HotelStay } from '@/types/trip';
+import DayImage from './DayImage';
+import DayCardContent from './DayCardContent';
 
 interface DayCardProps {
   id: string;
@@ -57,41 +56,57 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   const dayTitle = title || format(parseISO(date), 'EEEE');
-  const formattedDate = format(parseISO(date), 'MMMM d, yyyy');
 
-  const onEdit = () => {
+  const handleEdit = () => {
     console.log("Edit DayCard", id);
   };
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
-      <div className="relative h-[600px] w-full">
-        <DayImage 
+      {/* 
+        Outer container ensures a fixed height for the “card.”
+        The image is placed absolutely with a lower z-index. 
+      */}
+      <div className="relative w-full h-[600px]">
+        {/* Background image behind everything (z-0). */}
+        <DayImage
           dayId={id}
           title={title}
           imageUrl={imageUrl}
           defaultImageUrl={defaultImageUrl}
-          className="object-cover"
+          className="absolute top-0 left-0 w-full h-full object-cover z-0"
         />
-        {/* Fixed header positioned at the top */}
-        <div className="absolute top-0 left-0 right-0 z-20">
+
+        {/* DayHeader absolutely positioned at the top (z-30). */}
+        <div className="absolute top-0 left-0 right-0 z-30">
           <DayHeader
             title={dayTitle}
             date={date}
             isOpen={isExpanded}
-            onEdit={onEdit}
+            onEdit={handleEdit}
             onDelete={() => onDelete(id)}
-            onToggle={() => setIsExpanded(prev => !prev)}
+            onToggle={() => setIsExpanded((prev) => !prev)}
           />
         </div>
+
+        {/* Collapsible content has a slightly lower z-index than the header, 
+            but higher than the image, so it’s visible in front of the image. */}
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-          <CollapsibleContent className="max-h-[600px] overflow-y-auto">
-            {/* Use relative positioning with padding to avoid overlap with the fixed header */}
-            <div className="pt-20 grid grid-cols-2 gap-4 p-4">
+          <CollapsibleContent
+            className="
+              relative
+              z-20
+              max-h-[600px]
+              overflow-y-auto
+              pt-20   /* Enough padding so it sits below the header */
+          "
+          >
+            <div className="grid grid-cols-2 gap-4 p-4">
               <div className="space-y-4">
+                {/* Hotel / Stay Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
-                  {hotelStays.map(stay => (
+                  {hotelStays.map((stay) => (
                     <div key={stay.stay_id} className="text-white">
                       <p className="font-medium">{stay.hotel}</p>
                       <p className="text-sm">{stay.hotel_address}</p>
@@ -99,6 +114,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   ))}
                 </div>
 
+                {/* Transport Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Flights and Transport</h3>
                   {transportations.map((transport, idx) => (
@@ -111,6 +127,7 @@ const DayCard: React.FC<DayCardProps> = ({
               </div>
 
               <div className="space-y-4">
+                {/* Activities Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <DayCardContent
@@ -123,6 +140,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   />
                 </div>
 
+                {/* Reservations Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-white">Reservations</h3>
