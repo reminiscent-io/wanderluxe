@@ -6,6 +6,7 @@ import ActivitiesList from './activities/ActivitiesList';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BedDouble, Calendar, MapPin } from 'lucide-react';
+import { accommodationService } from '@/services/accommodation/accommodationService';
 
 interface DayCardContentProps {
   index: number;
