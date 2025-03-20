@@ -133,7 +133,6 @@ const DayCard: React.FC<DayCardProps> = ({
                     index={0}
                     title={dayTitle}
                     activities={activities}
-                    // Removed reservations prop so they don't show under Activities
                     onAddActivity={() => {}}
                     onEditActivity={() => {}}
                     formatTime={formatTime}
@@ -144,7 +143,7 @@ const DayCard: React.FC<DayCardProps> = ({
 
                 {/* Reservations */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center mb-2">
                     <h3 className="text-lg font-semibold text-white">Reservations</h3>
                     <Button
                       variant="ghost"
@@ -155,11 +154,12 @@ const DayCard: React.FC<DayCardProps> = ({
                       <Plus className="h-5 w-5" />
                     </Button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {reservations?.map((reservation, idx) => (
                       <div
                         key={reservation.id || idx}
-                        className="flex justify-between items-center p-3 bg-black/20 backdrop-blur-sm rounded-lg"
+                        className="flex justify-between items-center p-3 bg-black/20 backdrop-blur-sm rounded-lg cursor-pointer hover:bg-black/30"
+                        onClick={() => {}}
                       >
                         <div>
                           <h4 className="font-medium text-white">{reservation.restaurant_name}</h4>
