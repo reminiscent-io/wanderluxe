@@ -20,16 +20,18 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   tripArrivalDate,
   tripDepartureDate
 }) => {
-  const defaultDate = tripArrivalDate || '';
+  // Use departure date for the start date and arrival date for the end date
+  const defaultDepartureDate = tripDepartureDate || '';
+  const defaultArrivalDate = tripArrivalDate || '';
 
   const [formData, setFormData] = useState<Partial<TransportationEvent>>({
     type: 'flight',
     provider: '',
     details: '',
     confirmation_number: '',
-    start_date: initialData?.start_date || defaultDate,
+    start_date: initialData?.start_date || defaultDepartureDate,
     start_time: initialData?.start_time || '',
-    end_date: initialData?.end_date || defaultDate,
+    end_date: initialData?.end_date || defaultArrivalDate,
     end_time: initialData?.end_time || '',
     departure_location: '',
     arrival_location: '',
