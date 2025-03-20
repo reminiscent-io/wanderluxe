@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
-import { Collapsible } from "@/components/ui/collapsible";
-import DayHeader from './DayHeader';
-import DayCollapsibleContent from './components/DayCollapsibleContent';
-import DayActivityManager from './components/DayActivityManager';
+import DayImage from './DayImage';
+import DayCardContent from './DayCardContent';
 import { format, parseISO } from 'date-fns';
-import { DayActivity, ActivityFormData } from '@/types/trip';
-import { toast } from 'sonner';
+import { DayActivity, HotelStay } from '@/types/trip';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import DayEditDialog from './DayEditDialog';
-import EditActivityDialog from './activities/EditActivityDialog';
 
 interface DayCardProps {
   id: string;
@@ -21,6 +16,8 @@ interface DayCardProps {
   index: number;
   onDelete: (id: string) => void;
   defaultImageUrl?: string;
+  hotelStays?: HotelStay[];
+  transportations?: any[];
 }
 
 const DayCard: React.FC<DayCardProps> = ({ 
@@ -32,15 +29,15 @@ const DayCard: React.FC<DayCardProps> = ({
   imageUrl,
   index,
   onDelete,
-  defaultImageUrl
+  defaultImageUrl,
+  hotelStays = [],
+  transportations = []
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isEditingDay, setIsEditingDay] = useState(false);
   const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
-  const [editingActivityData, setEditingActivityData] = useState<ActivityFormData | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch restaurant reservations for this day
   const { data: reservations } = useQuery({
     queryKey: ['reservations', id],
     queryFn: async () => {
@@ -57,131 +54,81 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   const dayTitle = title || format(parseISO(date), 'EEEE');
-
-  const formatTime = (time?: string) => {
-    if (!time) return '';
-    return time.substring(0, 5);
-  };
-
-  // Get activity manager functions
-  const activityManager = DayActivityManager({ 
-    id, 
-    tripId, 
-    activities 
-  });
-
-  // Update the edit handler to accept the full activity object.
-  const handleEditActivity = (activity: DayActivity) => {
-    console.log("DayCard handleEditActivity called with activity:", activity);
-    if (!activity?.id) {
-      console.error("Activity id is missing for the selected activity", activity);
-      toast.error("This activity hasn't been saved yet. Please save it before editing.");
-      return;
-    }
-    setEditingActivity(activity);
-    setEditingActivityData({
-      title: activity.title,
-      description: activity.description || '',
-      start_time: activity.start_time || '',
-      end_time: activity.end_time || '',
-      cost: activity.cost ? String(activity.cost) : '',
-      currency: activity.currency || ''
-    });
-  };
-
-  // Handle submission from the EditActivityDialog.
-  const handleActivityEditSubmit = async (updatedActivity: ActivityFormData) => {
-    if (editingActivity && editingActivity.id) {
-      try {
-        await activityManager.handleEditActivity(editingActivity.id, updatedActivity);
-        toast.success('Activity updated successfully');
-        setEditingActivity(null);
-        setEditingActivityData(null);
-        queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      } catch (error) {
-        console.error('Error updating activity:', error);
-        toast.error('Failed to update activity');
-      }
-    }
-  };
-
-  const handleDayUpdate = async (updatedData: { title?: string; imageUrl?: string }) => {
-    try {
-      const { error } = await supabase
-        .from('trip_days')
-        .update({
-          title: updatedData.title,
-          image_url: updatedData.imageUrl
-        })
-        .eq('day_id', id);
-
-      if (error) throw error;
-
-      toast.success('Day updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      setIsEditingDay(false);
-    } catch (error) {
-      console.error('Error updating day:', error);
-      toast.error('Failed to update day');
-      throw error;
-    }
-  };
+  const formattedDate = format(parseISO(date), 'MMMM d, yyyy');
 
   return (
-    <>
-      <Collapsible
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        className="rounded-lg overflow-hidden bg-white shadow-md"
-      >
-        <DayHeader
-          title={dayTitle}
-          date={date}
-          isOpen={isOpen}
-          onEdit={() => setIsEditingDay(true)}
-          onDelete={() => onDelete(id)}
-        />
-
-        <DayCollapsibleContent
-          title={dayTitle}
-          activities={activities}
-          hotelDetails={undefined}
-          index={index}
-          onAddActivity={activityManager.handleAddActivity}
-          onEditActivity={handleEditActivity}
-          formatTime={formatTime}
+    <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
+      {/* Background Image Container */}
+      <div className="relative h-[600px] w-full">
+        <DayImage 
           dayId={id}
-          tripId={tripId}
+          title={title}
           imageUrl={imageUrl}
           defaultImageUrl={defaultImageUrl}
-          reservations={reservations}
         />
-      </Collapsible>
+      </div>
 
-      <DayEditDialog
-        open={isEditingDay}
-        onOpenChange={setIsEditingDay}
-        initialTitle={title || ''}
-        initialImageUrl={imageUrl || ''}
-        onSave={handleDayUpdate}
-      />
+      {/* Header - Semi-transparent overlay */}
+      <div className="absolute top-0 left-0 right-0 bg-black/10 backdrop-blur-sm p-4">
+        <h2 className="text-2xl font-semibold text-white">{dayTitle}</h2>
+        <p className="text-white/90">{formattedDate}</p>
+      </div>
 
-      {editingActivity && editingActivityData && (
-        <EditActivityDialog
-          activityId={editingActivity.id}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditingActivity(null);
-              setEditingActivityData(null);
-            }
-          }}
-          activity={editingActivityData}
-          onActivityChange={(newData) => setEditingActivityData(newData)}
-          onSubmit={handleActivityEditSubmit}
-          eventId={editingActivity.id}
-        />
-      )}
-    </>
+      {/* Content Container */}
+      <div className="absolute inset-0 grid grid-cols-2 gap-4 p-4 pt-20">
+        {/* Left Column */}
+        <div className="space-y-4">
+          {/* Hotel Stay Section */}
+          <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
+            {hotelStays.map(stay => (
+              <div key={stay.stay_id} className="text-white">
+                <p className="font-medium">{stay.hotel}</p>
+                <p className="text-sm">{stay.hotel_address}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Transportation Section */}
+          <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-2">Flights and Transport</h3>
+            {transportations.map((transport, idx) => (
+              <div key={idx} className="text-white">
+                <p className="font-medium">{transport.route}</p>
+                <p className="text-sm">{transport.details}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-4">
+          {/* Activities Section */}
+          <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
+            <DayCardContent
+              activities={activities}
+              onAddActivity={() => {}}
+              onEditActivity={() => {}}
+              formatTime={(time) => time}
+              dayId={id}
+              eventId={null}
+            />
+          </div>
+
+          {/* Reservations Section */}
+          <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-2">Reservations</h3>
+            {reservations?.map((reservation, idx) => (
+              <div key={idx} className="text-white">
+                <p className="font-medium">{reservation.restaurant_name}</p>
+                <p className="text-sm">{reservation.time}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
