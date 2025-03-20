@@ -55,7 +55,7 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   const dayTitle = title || format(parseISO(date), 'EEEE');
-  
+
   const formatTime = (time?: string) => {
     if (!time) return '';
     return format(parseISO(time), 'h:mm a');
