@@ -59,9 +59,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     currency: 'USD'
   });
 
-  // Sort activities:
-  // - Those with a start_time come first, sorted by start_time (lexicographically).
-  // - Those without a start_time come later, sorted by created_at.
+  // Sort activities by start_time if present; else by created_at
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
       const aTime = a.start_time && a.start_time.trim() !== '' ? a.start_time : null;
@@ -73,13 +71,12 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       } else if (!aTime && bTime) {
         return 1;
       } else {
-        // Both times missing: sort by creation time.
+        // Both times missing: sort by creation time
         return a.created_at.localeCompare(b.created_at);
       }
     });
   }, [activities]);
 
-  // Updated handler passes the full activity object.
   const handleEditActivityWrapper = (activity: DayActivity) => {
     if (!activity.id) {
       console.error("Activity id is missing in DayCardContent", activity);
@@ -109,7 +106,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
               size="sm"
               className="text-earth-600 hover:text-earth-700 hover:bg-earth-50"
             >
-              <span className="h-4 w-4 mr-2">+</span> {/* Replaced Plus with '+' */}
+              <span className="h-4 w-4 mr-2">+</span>
               Add Reservation
             </Button>
           )}
