@@ -12,7 +12,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
 
     // Create trip days for the entire stay period
-    await createTripDays(tripId, stayDates);
+    // await createTripDays(tripId, stayDates);
 
     // Create all timeline events for the stay
     const accommodationData = {
