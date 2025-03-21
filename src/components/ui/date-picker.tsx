@@ -13,11 +13,12 @@ import {
 
 export interface DatePickerProps {
   date?: Date
+  defaultMonth?: Date
   onSelect: (date: Date | undefined) => void
   disabled?: boolean
 }
 
-export function DatePicker({ date, onSelect, disabled }: DatePickerProps) {
+export function DatePicker({ date, defaultMonth, onSelect, disabled }: DatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -37,6 +38,7 @@ export function DatePicker({ date, onSelect, disabled }: DatePickerProps) {
         <Calendar
           mode="single"
           selected={date}
+          defaultMonth={defaultMonth}
           onSelect={onSelect}
           initialFocus
         />

@@ -58,6 +58,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
         formData={formData}
         setFormData={setFormData}
         formatCost={formatCost}
+        tripDepartureDate={tripDepartureDate}
       />
 
       <div className="flex justify-end gap-2">
