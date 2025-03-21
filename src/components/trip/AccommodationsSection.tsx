@@ -7,9 +7,6 @@ import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDays } from '@/hooks/use-trip-days';
 import type { HotelStay } from '@/types/trip';
-import TransportationHeader from "./transportation/TransportationHeader"; // Added import
-import TransportationDialog from "./transportation/TransportationDialog"; // Added import
-
 
 interface AccommodationsSectionProps {
   tripId: string;
