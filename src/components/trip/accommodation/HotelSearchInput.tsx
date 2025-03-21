@@ -1,5 +1,4 @@
 import React from 'react';
-import { Label } from "@/components/ui/label";
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
 
 declare global {
