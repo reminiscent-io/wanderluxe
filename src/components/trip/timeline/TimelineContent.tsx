@@ -111,16 +111,16 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             title={day.title}
             date={day.date}
             activities={day.activities || []}
-            //onTitleChange={(title) => handleDayTitleChange(day.id, title)} //Removed these lines as they weren't defined in the original code.
-            //onImageChange={(imageUrl) => handleDayImageChange(day.id, imageUrl)}
+            onTitleChange={(title) => console.log('Title change:', title)}
+            onImageChange={(imageUrl) => console.log('Image change:', imageUrl)}
             imageUrl={day.image_url}
-            //defaultImageUrl={getDefaultImageForTrip()} //Removed this line as getDefaultImageForTrip wasn't defined in the original code.
+            defaultImageUrl=""
             accommodations={accommodations?.filter(acc => {
               const checkinDate = new Date(acc.hotel_checkin_date);
               const checkoutDate = new Date(acc.hotel_checkout_date);
               const dayDate = new Date(day.date);
               return dayDate >= checkinDate && dayDate < checkoutDate;
-            })}
+            }) || []}
           />
         ))}
       </div>

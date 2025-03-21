@@ -1,14 +1,16 @@
-import React, { useCallback, useState } from 'react';
-import { DayActivity, HotelStay } from '@/types/trip';
+
+import React, { useState, useCallback } from 'react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import DayImage from './DayImage';
+import DayEditDialog from './DayEditDialog';
+import { DayActivity, HotelStay } from '@/types/trip';
 import { Pencil } from 'lucide-react';
 import { formatToTime } from '@/utils/dateUtils';
+import { activityService } from '@/services/activity/activityService';
 import DayCardContent from './DayCardContent';
 import { toast } from 'sonner';
-import DayEditDialog from './DayEditDialog';
-import DayImage from './DayImage';
-import { motion } from 'framer-motion';
 
 interface DayCardProps {
   index: number;
@@ -41,6 +43,8 @@ const DayCard: React.FC<DayCardProps> = ({
   const [editTitle, setEditTitle] = useState(title);
   const [selectedImage, setSelectedImage] = useState<string | null>(imageUrl || null);
 
+  console.log('Edit DayCard', id);
+
   // Format time to a more readable format
   const formatTime = useCallback((time?: string) => {
     if (!time || time.trim() === '') return '';
@@ -54,6 +58,7 @@ const DayCard: React.FC<DayCardProps> = ({
         ...activity,
         day_id: id,
         event_id: eventId,
+        trip_id: eventId.split(':')[0], // Assuming eventId format is tripId:eventType
       });
       toast.success('Activity added successfully');
       return Promise.resolve();
