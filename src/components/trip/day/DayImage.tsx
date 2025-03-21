@@ -22,9 +22,10 @@ const DayImage: React.FC<DayImageProps> = ({
   console.log('DayImage rendering:', {
     dayId,
     title,
-    imageUrl,
-    defaultImageUrl,
-    displayImageUrl
+    imageUrl: imageUrl || 'undefined/null',
+    defaultImageUrl: defaultImageUrl || 'undefined/null',
+    displayImageUrl: displayImageUrl || 'undefined/null',
+    usingDefault: !imageUrl && !!defaultImageUrl
   });
 
   return (

@@ -43,8 +43,17 @@ const DayCard: React.FC<DayCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
-  const [imageUrlState, setImageUrl] = useState(originalImageUrl); // Added imageUrl state
+  // Initialize with originalImageUrl if available, then fallback to imageUrl, then null
+  const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
   const queryClient = useQueryClient();
+  
+  // Update imageUrlState when originalImageUrl changes (from parent component)
+  useEffect(() => {
+    if (originalImageUrl) {
+      setImageUrl(originalImageUrl);
+      console.log("Updated imageUrlState from originalImageUrl:", originalImageUrl);
+    }
+  }, [originalImageUrl]);
 
   const { data: reservations } = useQuery({
     queryKey: ['reservations', id],
@@ -80,13 +89,17 @@ const DayCard: React.FC<DayCardProps> = ({
       }
 
       // Save changes to the database
-      const { error } = await supabase
+      console.log("Saving to database:", { id, title: data.title, image_url: data.image_url });
+      
+      const { error, data: updatedData } = await supabase
         .from('trip_days')
         .update({
           title: data.title,
           image_url: data.image_url
         })
-        .eq('day_id', id);
+        .eq('day_id', id)
+        .select('*')
+        .single();
       
       if (error) {
         console.error('Error saving day edit:', error);
@@ -94,6 +107,12 @@ const DayCard: React.FC<DayCardProps> = ({
         throw error;
       } else {
         toast.success('Day updated successfully');
+        console.log("Database updated successfully:", updatedData);
+        
+        // Update local state with the data from the database
+        if (updatedData.image_url) {
+          setImageUrl(updatedData.image_url);
+        }
         
         // Invalidate the trip data query to refresh the data
         queryClient.invalidateQueries(['trip']);
