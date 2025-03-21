@@ -1,6 +1,6 @@
-<AddReservationDialog 
-        isOpen={isAddingReservation}
-        onOpenChange={setIsAddingReservation}
-        onReservationAdded={refetchReservations}
-        tripId={tripId}
-      />
+<AddReservationDialog
+  isOpen={isAddingReservation}
+  onOpenChange={setIsAddingReservation}
+  onReservationAdded={refreshReservations}
+  tripId={tripId}
+/>
