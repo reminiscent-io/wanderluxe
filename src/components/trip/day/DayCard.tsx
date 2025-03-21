@@ -209,8 +209,8 @@ const DayCard: React.FC<DayCardProps> = ({
                           onClick={() => {}}
                         >
                           <div>
-                            <h4 className="font-medium text-gray-900">{stay.hotel}</h4>
-                            <p className="text-sm text-gray-600">{stay.hotel_address}</p>
+                            <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
+                            <p className="text-sm text-gray-500">{stay.hotel_address}</p>
                             {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === date.split('T')[0] && (
                               <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                 Check-in day
@@ -297,11 +297,11 @@ const DayCard: React.FC<DayCardProps> = ({
                         }}
                       >
                         <div>
-                          <h4 className="font-medium text-gray-900">
+                          <h4 className="font-medium text-gray-700">
                             {activity.title}
                           </h4>
                           {activity.start_time && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-500">
                               {formatTime(activity.start_time)}
                             </p>
                           )}
@@ -347,11 +347,11 @@ const DayCard: React.FC<DayCardProps> = ({
                         onClick={() => {}}
                       >
                         <div>
-                          <h4 className="font-medium text-gray-900">
+                          <h4 className="font-medium text-gray-700">
                             {reservation.restaurant_name}
                           </h4>
                           {reservation.reservation_time && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-500">
                               {formatTime(reservation.reservation_time)}
                             </p>
                           )}
