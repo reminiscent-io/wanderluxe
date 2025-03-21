@@ -32,4 +32,4 @@ export const generateDateArray = (startDate: string, endDate: string): string[] 
 };
 
 // Create alias for backward compatibility
-export const generateDateArray = generateDateArray;
+export const generateDateArray;
