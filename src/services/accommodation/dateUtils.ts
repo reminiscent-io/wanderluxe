@@ -1,56 +1,35 @@
-
 import { format, parse, addDays, isBefore, isEqual, differenceInDays } from 'date-fns';
 
+/**
+ * Generates an array of dates between start and end (inclusive)
+ */
 export const generateDatesArray = (startDate: string, endDate: string): string[] => {
   if (!startDate || !endDate) {
     console.error('Invalid dates provided to generateDatesArray', { startDate, endDate });
     return [];
   }
 
-  // Ensure proper date format (YYYY-MM-DD)
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    // If the string already has the correct format, return it
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-
-    // Otherwise convert to ISO and extract date part
-    const date = new Date(dateStr);
-    return date.toISOString().split('T')[0];
-  };
-
-  const formattedStart = formatDate(startDate);
-  const formattedEnd = formatDate(endDate);
-
-  const start = new Date(formattedStart);
-  const end = new Date(formattedEnd);
   const datesArray: string[] = [];
+  const start = new Date(startDate);
+  const end = new Date(endDate);
 
-  // Validate dates
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    console.error('Invalid date conversion in generateDatesArray', { 
-      startDate, endDate, formattedStart, formattedEnd, 
-      startTime: start.getTime(), endTime: end.getTime() 
-    });
+    console.error('Invalid dates provided to generateDatesArray', { startDate, endDate, start, end });
     return [];
   }
 
-  console.log(`Generating dates from ${formattedStart} to ${formattedEnd}`);
-
-  // Generate array of dates between start and end (inclusive of start, exclusive of end)
+  // Generate array of dates between start and end (inclusive of start)
   const current = new Date(start);
-  while (current < end) {
+  while (current <= end) { //Corrected the comparison to include the end date.
     const dateString = current.toISOString().split('T')[0];
     datesArray.push(dateString);
     current.setDate(current.getDate() + 1);
   }
 
-  // Include the end date
-  const endDateString = end.toISOString().split('T')[0];
-  datesArray.push(endDateString);
 
   console.log(`Generated ${datesArray.length} dates:`, datesArray);
   return datesArray;
 };
 
-// Alias for backward compatibility
+// Create alias for backward compatibility
 export const generateDateArray = generateDatesArray;

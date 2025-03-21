@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +41,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
     currency: 'USD',
     hotel_place_id: null
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -82,7 +81,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error for this field if it exists
     if (errors[name]) {
       setErrors(prev => {
@@ -97,7 +96,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
     if (date && isValid(date)) {
       const isoDate = date.toISOString();
       setFormData(prev => ({ ...prev, [field]: isoDate }));
-      
+
       // Clear error for this field if it exists
       if (errors[field]) {
         setErrors(prev => {
@@ -111,24 +110,24 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.hotel.trim()) {
       newErrors.hotel = 'Hotel name is required';
     }
-    
+
     // Check if dates are valid
     try {
       const checkinDate = parseISO(formData.hotel_checkin_date);
       const checkoutDate = parseISO(formData.hotel_checkout_date);
-      
+
       if (!isValid(checkinDate)) {
         newErrors.hotel_checkin_date = 'Invalid check-in date';
       }
-      
+
       if (!isValid(checkoutDate)) {
         newErrors.hotel_checkout_date = 'Invalid check-out date';
       }
-      
+
       if (isValid(checkinDate) && isValid(checkoutDate) && checkinDate >= checkoutDate) {
         newErrors.hotel_checkout_date = 'Check-out date must be after check-in date';
       }
@@ -136,28 +135,28 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
       console.error("Date validation error:", error);
       newErrors.dates = 'Invalid date format';
     }
-    
+
     // Validate cost is a number if provided
     if (formData.cost && isNaN(parseFloat(formData.cost.toString()))) {
       newErrors.cost = 'Cost must be a number';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
       await onSubmit(formData);
       setIsSubmitting(false);
-      
+
       // Reset form and close
       if (!editingStay) {
         setIsAddingAccommodation(false);
