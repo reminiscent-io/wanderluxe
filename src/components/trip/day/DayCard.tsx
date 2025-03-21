@@ -11,6 +11,7 @@ import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
 import DayEditDialog from './DayEditDialog';
 import { toast } from 'sonner';
+import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 
 interface DayCardProps {
   id: string;
@@ -24,7 +25,7 @@ interface DayCardProps {
   defaultImageUrl?: string;
   hotelStays?: HotelStay[];
   transportations?: any[];
-  originalImageUrl?: string | null; // Added originalImageUrl prop
+  originalImageUrl?: string | null;
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -39,16 +40,16 @@ const DayCard: React.FC<DayCardProps> = ({
   defaultImageUrl,
   hotelStays = [],
   transportations = [],
-  originalImageUrl, // Added originalImageUrl prop
+  originalImageUrl,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
-  // Initialize with originalImageUrl if available, then fallback to imageUrl, then null
   const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
+  const [isHotelDialogOpen, setIsHotelDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Update imageUrlState when originalImageUrl changes (from parent component)
+  // Update imageUrlState when originalImageUrl changes
   useEffect(() => {
     if (originalImageUrl) {
       setImageUrl(originalImageUrl);
@@ -77,21 +78,15 @@ const DayCard: React.FC<DayCardProps> = ({
     setIsEditing(true);
   };
 
-  const handleSaveEdit = async (data) => {
+  const handleSaveEdit = async (data: any) => {
     try {
-      // Update local state immediately for better UX
       if (data.title) {
         setEditTitle(data.title);
       }
-
-      // Update image URL locally
       if (data.image_url) {
-        setImageUrl(data.image_url); // Update imageUrl state
+        setImageUrl(data.image_url);
       }
-
-      // Save changes to the database
       console.log("Saving to database:", { id, title: data.title, image_url: data.image_url });
-
       const { error, data: updatedData } = await supabase
         .from('trip_days')
         .update({
@@ -109,17 +104,11 @@ const DayCard: React.FC<DayCardProps> = ({
       } else {
         toast.success('Day updated successfully');
         console.log("Database updated successfully:", updatedData);
-
-        // Update local state with the data from the database
         if (updatedData.image_url) {
           setImageUrl(updatedData.image_url);
         }
-
-        // Invalidate the trip data query to refresh the data
         queryClient.invalidateQueries(['trip']);
       }
-
-      // Close the dialog
       setIsEditing(false);
     } catch (error) {
       console.error('Error saving day edit:', error);
@@ -133,6 +122,18 @@ const DayCard: React.FC<DayCardProps> = ({
     return `${hours}:${minutes}`;
   };
 
+  // Normalize the day date to avoid timezone issues
+  const normalizedDay = date.split('T')[0];
+
+  // Filter hotel stays for the current day only once
+  const filteredHotelStays = hotelStays.filter(stay => {
+    if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
+    const checkinDate = stay.hotel_checkin_date.split('T')[0];
+    const checkoutDate = stay.hotel_checkout_date.split('T')[0];
+    const dayDate = new Date(normalizedDay);
+    return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
+  });
+
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
       <DayEditDialog
@@ -144,7 +145,6 @@ const DayCard: React.FC<DayCardProps> = ({
         onSave={handleSaveEdit}
       />
 
-      {/* Header stays at top, outside of collapsible */}
       <div className="z-30">
         <DayHeader
           title={dayTitle}
@@ -156,106 +156,63 @@ const DayCard: React.FC<DayCardProps> = ({
         />
       </div>
 
-      {/* Collapsible content includes both the image and the overlay sections */}
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleContent className="max-h-[600px] overflow-y-auto">
           <div className="relative w-full h-[600px]">
-            {/* Background image behind everything */}
             <DayImage
               dayId={id}
               title={title}
-              imageUrl={imageUrlState} // Use imageUrlState
+              imageUrl={imageUrlState}
               defaultImageUrl={defaultImageUrl}
               className="absolute top-0 left-0 w-full h-full object-cover z-0"
             />
 
-            {/* Overlay content */}
             <div className="relative z-10 w-full h-full p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Column: Stay & Flights/Transport */}
               <div className="space-y-4 order-1">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
                   <div className="space-y-2">
-                    {hotelStays
-                      .filter(stay => {
-                        if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
-                          return false;
-                        }
-
-                        // Normalize dates by removing time portions to avoid timezone issues
-                        const dayDateStr = date.split('T')[0];
-                        const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
-                        const checkoutDateStr = stay.hotel_checkout_date.split('T')[0];
-
-                        // Create Date objects from normalized strings
-                        const dayDate = new Date(dayDateStr);
-                        const checkinDate = new Date(checkinDateStr);
-                        const checkoutDate = new Date(checkoutDateStr);
-
-                        console.log(`Filtering hotel stays - Day: ${dayDateStr}, 
-                          Hotel: ${stay.hotel}, 
-                          Check-in: ${checkinDateStr}, 
-                          Check-out: ${checkoutDateStr}`);
-
-                        // Include the day if it's on or after check-in and before check-out
-                        return dayDate >= checkinDate && dayDate < checkoutDate;
-                      })
-                      .map((stay) => (
-                        <div 
-                          key={stay.stay_id || stay.id} 
-                          className="flex justify-between items-center p-3
-                                     bg-white/90 rounded-lg shadow-sm 
-                                     hover:bg-white/100 cursor-pointer"
-                        >
-                          <div>
-                            <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
-                            <p className="text-sm text-gray-500">{stay.hotel_address}</p>
-                            {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === date.split('T')[0] && (
-                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                Check-in day
-                              </div>
-                            )}
-                            {stay.hotel_checkout_date && stay.hotel_checkout_date.split('T')[0] === date.split('T')[0] && (
-                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                                Check-out day
-                              </div>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Edit logic would go here
-                            }}
-                            className="text-gray-600 hover:bg-gray-200 h-8 w-8"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                    {filteredHotelStays.map((stay) => (
+                      <div 
+                        key={stay.stay_id || stay.id} 
+                        className="flex justify-between items-center p-3
+                                   bg-white/90 rounded-lg shadow-sm 
+                                   hover:bg-white/100 cursor-pointer"
+                      >
+                        <div>
+                          <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
+                          <p className="text-sm text-gray-500">{stay.hotel_address}</p>
+                          {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              Check-in day
+                            </div>
+                          )}
+                          {stay.hotel_checkout_date && stay.hotel_checkout_date.split('T')[0] === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                              Check-out day
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    {(!hotelStays || hotelStays.filter(stay => {
-                      if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
-                        return false;
-                      }
-
-                      // Use the same date normalization approach for consistency
-                      const dayDateStr = date.split('T')[0];
-                      const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
-                      const checkoutDateStr = stay.hotel_checkout_date.split('T')[0];
-
-                      const dayDate = new Date(dayDateStr);
-                      const checkinDate = new Date(checkinDateStr);
-                      const checkoutDate = new Date(checkoutDateStr);
-
-                      return dayDate >= checkinDate && dayDate < checkoutDate;
-                    }).length === 0) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Edit logic would go here
+                          }}
+                          className="text-gray-600 hover:bg-gray-200 h-8 w-8"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {filteredHotelStays.length === 0 && (
                       <p className="text-white text-sm italic">No hotel stay for this day</p>
                     )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {}}
+                      onClick={() => setIsHotelDialogOpen(true)}
                       className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -264,9 +221,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Flights and Transport
-                  </h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">Flights and Transport</h3>
                   {transportations.map((transport, idx) => (
                     <div key={idx} className="text-white">
                       <p className="font-medium">{transport.route}</p>
@@ -276,9 +231,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
 
-              {/* Column: Activities & Reservations */}
               <div className="space-y-4 order-2">
-                {/* Activities */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <div className="space-y-2">
@@ -296,13 +249,9 @@ const DayCard: React.FC<DayCardProps> = ({
                         }}
                       >
                         <div>
-                          <h4 className="font-medium text-gray-700">
-                            {activity.title}
-                          </h4>
+                          <h4 className="font-medium text-gray-700">{activity.title}</h4>
                           {activity.start_time && (
-                            <p className="text-sm text-gray-500">
-                              {formatTime(activity.start_time)}
-                            </p>
+                            <p className="text-sm text-gray-500">{formatTime(activity.start_time)}</p>
                           )}
                         </div>
                         <Button
@@ -333,7 +282,6 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
 
-                {/* Reservations */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Reservations</h3>
                   <div className="space-y-2">
@@ -346,13 +294,9 @@ const DayCard: React.FC<DayCardProps> = ({
                         onClick={() => {}}
                       >
                         <div>
-                          <h4 className="font-medium text-gray-700">
-                            {reservation.restaurant_name}
-                          </h4>
+                          <h4 className="font-medium text-gray-700">{reservation.restaurant_name}</h4>
                           {reservation.reservation_time && (
-                            <p className="text-sm text-gray-500">
-                              {formatTime(reservation.reservation_time)}
-                            </p>
+                            <p className="text-sm text-gray-500">{formatTime(reservation.reservation_time)}</p>
                           )}
                         </div>
                         <Button
@@ -387,6 +331,13 @@ const DayCard: React.FC<DayCardProps> = ({
           </div>
         </CollapsibleContent>
       </Collapsible>
+
+      <AccommodationDialog
+        tripId={tripId}
+        open={isHotelDialogOpen}
+        onOpenChange={setIsHotelDialogOpen}
+        onSuccess={() => queryClient.invalidateQueries(['trip'])}
+      />
     </div>
   );
 };

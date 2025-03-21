@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import AccommodationHeader from './accommodation/AccommodationHeader';
-import AccommodationActions from './accommodation/AccommodationActions';
 import HotelStaysList from './accommodation/HotelStaysList';
+import AccommodationDialog from './accommodation/AccommodationDialog';
 import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDays } from '@/hooks/use-trip-days';
@@ -22,41 +24,26 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   hotelStays
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editHotelStay, setEditHotelStay] = useState<HotelStay | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Use the main useTripDays hook and get dates from its data
+  // Use the main useTripDays hook to get trip dates
   const { days } = useTripDays(tripId);
   const tripDates = {
     arrival_date: days?.[0]?.date || null,
     departure_date: days?.[days?.length - 1]?.date || null
   };
 
-  const {
-    isAddingAccommodation,
-    setIsAddingAccommodation,
-    editingStay,
-    setEditingStay,
-    handleSubmit,
-    handleUpdate,
-    handleDelete
-  } = useAccommodationHandlers(tripId, onAccommodationChange);
+  // Only need delete handler from the original handlers
+  const { handleDelete } = useAccommodationHandlers(tripId, onAccommodationChange);
 
+  // Open edit dialog when an edit button is clicked
   const handleEdit = (stayId: string) => {
     const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
     if (stayToEdit) {
-      setEditingStay({
-        stay_id: stayToEdit.stay_id,
-        hotel: stayToEdit.hotel,
-        hotel_details: stayToEdit.hotel_details || '',
-        hotel_url: stayToEdit.hotel_url || '',
-        hotel_checkin_date: stayToEdit.hotel_checkin_date,
-        hotel_checkout_date: stayToEdit.hotel_checkout_date,
-        cost: stayToEdit.cost?.toString() || null,  // Optional cost
-        currency: stayToEdit.currency,              // Optional currency
-        hotel_address: stayToEdit.hotel_address || '',
-        hotel_phone: stayToEdit.hotel_phone || '',
-        hotel_place_id: stayToEdit.hotel_place_id,
-        hotel_website: stayToEdit.hotel_website
-      });
+      setEditHotelStay(stayToEdit);
+      setIsEditDialogOpen(true);
     }
   };
 
@@ -74,6 +61,17 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
       {isExpanded && (
         <>
+          <div className="mb-4">
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              variant="outline"
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Hotel Stay
+            </Button>
+          </div>
+
           <HotelStaysList
             hotelStays={sortedHotelStays}
             onEdit={handleEdit}
@@ -81,17 +79,21 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             formatDateRange={formatDateRange}
           />
 
-          <AccommodationActions
-            isAddingAccommodation={isAddingAccommodation}
-            setIsAddingAccommodation={setIsAddingAccommodation}
-            editingStay={editingStay}
-            onSubmit={editingStay ? 
-              (formData) => handleUpdate(editingStay.stay_id, formData)
-              : handleSubmit}
-            onCancel={() => editingStay ? setEditingStay(null) : setIsAddingAccommodation(false)}
-            initialData={editingStay}
-            tripArrivalDate={tripDates.arrival_date}
-            tripDepartureDate={tripDates.departure_date}
+          {/* Dialog for adding a new hotel stay */}
+          <AccommodationDialog
+            tripId={tripId}
+            open={isAddDialogOpen}
+            onOpenChange={setIsAddDialogOpen}
+            onSuccess={onAccommodationChange}
+          />
+
+          {/* Dialog for editing an existing hotel stay */}
+          <AccommodationDialog
+            tripId={tripId}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            initialData={editHotelStay || undefined}
+            onSuccess={onAccommodationChange}
           />
         </>
       )}
