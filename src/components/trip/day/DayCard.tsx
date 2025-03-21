@@ -175,70 +175,94 @@ const DayCard: React.FC<DayCardProps> = ({
               <div className="space-y-4 order-1">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
-                  {hotelStays
-                    .filter(stay => {
+                  <div className="space-y-2">
+                    {hotelStays
+                      .filter(stay => {
+                        if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
+                          return false;
+                        }
+                        
+                        // Normalize dates by removing time portions to avoid timezone issues
+                        const dayDateStr = date.split('T')[0];
+                        const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
+                        const checkoutDateStr = stay.hotel_checkout_date.split('T')[0];
+                        
+                        // Create Date objects from normalized strings
+                        const dayDate = new Date(dayDateStr);
+                        const checkinDate = new Date(checkinDateStr);
+                        const checkoutDate = new Date(checkoutDateStr);
+                        
+                        console.log(`Filtering hotel stays - Day: ${dayDateStr}, 
+                          Hotel: ${stay.hotel}, 
+                          Check-in: ${checkinDateStr}, 
+                          Check-out: ${checkoutDateStr}`);
+                        
+                        // Include the day if it's on or after check-in and before check-out
+                        return dayDate >= checkinDate && dayDate < checkoutDate;
+                      })
+                      .map((stay) => (
+                        <div 
+                          key={stay.stay_id || stay.id} 
+                          className="flex justify-between items-center p-3
+                                     bg-white/90 rounded-lg shadow-sm 
+                                     hover:bg-white/100 cursor-pointer"
+                          onClick={() => {}}
+                        >
+                          <div>
+                            <h4 className="font-medium text-gray-900">{stay.hotel}</h4>
+                            <p className="text-sm text-gray-600">{stay.hotel_address}</p>
+                            {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === date.split('T')[0] && (
+                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                Check-in day
+                              </div>
+                            )}
+                            {stay.hotel_checkout_date && stay.hotel_checkout_date.split('T')[0] === date.split('T')[0] && (
+                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                                Check-out day
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Edit logic would go here
+                            }}
+                            className="text-gray-600 hover:bg-gray-200 h-8 w-8"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    {(!hotelStays || hotelStays.filter(stay => {
                       if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
                         return false;
                       }
                       
-                      // Normalize dates by removing time portions to avoid timezone issues
+                      // Use the same date normalization approach for consistency
                       const dayDateStr = date.split('T')[0];
                       const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
                       const checkoutDateStr = stay.hotel_checkout_date.split('T')[0];
                       
-                      // Create Date objects from normalized strings
                       const dayDate = new Date(dayDateStr);
                       const checkinDate = new Date(checkinDateStr);
                       const checkoutDate = new Date(checkoutDateStr);
                       
-                      console.log(`Filtering hotel stays - Day: ${dayDateStr}, 
-                        Hotel: ${stay.hotel}, 
-                        Check-in: ${checkinDateStr}, 
-                        Check-out: ${checkoutDateStr}`);
-                      
-                      // Include the day if it's on or after check-in and before check-out
                       return dayDate >= checkinDate && dayDate < checkoutDate;
-                    })
-                    .map((stay) => (
-                      <div key={stay.stay_id || stay.id} className="text-white">
-                        <p className="font-medium">{stay.hotel}</p>
-                        <p className="text-sm">{stay.hotel_address}</p>
-                        {stay.hotel_website && (
-                          <a 
-                            href={stay.hotel_website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-200 hover:text-blue-100 flex items-center gap-1 mt-1"
-                          >
-                            View Hotel Website
-                          </a>
-                        )}
-                        {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === date.split('T')[0] && (
-                          <p className="text-xs mt-1 text-green-300 font-medium">Check-in day</p>
-                        )}
-                        {stay.hotel_checkout_date && stay.hotel_checkout_date.split('T')[0] === date.split('T')[0] && (
-                          <p className="text-xs mt-1 text-amber-300 font-medium">Check-out day</p>
-                        )}
-                      </div>
-                    ))}
-                  {!hotelStays || hotelStays.filter(stay => {
-                    if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
-                      return false;
-                    }
-                    
-                    // Use the same date normalization approach for consistency
-                    const dayDateStr = date.split('T')[0];
-                    const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
-                    const checkoutDateStr = stay.hotel_checkout_date.split('T')[0];
-                    
-                    const dayDate = new Date(dayDateStr);
-                    const checkinDate = new Date(checkinDateStr);
-                    const checkoutDate = new Date(checkoutDateStr);
-                    
-                    return dayDate >= checkinDate && dayDate < checkoutDate;
-                  }).length === 0 && (
-                    <p className="text-white text-sm italic">No hotel stay for this day</p>
-                  )}
+                    }).length === 0) && (
+                      <p className="text-white text-sm italic">No hotel stay for this day</p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {}}
+                      className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Hotel Stay
+                    </Button>
+                  </div>
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">
