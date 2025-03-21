@@ -11,7 +11,6 @@ interface TransportationFormFieldsProps {
   formData: Partial<TransportationEvent>;
   setFormData: (data: Partial<TransportationEvent>) => void;
   formatCost: (value: number | undefined | null) => string;
-  tripDepartureDate?: string;
 }
 
 const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
@@ -23,8 +22,7 @@ const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
 const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   formData,
   setFormData,
-  formatCost,
-  tripDepartureDate
+  formatCost
 }) => {
   const handleCostChange = (value: string) => {
     // Remove non-numeric characters except for decimal point
@@ -46,14 +44,14 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             <SelectTrigger className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500">
               <SelectValue placeholder="Select transportation type" />
             </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg">
-              <SelectItem value="flight" className="cursor-pointer hover:bg-gray-100">Flight</SelectItem>
-              <SelectItem value="train" className="cursor-pointer hover:bg-gray-100">Train</SelectItem>
-              <SelectItem value="car_service" className="cursor-pointer hover:bg-gray-100">Car Service</SelectItem>
-              <SelectItem value="rental_car" className="cursor-pointer hover:bg-gray-100">Rental Car</SelectItem>
-              <SelectItem value="shuttle" className="cursor-pointer hover:bg-gray-100">Shuttle</SelectItem>
-              <SelectItem value="ferry" className="cursor-pointer hover:bg-gray-100">Ferry</SelectItem>
-              <SelectItem value="other" className="cursor-pointer hover:bg-gray-100">Other</SelectItem>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg"> {/* Added styling */}
+              <SelectItem value="flight" className="cursor-pointer hover:bg-gray-100">Flight</SelectItem> {/* Added styling */}
+              <SelectItem value="train" className="cursor-pointer hover:bg-gray-100">Train</SelectItem> {/* Added styling */}
+              <SelectItem value="car_service" className="cursor-pointer hover:bg-gray-100">Car Service</SelectItem> {/* Added styling */}
+              <SelectItem value="rental_car" className="cursor-pointer hover:bg-gray-100">Rental Car</SelectItem> {/* Added styling */}
+              <SelectItem value="shuttle" className="cursor-pointer hover:bg-gray-100">Shuttle</SelectItem> {/* Added styling */}
+              <SelectItem value="ferry" className="cursor-pointer hover:bg-gray-100">Ferry</SelectItem> {/* Added styling */}
+              <SelectItem value="other" className="cursor-pointer hover:bg-gray-100">Other</SelectItem> {/* Added styling */}
             </SelectContent>
           </Select>
         </div>
@@ -85,7 +83,6 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
               type="date"
               value={formData.start_date || ''}
               onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              min={tripDepartureDate || ''}
               className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
             />
           </div>
@@ -107,7 +104,6 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
               type="date"
               value={formData.end_date || ''}
               onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              min={tripDepartureDate || ''}
               className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
             />
           </div>
@@ -174,13 +170,13 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
               <SelectTrigger className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500">
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                <SelectItem value="USD" className="cursor-pointer hover:bg-gray-100">USD</SelectItem>
-                <SelectItem value="EUR" className="cursor-pointer hover:bg-gray-100">EUR</SelectItem>
-                <SelectItem value="GBP" className="cursor-pointer hover:bg-gray-100">GBP</SelectItem>
-                <SelectItem value="JPY" className="cursor-pointer hover:bg-gray-100">JPY</SelectItem>
-                <SelectItem value="AUD" className="cursor-pointer hover:bg-gray-100">AUD</SelectItem>
-                <SelectItem value="CAD" className="cursor-pointer hover:bg-gray-100">CAD</SelectItem>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg"> {/* Added styling */}
+                <SelectItem value="USD" className="cursor-pointer hover:bg-gray-100">USD</SelectItem> {/* Added styling */}
+                <SelectItem value="EUR" className="cursor-pointer hover:bg-gray-100">EUR</SelectItem> {/* Added styling */}
+                <SelectItem value="GBP" className="cursor-pointer hover:bg-gray-100">GBP</SelectItem> {/* Added styling */}
+                <SelectItem value="JPY" className="cursor-pointer hover:bg-gray-100">JPY</SelectItem> {/* Added styling */}
+                <SelectItem value="AUD" className="cursor-pointer hover:bg-gray-100">AUD</SelectItem> {/* Added styling */}
+                <SelectItem value="CAD" className="cursor-pointer hover:bg-gray-100">CAD</SelectItem> {/* Added styling */}
               </SelectContent>
             </Select>
           </div>
