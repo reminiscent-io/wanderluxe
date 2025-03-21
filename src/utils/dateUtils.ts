@@ -72,3 +72,35 @@ export const calculateDurationInDays = (startDateStr?: string, endDateStr?: stri
     return 0;
   }
 };
+
+// Format a date range for display (e.g., "Jan 1 - Jan 15, 2024")
+export const formatDateRange = (startDateStr?: string | null, endDateStr?: string | null): string => {
+  if (!startDateStr || !endDateStr) return '';
+  
+  try {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    
+    // Validate dates
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      console.warn('Invalid date format in formatDateRange:', { startDateStr, endDateStr });
+      return '';
+    }
+    
+    // Format the dates
+    // If same year, only show year once at the end
+    if (startDate.getFullYear() === endDate.getFullYear()) {
+      // If same month, only show month once
+      if (startDate.getMonth() === endDate.getMonth()) {
+        return `${format(startDate, 'MMM d')} - ${format(endDate, 'd, yyyy')}`;
+      }
+      return `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    
+    // Different years, show full format for both
+    return `${format(startDate, 'MMM d, yyyy')} - ${format(endDate, 'MMM d, yyyy')}`;
+  } catch (error) {
+    console.error('Error formatting date range:', error);
+    return '';
+  }
+};
