@@ -1,14 +1,11 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import HotelSearchInput from './HotelSearchInput';
-import DateInputs from './form/DateInputs';
-import CostInputs from './form/CostInputs';
-import HotelOptionalDetails from './form/HotelOptionalDetails';
 import HotelContactInfo from './form/HotelContactInfo';
 import { AccommodationFormData } from '@/services/accommodation/types';
 import { toast } from 'sonner';
