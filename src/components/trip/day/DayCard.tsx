@@ -47,6 +47,8 @@ const DayCard: React.FC<DayCardProps> = ({
   const [editTitle, setEditTitle] = useState(title);
   const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
   const [isHotelDialogOpen, setIsHotelDialogOpen] = useState(false);
+  const [editHotelStay, setEditHotelStay] = useState<HotelStay | null>(null);
+  const [isHotelEditDialogOpen, setIsHotelEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   // Update imageUrlState when originalImageUrl changes
@@ -134,6 +136,12 @@ const DayCard: React.FC<DayCardProps> = ({
     return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
   });
 
+  // Open the edit dialog when an accommodation card is clicked
+  const handleHotelEdit = (stay: HotelStay) => {
+    setEditHotelStay(stay);
+    setIsHotelEditDialogOpen(true);
+  };
+
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
       <DayEditDialog
@@ -170,14 +178,15 @@ const DayCard: React.FC<DayCardProps> = ({
             <div className="relative z-10 w-full h-full p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4 order-1">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">Hotel Stay</h3>
                   <div className="space-y-2">
                     {filteredHotelStays.map((stay) => (
                       <div 
                         key={stay.stay_id || stay.id} 
-                        className="flex justify-between items-center p-3
+                        onClick={() => handleHotelEdit(stay)}
+                        className="cursor-pointer flex justify-between items-center p-3
                                    bg-white/90 rounded-lg shadow-sm 
-                                   hover:bg-white/100 cursor-pointer"
+                                   hover:bg-white/100"
                       >
                         <div>
                           <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
@@ -193,21 +202,10 @@ const DayCard: React.FC<DayCardProps> = ({
                             </div>
                           )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Edit logic would go here
-                          }}
-                          className="text-gray-600 hover:bg-gray-200 h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
                       </div>
                     ))}
                     {filteredHotelStays.length === 0 && (
-                      <p className="text-white text-sm italic">No hotel stay for this day</p>
+                      <p className="text-white text-sm italic">No hotel stay booked this night</p>
                     )}
                     <Button
                       variant="outline"
@@ -221,7 +219,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">Flights and Transport</h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">Flights and Transportation</h3>
                   {transportations.map((transport, idx) => (
                     <div key={idx} className="text-white">
                       <p className="font-medium">{transport.route}</p>
@@ -259,7 +257,7 @@ const DayCard: React.FC<DayCardProps> = ({
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Edit logic would go here
+                            // Edit logic would go here if needed
                           }}
                           className="text-gray-600 hover:bg-gray-200 h-8 w-8"
                         >
@@ -304,7 +302,7 @@ const DayCard: React.FC<DayCardProps> = ({
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Edit logic would go here
+                            // Edit logic would go here if needed
                           }}
                           className="text-gray-600 hover:bg-gray-200 h-8 w-8"
                         >
@@ -332,10 +330,20 @@ const DayCard: React.FC<DayCardProps> = ({
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Dialog for adding a new hotel stay */}
       <AccommodationDialog
         tripId={tripId}
         open={isHotelDialogOpen}
         onOpenChange={setIsHotelDialogOpen}
+        onSuccess={() => queryClient.invalidateQueries(['trip'])}
+      />
+
+      {/* Dialog for editing an existing hotel stay */}
+      <AccommodationDialog
+        tripId={tripId}
+        open={isHotelEditDialogOpen}
+        onOpenChange={setIsHotelEditDialogOpen}
+        initialData={editHotelStay || undefined}
         onSuccess={() => queryClient.invalidateQueries(['trip'])}
       />
     </div>
