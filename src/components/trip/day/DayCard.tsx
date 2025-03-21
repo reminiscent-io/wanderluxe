@@ -23,6 +23,7 @@ interface DayCardProps {
   defaultImageUrl?: string;
   hotelStays?: HotelStay[];
   transportations?: any[];
+  originalImageUrl?: string | null; // Added originalImageUrl prop
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -36,11 +37,13 @@ const DayCard: React.FC<DayCardProps> = ({
   onDelete,
   defaultImageUrl,
   hotelStays = [],
-  transportations = []
+  transportations = [],
+  originalImageUrl, // Added originalImageUrl prop
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
+  const [imageUrlState, setImageUrl] = useState(originalImageUrl); // Added imageUrl state
   const queryClient = useQueryClient();
 
   const { data: reservations } = useQuery({
@@ -70,16 +73,15 @@ const DayCard: React.FC<DayCardProps> = ({
       if (data.title) {
         setEditTitle(data.title);
       }
-      
+
       // Update image URL locally
       if (data.image_url) {
-        // This would normally be handled by the API, but for now we'll just log it
-        console.log('New image URL:', data.image_url);
+        setImageUrl(data.image_url); // Update imageUrl state
       }
-      
+
       // You would typically call an API to save the changes here
       console.log('Saving day edit:', data);
-      
+
       // Close the dialog
       setIsEditing(false);
     } catch (error) {
@@ -125,7 +127,7 @@ const DayCard: React.FC<DayCardProps> = ({
             <DayImage
               dayId={id}
               title={title}
-              imageUrl={imageUrl}
+              imageUrl={imageUrlState} // Use imageUrlState
               defaultImageUrl={defaultImageUrl}
               className="absolute top-0 left-0 w-full h-full object-cover z-0"
             />
