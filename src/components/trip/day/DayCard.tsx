@@ -6,12 +6,22 @@ import { Pencil, Plus } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
-import { DayActivity, HotelStay } from '@/types/trip';
+import { DayActivity, HotelStay, ActivityFormData } from '@/types/trip';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
 import DayEditDialog from './DayEditDialog';
 import { toast } from 'sonner';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
+import ActivityDialogs from '@/components/trip/day/ActivityDialogs';
+
+const initialActivity: ActivityFormData = { 
+  title: '', 
+  description: '', 
+  start_time: '', 
+  end_time: '', 
+  cost: '', 
+  currency: '' 
+};
 
 interface DayCardProps {
   id: string;
@@ -49,6 +59,13 @@ const DayCard: React.FC<DayCardProps> = ({
   const [isHotelDialogOpen, setIsHotelDialogOpen] = useState(false);
   const [editHotelStay, setEditHotelStay] = useState<HotelStay | null>(null);
   const [isHotelEditDialogOpen, setIsHotelEditDialogOpen] = useState(false);
+
+  // Activity dialog states
+  const [isAddingActivity, setIsAddingActivity] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<string | null>(null);
+  const [newActivity, setNewActivity] = useState<ActivityFormData>(initialActivity);
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>(initialActivity);
+
   const queryClient = useQueryClient();
 
   // Update imageUrlState when originalImageUrl changes
@@ -140,6 +157,32 @@ const DayCard: React.FC<DayCardProps> = ({
   const handleHotelEdit = (stay: HotelStay) => {
     setEditHotelStay(stay);
     setIsHotelEditDialogOpen(true);
+  };
+
+  // Open the edit dialog when an activity item is clicked
+  const handleActivityEdit = (activity: DayActivity) => {
+    if (activity.id) {
+      setEditingActivity(activity.id);
+      setActivityEdit({
+        title: activity.title,
+        description: activity.description || '',
+        start_time: activity.start_time || '',
+        end_time: activity.end_time || '',
+        cost: activity.cost ? String(activity.cost) : '',
+        currency: activity.currency || '',
+      });
+    }
+  };
+
+  // Stub functions for activity add/edit (integration with DayActivityManager can be added)
+  const handleAddActivity = async (activity: ActivityFormData) => {
+    console.log("Adding activity:", activity);
+    // Implementation here...
+  };
+
+  const handleEditActivity = (activityId: string) => {
+    console.log("Editing activity with id:", activityId);
+    // Implementation here...
   };
 
   return (
@@ -236,15 +279,10 @@ const DayCard: React.FC<DayCardProps> = ({
                     {activities.map((activity) => (
                       <div
                         key={activity.id || activity.title}
-                        className="flex justify-between items-center p-3
+                        onClick={() => handleActivityEdit(activity)}
+                        className="cursor-pointer flex justify-between items-center p-3
                                    bg-white/90 rounded-lg shadow-sm 
-                                   hover:bg-white/100 cursor-pointer"
-                        onClick={() => {
-                          console.log("Activity item clicked:", activity);
-                          if (activity?.id) {
-                            // Handle activity click
-                          }
-                        }}
+                                   hover:bg-white/100"
                       >
                         <div>
                           <h4 className="font-medium text-gray-700">{activity.title}</h4>
@@ -252,17 +290,6 @@ const DayCard: React.FC<DayCardProps> = ({
                             <p className="text-sm text-gray-500">{formatTime(activity.start_time)}</p>
                           )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Edit logic would go here if needed
-                          }}
-                          className="text-gray-600 hover:bg-gray-200 h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
                       </div>
                     ))}
                     {(!activities || activities.length === 0) && (
@@ -271,7 +298,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {}}
+                      onClick={() => setIsAddingActivity(true)}
                       className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -302,7 +329,6 @@ const DayCard: React.FC<DayCardProps> = ({
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Edit logic would go here if needed
                           }}
                           className="text-gray-600 hover:bg-gray-200 h-8 w-8"
                         >
@@ -345,6 +371,21 @@ const DayCard: React.FC<DayCardProps> = ({
         onOpenChange={setIsHotelEditDialogOpen}
         initialData={editHotelStay || undefined}
         onSuccess={() => queryClient.invalidateQueries(['trip'])}
+      />
+
+      {/* Activity dialogs for adding and editing */}
+      <ActivityDialogs
+        isAddingActivity={isAddingActivity}
+        setIsAddingActivity={setIsAddingActivity}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
+        newActivity={newActivity}
+        setNewActivity={setNewActivity}
+        activityEdit={activityEdit}
+        setActivityEdit={setActivityEdit}
+        onAddActivity={handleAddActivity}
+        onEditActivity={handleEditActivity}
+        eventId={id}
       />
     </div>
   );
