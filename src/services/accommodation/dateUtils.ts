@@ -1,3 +1,6 @@
+
+import { format, parse, addDays, isBefore, isEqual, differenceInDays } from 'date-fns';
+
 export const generateDatesArray = (startDate: string, endDate: string): string[] => {
   if (!startDate || !endDate) {
     console.error('Invalid dates provided to generateDatesArray', { startDate, endDate });
@@ -41,6 +44,13 @@ export const generateDatesArray = (startDate: string, endDate: string): string[]
     current.setDate(current.getDate() + 1);
   }
 
+  // Include the end date
+  const endDateString = end.toISOString().split('T')[0];
+  datesArray.push(endDateString);
+
   console.log(`Generated ${datesArray.length} dates:`, datesArray);
   return datesArray;
 };
+
+// Alias for backward compatibility
+export const generateDateArray = generateDatesArray;
