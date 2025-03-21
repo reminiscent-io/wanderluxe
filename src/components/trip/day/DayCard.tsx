@@ -43,7 +43,7 @@ const DayCard: React.FC<DayCardProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [setEditTitle] = useState(title);
+  const [editTitle, setEditTitle] = useState(title);
   // Initialize with originalImageUrl if available, then fallback to imageUrl, then null
   const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
   const queryClient = useQueryClient();
