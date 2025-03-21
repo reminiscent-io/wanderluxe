@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,10 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   onEdit,
   onDelete
 }) => {
+  if (!transportation) {
+    return <div>Transportation data is missing.</div>;
+  }
+
   const formatDate = (dateString: string): string => {
     try {
       return format(parseISO(dateString), 'MMM d, yyyy');
@@ -29,7 +32,9 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
     <Card className="p-4 bg-white hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start">
         <div className="flex-1 mr-4">
-          <h3 className="font-semibold text-lg text-gray-900">{transportation.type || 'Transportation'}</h3>
+          <h3 className="font-semibold text-lg text-gray-900">
+            {transportation.type || 'Transportation'}
+          </h3>
           
           <div className="mt-2 text-sm text-gray-700">
             {transportation.from_location && transportation.to_location && (
