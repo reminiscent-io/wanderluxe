@@ -272,24 +272,14 @@ const DayCard: React.FC<DayCardProps> = ({
 
                 {/* Reservations */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-semibold text-white">Reservations</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {}}
-                      className="text-white hover:bg-white/20"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Reservations</h3>
+                  <div className="space-y-2">
                     {reservations?.map((reservation, idx) => (
                       <div
                         key={reservation.id || idx}
                         className="flex justify-between items-center p-3
-                                   bg-white rounded-lg shadow-sm 
-                                   hover:bg-gray-50 cursor-pointer"
+                                   bg-white/90 rounded-lg shadow-sm 
+                                   hover:bg-white/100 cursor-pointer"
                         onClick={() => {}}
                       >
                         <div>
@@ -297,7 +287,7 @@ const DayCard: React.FC<DayCardProps> = ({
                             {reservation.restaurant_name}
                           </h4>
                           {reservation.reservation_time && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-600">
                               {formatTime(reservation.reservation_time)}
                             </p>
                           )}
@@ -305,13 +295,28 @@ const DayCard: React.FC<DayCardProps> = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => {}}
-                          className="text-gray-600 hover:bg-gray-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Edit logic would go here
+                          }}
+                          className="text-gray-600 hover:bg-gray-200 h-8 w-8"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
+                    {(!reservations || reservations.length === 0) && (
+                      <p className="text-white text-sm italic">No reservations for this day</p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {}}
+                      className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Reservation
+                    </Button>
                   </div>
                 </div>
               </div>
