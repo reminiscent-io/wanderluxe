@@ -47,7 +47,7 @@ const DayCard: React.FC<DayCardProps> = ({
   // Initialize with originalImageUrl if available, then fallback to imageUrl, then null
   const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
   const queryClient = useQueryClient();
-  
+
   // Update imageUrlState when originalImageUrl changes (from parent component)
   useEffect(() => {
     if (originalImageUrl) {
@@ -91,7 +91,7 @@ const DayCard: React.FC<DayCardProps> = ({
 
       // Save changes to the database
       console.log("Saving to database:", { id, title: data.title, image_url: data.image_url });
-      
+
       const { error, data: updatedData } = await supabase
         .from('trip_days')
         .update({
@@ -101,7 +101,7 @@ const DayCard: React.FC<DayCardProps> = ({
         .eq('day_id', id)
         .select('*')
         .single();
-      
+
       if (error) {
         console.error('Error saving day edit:', error);
         toast.error('Failed to save changes');
@@ -109,12 +109,12 @@ const DayCard: React.FC<DayCardProps> = ({
       } else {
         toast.success('Day updated successfully');
         console.log("Database updated successfully:", updatedData);
-        
+
         // Update local state with the data from the database
         if (updatedData.image_url) {
           setImageUrl(updatedData.image_url);
         }
-        
+
         // Invalidate the trip data query to refresh the data
         queryClient.invalidateQueries(['trip']);
       }
@@ -181,22 +181,22 @@ const DayCard: React.FC<DayCardProps> = ({
                         if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
                           return false;
                         }
-                        
+
                         // Normalize dates by removing time portions to avoid timezone issues
                         const dayDateStr = date.split('T')[0];
                         const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
                         const checkoutDateStr = stay.hotel_checkout_date.split('T')[0];
-                        
+
                         // Create Date objects from normalized strings
                         const dayDate = new Date(dayDateStr);
                         const checkinDate = new Date(checkinDateStr);
                         const checkoutDate = new Date(checkoutDateStr);
-                        
+
                         console.log(`Filtering hotel stays - Day: ${dayDateStr}, 
                           Hotel: ${stay.hotel}, 
                           Check-in: ${checkinDateStr}, 
                           Check-out: ${checkoutDateStr}`);
-                        
+
                         // Include the day if it's on or after check-in and before check-out
                         return dayDate >= checkinDate && dayDate < checkoutDate;
                       })
@@ -206,7 +206,6 @@ const DayCard: React.FC<DayCardProps> = ({
                           className="flex justify-between items-center p-3
                                      bg-white/90 rounded-lg shadow-sm 
                                      hover:bg-white/100 cursor-pointer"
-                          onClick={() => {}}
                         >
                           <div>
                             <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
@@ -239,16 +238,16 @@ const DayCard: React.FC<DayCardProps> = ({
                       if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
                         return false;
                       }
-                      
+
                       // Use the same date normalization approach for consistency
                       const dayDateStr = date.split('T')[0];
                       const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
                       const checkoutDateStr = stay.hotel_checkout_date.split('T')[0];
-                      
+
                       const dayDate = new Date(dayDateStr);
                       const checkinDate = new Date(checkinDateStr);
                       const checkoutDate = new Date(checkoutDateStr);
-                      
+
                       return dayDate >= checkinDate && dayDate < checkoutDate;
                     }).length === 0) && (
                       <p className="text-white text-sm italic">No hotel stay for this day</p>
