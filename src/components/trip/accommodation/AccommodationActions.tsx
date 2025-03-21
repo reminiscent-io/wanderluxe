@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format, parseISO, isValid } from 'date-fns';
+import { parseISO, isValid } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
 import { AccommodationFormData } from '@/services/accommodation/accommodationService';
 import { Plus, X } from 'lucide-react';
