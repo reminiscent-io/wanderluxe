@@ -42,8 +42,10 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   // Sort activities by start_time if present; else by created_at
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
-      const aTime = a.start_time && a.start_time.trim() !== '' ? a.start_time : null;
-      const bTime = b.start_time && b.start_time.trim() !== '' ? b.start_time : null;
+      // Safely handle null or undefined start_time
+      const aTime = a.start_time ? a.start_time.trim() : '';
+      const bTime = b.start_time ? b.start_time.trim() : '';
+      
       if (aTime && bTime) {
         return aTime.localeCompare(bTime);
       } else if (aTime && !bTime) {
@@ -52,7 +54,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         return 1;
       } else {
         // Both times missing: sort by creation time
-        return a.created_at.localeCompare(b.created_at);
+        return (a.created_at || '').localeCompare(b.created_at || '');
       }
     });
   }, [activities]);
@@ -65,6 +67,26 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     }
     console.log("DayCardContent: Editing activity with id", activity.id);
     onEditActivity(activity);
+  };
+
+  // Add activity handler with proper error handling
+  const handleAddActivity = async (formData: ActivityFormData) => {
+    try {
+      await onAddActivity(formData);
+      setIsAddingActivity(false);
+      // Reset form after successful add
+      setNewActivity({
+        title: '',
+        description: '',
+        start_time: '',
+        end_time: '',
+        cost: '',
+        currency: 'USD'
+      });
+    } catch (error) {
+      console.error("Error adding activity:", error);
+      toast.error("Failed to add activity");
+    }
   };
 
   return (
@@ -91,7 +113,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         setIsAddingActivity={setIsAddingActivity}
         newActivity={newActivity}
         setNewActivity={setNewActivity}
-        onAddActivity={onAddActivity}
+        onAddActivity={handleAddActivity}
         eventId={eventId}
         editingActivity={editingActivity}
         setEditingActivity={setEditingActivity}
