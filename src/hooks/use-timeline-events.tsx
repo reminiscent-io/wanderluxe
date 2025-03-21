@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Tables } from '@/types/database.types';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import type { Tables } from '@/types/supabase';
 
 type DbAccommodationDay = Tables<'accommodations_days'>;
 
@@ -64,27 +64,20 @@ export function useTimelineEvents(tripId: string | undefined) {
     queryFn: async () => {
       if (!tripId) return [];
 
-      // Fetch accommodations data with all associated days
-      const { data: accommodations, error } = await supabase
+      // Fetch hotel stays data instead of the old accommodations data
+      const { data: hotelStays, error } = await supabase
         .from('accommodations')
-        .select(`
-          *,
-          accommodations_days (
-            id, 
-            day_id, 
-            date
-          )
-        `)
+        .select('*')
         .eq('trip_id', tripId)
         .order('order_index');
 
       if (error) {
-        console.error("Error fetching accommodations:", error);
+        console.error("Error fetching hotel stays:", error);
         throw error;
       }
 
-      console.log("Fetched accommodations data:", accommodations);
-      return accommodations || [];
+      console.log("Fetched accommodations data:", hotelStays);
+      return hotelStays || [];
     },
     enabled: !!tripId,
   });
@@ -122,8 +115,8 @@ export function useTimelineEvents(tripId: string | undefined) {
   return {
     events,
     isLoading,
+    refreshEvents,
     updateEvent,
-    deleteEvent,
-    refreshEvents
+    deleteEvent
   };
 }

@@ -143,6 +143,23 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     })) || []
   , [events, tripId]);
 
+  const handleDayDelete = async (dayId: string) => {
+    try {
+      const { error } = await supabase
+        .from('trip_days')
+        .delete()
+        .eq('day_id', dayId);
+
+      if (error) throw error;
+
+      toast.success('Day deleted successfully');
+      if (refreshDays) refreshDays();
+    } catch (error) {
+      console.error('Error deleting day:', error);
+      toast.error('Failed to delete day');
+    }
+  };
+
   return (
     <div className="relative space-y-8">
       {isRefreshing && (
@@ -185,6 +202,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       <TimelineContent 
         groups={groups} 
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
+        hotelStays={processedHotelStays} // Added prop for hotel stays
+        onDayDelete={handleDayDelete} // Added prop for day deletion
       />
       <AccommodationGaps 
         gaps={gaps} 
