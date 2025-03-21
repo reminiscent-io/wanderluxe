@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import ActivityDialogs from './ActivityDialogs';
 import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
