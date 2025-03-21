@@ -49,7 +49,7 @@ export const updateAccommodation = async (
     const stayDates = generateDatesArray(formData.hotel_checkin_date, formData.hotel_checkout_date);
 
     // Create trip days for the entire stay period if needed
-    /await createTripDays(tripId, stayDates);
+    await createTripDays(tripId, stayDates);
 
     // Update existing events for this hotel stay
     const accommodationData = {
