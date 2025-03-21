@@ -9,8 +9,8 @@ import { useAccommodationHandlers } from './hooks/useAccommodationHandlers';
 
 interface AccommodationListProps {
   tripId: string;
-  accommodations: any[];
-  onRefresh: () => void;
+  accommodations: AccommodationFormData[];
+  onSuccess: () => void;
   tripArrivalDate: string | null;
   tripDepartureDate: string | null;
 }
@@ -18,79 +18,79 @@ interface AccommodationListProps {
 const AccommodationList: React.FC<AccommodationListProps> = ({
   tripId,
   accommodations,
-  onRefresh,
+  onSuccess,
   tripArrivalDate,
   tripDepartureDate
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  
   const {
     editingStay,
     setEditingStay,
     handleSubmit,
     handleUpdate,
     handleDelete
-  } = useAccommodationHandlers(tripId, onRefresh);
+  } = useAccommodationHandlers({
+    tripId,
+    onSuccess,
+  });
 
-  const handleFormSubmit = async (data: AccommodationFormData) => {
-    try {
-      if (editingStay && editingStay.stay_id) {
-        await handleUpdate(editingStay.stay_id, data);
-      } else {
-        await handleSubmit(data);
-      }
-      setIsDialogOpen(false);
-      setEditingStay(null);
-    } catch (error) {
-      console.error("Error saving accommodation:", error);
-    }
+  const openAddDialog = () => {
+    setEditingStay(null);
+    setIsDialogOpen(true);
   };
 
-  const handleEditClick = (stay: AccommodationFormData) => {
+  const openEditDialog = (stay: AccommodationFormData) => {
     setEditingStay(stay);
     setIsDialogOpen(true);
   };
 
-  const handleDialogClose = () => {
+  const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingStay(null);
   };
 
+  const onSubmitForm = async (data: AccommodationFormData) => {
+    if (editingStay && editingStay.stay_id) {
+      await handleUpdate(editingStay.stay_id, data);
+    } else {
+      await handleSubmit(data);
+    }
+    closeDialog();
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-2">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-700">Hotel Stays</h3>
+        <h2 className="text-xl font-semibold text-gray-800">Accommodations</h2>
         <Button 
-          onClick={() => setIsDialogOpen(true)} 
+          onClick={openAddDialog}
           className="bg-earth-500 hover:bg-earth-600 text-white"
-          size="sm"
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add Hotel
+          Add Hotel Stay
         </Button>
       </div>
 
-      {accommodations.length === 0 ? (
-        <div className="text-sm text-gray-500 py-2">
-          No hotel stays added yet.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {accommodations.map((stay) => (
+      <div className="space-y-3">
+        {accommodations.length === 0 ? (
+          <p className="text-gray-500 text-sm">No accommodations added yet.</p>
+        ) : (
+          accommodations.map((stay) => (
             <AccommodationItem
               key={stay.stay_id}
               stay={stay}
-              onEdit={() => handleEditClick(stay)}
-              onDelete={() => handleDelete(stay.stay_id)}
+              onEdit={() => openEditDialog(stay)}
+              onDelete={() => handleDelete(stay.stay_id!)}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
       <AccommodationDialog
         isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        onSubmit={handleFormSubmit}
+        onClose={closeDialog}
+        onSubmit={onSubmitForm}
         initialData={editingStay}
         tripArrivalDate={tripArrivalDate}
         tripDepartureDate={tripDepartureDate}
