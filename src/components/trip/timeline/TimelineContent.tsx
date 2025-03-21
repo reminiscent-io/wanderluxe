@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+
+import React from 'react';
 import { motion } from 'framer-motion';
+import AccommodationGroup from '../accommodation/AccommodationGroup';
 import DayCard from '../day/DayCard';
-import { TripDay, TransportationEvent } from '@/types/trip'; // Added missing import
+import { TripDay } from '@/types/trip';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,7 +29,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     queryKey: ['trip', tripId],
     queryFn: async () => {
       if (!tripId) return null;
-
+      
       const { data, error } = await supabase
         .from('trips')
         .select('cover_image_url')
@@ -71,60 +73,64 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     }
   };
 
-  // Fetch accommodations for the trip
-  const { data: accommodations } = useQuery({
-    queryKey: ['accommodations', tripId],
-    queryFn: async () => {
-      if (!tripId) return []; // Handle case where tripId is null
-
-      const { data, error } = await supabase
-        .from('accommodations')
-        .select('*')
-        .eq('trip_id', tripId);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!tripId
-  });
-
-
-  // Assuming validDays is defined elsewhere and contains the days data.  This needs to be fixed in the original code.
-  const validDays = groups.flatMap(group => group.days); //Added this line to make the code compile.
-
-  // Add logging to debug accommodation data
-  useEffect(() => {
-    console.log('TimelineContent - accommodations:', accommodations);
-    console.log('TimelineContent - validDays:', validDays);
-  }, [accommodations, validDays]);
-
   return (
-    <section className="w-full max-w-screen-xl mx-auto px-4 py-8 space-y-12">
-      {/* Trip days timeline */}
-      <div className="space-y-8">
-        {validDays.map((day, index) => (
-          <DayCard
-            key={day.id}
-            index={index}
-            id={day.id}
-            eventId={day.event_id}
-            title={day.title}
-            date={day.date}
-            activities={day.activities || []}
-            onTitleChange={(title) => console.log('Title change:', title)}
-            onImageChange={(imageUrl) => console.log('Image change:', imageUrl)}
-            imageUrl={day.image_url}
-            defaultImageUrl=""
-            accommodations={accommodations?.filter(acc => {
-              const checkinDate = new Date(acc.hotel_checkin_date);
-              const checkoutDate = new Date(acc.hotel_checkout_date);
-              const dayDate = new Date(day.date);
-              return dayDate >= checkinDate && dayDate < checkoutDate;
-            }) || []}
-          />
-        ))}
-      </div>
-    </section>
+    <div className="space-y-8">
+      {groups.map((group, groupIndex) => {
+        
+
+        return (
+          <motion.fieldset
+            key={`${group.hotel || 'standalone'}-${groupIndex}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: groupIndex * 0.1 }}
+            className="border-0 p-0 m-0"
+          >
+            {group.hotel ? (
+              <AccommodationGroup
+                hotel={group.hotel}
+                hotelDetails={group.hotelDetails}
+                checkinDate={group.checkinDate!}
+                checkoutDate={group.checkoutDate!}
+              >
+                
+                {group.days.map((day) => (
+                  <DayCard
+                    key={day.day_id}
+                    id={day.day_id}
+                    tripId={tripId || ''}
+                    date={day.date}
+                    title={day.title || ''}
+                    activities={day.activities || []}
+                    imageUrl={day.image_url}
+                    defaultImageUrl={tripData?.cover_image_url}
+                    index={dayIndexMap.get(day.day_id) || 0}
+                    onDelete={handleDayDelete}
+                  />
+                ))}
+              </AccommodationGroup>
+            ) : (
+              <fieldset className="space-y-6 border-0 p-0 m-0">
+                {group.days.map((day) => (
+                  <DayCard
+                    key={day.day_id}
+                    id={day.day_id}
+                    tripId={tripId || ''}
+                    date={day.date}
+                    title={day.title || ''}
+                    activities={day.activities || []}
+                    imageUrl={day.image_url}
+                    defaultImageUrl={tripData?.cover_image_url}
+                    index={dayIndexMap.get(day.day_id) || 0}
+                    onDelete={handleDayDelete}
+                  />
+                ))}
+              </fieldset>
+            )}
+          </motion.fieldset>
+        );
+      })}
+    </div>
   );
 };
 

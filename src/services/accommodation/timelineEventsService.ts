@@ -1,25 +1,33 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { AccommodationFormData } from '@/types/trip';
+import { AccommodationFormData } from './types';
 
 // Helper function to create accommodation days entries
-const createAccommodationDays = async (stayId: string, tripId: string, dates: string[]) => {
-  if (dates.length === 0) return;
+const createAccommodationDays = async (stay_id: string, tripId: string, dates: string[]) => {
+  // Get existing trip days for this period
+  const { data: tripDays, error: tripDaysError } = await supabase
+    .from('trip_days')
+    .select('day_id, date')
+    .eq('trip_id', tripId)
+    .in('date', dates);
 
-  // Create the accommodation days entries
-  const accommodationDays = dates.map((date, index) => ({
-    stay_id: stayId,
-    trip_id: tripId,
-    date,
-    order_index: index,
-    created_at: new Date().toISOString()
+  if (tripDaysError) throw tripDaysError;
+  if (!tripDays?.length) return [];
+
+  // Create accommodation_days entries only for existing trip days
+  const accommodationDays = tripDays.map(day => ({
+    stay_id,
+    day_id: day.day_id,
+    date: day.date
   }));
 
-  const { error } = await supabase
+  const { error: daysError } = await supabase
     .from('accommodations_days')
     .insert(accommodationDays);
 
-  if (error) throw error;
+  if (daysError) throw daysError;
+  
+  return tripDays;
 };
 
 export const createAccommodationEvents = async (
@@ -139,10 +147,4 @@ export const deleteAccommodationEvents = async (stay_id: string) => {
     console.error('Error in deleteAccommodationEvents:', error);
     throw error;
   }
-};
-
-export const timelineEventsService = {
-  createAccommodationEvents,
-  updateAccommodationEvents,
-  deleteAccommodationEvents
 };

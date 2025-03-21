@@ -1,170 +1,228 @@
-
-import React, { useState, useCallback } from 'react';
-import { Card, CardHeader } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { format, parseISO } from 'date-fns';
+import DayHeader from './DayHeader';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import DayImage from './DayImage';
-import DayEditDialog from './DayEditDialog';
+import { Pencil, Plus } from 'lucide-react';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
 import { DayActivity, HotelStay } from '@/types/trip';
-import { Pencil } from 'lucide-react';
-import { formatToTime } from '@/utils/dateUtils';
-import { activityService } from '@/services/activity/activityService';
+import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
-import { toast } from 'sonner';
+import DayEditDialog from './DayEditDialog';
 
 interface DayCardProps {
-  index: number;
   id: string;
-  eventId: string;
-  title: string;
+  tripId: string;
   date: string;
-  activities: DayActivity[];
-  onTitleChange: (title: string) => void;
-  onImageChange: (imageUrl: string) => void;
+  title?: string;
+  activities?: DayActivity[];
   imageUrl?: string | null;
+  index: number;
+  onDelete: (id: string) => void;
   defaultImageUrl?: string;
-  accommodations: any[] | HotelStay[];
+  hotelStays?: HotelStay[];
+  transportations?: any[];
 }
 
 const DayCard: React.FC<DayCardProps> = ({
-  index,
   id,
-  eventId,
-  title,
+  tripId,
   date,
-  activities,
-  onTitleChange,
-  onImageChange,
+  title,
+  activities = [],
   imageUrl,
+  index,
+  onDelete,
   defaultImageUrl,
-  accommodations,
+  hotelStays = [],
+  transportations = []
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
-  const [selectedImage, setSelectedImage] = useState<string | null>(imageUrl || null);
+  const queryClient = useQueryClient();
 
-  console.log('Edit DayCard', id);
+  const { data: reservations } = useQuery({
+    queryKey: ['reservations', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('restaurant_reservations')
+        .select('*')
+        .eq('day_id', id)
+        .order('order_index');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
 
-  // Format time to a more readable format
-  const formatTime = useCallback((time?: string) => {
-    if (!time || time.trim() === '') return '';
-    return formatToTime(time);
-  }, []);
+  const dayTitle = title || format(parseISO(date), 'EEEE');
 
-  // Add a new activity to this day
-  const handleAddActivity = async (activity: any) => {
+  const handleEdit = () => {
+    console.log("Edit DayCard", id);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async (data) => {
     try {
-      await activityService.addActivity({
-        ...activity,
-        day_id: id,
-        event_id: eventId,
-        trip_id: eventId.split(':')[0], // Assuming eventId format is tripId:eventType
-      });
-      toast.success('Activity added successfully');
-      return Promise.resolve();
+      // Update local state immediately for better UX
+      if (data.title) {
+        setEditTitle(data.title);
+      }
+      
+      // Update image URL locally
+      if (data.image_url) {
+        // This would normally be handled by the API, but for now we'll just log it
+        console.log('New image URL:', data.image_url);
+      }
+      
+      // You would typically call an API to save the changes here
+      console.log('Saving day edit:', data);
+      
+      // Close the dialog
+      setIsEditing(false);
     } catch (error) {
-      console.error('Error adding activity:', error);
-      toast.error('Failed to add activity');
-      return Promise.reject(error);
+      console.error('Error saving day edit:', error);
     }
   };
 
-  // Edit an existing activity
-  const handleEditActivity = (activity: DayActivity) => {
-    // Just pass the activity to the editor dialog
-    console.log('Activity item clicked:', activity);
+  const formatTime = (time?: string) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    if (!hours || !minutes) return '';
+    return `${hours}:${minutes}`;
   };
-
-  // Handle the save of the day title and image
-  const handleSave = useCallback(
-    async (newTitle: string, newImage: string | null) => {
-      try {
-        onTitleChange(newTitle);
-        if (newImage) {
-          onImageChange(newImage);
-        }
-        setIsEditing(false);
-      } catch (error) {
-        console.error('Error saving day changes:', error);
-        toast.error('Failed to save changes');
-      }
-    },
-    [onTitleChange, onImageChange]
-  );
-
-  // Find the accommodation for this day, if any
-  const findAccommodationForDay = () => {
-    if (!accommodations || accommodations.length === 0) return null;
-
-    // Find an accommodation where the day's date falls between check-in and check-out dates
-    return accommodations.find(accommodation => {
-      if (!accommodation.hotel_checkin_date || !accommodation.hotel_checkout_date) return false;
-
-      // Check if this day's date is within the accommodation stay dates
-      return date >= accommodation.hotel_checkin_date && date <= accommodation.hotel_checkout_date;
-    }) || null;
-  };
-
-  const dayAccommodation = findAccommodationForDay();
-  console.log(`DayCard for date ${date}:`, { dayAccommodation, allAccommodations: accommodations });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ 
-        duration: 0.5,
-        delay: index * 0.1,
-        ease: [0.4, 0, 0.2, 1], 
-      }}
-      className="w-full"
-    >
-      <Card className="overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 bg-white">
-        <DayImage 
-          dayId={id} 
-          title={title} 
-          imageUrl={imageUrl || null} 
-          defaultImageUrl={defaultImageUrl}
-        />
-
-        <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <Button 
-            onClick={() => setIsEditing(true)} 
-            variant="outline" 
-            size="sm" 
-            className="h-8 w-8 p-0"
-          >
-            <Pencil className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
-        </CardHeader>
-
-        <DayCardContent
-          index={index}
-          title={title}
-          activities={activities}
-          onAddActivity={handleAddActivity}
-          onEditActivity={handleEditActivity}
-          formatTime={formatTime}
-          dayId={id}
-          eventId={eventId}
-          date={date}
-          accommodation={dayAccommodation}
-        />
-      </Card>
-
+    <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
       <DayEditDialog
-        isOpen={isEditing}
+        open={isEditing}
         onOpenChange={setIsEditing}
-        title={editTitle}
-        setTitle={setEditTitle}
-        selectedImage={selectedImage}
-        setSelectedImage={setSelectedImage}
-        onTitleChange={onTitleChange}
-        onSave={(title) => handleSave(title, selectedImage)}
+        dayId={id}
+        currentTitle={title}
+        onTitleChange={setEditTitle}
+        onSave={handleSaveEdit}
       />
-    </motion.div>
+
+      {/* Header stays at top, outside of collapsible */}
+      <div className="z-30">
+        <DayHeader
+          title={dayTitle}
+          date={date}
+          isOpen={isExpanded}
+          onEdit={handleEdit}
+          onDelete={() => onDelete(id)}
+          onToggle={() => setIsExpanded(prev => !prev)}
+        />
+      </div>
+
+      {/* Collapsible content includes both the image and the overlay sections */}
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <CollapsibleContent className="max-h-[600px] overflow-y-auto">
+          <div className="relative w-full h-[600px]">
+            {/* Background image behind everything */}
+            <DayImage
+              dayId={id}
+              title={title}
+              imageUrl={imageUrl}
+              defaultImageUrl={defaultImageUrl}
+              className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            />
+
+            {/* Overlay content */}
+            <div className="relative z-10 w-full h-full p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Column: Stay & Flights/Transport */}
+              <div className="space-y-4 order-1">
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
+                  {hotelStays.map((stay) => (
+                    <div key={stay.stay_id} className="text-white">
+                      <p className="font-medium">{stay.hotel}</p>
+                      <p className="text-sm">{stay.hotel_address}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    Flights and Transport
+                  </h3>
+                  {transportations.map((transport, idx) => (
+                    <div key={idx} className="text-white">
+                      <p className="font-medium">{transport.route}</p>
+                      <p className="text-sm">{transport.details}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Column: Activities & Reservations */}
+              <div className="space-y-4 order-2">
+                {/* Activities */}
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
+                  <DayCardContent
+                    index={0}
+                    title={dayTitle}
+                    activities={activities}
+                    onAddActivity={() => {}}
+                    onEditActivity={() => {}}
+                    formatTime={formatTime}
+                    dayId={id}
+                    eventId={id}
+                  />
+                </div>
+
+                {/* Reservations */}
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-semibold text-white">Reservations</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {}}
+                      className="text-white hover:bg-white/20"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {reservations?.map((reservation, idx) => (
+                      <div
+                        key={reservation.id || idx}
+                        className="flex justify-between items-center p-3
+                                   bg-white rounded-lg shadow-sm 
+                                   hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {}}
+                      >
+                        <div>
+                          <h4 className="font-medium text-gray-900">
+                            {reservation.restaurant_name}
+                          </h4>
+                          {reservation.reservation_time && (
+                            <p className="text-sm text-gray-500">
+                              {formatTime(reservation.reservation_time)}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {}}
+                          className="text-gray-600 hover:bg-gray-200"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 };
 
