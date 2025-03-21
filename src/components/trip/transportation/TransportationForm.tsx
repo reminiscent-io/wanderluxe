@@ -25,9 +25,9 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     provider: '',
     details: '',
     confirmation_number: '',
-    start_date: initialData?.start_date || tripArrivalDate,
+    start_date: initialData?.start_date || tripArrivalDate || null,
     start_time: initialData?.start_time || '',
-    end_date: initialData?.end_date || tripDepartureDate,
+    end_date: initialData?.end_date || tripDepartureDate || null,
     end_time: initialData?.end_time || '',
     departure_location: '',
     arrival_location: '',
@@ -46,7 +46,15 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Clean date fields: convert empty strings to null
+    const cleanedData = {
+      ...formData,
+      start_date: formData.start_date === '' ? null : formData.start_date,
+      end_date: formData.end_date === '' ? null : formData.end_date,
+    };
+
+    onSubmit(cleanedData);
   };
 
   return (
