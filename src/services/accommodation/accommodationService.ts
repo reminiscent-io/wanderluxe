@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { generateDatesArray } from "./dateUtils";
+import { generateDateArray } from "./dateUtils";
 import { toast } from "sonner";
 
 // Type for accommodation form data
@@ -50,7 +50,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     console.log("Accommodation added successfully:", accommodationData);
 
     // Generate array of dates between check-in and check-out
-    const dateArray = generateDatesArray(
+    const dateArray = generateDateArray(
       formData.hotel_checkin_date, 
       formData.hotel_checkout_date
     );
@@ -167,7 +167,7 @@ export const updateAccommodation = async (
     const tripId = accommodationData.trip_id;
 
     // Generate array of dates between check-in and check-out
-    const dateArray = generateDatesArray(
+    const dateArray = generateDateArray(
       formData.hotel_checkin_date, 
       formData.hotel_checkout_date
     );
