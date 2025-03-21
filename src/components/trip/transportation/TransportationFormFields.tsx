@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,14 +44,14 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             <SelectTrigger className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500">
               <SelectValue placeholder="Select transportation type" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="flight">Flight</SelectItem>
-              <SelectItem value="train">Train</SelectItem>
-              <SelectItem value="car_service">Car Service</SelectItem>
-              <SelectItem value="rental_car">Rental Car</SelectItem>
-              <SelectItem value="shuttle">Shuttle</SelectItem>
-              <SelectItem value="ferry">Ferry</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg"> {/* Added styling */}
+              <SelectItem value="flight" className="cursor-pointer hover:bg-gray-100">Flight</SelectItem> {/* Added styling */}
+              <SelectItem value="train" className="cursor-pointer hover:bg-gray-100">Train</SelectItem> {/* Added styling */}
+              <SelectItem value="car_service" className="cursor-pointer hover:bg-gray-100">Car Service</SelectItem> {/* Added styling */}
+              <SelectItem value="rental_car" className="cursor-pointer hover:bg-gray-100">Rental Car</SelectItem> {/* Added styling */}
+              <SelectItem value="shuttle" className="cursor-pointer hover:bg-gray-100">Shuttle</SelectItem> {/* Added styling */}
+              <SelectItem value="ferry" className="cursor-pointer hover:bg-gray-100">Ferry</SelectItem> {/* Added styling */}
+              <SelectItem value="other" className="cursor-pointer hover:bg-gray-100">Other</SelectItem> {/* Added styling */}
             </SelectContent>
           </Select>
         </div>
@@ -171,13 +170,13 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
               <SelectTrigger className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500">
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-                <SelectItem value="GBP">GBP</SelectItem>
-                <SelectItem value="JPY">JPY</SelectItem>
-                <SelectItem value="AUD">AUD</SelectItem>
-                <SelectItem value="CAD">CAD</SelectItem>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg"> {/* Added styling */}
+                <SelectItem value="USD" className="cursor-pointer hover:bg-gray-100">USD</SelectItem> {/* Added styling */}
+                <SelectItem value="EUR" className="cursor-pointer hover:bg-gray-100">EUR</SelectItem> {/* Added styling */}
+                <SelectItem value="GBP" className="cursor-pointer hover:bg-gray-100">GBP</SelectItem> {/* Added styling */}
+                <SelectItem value="JPY" className="cursor-pointer hover:bg-gray-100">JPY</SelectItem> {/* Added styling */}
+                <SelectItem value="AUD" className="cursor-pointer hover:bg-gray-100">AUD</SelectItem> {/* Added styling */}
+                <SelectItem value="CAD" className="cursor-pointer hover:bg-gray-100">CAD</SelectItem> {/* Added styling */}
               </SelectContent>
             </Select>
           </div>
