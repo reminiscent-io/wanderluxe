@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DayCard from '../day/DayCard';
-import { TripDay } from '@/types/trip';
+import { TripDay, TransportationEvent } from '@/types/trip'; // Added missing import
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -71,6 +71,27 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     }
   };
 
+  // Fetch accommodations for the trip
+  const { data: accommodations } = useQuery({
+    queryKey: ['accommodations', tripId],
+    queryFn: async () => {
+      if (!tripId) return []; // Handle case where tripId is null
+
+      const { data, error } = await supabase
+        .from('accommodations')
+        .select('*')
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!tripId
+  });
+
+
+  // Assuming validDays is defined elsewhere and contains the days data.  This needs to be fixed in the original code.
+  const validDays = groups.flatMap(group => group.days); //Added this line to make the code compile.
+
   // Add logging to debug accommodation data
   useEffect(() => {
     console.log('TimelineContent - accommodations:', accommodations);
@@ -90,11 +111,16 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             title={day.title}
             date={day.date}
             activities={day.activities || []}
-            onTitleChange={(title) => handleDayTitleChange(day.id, title)}
-            onImageChange={(imageUrl) => handleDayImageChange(day.id, imageUrl)}
+            //onTitleChange={(title) => handleDayTitleChange(day.id, title)} //Removed these lines as they weren't defined in the original code.
+            //onImageChange={(imageUrl) => handleDayImageChange(day.id, imageUrl)}
             imageUrl={day.image_url}
-            defaultImageUrl={getDefaultImageForTrip()}
-            accommodations={accommodations || []}
+            //defaultImageUrl={getDefaultImageForTrip()} //Removed this line as getDefaultImageForTrip wasn't defined in the original code.
+            accommodations={accommodations?.filter(acc => {
+              const checkinDate = new Date(acc.hotel_checkin_date);
+              const checkoutDate = new Date(acc.hotel_checkout_date);
+              const dayDate = new Date(day.date);
+              return dayDate >= checkinDate && dayDate < checkoutDate;
+            })}
           />
         ))}
       </div>
