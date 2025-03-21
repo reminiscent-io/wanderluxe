@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { generateDateArray } from "./dateUtils";
+import { generateDatesArray } from "./dateUtils";
 import { toast } from "sonner";
 
 // Type for accommodation form data
@@ -22,7 +21,7 @@ export interface AccommodationFormData {
 export const addAccommodation = async (tripId: string, formData: AccommodationFormData) => {
   try {
     console.log("Adding accommodation with data:", formData);
-    
+
     // Insert the accommodation record
     const { data: accommodationData, error: accommodationError } = await supabase
       .from("accommodations")
@@ -49,13 +48,13 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     }
 
     console.log("Accommodation added successfully:", accommodationData);
-    
+
     // Generate array of dates between check-in and check-out
-    const dateArray = generateDateArray(
+    const dateArray = generateDatesArray(
       formData.hotel_checkin_date, 
       formData.hotel_checkout_date
     );
-    
+
     console.log("Generated date array for accommodation days:", dateArray);
 
     // Get the stay_id from the newly created accommodation
@@ -74,17 +73,17 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
 
     // Map days to their corresponding day_ids
     const dayMap = new Map(dayData.map(day => [day.date.split('T')[0], day.day_id]));
-    
+
     // Create accommodation_days entries for each date
     const accommodationDaysData = dateArray.map(date => {
       const formattedDate = date.toISOString().split('T')[0];
       const dayId = dayMap.get(formattedDate);
-      
+
       if (!dayId) {
         console.warn(`No matching day_id found for date: ${formattedDate}`);
         return null;
       }
-      
+
       return {
         stay_id: stayId,
         day_id: dayId,
@@ -94,7 +93,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
 
     if (accommodationDaysData.length > 0) {
       console.log("Inserting accommodation days:", accommodationDaysData);
-      
+
       // Insert all accommodation_days records
       const { error: daysError } = await supabase
         .from("accommodations_days")
@@ -104,7 +103,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
         console.error("Error adding accommodation days:", daysError);
         throw daysError;
       }
-      
+
       console.log("Accommodation days added successfully");
     } else {
       console.warn("No accommodation days to add - no matching trip days found");
@@ -125,7 +124,7 @@ export const updateAccommodation = async (
 ) => {
   try {
     console.log("Updating accommodation with data:", { stayId, ...formData });
-    
+
     // Update the accommodation record
     const { data: accommodationData, error: accommodationError } = await supabase
       .from("accommodations")
@@ -168,11 +167,11 @@ export const updateAccommodation = async (
     const tripId = accommodationData.trip_id;
 
     // Generate array of dates between check-in and check-out
-    const dateArray = generateDateArray(
+    const dateArray = generateDatesArray(
       formData.hotel_checkin_date, 
       formData.hotel_checkout_date
     );
-    
+
     console.log("Generated date array for accommodation days:", dateArray);
 
     // Get day_ids for all dates that match the trip's days
@@ -188,17 +187,17 @@ export const updateAccommodation = async (
 
     // Map days to their corresponding day_ids
     const dayMap = new Map(dayData.map(day => [day.date.split('T')[0], day.day_id]));
-    
+
     // Create accommodation_days entries for each date
     const accommodationDaysData = dateArray.map(date => {
       const formattedDate = date.toISOString().split('T')[0];
       const dayId = dayMap.get(formattedDate);
-      
+
       if (!dayId) {
         console.warn(`No matching day_id found for date: ${formattedDate}`);
         return null;
       }
-      
+
       return {
         stay_id: stayId,
         day_id: dayId,
@@ -208,7 +207,7 @@ export const updateAccommodation = async (
 
     if (accommodationDaysData.length > 0) {
       console.log("Inserting accommodation days:", accommodationDaysData);
-      
+
       // Insert all accommodation_days records
       const { error: daysError } = await supabase
         .from("accommodations_days")
@@ -218,7 +217,7 @@ export const updateAccommodation = async (
         console.error("Error adding accommodation days:", daysError);
         throw daysError;
       }
-      
+
       console.log("Accommodation days added successfully");
     } else {
       console.warn("No accommodation days to add - no matching trip days found");
@@ -236,7 +235,7 @@ export const updateAccommodation = async (
 export const deleteAccommodation = async (stayId: string) => {
   try {
     console.log("Deleting accommodation with ID:", stayId);
-    
+
     // First delete all associated accommodation_days
     const { error: daysError } = await supabase
       .from("accommodations_days")
