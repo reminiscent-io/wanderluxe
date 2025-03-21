@@ -86,28 +86,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           autoComplete="off"
         />
       </div>
-      <style jsx>{`
-        .pac-container {
-          z-index: 9999 !important;
-          border-radius: 0.5rem;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          margin-top: 4px;
-          background-color: white;
-          pointer-events: auto;
-        }
-        .pac-item {
-          padding: 8px 12px;
-          cursor: pointer;
-          font-family: inherit;
-        }
-        .pac-item:hover {
-          background-color: #f7fafc;
-        }
-        .pac-item-selected {
-          background-color: #edf2f7;
-        }
-      `}</style>
     </div>
   );
 };
