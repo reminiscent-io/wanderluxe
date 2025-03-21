@@ -47,11 +47,13 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Clean date fields: convert empty strings to null
+    // Clean date and time fields: convert empty strings to null
     const cleanedData = {
       ...formData,
       start_date: formData.start_date === '' ? null : formData.start_date,
       end_date: formData.end_date === '' ? null : formData.end_date,
+      start_time: formData.start_time === '' ? null : formData.start_time,
+      end_time: formData.end_time === '' ? null : formData.end_time,
     };
 
     onSubmit(cleanedData);
