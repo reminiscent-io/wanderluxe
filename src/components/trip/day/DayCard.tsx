@@ -4,7 +4,6 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
 import { formatToTime } from '@/utils/dateUtils';
-import { activityService } from '@/services/activity/activityService';
 import DayCardContent from './DayCardContent';
 import { toast } from 'sonner';
 import DayEditDialog from './DayEditDialog';
