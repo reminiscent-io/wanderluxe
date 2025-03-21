@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DayCard from '../day/DayCard';
 import { TripDay } from '@/types/trip';
@@ -70,6 +70,36 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       console.error('Error deleting day:', error);
     }
   };
+
+  // Add logging to debug accommodation data
+  useEffect(() => {
+    console.log('TimelineContent - accommodations:', accommodations);
+    console.log('TimelineContent - validDays:', validDays);
+  }, [accommodations, validDays]);
+
+  return (
+    <section className="w-full max-w-screen-xl mx-auto px-4 py-8 space-y-12">
+      {/* Trip days timeline */}
+      <div className="space-y-8">
+        {validDays.map((day, index) => (
+          <DayCard
+            key={day.id}
+            index={index}
+            id={day.id}
+            eventId={day.event_id}
+            title={day.title}
+            date={day.date}
+            activities={day.activities || []}
+            onTitleChange={(title) => handleDayTitleChange(day.id, title)}
+            onImageChange={(imageUrl) => handleDayImageChange(day.id, imageUrl)}
+            imageUrl={day.image_url}
+            defaultImageUrl={getDefaultImageForTrip()}
+            accommodations={accommodations || []}
+          />
+        ))}
+      </div>
+    </section>
+  );
 };
 
 export default TimelineContent;
