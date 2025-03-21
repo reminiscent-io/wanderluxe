@@ -5,7 +5,7 @@ export interface ActivityFormData {
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost: string;  // Made required
+  cost?: string;
   currency: string;  // Made required
 }
 
