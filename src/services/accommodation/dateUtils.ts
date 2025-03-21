@@ -3,9 +3,9 @@ import { format, parse, addDays, isBefore, isEqual, differenceInDays } from 'dat
 /**
  * Generates an array of dates between start and end (inclusive)
  */
-export const generateDatesArray = (startDate: string, endDate: string): string[] => {
+export const generateDateArray = (startDate: string, endDate: string): string[] => {
   if (!startDate || !endDate) {
-    console.error('Invalid dates provided to generateDatesArray', { startDate, endDate });
+    console.error('Invalid dates provided to generateDateArray', { startDate, endDate });
     return [];
   }
 
@@ -14,7 +14,7 @@ export const generateDatesArray = (startDate: string, endDate: string): string[]
   const end = new Date(endDate);
 
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    console.error('Invalid dates provided to generateDatesArray', { startDate, endDate, start, end });
+    console.error('Invalid dates provided to generateDateArray', { startDate, endDate, start, end });
     return [];
   }
 
@@ -32,4 +32,4 @@ export const generateDatesArray = (startDate: string, endDate: string): string[]
 };
 
 // Create alias for backward compatibility
-export const generateDateArray = generateDatesArray;
+export const generateDateArray = generateDateArray;
