@@ -55,12 +55,18 @@ export const useTimelineEvents = (tripId: string | undefined) => {
   const { data: events = [], isLoading, refetch: refreshEvents } = useQuery({
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
-      // Accommodation data fetching has been removed
-      return [];
+      if (!tripId) return [];
+      
+      // Fetch accommodations data
+      const { data: accommodations, error } = await supabase
+        .from('accommodations')
+        .select('*, accommodations_days(day_id, date)')
+        .eq('trip_id', tripId)
+        .order('order_index');
 
       if (error) throw error;
-      // Accommodation functionality has been removed
-      return [];
+      
+      return accommodations || [];
     },
     enabled: !!tripId,
   });

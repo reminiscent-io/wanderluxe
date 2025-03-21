@@ -178,9 +178,15 @@ const DayCard: React.FC<DayCardProps> = ({
                   {hotelStays
                     .filter(stay => {
                       // Check if current day's date falls within this hotel stay's date range
-                      const dayDate = new Date(date);
-                      const checkinDate = new Date(stay.hotel_checkin_date);
-                      const checkoutDate = new Date(stay.hotel_checkout_date);
+                      const dayDate = new Date(date.split('T')[0]);  // Fix potential timezone issues
+                      const checkinDate = new Date(stay.hotel_checkin_date.split('T')[0]);
+                      const checkoutDate = new Date(stay.hotel_checkout_date.split('T')[0]);
+                      
+                      console.log(`Filtering hotel stays - Day: ${date}, 
+                        Hotel: ${stay.hotel}, 
+                        Check-in: ${stay.hotel_checkin_date}, 
+                        Check-out: ${stay.hotel_checkout_date}, 
+                        Is match: ${dayDate >= checkinDate && dayDate < checkoutDate}`);
                       
                       // Include the day if it's on or after check-in and before check-out
                       return dayDate >= checkinDate && dayDate < checkoutDate;

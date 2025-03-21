@@ -16,7 +16,9 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
     console.log('Generated stay dates:', stayDates);
 
     // Make sure we have trip days for these dates
-    await createTripDays(tripId, stayDates);
+    console.log('Creating trip days for accommodation dates');
+    const tripDaysResult = await createTripDays(tripId, stayDates);
+    console.log('Trip days creation result:', tripDaysResult);
     
     // Create all timeline events for the stay
     const accommodationData = {

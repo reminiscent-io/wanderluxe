@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { AccommodationFormData } from './types';
 
@@ -26,7 +25,7 @@ const createAccommodationDays = async (stay_id: string, tripId: string, dates: s
     .insert(accommodationDays);
 
   if (daysError) throw daysError;
-  
+
   return tripDays;
 };
 
@@ -37,7 +36,7 @@ export const createAccommodationEvents = async (
 ) => {
   try {
     console.log('Creating accommodation with dates:', dates);
-    
+
     // First, create the main accommodation entry
     const { data: accommodation, error: accommodationError } = await supabase
       .from('accommodations')
@@ -64,7 +63,7 @@ export const createAccommodationEvents = async (
       .single();
 
     if (accommodationError) throw accommodationError;
-    
+
     console.log('Accommodation created:', accommodation);
 
     // Create accommodation days entries - ensure we're passing the right data
@@ -72,7 +71,7 @@ export const createAccommodationEvents = async (
       console.warn('No dates provided for accommodation days');
       return accommodation;
     }
-    
+
     const result = await createAccommodationDays(accommodation.stay_id, tripId, dates);
     console.log('Accommodation days created:', result);
 
