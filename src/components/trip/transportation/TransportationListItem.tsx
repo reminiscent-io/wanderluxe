@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,11 +16,14 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   onEdit,
   onDelete
 }) => {
+  // Safe check if transportation data is missing
   if (!transportation) {
-    return <div>Transportation data is missing.</div>;
+    return <Card className="p-4 bg-white">Transportation data is missing.</Card>;
   }
 
-  const formatDate = (dateString: string): string => {
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return '';
+    
     try {
       return format(parseISO(dateString), 'MMM d, yyyy');
     } catch (error) {

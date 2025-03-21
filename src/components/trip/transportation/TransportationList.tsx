@@ -24,12 +24,14 @@ const TransportationList: React.FC<TransportationListProps> = ({
   return (
     <div className="space-y-3 p-4">
       {transportations.map((transportation) => (
-        <TransportationListItem 
-          key={transportation.id} 
-          transportation={transportation}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        transportation ? (
+          <TransportationListItem 
+            key={transportation.id || Math.random().toString()} 
+            transportation={transportation}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ) : null
       ))}
     </div>
   );
