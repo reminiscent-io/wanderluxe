@@ -1,18 +1,13 @@
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
-import { Tables } from '@/integrations/supabase/types';
+import { Tables } from '@/types/database.types';
 
-// Use database types directly to avoid complex type hierarchies
-type DbAccommodation = Tables<'accommodations'>;
 type DbAccommodationDay = Tables<'accommodations_days'>;
 
-// Simplified accommodation type that matches database structure
-// Accommodation interfaces have been removed
-
-export const useTimelineEvents = (tripId: string | undefined) => {
+export function useTimelineEvents(tripId: string | undefined) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -45,9 +40,22 @@ export const useTimelineEvents = (tripId: string | undefined) => {
           queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodations_days'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+          queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+        }
+      )
       .subscribe();
 
     return () => {
+      console.log("Cleaning up real-time subscription");
       supabase.removeChannel(channel);
     };
   }, [tripId, queryClient]);
@@ -57,15 +65,26 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     queryFn: async () => {
       if (!tripId) return [];
       
-      // Fetch accommodations data
+      // Fetch accommodations data with all associated days
       const { data: accommodations, error } = await supabase
         .from('accommodations')
-        .select('*, accommodations_days(day_id, date)')
+        .select(`
+          *,
+          accommodations_days (
+            id, 
+            day_id, 
+            date
+          )
+        `)
         .eq('trip_id', tripId)
         .order('order_index');
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching accommodations:", error);
+        throw error;
+      }
       
+      console.log("Fetched accommodations data:", accommodations);
       return accommodations || [];
     },
     enabled: !!tripId,
@@ -87,12 +106,9 @@ export const useTimelineEvents = (tripId: string | undefined) => {
   });
 
   const deleteEvent = useMutation({
-    mutationFn: async (eventId: string) => {
-      // Accommodation functionality has been removed
+    mutationFn: async () => {
       toast.error('Accommodation functionality has been removed');
       throw new Error('Accommodation functionality has been removed');
-
-      if (error) throw error;
     },
     onSuccess: () => {
       toast.success('Event deleted successfully');
@@ -109,6 +125,6 @@ export const useTimelineEvents = (tripId: string | undefined) => {
     isLoading,
     updateEvent,
     deleteEvent,
-    refreshEvents,
+    refreshEvents
   };
-};
+}
