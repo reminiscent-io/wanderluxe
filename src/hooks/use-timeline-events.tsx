@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,7 +63,7 @@ export function useTimelineEvents(tripId: string | undefined) {
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
       if (!tripId) return [];
-      
+
       // Fetch accommodations data with all associated days
       const { data: accommodations, error } = await supabase
         .from('accommodations')
@@ -83,7 +82,7 @@ export function useTimelineEvents(tripId: string | undefined) {
         console.error("Error fetching accommodations:", error);
         throw error;
       }
-      
+
       console.log("Fetched accommodations data:", accommodations);
       return accommodations || [];
     },

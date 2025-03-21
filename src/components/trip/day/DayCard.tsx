@@ -177,6 +177,10 @@ const DayCard: React.FC<DayCardProps> = ({
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
                   {hotelStays
                     .filter(stay => {
+                      if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
+                        return false;
+                      }
+                      
                       // Normalize dates by removing time portions to avoid timezone issues
                       const dayDateStr = date.split('T')[0];
                       const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
@@ -190,14 +194,13 @@ const DayCard: React.FC<DayCardProps> = ({
                       console.log(`Filtering hotel stays - Day: ${dayDateStr}, 
                         Hotel: ${stay.hotel}, 
                         Check-in: ${checkinDateStr}, 
-                        Check-out: ${checkoutDateStr}, 
-                        Is match: ${dayDate >= checkinDate && dayDate < checkoutDate}`);
+                        Check-out: ${checkoutDateStr}`);
                       
                       // Include the day if it's on or after check-in and before check-out
                       return dayDate >= checkinDate && dayDate < checkoutDate;
                     })
                     .map((stay) => (
-                      <div key={stay.stay_id} className="text-white">
+                      <div key={stay.stay_id || stay.id} className="text-white">
                         <p className="font-medium">{stay.hotel}</p>
                         <p className="text-sm">{stay.hotel_address}</p>
                         {stay.hotel_website && (
@@ -210,15 +213,19 @@ const DayCard: React.FC<DayCardProps> = ({
                             View Hotel Website
                           </a>
                         )}
-                        {stay.hotel_checkin_date.split('T')[0] === date.split('T')[0] && (
+                        {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === date.split('T')[0] && (
                           <p className="text-xs mt-1 text-green-300 font-medium">Check-in day</p>
                         )}
-                        {stay.hotel_checkout_date.split('T')[0] === date.split('T')[0] && (
+                        {stay.hotel_checkout_date && stay.hotel_checkout_date.split('T')[0] === date.split('T')[0] && (
                           <p className="text-xs mt-1 text-amber-300 font-medium">Check-out day</p>
                         )}
                       </div>
                     ))}
-                  {hotelStays.filter(stay => {
+                  {!hotelStays || hotelStays.filter(stay => {
+                    if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) {
+                      return false;
+                    }
+                    
                     // Use the same date normalization approach for consistency
                     const dayDateStr = date.split('T')[0];
                     const checkinDateStr = stay.hotel_checkin_date.split('T')[0];
