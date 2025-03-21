@@ -23,10 +23,9 @@ const AccommodationList: React.FC<AccommodationListProps> = ({
   tripDepartureDate
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingStay, setEditingStay] = useState<AccommodationFormData | null>(null);
   
   const {
-    editingStay,
-    setEditingStay,
     handleSubmit,
     handleUpdate,
     handleDelete
@@ -51,12 +50,16 @@ const AccommodationList: React.FC<AccommodationListProps> = ({
   };
 
   const onSubmitForm = async (data: AccommodationFormData) => {
-    if (editingStay && editingStay.stay_id) {
-      await handleUpdate(editingStay.stay_id, data);
-    } else {
-      await handleSubmit(data);
+    try {
+      if (editingStay && editingStay.stay_id) {
+        await handleUpdate(editingStay.stay_id, data);
+      } else {
+        await handleSubmit(data);
+      }
+      closeDialog();
+    } catch (error) {
+      console.error("Error saving accommodation:", error);
     }
-    closeDialog();
   };
 
   return (

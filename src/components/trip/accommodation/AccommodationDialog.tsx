@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,11 +27,17 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   tripDepartureDate,
   isEditing = false
 }) => {
+  useEffect(() => {
+    if (initialData) {
+      console.log("Dialog opened with initial data:", initialData);
+    }
+  }, [initialData, isOpen]);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-gray-800">
             {isEditing ? 'Edit Hotel Stay' : 'Add Hotel Stay'}
           </DialogTitle>
         </DialogHeader>

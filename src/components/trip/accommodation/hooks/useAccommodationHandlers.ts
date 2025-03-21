@@ -4,7 +4,7 @@ import type { AccommodationFormData } from '@/types/trip';
 import { addAccommodation, updateAccommodation, deleteAccommodation } from '@/services/accommodation/accommodationService';
 import { toast } from 'sonner';
 
-export const useAccommodationHandlers = (tripId: string, onSuccess: () => void) => {
+export const useAccommodationHandlers = ({ tripId, onSuccess }: { tripId: string, onSuccess: () => void }) => {
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<(AccommodationFormData & { stay_id: string }) | null>(null);
 
