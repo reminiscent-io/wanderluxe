@@ -175,12 +175,46 @@ const DayCard: React.FC<DayCardProps> = ({
               <div className="space-y-4 order-1">
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Stay</h3>
-                  {hotelStays.map((stay) => (
-                    <div key={stay.stay_id} className="text-white">
-                      <p className="font-medium">{stay.hotel}</p>
-                      <p className="text-sm">{stay.hotel_address}</p>
-                    </div>
-                  ))}
+                  {hotelStays
+                    .filter(stay => {
+                      // Check if current day's date falls within this hotel stay's date range
+                      const dayDate = new Date(date);
+                      const checkinDate = new Date(stay.hotel_checkin_date);
+                      const checkoutDate = new Date(stay.hotel_checkout_date);
+                      
+                      // Include the day if it's on or after check-in and before check-out
+                      return dayDate >= checkinDate && dayDate < checkoutDate;
+                    })
+                    .map((stay) => (
+                      <div key={stay.stay_id} className="text-white">
+                        <p className="font-medium">{stay.hotel}</p>
+                        <p className="text-sm">{stay.hotel_address}</p>
+                        {stay.hotel_website && (
+                          <a 
+                            href={stay.hotel_website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-200 hover:text-blue-100 flex items-center gap-1 mt-1"
+                          >
+                            View Hotel Website
+                          </a>
+                        )}
+                        {stay.hotel_checkin_date === date && (
+                          <p className="text-xs mt-1 text-green-300 font-medium">Check-in day</p>
+                        )}
+                        {stay.hotel_checkout_date === date && (
+                          <p className="text-xs mt-1 text-amber-300 font-medium">Check-out day</p>
+                        )}
+                      </div>
+                    ))}
+                  {hotelStays.filter(stay => {
+                    const dayDate = new Date(date);
+                    const checkinDate = new Date(stay.hotel_checkin_date);
+                    const checkoutDate = new Date(stay.hotel_checkout_date);
+                    return dayDate >= checkinDate && dayDate < checkoutDate;
+                  }).length === 0 && (
+                    <p className="text-white text-sm italic">No hotel stay for this day</p>
+                  )}
                 </div>
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">
