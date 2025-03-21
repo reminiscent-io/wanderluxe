@@ -1,52 +1,135 @@
-import React, {useEffect} from 'react';
+
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AccommodationFormData } from '@/services/accommodation/accommodationService';
+import { Tables } from '@/integrations/supabase/types';
 import AccommodationForm from './AccommodationForm';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+type Accommodation = Tables<'accommodations'>;
 
 interface AccommodationDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: AccommodationFormData) => Promise<void>;
-  initialData?: AccommodationFormData | null;
-  tripArrivalDate: string | null;
-  tripDepartureDate: string | null;
-  isEditing?: boolean;
+  tripId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialData?: Accommodation;
+  onSuccess: () => void;
 }
 
 const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
+  tripId,
+  open,
+  onOpenChange,
   initialData,
-  tripArrivalDate,
-  tripDepartureDate,
-  isEditing = false
+  onSuccess
 }) => {
+  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
+    arrival_date: null,
+    departure_date: null
+  });
+
   useEffect(() => {
-    if (initialData) {
-      console.log("Dialog opened with initial data:", initialData);
+    const fetchTripDates = async () => {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
+
+      if (!error && data) {
+        if (data.arrival_date && data.departure_date) {
+          console.log('AccommodationDialog: Setting trip dates', data);
+          setTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date
+          });
+        } else {
+          console.log('AccommodationDialog: Skipping update - missing dates', data);
+        }
+      }
+    };
+
+    if (open) {
+      fetchTripDates();
     }
-  }, [initialData, isOpen]);
+  }, [tripId, open]);
+
+  const handleSubmit = async (data: any) => {
+    try {
+      if (initialData?.stay_id) {
+        // Update existing accommodation
+        const { error } = await supabase
+          .from('accommodations')
+          .update({
+            hotel: data.hotel,
+            hotel_details: data.hotel_details,
+            hotel_url: data.hotel_url,
+            hotel_checkin_date: data.hotel_checkin_date,
+            hotel_checkout_date: data.hotel_checkout_date,
+            cost: data.cost,
+            currency: data.currency,
+            hotel_address: data.hotel_address,
+            hotel_phone: data.hotel_phone,
+            hotel_place_id: data.hotel_place_id,
+            hotel_website: data.hotel_website,
+          })
+          .eq('stay_id', initialData.stay_id);
+
+        if (error) throw error;
+        toast.success('Accommodation updated successfully');
+      } else {
+        // Create new accommodation
+        const { error } = await supabase
+          .from('accommodations')
+          .insert([{
+            trip_id: tripId,
+            hotel: data.hotel,
+            hotel_details: data.hotel_details,
+            hotel_url: data.hotel_url,
+            hotel_checkin_date: data.hotel_checkin_date,
+            hotel_checkout_date: data.hotel_checkout_date,
+            cost: data.cost,
+            currency: data.currency,
+            hotel_address: data.hotel_address,
+            hotel_phone: data.hotel_phone,
+            hotel_place_id: data.hotel_place_id,
+            hotel_website: data.hotel_website,
+            order_index: 0,
+            expense_type: 'accommodation',
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+        toast.success('Accommodation added successfully');
+      }
+
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving accommodation:', error);
+      toast.error('Failed to save accommodation');
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-800">
-            {isEditing ? 'Edit Hotel Stay' : 'Add Hotel Stay'}
+          <DialogTitle>
+            {initialData ? 'Edit Accommodation' : 'Add Accommodation'}
           </DialogTitle>
         </DialogHeader>
         <AccommodationForm
-          onSubmit={onSubmit}
-          onCancel={onClose}
           initialData={initialData}
-          tripArrivalDate={tripArrivalDate}
-          tripDepartureDate={tripDepartureDate}
+          onSubmit={handleSubmit}
+          onCancel={() => onOpenChange(false)}
+          tripArrivalDate={tripDates.arrival_date}
+          tripDepartureDate={tripDates.departure_date}
         />
       </DialogContent>
     </Dialog>

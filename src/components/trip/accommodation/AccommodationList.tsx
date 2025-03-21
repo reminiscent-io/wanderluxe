@@ -1,103 +1,82 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { AccommodationFormData } from '@/services/accommodation/accommodationService';
 import AccommodationItem from './AccommodationItem';
 import AccommodationDialog from './AccommodationDialog';
-import { useAccommodationHandlers } from './hooks/useAccommodationHandlers';
+import { Tables } from '@/integrations/supabase/types';
+import useAccommodationHandlers from './hooks/useAccommodationHandlers';
+
+type Accommodation = Tables<'accommodations'>;
 
 interface AccommodationListProps {
+  accommodations: Accommodation[];
   tripId: string;
-  accommodations: AccommodationFormData[];
-  onSuccess: () => void;
-  tripArrivalDate: string | null;
-  tripDepartureDate: string | null;
+  onAccommodationsChange: () => void;
 }
 
 const AccommodationList: React.FC<AccommodationListProps> = ({
-  tripId,
   accommodations,
-  onSuccess,
-  tripArrivalDate,
-  tripDepartureDate
+  tripId,
+  onAccommodationsChange
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingStay, setEditingStay] = useState<AccommodationFormData | null>(null);
-  
-  const {
-    handleSubmit,
-    handleUpdate,
-    handleDelete
-  } = useAccommodationHandlers({
-    tripId,
-    onSuccess,
-  });
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editAccommodation, setEditAccommodation] = useState<Accommodation | undefined>(undefined);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const openAddDialog = () => {
-    setEditingStay(null);
-    setIsDialogOpen(true);
+  const { handleDelete } = useAccommodationHandlers(tripId, onAccommodationsChange);
+
+  const handleEdit = (accommodation: Accommodation) => {
+    setEditAccommodation(accommodation);
+    setIsEditDialogOpen(true);
   };
 
-  const openEditDialog = (stay: AccommodationFormData) => {
-    setEditingStay(stay);
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-    setEditingStay(null);
-  };
-
-  const onSubmitForm = async (data: AccommodationFormData) => {
-    try {
-      if (editingStay && editingStay.stay_id) {
-        await handleUpdate(editingStay.stay_id, data);
-      } else {
-        await handleSubmit(data);
-      }
-      closeDialog();
-    } catch (error) {
-      console.error("Error saving accommodation:", error);
-    }
+  const handleDialogSuccess = () => {
+    onAccommodationsChange();
   };
 
   return (
-    <div className="space-y-4 p-2">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-800">Accommodations</h2>
+        <h3 className="text-lg font-medium">Your Stays</h3>
         <Button 
-          onClick={openAddDialog}
-          className="bg-earth-500 hover:bg-earth-600 text-white"
+          onClick={() => setIsAddDialogOpen(true)} 
+          size="sm" 
+          className="bg-earth-500 hover:bg-earth-600 text-sand-50"
         >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Hotel Stay
+          <Plus className="h-4 w-4 mr-1" /> Add
         </Button>
       </div>
 
-      <div className="space-y-3">
-        {accommodations.length === 0 ? (
-          <p className="text-gray-500 text-sm">No accommodations added yet.</p>
-        ) : (
-          accommodations.map((stay) => (
+      {accommodations.length === 0 ? (
+        <p className="text-gray-500 text-sm">No accommodations added yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {accommodations.map((accommodation) => (
             <AccommodationItem
-              key={stay.stay_id}
-              stay={stay}
-              onEdit={() => openEditDialog(stay)}
-              onDelete={() => handleDelete(stay.stay_id!)}
+              key={accommodation.stay_id}
+              accommodation={accommodation}
+              onEdit={() => handleEdit(accommodation)}
+              onDelete={() => handleDelete(accommodation.stay_id)}
             />
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
+      {/* Add Accommodation Dialog */}
       <AccommodationDialog
-        isOpen={isDialogOpen}
-        onClose={closeDialog}
-        onSubmit={onSubmitForm}
-        initialData={editingStay}
-        tripArrivalDate={tripArrivalDate}
-        tripDepartureDate={tripDepartureDate}
-        isEditing={!!editingStay}
+        tripId={tripId}
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleDialogSuccess}
+      />
+
+      {/* Edit Accommodation Dialog */}
+      <AccommodationDialog
+        tripId={tripId}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        initialData={editAccommodation}
+        onSuccess={handleDialogSuccess}
       />
     </div>
   );

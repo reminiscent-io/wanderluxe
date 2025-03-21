@@ -1,54 +1,63 @@
-
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import type { AccommodationFormData } from '@/types/trip';
-import { addAccommodation, updateAccommodation, deleteAccommodation } from '@/services/accommodation/accommodationService';
+import { addAccommodation, updateAccommodation } from '@/services/accommodation/accommodationService';
 import { toast } from 'sonner';
 
-export const useAccommodationHandlers = ({ tripId, onSuccess }: { tripId: string, onSuccess: () => void }) => {
+export const useAccommodationHandlers = ({ tripId, onAccommodationChange }: { tripId: string, onAccommodationChange: () => void }) => {
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<(AccommodationFormData & { stay_id: string }) | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (formData: AccommodationFormData) => {
+    setIsLoading(true);
     try {
-      console.log('Submitting accommodation data:', formData);
       await addAccommodation(tripId, formData);
       setIsAddingAccommodation(false);
-      onSuccess();
+      onAccommodationChange();
       toast.success('Accommodation added successfully');
     } catch (error) {
       console.error('Error saving accommodation:', error);
       toast.error('Failed to add accommodation');
-      throw error; // Re-throw to be handled by the form
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUpdate = async (stayId: string, formData: AccommodationFormData) => {
+    setIsLoading(true);
     try {
-      console.log('Updating accommodation:', { stayId, formData });
       if (!stayId) {
         throw new Error('No stay ID provided for update');
       }
       await updateAccommodation(tripId, stayId, formData);
       setEditingStay(null);
-      onSuccess();
+      onAccommodationChange();
       toast.success('Accommodation updated successfully');
     } catch (error) {
       console.error('Error updating accommodation:', error);
       toast.error('Failed to update accommodation');
-      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async (stayId: string) => {
+    setIsLoading(true);
     try {
-      console.log('Deleting accommodation:', stayId);
-      await deleteAccommodation(stayId);
-      onSuccess();
-      toast.success('Accommodation deleted successfully');
+      const { error } = await supabase
+        .from('accommodations')
+        .delete()
+        .eq('stay_id', stayId);
+
+      if (error) throw error;
+      toast.success('Accommodation deleted');
+      onAccommodationChange();
     } catch (error) {
       console.error('Error deleting accommodation:', error);
       toast.error('Failed to delete accommodation');
-      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -57,6 +66,7 @@ export const useAccommodationHandlers = ({ tripId, onSuccess }: { tripId: string
     setIsAddingAccommodation,
     editingStay,
     setEditingStay,
+    isLoading,
     handleSubmit,
     handleUpdate,
     handleDelete
