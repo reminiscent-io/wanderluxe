@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import TripDateDisplay from './TripDateDisplay';
 import TripDateEditDialog from './TripDateEditDialog';
 import DateChangeConfirmationDialog from './DateChangeConfirmationDialog';
-import { generateDatesArray } from '@/services/accommodation/accommodationService';
+import { generateDateArray } from '@/services/accommodation/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 
 interface TripDatesProps {
