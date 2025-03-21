@@ -79,8 +79,25 @@ const DayCard: React.FC<DayCardProps> = ({
         setImageUrl(data.image_url); // Update imageUrl state
       }
 
-      // You would typically call an API to save the changes here
-      console.log('Saving day edit:', data);
+      // Save changes to the database
+      const { error } = await supabase
+        .from('trip_days')
+        .update({
+          title: data.title,
+          image_url: data.image_url
+        })
+        .eq('day_id', id);
+      
+      if (error) {
+        console.error('Error saving day edit:', error);
+        toast.error('Failed to save changes');
+        throw error;
+      } else {
+        toast.success('Day updated successfully');
+        
+        // Invalidate the trip data query to refresh the data
+        queryClient.invalidateQueries(['trip']);
+      }
 
       // Close the dialog
       setIsEditing(false);
