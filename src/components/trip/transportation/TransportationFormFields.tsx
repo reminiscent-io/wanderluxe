@@ -87,7 +87,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             />
           </div>
           <div>
-            <Label>Departure Time (Optional)</Label>
+            <Label>Departure Time</Label>
             <Input
               type="time"
               value={formData.start_time || ''}
@@ -99,7 +99,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Arrival Date (Optional)</Label>
+            <Label>Arrival Date</Label>
             <Input
               type="date"
               value={formData.end_date || ''}
@@ -108,7 +108,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             />
           </div>
           <div>
-            <Label>Arrival Time (Optional)</Label>
+            <Label>Arrival Time</Label>
             <Input
               type="time"
               value={formData.end_time || ''}
@@ -121,7 +121,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
 
       <div className="space-y-4">
         <div>
-          <Label>Provider/Carrier (Optional)</Label>
+          <Label>Provider/Carrier</Label>
           <Input
             value={formData.provider || ''}
             onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
@@ -131,7 +131,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         </div>
 
         <div>
-          <Label>Confirmation Number (Optional)</Label>
+          <Label>Confirmation Number</Label>
           <Input
             value={formData.confirmation_number || ''}
             onChange={(e) => setFormData({ ...formData, confirmation_number: e.target.value })}
@@ -141,7 +141,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         </div>
 
         <div>
-          <Label>Details (Optional)</Label>
+          <Label>Details</Label>
           <Textarea
             value={formData.details || ''}
             onChange={(e) => setFormData({ ...formData, details: e.target.value })}
@@ -152,7 +152,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Cost (Optional)</Label>
+            <Label>Cost</Label>
             <Input
               type="text"
               value={formData.cost !== undefined ? formData.cost.toString() : ''}
