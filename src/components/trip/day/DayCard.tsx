@@ -282,16 +282,56 @@ const DayCard: React.FC<DayCardProps> = ({
                 {/* Activities */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
-                  <DayCardContent
-                    index={0}
-                    title={dayTitle}
-                    activities={activities}
-                    onAddActivity={() => {}}
-                    onEditActivity={() => {}}
-                    formatTime={formatTime}
-                    dayId={id}
-                    eventId={id}
-                  />
+                  <div className="space-y-2">
+                    {activities.map((activity) => (
+                      <div
+                        key={activity.id || activity.title}
+                        className="flex justify-between items-center p-3
+                                   bg-white/90 rounded-lg shadow-sm 
+                                   hover:bg-white/100 cursor-pointer"
+                        onClick={() => {
+                          console.log("Activity item clicked:", activity);
+                          if (activity?.id) {
+                            // Handle activity click
+                          }
+                        }}
+                      >
+                        <div>
+                          <h4 className="font-medium text-gray-900">
+                            {activity.title}
+                          </h4>
+                          {activity.start_time && (
+                            <p className="text-sm text-gray-600">
+                              {formatTime(activity.start_time)}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Edit logic would go here
+                          }}
+                          className="text-gray-600 hover:bg-gray-200 h-8 w-8"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {(!activities || activities.length === 0) && (
+                      <p className="text-white text-sm italic">No activities for this day</p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {}}
+                      className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Activity
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Reservations */}
