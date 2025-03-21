@@ -36,6 +36,8 @@ export const createAccommodationEvents = async (
   dates: string[]
 ) => {
   try {
+    console.log('Creating accommodation with dates:', dates);
+    
     // First, create the main accommodation entry
     const { data: accommodation, error: accommodationError } = await supabase
       .from('accommodations')
@@ -62,9 +64,17 @@ export const createAccommodationEvents = async (
       .single();
 
     if (accommodationError) throw accommodationError;
+    
+    console.log('Accommodation created:', accommodation);
 
-    // Create accommodation days entries
-    await createAccommodationDays(accommodation.stay_id, tripId, dates);
+    // Create accommodation days entries - ensure we're passing the right data
+    if (dates.length === 0) {
+      console.warn('No dates provided for accommodation days');
+      return accommodation;
+    }
+    
+    const result = await createAccommodationDays(accommodation.stay_id, tripId, dates);
+    console.log('Accommodation days created:', result);
 
     return accommodation;
   } catch (error) {
