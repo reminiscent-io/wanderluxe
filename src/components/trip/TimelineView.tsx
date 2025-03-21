@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
-import { useTimelineGroups } from '@/hooks/use-timeline-groups';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
-import AccommodationGaps from './timeline/AccommodationGaps';
 import AccommodationsSection from './AccommodationsSection';
 import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
@@ -25,7 +23,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
-  const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // State for trip dates; initialized from props if available.
@@ -200,14 +197,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         </div>
       </div>
       <TimelineContent 
-        groups={groups} 
+        days={days} 
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
-        hotelStays={processedHotelStays} // Added prop for hotel stays
-        onDayDelete={handleDayDelete} // Added prop for day deletion
-      />
-      <AccommodationGaps 
-        gaps={gaps} 
-        onAddAccommodation={() => {}}
+        hotelStays={processedHotelStays}
+        onDayDelete={handleDayDelete}
       />
     </div>
   );

@@ -1,58 +1,62 @@
+
 import React from 'react';
-import { motion } from 'framer-motion';
-import DayCard from '../day/DayCard';
 import { TripDay, HotelStay } from '@/types/trip';
-import { cn } from '@/lib/utils';
+import DayCard from '../day/DayCard';
 
 interface TimelineContentProps {
   days?: TripDay[];
-  hotelStays?: HotelStay[];
-  onDayDelete?: (dayId: string) => void;
-  defaultImageUrl?: string;
-  className?: string;
+  dayIndexMap: Map<string, number>;
+  hotelStays: HotelStay[];
+  onDayDelete: (id: string) => void;
 }
 
 const TimelineContent: React.FC<TimelineContentProps> = ({
   days = [],
-  hotelStays = [],
-  onDayDelete,
-  defaultImageUrl,
-  className
+  dayIndexMap,
+  hotelStays,
+  onDayDelete
 }) => {
-  if (!days || days.length === 0) {
+  if (!days.length) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-lg text-gray-500">
-          No days to display. Add days to your trip to get started.
-        </p>
+      <div className="text-center py-12 border border-dashed rounded-lg">
+        <p className="text-gray-500">No days added yet. Start by setting your trip dates above.</p>
       </div>
     );
   }
 
+  // Sort days by date
+  const sortedDays = [...days].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
   return (
-    <div className={cn("space-y-4", className)}>
-      {days.map((day, index) => (
-        <motion.div
-          key={day.day_id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.1 }}
-        >
+    <div className="space-y-8">
+      {sortedDays.map((day, index) => {
+        const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
+        
+        return (
           <DayCard
+            key={day.day_id}
             id={day.day_id}
             tripId={day.trip_id}
             date={day.date}
             title={day.title}
-            activities={day.activities}
+            activities={day.activities || []}
             imageUrl={day.image_url}
-            index={index}
-            onDelete={(id) => onDayDelete && onDayDelete(id)}
-            defaultImageUrl={defaultImageUrl}
-            hotelStays={hotelStays}
-            transportations={[]}
+            index={dayIndex}
+            onDelete={onDayDelete}
+            hotelStays={hotelStays.filter(stay => {
+              if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
+              
+              const dayDate = new Date(day.date.split('T')[0]);
+              const checkinDate = new Date(stay.hotel_checkin_date.split('T')[0]);
+              const checkoutDate = new Date(stay.hotel_checkout_date.split('T')[0]);
+              
+              return dayDate >= checkinDate && dayDate < checkoutDate;
+            })}
           />
-        </motion.div>
-      ))}
+        );
+      })}
     </div>
   );
 };
