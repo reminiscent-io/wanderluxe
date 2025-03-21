@@ -1,3 +1,4 @@
+
 import { format, parse, addDays, isBefore, isEqual, differenceInDays } from 'date-fns';
 
 /**
@@ -26,10 +27,10 @@ export const generateDateArray = (startDate: string, endDate: string): string[] 
     current.setDate(current.getDate() + 1);
   }
 
-
   console.log(`Generated ${datesArray.length} dates:`, datesArray);
   return datesArray;
 };
 
-// Create alias for backward compatibility
-export const generateDateArray;
+// We don't need to create an alias since we're already exporting the function with the correct name
+// If other parts of the app expect a function named 'generateDatesArray', uncomment the line below:
+// export const generateDatesArray = generateDateArray;
