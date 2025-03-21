@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import DayHeader from './DayHeader';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { DayActivity, HotelStay } from '@/types/trip';
 import DayImage from './DayImage';
 import DayCardContent from './DayCardContent';
 import DayEditDialog from './DayEditDialog';
+import { toast } from 'sonner';
 
 interface DayCardProps {
   id: string;
