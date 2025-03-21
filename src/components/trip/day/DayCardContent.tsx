@@ -1,29 +1,12 @@
 import React, { useState, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
 import ActivityDialogs from './ActivityDialogs';
-import DiningList from '../dining/DiningList';
 import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
 import { toast } from 'sonner';
 
 interface DayCardContentProps {
   index: number;
-  reservations?: Array<{
-    id: string;
-    day_id: string;
-    restaurant_name: string;
-    reservation_time?: string;
-    number_of_people?: number;
-    confirmation_number?: string;
-    notes?: string;
-    cost?: number;
-    currency?: string;
-    address?: string;
-    phone_number?: string;
-    website?: string;
-    rating?: number;
-    created_at: string;
-    order_index: number;
-  }>;
   title: string;
   activities: DayActivity[];
   onAddActivity: (activity: ActivityFormData) => Promise<void>;
@@ -31,13 +14,14 @@ interface DayCardContentProps {
   formatTime: (time?: string) => string;
   dayId: string;
   eventId: string;
+  // Removed reservations, onAddReservation, onEditReservation 
+  // to ensure reservations are handled only in DayCard
 }
 
 const DayCardContent: React.FC<DayCardContentProps> = ({
   index,
   title,
   activities,
-  reservations,
   onAddActivity,
   onEditActivity,
   formatTime,
@@ -45,6 +29,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
   eventId,
 }) => {
   const [isAddingActivity, setIsAddingActivity] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
   const [newActivity, setNewActivity] = useState<ActivityFormData>({
     title: '',
     description: '',
@@ -54,9 +39,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     currency: 'USD'
   });
 
-  // Sort activities:
-  // - Those with a start_time come first, sorted by start_time (lexicographically).
-  // - Those without a start_time come later, sorted by created_at.
+  // Sort activities by start_time if present; else by created_at
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
       const aTime = a.start_time && a.start_time.trim() !== '' ? a.start_time : null;
@@ -68,13 +51,12 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
       } else if (!aTime && bTime) {
         return 1;
       } else {
-        // Both times missing: sort by creation time.
+        // Both times missing: sort by creation time
         return a.created_at.localeCompare(b.created_at);
       }
     });
   }, [activities]);
 
-  // Updated handler passes the full activity object.
   const handleEditActivityWrapper = (activity: DayActivity) => {
     if (!activity.id) {
       console.error("Activity id is missing in DayCardContent", activity);
@@ -87,21 +69,23 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
 
   return (
     <div className="p-6 space-y-4">
+      {/* Activities */}
       <ActivitiesList
         activities={sortedActivities}
         formatTime={formatTime}
         onAddActivity={() => setIsAddingActivity(true)}
-        onEditActivity={handleEditActivityWrapper}
+        onEditActivity={(activity) => {
+          setEditingActivity(activity);
+          handleEditActivityWrapper(activity);
+        }}
       />
 
-      <div className="mt-8 space-y-4">
-        <DiningList
-          reservations={reservations || []}
-          formatTime={formatTime}
-          dayId={dayId}
-        />
-      </div>
+      {/* 
+        Removed the reservations block from here,
+        so they no longer appear under Activities.
+      */}
 
+      {/* Add / Edit Activity Dialog */}
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
         setIsAddingActivity={setIsAddingActivity}
@@ -109,6 +93,9 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         setNewActivity={setNewActivity}
         onAddActivity={onAddActivity}
         eventId={eventId}
+        editingActivity={editingActivity}
+        setEditingActivity={setEditingActivity}
+        onEditActivity={onEditActivity}
       />
     </div>
   );

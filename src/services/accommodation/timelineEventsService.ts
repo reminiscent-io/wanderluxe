@@ -1,10 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { AccommodationFormData } from './types';
 
 // Helper function to create accommodation days entries
 const createAccommodationDays = async (stay_id: string, tripId: string, dates: string[]) => {
-  // Get all trip days for this period
+  // Get existing trip days for this period
   const { data: tripDays, error: tripDaysError } = await supabase
     .from('trip_days')
     .select('day_id, date')
@@ -12,8 +11,9 @@ const createAccommodationDays = async (stay_id: string, tripId: string, dates: s
     .in('date', dates);
 
   if (tripDaysError) throw tripDaysError;
+  if (!tripDays?.length) return [];
 
-  // Create accommodation_days entries
+  // Create accommodation_days entries only for existing trip days
   const accommodationDays = tripDays.map(day => ({
     stay_id,
     day_id: day.day_id,
@@ -25,7 +25,7 @@ const createAccommodationDays = async (stay_id: string, tripId: string, dates: s
     .insert(accommodationDays);
 
   if (daysError) throw daysError;
-  
+
   return tripDays;
 };
 
@@ -35,6 +35,8 @@ export const createAccommodationEvents = async (
   dates: string[]
 ) => {
   try {
+    console.log('Creating accommodation with dates:', dates);
+
     // First, create the main accommodation entry
     const { data: accommodation, error: accommodationError } = await supabase
       .from('accommodations')
@@ -62,8 +64,16 @@ export const createAccommodationEvents = async (
 
     if (accommodationError) throw accommodationError;
 
-    // Create accommodation days entries
-    await createAccommodationDays(accommodation.stay_id, tripId, dates);
+    console.log('Accommodation created:', accommodation);
+
+    // Create accommodation days entries - ensure we're passing the right data
+    if (dates.length === 0) {
+      console.warn('No dates provided for accommodation days');
+      return accommodation;
+    }
+
+    const result = await createAccommodationDays(accommodation.stay_id, tripId, dates);
+    console.log('Accommodation days created:', result);
 
     return accommodation;
   } catch (error) {

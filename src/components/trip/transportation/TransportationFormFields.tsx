@@ -14,7 +14,9 @@ interface TransportationFormFieldsProps {
 }
 
 const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
-  <Label>{children} <span style={{ color: 'red' }}>*</span></Label>
+  <Label>
+    {children} <span style={{ color: 'red' }}>*</span>
+  </Label>
 );
 
 const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
@@ -23,7 +25,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   formatCost
 }) => {
   const handleCostChange = (value: string) => {
-    // Remove any non-numeric characters except decimal point
+    // Remove any non-numeric characters except the decimal point
     const numericValue = value.replace(/[^\d.]/g, '');
 
     // Ensure only one decimal point
@@ -46,7 +48,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <RequiredLabel>Type</RequiredLabel>
           <Select
             value={formData.type || 'flight'}
-            onValueChange={(value: any) => setFormData({ ...formData, type: value })}
+            onValueChange={(value: string) => setFormData({ ...formData, type: value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select type" />
@@ -160,7 +162,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <Label>Currency</Label>
           <Select
             value={formData.currency || 'USD'}
-            onValueChange={(value) => setFormData({ ...formData, currency: value })}
+            onValueChange={(value: string) => setFormData({ ...formData, currency: value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select currency" />

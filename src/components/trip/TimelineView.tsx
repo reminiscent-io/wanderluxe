@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
-import { useTimelineGroups } from '@/hooks/use-timeline-groups';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
-import AccommodationGaps from './timeline/AccommodationGaps';
 import AccommodationsSection from './AccommodationsSection';
 import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
@@ -25,7 +23,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
-  const { groups, gaps } = useTimelineGroups(days, events);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // State for trip dates; initialized from props if available.
@@ -143,6 +140,23 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     })) || []
   , [events, tripId]);
 
+  const handleDayDelete = async (dayId: string) => {
+    try {
+      const { error } = await supabase
+        .from('trip_days')
+        .delete()
+        .eq('day_id', dayId);
+
+      if (error) throw error;
+
+      toast.success('Day deleted successfully');
+      if (refreshDays) refreshDays();
+    } catch (error) {
+      console.error('Error deleting day:', error);
+      toast.error('Failed to delete day');
+    }
+  };
+
   return (
     <div className="relative space-y-8">
       {isRefreshing && (
@@ -165,30 +179,28 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         ) : (
           <p>Loading dates...</p>
         )}
-        <div className="flex flex-col md:flex-row gap-6 mb-6">
-          <div className="w-full md:w-1/2">
-            <AccommodationsSection
-              tripId={tripId}
-              onAccommodationChange={handleRefresh}
-              hotelStays={processedHotelStays}
-            />
-          </div>
-          <div className="w-full md:w-1/2">
-            <TransportationSection
-              tripId={tripId}
-              onTransportationChange={handleRefresh}
-            />
-          </div>
-        </div>
       </div>
 
+      <div className="flex flex-col md:flex-row gap-6 mb-6">
+        <div className="w-full md:w-1/2">
+          <AccommodationsSection
+            tripId={tripId}
+            onAccommodationChange={handleRefresh}
+            hotelStays={processedHotelStays}
+          />
+        </div>
+        <div className="w-full md:w-1/2">
+          <TransportationSection
+            tripId={tripId}
+            onTransportationChange={handleRefresh}
+          />
+        </div>
+      </div>
       <TimelineContent 
-        groups={groups} 
+        days={days} 
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
-      />
-      <AccommodationGaps 
-        gaps={gaps} 
-        onAddAccommodation={() => {}}
+        hotelStays={processedHotelStays}
+        onDayDelete={handleDayDelete}
       />
     </div>
   );

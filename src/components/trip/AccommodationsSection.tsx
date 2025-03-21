@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import AccommodationHeader from './accommodation/AccommodationHeader';
@@ -8,6 +7,9 @@ import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
 import { useTripDays } from '@/hooks/use-trip-days';
 import type { HotelStay } from '@/types/trip';
+import TransportationHeader from "./transportation/TransportationHeader"; // Added import
+import TransportationDialog from "./transportation/TransportationDialog"; // Added import
+
 
 interface AccommodationsSectionProps {
   tripId: string;
@@ -23,14 +25,14 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   hotelStays
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // Use the main useTripDays hook and get dates from its data
   const { days } = useTripDays(tripId);
   const tripDates = {
     arrival_date: days?.[0]?.date || null,
     departure_date: days?.[days?.length - 1]?.date || null
   };
-  
+
   const {
     isAddingAccommodation,
     setIsAddingAccommodation,
@@ -62,7 +64,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   };
 
   // Sort hotel stays by check-in date in ascending order
-  const sortedHotelStays = hotelStays.sort((a, b) =>
+  const sortedHotelStays = (hotelStays || []).sort((a, b) =>
     new Date(a.hotel_checkin_date).getTime() - new Date(b.hotel_checkin_date).getTime()
   );
 

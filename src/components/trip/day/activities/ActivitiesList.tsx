@@ -30,7 +30,6 @@ const ActivitiesList: React.FC<ActivitiesListProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h4 className="text-sm font-medium text-earth-500">Activities</h4>
         <Button
           variant="outline"
           size="sm"

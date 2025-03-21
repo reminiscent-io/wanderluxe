@@ -44,10 +44,10 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         // Only update if we have valid dates
         if (data.arrival_date && data.departure_date) {
           console.log('TransportationDialog: Setting trip dates', data);
-          setTripDates(prevDates => ({
-            arrival_date: data.arrival_date || prevDates.arrival_date,
-            departure_date: data.departure_date || prevDates.departure_date
-          }));
+          setTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date
+          });
         } else {
           console.log('TransportationDialog: Skipping update - missing dates', data);
         }
@@ -60,64 +60,65 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   }, [tripId, open]);
 
   const handleSubmit = async (data: Partial<TransportationEvent>) => {
-  try {
-    if (initialData?.id) {
-      // Update existing transportation event
-      const { error } = await supabase
-        .from('transportation_events')
-        .update({
-          type: data.type,
-          provider: data.provider,
-          details: data.details,
-          confirmation_number: data.confirmation_number,
-          start_date: data.start_date,
-          start_time: data.start_time,
-          end_time: data.end_time,
-          departure_location: data.departure_location,
-          arrival_location: data.arrival_location,
-          cost: data.cost,
-          currency: data.currency,
-          is_arrival: data.is_arrival,
-          is_departure: data.is_departure
-        })
-        .eq('id', initialData.id);
+    try {
+      if (initialData?.id) {
+        // Update existing transportation event
+        const { error } = await supabase
+          .from('transportation_events')
+          .update({
+            type: data.type,
+            provider: data.provider,
+            details: data.details,
+            confirmation_number: data.confirmation_number,
+            start_date: data.start_date,
+            start_time: data.start_time,
+            end_date: data.end_date, // Include end_date
+            end_time: data.end_time,
+            departure_location: data.departure_location,
+            arrival_location: data.arrival_location,
+            cost: data.cost,
+            currency: data.currency,
+            is_arrival: data.is_arrival,
+            is_departure: data.is_departure
+          })
+          .eq('id', initialData.id);
 
-      if (error) throw error;
-      toast.success('Transportation updated successfully');
-    } else {
-      // Create new transportation event
-      const { error } = await supabase
-        .from('transportation_events')
-        .insert([{
-          trip_id: tripId,
-          type: data.type,
-          provider: data.provider,
-          details: data.details,
-          confirmation_number: data.confirmation_number,
-          start_date: data.start_date,
-          start_time: data.start_time,
-          end_time: data.end_time,
-          departure_location: data.departure_location,
-          arrival_location: data.arrival_location,
-          cost: data.cost,
-          currency: data.currency,
-          is_arrival: data.is_arrival,
-          is_departure: data.is_departure,
-          created_at: new Date().toISOString()
-        }]);
+        if (error) throw error;
+        toast.success('Transportation updated successfully');
+      } else {
+        // Create new transportation event
+        const { error } = await supabase
+          .from('transportation_events')
+          .insert([{
+            trip_id: tripId,
+            type: data.type,
+            provider: data.provider,
+            details: data.details,
+            confirmation_number: data.confirmation_number,
+            start_date: data.start_date,
+            start_time: data.start_time,
+            end_date: data.end_date, // Include end_date
+            end_time: data.end_time,
+            departure_location: data.departure_location,
+            arrival_location: data.arrival_location,
+            cost: data.cost,
+            currency: data.currency,
+            is_arrival: data.is_arrival,
+            is_departure: data.is_departure,
+            created_at: new Date().toISOString()
+          }]);
 
-      if (error) throw error;
-      toast.success('Transportation added successfully');
+        if (error) throw error;
+        toast.success('Transportation added successfully');
+      }
+
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving transportation:', error);
+      toast.error('Failed to save transportation');
     }
-
-    onSuccess();
-    onOpenChange(false);
-  } catch (error) {
-    console.error('Error saving transportation:', error);
-    toast.error('Failed to save transportation');
-  }
-};
-
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

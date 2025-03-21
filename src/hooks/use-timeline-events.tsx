@@ -1,115 +1,105 @@
 
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
-import { Tables } from '@/integrations/supabase/types';
+import { HotelStay } from '@/types/trip';
 
-// Use database types directly to avoid complex type hierarchies
-type DbAccommodation = Tables<'accommodations'>;
-type DbAccommodationDay = Tables<'accommodations_days'>;
-
-// Simplified accommodation type that matches database structure
-interface TimelineAccommodation extends DbAccommodation {
-  accommodations_days?: DbAccommodationDay[];
-}
-
-export const useTimelineEvents = (tripId: string | undefined) => {
+export function useTimelineEvents(tripId: string) {
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (!tripId) return;
-
-    const channel = supabase
-      .channel('timeline-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'accommodations',
-          filter: `trip_id=eq.${tripId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
-          queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'trip_days',
-          filter: `trip_id=eq.${tripId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tripId, queryClient]);
-
-  const { data: events = [], isLoading, refetch: refreshEvents } = useQuery({
+  const { data: events, isLoading } = useQuery({
     queryKey: ['timeline-events', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       
       const { data, error } = await supabase
         .from('accommodations')
-        .select('*, accommodations_days(day_id, date)')
+        .select('*')
         .eq('trip_id', tripId)
         .order('order_index');
-
-      if (error) throw error;
-      return (data || []) as TimelineAccommodation[];
+      
+      if (error) {
+        console.error('Error fetching accommodations:', error);
+        throw error;
+      }
+      
+      console.log('Fetched accommodations data:', data);
+      return data as HotelStay[];
     },
     enabled: !!tripId,
   });
 
+  const refreshEvents = async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Set up real-time subscription for accommodation changes
+  useEffect(() => {
+    if (!tripId) return;
+    
+    const channel = supabase
+      .channel('accommodation-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodations',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        () => {
+          refreshEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [tripId, queryClient]);
+
   const updateEvent = useMutation({
-    mutationFn: async (event: Partial<TimelineAccommodation> & { stay_id: string }) => {
-      const { data, error } = await supabase
+    mutationFn: async (data: any) => {
+      if (!data.id) throw new Error('No event ID provided');
+      
+      const { error } = await supabase
         .from('accommodations')
-        .update(event)
-        .eq('stay_id', event.stay_id)
-        .select()
-        .single();
+        .update({
+          title: data.title,
+          description: data.description,
+          image_url: data.image_url,
+          hotel: data.hotel,
+          hotel_details: data.hotel_details,
+          hotel_url: data.hotel_url,
+          hotel_checkin_date: data.hotel_checkin_date,
+          hotel_checkout_date: data.hotel_checkout_date,
+        })
+        .eq('stay_id', data.id);
 
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      toast.success('Event updated successfully');
+      toast.success('Stay updated successfully');
       queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
     },
     onError: (error) => {
       console.error('Error:', error);
-      toast.error('Failed to update event');
+      toast.error('Failed to update stay');
     },
   });
 
   const deleteEvent = useMutation({
-    mutationFn: async (eventId: string) => {
-      // First delete all accommodation_days
-      const { error: daysError } = await supabase
-        .from('accommodations_days')
-        .delete()
-        .eq('stay_id', eventId);
-
-      if (daysError) throw daysError;
-
-      // Then delete the accommodation
-      const { error } = await supabase
-        .from('accommodations')
-        .delete()
-        .eq('stay_id', eventId);
-
-      if (error) throw error;
+    mutationFn: async () => {
+      toast.error('Accommodation functionality has been removed');
+      throw new Error('Accommodation functionality has been removed');
     },
     onSuccess: () => {
       toast.success('Event deleted successfully');
@@ -124,8 +114,8 @@ export const useTimelineEvents = (tripId: string | undefined) => {
   return {
     events,
     isLoading,
-    updateEvent,
-    deleteEvent,
     refreshEvents,
+    updateEvent,
+    deleteEvent
   };
-};
+}

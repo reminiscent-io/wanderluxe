@@ -1,9 +1,12 @@
-
 import React from 'react';
 import ImageSection from "./ImageSection";
 import TimingSection from "./TimingSection";
 import DestinationInput from "./DestinationInput";
 import FormActions from "./FormActions";
+import { supabase } from '@/integrations/supabase/client';
+import { getDaysBetweenDates } from '../../../utils/dateUtils';
+import { createTripDays } from '../../../services/tripDaysService';
+
 
 interface CreateTripFormProps {
   destination: string;
@@ -32,8 +35,42 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   onSubmit,
   onCancel
 }) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Insert the trip into the database
+      const { data: trip, error } = await supabase
+        .from('trips')
+        .insert([{
+          destination,
+          arrival_date: startDate,
+          departure_date: endDate,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+        
+      if (trip) {
+        // Generate an array of dates between start and end dates (inclusive)
+        const days = getDaysBetweenDates(startDate, endDate);
+        
+        // Create trip days in the database for each date
+        await createTripDays(trip.id, days);
+        
+        // Call the parent's onSubmit callback
+        onSubmit(e);
+      }
+    } catch (error) {
+      console.error('Error creating trip:', error);
+    }
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <DestinationInput
         destination={destination}
         setDestination={setDestination}

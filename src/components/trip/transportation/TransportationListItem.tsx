@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tables } from '@/integrations/supabase/types';
 import { Car, Plane, Train, Bus, Ship } from 'lucide-react';
@@ -34,15 +33,12 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   };
 
   const formatDateTime = (date: string, time?: string | null) => {
-    const formattedDate = format(new Date(date), 'MM/dd/yy');
     if (time) {
-      const [hours, minutes] = time.split(':');
-      const timeDate = new Date();
-      timeDate.setHours(parseInt(hours), parseInt(minutes));
-      const formattedTime = format(timeDate, 'h:mm a').toLowerCase();
-      return `${formattedDate} ${formattedTime}`;
+      // Combine date and time into an ISO string to construct a proper Date object
+      const dateTime = new Date(`${date}T${time}`);
+      return format(dateTime, 'MM/dd/yy h:mm a').toLowerCase();
     }
-    return formattedDate;
+    return format(new Date(date), 'MM/dd/yy');
   };
 
   return (

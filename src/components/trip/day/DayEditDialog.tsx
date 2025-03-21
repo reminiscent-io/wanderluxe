@@ -40,11 +40,19 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Create update data with current title
       const updateData: { title: string; image_url?: string } = { title };
+      
+      // Only include image_url if an image was selected
       if (selectedImage) {
         updateData.image_url = selectedImage;
+        console.log('Selected image to save:', selectedImage);
       }
+      
+      // Save the data
       await onSave(updateData);
+      
+      // Close dialog after successful save
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving day:', error);
@@ -80,9 +88,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
           {/* Image Generation Section */}
           <div className="space-y-1">
-            <Label className="text-sm font-medium text-gray-700">
-              Generate Image
-            </Label>
             <ImageGenerationSection
               onImageSelect={setSelectedImage}
               selectedImage={selectedImage}
