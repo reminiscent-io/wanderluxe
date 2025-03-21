@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
       <div className="flex justify-between items-start">
         <div className="flex-1 mr-4">
           <h3 className="font-semibold text-lg text-gray-900">{transportation.type || 'Transportation'}</h3>
-
+          
           <div className="mt-2 text-sm text-gray-700">
             {transportation.from_location && transportation.to_location && (
               <p className="mb-1">
@@ -37,7 +38,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
                 {transportation.from_location} to {transportation.to_location}
               </p>
             )}
-
+            
             {transportation.departure_date && (
               <p className="mb-1">
                 <span className="font-medium">Departure: </span>
@@ -45,7 +46,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
                 {transportation.departure_time && ` at ${transportation.departure_time}`}
               </p>
             )}
-
+            
             {transportation.arrival_date && (
               <p className="mb-1">
                 <span className="font-medium">Arrival: </span>
@@ -53,28 +54,28 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
                 {transportation.arrival_time && ` at ${transportation.arrival_time}`}
               </p>
             )}
-
+            
             {transportation.company && (
               <p className="mb-1">
                 <span className="font-medium">Company: </span>
                 {transportation.company}
               </p>
             )}
-
+            
             {transportation.reservation_number && (
               <p className="mb-1">
                 <span className="font-medium">Reservation: </span>
                 {transportation.reservation_number}
               </p>
             )}
-
+            
             {transportation.cost && (
               <p className="mb-1">
                 <span className="font-medium">Cost: </span>
                 {transportation.cost} {transportation.currency || ''}
               </p>
             )}
-
+            
             {transportation.notes && (
               <p className="mb-1">
                 <span className="font-medium">Notes: </span>
@@ -82,7 +83,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
               </p>
             )}
           </div>
-
+          
           {transportation.booking_link && (
             <a 
               href={transportation.booking_link}
@@ -94,7 +95,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
             </a>
           )}
         </div>
-
+        
         <div className="flex space-x-2">
           <Button 
             variant="ghost" 
@@ -115,7 +116,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
           </Button>
         </div>
       </div>
-
+      
       {transportation.departure_date && transportation.arrival_date && (
         <div className="flex mt-3 space-x-2">
           <div className="flex-1 bg-blue-50 text-blue-700 text-xs rounded p-2">
