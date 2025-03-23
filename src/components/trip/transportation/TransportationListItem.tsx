@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,37 +15,68 @@ interface TransportationListItemProps {
   onDelete: () => void;
 }
 
+const formatDate = (dateString: string) => {
+  try {
+    return format(new Date(dateString), 'MMM d, yyyy');
+  } catch (error) {
+    return dateString;
+  }
+};
+
+const formatCost = (cost: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(cost);
+};
+
+const getTransportationType = (type: string | null) => {
+  if (!type) return 'Unknown';
+  
+  // Convert snake_case to Title Case
+  return type.split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const TransportationListItem: React.FC<TransportationListItemProps> = ({
   transportation,
   onEdit,
   onDelete
 }) => {
-  const getTransportationType = (type: string | null) => {
-    if (!type) return 'Transportation';
-
-    // Convert snake_case to Title Case
-    return type
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  const formatDate = (date: string | null) => {
-    if (!date) return '';
-    try {
-      return format(new Date(date), 'MMM d, yyyy');
-    } catch (error) {
-      return date;
-    }
-  };
-
-  const formatCost = (cost: number | null) => {
-    if (cost === null) return '';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: transportation.currency || 'USD'
-    }).format(cost);
-  };
+  // Safety check - if transportation is incomplete, render a simpler card
+  if (!transportation || !transportation.type || !transportation.departure_location || !transportation.arrival_location) {
+    return (
+      <Card className="p-4 rounded-lg shadow-sm">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-lg font-medium">Transportation Details Incomplete</h3>
+            <p className="text-sm text-gray-500">
+              {transportation?.start_date ? formatDate(transportation.start_date) : 'Date missing'}
+            </p>
+          </div>
+          <div className="flex space-x-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={onEdit}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-red-500"
+              onClick={onDelete}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4 rounded-lg shadow-sm">
@@ -60,7 +92,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
               </Badge>
             </div>
             <p className="text-sm text-gray-500">
-              {formatDate(transportation.start_date)}
+              {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
               {transportation.start_time ? ` at ${transportation.start_time}` : ''}
             </p>
             {transportation.provider && (
@@ -85,7 +117,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+              className="h-8 w-8 text-red-500"
               onClick={onDelete}
             >
               <Trash className="h-4 w-4" />
