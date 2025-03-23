@@ -65,7 +65,7 @@ const DayCard: React.FC<DayCardProps> = ({
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [newActivity, setNewActivity] = useState<ActivityFormData>(initialActivity);
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>(initialActivity);
-  
+
   const queryClient = useQueryClient();
 
   // Update imageUrlState when originalImageUrl changes
@@ -300,7 +300,9 @@ const DayCard: React.FC<DayCardProps> = ({
             />
 
             <div className="relative z-10 w-full h-full p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left column: Hotel + Transportation */}
               <div className="space-y-4 order-1">
+                {/* Hotel Stay */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Hotel Stay</h3>
                   <div className="space-y-2">
@@ -342,6 +344,8 @@ const DayCard: React.FC<DayCardProps> = ({
                     </Button>
                   </div>
                 </div>
+
+                {/* Flights and Transportation */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Flights and Transportation</h3>
                   {transportations.map((transport, idx) => (
@@ -353,7 +357,9 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
 
+              {/* Right column: Activities + Dining */}
               <div className="space-y-4 order-2">
+                {/* Activities */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <div className="space-y-2">
@@ -391,11 +397,15 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
 
-                <DiningList 
-                  reservations={reservations || []} 
-                  formatTime={formatTime} 
-                  dayId={id} 
-                />
+                {/* Dining (Reservations) */}
+                <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">Dining</h3>
+                  <DiningList 
+                    reservations={reservations || []} 
+                    formatTime={formatTime} 
+                    dayId={id} 
+                  />
+                </div>
               </div>
             </div>
           </div>

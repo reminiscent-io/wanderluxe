@@ -52,7 +52,6 @@ const DiningList: React.FC<DiningListProps> = ({
         order_index: reservations.length,
         reservation_time: data.reservation_time || null
       };
-      console.log("ProcessedData:", processedData);
 
       if (editingReservation) {
         const { error } = await supabase
@@ -91,7 +90,6 @@ const DiningList: React.FC<DiningListProps> = ({
         .eq('id', deletingReservation);
 
       if (error) throw error;
-
       toast.success('Reservation deleted successfully');
       setDeletingReservation(null);
     } catch (error) {
@@ -107,19 +105,7 @@ const DiningList: React.FC<DiningListProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h4 className="text-sm font-medium text-earth-500">Dining</h4>
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          variant="outline"
-          size="sm"
-          className="text-earth-500"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Reservation
-        </Button>
-      </div>
-
+      {/* List of Reservations */}
       <div className="space-y-3">
         {[...reservations]
           .sort((a, b) => {
@@ -128,16 +114,28 @@ const DiningList: React.FC<DiningListProps> = ({
             return timeA.localeCompare(timeB);
           })
           .map((reservation) => (
-          <RestaurantCard
-            key={reservation.id}
-            reservation={reservation}
-            formatTime={formatTime}
-            onEdit={handleEdit}
-            onDelete={() => setDeletingReservation(reservation.id)}
-          />
+            <RestaurantCard
+              key={reservation.id}
+              reservation={reservation}
+              formatTime={formatTime}
+              onEdit={handleEdit}
+              onDelete={() => setDeletingReservation(reservation.id)}
+            />
         ))}
       </div>
 
+      {/* Add Reservation Button (mirroring Add Hotel Stay) */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsDialogOpen(true)}
+        className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add Reservation
+      </Button>
+
+      {/* Dialog for Add/Edit Reservation */}
       <RestaurantReservationDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -148,6 +146,7 @@ const DiningList: React.FC<DiningListProps> = ({
         tripId={tripId} // Pass tripId directly
       />
 
+      {/* Dialog for Delete Confirmation */}
       <DeleteReservationDialog
         isOpen={!!deletingReservation}
         onOpenChange={() => setDeletingReservation(null)}
