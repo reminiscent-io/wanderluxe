@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { ActivityFormData } from '@/types/trip';
 import { formatTimeForDisplay } from '@/utils/dateUtils';
 import { handleTimeInput } from '@/utils/inputHandlers';
