@@ -1,6 +1,7 @@
 
 import React from 'react';
 import TransportationListItem from './TransportationListItem';
+import { Card } from '@/components/ui/card';
 
 interface TransportationListProps {
   transportations: any[]; // Replace with your transportation type
@@ -13,7 +14,7 @@ const TransportationList: React.FC<TransportationListProps> = ({
   onEdit,
   onDelete
 }) => {
-  if (transportations.length === 0) {
+  if (!transportations || transportations.length === 0) {
     return (
       <div className="text-center py-4 text-gray-500">
         No transportation added yet.
@@ -24,14 +25,18 @@ const TransportationList: React.FC<TransportationListProps> = ({
   return (
     <div className="space-y-3 p-4">
       {transportations.map((transportation) => (
-        transportation ? (
+        transportation && transportation.id ? (
           <TransportationListItem 
-            key={transportation.id || Math.random().toString()} 
+            key={transportation.id} 
             transportation={transportation}
-            onEdit={onEdit}
-            onDelete={onDelete}
+            onEdit={() => onEdit(transportation.id)}
+            onDelete={() => onDelete(transportation.id)}
           />
-        ) : null
+        ) : (
+          <Card key={Math.random().toString()} className="p-4 bg-white">
+            <p className="text-gray-500">Transportation data is incomplete.</p>
+          </Card>
+        )
       ))}
     </div>
   );

@@ -37,7 +37,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
       <div className="flex justify-between items-start">
         <div className="flex-1 mr-4">
           <h3 className="font-semibold text-lg text-gray-900">
-            {transportation.type || 'Transportation'}
+            {transportation?.type || 'Transportation'}
           </h3>
           
           <div className="mt-2 text-sm text-gray-700">

@@ -25,7 +25,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<TransportationEvent | undefined>();
 
-  const { data: transportationEvents, refetch } = useQuery({
+  const { data: transportationEvents, isLoading, refetch } = useQuery({
     queryKey: ['transportation-events', tripId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -34,9 +34,14 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         .eq('trip_id', tripId)
         .order('start_date', { ascending: true });
 
-      if (error) throw error;
-      return data as TransportationEvent[];
-    }
+      if (error) {
+        console.error("Error fetching transportation data:", error);
+        throw error;
+      }
+      console.log("Fetched transportation data:", data);
+      return data || [];
+    },
+    enabled: !!tripId
   });
 
   const handleEventClick = (event: TransportationEvent) => {
@@ -67,13 +72,19 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
       {isExpanded && (
         <div className="p-6 pt-0 space-y-6">
           <div className="space-y-4">
-            {transportationEvents?.map((event) => (
-              <TransportationListItem
-                key={event.id}
-                event={event}
-                onClick={handleEventClick}
-              />
-            ))}
+            {isLoading ? (
+              <div className="text-center py-4 text-gray-500">
+                Loading transportation data...
+              </div>
+            ) : (
+              transportationEvents?.map((event) => (
+                <TransportationListItem
+                  key={event.id}
+                  event={event}
+                  onClick={handleEventClick}
+                />
+              ))
+            )}
           </div>
 
           <Button
