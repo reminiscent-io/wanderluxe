@@ -382,7 +382,10 @@ const DayCard: React.FC<DayCardProps> = ({
                         <div>
                           <h4 className="font-medium text-gray-700">{activity.title}</h4>
                           {activity.start_time && (
-                            <p className="text-sm text-gray-500">{formatTime(activity.start_time)}</p>
+                            <p className="text-sm text-gray-500">
+                              {formatTime(activity.start_time)}
+                              {activity.end_time && ` - ${formatTime(activity.end_time)}`}
+                            </p>
                           )}
                         </div>
                       </div>
