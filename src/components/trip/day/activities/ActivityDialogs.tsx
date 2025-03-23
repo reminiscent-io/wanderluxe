@@ -80,7 +80,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         activity={activityEdit}
         onActivityChange={setActivityEdit}
         onSubmit={() => editingActivity && onEditActivity(editingActivity)}
-        onDelete={() => editingActivity && onDeleteActivity(editingActivity)} // Added onDelete prop
+        onDelete={onDeleteActivity} // Pass the function directly
         eventId={eventId}
       />
     </>

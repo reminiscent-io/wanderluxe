@@ -187,7 +187,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form id="activity-form" onSubmit={handleSubmit} className="space-y-6">
       {/* Title Field */}
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700">

@@ -57,12 +57,13 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
           eventId={eventId}
         />
         <DialogFooter className="flex justify-between items-center mt-4 pt-2 border-t">
-          <div className="flex w-full justify-between">
+          <div className="flex w-full justify-between items-center">
             <button
               type="button"
               onClick={handleDelete}
               className="flex items-center justify-center size-9 text-red-600 hover:text-white bg-transparent border border-red-600 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
               title="Delete activity"
+              aria-label="Delete activity"
             >
               <Trash className="w-4 h-4" />
             </button>
