@@ -1,12 +1,6 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from "@/components/ui/dialog";
-import ActivityForm from '../ActivityForm';
+import AddActivityDialog from './activities/AddActivityDialog';
+import EditActivityDialog from './activities/EditActivityDialog';
 import { ActivityFormData } from '@/types/trip';
 
 interface ActivityDialogsProps {
@@ -36,78 +30,30 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
   onEditActivity,
   eventId
 }) => {
-  const initialActivity: ActivityFormData = { 
-    title: '', 
-    description: '', 
-    start_time: '', 
-    end_time: '', 
-    cost: '', 
-    currency: 'USD' 
-  };
-
-  const handleAddClose = () => {
-    setIsAddingActivity(false);
-    // Reset form data
-    setNewActivity(initialActivity);
-  };
-
-  const handleEditClose = () => {
+  // Helper function to handle the dialog closing
+  const handleEditActivityDialogClose = () => {
     setEditingActivity(null);
-    // Reset form data
-    setActivityEdit(initialActivity);
   };
 
   return (
     <>
-      {/* Add Activity Dialog */}
-      <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Activity</DialogTitle>
-            <DialogDescription>
-              Add a new activity to your trip day
-            </DialogDescription>
-          </DialogHeader>
-          <ActivityForm
-            formData={newActivity}
-            onChange={setNewActivity}
-            onSubmit={async () => {
-              await onAddActivity(newActivity);
-              handleAddClose();
-            }}
-            onCancel={handleAddClose}
-            submitLabel="Add Activity"
-          />
-        </DialogContent>
-      </Dialog>
+      <AddActivityDialog
+        isOpen={isAddingActivity}
+        onOpenChange={setIsAddingActivity}
+        activity={newActivity}
+        onActivityChange={setNewActivity}
+        onSubmit={() => onAddActivity(newActivity)}
+        eventId={eventId}
+      />
 
-      {/* Edit Activity Dialog */}
-      <Dialog 
-        open={!!editingActivity} 
-        onOpenChange={(open) => {
-          if (!open) handleEditClose();
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Activity</DialogTitle>
-            <DialogDescription>
-              Modify your activity details
-            </DialogDescription>
-          </DialogHeader>
-          <ActivityForm
-            formData={activityEdit}
-            onChange={setActivityEdit}
-            onSubmit={async () => {
-              if (editingActivity) {
-                await onEditActivity(editingActivity);
-              }
-            }}
-            onCancel={handleEditClose}
-            submitLabel="Save Changes"
-          />
-        </DialogContent>
-      </Dialog>
+      <EditActivityDialog
+        activityId={editingActivity}
+        onOpenChange={handleEditActivityDialogClose}
+        activity={activityEdit}
+        onActivityChange={setActivityEdit}
+        onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+        eventId={eventId}
+      />
     </>
   );
 };

@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import ActivityForm from '../../activity/ActivityForm';
+import ActivityForm from '../../ActivityForm';
 import RequiredLabel from '@/components/ui/RequiredLabel';
 
 interface AddActivityDialogProps {

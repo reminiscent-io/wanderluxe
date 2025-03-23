@@ -382,7 +382,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         <button
           type="submit"
           className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border-2 border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50"
-          disabled={isSubmitting || !formData.title.trim()}
+          disabled={isSubmitting || !activity.title.trim()}
         >
           {isSubmitting ? 'Saving...' : submitLabel}
         </button>
