@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
 import { DayActivity, HotelStay, ActivityFormData } from '@/types/trip';
 import DayImage from './DayImage';
-import DayCardContent from './DayCardContent';
 import DayEditDialog from './DayEditDialog';
 import { toast } from 'sonner';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
