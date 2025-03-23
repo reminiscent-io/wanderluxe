@@ -5,7 +5,7 @@ import DestinationInput from "./DestinationInput";
 import FormActions from "./FormActions";
 import { supabase } from '@/integrations/supabase/client';
 import { getDaysBetweenDates } from '../../../utils/dateUtils';
-import { createTripDays } from '../../../services/tripDaysService';
+import { createTripDays } from '@/services/tripDaysService';
 
 
 interface CreateTripFormProps {
