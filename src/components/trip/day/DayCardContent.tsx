@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import ActivityDialogs from './ActivityDialogs';
+import ActivityDialogs from './activities/ActivityDialogs';
 import { DayActivity, ActivityFormData } from '@/types/trip';
 import ActivitiesList from './activities/ActivitiesList';
 import { toast } from 'sonner';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 interface DayCardContentProps {
   index: number;
@@ -37,6 +38,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     cost: '',
     currency: 'USD'
   });
+  const supabase = useSupabaseClient();
 
   // Sort activities by start_time if present; else by created_at
   const sortedActivities = useMemo(() => {
@@ -64,6 +66,24 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
     }
     console.log("DayCardContent: Editing activity with id", activity.id);
     onEditActivity(activity);
+  };
+
+  // Handler for deleting an activity
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('day_activities')
+        .delete()
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      // Show success message and update activities list (parent component should handle this via requery)
+      toast.success('Activity deleted successfully');
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error('Failed to delete activity');
+    }
   };
 
   return (
@@ -95,6 +115,7 @@ const DayCardContent: React.FC<DayCardContentProps> = ({
         editingActivity={editingActivity}
         setEditingActivity={setEditingActivity}
         onEditActivity={onEditActivity}
+        onDeleteActivity={handleDeleteActivity}
       />
     </div>
   );
