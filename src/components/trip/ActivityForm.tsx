@@ -2,7 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ActivityFormData } from '@/types/trip';
 import { formatTimeForDisplay } from '@/utils/dateUtils';
-import { handleTimeInput } from '@/utils/inputHandlers';
+
+// Define handleTimeInput function directly since the module is missing
+const handleTimeInput = (value: string): string | null => {
+  if (!value) return null;
+
+  // Remove any non-digit or non-colon characters
+  const cleanValue = value.replace(/[^\d:]/g, '');
+
+  // Simple validation for HH:MM format
+  const parts = cleanValue.split(':');
+  if (parts.length === 2) {
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+
+    if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+  }
+
+  // Return the cleaned input if it doesn't match the format
+  return cleanValue;
+};
 
 interface ActivityFormProps {
   activity: ActivityFormData;
