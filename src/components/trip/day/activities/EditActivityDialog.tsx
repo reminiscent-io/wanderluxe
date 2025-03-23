@@ -7,7 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import ActivityForm from '../../ActivityForm';
-import { TrashIcon } from "@radix-ui/react-icons";
+import { Trash } from "lucide-react";
 import { ActivityFormData } from '@/types/trip';
 
 interface EditActivityDialogProps {
@@ -63,7 +63,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
             className="flex items-center px-3 py-1.5 text-sm text-red-600 hover:text-white bg-transparent border border-red-600 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
             title="Delete activity"
           >
-            <TrashIcon className="w-4 h-4 mr-1" />
+            <Trash className="w-4 h-4 mr-1" />
             Delete
           </button>
           <div></div> {/* Empty div to maintain space for flex-between */}
