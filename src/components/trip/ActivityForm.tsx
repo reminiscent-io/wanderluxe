@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
+import TrashIcon from './TrashIcon'; // Assumed component or image import
 
 interface ActivityFormProps {
   activity: ActivityFormData;             // Make sure this is always defined
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (activity: ActivityFormData) => void;
   onCancel: () => void;
+  onDelete: () => void; // Added onDelete handler
   submitLabel: string;
   eventId: string;
 }
@@ -74,6 +76,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   onActivityChange,
   onSubmit,
   onCancel,
+  onDelete, // Use onDelete handler
   submitLabel,
   eventId
 }) => {
@@ -383,7 +386,14 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* Buttons */}
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-start gap-2"> {/* Changed to justify-start */}
+        <button
+          type="button"
+          onClick={onDelete}  {/* Added onDelete handler */}
+          className="p-2"
+        >
+          <TrashIcon /> {/* Added trash icon */}
+        </button>
         <button
           type="button"
           onClick={onCancel}

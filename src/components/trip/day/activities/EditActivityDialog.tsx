@@ -57,16 +57,32 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
           eventId={eventId}
         />
         <DialogFooter className="flex justify-between items-center mt-4 pt-2 border-t">
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="flex items-center px-3 py-1.5 text-sm text-red-600 hover:text-white bg-transparent border border-red-600 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-            title="Delete activity"
-          >
-            <Trash className="w-4 h-4 mr-1" />
-            Delete
-          </button>
-          <div></div> {/* Empty div to maintain space for flex-between */}
+          <div className="flex w-full justify-between">
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="flex items-center justify-center size-9 text-red-600 hover:text-white bg-transparent border border-red-600 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              title="Delete activity"
+            >
+              <Trash className="w-4 h-4" />
+            </button>
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="activity-form"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
