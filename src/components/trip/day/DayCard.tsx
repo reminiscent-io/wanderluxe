@@ -392,7 +392,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
 
                 <DiningList 
-                  reservations={reservations} 
+                  reservations={reservations || []} 
                   formatTime={formatTime} 
                   dayId={id} 
                 />
