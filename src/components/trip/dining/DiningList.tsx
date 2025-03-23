@@ -6,7 +6,6 @@ import RestaurantCard from './RestaurantCard';
 import DeleteReservationDialog from './DeleteReservationDialog';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 import { useParams } from 'react-router-dom';
 
 interface DiningListProps {
