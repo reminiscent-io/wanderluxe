@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Tables } from '@/integrations/supabase/types';
 import TransportationFormFields from './TransportationFormFields';
+import { toast } from 'sonner';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -20,43 +22,64 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   tripArrivalDate,
   tripDepartureDate
 }) => {
-  const [formData, setFormData] = useState<Partial<TransportationEvent>>({
-    type: 'flight',
+  const defaultData: Partial<TransportationEvent> = {
+    type: '',
+    departure_location: '',
+    arrival_location: '',
+    start_date: tripArrivalDate || '',
+    start_time: '',
     provider: '',
     details: '',
     confirmation_number: '',
-    start_date: initialData?.start_date || tripArrivalDate || null,
-    start_time: initialData?.start_time || '',
-    end_date: initialData?.end_date || tripDepartureDate || null,
-    end_time: initialData?.end_time || '',
-    departure_location: '',
-    arrival_location: '',
-    cost: initialData?.cost ? Number(initialData.cost) : undefined,
-    currency: 'USD',
-    ...initialData
-  });
+    cost: null,
+    currency: 'USD'
+  };
 
-  const formatCost = (value: number | undefined | null) => {
+  const [formData, setFormData] = useState<Partial<TransportationEvent>>(
+    initialData || defaultData
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const formatCost = (value: number | undefined | null): string => {
     if (value === undefined || value === null) return '';
-    return value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return value.toString();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // Clean date and time fields: convert empty strings to null
-    const cleanedData = {
-      ...formData,
-      start_date: formData.start_date === '' ? null : formData.start_date,
-      end_date: formData.end_date === '' ? null : formData.end_date,
-      start_time: formData.start_time === '' ? null : formData.start_time,
-      end_time: formData.end_time === '' ? null : formData.end_time,
-    };
+    // Validate required fields
+    if (!formData.type) {
+      toast.error('Please select a transportation type');
+      setIsSubmitting(false);
+      return;
+    }
 
-    onSubmit(cleanedData);
+    if (!formData.departure_location) {
+      toast.error('Please enter a departure location');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.arrival_location) {
+      toast.error('Please enter an arrival location');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.start_date) {
+      toast.error('Please select a departure date');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.currency) {
+      setFormData({...formData, currency: 'USD'});
+    }
+
+    onSubmit(formData);
+    setIsSubmitting(false);
   };
 
   return (
@@ -67,20 +90,20 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
         formatCost={formatCost}
       />
 
-      <div className="flex justify-end gap-2">
-        <Button 
-          type="button" 
-          variant="outline" 
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
           onClick={onCancel}
-          className="text-gray-600"
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button 
+        <Button
           type="submit"
-          className="bg-earth-500 hover:bg-earth-600 text-white"
+          disabled={isSubmitting}
         >
-          {initialData ? 'Update' : 'Add'}
+          {initialData ? 'Update' : 'Add'} Transportation
         </Button>
       </div>
     </form>

@@ -1,14 +1,17 @@
-
 import React from 'react';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Pencil, Trash } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { Tables } from '@/integrations/supabase/types';
+
+type TransportationEvent = Tables<'transportation_events'>;
 
 interface TransportationListItemProps {
-  transportation: any; // Replace with your transportation type
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  transportation: TransportationEvent;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 const TransportationListItem: React.FC<TransportationListItemProps> = ({
@@ -16,128 +19,80 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   onEdit,
   onDelete
 }) => {
-  // Safe check if transportation data is missing
-  if (!transportation) {
-    return <Card className="p-4 bg-white">Transportation data is missing.</Card>;
-  }
+  const getTransportationType = (type: string | null) => {
+    if (!type) return 'Transportation';
 
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return '';
-    
+    // Convert snake_case to Title Case
+    return type
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const formatDate = (date: string | null) => {
+    if (!date) return '';
     try {
-      return format(parseISO(dateString), 'MMM d, yyyy');
+      return format(new Date(date), 'MMM d, yyyy');
     } catch (error) {
-      console.error("Error formatting date:", dateString, error);
-      return dateString;
+      return date;
     }
   };
 
+  const formatCost = (cost: number | null) => {
+    if (cost === null) return '';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: transportation.currency || 'USD'
+    }).format(cost);
+  };
+
   return (
-    <Card className="p-4 bg-white hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start">
-        <div className="flex-1 mr-4">
-          <h3 className="font-semibold text-lg text-gray-900">
-            {transportation?.type || 'Transportation'}
-          </h3>
-          
-          <div className="mt-2 text-sm text-gray-700">
-            {transportation.from_location && transportation.to_location && (
-              <p className="mb-1">
-                <span className="font-medium">Route: </span>
-                {transportation.from_location} to {transportation.to_location}
-              </p>
+    <Card className="p-4 rounded-lg shadow-sm">
+      <div className="flex flex-col space-y-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-medium">
+                {transportation.departure_location} to {transportation.arrival_location}
+              </h3>
+              <Badge variant="outline" className="capitalize">
+                {getTransportationType(transportation.type)}
+              </Badge>
+            </div>
+            <p className="text-sm text-gray-500">
+              {formatDate(transportation.start_date)}
+              {transportation.start_time ? ` at ${transportation.start_time}` : ''}
+            </p>
+            {transportation.provider && (
+              <p className="text-sm text-gray-500">Provider: {transportation.provider}</p>
             )}
-            
-            {transportation.departure_date && (
-              <p className="mb-1">
-                <span className="font-medium">Departure: </span>
-                {formatDate(transportation.departure_date)}
-                {transportation.departure_time && ` at ${transportation.departure_time}`}
-              </p>
+            {transportation.details && (
+              <p className="text-sm mt-1">{transportation.details}</p>
             )}
-            
-            {transportation.arrival_date && (
-              <p className="mb-1">
-                <span className="font-medium">Arrival: </span>
-                {formatDate(transportation.arrival_date)}
-                {transportation.arrival_time && ` at ${transportation.arrival_time}`}
-              </p>
-            )}
-            
-            {transportation.company && (
-              <p className="mb-1">
-                <span className="font-medium">Company: </span>
-                {transportation.company}
-              </p>
-            )}
-            
-            {transportation.reservation_number && (
-              <p className="mb-1">
-                <span className="font-medium">Reservation: </span>
-                {transportation.reservation_number}
-              </p>
-            )}
-            
-            {transportation.cost && (
-              <p className="mb-1">
-                <span className="font-medium">Cost: </span>
-                {transportation.cost} {transportation.currency || ''}
-              </p>
-            )}
-            
-            {transportation.notes && (
-              <p className="mb-1">
-                <span className="font-medium">Notes: </span>
-                {transportation.notes}
-              </p>
+            {transportation.cost !== null && (
+              <p className="text-sm font-medium mt-1">{formatCost(transportation.cost)}</p>
             )}
           </div>
-          
-          {transportation.booking_link && (
-            <a 
-              href={transportation.booking_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:text-blue-800 inline-block mt-2"
+          <div className="flex space-x-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={onEdit}
             >
-              View booking details
-            </a>
-          )}
-        </div>
-        
-        <div className="flex space-x-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onEdit(transportation.id)}
-            aria-label="Edit transportation"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onDelete(transportation.id)}
-            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-            aria-label="Delete transportation"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+              onClick={onDelete}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
-      
-      {transportation.departure_date && transportation.arrival_date && (
-        <div className="flex mt-3 space-x-2">
-          <div className="flex-1 bg-blue-50 text-blue-700 text-xs rounded p-2">
-            <span className="font-medium">Departure:</span> {formatDate(transportation.departure_date)}
-            {transportation.departure_time && ` at ${transportation.departure_time}`}
-          </div>
-          <div className="flex-1 bg-green-50 text-green-700 text-xs rounded p-2">
-            <span className="font-medium">Arrival:</span> {formatDate(transportation.arrival_date)}
-            {transportation.arrival_time && ` at ${transportation.arrival_time}`}
-          </div>
-        </div>
-      )}
     </Card>
   );
 };

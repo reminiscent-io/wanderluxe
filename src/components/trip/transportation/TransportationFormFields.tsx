@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
+import { format } from 'date-fns';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -24,163 +25,139 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   setFormData,
   formatCost
 }) => {
-  const handleCostChange = (value: string) => {
-    // Remove non-numeric characters except for decimal point
-    const numericValue = value.replace(/[^\d.]/g, '');
-    // Parse to float or null if empty
-    const parsedValue = numericValue ? parseFloat(numericValue) : null;
-    setFormData({ ...formData, cost: parsedValue });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <RequiredLabel>Type</RequiredLabel>
-          <Select
-            value={formData.type || ''}
-            onValueChange={(value: TransportationEvent['type']) => setFormData({ ...formData, type: value })}
-          >
-            <SelectTrigger className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500">
-              <SelectValue placeholder="Select transportation type" />
-            </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg"> {/* Added styling */}
-              <SelectItem value="flight" className="cursor-pointer hover:bg-gray-100">Flight</SelectItem> {/* Added styling */}
-              <SelectItem value="train" className="cursor-pointer hover:bg-gray-100">Train</SelectItem> {/* Added styling */}
-              <SelectItem value="car_service" className="cursor-pointer hover:bg-gray-100">Car Service</SelectItem> {/* Added styling */}
-              <SelectItem value="rental_car" className="cursor-pointer hover:bg-gray-100">Rental Car</SelectItem> {/* Added styling */}
-              <SelectItem value="shuttle" className="cursor-pointer hover:bg-gray-100">Shuttle</SelectItem> {/* Added styling */}
-              <SelectItem value="ferry" className="cursor-pointer hover:bg-gray-100">Ferry</SelectItem> {/* Added styling */}
-              <SelectItem value="other" className="cursor-pointer hover:bg-gray-100">Other</SelectItem> {/* Added styling */}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <RequiredLabel>From</RequiredLabel>
-          <Input
-            value={formData.departure_location || ''}
-            onChange={(e) => setFormData({ ...formData, departure_location: e.target.value })}
-            placeholder="City, airport, station, etc."
-            className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-          />
-        </div>
-
-        <div>
-          <RequiredLabel>To</RequiredLabel>
-          <Input
-            value={formData.arrival_location || ''}
-            onChange={(e) => setFormData({ ...formData, arrival_location: e.target.value })}
-            placeholder="City, airport, station, etc."
-            className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <RequiredLabel>Departure Date</RequiredLabel>
-            <Input
-              type="date"
-              value={formData.start_date || ''}
-              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-            />
-          </div>
-          <div>
-            <Label>Departure Time</Label>
-            <Input
-              type="time"
-              value={formData.start_time || ''}
-              onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-              className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Arrival Date</Label>
-            <Input
-              type="date"
-              value={formData.end_date || ''}
-              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-            />
-          </div>
-          <div>
-            <Label>Arrival Time</Label>
-            <Input
-              type="time"
-              value={formData.end_time || ''}
-              onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-              className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-            />
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div>
+        <RequiredLabel>Transportation Type</RequiredLabel>
+        <Select
+          value={formData.type || ''}
+          onValueChange={(value) => setFormData({ ...formData, type: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="flight">Flight</SelectItem>
+            <SelectItem value="train">Train</SelectItem>
+            <SelectItem value="car_service">Car Service</SelectItem>
+            <SelectItem value="shuttle">Shuttle</SelectItem>
+            <SelectItem value="ferry">Ferry</SelectItem>
+            <SelectItem value="rental_car">Rental Car</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <Label>Provider/Carrier</Label>
-          <Input
-            value={formData.provider || ''}
-            onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
-            placeholder="Airline, train company, etc."
-            className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-          />
-        </div>
+      <div>
+        <RequiredLabel>From</RequiredLabel>
+        <Input
+          name="departure_location"
+          value={formData.departure_location || ''}
+          onChange={handleInputChange}
+          placeholder="Departure location"
+        />
+      </div>
 
-        <div>
-          <Label>Confirmation Number</Label>
-          <Input
-            value={formData.confirmation_number || ''}
-            onChange={(e) => setFormData({ ...formData, confirmation_number: e.target.value })}
-            placeholder="Booking reference"
-            className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-          />
-        </div>
+      <div>
+        <RequiredLabel>To</RequiredLabel>
+        <Input
+          name="arrival_location"
+          value={formData.arrival_location || ''}
+          onChange={handleInputChange}
+          placeholder="Arrival location"
+        />
+      </div>
 
-        <div>
-          <Label>Details</Label>
-          <Textarea
-            value={formData.details || ''}
-            onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-            placeholder="Flight number, seat information, etc."
-            className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-          />
-        </div>
+      <div>
+        <RequiredLabel>Departure Date</RequiredLabel>
+        <Input
+          type="date"
+          name="start_date"
+          value={formData.start_date || ''}
+          onChange={handleInputChange}
+        />
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Cost</Label>
-            <Input
-              type="text"
-              value={formData.cost !== undefined ? formData.cost.toString() : ''}
-              onChange={(e) => handleCostChange(e.target.value)}
-              placeholder="0.00"
-              className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500"
-            />
-          </div>
-          <div>
-            <Label>Currency</Label>
-            <Select
-              value={formData.currency || 'USD'}
-              onValueChange={(value: string) => setFormData({ ...formData, currency: value })}
-            >
-              <SelectTrigger className="bg-white focus:ring-2 focus:ring-earth-500 focus:border-earth-500">
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg"> {/* Added styling */}
-                <SelectItem value="USD" className="cursor-pointer hover:bg-gray-100">USD</SelectItem> {/* Added styling */}
-                <SelectItem value="EUR" className="cursor-pointer hover:bg-gray-100">EUR</SelectItem> {/* Added styling */}
-                <SelectItem value="GBP" className="cursor-pointer hover:bg-gray-100">GBP</SelectItem> {/* Added styling */}
-                <SelectItem value="JPY" className="cursor-pointer hover:bg-gray-100">JPY</SelectItem> {/* Added styling */}
-                <SelectItem value="AUD" className="cursor-pointer hover:bg-gray-100">AUD</SelectItem> {/* Added styling */}
-                <SelectItem value="CAD" className="cursor-pointer hover:bg-gray-100">CAD</SelectItem> {/* Added styling */}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+      <div>
+        <Label>Departure Time</Label>
+        <Input
+          type="time"
+          name="start_time"
+          value={formData.start_time || ''}
+          onChange={handleInputChange}
+        />
+      </div>
+
+      <div>
+        <Label>Provider</Label>
+        <Input
+          name="provider"
+          value={formData.provider || ''}
+          onChange={handleInputChange}
+          placeholder="Airline, train company, etc."
+        />
+      </div>
+
+      <div>
+        <Label>Confirmation Number</Label>
+        <Input
+          name="confirmation_number"
+          value={formData.confirmation_number || ''}
+          onChange={handleInputChange}
+          placeholder="Booking reference"
+        />
+      </div>
+
+      <div>
+        <Label>Cost</Label>
+        <Input
+          name="cost"
+          value={formatCost(formData.cost)}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^\d.-]/g, '');
+            const cost = value ? parseFloat(value) : null;
+            setFormData({ ...formData, cost });
+          }}
+          placeholder="0.00"
+        />
+      </div>
+
+      <div>
+        <RequiredLabel>Currency</RequiredLabel>
+        <Select
+          value={formData.currency || 'USD'}
+          onValueChange={(value) => setFormData({ ...formData, currency: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select currency" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="USD">USD</SelectItem>
+            <SelectItem value="EUR">EUR</SelectItem>
+            <SelectItem value="GBP">GBP</SelectItem>
+            <SelectItem value="CAD">CAD</SelectItem>
+            <SelectItem value="AUD">AUD</SelectItem>
+            <SelectItem value="JPY">JPY</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Details</Label>
+        <Textarea
+          name="details"
+          value={formData.details || ''}
+          onChange={handleInputChange}
+          placeholder="Additional details"
+          rows={3}
+        />
       </div>
     </div>
   );
