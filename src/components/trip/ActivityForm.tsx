@@ -89,42 +89,49 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [endMinute, setEndMinute] = useState<number | null>(null);
   const [endAmPm, setEndAmPm] = useState<string | null>(null);
 
-  // On mount or when activity times change, parse them into local state
+  // Parse times from activity prop on first render or when format changes
   useEffect(() => {
-    if (activity?.start_time) {
-      const start = parse24HourString(activity.start_time);
-      setStartHour(start.hour);
-      setStartMinute(start.minute);
-      setStartAmPm(start.ampm);
-    } else {
-      setStartHour(null);
-      setStartMinute(null);
-      setStartAmPm(null);
-    }
+    // Track if this is a "source of truth" update from parent
+    const isParentUpdate = 
+      to24HourString(startHour, startMinute, startAmPm) !== activity.start_time ||
+      to24HourString(endHour, endMinute, endAmPm) !== activity.end_time;
+      
+    // Only update local state if changes came from parent
+    if (isParentUpdate) {
+      if (activity?.start_time) {
+        const start = parse24HourString(activity.start_time);
+        setStartHour(start.hour);
+        setStartMinute(start.minute);
+        setStartAmPm(start.ampm);
+      } else {
+        setStartHour(null);
+        setStartMinute(null);
+        setStartAmPm(null);
+      }
 
-    if (activity?.end_time) {
-      const end = parse24HourString(activity.end_time);
-      setEndHour(end.hour);
-      setEndMinute(end.minute);
-      setEndAmPm(end.ampm);
-    } else {
-      setEndHour(null);
-      setEndMinute(null);
-      setEndAmPm(null);
+      if (activity?.end_time) {
+        const end = parse24HourString(activity.end_time);
+        setEndHour(end.hour);
+        setEndMinute(end.minute);
+        setEndAmPm(end.ampm);
+      } else {
+        setEndHour(null);
+        setEndMinute(null);
+        setEndAmPm(null);
+      }
     }
   }, [activity.start_time, activity.end_time]);
 
-  // Whenever local start-time state changes, update the parent activity object
-  useEffect(() => {
+  // Handle time updates manually through change handlers instead of useEffect
+  const updateStartTime = () => {
     const newStart = to24HourString(startHour, startMinute, startAmPm);
     onActivityChange({ ...activity, start_time: newStart });
-  }, [startHour, startMinute, startAmPm]);
+  };
 
-  // Whenever local end-time state changes, update the parent activity object
-  useEffect(() => {
+  const updateEndTime = () => {
     const newEnd = to24HourString(endHour, endMinute, endAmPm);
     onActivityChange({ ...activity, end_time: newEnd });
-  }, [endHour, endMinute, endAmPm]);
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -226,6 +233,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setStartHour(val);
+                setTimeout(updateStartTime, 0);
               }}
             >
               <option value="">–</option>
@@ -245,6 +253,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setStartMinute(val);
+                setTimeout(updateStartTime, 0);
               }}
             >
               <option value="">–</option>
@@ -262,6 +271,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : e.target.value;
                 setStartAmPm(val);
+                setTimeout(updateStartTime, 0);
               }}
             >
               <option value="">–</option>
@@ -285,6 +295,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setEndHour(val);
+                setTimeout(updateEndTime, 0);
               }}
             >
               <option value="">–</option>
@@ -304,6 +315,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setEndMinute(val);
+                setTimeout(updateEndTime, 0);
               }}
             >
               <option value="">–</option>
@@ -321,6 +333,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : e.target.value;
                 setEndAmPm(val);
+                setTimeout(updateEndTime, 0);
               }}
             >
               <option value="">–</option>
