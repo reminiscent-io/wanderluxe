@@ -65,6 +65,11 @@ const DayCard: React.FC<DayCardProps> = ({
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [newActivity, setNewActivity] = useState<ActivityFormData>(initialActivity);
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>(initialActivity);
+  
+  // Reservation dialog states
+  const [isReservationDialogOpen, setIsReservationDialogOpen] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<string | null>(null);
+  const [reservationData, setReservationData] = useState<any>(null);
 
   const queryClient = useQueryClient();
 
@@ -171,6 +176,16 @@ const DayCard: React.FC<DayCardProps> = ({
         cost: activity.cost ? String(activity.cost) : '',
         currency: activity.currency || '',
       });
+    }
+  };
+  
+  // Open the edit dialog when a reservation item is clicked
+  const handleReservationEdit = (reservation: any) => {
+    if (reservation.id) {
+      setEditingReservation(reservation.id);
+      setReservationData(reservation);
+      setIsReservationDialogOpen(true);
+      console.log("Editing reservation:", reservation);
     }
   };
 
@@ -397,7 +412,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         className="flex justify-between items-center p-3
                                    bg-white/90 rounded-lg shadow-sm 
                                    hover:bg-white/100 cursor-pointer"
-                        onClick={() => {}}
+                        onClick={() => handleReservationEdit(reservation)}
                       >
                         <div>
                           <h4 className="font-medium text-gray-700">{reservation.restaurant_name}</h4>
@@ -410,6 +425,7 @@ const DayCard: React.FC<DayCardProps> = ({
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
+                            handleReservationEdit(reservation);
                           }}
                           className="text-gray-600 hover:bg-gray-200 h-8 w-8"
                         >
@@ -423,7 +439,11 @@ const DayCard: React.FC<DayCardProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {}}
+                      onClick={() => {
+                        setReservationData(null);
+                        setEditingReservation(null);
+                        setIsReservationDialogOpen(true);
+                      }}
                       className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -468,6 +488,46 @@ const DayCard: React.FC<DayCardProps> = ({
         onEditActivity={handleEditActivity}
         eventId={id}
       />
+
+      {/* Reservation dialog */}
+      {isReservationDialogOpen && (
+        <Dialog 
+          open={isReservationDialogOpen} 
+          onOpenChange={(open) => { 
+            if (!open) setIsReservationDialogOpen(false);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingReservation ? 'Edit Reservation' : 'Add Reservation'}
+              </DialogTitle>
+            </DialogHeader>
+            {/* You'll need to create a ReservationForm component similar to ActivityForm */}
+            <div className="p-4">
+              <p>Reservation form would go here.</p>
+              <p className="text-sm text-gray-500 mb-4">This functionality is in development. Currently, you can see reservation details in the console.</p>
+              <div className="flex justify-between mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsReservationDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Handle save reservation logic here
+                    console.log("Save reservation:", reservationData);
+                    setIsReservationDialogOpen(false);
+                  }}
+                >
+                  Save Reservation
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
