@@ -12,7 +12,7 @@ import DayCardContent from './DayCardContent';
 import DayEditDialog from './DayEditDialog';
 import { toast } from 'sonner';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
-import ActivityDialogs from '@/components/trip/day/ActivityDialogs';
+import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
 
 const initialActivity: ActivityFormData = { 
   title: '', 
