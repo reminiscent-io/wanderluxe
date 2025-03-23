@@ -49,7 +49,7 @@ function parse24HourString(time?: string) {
     // Remove any seconds portion and only keep HH:MM
     const timeWithoutSeconds = time.split('.')[0].split(':').slice(0, 2).join(':');
     const [hoursStr, minutesStr] = timeWithoutSeconds.split(':');
-    
+
     const hours24 = parseInt(hoursStr, 10);
     const minutes = parseInt(minutesStr, 10);
 
@@ -95,7 +95,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     const isParentUpdate = 
       to24HourString(startHour, startMinute, startAmPm) !== activity.start_time ||
       to24HourString(endHour, endMinute, endAmPm) !== activity.end_time;
-      
+
     // Only update local state if changes came from parent
     if (isParentUpdate) {
       if (activity?.start_time) {
