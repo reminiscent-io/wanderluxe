@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ActivityFormData } from '@/types/trip';
-import { formatTimeForDisplay } from '@/utils/dateUtils';
+import { formatTimeForDisplay, formatToTime } from '@/utils/dateUtils';
 
 // Define handleTimeInput function directly since the module is missing
 const handleTimeInput = (value: string): string | null => {

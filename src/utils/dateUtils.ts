@@ -29,6 +29,9 @@ export const formatToTime = (timeString?: string | null): string => {
   }
 };
 
+// Alias for formatToTime to maintain compatibility
+export const formatTimeForDisplay = formatToTime;
+
 // Generate an array of date strings between start and end dates (inclusive)
 export const getDaysBetweenDates = (startDateStr: string, endDateStr: string): string[] => {
   try {
