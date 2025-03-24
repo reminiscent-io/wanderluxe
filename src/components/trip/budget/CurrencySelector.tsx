@@ -1,9 +1,8 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CURRENCY_SYMBOLS } from './utils/currencyConverter';
-
-import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';
+import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
 interface CurrencySelectorProps {
   value: string;
