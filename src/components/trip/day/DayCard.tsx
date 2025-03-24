@@ -15,7 +15,8 @@ import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
 import DiningList from '../dining/DiningList';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import TransportationListItem from '@/components/trip/transportation/TransportationListItem';
-import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import { CURRENCIES } from '@/utils/currencyConstants';
+import DayActivityManager from './components/DayActivityManager'; 
 
 const initialActivity: ActivityFormData = { 
   title: '', 
@@ -158,10 +159,9 @@ const DayCard: React.FC<DayCardProps> = ({
     return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
   });
 
-  // Updated transportation filter: Convert start_date to a Date and format as 'yyyy-MM-dd' for comparison.
+  // Filter transportations based on normalized day
   const filteredTransportations = transportations.filter(transport => {
     if (!transport.start_date) return false;
-    // If start_date is a string, parse it; if it's already a Date, use it directly.
     const transportDate = typeof transport.start_date === 'string'
       ? new Date(transport.start_date)
       : transport.start_date;
@@ -174,131 +174,10 @@ const DayCard: React.FC<DayCardProps> = ({
     setIsHotelEditDialogOpen(true);
   };
 
-  const handleActivityEdit = async (activityId: string) => {
-    console.log("Editing activity with id:", activityId);
-    try {
-      if (!activityEdit.title.trim()) {
-        toast.error('Activity title is required');
-        return Promise.reject(new Error('Activity title is required'));
-      }
-
-      const costAsNumber = activityEdit.cost && activityEdit.cost.trim() !== '' 
-        ? parseFloat(activityEdit.cost) 
-        : null;
-
-      const updatedActivity = {
-        title: activityEdit.title.trim(),
-        description: activityEdit.description?.trim() || null,
-        start_time: activityEdit.start_time || null,
-        end_time: activityEdit.end_time || null,
-        cost: costAsNumber,
-        currency: activityEdit.currency || 'USD',
-      };
-
-      const { data, error } = await supabase
-        .from('day_activities')
-        .update(updatedActivity)
-        .eq('id', activityId)
-        .select('*')
-        .single();
-
-      if (error) {
-        console.error('Error updating activity:', error);
-        toast.error('Failed to update activity');
-        throw error;
-      }
-
-      toast.success('Activity updated successfully');
-      queryClient.invalidateQueries(['trip']);
-      setEditingActivity(null);
-      return Promise.resolve();
-    } catch (error) {
-      console.error('Error editing activity:', error);
-      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-    }
-  };
-
-  const handleAddActivity = async (activity: ActivityFormData) => {
-    console.log("Adding activity:", activity);
-    try {
-      if (!activity.title.trim()) {
-        toast.error('Activity title is required');
-        return Promise.reject(new Error('Activity title is required'));
-      }
-
-      const costAsNumber = activity.cost && activity.cost.trim() !== '' 
-        ? parseFloat(activity.cost) 
-        : null;
-
-      const newActivity = {
-        day_id: id,
-        trip_id: tripId,
-        title: activity.title.trim(),
-        description: activity.description?.trim() || null,
-        start_time: activity.start_time || null,
-        end_time: activity.end_time || null,
-        cost: costAsNumber,
-        currency: activity.currency || 'USD',
-        order_index: activities.length,
-      };
-
-      const { data, error } = await supabase
-        .from('day_activities')
-        .insert(newActivity)
-        .select('*')
-        .single();
-
-      if (error) {
-        console.error('Error saving activity:', error);
-        toast.error('Failed to save activity');
-        throw error;
-      }
-
-      toast.success('Activity added successfully');
-      queryClient.invalidateQueries(['trip']);
-      return Promise.resolve();
-    } catch (error) {
-      console.error('Error adding activity:', error);
-      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-    }
-  };
-
-  const handleDeleteActivity = async (activityId: string) => {
-    try {
-      const { error } = await supabase
-        .from('day_activities')
-        .delete()
-        .eq('id', activityId);
-
-      if (error) {
-        console.error('Error deleting activity:', error);
-        toast.error('Failed to delete activity');
-        throw error;
-      }
-
-      toast.success('Activity deleted successfully');
-      queryClient.invalidateQueries(['trip']);
-      setEditingActivity(null);
-    } catch (error) {
-      console.error('Error deleting activity:', error);
-    }
-  };
+  // Import activity management functions from DayActivityManager
+  const { handleAddActivity, handleEditActivity, handleDeleteActivity } = DayActivityManager({ id, tripId, activities }); // :contentReference[oaicite:6]{index=6}&#8203;:contentReference[oaicite:7]{index=7}
 
   const handleActivityEditClick = (activity: DayActivity) => {
-    if (activity.id) {
-      setEditingActivity(activity.id);
-      setActivityEdit({
-        title: activity.title,
-        description: activity.description || '',
-        start_time: activity.start_time || '',
-        end_time: activity.end_time || '',
-        cost: activity.cost ? String(activity.cost) : '',
-        currency: activity.currency || '',
-      });
-    }
-  };
-
-  const handleActivityEditStart = (activity: DayActivity) => {
     if (activity.id) {
       setEditingActivity(activity.id);
       setActivityEdit({
@@ -505,7 +384,7 @@ const DayCard: React.FC<DayCardProps> = ({
         activityEdit={activityEdit}
         setActivityEdit={setActivityEdit}
         onAddActivity={handleAddActivity}
-        onEditActivity={handleActivityEdit}
+        onEditActivity={handleEditActivity}
         onDeleteActivity={handleDeleteActivity}
         eventId={id}
       />

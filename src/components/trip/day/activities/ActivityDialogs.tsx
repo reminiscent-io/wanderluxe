@@ -1,47 +1,20 @@
 import React from 'react';
 import AddActivityDialog from './AddActivityDialog';
 import EditActivityDialog from './EditActivityDialog';
+import { ActivityFormData } from '@/types/trip';
 
 interface ActivityDialogsProps {
   isAddingActivity: boolean;
   setIsAddingActivity: (value: boolean) => void;
   editingActivity: string | null;
   setEditingActivity: (value: string | null) => void;
-  newActivity: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  };
-  setNewActivity: (activity: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  }) => void;
-  activityEdit: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  };
-  setActivityEdit: (activity: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  }) => void;
-  onAddActivity: () => void;
-  onEditActivity: (id: string) => void;
-  onDeleteActivity: (id: string) => void; // Added onDeleteActivity prop
+  newActivity: ActivityFormData;
+  setNewActivity: (activity: ActivityFormData) => void;
+  activityEdit: ActivityFormData;
+  setActivityEdit: (activity: ActivityFormData) => void;
+  onAddActivity: (activity: ActivityFormData) => void;
+  onEditActivity: (id: string, updatedActivity: ActivityFormData) => void;
+  onDeleteActivity: (id: string) => void;
   eventId: string;
 }
 
@@ -56,7 +29,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
   setActivityEdit,
   onAddActivity,
   onEditActivity,
-  onDeleteActivity, // Added onDeleteActivity prop
+  onDeleteActivity,
   eventId,
 }) => {
   // Helper function to handle the dialog closing
@@ -80,8 +53,10 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         onOpenChange={handleEditActivityDialogClose}
         activity={activityEdit}
         onActivityChange={setActivityEdit}
-        onSubmit={() => editingActivity && onEditActivity(editingActivity)}
-        onDelete={onDeleteActivity} // Passed onDeleteActivity prop
+        onSubmit={(updatedActivity: ActivityFormData) =>
+          editingActivity && onEditActivity(editingActivity, updatedActivity)
+        }
+        onDelete={onDeleteActivity}
         eventId={eventId}
       />
     </>
