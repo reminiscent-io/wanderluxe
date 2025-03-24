@@ -334,7 +334,7 @@ const DayCard: React.FC<DayCardProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setIsHotelDialogOpen(true)}
-                      className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
+                      className="w-full bg-earth-600 hover:bg-earth-700 text-gray-800 font-semibold mt-2"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Hotel Stay
