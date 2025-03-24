@@ -2,7 +2,7 @@
 import { Tables } from './tables';
 
 // Export specific table types that are commonly used
-export type TransportationEvent = Tables<"transportation_events">
+export type TransportationEvent = Tables<"transportation">
 export type Trip = Tables<"trips">
 export type TripDay = Tables<"trip_days">
 export type DayActivity = Tables<"day_activities">
