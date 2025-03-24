@@ -45,27 +45,16 @@ export const useAccommodationHandlers = ({ tripId, onAccommodationChange }: { tr
   const handleDelete = async (stayId: string) => {
     setIsLoading(true);
     try {
-      // First delete accommodation days
-      const { error: daysError } = await supabase
-        .from('accommodations_days')
-        .delete()
-        .eq('stay_id', stayId);
-
-      if (daysError) {
-        console.error('Error deleting accommodation days:', daysError);
-        throw daysError;
-      }
-
-      // Then delete the accommodation
-      const { error: accommodationError } = await supabase
-        .from('accommodations')
-        .delete()
-        .eq('stay_id', stayId);
-
-      if (accommodationError) {
-        console.error('Error deleting accommodation:', accommodationError);
-        throw accommodationError;
-      }
+      await deleteAccommodation(stayId);
+      onAccommodationChange();
+      toast.success('Accommodation deleted successfully');
+    } catch (error) {
+      console.error('Error in delete operation:', error);
+      // Don't throw the error, just show toast
+      toast.error('Error occurred while deleting, please try again');
+    } finally {
+      setIsLoading(false);
+    }
 
       onAccommodationChange();
       toast.success('Accommodation deleted');
