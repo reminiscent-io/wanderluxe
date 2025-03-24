@@ -1,10 +1,18 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { deleteAccommodation } from '@/services/accommodation/accommodationService';
+import { Tables } from '@/integrations/supabase/types';
 
-const useAccommodationHandlers = (onAccommodationChange: () => void) => {
+type Accommodation = Tables<'accommodations'>;
+
+interface UseAccommodationHandlersProps {
+  onAccommodationChange: () => void;
+}
+
+const useAccommodationHandlers = ({ onAccommodationChange }: UseAccommodationHandlersProps) => {
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
-  const [editingStay, setEditingStay] = useState(null);
+  const [editingStay, setEditingStay] = useState<(Accommodation & { stay_id: string }) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDelete = async (stayId: string) => {
