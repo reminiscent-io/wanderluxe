@@ -286,6 +286,20 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
+  const handleActivityEditStart = (activity: DayActivity) => {
+    if (activity.id) {
+      setEditingActivity(activity.id);
+      setActivityEdit({
+        title: activity.title,
+        description: activity.description || '',
+        start_time: activity.start_time || '',
+        end_time: activity.end_time || '',
+        cost: activity.cost ? String(activity.cost) : '',
+        currency: activity.currency || '',
+      });
+    }
+  };
+
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
