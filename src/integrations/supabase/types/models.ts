@@ -10,7 +10,7 @@ export type Profile = Tables<"profiles">
 export type ExchangeRate = Tables<"exchange_rates">
 export type Accommodation = Tables<"accommodations">
 export type AccommodationDay = Tables<"accommodations_days">
-export type RestaurantReservation = Tables<"restaurant_reservations">
+export type RestaurantReservation = Tables<"reservations">
 export type Currency = Tables<"currencies">
 
 // Define the Expense type based on the database schema
