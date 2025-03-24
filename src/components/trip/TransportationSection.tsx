@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Plus, Plane } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import TransportationList from './transportation/TransportationList';
 import TransportationDialog from './transportation/TransportationDialog';
-import TransportationListItem from './transportation/TransportationListItem';
-import { Tables } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
-type TransportationEvent = Tables<'transportation_events'>;
+import { TransportationHeader } from './transportation/TransportationHeader';
 
 interface TransportationSectionProps {
   tripId: string;
@@ -23,7 +22,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<TransportationEvent | undefined>();
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   const { data: transportationEvents, isLoading, refetch } = useQuery({
     queryKey: ['transportation-events', tripId],
@@ -38,18 +37,20 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         console.error("Error fetching transportation data:", error);
         throw error;
       }
-      console.log("Fetched transportation data:", data);
       return data || [];
     },
     enabled: !!tripId
   });
 
-  const handleEventClick = (event: TransportationEvent) => {
-    setSelectedEvent(event);
-    setDialogOpen(true);
+  const handleEdit = (id: string) => {
+    const eventToEdit = transportationEvents?.find(event => event.id === id);
+    if (eventToEdit) {
+      setSelectedEvent(eventToEdit);
+      setDialogOpen(true);
+    }
   };
 
-  const handleDeleteTransportation = async (id: string) => {
+  const handleDelete = async (id: string) => {
     const { error } = await supabase
       .from('transportation_events')
       .delete()
@@ -64,49 +65,30 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   };
 
   return (
-    <div className={className}>
-      <Button
-        onClick={() => setIsExpanded(!isExpanded)}
-        variant="ghost"
-        className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Plane className="h-5 w-5" />
-          <span className="text-lg font-medium">Flight and Transportation</span>
-        </div>
-        <Plus className="h-5 w-5" />
-      </Button>
+    <Card className="bg-sand-50 shadow-md">
+      <TransportationHeader
+        isExpanded={isExpanded}
+        onToggle={() => setIsExpanded(!isExpanded)}
+      />
 
       {isExpanded && (
-        <div className="p-6 pt-0 space-y-6">
-          <div className="space-y-4">
-            {isLoading ? (
-              <div className="text-center py-4 text-gray-500">
-                Loading transportation data...
-              </div>
-            ) : (
-              transportationEvents?.map((event) => (
-                <TransportationListItem
-                  key={event.id}
-                  transportation={event}
-                  onEdit={() => handleEventClick(event)}
-                  onDelete={() => handleDeleteTransportation(event.id)}
-                />
-              ))
-            )}
-          </div>
-
+        <div className="p-4">
           <Button
             onClick={() => {
-              setSelectedEvent(undefined);
+              setSelectedEvent(null);
               setDialogOpen(true);
             }}
-            variant="outline"
-            className="w-full"
+            className="w-full bg-earth-500 hover:bg-earth-600 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Transportation
           </Button>
+
+          <TransportationList
+            transportations={transportationEvents || []}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </div>
       )}
 
@@ -118,10 +100,10 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         onSuccess={() => {
           refetch();
           onTransportationChange();
-          setSelectedEvent(undefined);
+          setSelectedEvent(null);
         }}
       />
-    </div>
+    </Card>
   );
 };
 
