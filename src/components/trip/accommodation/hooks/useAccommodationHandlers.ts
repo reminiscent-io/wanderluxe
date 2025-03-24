@@ -51,7 +51,10 @@ export const useAccommodationHandlers = ({ tripId, onAccommodationChange }: { tr
         .delete()
         .eq('stay_id', stayId);
 
-      if (daysError) throw daysError;
+      if (daysError) {
+        console.error('Error deleting accommodation days:', daysError);
+        throw daysError;
+      }
 
       // Then delete the accommodation
       const { error: accommodationError } = await supabase
@@ -59,13 +62,17 @@ export const useAccommodationHandlers = ({ tripId, onAccommodationChange }: { tr
         .delete()
         .eq('stay_id', stayId);
 
-      if (accommodationError) throw accommodationError;
-      
-      toast.success('Accommodation deleted');
+      if (accommodationError) {
+        console.error('Error deleting accommodation:', accommodationError);
+        throw accommodationError;
+      }
+
       onAccommodationChange();
-    } catch (error) {
-      console.error('Error deleting accommodation:', error);
-      toast.error('Failed to delete accommodation');
+      toast.success('Accommodation deleted');
+    } catch (error: any) {
+      console.error('Error in delete operation:', error);
+      toast.error(`Error deleting accommodation: ${error.message || 'Unknown error'}`);
+      throw error;
     } finally {
       setIsLoading(false);
     }
