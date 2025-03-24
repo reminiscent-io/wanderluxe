@@ -136,7 +136,7 @@ const MyTrips = () => {
                 key={trip.trip_id}
                 trip={{
                   ...trip,
-                  cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1501854140801-50d01698950b'
+                  cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                 }}
                 onHide={() => handleHideTrip(trip.trip_id)}
               />
