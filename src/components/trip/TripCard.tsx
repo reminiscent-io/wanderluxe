@@ -59,7 +59,7 @@ const TripCard = ({
       >
         <div className="relative h-48">
           <img 
-            src={trip.cover_image_url} //|| 'https://images.unsplash.com/photo-1501854140801-50d01698950b'
+            src={trip.cover_image_url} || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"
             alt={trip.destination} 
             className="w-full h-full object-cover object-center"
           />
