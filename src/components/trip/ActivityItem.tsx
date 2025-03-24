@@ -2,6 +2,8 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Clock, DollarSign, Pencil } from "lucide-react";
 
+import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+
 interface ActivityItemProps {
   activity: {
     order_index: number;
