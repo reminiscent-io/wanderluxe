@@ -1,4 +1,6 @@
 
+import { Currency } from '@/utils/currencyConstants';
+
 // Define the form types (string-based for form handling)
 export interface ActivityFormData {
   title: string;
@@ -6,7 +8,7 @@ export interface ActivityFormData {
   start_time?: string;
   end_time?: string;
   cost?: string;
-  currency: string;  // Made required
+  currency: Currency;
 }
 
 // Define the database types (number-based for database storage)
@@ -18,20 +20,20 @@ export interface DayActivity {
   description?: string;
   start_time?: string;
   end_time?: string;
-  cost?: number | null;  // Database type - keep as number
-  currency?: string;
+  cost: number | null;
+  currency: Currency | null;
   order_index: number;
   created_at: string;
-  is_paid?: boolean;
+  is_paid: boolean;
 }
 
 export interface TripDay {
   day_id: string;
   trip_id: string;
   date: string;
-  title?: string;
-  description?: string;
-  image_url?: string;
+  title: string | null;
+  description: string | null;
+  image_url: string | null;
   created_at: string;
   activities?: DayActivity[];
 }
@@ -49,25 +51,25 @@ export interface Accommodation {
   stay_id: string;
   trip_id: string;
   title: string;
-  description?: string;
-  image_url?: string;
-  hotel?: string;
-  hotel_details?: string;
-  hotel_url?: string;
+  description: string | null;
+  image_url: string | null;
+  hotel: string | null;
+  hotel_details: string | null;
+  hotel_url: string | null;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost?: number | null;  // Database type - keep as number
-  currency?: string;
-  expense_type?: string;
-  is_paid?: boolean;
-  expense_date?: string;
-  hotel_address?: string;
-  hotel_phone?: string;
-  hotel_place_id?: string;
-  hotel_website?: string;
+  cost: number | null;
+  currency: Currency | null;
+  expense_type: string | null;
+  is_paid: boolean;
+  expense_date: string | null;
+  hotel_address: string | null;
+  hotel_phone: string | null;
+  hotel_place_id: string | null;
+  hotel_website: string | null;
   order_index: number;
   created_at: string;
-  final_accommodation_day?: string;
+  final_accommodation_day: string | null;
   accommodations_days?: AccommodationDay[];
 }
 
@@ -77,34 +79,34 @@ export interface HotelStay {
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  hotel_details?: string;
-  hotel_url?: string;
-  cost?: number | null;  // Database type - keep as number
-  currency?: string;
-  hotel_address?: string;
-  hotel_phone?: string;
-  hotel_place_id?: string;
-  hotel_website?: string;
-  created_at?: string;
+  hotel_details: string | null;
+  hotel_url: string | null;
+  cost: number | null;
+  currency: Currency | null;
+  hotel_address: string | null;
+  hotel_phone: string | null;
+  hotel_place_id: string | null;
+  hotel_website: string | null;
+  created_at: string;
 }
 
 export interface TransportationEvent {
   id: string;
   trip_id: string;
   type: string;
-  provider?: string;
-  details?: string;
-  confirmation_number?: string;
+  provider: string | null;
+  details: string | null;
+  confirmation_number: string | null;
   start_date: string;
-  start_time?: string;
-  end_time?: string;
-  departure_location?: string;
-  arrival_location?: string;
-  cost?: number | null;  // Database type - keep as number
-  currency?: string;
-  is_paid?: boolean;
-  is_arrival?: boolean;
-  is_departure?: boolean;
+  start_time: string | null;
+  end_time: string | null;
+  departure_location: string | null;
+  arrival_location: string | null;
+  cost: number | null;
+  currency: Currency | null;
+  is_paid: boolean;
+  is_arrival: boolean;
+  is_departure: boolean;
   created_at: string;
 }
 
@@ -112,25 +114,19 @@ export interface RestaurantReservation {
   id: string;
   day_id: string;
   restaurant_name: string;
-  reservation_time?: string;
-  number_of_people?: number;
-  notes?: string;
-  confirmation_number?: string;
-  cost?: number | null;  // Database type - keep as number
-  currency?: string;
-  is_paid?: boolean;
-  address?: string;
-  phone_number?: string;
-  place_id?: string;
-  rating?: number;
+  reservation_time: string | null;
+  number_of_people: number | null;
+  notes: string | null;
+  confirmation_number: string | null;
+  cost: number | null;
+  currency: Currency | null;
+  is_paid: boolean;
+  address: string | null;
+  phone_number: string | null;
+  place_id: string | null;
+  rating: number | null;
   created_at: string;
   order_index: number;
-}
-
-export interface Currency {
-  currency: string;
-  currency_name: string;
-  symbol: string;
 }
 
 export interface ExpenseItem {
@@ -138,28 +134,28 @@ export interface ExpenseItem {
   trip_id: string;
   category: string;
   description: string;
-  cost?: number | null;  // Database type - keep as number
-  currency?: string | null;
-  is_paid?: boolean;
-  created_at?: string;
-  date?: string;
-  transportation_id?: string | null;
-  activity_id?: string | null;
-  accommodation_id?: string | null;
-  title?: string;
+  cost: number | null;
+  currency: Currency | null;
+  is_paid: boolean;
+  created_at: string;
+  date: string | null;
+  transportation_id: string | null;
+  activity_id: string | null;
+  accommodation_id: string | null;
+  title: string | null;
 }
 
 export interface AccommodationFormData {
   stay_id?: string;
   hotel: string;
   hotel_details: string;
-  hotel_url: string;  // Required to match the form data requirements
+  hotel_url: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  cost?: string | null;  // Made optional
-  currency?: string;     // Made optional
+  cost?: string | null;
+  currency?: Currency;
   expense_type?: string;
-  is_paid?: boolean;     // Added is_paid field
+  is_paid: boolean;
   expense_date?: string;
   hotel_address?: string;
   hotel_phone?: string;
