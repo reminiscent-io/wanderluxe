@@ -286,6 +286,20 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
+  const handleActivityEditStart = (activity: DayActivity) => {
+    if (activity.id) {
+      setEditingActivity(activity.id);
+      setActivityEdit({
+        title: activity.title,
+        description: activity.description || '',
+        start_time: activity.start_time || '',
+        end_time: activity.end_time || '',
+        cost: activity.cost ? String(activity.cost) : '',
+        currency: activity.currency || '',
+      });
+    }
+  };
+
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
@@ -310,8 +324,8 @@ const DayCard: React.FC<DayCardProps> = ({
       </div>
 
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <CollapsibleContent className="max-h-[600px] overflow-y-auto">
-          <div className="relative w-full h-[600px]">
+        <CollapsibleContent>
+          <div className="relative w-full min-h-[400px]">
             <DayImage
               dayId={id}
               title={title}

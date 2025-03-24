@@ -14,11 +14,11 @@ const DayImage: React.FC<DayImageProps> = ({
   title,
   imageUrl,
   defaultImageUrl,
-  className
+  className,
+  ...props // Added to handle any other props passed to the component
 }) => {
   const displayImageUrl = imageUrl || defaultImageUrl;
-  
-  // For debugging
+
   console.log('DayImage rendering:', {
     dayId,
     title,
@@ -29,20 +29,21 @@ const DayImage: React.FC<DayImageProps> = ({
   });
 
   return (
-    <div className={cn('relative w-full h-full bg-gray-200', className)}>
-      {displayImageUrl && (
-        <img
-          src={displayImageUrl}
-          alt={title || 'Day image'}
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            console.error('Image failed to load:', displayImageUrl);
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-      )}
-      {!displayImageUrl && (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+    <div className={cn('relative w-full bg-gray-200', className)} {...props}> {/* Added ...props to the div */}
+      {displayImageUrl ? (
+        <div className="relative overflow-hidden">
+          <img
+            src={displayImageUrl}
+            alt={title || 'Day image'}
+            className="w-full h-auto"
+            onError={(e) => {
+              console.error('Image failed to load:', displayImageUrl);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      ) : (
+        <div className="flex items-center justify-center text-gray-400 h-[400px]">
           No image available
         </div>
       )}

@@ -1,3 +1,7 @@
+/**
+ * @deprecated This component is deprecated. Use components from the Accommodations folder instead.
+ * This will be removed in a future version.
+ */
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import BasicInfoFields from './event/form/BasicInfoFields';

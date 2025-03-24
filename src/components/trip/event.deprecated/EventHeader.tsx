@@ -1,3 +1,7 @@
+/**
+ * @deprecated This component is deprecated. Use components from the Accommodations folder instead.
+ * This will be removed in a future version.
+ */
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
