@@ -55,7 +55,7 @@ const DiningList: React.FC<DiningListProps> = ({
 
       if (editingReservation) {
         const { error } = await supabase
-          .from('restaurant_reservations')
+          .from('reservations')
           .update(processedData)
           .eq('id', editingReservation);
 
@@ -63,7 +63,7 @@ const DiningList: React.FC<DiningListProps> = ({
         toast.success('Reservation updated successfully');
       } else {
         const { error } = await supabase
-          .from('restaurant_reservations')
+          .from('reservations')
           .insert([processedData]);
 
         if (error) throw error;
@@ -85,7 +85,7 @@ const DiningList: React.FC<DiningListProps> = ({
 
     try {
       const { error } = await supabase
-        .from('restaurant_reservations')
+        .from('reservations')
         .delete()
         .eq('id', deletingReservation);
 
