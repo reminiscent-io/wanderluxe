@@ -24,7 +24,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
-  const { data: transportationEvents, isLoading, refetch } = useQuery({
+  const { data: Transportations, isLoading, refetch } = useQuery({
     queryKey: ['transportation-events', tripId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,7 +43,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   });
 
   const handleEdit = (id: string) => {
-    const eventToEdit = transportationEvents?.find(event => event.id === id);
+    const eventToEdit = Transportations?.find(event => event.id === id);
     if (eventToEdit) {
       setSelectedEvent(eventToEdit);
       setDialogOpen(true);
@@ -86,7 +86,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
           </Button>
 
           <TransportationList
-            transportations={transportationEvents || []}
+            transportations={Transportations || []}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
