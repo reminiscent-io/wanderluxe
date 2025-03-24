@@ -12,5 +12,5 @@ export type {
   AccommodationDay,
   RestaurantReservation,
   Currency,
-  TransportationEvent
+  Transportation
 } from './models';
