@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +19,6 @@ const DayImage: React.FC<DayImageProps> = ({
 }) => {
   const displayImageUrl = imageUrl || defaultImageUrl;
   
-  // For debugging
   console.log('DayImage rendering:', {
     dayId,
     title,
@@ -30,19 +30,19 @@ const DayImage: React.FC<DayImageProps> = ({
 
   return (
     <div className={cn('relative w-full bg-gray-200', className)}>
-      {displayImageUrl && (
-        <div className="aspect-[16/9] relative overflow-hidden">
+      {displayImageUrl ? (
+        <div className="aspect-auto relative overflow-hidden">
           <img
             src={displayImageUrl}
             alt={title || 'Day image'}
-            className="absolute w-full h-full object-contain"
+            className="w-full h-auto object-contain"
             onError={(e) => {
-            console.error('Image failed to load:', displayImageUrl);
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-      )}
-      {!displayImageUrl && (
+              console.error('Image failed to load:', displayImageUrl);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      ) : (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
           No image available
         </div>
