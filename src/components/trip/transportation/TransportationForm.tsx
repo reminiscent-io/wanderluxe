@@ -5,7 +5,7 @@ import TransportationFormFields from './TransportationFormFields';
 import { toast } from 'sonner';
 import { CURRENCIES } from '@/utils/currencyConstants';
 
-type TransportationEvent = Tables<'transportation_events'>;
+type TransportationEvent = Tables<'transportation'>;
 
 interface TransportationFormProps {
   initialData?: Partial<TransportationEvent>;
