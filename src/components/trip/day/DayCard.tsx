@@ -13,8 +13,8 @@ import { toast } from 'sonner';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
 import DiningList from '../dining/DiningList';
-import TransportationDialog from '@/components/transportation/TransportationDialog';
-import TransportationListItem from '@/components/transportation/TransportationListItem';
+import TransportationDialog from '@/components/trip//transportation/TransportationDialog';
+import TransportationListItem from '@/components/trip/transportation/TransportationListItem';
 
 const initialActivity: ActivityFormData = { 
   title: '', 
