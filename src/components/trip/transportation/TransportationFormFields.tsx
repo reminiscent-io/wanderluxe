@@ -57,14 +57,14 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="flight">Flight</SelectItem>
-            <SelectItem value="train">Train</SelectItem>
-            <SelectItem value="car_service">Car Service</SelectItem>
-            <SelectItem value="shuttle">Shuttle</SelectItem>
-            <SelectItem value="ferry">Ferry</SelectItem>
-            <SelectItem value="rental_car">Rental Car</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
+          <SelectContent className="z-50 bg-sand-50">
+            <SelectItem value="flight" className="cursor-pointer hover:bg-earth-100">Flight</SelectItem>
+            <SelectItem value="train" className="cursor-pointer hover:bg-earth-100">Train</SelectItem>
+            <SelectItem value="car_service" className="cursor-pointer hover:bg-earth-100">Car Service</SelectItem>
+            <SelectItem value="shuttle" className="cursor-pointer hover:bg-earth-100">Shuttle</SelectItem>
+            <SelectItem value="ferry" className="cursor-pointer hover:bg-earth-100">Ferry</SelectItem>
+            <SelectItem value="rental_car" className="cursor-pointer hover:bg-earth-100">Rental Car</SelectItem>
+            <SelectItem value="other" className="cursor-pointer hover:bg-earth-100">Other</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -179,12 +179,16 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           value={formData.currency || 'USD'}
           onValueChange={(value) => setFormData({ ...formData, currency: value })}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select currency" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-50 bg-sand-50">
             {CURRENCIES.map((currency) => (
-              <SelectItem key={currency} value={currency}>
+              <SelectItem
+                key={currency}
+                value={currency}
+                className="cursor-pointer hover:bg-earth-100"
+              >
                 {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
               </SelectItem>
             ))}
