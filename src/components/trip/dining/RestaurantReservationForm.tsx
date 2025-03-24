@@ -10,6 +10,7 @@ import RestaurantSearchInput from './RestaurantSearchInput';
 import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
+import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
 // Define your form schema
 const formSchema = z.object({
@@ -280,9 +281,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
                   >
                     <option value="">Select currency</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
+                    {CURRENCIES.map(currency => (
+                      <option key={currency} value={currency}>
+                        {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
+                      </option>
+                    ))}
                   </select>
                 </FormControl>
               </FormItem>
