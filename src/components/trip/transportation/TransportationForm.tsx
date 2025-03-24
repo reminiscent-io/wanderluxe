@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tables } from '@/integrations/supabase/types';
 import TransportationFormFields from './TransportationFormFields';
 import { toast } from 'sonner';
+import { CURRENCIES } from '@/utils/currencyConstants';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
