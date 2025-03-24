@@ -86,7 +86,7 @@ const DayCard: React.FC<DayCardProps> = ({
     queryKey: ['reservations', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('restaurant_reservations')
+        .from('reservations')
         .select('*')
         .eq('day_id', id)
         .order('order_index');
