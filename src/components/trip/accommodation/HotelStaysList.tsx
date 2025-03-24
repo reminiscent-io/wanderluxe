@@ -5,19 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import { formatDateRange } from '@/utils/formatDateRange';
 
 interface HotelStaysListProps {
   hotelStays: HotelStay[];
   onEdit: (stayId: string) => void;
   onDelete: (stayId: string) => void;
-  formatDateRange: (startDate: string, endDate: string) => string;
 }
 
 const HotelStaysList: React.FC<HotelStaysListProps> = ({
   hotelStays,
   onEdit,
-  onDelete,
-  formatDateRange
+  onDelete
 }) => {
   if (hotelStays.length === 0) {
     return (
