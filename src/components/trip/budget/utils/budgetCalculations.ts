@@ -1,5 +1,4 @@
-import { CURRENCY_SYMBOLS } from './currencyConverter';
-import { Currency } from '@/utils/currencyConstants';
+import { Currency, CURRENCY_SYMBOLS} from '@/utils/currencyConstants';
 import { ExpenseItem } from '@/types/trip';
 import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
