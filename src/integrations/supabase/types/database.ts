@@ -358,7 +358,7 @@ export type Database = {
           }
         ]
       }
-      transportation_events: {
+      transportation: {
         Row: {
           id: string
           trip_id: string
@@ -418,14 +418,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "transportation_events_currency_fkey"
+            foreignKeyName: "transportation_currency_fkey"
             columns: ["currency"]
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["currency"]
           },
           {
-            foreignKeyName: "transportation_events_trip_id_fkey"
+            foreignKeyName: "transportation_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
