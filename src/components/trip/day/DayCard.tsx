@@ -272,7 +272,7 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  const handleActivityEdit = (activity: DayActivity) => {
+  const handleActivityEditClick = (activity: DayActivity) => {
     if (activity.id) {
       setEditingActivity(activity.id);
       setActivityEdit({
