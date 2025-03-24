@@ -35,7 +35,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     details: '',
     confirmation_number: '',
     cost: null,
-    currency: 'USD'
+    currency: CURRENCIES[0] // Updated line
   };
 
   const [formData, setFormData] = useState<Partial<TransportationEvent>>(
