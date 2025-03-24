@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,17 +29,14 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   const [editHotelStay, setEditHotelStay] = useState<HotelStay | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Use the main useTripDays hook to get trip dates
   const { days } = useTripDays(tripId);
   const tripDates = {
     arrival_date: days?.[0]?.date || null,
     departure_date: days?.[days?.length - 1]?.date || null
   };
 
-  // Only need delete handler from the original handlers
   const { handleDelete } = useAccommodationHandlers(tripId, onAccommodationChange);
 
-  // Open edit dialog when an edit button is clicked
   const handleEdit = (stayId: string) => {
     const stayToEdit = hotelStays.find(stay => stay.stay_id === stayId);
     if (stayToEdit) {
@@ -47,7 +45,6 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
     }
   };
 
-  // Sort hotel stays by check-in date in ascending order
   const sortedHotelStays = (hotelStays || []).sort((a, b) =>
     new Date(a.hotel_checkin_date).getTime() - new Date(b.hotel_checkin_date).getTime()
   );
@@ -60,16 +57,15 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
       />
 
       {isExpanded && (
-        <>
-          <div className="p-4">
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              variant="outline"
-              className="w-full"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Hotel Stay
-            </Button>
+        <div className="p-4">
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)}
+            variant="outline"
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Hotel Stay
+          </Button>
 
           <HotelStaysList
             hotelStays={sortedHotelStays}
@@ -78,7 +74,6 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             formatDateRange={formatDateRange}
           />
 
-          {/* Dialog for adding a new hotel stay */}
           <AccommodationDialog
             tripId={tripId}
             open={isAddDialogOpen}
@@ -86,7 +81,6 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             onSuccess={onAccommodationChange}
           />
 
-          {/* Dialog for editing an existing hotel stay */}
           <AccommodationDialog
             tripId={tripId}
             open={isEditDialogOpen}
@@ -94,7 +88,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
             initialData={editHotelStay || undefined}
             onSuccess={onAccommodationChange}
           />
-        </>
+        </div>
       )}
     </Card>
   );
