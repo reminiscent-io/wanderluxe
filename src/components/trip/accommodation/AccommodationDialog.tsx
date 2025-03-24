@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { parseCost } from "@/utils/costUtils";
 import { Accommodation } from "@/types/trip";
 import { PlaceResult } from "@/components/places/PlaceSearchInput";
-import { HotelSearchDialog } from "./HotelSearchDialog";
+import PlaceSearchInput from "@/components/places/PlaceSearchInput";
 
 const accommodationSchema = z.object({
   hotel: z.string().min(1, "Hotel name is required"),
@@ -110,10 +110,19 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
                 <FormItem>
                   <FormLabel>Hotel Name*</FormLabel>
                   <FormControl>
-                    <div className="flex gap-2">
-                      <Input {...field} />
-                      <HotelSearchDialog onSelect={handleHotelSelect} />
-                    </div>
+                    <PlaceSearchInput
+                      value={field.value}
+                      onChange={(value, placeDetails) => {
+                        field.onChange(value);
+                        if (placeDetails) {
+                          form.setValue('hotel_address', placeDetails.formatted_address || '');
+                          form.setValue('hotel_phone', placeDetails.formatted_phone_number || '');
+                          form.setValue('hotel_place_id', placeDetails.place_id || '');
+                          form.setValue('hotel_website', placeDetails.website || '');
+                          form.setValue('hotel_url', placeDetails.website || '');
+                        }
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
