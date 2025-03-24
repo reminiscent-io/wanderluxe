@@ -105,8 +105,9 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
         <Button
           type="submit"
           disabled={isSubmitting}
+          className={initialData ? "bg-sand-600 text-white" : ""}
         >
-          {initialData ? 'Update' : 'Add'} Transportation
+          {initialData ? 'Update Transportation' : 'Add Transportation'}
         </Button>
       </div>
     </form>
