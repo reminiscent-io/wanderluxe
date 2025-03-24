@@ -17,7 +17,7 @@ export const TransportationHeader: React.FC<TransportationHeaderProps> = ({
       <Button
         variant="ghost"
         onClick={onToggle}
-        className="w-full flex justify-between items-center p-4 hover:bg-sand-100"
+        className="w-full flex justify-between items-center p-6 hover:bg-sand-100"
       >
         <div className="flex items-center gap-2">
           <Car className="h-5 w-5 text-earth-600" />
