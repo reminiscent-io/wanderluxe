@@ -12,7 +12,8 @@
   }
   /* Tailwind styles for Google Maps autocomplete */
   .pac-container {
-    @apply z-[9999] rounded-md border border-gray-300 shadow-lg mt-1 bg-white;
+    @apply z-[10000] rounded-md border border-gray-300 shadow-lg mt-1 bg-white;
+    pointer-events: auto !important;
   }
   .pac-item {
     @apply p-2 cursor-pointer font-sans;
