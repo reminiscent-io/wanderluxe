@@ -328,7 +328,7 @@ export type Database = {
             foreignKeyName: "expenses_transportation_id_fkey"
             columns: ["transportation_id"]
             isOneToOne: false
-            referencedRelation: "transportation_events"
+            referencedRelation: "transportation"
             referencedColumns: ["id"]
           },
           {
@@ -500,7 +500,7 @@ export type Database = {
           },
         ]
       }
-      transportation_events: {
+      transportation: {
         Row: {
           arrival_location: string | null
           confirmation_number: string | null
@@ -563,14 +563,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "transportation_events_currency_fkey"
+            foreignKeyName: "transportation_currency_fkey"
             columns: ["currency"]
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["currency"]
           },
           {
-            foreignKeyName: "transportation_events_trip_id_fkey"
+            foreignKeyName: "transportation_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
