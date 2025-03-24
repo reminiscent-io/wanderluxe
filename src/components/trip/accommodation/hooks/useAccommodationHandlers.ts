@@ -5,22 +5,24 @@ import { Tables } from '@/integrations/supabase/types';
 
 type Accommodation = Tables<'accommodations'>;
 
-interface UseAccommodationHandlersProps {
-  onAccommodationChange?: () => void;
-}
-
-const useAccommodationHandlers = ({
-  onAccommodationChange = () => {}
-}: UseAccommodationHandlersProps) => {
+const useAccommodationHandlers = (
+  tripId: string,
+  onAccommodationChange?: () => void
+) => {
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<(Accommodation & { stay_id: string }) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Use a default no-op if onAccommodationChange isn’t a function
+  const safeOnAccommodationChange = typeof onAccommodationChange === 'function'
+    ? onAccommodationChange
+    : () => {};
 
   const handleDelete = async (stayId: string) => {
     setIsLoading(true);
     try {
       await deleteAccommodation(stayId);
-      onAccommodationChange();
+      safeOnAccommodationChange();
       toast.success('Accommodation deleted successfully');
     } catch (error) {
       console.error('Error in delete operation:', error);
