@@ -25,7 +25,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   const { data: Transportations, isLoading, refetch } = useQuery({
-    queryKey: ['transportation-events', tripId],
+    queryKey: ['transportation', tripId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('transportation')
