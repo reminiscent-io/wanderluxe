@@ -6,7 +6,7 @@ import { Tables } from '@/integrations/supabase/types';
 // Define table types
 type DayActivity = Tables<'day_activities'>;
 type Accommodation = Tables<'accommodations'>;
-type TransportationEvent = Tables<'transportation_events'>;
+type TransportationEvent = Tables<'transportation'>;
 type RestaurantReservation = Tables<'restaurant_reservations'>;
 type OtherExpense = Tables<'other_expenses'>;
 
@@ -103,7 +103,7 @@ export const useExpenses = (tripId: string) => {
       ] = await Promise.all([
         supabase.from('day_activities').select('*').eq('trip_id', tripId),
         supabase.from('accommodations').select('*').eq('trip_id', tripId),
-        supabase.from('transportation_events').select('*').eq('trip_id', tripId),
+        supabase.from('transportation').select('*').eq('trip_id', tripId),
         supabase.from('restaurant_reservations').select('*').eq('trip_id', tripId),
         supabase.from('other_expenses').select('*').eq('trip_id', tripId),
       ]);
