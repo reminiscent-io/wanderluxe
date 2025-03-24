@@ -6,10 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
 
-type TransportationEvent = Tables<'transportation'>;
+type Transportation = Tables<'transportation'>;
 
 interface TransportationListItemProps {
-  transportation: TransportationEvent;
+  transportation: Transportation;
   onEdit?: () => void;
   onDelete?: () => void;
   onClick?: () => void;
