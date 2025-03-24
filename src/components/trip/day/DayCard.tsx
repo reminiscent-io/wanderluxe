@@ -162,17 +162,47 @@ const DayCard: React.FC<DayCardProps> = ({
     setIsHotelEditDialogOpen(true);
   };
 
-  const handleActivityEdit = (activity: DayActivity) => {
-    if (activity.id) {
-      setEditingActivity(activity.id);
-      setActivityEdit({
-        title: activity.title,
-        description: activity.description || '',
-        start_time: activity.start_time || '',
-        end_time: activity.end_time || '',
-        cost: activity.cost ? String(activity.cost) : '',
-        currency: activity.currency || '',
-      });
+  const handleActivityEdit = async (activityId: string) => {
+    console.log("Editing activity with id:", activityId);
+    try {
+      if (!activityEdit.title.trim()) {
+        toast.error('Activity title is required');
+        return Promise.reject(new Error('Activity title is required'));
+      }
+
+      const costAsNumber = activityEdit.cost && activityEdit.cost.trim() !== '' 
+        ? parseFloat(activityEdit.cost) 
+        : null;
+
+      const updatedActivity = {
+        title: activityEdit.title.trim(),
+        description: activityEdit.description?.trim() || null,
+        start_time: activityEdit.start_time || null,
+        end_time: activityEdit.end_time || null,
+        cost: costAsNumber,
+        currency: activityEdit.currency || 'USD',
+      };
+
+      const { data, error } = await supabase
+        .from('day_activities')
+        .update(updatedActivity)
+        .eq('id', activityId)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error updating activity:', error);
+        toast.error('Failed to update activity');
+        throw error;
+      }
+
+      toast.success('Activity updated successfully');
+      queryClient.invalidateQueries(['trip']);
+      setEditingActivity(null);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error editing activity:', error);
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -221,49 +251,41 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  const handleEditActivity = async (activityId: string) => {
-    console.log("Editing activity with id:", activityId);
+  const handleDeleteActivity = async (activityId: string) => {
     try {
-      if (!activityEdit.title.trim()) {
-        toast.error('Activity title is required');
-        return Promise.reject(new Error('Activity title is required'));
-      }
-
-      const costAsNumber = activityEdit.cost && activityEdit.cost.trim() !== '' 
-        ? parseFloat(activityEdit.cost) 
-        : null;
-
-      const updatedActivity = {
-        title: activityEdit.title.trim(),
-        description: activityEdit.description?.trim() || null,
-        start_time: activityEdit.start_time || null,
-        end_time: activityEdit.end_time || null,
-        cost: costAsNumber,
-        currency: activityEdit.currency || 'USD',
-      };
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('day_activities')
-        .update(updatedActivity)
-        .eq('id', activityId)
-        .select('*')
-        .single();
+        .delete()
+        .eq('id', activityId);
 
       if (error) {
-        console.error('Error updating activity:', error);
-        toast.error('Failed to update activity');
+        console.error('Error deleting activity:', error);
+        toast.error('Failed to delete activity');
         throw error;
       }
 
-      toast.success('Activity updated successfully');
+      toast.success('Activity deleted successfully');
       queryClient.invalidateQueries(['trip']);
       setEditingActivity(null);
-      return Promise.resolve();
     } catch (error) {
-      console.error('Error editing activity:', error);
-      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+      console.error('Error deleting activity:', error);
     }
   };
+
+  const handleActivityEdit = (activity: DayActivity) => {
+    if (activity.id) {
+      setEditingActivity(activity.id);
+      setActivityEdit({
+        title: activity.title,
+        description: activity.description || '',
+        start_time: activity.start_time || '',
+        end_time: activity.end_time || '',
+        cost: activity.cost ? String(activity.cost) : '',
+        currency: activity.currency || '',
+      });
+    }
+  };
+
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
@@ -459,6 +481,7 @@ const DayCard: React.FC<DayCardProps> = ({
         setActivityEdit={setActivityEdit}
         onAddActivity={handleAddActivity}
         onEditActivity={handleEditActivity}
+        onDeleteActivity={handleDeleteActivity}
         eventId={id}
       />
 
