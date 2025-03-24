@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
 import DiningList from '../dining/DiningList';
+import TransportationDialog from '@/components/transportation/TransportationDialog';
+import TransportationListItem from '@/components/transportation/TransportationListItem';
 
 const initialActivity: ActivityFormData = { 
   title: '', 
@@ -66,9 +68,12 @@ const DayCard: React.FC<DayCardProps> = ({
   const [newActivity, setNewActivity] = useState<ActivityFormData>(initialActivity);
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>(initialActivity);
 
+  // Transportation dialog states
+  const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
+  const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
+
   const queryClient = useQueryClient();
 
-  // Update imageUrlState when originalImageUrl changes
   useEffect(() => {
     if (originalImageUrl) {
       setImageUrl(originalImageUrl);
@@ -141,10 +146,8 @@ const DayCard: React.FC<DayCardProps> = ({
     return `${hours}:${minutes}`;
   };
 
-  // Normalize the day date to avoid timezone issues
   const normalizedDay = date.split('T')[0];
 
-  // Filter hotel stays for the current day only once
   const filteredHotelStays = hotelStays.filter(stay => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
     const checkinDate = stay.hotel_checkin_date.split('T')[0];
@@ -153,13 +156,11 @@ const DayCard: React.FC<DayCardProps> = ({
     return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
   });
 
-  // Open the edit dialog when an accommodation card is clicked
   const handleHotelEdit = (stay: HotelStay) => {
     setEditHotelStay(stay);
     setIsHotelEditDialogOpen(true);
   };
 
-  // Open the edit dialog when an activity item is clicked
   const handleActivityEdit = (activity: DayActivity) => {
     if (activity.id) {
       setEditingActivity(activity.id);
@@ -174,7 +175,6 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  // Implement activity add/edit functionality
   const handleAddActivity = async (activity: ActivityFormData) => {
     console.log("Adding activity:", activity);
     try {
@@ -183,7 +183,6 @@ const DayCard: React.FC<DayCardProps> = ({
         return Promise.reject(new Error('Activity title is required'));
       }
 
-      // Convert cost to number if provided, otherwise null
       const costAsNumber = activity.cost && activity.cost.trim() !== '' 
         ? parseFloat(activity.cost) 
         : null;
@@ -197,7 +196,7 @@ const DayCard: React.FC<DayCardProps> = ({
         end_time: activity.end_time || null,
         cost: costAsNumber,
         currency: activity.currency || 'USD',
-        order_index: activities.length, // Add to the end
+        order_index: activities.length,
       };
 
       const { data, error } = await supabase
@@ -229,7 +228,6 @@ const DayCard: React.FC<DayCardProps> = ({
         return Promise.reject(new Error('Activity title is required'));
       }
 
-      // Convert cost to number if provided, otherwise null
       const costAsNumber = activityEdit.cost && activityEdit.cost.trim() !== '' 
         ? parseFloat(activityEdit.cost) 
         : null;
@@ -310,9 +308,7 @@ const DayCard: React.FC<DayCardProps> = ({
                       <div 
                         key={stay.stay_id || stay.id} 
                         onClick={() => handleHotelEdit(stay)}
-                        className="cursor-pointer flex justify-between items-center p-3
-                                   bg-white/90 rounded-lg shadow-sm 
-                                   hover:bg-white/100"
+                        className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
                       >
                         <div>
                           <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
@@ -348,12 +344,35 @@ const DayCard: React.FC<DayCardProps> = ({
                 {/* Flights and Transportation */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Flights and Transportation</h3>
-                  {transportations.map((transport, idx) => (
-                    <div key={idx} className="text-white">
-                      <p className="font-medium">{transport.route}</p>
-                      <p className="text-sm">{transport.details}</p>
-                    </div>
-                  ))}
+                  <div className="space-y-2">
+                    {transportations && transportations.length > 0 ? (
+                      transportations.map((transport, idx) => (
+                        <TransportationListItem
+                          key={transport.id || idx}
+                          transportation={transport}
+                          compact
+                          onClick={() => {
+                            setSelectedTransportation(transport);
+                            setIsTransportationDialogOpen(true);
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-white text-sm italic">No transportation for this day</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTransportation(null);
+                      setIsTransportationDialogOpen(true);
+                    }}
+                    className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Transportation
+                  </Button>
                 </div>
               </div>
 
@@ -367,9 +386,7 @@ const DayCard: React.FC<DayCardProps> = ({
                       <div
                         key={activity.id || activity.title}
                         onClick={() => handleActivityEdit(activity)}
-                        className="cursor-pointer flex justify-between items-center p-3
-                                   bg-white/90 rounded-lg shadow-sm 
-                                   hover:bg-white/100"
+                        className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
                       >
                         <div>
                           <h4 className="font-medium text-gray-700">{activity.title}</h4>
@@ -412,7 +429,7 @@ const DayCard: React.FC<DayCardProps> = ({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Dialog for adding a new hotel stay */}
+      {/* Dialog for adding/editing a new hotel stay */}
       <AccommodationDialog
         tripId={tripId}
         open={isHotelDialogOpen}
@@ -442,6 +459,18 @@ const DayCard: React.FC<DayCardProps> = ({
         onAddActivity={handleAddActivity}
         onEditActivity={handleEditActivity}
         eventId={id}
+      />
+
+      {/* Transportation Dialog for DayCard */}
+      <TransportationDialog
+        tripId={tripId}
+        open={isTransportationDialogOpen}
+        onOpenChange={setIsTransportationDialogOpen}
+        initialData={selectedTransportation}
+        onSuccess={() => {
+          queryClient.invalidateQueries(['trip']);
+          setSelectedTransportation(null);
+        }}
       />
     </div>
   );
