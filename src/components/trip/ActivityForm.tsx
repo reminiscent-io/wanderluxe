@@ -3,6 +3,9 @@ import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
 
+// Added currency constants
+const CURRENCIES = ['USD', 'EUR', 'GBP'];
+
 interface ActivityFormProps {
   activity: ActivityFormData;             // Make sure this is always defined
   onActivityChange: (activity: ActivityFormData) => void;
@@ -375,9 +378,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             onChange={(e) => onActivityChange({ ...activity, currency: e.target.value })}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           >
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
+            {CURRENCIES.map((currency) => (
+              <option key={currency} value={currency}>
+                {currency}
+              </option>
+            ))}
           </select>
         </div>
       </div>
