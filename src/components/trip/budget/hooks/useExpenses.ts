@@ -23,12 +23,13 @@ export type ExpenseItem = {
   activity_id?: string;
   accommodation_id?: string;
   transportation_id?: string;
+  date: string;
 };
 
 // Define the query result type
 export type ExpensesQueryResult = {
   items: ExpenseItem[];
-  exchangeRates: any[]; // Simplified for now
+  exchangeRates: any[]; 
 };
 
 // Helper functions to map different expense types
@@ -41,7 +42,8 @@ const mapActivityToExpense = (act: DayActivity): ExpenseItem => ({
   currency: act.currency,
   is_paid: act.is_paid || false,
   created_at: act.created_at,
-  activity_id: act.id
+  activity_id: act.id,
+  date: act.date
 });
 
 const mapAccommodationToExpense = (acc: Accommodation): ExpenseItem => ({
@@ -53,7 +55,8 @@ const mapAccommodationToExpense = (acc: Accommodation): ExpenseItem => ({
   currency: acc.currency,
   is_paid: acc.is_paid || false,
   created_at: acc.created_at,
-  accommodation_id: acc.stay_id
+  accommodation_id: acc.stay_id,
+  date: acc.hotel_checkin_date
 });
 
 const mapTransportationToExpense = (trans: Transportation): ExpenseItem => ({
@@ -65,7 +68,8 @@ const mapTransportationToExpense = (trans: Transportation): ExpenseItem => ({
   currency: trans.currency,
   is_paid: trans.is_paid || false,
   created_at: trans.created_at,
-  transportation_id: trans.id
+  transportation_id: trans.id,
+  date: trans.start_date
 });
 
 const mapRestaurantToExpense = (rest: RestaurantReservation): ExpenseItem => ({
@@ -76,7 +80,8 @@ const mapRestaurantToExpense = (rest: RestaurantReservation): ExpenseItem => ({
   cost: rest.cost,
   currency: rest.currency,
   is_paid: rest.is_paid || false,
-  created_at: rest.created_at
+  created_at: rest.created_at,
+  date: rest.date
 });
 
 const mapOtherExpenseToExpense = (expense: OtherExpense): ExpenseItem => ({
@@ -87,7 +92,8 @@ const mapOtherExpenseToExpense = (expense: OtherExpense): ExpenseItem => ({
   cost: expense.cost,
   currency: expense.currency,
   is_paid: expense.is_paid || false,
-  created_at: expense.created_at
+  created_at: expense.created_at,
+  date: expense.date
 });
 
 export const useExpenses = (tripId: string) => {
