@@ -28,7 +28,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
     queryKey: ['transportation-events', tripId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('transportation_events')
+        .from('transportation')
         .select('*')
         .eq('trip_id', tripId)
         .order('start_date', { ascending: true });
@@ -52,7 +52,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
-      .from('transportation_events')
+      .from('transportation')
       .delete()
       .eq('id', id);
     if (error) {
