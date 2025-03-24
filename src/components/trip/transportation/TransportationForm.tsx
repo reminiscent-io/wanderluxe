@@ -36,7 +36,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     details: '',
     confirmation_number: '',
     cost: null,
-    currency: CURRENCIES[0] // Updated line
+    currency: CURRENCIES[0] 
   };
 
   const [formData, setFormData] = useState<Partial<TransportationEvent>>(
@@ -49,7 +49,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     return value.toString();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -73,6 +73,20 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     }
 
     if (!formData.start_date) {
+      toast.error('Please select a date');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Ensure end_date is either a valid date or null, not an empty string
+    const dataToSubmit = {
+      ...formData,
+      end_date: formData.end_date || null,
+      start_time: formData.start_time || null,
+      end_time: formData.end_time || null
+    };
+
+    if (!formData.start_date) {
       toast.error('Please select a departure date');
       setIsSubmitting(false);
       return;
@@ -82,7 +96,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
       setFormData({ ...formData, currency: 'USD' });
     }
 
-    onSubmit(formData);
+    await onSubmit(dataToSubmit);
     setIsSubmitting(false);
   };
 

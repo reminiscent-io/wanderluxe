@@ -27,6 +27,7 @@ export const addAccommodation = async (tripId: string, formData: AccommodationFo
       .from("accommodations")
       .insert({
         trip_id: tripId,
+        title: formData.hotel || 'Unnamed Accommodation', // Ensure title is never null
         hotel: formData.hotel,
         hotel_details: formData.hotel_details || null,
         hotel_address: formData.hotel_address || null,

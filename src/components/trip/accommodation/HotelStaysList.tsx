@@ -1,23 +1,22 @@
-
 import React from 'react';
 import { HotelStay } from '@/types/trip';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import { formatDateRange } from '@/utils/formatDateRange';
 
 interface HotelStaysListProps {
   hotelStays: HotelStay[];
   onEdit: (stayId: string) => void;
   onDelete: (stayId: string) => void;
-  formatDateRange: (startDate: string, endDate: string) => string;
 }
 
 const HotelStaysList: React.FC<HotelStaysListProps> = ({
   hotelStays,
   onEdit,
-  onDelete,
-  formatDateRange
+  onDelete
 }) => {
   if (hotelStays.length === 0) {
     return (
@@ -46,16 +45,23 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
           <div className="flex justify-between items-start">
             <div className="flex-1 mr-4">
               <h3 className="font-semibold text-lg text-gray-900">{stay.hotel}</h3>
-              
+
               <div className="mt-2 text-sm text-gray-700">
                 <p className="mb-1">
-                  <span className="font-medium">Stay: </span>
+                  <span className="font-medium">Nights: </span>
                   {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
                 </p>
                 {stay.hotel_address && (
                   <p className="mb-1 line-clamp-2">
                     <span className="font-medium">Address: </span>
-                    {stay.hotel_address}
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stay.hotel_address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      {stay.hotel_address}
+                    </a>
                   </p>
                 )}
                 {stay.hotel_phone && (
@@ -67,11 +73,17 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
                 {stay.cost && (
                   <p className="mb-1">
                     <span className="font-medium">Cost: </span>
-                    {stay.cost} {stay.currency || ''}
+                    {CURRENCY_SYMBOLS[stay.currency] || '$'}{Number(stay.cost).toLocaleString()}
+                  </p>
+                )}
+                {stay.hotel_details && (
+                  <p className="mb-1">
+                    <span className="font-medium">Details: </span>
+                    {stay.hotel_details}
                   </p>
                 )}
               </div>
-              
+
               {stay.hotel_website && (
                 <a 
                   href={stay.hotel_website}
@@ -83,7 +95,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
                 </a>
               )}
             </div>
-            
+
             <div className="flex space-x-2">
               <Button 
                 variant="ghost" 
@@ -104,7 +116,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
               </Button>
             </div>
           </div>
-          
+
           <div className="flex mt-3 space-x-2">
             <div className="flex-1 bg-green-50 text-green-700 text-xs rounded p-2">
               <span className="font-medium">Check-in:</span> {formatDate(stay.hotel_checkin_date)}

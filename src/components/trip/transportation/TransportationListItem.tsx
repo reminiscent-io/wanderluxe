@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, parseISO, startOfDay } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
 
 type TransportationEvent = Tables<'transportation_events'>;
@@ -18,7 +18,8 @@ interface TransportationListItemProps {
 
 const formatDate = (dateString: string) => {
   try {
-    return format(new Date(dateString), 'MMM d, yyyy');
+    // Parse the date as ISO, normalize to start of day, then format
+    return format(startOfDay(parseISO(dateString)), 'MMM d, yyyy');
   } catch (error) {
     return dateString;
   }
@@ -33,7 +34,8 @@ const formatCost = (cost: number) => {
 
 const getTransportationType = (type: string | null) => {
   if (!type) return 'Unknown';
-  return type.split('_')
+  return type
+    .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
