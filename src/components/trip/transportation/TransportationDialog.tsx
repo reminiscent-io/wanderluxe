@@ -1,97 +1,106 @@
+
 import React, { useEffect, useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import TransportationForm from './TransportationForm';
-import { Tables } from '@/integrations/supabase/types';
-// Import trip dates from props instead
 
-type TransportationEvent = Tables<'transportation_events'>;
+const TransportationDialog = ({ tripId, open, onOpenChange, initialData, onSuccess }) => {
+  const [tripDates, setTripDates] = useState({
+    arrival_date: null,
+    departure_date: null
+  });
+  const queryClient = useQueryClient();
 
-interface TransportationDialogProps {
-  tripId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialData?: Partial<TransportationEvent>;
-  onSuccess?: () => void;
-}
-
-const TransportationDialog: React.FC<TransportationDialogProps> = ({
-  tripId,
-  open,
-  onOpenChange,
-  initialData,
-  onSuccess
-}) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { arrivalDate, departureDate } = useTripDates(tripId);
-
-  // This helps with debugging trip dates
   useEffect(() => {
-    console.log("TransportationDialog: Setting trip dates", {
-      arrival_date: arrivalDate,
-      departure_date: departureDate,
-    });
-  }, [arrivalDate, departureDate]);
+    const fetchTripDates = async () => {
+      if (!tripId) return;
+      
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
 
-  const handleSubmit = async (data: Partial<TransportationEvent>) => {
-    setIsSubmitting(true);
+      if (!error && data) {
+        console.log('TransportationDialog: Setting trip dates', data);
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date
+        });
+      }
+    };
+
+    if (open) {
+      fetchTripDates();
+    }
+  }, [tripId, open]);
+
+  const handleSubmit = async (data) => {
     try {
-      // Create a new transportation event record
+      if (!tripId) {
+        toast.error('Trip ID is required');
+        return;
+      }
+
       const transportationData = {
         ...data,
-        trip_id: tripId,
+        trip_id: tripId
       };
 
+      let response;
       if (initialData && initialData.id) {
         // Update existing transportation
-        const { error } = await supabase
+        response = await supabase
           .from('transportation_events')
           .update(transportationData)
-          .eq('id', initialData.id);
-
-        if (error) throw error;
-        toast.success('Transportation updated successfully');
+          .eq('id', initialData.id)
+          .select('*')
+          .single();
       } else {
         // Insert new transportation
-        const { error } = await supabase
+        response = await supabase
           .from('transportation_events')
-          .insert(transportationData);
-
-        if (error) throw error;
-        toast.success('Transportation added successfully');
+          .insert(transportationData)
+          .select('*')
+          .single();
       }
 
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast.success(
+        initialData ? 'Transportation updated successfully' : 'Transportation added successfully'
+      );
+      
       if (onSuccess) {
-        onSuccess();
+        onSuccess(response.data);
       }
+      
+      queryClient.invalidateQueries(['trip']);
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving transportation:', error);
       toast.error('Failed to save transportation');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] bg-white">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Update Transportation' : 'Add Transportation'}</DialogTitle>
+          <DialogTitle>
+            {initialData ? 'Edit Transportation' : 'Add Transportation'}
+          </DialogTitle>
         </DialogHeader>
         <TransportationForm
           initialData={initialData}
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
-          tripArrivalDate={arrivalDate}
-          tripDepartureDate={departureDate}
-          buttonClassName="bg-earth-600 hover:bg-earth-700 text-white"
+          tripArrivalDate={tripDates.arrival_date}
+          tripDepartureDate={tripDates.departure_date}
         />
       </DialogContent>
     </Dialog>
