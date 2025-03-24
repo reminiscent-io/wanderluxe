@@ -78,7 +78,8 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
               setSelectedEvent(null);
               setDialogOpen(true);
             }}
-            className="w-full bg-earth-500 hover:bg-earth-600 text-white"
+            variant="outline"
+            className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Transportation

@@ -61,7 +61,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
 
       {isExpanded && (
         <>
-          <div className="mb-4">
+          <div className="p-4">
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
               variant="outline"
@@ -70,7 +70,6 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
               <Plus className="h-4 w-4 mr-2" />
               Add Hotel Stay
             </Button>
-          </div>
 
           <HotelStaysList
             hotelStays={sortedHotelStays}
