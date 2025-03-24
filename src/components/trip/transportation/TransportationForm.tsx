@@ -20,7 +20,8 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   onSubmit,
   onCancel,
   tripArrivalDate,
-  tripDepartureDate
+  tripDepartureDate,
+  buttonClassName
 }) => {
   const defaultData: Partial<TransportationEvent> = {
     type: '',
