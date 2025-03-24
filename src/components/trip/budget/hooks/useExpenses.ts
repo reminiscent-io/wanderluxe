@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
@@ -29,24 +28,41 @@ export type ExpenseItem = {
 // Define the query result type
 export type ExpensesQueryResult = {
   items: ExpenseItem[];
-  exchangeRates: any[]; 
+  exchangeRates: any[];
 };
 
-// Helper functions to map different expense types
-const mapActivityToExpense = (act: DayActivity): ExpenseItem => ({
-  id: act.id,
-  trip_id: act.trip_id,
-  category: 'Activities',
-  description: act.title,
-  cost: act.cost,
-  currency: act.currency,
-  is_paid: act.is_paid || false,
-  created_at: act.created_at,
-  activity_id: act.id,
-  date: act.date
-});
+// Helper function to fetch date from trip_days with error handling
+const fetchTripDayDate = async (dayId: string): Promise<string> => {
+  const { data, error } = await supabase
+    .from('trip_days')
+    .select('date')
+    .eq('id', dayId)
+    .single();
+  if (error || !data) {
+    // Optionally, you could log error details here
+    return "";
+  }
+  return data.date;
+};
 
-const mapAccommodationToExpense = (acc: Accommodation): ExpenseItem => ({
+// Mapping functions
+const mapActivityToExpense = async (act: DayActivity): Promise<ExpenseItem> => {
+  const date = await fetchTripDayDate(act.day_id);
+  return {
+    id: act.id,
+    trip_id: act.trip_id,
+    category: 'Activities',
+    description: act.title,
+    cost: act.cost,
+    currency: act.currency,
+    is_paid: act.is_paid || false,
+    created_at: act.created_at,
+    activity_id: act.id,
+    date
+  };
+};
+
+const mapAccommodationToExpense = async (acc: Accommodation): Promise<ExpenseItem> => ({
   id: acc.stay_id,
   trip_id: acc.trip_id,
   category: 'Accommodations',
@@ -59,7 +75,7 @@ const mapAccommodationToExpense = (acc: Accommodation): ExpenseItem => ({
   date: acc.hotel_checkin_date
 });
 
-const mapTransportationToExpense = (trans: Transportation): ExpenseItem => ({
+const mapTransportationToExpense = async (trans: Transportation): Promise<ExpenseItem> => ({
   id: trans.id,
   trip_id: trans.trip_id,
   category: 'Transportation',
@@ -72,19 +88,22 @@ const mapTransportationToExpense = (trans: Transportation): ExpenseItem => ({
   date: trans.start_date
 });
 
-const mapRestaurantToExpense = (rest: RestaurantReservation): ExpenseItem => ({
-  id: rest.id,
-  trip_id: rest.trip_id,
-  category: 'Dining',
-  description: rest.restaurant_name,
-  cost: rest.cost,
-  currency: rest.currency,
-  is_paid: rest.is_paid || false,
-  created_at: rest.created_at,
-  date: rest.date
-});
+const mapRestaurantToExpense = async (rest: RestaurantReservation): Promise<ExpenseItem> => {
+  const date = await fetchTripDayDate(rest.day_id);
+  return {
+    id: rest.id,
+    trip_id: rest.trip_id,
+    category: 'Dining',
+    description: rest.restaurant_name,
+    cost: rest.cost,
+    currency: rest.currency,
+    is_paid: rest.is_paid || false,
+    created_at: rest.created_at,
+    date
+  };
+};
 
-const mapOtherExpenseToExpense = (expense: OtherExpense): ExpenseItem => ({
+const mapOtherExpenseToExpense = async (expense: OtherExpense): Promise<ExpenseItem> => ({
   id: expense.id,
   trip_id: expense.trip_id,
   category: 'Other',
@@ -111,15 +130,31 @@ export const useExpenses = (tripId: string) => {
         supabase.from('accommodations').select('*').eq('trip_id', tripId),
         supabase.from('transportation').select('*').eq('trip_id', tripId),
         supabase.from('reservations').select('*').eq('trip_id', tripId),
-        supabase.from('other_expenses').select('*').eq('trip_id', tripId),
+        supabase.from('other_expenses').select('*').eq('trip_id', tripId)
       ]);
 
+      const activityExpenses = await Promise.all(
+        ((activities || []) as DayActivity[]).map(mapActivityToExpense)
+      );
+      const accommodationExpenses = await Promise.all(
+        ((accommodations || []) as Accommodation[]).map(mapAccommodationToExpense)
+      );
+      const transportationExpenses = await Promise.all(
+        ((transportation || []) as Transportation[]).map(mapTransportationToExpense)
+      );
+      const restaurantExpenses = await Promise.all(
+        ((restaurants || []) as RestaurantReservation[]).map(mapRestaurantToExpense)
+      );
+      const otherExpensesMapped = await Promise.all(
+        ((otherExpenses || []) as OtherExpense[]).map(mapOtherExpenseToExpense)
+      );
+
       const mappedExpenses: ExpenseItem[] = [
-        ...((activities || []) as DayActivity[]).map(mapActivityToExpense),
-        ...((accommodations || []) as Accommodation[]).map(mapAccommodationToExpense),
-        ...((transportation || []) as Transportation[]).map(mapTransportationToExpense),
-        ...((restaurants || []) as RestaurantReservation[]).map(mapRestaurantToExpense),
-        ...((otherExpenses || []) as OtherExpense[]).map(mapOtherExpenseToExpense)
+        ...activityExpenses,
+        ...accommodationExpenses,
+        ...transportationExpenses,
+        ...restaurantExpenses,
+        ...otherExpensesMapped
       ];
 
       return {
