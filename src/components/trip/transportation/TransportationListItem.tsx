@@ -100,7 +100,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   }
 
   return (
-    <Card className="p-4 rounded-lg shadow-sm bg-earth-500/10">
+    <Card className="p-4 rounded-lg shadow-sm bg-white">
       <div className="flex flex-col space-y-2">
         <div className="flex justify-between items-start">
           <div>
