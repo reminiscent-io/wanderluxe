@@ -1,5 +1,5 @@
 
-export const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'] as const;
+export const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'MXN', 'CHF'] as const;
 
 export const CURRENCY_NAMES = {
   USD: 'US Dollar',
@@ -7,7 +7,9 @@ export const CURRENCY_NAMES = {
   GBP: 'British Pound',
   CAD: 'Canadian Dollar',
   AUD: 'Australian Dollar',
-  JPY: 'Japanese Yen'
+  JPY: 'Japanese Yen',
+  MXN: 'Mexican Peso',
+  CHF: 'Swiss Franc'
 } as const;
 
 export const CURRENCY_SYMBOLS = {
@@ -16,5 +18,7 @@ export const CURRENCY_SYMBOLS = {
   GBP: '£',
   JPY: '¥',
   AUD: 'A$',
-  CAD: 'C$'
+  CAD: 'C$',
+  MXN: 'MX$',
+  CHF: 'Fr.'
 } as const;
