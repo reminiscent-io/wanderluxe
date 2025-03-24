@@ -6,7 +6,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from '../components/trip/TripCard';
 import { toast } from 'sonner';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction
+} from "@/components/ui/alert-dialog";
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -29,7 +38,7 @@ const MyTrips = () => {
     queryKey: ['my-trips'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) throw new Error('No user found');
 
       const { data, error } = await supabase
@@ -97,7 +106,9 @@ const MyTrips = () => {
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="mb-12 text-center">
           <div className="h-px bg-earth-200 max-w-[1024px] mx-auto mb-8"></div>
-          <h1 className="text-4xl font-light tracking-tight text-earth-900">My Trips</h1>
+          <h1 className="text-5xl font-serif font-bold leading-tight tracking-wide text-earth-900">
+            My Trips
+          </h1>
           <div className="h-px bg-earth-200 max-w-[1024px] mx-auto mt-8"></div>
         </div>
 
@@ -133,7 +144,10 @@ const MyTrips = () => {
           </div>
         )}
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
