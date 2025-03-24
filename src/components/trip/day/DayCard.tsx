@@ -408,7 +408,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     {activities.map((activity) => (
                       <div
                         key={activity.id || activity.title}
-                        onClick={() => handleActivityEdit(activity)}
+                        onClick={() => handleActivityEditClick(activity)}
                         className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
                       >
                         <div>
@@ -480,7 +480,7 @@ const DayCard: React.FC<DayCardProps> = ({
         activityEdit={activityEdit}
         setActivityEdit={setActivityEdit}
         onAddActivity={handleAddActivity}
-        onEditActivity={handleEditActivity}
+        onEditActivity={handleActivityEdit}
         onDeleteActivity={handleDeleteActivity}
         eventId={id}
       />
