@@ -46,14 +46,12 @@ interface AccommodationFormProps {
   tripDepartureDate?: string | null;
 }
 
-const CURRENCIES = [
-  { label: 'USD - US Dollar', value: 'USD' },
-  { label: 'EUR - Euro', value: 'EUR' },
-  { label: 'GBP - British Pound', value: 'GBP' },
-  { label: 'JPY - Japanese Yen', value: 'JPY' },
-  { label: 'AUD - Australian Dollar', value: 'AUD' },
-  { label: 'CAD - Canadian Dollar', value: 'CAD' }
-];
+import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';
+
+const CURRENCY_OPTIONS = CURRENCIES.map(currency => ({
+  label: `${currency} - ${CURRENCY_NAMES[currency]}`,
+  value: currency
+}));
 
 const AccommodationForm: React.FC<AccommodationFormProps> = ({
   onSubmit,
@@ -222,7 +220,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
                     {...field}
                     className="w-full p-2 border rounded-md"
                   >
-                    {CURRENCIES.map(currency => (
+                    {CURRENCY_OPTIONS.map(currency => (
                       <option key={currency.value} value={currency.value}>
                         {currency.label}
                       </option>
