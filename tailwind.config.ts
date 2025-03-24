@@ -33,6 +33,7 @@ export default {
           300: "#C7BBB0",
           400: "#B8A99B",
           500: "#8A7F6C",
+          600: "#7B715F",
         },
         earth: {
           50: "#F5F3F2",
@@ -41,6 +42,7 @@ export default {
           300: "#A89B8E",
           400: "#8A7F6C",
           500: "#6B6354",
+          600: "#5C544A",
         },
       },
       animation: {
