@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
-import { format } from 'date-fns';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -93,6 +92,47 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           value={formData.start_time || ''}
           onChange={handleInputChange}
         />
+      </div>
+
+      <div>
+        <Label>Arrival Date</Label>
+        <Input
+          type="date"
+          name="end_date"
+          value={formData.end_date || ''}
+          onChange={handleInputChange}
+        />
+      </div>
+
+      <div>
+        <Label>Arrival Time</Label>
+        <Input
+          type="time"
+          name="end_time"
+          value={formData.end_time || ''}
+          onChange={handleInputChange}
+        />
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center">
+          <Label className="mr-2">Is Departure</Label>
+          <Input
+            type="checkbox"
+            name="is_departure"
+            checked={!!formData.is_departure}
+            onChange={(e) => setFormData({ ...formData, is_departure: e.target.checked })}
+          />
+        </div>
+        <div className="flex items-center">
+          <Label className="mr-2">Is Arrival</Label>
+          <Input
+            type="checkbox"
+            name="is_arrival"
+            checked={!!formData.is_arrival}
+            onChange={(e) => setFormData({ ...formData, is_arrival: e.target.checked })}
+          />
+        </div>
       </div>
 
       <div>
