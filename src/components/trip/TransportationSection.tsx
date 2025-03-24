@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Plus, Plane } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TransportationDialog from './transportation/TransportationDialog';
 import TransportationListItem from './transportation/TransportationListItem';
 import { Tables } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -49,14 +49,22 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
     setDialogOpen(true);
   };
 
-  const handleSuccess = () => {
-    refetch();
-    onTransportationChange();
-    setSelectedEvent(undefined);
+  const handleDeleteTransportation = async (id: string) => {
+    const { error } = await supabase
+      .from('transportation_events')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      toast.error('Failed to delete transportation');
+    } else {
+      toast.success('Transportation deleted successfully');
+      refetch();
+      onTransportationChange();
+    }
   };
 
   return (
-    <Card className="bg-sand-50 shadow-md">
+    <div className={className}>
       <Button
         onClick={() => setIsExpanded(!isExpanded)}
         variant="ghost"
@@ -80,8 +88,9 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
               transportationEvents?.map((event) => (
                 <TransportationListItem
                   key={event.id}
-                  event={event}
-                  onClick={handleEventClick}
+                  transportation={event}
+                  onEdit={() => handleEventClick(event)}
+                  onDelete={() => handleDeleteTransportation(event.id)}
                 />
               ))
             )}
@@ -106,9 +115,13 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         initialData={selectedEvent}
-        onSuccess={handleSuccess}
+        onSuccess={() => {
+          refetch();
+          onTransportationChange();
+          setSelectedEvent(undefined);
+        }}
       />
-    </Card>
+    </div>
   );
 };
 
