@@ -1,4 +1,3 @@
-
 import React from 'react';
 import TransportationListItem from './TransportationListItem';
 import { Card } from '@/components/ui/card';
