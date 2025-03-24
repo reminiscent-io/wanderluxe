@@ -10,7 +10,7 @@ import TransportationForm from './TransportationForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type TransportationType = Tables<'transportation_events'>;
+type TransportationType = Tables<'transportation'>;
 
 interface TransportationDialogProps {
   tripId: string;
@@ -66,7 +66,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
       if (initialData?.id) {
         // Update existing transportation event
         const { error } = await supabase
-          .from('transportation_events')
+          .from('transportation')
           .update({
             type: data.type,
             provider: data.provider,
@@ -88,7 +88,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
       } else {
         // Create new transportation event
         const { error } = await supabase
-          .from('transportation_events')
+          .from('transportation')
           .insert([{
             trip_id: tripId,
             type: data.type,
