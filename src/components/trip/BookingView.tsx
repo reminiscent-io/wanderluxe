@@ -5,7 +5,7 @@ interface BookingViewProps {
   tripId: string | undefined;
 }
 
-const PackingView: React.FC<BookingViewProps> = ({ tripId }) => {
+const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-earth-500">Booking</h2>
