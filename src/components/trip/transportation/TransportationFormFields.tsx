@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,20 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   setFormData,
   formatCost
 }) => {
+  // Local state for cost input to handle formatting on blur/focus
+  const [costInput, setCostInput] = useState<string>(
+    formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : ''
+  );
+
+  useEffect(() => {
+    setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
+  }, [formData.cost]);
+
+  const formatNumber = (value: number | null) => {
+    if (value === null || isNaN(value)) return '';
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
@@ -39,7 +53,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           value={formData.type || ''}
           onValueChange={(value) => setFormData({ ...formData, type: value })}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
           <SelectContent>
@@ -114,26 +128,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         />
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center">
-          <Label className="mr-2">Is Departure</Label>
-          <Input
-            type="checkbox"
-            name="is_departure"
-            checked={!!formData.is_departure}
-            onChange={(e) => setFormData({ ...formData, is_departure: e.target.checked })}
-          />
-        </div>
-        <div className="flex items-center">
-          <Label className="mr-2">Is Arrival</Label>
-          <Input
-            type="checkbox"
-            name="is_arrival"
-            checked={!!formData.is_arrival}
-            onChange={(e) => setFormData({ ...formData, is_arrival: e.target.checked })}
-          />
-        </div>
-      </div>
+      {/* Removed the isDeparture and isArrival toggles */}
 
       <div>
         <Label>Provider</Label>
@@ -159,13 +154,21 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         <Label>Cost</Label>
         <Input
           name="cost"
-          value={formatCost(formData.cost)}
+          value={costInput}
+          onFocus={() => {
+            setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
+          }}
           onChange={(e) => {
             const value = e.target.value.replace(/[^\d.-]/g, '');
+            setCostInput(value);
             const cost = value ? parseFloat(value) : null;
             setFormData({ ...formData, cost });
           }}
-          placeholder="0.00"
+          onBlur={() => {
+            const formatted = formatNumber(formData.cost);
+            setCostInput(formatted);
+          }}
+          placeholder="0"
         />
       </div>
 
