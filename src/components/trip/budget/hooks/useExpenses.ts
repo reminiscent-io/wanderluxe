@@ -6,7 +6,7 @@ import { Tables } from '@/integrations/supabase/types';
 // Define table types
 type DayActivity = Tables<'day_activities'>;
 type Accommodation = Tables<'accommodations'>;
-type TransportationEvent = Tables<'transportation'>;
+type Transportation = Tables<'transportation'>;
 type RestaurantReservation = Tables<'restaurant_reservations'>;
 type OtherExpense = Tables<'other_expenses'>;
 
@@ -56,7 +56,7 @@ const mapAccommodationToExpense = (acc: Accommodation): ExpenseItem => ({
   accommodation_id: acc.stay_id
 });
 
-const mapTransportationToExpense = (trans: TransportationEvent): ExpenseItem => ({
+const mapTransportationToExpense = (trans: Transportation): ExpenseItem => ({
   id: trans.id,
   trip_id: trans.trip_id,
   category: 'Transportation',
@@ -111,7 +111,7 @@ export const useExpenses = (tripId: string) => {
       const mappedExpenses: ExpenseItem[] = [
         ...((activities || []) as DayActivity[]).map(mapActivityToExpense),
         ...((accommodations || []) as Accommodation[]).map(mapAccommodationToExpense),
-        ...((transportation || []) as TransportationEvent[]).map(mapTransportationToExpense),
+        ...((transportation || []) as Transportation[]).map(mapTransportationToExpense),
         ...((restaurants || []) as RestaurantReservation[]).map(mapRestaurantToExpense),
         ...((otherExpenses || []) as OtherExpense[]).map(mapOtherExpenseToExpense)
       ];
