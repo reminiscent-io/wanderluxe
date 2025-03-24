@@ -29,12 +29,12 @@ const DayImage: React.FC<DayImageProps> = ({
   });
 
   return (
-    <div className={cn('relative w-full h-full bg-gray-200', className)}>
+    <div className={cn('relative w-full bg-gray-200', className)}>
       {displayImageUrl && (
         <img
           src={displayImageUrl}
           alt={title || 'Day image'}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="w-full h-auto object-cover"
           onError={(e) => {
             console.error('Image failed to load:', displayImageUrl);
             e.currentTarget.style.display = 'none';

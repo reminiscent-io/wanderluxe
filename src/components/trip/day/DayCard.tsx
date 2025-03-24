@@ -324,8 +324,8 @@ const DayCard: React.FC<DayCardProps> = ({
       </div>
 
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <CollapsibleContent className="max-h-[600px] overflow-y-auto">
-          <div className="relative w-full h-[600px]">
+        <CollapsibleContent>
+          <div className="relative w-full min-h-[400px]">
             <DayImage
               dayId={id}
               title={title}
