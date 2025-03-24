@@ -87,6 +87,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           .from('accommodations')
           .insert([{
             trip_id: tripId,
+            title: data.hotel || 'Unnamed Accommodation', // Ensure title is set
             hotel: data.hotel,
             hotel_details: data.hotel_details,
             hotel_url: data.hotel_url,
