@@ -1,3 +1,4 @@
+// Updated cost display to use currency symbol from src/utils/currencyConstants.ts
 
 import React from 'react';
 import { HotelStay } from '@/types/trip';
@@ -5,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
 interface HotelStaysListProps {
   hotelStays: HotelStay[];
@@ -46,7 +48,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
           <div className="flex justify-between items-start">
             <div className="flex-1 mr-4">
               <h3 className="font-semibold text-lg text-gray-900">{stay.hotel}</h3>
-              
+
               <div className="mt-2 text-sm text-gray-700">
                 <p className="mb-1">
                   <span className="font-medium">Stay: </span>
@@ -67,11 +69,11 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
                 {stay.cost && (
                   <p className="mb-1">
                     <span className="font-medium">Cost: </span>
-                    {stay.cost} {stay.currency || ''}
+                    {CURRENCY_SYMBOLS[stay.currency] || '$'}{Number(stay.cost).toLocaleString()}
                   </p>
                 )}
               </div>
-              
+
               {stay.hotel_website && (
                 <a 
                   href={stay.hotel_website}
@@ -83,7 +85,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
                 </a>
               )}
             </div>
-            
+
             <div className="flex space-x-2">
               <Button 
                 variant="ghost" 
@@ -104,7 +106,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
               </Button>
             </div>
           </div>
-          
+
           <div className="flex mt-3 space-x-2">
             <div className="flex-1 bg-green-50 text-green-700 text-xs rounded p-2">
               <span className="font-medium">Check-in:</span> {formatDate(stay.hotel_checkin_date)}
