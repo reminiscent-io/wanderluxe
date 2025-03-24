@@ -73,6 +73,18 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     }
 
     if (!formData.start_date) {
+      toast.error('Please select a date');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Ensure end_date is either a valid date or null, not an empty string
+    const dataToSubmit = {
+      ...formData,
+      end_date: formData.end_date || null
+    };
+
+    if (!formData.start_date) {
       toast.error('Please select a departure date');
       setIsSubmitting(false);
       return;
@@ -82,7 +94,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
       setFormData({ ...formData, currency: 'USD' });
     }
 
-    onSubmit(formData);
+    onSubmit(dataToSubmit);
     setIsSubmitting(false);
   };
 
