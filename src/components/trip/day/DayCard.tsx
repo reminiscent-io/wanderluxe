@@ -13,7 +13,6 @@ import { toast } from 'sonner';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
 import DiningList from '../dining/DiningList';
-// Updated import paths for TransportationDialog and TransportationListItem:
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import TransportationListItem from '@/components/trip/transportation/TransportationListItem';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
@@ -148,6 +147,7 @@ const DayCard: React.FC<DayCardProps> = ({
     return `${hours}:${minutes}`;
   };
 
+  // Normalize the day from the DayCard date prop.
   const normalizedDay = date.split('T')[0];
 
   const filteredHotelStays = hotelStays.filter(stay => {
@@ -156,6 +156,17 @@ const DayCard: React.FC<DayCardProps> = ({
     const checkoutDate = stay.hotel_checkout_date.split('T')[0];
     const dayDate = new Date(normalizedDay);
     return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
+  });
+
+  // Updated transportation filter: Convert start_date to a Date and format as 'yyyy-MM-dd' for comparison.
+  const filteredTransportations = transportations.filter(transport => {
+    if (!transport.start_date) return false;
+    // If start_date is a string, parse it; if it's already a Date, use it directly.
+    const transportDate = typeof transport.start_date === 'string'
+      ? new Date(transport.start_date)
+      : transport.start_date;
+    const transportNormalized = format(transportDate, 'yyyy-MM-dd');
+    return transportNormalized === normalizedDay;
   });
 
   const handleHotelEdit = (stay: HotelStay) => {
@@ -301,7 +312,6 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
       <DayEditDialog
@@ -383,8 +393,8 @@ const DayCard: React.FC<DayCardProps> = ({
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Flights and Transportation</h3>
                   <div className="space-y-2">
-                    {transportations && transportations.length > 0 ? (
-                      transportations.map((transport, idx) => (
+                    {filteredTransportations && filteredTransportations.length > 0 ? (
+                      filteredTransportations.map((transport, idx) => (
                         <TransportationListItem
                           key={transport.id || idx}
                           transportation={transport}
