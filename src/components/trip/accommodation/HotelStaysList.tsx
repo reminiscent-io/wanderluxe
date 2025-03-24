@@ -1,5 +1,3 @@
-// Updated cost display to use currency symbol from src/utils/currencyConstants.ts
-
 import React from 'react';
 import { HotelStay } from '@/types/trip';
 import { Card } from '@/components/ui/card';
@@ -51,13 +49,20 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 
               <div className="mt-2 text-sm text-gray-700">
                 <p className="mb-1">
-                  <span className="font-medium">Stay: </span>
+                  <span className="font-medium">Nights: </span>
                   {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
                 </p>
                 {stay.hotel_address && (
                   <p className="mb-1 line-clamp-2">
                     <span className="font-medium">Address: </span>
-                    {stay.hotel_address}
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stay.hotel_address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      {stay.hotel_address}
+                    </a>
                   </p>
                 )}
                 {stay.hotel_phone && (
@@ -70,6 +75,12 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
                   <p className="mb-1">
                     <span className="font-medium">Cost: </span>
                     {CURRENCY_SYMBOLS[stay.currency] || '$'}{Number(stay.cost).toLocaleString()}
+                  </p>
+                )}
+                {stay.hotel_details && (
+                  <p className="mb-1">
+                    <span className="font-medium">Details: </span>
+                    {stay.hotel_details}
                   </p>
                 )}
               </div>
