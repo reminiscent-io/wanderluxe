@@ -7,7 +7,7 @@ import { Tables } from '@/integrations/supabase/types';
 type DayActivity = Tables<'day_activities'>;
 type Accommodation = Tables<'accommodations'>;
 type Transportation = Tables<'transportation'>;
-type RestaurantReservation = Tables<'restaurant_reservations'>;
+type RestaurantReservation = Tables<'reservations'>;
 type OtherExpense = Tables<'other_expenses'>;
 
 // Define the base expense item type
@@ -104,7 +104,7 @@ export const useExpenses = (tripId: string) => {
         supabase.from('day_activities').select('*').eq('trip_id', tripId),
         supabase.from('accommodations').select('*').eq('trip_id', tripId),
         supabase.from('transportation').select('*').eq('trip_id', tripId),
-        supabase.from('restaurant_reservations').select('*').eq('trip_id', tripId),
+        supabase.from('reservations').select('*').eq('trip_id', tripId),
         supabase.from('other_expenses').select('*').eq('trip_id', tripId),
       ]);
 
