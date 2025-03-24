@@ -27,11 +27,15 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     arrival_location: '',
     start_date: tripArrivalDate || '',
     start_time: '',
+    end_date: '',
+    end_time: '',
     provider: '',
     details: '',
     confirmation_number: '',
     cost: null,
-    currency: 'USD'
+    currency: 'USD',
+    is_arrival: false,
+    is_departure: false,
   };
 
   const [formData, setFormData] = useState<Partial<TransportationEvent>>(
@@ -74,7 +78,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     }
 
     if (!formData.currency) {
-      setFormData({...formData, currency: 'USD'});
+      setFormData({ ...formData, currency: 'USD' });
     }
 
     onSubmit(formData);
