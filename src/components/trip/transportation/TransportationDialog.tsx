@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TransportationForm from './TransportationForm';
 import { Tables } from '@/integrations/supabase/types';
-import { useTripDates } from '@/hooks/use-trip-dates';
+// Import trip dates from props instead
 
 type TransportationEvent = Tables<'transportation_events'>;
 

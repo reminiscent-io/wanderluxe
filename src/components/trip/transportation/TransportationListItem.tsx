@@ -74,34 +74,52 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   }
 
   return (
-    <Card className="overflow-hidden">
-      <div className={className} onClick={onClick}>
-        <div className="flex flex-col space-y-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium">{departure_location} to {arrival_location}</span>
-                <Badge variant="outline">{getTypeLabel()}</Badge>
-              </div>
-              {start_date && (
-                <div className="text-sm text-gray-500">{formatDate(start_date)}</div>
-              )}
-              {provider && <div className="text-sm text-gray-500">{provider}</div>}
-            </div>
-            <div className="flex space-x-1">
-              {onEdit && (
-                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
-              {onDelete && (
-                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+    <Card className="shadow-sm mb-3 hover:bg-gray-50" onClick={onClick}>
+      <div className="p-4 flex justify-between items-center">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              {departure_location} to {arrival_location}
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {getTypeLabel()}
+            </Badge>
+          </div>
+          <div className="flex flex-col text-sm text-gray-500">
+            {provider && <span>{provider}</span>}
+            {start_date && <span>{formatDate(start_date)}</span>}
           </div>
         </div>
+        {(onEdit || onDelete) && (
+          <div className="flex space-x-2">
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Are you sure you want to delete this transportation?')) {
+                    onDelete();
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );

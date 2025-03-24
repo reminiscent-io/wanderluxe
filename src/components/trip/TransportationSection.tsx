@@ -1,12 +1,14 @@
+
 import React, { useState } from 'react';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Plane } from "lucide-react";
-import TransportationDialog from './transportation/TransportationDialog';
-import TransportationList from './transportation/TransportationList';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import TransportationList from './transportation/TransportationList';
+import TransportationDialog from './transportation/TransportationDialog';
+import TransportationHeader from './transportation/TransportationHeader';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 interface TransportationSectionProps {
   tripId: string;
@@ -55,56 +57,60 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   };
 
   return (
-    <Card className="bg-sand-50 shadow-md">
-      <Button
-        onClick={() => setIsExpanded(!isExpanded)}
-        variant="ghost"
-        className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Plane className="h-5 w-5" />
-          <span className="text-lg font-medium">Flight and Transportation</span>
+    <Card className={`${className} shadow-md bg-white`}>
+      <CardHeader className="p-0">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <h2 className="text-xl font-semibold">Flight and Transportation</h2>
+          </div>
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)} 
+            variant="outline" 
+            size="sm"
+            className="ml-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add
+          </Button>
         </div>
-        <Plus className="h-5 w-5" />
-      </Button>
-
-      {isExpanded && (
-        <>
-          <div className="mb-4">
-            <Button 
+      </CardHeader>
+      <CardContent className="p-0">
+        <TransportationList 
+          transportations={transportations} 
+          onEdit={handleEdit} 
+          onDelete={handleDelete} 
+        />
+        
+        {/* Add button for bottom of empty list */}
+        {(!transportations || transportations.length === 0) && (
+          <div className="text-center py-6">
+            <Button
               onClick={() => setIsAddDialogOpen(true)}
               variant="outline"
-              className="w-full"
+              className="bg-earth-50 hover:bg-earth-100"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Transportation
             </Button>
           </div>
+        )}
+      </CardContent>
 
-          <TransportationList
-            transportations={transportations || []}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+      {/* Dialogs */}
+      <TransportationDialog 
+        tripId={tripId}
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleSuccess}
+      />
 
-          {/* Dialog for adding a new transportation */}
-          <TransportationDialog
-            tripId={tripId}
-            open={isAddDialogOpen}
-            onOpenChange={setIsAddDialogOpen}
-            onSuccess={handleSuccess}
-          />
-
-          {/* Dialog for editing an existing transportation */}
-          <TransportationDialog
-            tripId={tripId}
-            open={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            initialData={editTransportation || undefined}
-            onSuccess={handleSuccess}
-          />
-        </>
-      )}
+      <TransportationDialog 
+        tripId={tripId}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        initialData={editTransportation}
+        onSuccess={handleSuccess}
+      />
     </Card>
   );
 };
