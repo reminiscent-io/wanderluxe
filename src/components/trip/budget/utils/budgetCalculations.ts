@@ -1,15 +1,7 @@
 import { CURRENCY_SYMBOLS } from './currencyConverter';
-
-export interface ExpenseItem {
-  id: string;
-  description: string;
-  cost: number;
-  convertedCost?: number;
-  currency: string;
-  date?: string;
-  category?: string;
-  is_paid: boolean;
-}
+import { Currency } from '@/utils/currencyConstants';
+import { ExpenseItem } from '@/types/trip';
+import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
 export function formatCurrencyWithSymbol(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] || currency;
@@ -25,21 +17,21 @@ export function formatCurrencyWithSymbol(amount: number, currency: string): stri
   }
 }
 
-import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
-export interface ExpenseItem {
-  id: string;
-  description: string;
-  category: string;
-  cost: number | null;
-  currency: string;
-  is_paid: boolean;
-  date?: string | null;
-}
+export const formatCurrency = (amount: number | null, currency: Currency | null): string => {
+  if (amount === null || currency === null) return '-';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
+};
 
-// Export the getExpensesByCategory function
-export const getExpensesByCategory = (expenses: Expense[], category: string): Expense[] => {
+export const getExpensesByCategory = (expenses: ExpenseItem[], category: string): ExpenseItem[] => {
   return expenses.filter(expense => expense.category === category);
+};
+
+export const calculateTotalAmount = (expenses: ExpenseItem[]): number => {
+  return expenses.reduce((total, expense) => total + (expense.cost || 0), 0);
 };
 
 // Map different expense types to a unified ExpenseItem format
@@ -132,21 +124,21 @@ export const mapToExpenseItems = (
 
 // Convert amount between currencies using exchange rates
 export const convertAmount = (
-  amount: number | null, 
-  fromCurrency: string, 
-  selectedCurrency: string, 
+  amount: number | null,
+  fromCurrency: string,
+  selectedCurrency: string,
   exchangeRates: ExchangeRate[]
 ): number => {
   if (!amount) return 0;
   if (fromCurrency === selectedCurrency) return amount;
 
-  const toUsdRate = exchangeRates.find(r => 
-    r.currency_from === fromCurrency && 
+  const toUsdRate = exchangeRates.find(r =>
+    r.currency_from === fromCurrency &&
     r.currency_to === 'USD'
   )?.rate || 1;
 
-  const fromUsdRate = exchangeRates.find(r => 
-    r.currency_from === 'USD' && 
+  const fromUsdRate = exchangeRates.find(r =>
+    r.currency_from === 'USD' &&
     r.currency_to === selectedCurrency
   )?.rate || 1;
 
@@ -154,17 +146,6 @@ export const convertAmount = (
 };
 
 // Format currency amount to string
-export const formatCurrency = (amount: number | null, currency: string): string => {
-  if (amount === null) return '-';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-    currency: currency
-  }).format(amount);
-};
-
-// Keeping old format for backward compatibility
 export const formatCurrencyOld = (amount: number | null, currency: string): string => {
   if (amount === null) return '-';
   return new Intl.NumberFormat('en-US', {
