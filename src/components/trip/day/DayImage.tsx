@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -15,10 +14,11 @@ const DayImage: React.FC<DayImageProps> = ({
   title,
   imageUrl,
   defaultImageUrl,
-  className
+  className,
+  ...props // Added to handle any other props passed to the component
 }) => {
   const displayImageUrl = imageUrl || defaultImageUrl;
-  
+
   console.log('DayImage rendering:', {
     dayId,
     title,
@@ -29,7 +29,7 @@ const DayImage: React.FC<DayImageProps> = ({
   });
 
   return (
-    <div className={cn('relative w-full bg-gray-200', className)}>
+    <div className={cn('relative w-full bg-gray-200', className)} {...props}> {/* Added ...props to the div */}
       {displayImageUrl ? (
         <div className="relative overflow-hidden">
           <img
