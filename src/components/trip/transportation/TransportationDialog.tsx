@@ -10,14 +10,15 @@ import TransportationForm from './TransportationForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type TransportationEvent = Tables<'transportation_events'>;
+type TransportationType = Tables<'transportation_events'>;
 
 interface TransportationDialogProps {
   tripId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: TransportationEvent;
-  onSuccess: () => void;
+  initialData?: TransportationType | null;
+  onSuccess?: () => void;
+  buttonClassName?: string;
 }
 
 const TransportationDialog: React.FC<TransportationDialogProps> = ({
@@ -25,7 +26,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   open,
   onOpenChange,
   initialData,
-  onSuccess
+  onSuccess,
+  buttonClassName = "bg-earth-600 hover:bg-earth-700 text-white font-semibold" //Added default value
 }) => {
   const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
     arrival_date: null,
@@ -59,7 +61,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
     }
   }, [tripId, open]);
 
-  const handleSubmit = async (data: Partial<TransportationEvent>) => {
+  const handleSubmit = async (data: Partial<TransportationType>) => {
     try {
       if (initialData?.id) {
         // Update existing transportation event
@@ -108,12 +110,16 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         toast.success('Transportation added successfully');
       }
 
-      onSuccess();
+      onSuccess?.(); // Use optional chaining
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving transportation:', error);
       toast.error('Failed to save transportation');
     }
+  };
+
+  const handleCancel = () => {
+    onOpenChange(false);
   };
 
   return (
@@ -125,11 +131,12 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         <TransportationForm
-          initialData={initialData}
+          initialData={initialData || undefined}
           onSubmit={handleSubmit}
-          onCancel={() => onOpenChange(false)}
-          tripArrivalDate={tripDates.arrival_date}
-          tripDepartureDate={tripDates.departure_date}
+          onCancel={handleCancel}
+          tripArrivalDate={tripDates?.arrival_date}
+          tripDepartureDate={tripDates?.departure_date}
+          buttonClassName={buttonClassName}
         />
       </DialogContent>
     </Dialog>
