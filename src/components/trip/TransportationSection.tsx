@@ -1,117 +1,127 @@
-
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { Button } from "@/components/ui/button";
+import { Plus, Plane } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import TransportationList from './transportation/TransportationList';
 import TransportationDialog from './transportation/TransportationDialog';
-import TransportationHeader from './transportation/TransportationHeader';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import TransportationListItem from './transportation/TransportationListItem';
+import { Tables } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
+
+type TransportationEvent = Tables<'transportation_events'>;
 
 interface TransportationSectionProps {
   tripId: string;
-  transportations: any[];
+  onTransportationChange: () => void;
   className?: string;
 }
 
 const TransportationSection: React.FC<TransportationSectionProps> = ({
   className,
   tripId,
-  transportations
+  onTransportationChange
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editTransportation, setEditTransportation] = useState<any | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<TransportationEvent | undefined>();
 
-  const queryClient = useQueryClient();
-
-  const handleEdit = (id: string) => {
-    const transportToEdit = transportations.find(t => t.id === id);
-    if (transportToEdit) {
-      setEditTransportation(transportToEdit);
-      setIsEditDialogOpen(true);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
+  const { data: transportationEvents, isLoading, refetch } = useQuery({
+    queryKey: ['transportation-events', tripId],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('transportation_events')
-        .delete()
-        .eq('id', id);
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('start_date', { ascending: true });
 
-      if (error) throw error;
-      toast.success('Transportation deleted');
-      queryClient.invalidateQueries(['trip']);
-    } catch (error) {
-      console.error('Error deleting transportation:', error);
-      toast.error('Failed to delete transportation');
-    }
+      if (error) {
+        console.error("Error fetching transportation data:", error);
+        throw error;
+      }
+      console.log("Fetched transportation data:", data);
+      return data || [];
+    },
+    enabled: !!tripId
+  });
+
+  const handleEventClick = (event: TransportationEvent) => {
+    setSelectedEvent(event);
+    setDialogOpen(true);
   };
 
-  const handleSuccess = () => {
-    queryClient.invalidateQueries(['trip']);
+  const handleDeleteTransportation = async (id: string) => {
+    const { error } = await supabase
+      .from('transportation_events')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      toast.error('Failed to delete transportation');
+    } else {
+      toast.success('Transportation deleted successfully');
+      refetch();
+      onTransportationChange();
+    }
   };
 
   return (
-    <Card className={`${className} shadow-md bg-white`}>
-      <CardHeader className="p-0">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-2">
-            <h2 className="text-xl font-semibold">Flight and Transportation</h2>
+    <div className={className}>
+      <Button
+        onClick={() => setIsExpanded(!isExpanded)}
+        variant="ghost"
+        className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Plane className="h-5 w-5" />
+          <span className="text-lg font-medium">Flight and Transportation</span>
+        </div>
+        <Plus className="h-5 w-5" />
+      </Button>
+
+      {isExpanded && (
+        <div className="p-6 pt-0 space-y-6">
+          <div className="space-y-4">
+            {isLoading ? (
+              <div className="text-center py-4 text-gray-500">
+                Loading transportation data...
+              </div>
+            ) : (
+              transportationEvents?.map((event) => (
+                <TransportationListItem
+                  key={event.id}
+                  transportation={event}
+                  onEdit={() => handleEventClick(event)}
+                  onDelete={() => handleDeleteTransportation(event.id)}
+                />
+              ))
+            )}
           </div>
-          <Button 
-            onClick={() => setIsAddDialogOpen(true)} 
-            variant="outline" 
-            size="sm"
-            className="ml-auto"
+
+          <Button
+            onClick={() => {
+              setSelectedEvent(undefined);
+              setDialogOpen(true);
+            }}
+            variant="outline"
+            className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add
+            Add Transportation
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <TransportationList 
-          transportations={transportations} 
-          onEdit={handleEdit} 
-          onDelete={handleDelete} 
-        />
-        
-        {/* Add button for bottom of empty list */}
-        {(!transportations || transportations.length === 0) && (
-          <div className="text-center py-6">
-            <Button
-              onClick={() => setIsAddDialogOpen(true)}
-              variant="outline"
-              className="bg-earth-50 hover:bg-earth-100"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Transportation
-            </Button>
-          </div>
-        )}
-      </CardContent>
+      )}
 
-      {/* Dialogs */}
-      <TransportationDialog 
+      <TransportationDialog
         tripId={tripId}
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSuccess={handleSuccess}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initialData={selectedEvent}
+        onSuccess={() => {
+          refetch();
+          onTransportationChange();
+          setSelectedEvent(undefined);
+        }}
       />
-
-      <TransportationDialog 
-        tripId={tripId}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        initialData={editTransportation}
-        onSuccess={handleSuccess}
-      />
-    </Card>
+    </div>
   );
 };
 
