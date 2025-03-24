@@ -415,7 +415,7 @@ export type Database = {
         }
         Relationships: []
       }
-      restaurant_reservations: {
+      reservations: {
         Row: {
           address: string | null
           confirmation_number: string | null
@@ -478,21 +478,21 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "restaurant_reservations_currency_fkey"
+            foreignKeyName: "reservations_currency_fkey"
             columns: ["currency"]
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["currency"]
           },
           {
-            foreignKeyName: "restaurant_reservations_day_id_fkey"
+            foreignKeyName: "reservations_day_id_fkey"
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "trip_days"
             referencedColumns: ["day_id"]
           },
           {
-            foreignKeyName: "restaurant_reservations_trip_id_fkey"
+            foreignKeyName: "reservations_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
