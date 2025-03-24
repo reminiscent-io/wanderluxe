@@ -6,11 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
-type TransportationEvent = Tables<'transportation'>;
+type Transportation = Tables<'transportation'>;
 
 interface TransportationFormFieldsProps {
-  formData: Partial<TransportationEvent>;
-  setFormData: (data: Partial<TransportationEvent>) => void;
+  formData: Partial<Transportation>;
+  setFormData: (data: Partial<Transportation>) => void;
   formatCost: (value: number | undefined | null) => string;
 }
 
