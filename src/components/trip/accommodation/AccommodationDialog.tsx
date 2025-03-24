@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -118,7 +117,10 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="sm:max-w-[600px]"
+      >
         <DialogHeader>
           <DialogTitle>
             {initialData ? 'Edit Accommodation' : 'Add Accommodation'}
