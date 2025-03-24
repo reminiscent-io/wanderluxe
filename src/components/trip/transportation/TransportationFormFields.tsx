@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
+import { CURRENCIES } from '@/utils/currencyConstants';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -182,12 +183,11 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             <SelectValue placeholder="Select currency" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="USD">USD</SelectItem>
-            <SelectItem value="EUR">EUR</SelectItem>
-            <SelectItem value="GBP">GBP</SelectItem>
-            <SelectItem value="CAD">CAD</SelectItem>
-            <SelectItem value="AUD">AUD</SelectItem>
-            <SelectItem value="JPY">JPY</SelectItem>
+            {CURRENCIES.map((currency) => (
+              <SelectItem key={currency} value={currency}>
+                {currency}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

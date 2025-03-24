@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tables } from '@/integrations/supabase/types';
 import TransportationFormFields from './TransportationFormFields';
 import { toast } from 'sonner';
+import { CURRENCIES } from '@/utils/currencyConstants';
 
 type TransportationEvent = Tables<'transportation_events'>;
 
@@ -35,7 +36,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     details: '',
     confirmation_number: '',
     cost: null,
-    currency: 'USD'
+    currency: CURRENCIES[0] // Updated line
   };
 
   const [formData, setFormData] = useState<Partial<TransportationEvent>>(

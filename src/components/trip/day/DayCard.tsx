@@ -16,6 +16,7 @@ import DiningList from '../dining/DiningList';
 // Updated import paths for TransportationDialog and TransportationListItem:
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import TransportationListItem from '@/components/trip/transportation/TransportationListItem';
+import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
 const initialActivity: ActivityFormData = { 
   title: '', 
@@ -23,7 +24,7 @@ const initialActivity: ActivityFormData = {
   start_time: '', 
   end_time: '', 
   cost: '', 
-  currency: '' 
+  currency: CURRENCIES[0] 
 };
 
 interface DayCardProps {

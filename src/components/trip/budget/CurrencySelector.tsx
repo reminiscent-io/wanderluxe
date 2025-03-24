@@ -3,16 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CURRENCY_SYMBOLS } from './utils/currencyConverter';
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'];
-
-const CURRENCY_NAMES = {
-  USD: 'US Dollar',
-  EUR: 'Euro',
-  GBP: 'British Pound',
-  CAD: 'Canadian Dollar',
-  AUD: 'Australian Dollar',
-  JPY: 'Japanese Yen'
-};
+import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';
 
 interface CurrencySelectorProps {
   value: string;
