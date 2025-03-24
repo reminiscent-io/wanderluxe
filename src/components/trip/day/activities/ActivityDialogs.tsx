@@ -79,6 +79,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         activity={activityEdit}
         onActivityChange={setActivityEdit}
         onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+        onDelete={onDeleteActivity}
         eventId={eventId}
       />
     </>
