@@ -90,7 +90,7 @@ export interface HotelStay {
   created_at: string;
 }
 
-export interface TransportationEvent {
+export interface Transportation {
   id: string;
   trip_id: string;
   type: string;
