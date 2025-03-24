@@ -174,6 +174,116 @@ const DayCard: React.FC<DayCardProps> = ({
     setIsHotelEditDialogOpen(true);
   };
 
+  const handleActivityEdit = async (activityId: string) => {
+    console.log("Editing activity with id:", activityId);
+    try {
+      if (!activityEdit.title.trim()) {
+        toast.error('Activity title is required');
+        return Promise.reject(new Error('Activity title is required'));
+      }
+
+      const costAsNumber = activityEdit.cost && activityEdit.cost.trim() !== '' 
+        ? parseFloat(activityEdit.cost) 
+        : null;
+
+      const updatedActivity = {
+        title: activityEdit.title.trim(),
+        description: activityEdit.description?.trim() || null,
+        start_time: activityEdit.start_time || null,
+        end_time: activityEdit.end_time || null,
+        cost: costAsNumber,
+        currency: activityEdit.currency || 'USD',
+      };
+
+      const { data, error } = await supabase
+        .from('day_activities')
+        .update(updatedActivity)
+        .eq('id', activityId)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error updating activity:', error);
+        toast.error('Failed to update activity');
+        throw error;
+      }
+
+      toast.success('Activity updated successfully');
+      queryClient.invalidateQueries(['trip']);
+      setEditingActivity(null);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error editing activity:', error);
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    }
+  };
+
+  const handleAddActivity = async (activity: ActivityFormData) => {
+    console.log("Adding activity:", activity);
+    try {
+      if (!activity.title.trim()) {
+        toast.error('Activity title is required');
+        return Promise.reject(new Error('Activity title is required'));
+      }
+
+      const costAsNumber = activity.cost && activity.cost.trim() !== '' 
+        ? parseFloat(activity.cost) 
+        : null;
+
+      const newActivity = {
+        day_id: id,
+        trip_id: tripId,
+        title: activity.title.trim(),
+        description: activity.description?.trim() || null,
+        start_time: activity.start_time || null,
+        end_time: activity.end_time || null,
+        cost: costAsNumber,
+        currency: activity.currency || 'USD',
+        order_index: activities.length,
+      };
+
+      const { data, error } = await supabase
+        .from('day_activities')
+        .insert(newActivity)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error saving activity:', error);
+        toast.error('Failed to save activity');
+        throw error;
+      }
+
+      toast.success('Activity added successfully');
+      queryClient.invalidateQueries(['trip']);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    }
+  };
+
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('day_activities')
+        .delete()
+        .eq('id', activityId);
+
+      if (error) {
+        console.error('Error deleting activity:', error);
+        toast.error('Failed to delete activity');
+        throw error;
+      }
+
+      toast.success('Activity deleted successfully');
+      queryClient.invalidateQueries(['trip']);
+      setEditingActivity(null);
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+    }
+  };
+
   const handleActivityEditClick = (activity: DayActivity) => {
     if (activity.id) {
       setEditingActivity(activity.id);
@@ -187,124 +297,6 @@ const DayCard: React.FC<DayCardProps> = ({
       });
     }
   };
-
-
-  const DayActivityManager = ({id, tripId, activities}: {id: string, tripId: string, activities: DayActivity[]}) => {
-    const handleAddActivity = async (activity: ActivityFormData) => {
-      try {
-        if (!activity.title.trim()) {
-          toast.error('Activity title is required');
-          return Promise.reject(new Error('Activity title is required'));
-        }
-
-        const costAsNumber = activity.cost && activity.cost.trim() !== '' 
-          ? parseFloat(activity.cost) 
-          : null;
-
-        const newActivity = {
-          day_id: id,
-          trip_id: tripId,
-          title: activity.title.trim(),
-          description: activity.description?.trim() || null,
-          start_time: activity.start_time || null,
-          end_time: activity.end_time || null,
-          cost: costAsNumber,
-          currency: activity.currency || 'USD',
-          order_index: activities.length,
-        };
-
-        const { data, error } = await supabase
-          .from('day_activities')
-          .insert(newActivity)
-          .select('*')
-          .single();
-
-        if (error) {
-          console.error('Error saving activity:', error);
-          toast.error('Failed to save activity');
-          throw error;
-        }
-
-        toast.success('Activity added successfully');
-        queryClient.invalidateQueries(['trip']);
-        return Promise.resolve();
-      } catch (error) {
-        console.error('Error adding activity:', error);
-        return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-      }
-    };
-
-    const handleDeleteActivity = async (activityId: string) => {
-      try {
-        const { error } = await supabase
-          .from('day_activities')
-          .delete()
-          .eq('id', activityId);
-
-        if (error) {
-          console.error('Error deleting activity:', error);
-          toast.error('Failed to delete activity');
-          throw error;
-        }
-
-        toast.success('Activity deleted successfully');
-        queryClient.invalidateQueries(['trip']);
-        setEditingActivity(null);
-      } catch (error) {
-        console.error('Error deleting activity:', error);
-      }
-    };
-
-    const handleEditActivity = async (activityId: string, updatedActivity: ActivityFormData) => {
-      try {
-        if (!updatedActivity.title.trim()) {
-          toast.error('Activity title is required');
-          return Promise.reject(new Error('Activity title is required'));
-        }
-
-        const costAsNumber = updatedActivity.cost && updatedActivity.cost.trim() !== '' 
-          ? parseFloat(updatedActivity.cost) 
-          : null;
-
-        const updatedAct = {
-          title: updatedActivity.title.trim(),
-          description: updatedActivity.description?.trim() || null,
-          start_time: updatedActivity.start_time || null,
-          end_time: updatedActivity.end_time || null,
-          cost: costAsNumber,
-          currency: updatedActivity.currency || 'USD',
-        };
-
-        const { data, error } = await supabase
-          .from('day_activities')
-          .update(updatedAct)
-          .eq('id', activityId)
-          .select('*')
-          .single();
-
-        if (error) {
-          console.error('Error updating activity:', error);
-          toast.error('Failed to update activity');
-          throw error;
-        }
-
-        toast.success('Activity updated successfully');
-        queryClient.invalidateQueries(['trip']);
-        setEditingActivity(null);
-        return Promise.resolve();
-      } catch (error) {
-        console.error('Error editing activity:', error);
-        return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-      }
-    };
-      return {handleAddActivity, handleDeleteActivity, handleEditActivity}
-  }
-
-  const activityManager = DayActivityManager({ id, tripId, activities: activities || [] });
-
-  const handleAddActivity = activityManager.handleAddActivity;
-  const handleDeleteActivity = activityManager.handleDeleteActivity;
-  const handleActivityEdit = activityManager.handleEditActivity;
 
   const handleActivityEditStart = (activity: DayActivity) => {
     if (activity.id) {
