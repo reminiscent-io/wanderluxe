@@ -1,3 +1,4 @@
+
 import React from 'react';
 import TransportationListItem from './TransportationListItem';
 import { Card } from '@/components/ui/card';
@@ -15,14 +16,14 @@ const TransportationList: React.FC<TransportationListProps> = ({
 }) => {
   if (!transportations || transportations.length === 0) {
     return (
-      <div className="text-center py-4 text-gray-500">
+      <div className="text-center py-4 px-6 text-gray-500">
         No transportation added yet.
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-3 px-6 pb-6">
       {transportations.map((transportation) => (
         transportation && transportation.id ? (
           <TransportationListItem 
