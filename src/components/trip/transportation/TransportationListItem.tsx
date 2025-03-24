@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,8 +10,10 @@ type TransportationEvent = Tables<'transportation_events'>;
 
 interface TransportationListItemProps {
   transportation: TransportationEvent;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onClick?: () => void;
+  compact?: boolean;
 }
 
 const formatDate = (dateString: string) => {
@@ -32,8 +33,6 @@ const formatCost = (cost: number) => {
 
 const getTransportationType = (type: string | null) => {
   if (!type) return 'Unknown';
-  
-  // Convert snake_case to Title Case
   return type.split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
@@ -42,9 +41,31 @@ const getTransportationType = (type: string | null) => {
 const TransportationListItem: React.FC<TransportationListItemProps> = ({
   transportation,
   onEdit,
-  onDelete
+  onDelete,
+  onClick,
+  compact = false
 }) => {
-  // Safety check - if transportation is incomplete, render a simpler card
+  // Render compact version (for DayCard) when compact prop is true
+  if (compact) {
+    return (
+      <Card 
+        className="p-3 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+        onClick={onClick}
+      >
+        <div>
+          <h4 className="font-medium">
+            {transportation.departure_location} to {transportation.arrival_location}
+          </h4>
+          <p className="text-sm text-gray-500">
+            {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
+            {transportation.start_time ? ` at ${transportation.start_time}` : ''}
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  // Detailed view with edit and delete buttons
   if (!transportation || !transportation.type || !transportation.departure_location || !transportation.arrival_location) {
     return (
       <Card className="p-4 rounded-lg shadow-sm">
@@ -106,22 +127,26 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
             )}
           </div>
           <div className="flex space-x-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8"
-              onClick={onEdit}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 text-red-500"
-              onClick={onDelete}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
+            {onEdit && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={onEdit}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-red-500"
+                onClick={onDelete}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
