@@ -31,11 +31,11 @@ const DayImage: React.FC<DayImageProps> = ({
   return (
     <div className={cn('relative w-full bg-gray-200', className)}>
       {displayImageUrl ? (
-        <div className="aspect-auto relative overflow-hidden">
+        <div className="relative overflow-hidden">
           <img
             src={displayImageUrl}
             alt={title || 'Day image'}
-            className="w-full h-auto object-contain"
+            className="w-full h-auto"
             onError={(e) => {
               console.error('Image failed to load:', displayImageUrl);
               e.currentTarget.style.display = 'none';
@@ -43,7 +43,7 @@ const DayImage: React.FC<DayImageProps> = ({
           />
         </div>
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+        <div className="flex items-center justify-center text-gray-400 h-[400px]">
           No image available
         </div>
       )}
