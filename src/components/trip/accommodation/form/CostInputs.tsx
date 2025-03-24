@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,18 +10,6 @@ interface CostInputsProps {
   onCurrencyChange: (value: string) => void;
 }
 
-const formatCost = (cost: number): string => {
-  return cost.toLocaleString(); // This provides #,### formatting
-};
-
-const parseCost = (value: string): number | null => {
-  // Remove non-numeric characters except for the decimal point
-  const cleanedValue = value.replace(/[^0-9.]/g, '');
-  const parsed = parseFloat(cleanedValue);
-  return isNaN(parsed) ? null : parsed;
-};
-
-
 const CostInputs: React.FC<CostInputsProps> = ({
   cost,
   currency,
@@ -29,8 +18,38 @@ const CostInputs: React.FC<CostInputsProps> = ({
 }) => {
   // Handle the cost input change
   const handleCostChange = (value: string) => {
-    const parsed = parseCost(value);
-    onCostChange(parsed !== null ? parsed.toString() : '');
+    // Allow empty string to be converted to null
+    if (value === '') {
+      onCostChange(null);
+      return;
+    }
+
+    // Use a more secure regex pattern that prevents backtracking
+    // This pattern anchors the match at the start and end, and uses non-capturing groups
+    if (!/^(?:[0-9]*|[0-9]+\.[0-9]*)$/.test(value)) {
+      return;
+    }
+
+    // If it's just a decimal point, add a leading zero
+    if (value === '.') {
+      onCostChange('0.');
+      return;
+    }
+
+    // Prevent multiple decimal points
+    const decimalCount = (value.match(/\./g) || []).length;
+    if (decimalCount > 1) {
+      return;
+    }
+
+    // Limit to two decimal places
+    const parts = value.split('.');
+    if (parts[1] && parts[1].length > 2) {
+      return;
+    }
+
+    // Update the value
+    onCostChange(value);
   };
 
   return (
@@ -40,7 +59,7 @@ const CostInputs: React.FC<CostInputsProps> = ({
         <Input
           id="cost"
           type="text"
-          value={cost ? formatCost(Number(cost)) : ''}
+          value={cost || ''}
           onChange={(e) => handleCostChange(e.target.value)}
           placeholder="0.00"
           inputMode="decimal"
@@ -60,3 +79,4 @@ const CostInputs: React.FC<CostInputsProps> = ({
 };
 
 export default CostInputs;
+
