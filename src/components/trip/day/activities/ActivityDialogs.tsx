@@ -40,7 +40,8 @@ interface ActivityDialogsProps {
     currency: string;
   }) => void;
   onAddActivity: () => void;
-  onEditActivity: (id: string) => void; //Corrected the type here.  onEditActivity now accepts an ID.
+  onEditActivity: (id: string) => void;
+  onDeleteActivity: (id: string) => void; // Added onDeleteActivity prop
   eventId: string;
 }
 
@@ -55,6 +56,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
   setActivityEdit,
   onAddActivity,
   onEditActivity,
+  onDeleteActivity, // Added onDeleteActivity prop
   eventId,
 }) => {
   // Helper function to handle the dialog closing
@@ -79,7 +81,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         activity={activityEdit}
         onActivityChange={setActivityEdit}
         onSubmit={() => editingActivity && onEditActivity(editingActivity)}
-        onDelete={onDeleteActivity}
+        onDelete={onDeleteActivity} // Passed onDeleteActivity prop
         eventId={eventId}
       />
     </>

@@ -17,7 +17,7 @@ interface EditActivityDialogProps {
   activity: ActivityFormData;
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (updatedActivity: ActivityFormData) => void;
-  onDelete?: (activityId: string) => void;
+  onDelete: (id: string) => void; // Added onDelete prop
   eventId: string;
 }
 
@@ -27,6 +27,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
   activity,
   onActivityChange,
   onSubmit,
+  onDelete, // Added onDelete prop
   eventId,
 }) => {
   useEffect(() => {
