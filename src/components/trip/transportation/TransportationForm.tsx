@@ -33,9 +33,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     details: '',
     confirmation_number: '',
     cost: null,
-    currency: 'USD',
-    is_arrival: false,
-    is_departure: false,
+    currency: 'USD'
   };
 
   const [formData, setFormData] = useState<Partial<TransportationEvent>>(
@@ -105,7 +103,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className={initialData ? "bg-sand-600 text-white" : ""}
+          className={initialData ? "bg-earth-600 text-white" : "bg-earth-600 text-white"}
         >
           {initialData ? 'Update Transportation' : 'Add Transportation'}
         </Button>
