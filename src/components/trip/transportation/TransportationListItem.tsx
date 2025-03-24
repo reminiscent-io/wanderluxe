@@ -68,7 +68,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   // Detailed view with edit and delete buttons
   if (!transportation || !transportation.type || !transportation.departure_location || !transportation.arrival_location) {
     return (
-      <Card className="p-4 rounded-lg shadow-sm">
+      <Card className="p-4 rounded-lg shadow-sm bg-earth-500/10">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="text-lg font-medium">Transportation Details Incomplete</h3>
@@ -100,7 +100,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   }
 
   return (
-    <Card className="p-4 rounded-lg shadow-sm">
+    <Card className="p-4 rounded-lg shadow-sm bg-earth-500/10">
       <div className="flex flex-col space-y-2">
         <div className="flex justify-between items-start">
           <div>
