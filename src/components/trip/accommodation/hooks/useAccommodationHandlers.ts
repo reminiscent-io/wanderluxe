@@ -45,12 +45,22 @@ export const useAccommodationHandlers = ({ tripId, onAccommodationChange }: { tr
   const handleDelete = async (stayId: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      // First delete accommodation days
+      const { error: daysError } = await supabase
+        .from('accommodations_days')
+        .delete()
+        .eq('stay_id', stayId);
+
+      if (daysError) throw daysError;
+
+      // Then delete the accommodation
+      const { error: accommodationError } = await supabase
         .from('accommodations')
         .delete()
         .eq('stay_id', stayId);
 
-      if (error) throw error;
+      if (accommodationError) throw accommodationError;
+      
       toast.success('Accommodation deleted');
       onAccommodationChange();
     } catch (error) {
