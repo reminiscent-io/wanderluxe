@@ -5,11 +5,11 @@ import TransportationFormFields from './TransportationFormFields';
 import { toast } from 'sonner';
 import { CURRENCIES } from '@/utils/currencyConstants';
 
-type TransportationEvent = Tables<'transportation'>;
+type Transportation = Tables<'transportation'>;
 
 interface TransportationFormProps {
-  initialData?: Partial<TransportationEvent>;
-  onSubmit: (data: Partial<TransportationEvent>) => void;
+  initialData?: Partial<Transportation>;
+  onSubmit: (data: Partial<Transportation>) => void;
   onCancel: () => void;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
@@ -24,7 +24,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   tripDepartureDate,
   buttonClassName
 }) => {
-  const defaultData: Partial<TransportationEvent> = {
+  const defaultData: Partial<Transportation> = {
     type: '',
     departure_location: '',
     arrival_location: '',
@@ -39,7 +39,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     currency: CURRENCIES[0] 
   };
 
-  const [formData, setFormData] = useState<Partial<TransportationEvent>>(
+  const [formData, setFormData] = useState<Partial<Transportation>>(
     initialData || defaultData
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
