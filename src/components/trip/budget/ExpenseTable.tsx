@@ -71,7 +71,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                   )}
                 </TableCell>
                 <TableCell className="text-center">
-                  <div className="flex justify-center">
+                  <div className="flex items-center justify-center">
                     <Switch
                       checked={expense.is_paid || false}
                       onCheckedChange={(checked) => onUpdatePaidStatus(expense.id, checked, category)}
