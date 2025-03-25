@@ -76,8 +76,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     updateExpense.mutate({ 
       id, 
       data: { 
-        is_paid: isPaid 
-      } 
+        is_paid: isPaid,
+        category: category // Preserve the category when updating
+      }
     });
   };
 
