@@ -28,7 +28,7 @@ const BudgetHeader: React.FC<BudgetHeaderProps> = ({
       </div>
       {lastUpdated && (
         <p className="text-sm text-gray-500">
-          Exchange rates last updated: {format(new Date(lastUpdated), 'h:mm a')}
+          Exchange rates last updated: {format(new Date(lastUpdated), 'M/d/yy h:mm a')}
         </p>
       )}
     </div>
