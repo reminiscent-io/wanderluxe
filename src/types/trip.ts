@@ -57,6 +57,8 @@ export interface Accommodation {
   hotel_url: string | null;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
+  checkin_time: string;
+  checkout_time: string;  
   cost: number | null;
   currency: Currency | null;
   expense_type: string | null;
@@ -78,8 +80,8 @@ export interface HotelStay {
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
-  checkin_time?: string;
-  checkout_time?: string;
+  checkin_time: string;
+  checkout_time: string;
   hotel_details: string | null;
   hotel_url: string | null;
   cost: number | null;
@@ -153,6 +155,8 @@ export interface AccommodationFormData {
   hotel_url: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
+  checkin_time: string;
+  checkout_time: string;
   cost?: string | null;
   currency?: Currency;
   expense_type?: string;
