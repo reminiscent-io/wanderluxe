@@ -120,6 +120,19 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      if (initialData?.stay_id) {
+        await accommodationHandlers.handleDelete(initialData.stay_id);
+        onOpenChange(false);
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error deleting accommodation:', error);
+      toast.error('Failed to delete accommodation');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -139,6 +152,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           tripDepartureDate={tripDates.departure_date}
           checkin_time={initialData?.checkin_time || '14:00'}
           checkout_time={initialData?.checkout_time || '11:00'}
+          onDelete={handleDelete}
         />
       </DialogContent>
     </Dialog>
