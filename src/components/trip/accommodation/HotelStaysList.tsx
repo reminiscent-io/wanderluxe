@@ -3,7 +3,7 @@ import { HotelStay } from '@/types/trip';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
-import { format, parse, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 import { formatDateRange } from '@/utils/formatDateRange';
 
@@ -12,35 +12,6 @@ interface HotelStaysListProps {
   onEdit: (stayId: string) => void;
   onDelete: (stayId: string) => void;
 }
-
-// Formatter for dates (if you only want the date)
-const formatDate = (dateString: string): string => {
-  try {
-    return format(parseISO(dateString), 'MMM d, yyyy');
-  } catch (error) {
-    console.error("Error formatting date:", dateString, error);
-    return dateString;
-  }
-};
-
-// Formatter for date and time that handles time-only strings.
-const formatDateTime = (dateTimeString: string): string => {
-  try {
-    let dateObj;
-    // If the string is in HH:mm:ss format (time only)
-    if (/^\d{2}:\d{2}:\d{2}$/.test(dateTimeString)) {
-      // Use today's date as the reference.
-      dateObj = parse(dateTimeString, 'HH:mm:ss', new Date());
-      return format(dateObj, 'h:mm a');
-    } else {
-      dateObj = parseISO(dateTimeString);
-      return format(dateObj, 'MMM d, yyyy, h:mm a');
-    }
-  } catch (error) {
-    console.error("Error formatting date/time:", dateTimeString, error);
-    return dateTimeString;
-  }
-};
 
 const HotelStaysList: React.FC<HotelStaysListProps> = ({
   hotelStays,
@@ -55,6 +26,15 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
     );
   }
 
+  const formatDate = (dateString: string): string => {
+    try {
+      return format(parseISO(dateString), 'MMM d, yyyy');
+    } catch (error) {
+      console.error("Error formatting date:", dateString, error);
+      return dateString;
+    }
+  };
+
   return (
     <div className="space-y-3 p-4">
       {hotelStays.map((stay) => (
@@ -68,7 +48,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 
               <div className="mt-2 text-sm text-gray-700">
                 <p className="mb-1">
-                  <span className="font-medium">Stay: </span>
+                  <span className="font-medium">Nights: </span>
                   {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
                 </p>
                 {stay.hotel_address && (
@@ -139,10 +119,10 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 
           <div className="flex mt-3 space-x-2">
             <div className="flex-1 bg-green-50 text-green-700 text-xs rounded p-2">
-              <span className="font-medium">Check-in:</span> {formatDateTime(stay.checkin_time)}
+              <span className="font-medium">Check-in:</span> {formatDate(stay.hotel_checkin_date)}
             </div>
             <div className="flex-1 bg-amber-50 text-amber-700 text-xs rounded p-2">
-              <span className="font-medium">Check-out:</span> {formatDateTime(stay.checkout_time)}
+              <span className="font-medium">Check-out:</span> {formatDate(stay.hotel_checkout_date)}
             </div>
           </div>
         </Card>

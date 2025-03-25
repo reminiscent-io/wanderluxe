@@ -45,8 +45,8 @@ interface AccommodationFormProps {
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
-  //checkin_time?: string | null;
-  //checkout_time?: string | null;
+  checkin_time?: string | null;
+  checkout_time?: string | null;
 }
 
 import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';

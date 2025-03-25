@@ -80,8 +80,6 @@ export function useTimelineEvents(tripId: string) {
           hotel_url: data.hotel_url,
           hotel_checkin_date: data.hotel_checkin_date,
           hotel_checkout_date: data.hotel_checkout_date,
-          checkin_time: data.checkin_time,
-          checkout_time: data.checkout_time,
         })
         .eq('stay_id', data.id);
 

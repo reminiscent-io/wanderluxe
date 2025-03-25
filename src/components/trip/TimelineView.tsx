@@ -122,7 +122,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
-  // Updated mapping: now uses checkin_time and checkout_time
   const processedHotelStays = React.useMemo(() => 
     events?.filter(event => event.hotel && event.stay_id).map(event => ({
       stay_id: event.stay_id,
@@ -130,8 +129,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       hotel: event.hotel || '',
       hotel_details: event.hotel_details,
       hotel_url: event.hotel_url,
-      checkin_time: event.checkin_time || '',
-      checkout_time: event.checkout_time || '',
+      hotel_checkin_date: event.hotel_checkin_date || '',
+      hotel_checkout_date: event.hotel_checkout_date || '',
       cost: event.cost ? Number(event.cost) : null,
       currency: event.currency || 'USD',
       hotel_address: event.hotel_address,

@@ -1,6 +1,4 @@
-import { useAccommodationHandlers } from './hooks/useAccommodationHandlers';
 import React, { useEffect, useState } from 'react';
-import { AccommodationFormData } from '@/services/accommodation/accommodationService';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +18,7 @@ interface AccommodationDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: Accommodation;
   onSuccess: () => void;
-}
+  }
 
 const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   tripId,
@@ -29,27 +27,36 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   initialData,
   onSuccess
 }) => {
-  const [formData, setFormData] = useState<AccommodationFormData | undefined>(undefined);
+  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
+    arrival_date: null,
+    departure_date: null
+  });
 
-  // Initialize or reinitialize form data when initialData changes.
-  // Since dates are already in "YYYY-MM-DD" format, no additional splitting is required.
   useEffect(() => {
-    if (initialData) {
-      const newFormData = {
-        ...initialData,
-        hotel_checkin_date: initialData.hotel_checkin_date,
-        hotel_checkout_date: initialData.hotel_checkout_date,
-      };
-      setFormData(newFormData);
-    }
-  }, [initialData]);
+    const fetchTripDates = async () => {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
 
-  // Reset form data when dialog closes
-  useEffect(() => {
-    if (!open) {
-      setFormData(undefined);
+      if (!error && data) {
+        if (data.arrival_date && data.departure_date) {
+          console.log('AccommodationDialog: Setting trip dates', data);
+          setTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date
+          });
+        } else {
+          console.log('AccommodationDialog: Skipping update - missing dates', data);
+        }
+      }
+    };
+
+    if (open) {
+      fetchTripDates();
     }
-  }, [open]);
+  }, [tripId, open]);
 
   const handleSubmit = async (data: any) => {
     try {
@@ -116,7 +123,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   const handleDelete = async () => {
     try {
       if (initialData?.stay_id) {
-        await useAccommodationHandlers.handleDelete(initialData.stay_id);
+        await accommodationHandlers.handleDelete(initialData.stay_id);
         onOpenChange(false);
         window.location.reload();
       }
@@ -138,9 +145,13 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         <AccommodationForm
-          initialData={formData}
+          initialData={initialData}
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
+          tripArrivalDate={tripDates.arrival_date}
+          tripDepartureDate={tripDates.departure_date}
+          checkin_time={initialData?.checkin_time || '14:00'}
+          checkout_time={initialData?.checkout_time || '11:00'}
           onDelete={handleDelete}
         />
       </DialogContent>

@@ -158,16 +158,16 @@ const DayCard: React.FC<DayCardProps> = ({
     return `${hours}:${minutes}`;
   };
 
-  // Normalize the day using date-fns
-  const normalizedDay = format(parseISO(date), 'yyyy-MM-dd');
+  // Normalize the day from the DayCard date prop.
+  const normalizedDay = date.split('T')[0];
 
-  const filteredHotelStays = hotelStays?.filter(stay => {
+  const filteredHotelStays = hotelStays.filter(stay => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const checkInDate = format(parseISO(stay.hotel_checkin_date), 'yyyy-MM-dd');
-    const checkOutDate = format(parseISO(stay.hotel_checkout_date), 'yyyy-MM-dd');
-    const currentDate = format(parseISO(normalizedDay), 'yyyy-MM-dd');
-    return currentDate >= checkInDate && currentDate <= checkOutDate;
-  }) || [];
+    const checkinDate = stay.hotel_checkin_date.split('T')[0];
+    const checkoutDate = stay.hotel_checkout_date.split('T')[0];
+    const dayDate = new Date(normalizedDay);
+    return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
+  });
 
   // Filter transportations based on normalized day using parseISO for proper date parsing.
   const filteredTransportations = transportations.filter(transport => {
@@ -250,12 +250,12 @@ const DayCard: React.FC<DayCardProps> = ({
                         <div>
                           <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
                           <p className="text-sm text-gray-500">{stay.hotel_address}</p>
-                          {stay.hotel_checkin_date && format(parseISO(stay.hotel_checkin_date), 'yyyy-MM-dd') === normalizedDay && (
+                          {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === normalizedDay && (
                             <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                               Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ''}
                             </div>
                           )}
-                          {stay.hotel_checkout_date && format(parseISO(stay.hotel_checkout_date), 'yyyy-MM-dd') === normalizedDay && (
+                          {stay.hotel_checkout_date && stay.hotel_checkout_date.split('T')[0] === normalizedDay && (
                             <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
                               Check-out {stay.checkout_time ? formatTime12(stay.checkout_time) : ''}
                             </div>
