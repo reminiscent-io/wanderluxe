@@ -29,14 +29,15 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   // Use the hook that provides expenses and exchange rates
   const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
 
-  // Transform the exchangeRates array into an object: { fromCurrency: { toCurrency: rate, ... }, ... }
+  // Transform the exchangeRates array into an object:
+  // { currency_from: { currency_to: rate, ... }, ... }
   const ratesObject = useMemo(() => {
     if (!exchangeRates || exchangeRates.length === 0) return {};
     const obj: Record<string, Record<string, number>> = {};
     exchangeRates.forEach((rate) => {
-      // Assuming each exchange rate row has: from_currency, to_currency, and rate
-      const from = rate.from_currency;
-      const to = rate.to_currency;
+      // Use the correct field names: currency_from and currency_to
+      const from = rate.currency_from;
+      const to = rate.currency_to;
       if (!obj[from]) {
         obj[from] = {};
       }
