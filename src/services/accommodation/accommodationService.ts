@@ -134,6 +134,7 @@ export const updateAccommodation = async (
     const { data: accommodationData, error: accommodationError } = await supabase
       .from("accommodations")
       .update({
+        title: formData.hotel || 'Unnamed Accommodation',
         hotel: formData.hotel,
         hotel_details: formData.hotel_details || null,
         hotel_address: formData.hotel_address || null,
