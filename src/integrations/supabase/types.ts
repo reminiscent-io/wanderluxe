@@ -22,6 +22,8 @@ export type Database = {
           hotel_address: string | null
           hotel_checkin_date: string | null
           hotel_checkout_date: string | null
+          checkin_time: string | null
+          checkout_time: string | null          
           hotel_details: string | null
           hotel_phone: string | null
           hotel_place_id: string | null
@@ -46,6 +48,8 @@ export type Database = {
           hotel_address?: string | null
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
           hotel_details?: string | null
           hotel_phone?: string | null
           hotel_place_id?: string | null
@@ -70,6 +74,8 @@ export type Database = {
           hotel_address?: string | null
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
           hotel_details?: string | null
           hotel_phone?: string | null
           hotel_place_id?: string | null
