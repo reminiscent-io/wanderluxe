@@ -1,3 +1,4 @@
+import { useAccommodationHandlers } from './hooks/useAccommodationHandlers';
 import React, { useEffect, useState } from 'react';
 import { AccommodationFormData } from '@/services/accommodation/accommodationService';
 import {
@@ -29,51 +30,19 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   onSuccess
 }) => {
   const [formData, setFormData] = useState<AccommodationFormData | undefined>(undefined);
-  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
-    arrival_date: null,
-    departure_date: null
-  });
 
+  // Initialize or reinitialize form data when initialData changes.
+  // Since dates are already in "YYYY-MM-DD" format, no additional splitting is required.
   useEffect(() => {
-    const fetchTripDates = async () => {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('arrival_date, departure_date')
-        .eq('trip_id', tripId)
-        .single();
-
-      if (!error && data) {
-        if (data.arrival_date && data.departure_date) {
-          console.log('AccommodationDialog: Setting trip dates', data);
-          setTripDates({
-            arrival_date: data.arrival_date,
-            departure_date: data.departure_date
-          });
-        } else {
-          console.log('AccommodationDialog: Skipping update - missing dates', data);
-        }
-      }
-    };
-
-    if (open) {
-      fetchTripDates();
-    }
-  }, [tripId, open]);
-
-  // Initialize or reinitialize form data when the dialog opens
-  useEffect(() => {
-    if (open && initialData) {
-      const formattedCheckinDate = initialData.hotel_checkin_date?.split('T')[0];
-      const formattedCheckoutDate = initialData.hotel_checkout_date?.split('T')[0];
-
+    if (initialData) {
       const newFormData = {
         ...initialData,
-        hotel_checkin_date: formattedCheckinDate,
-        hotel_checkout_date: formattedCheckoutDate
+        hotel_checkin_date: initialData.hotel_checkin_date,
+        hotel_checkout_date: initialData.hotel_checkout_date,
       };
       setFormData(newFormData);
     }
-  }, [open, initialData]);
+  }, [initialData]);
 
   // Reset form data when dialog closes
   useEffect(() => {
@@ -147,7 +116,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   const handleDelete = async () => {
     try {
       if (initialData?.stay_id) {
-        await accommodationHandlers.handleDelete(initialData.stay_id);
+        await useAccommodationHandlers.handleDelete(initialData.stay_id);
         onOpenChange(false);
         window.location.reload();
       }
@@ -172,8 +141,6 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           initialData={formData}
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
-          tripArrivalDate={tripDates.arrival_date}
-          tripDepartureDate={tripDates.departure_date}
           onDelete={handleDelete}
         />
       </DialogContent>
