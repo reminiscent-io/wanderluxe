@@ -207,7 +207,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           value={formData.details || ''}
           onChange={handleInputChange}
           placeholder="Additional details"
-          rows={3}
+          rows={1}
         />
       </div>
     </div>
