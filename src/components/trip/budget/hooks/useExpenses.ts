@@ -42,7 +42,7 @@ const fetchTripDayDate = async (dayId: string): Promise<string> => {
   const { data, error } = await supabase
     .from('trip_days')
     .select('date')
-    .eq('id', dayId)
+    .eq('day_id', dayId)
     .maybeSingle();
   if (error || !data) {
     console.error(`Error fetching date for day id ${dayId}:`, error);
