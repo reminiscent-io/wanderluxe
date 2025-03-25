@@ -18,9 +18,20 @@ export function convertCurrency(
   rates: Record<string, Record<string, number>>
 ): number {
   if (!amount || fromCurrency === toCurrency) return amount;
-  if (!rates[fromCurrency]?.[toCurrency]) return amount;
   
-  return amount * rates[fromCurrency][toCurrency];
+  // Try direct conversion
+  if (rates[fromCurrency]?.[toCurrency]) {
+    return amount * rates[fromCurrency][toCurrency];
+  }
+  
+  // If no direct rate, try converting through USD
+  if (rates[fromCurrency]?.['USD'] && rates['USD']?.[toCurrency]) {
+    const amountInUSD = amount * rates[fromCurrency]['USD'];
+    return amountInUSD * rates['USD'][toCurrency];
+  }
+  
+  console.warn(`No conversion rate found for ${fromCurrency} to ${toCurrency}`);
+  return amount;
 }
 
 export function useCurrencyRates() {
