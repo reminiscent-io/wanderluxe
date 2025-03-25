@@ -169,11 +169,11 @@ const DayCard: React.FC<DayCardProps> = ({
     return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
   });
 
-  // Filter transportations based on normalized day
+  // Filter transportations based on normalized day using parseISO for proper date parsing.
   const filteredTransportations = transportations.filter(transport => {
     if (!transport.start_date) return false;
     const transportDate = typeof transport.start_date === 'string'
-      ? new Date(transport.start_date)
+      ? parseISO(transport.start_date)
       : transport.start_date;
     const transportNormalized = format(transportDate, 'yyyy-MM-dd');
     return transportNormalized === normalizedDay;

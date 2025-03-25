@@ -1,4 +1,4 @@
-import { Currency, CURRENCY_SYMBOLS} from '@/utils/currencyConstants';
+import { Currency, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 import { ExpenseItem } from '@/types/trip';
 import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
@@ -15,7 +15,6 @@ export function formatCurrencyWithSymbol(amount: number, currency: string): stri
     return `${symbol}${amount.toFixed(2)}`;
   }
 }
-
 
 export const formatCurrency = (amount: number | null, currency: Currency | null): string => {
   if (amount === null || currency === null) return '-';
@@ -76,9 +75,15 @@ export const mapToExpenseItems = (
   // Map transportation
   transportation.forEach(transport => {
     if (transport.cost) {
+      const type = transport.type || '';
+      const provider = transport.provider || '';
+      const departure = transport.departure_location || '';
+      const arrival = transport.arrival_location || '';
+      // Build description in the format: "Flight | Delta JFK - LAX"
+      const description = `${type} | ${provider} ${departure} - ${arrival}`.trim();
       items.push({
         id: transport.id,
-        description: `${transport.type} - ${transport.provider || ''}`,
+        description,
         category: 'Transportation',
         cost: transport.cost,
         currency: transport.currency || 'USD',
@@ -134,7 +139,7 @@ export const convertAmount = (
 
   // Convert to USD first
   const toUsdRate = exchangeRates[fromCurrency]['USD'] || 1;
-  
+
   // Then convert from USD to target currency
   const fromUsdRate = exchangeRates['USD'][selectedCurrency] || 1;
 
