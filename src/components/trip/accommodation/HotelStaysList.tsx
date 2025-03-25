@@ -69,7 +69,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
               <div className="mt-2 text-sm text-gray-700">
                 <p className="mb-1">
                   <span className="font-medium">Stay: </span>
-                  {formatDateRange(stay.checkin_time, stay.checkout_time)}
+                  {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
                 </p>
                 {stay.hotel_address && (
                   <p className="mb-1 line-clamp-2">
