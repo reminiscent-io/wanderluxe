@@ -19,11 +19,14 @@ export const useAccommodationHandlers = ({ onAccommodationChange }: UseAccommoda
     setIsLoading(true);
     try {
       await deleteAccommodation(stayId);
-      onAccommodationChange();
       toast.success('Accommodation deleted successfully');
+      // Call change handler after success message
+      await onAccommodationChange();
     } catch (error) {
-      console.error('Error in delete operation:', error);
-      toast.error('Error occurred while deleting, please try again');
+      if (error instanceof Error) {
+        console.error('Error in delete operation:', error.message);
+        toast.error(error.message || 'Error occurred while deleting');
+      }
     } finally {
       setIsLoading(false);
     }
