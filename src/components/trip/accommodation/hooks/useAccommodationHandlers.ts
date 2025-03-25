@@ -20,8 +20,10 @@ export const useAccommodationHandlers = ({ onAccommodationChange }: UseAccommoda
     try {
       await deleteAccommodation(stayId);
       toast.success('Accommodation deleted successfully');
-      // Call change handler after success message
-      await onAccommodationChange();
+      // Only call onAccommodationChange if it exists
+      if (typeof onAccommodationChange === 'function') {
+        await onAccommodationChange();
+      }
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error in delete operation:', error.message);
