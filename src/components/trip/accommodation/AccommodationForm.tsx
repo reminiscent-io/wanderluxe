@@ -71,8 +71,8 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       hotel_url: initialData?.hotel_url || '',
       hotel_checkin_date: initialData?.hotel_checkin_date || tripArrivalDate || '',
       hotel_checkout_date: initialData?.hotel_checkout_date || tripDepartureDate || '',
-      checkin_time: initialData?.checkin_time || '',
-      checkout_time: initialData?.checkout_time || '',
+      checkin_time: initialData?.checkin_time || '15:00',  // 3:00pm
+      checkout_time: initialData?.checkout_time || '11:00', // 11:00am
       cost: initialData?.cost || null,
       currency: initialData?.currency || 'USD',
       hotel_address: initialData?.hotel_address || '',
