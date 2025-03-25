@@ -89,47 +89,49 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         />
       </div>
 
-      <div>
-        <RequiredLabel>Departure Date</RequiredLabel>
-        <Input
-          type="date"
-          name="start_date"
-          value={formData.start_date || ''}
-          onChange={handleInputChange}
-        />
+      {/* Group Departure Date and Time on the same line */}
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <RequiredLabel>Departure Date</RequiredLabel>
+          <Input
+            type="date"
+            name="start_date"
+            value={formData.start_date || ''}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="flex-1">
+          <Label>Departure Time</Label>
+          <Input
+            type="time"
+            name="start_time"
+            value={formData.start_time || ''}
+            onChange={handleInputChange}
+          />
+        </div>
       </div>
 
-      <div>
-        <Label>Departure Time</Label>
-        <Input
-          type="time"
-          name="start_time"
-          value={formData.start_time || ''}
-          onChange={handleInputChange}
-        />
+      {/* Group Arrival Date and Time on the same line */}
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <Label>Arrival Date</Label>
+          <Input
+            type="date"
+            name="end_date"
+            value={formData.end_date || ''}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="flex-1">
+          <Label>Arrival Time</Label>
+          <Input
+            type="time"
+            name="end_time"
+            value={formData.end_time || ''}
+            onChange={handleInputChange}
+          />
+        </div>
       </div>
-
-      <div>
-        <Label>Arrival Date</Label>
-        <Input
-          type="date"
-          name="end_date"
-          value={formData.end_date || ''}
-          onChange={handleInputChange}
-        />
-      </div>
-
-      <div>
-        <Label>Arrival Time</Label>
-        <Input
-          type="time"
-          name="end_time"
-          value={formData.end_time || ''}
-          onChange={handleInputChange}
-        />
-      </div>
-
-      {/* Removed the isDeparture and isArrival toggles */}
 
       <div>
         <Label>Provider</Label>
@@ -151,49 +153,51 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         />
       </div>
 
-      <div>
-        <Label>Cost</Label>
-        <Input
-          name="cost"
-          value={costInput}
-          onFocus={() => {
-            setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
-          }}
-          onChange={(e) => {
-            const value = e.target.value.replace(/[^\d.-]/g, '');
-            setCostInput(value);
-            const cost = value ? parseFloat(value) : null;
-            setFormData({ ...formData, cost });
-          }}
-          onBlur={() => {
-            const formatted = formatNumber(formData.cost);
-            setCostInput(formatted);
-          }}
-          placeholder="0"
-        />
-      </div>
-
-      <div>
-        <RequiredLabel>Currency</RequiredLabel>
-        <Select
-          value={formData.currency || 'USD'}
-          onValueChange={(value) => setFormData({ ...formData, currency: value })}
-        >
-          <SelectTrigger className="bg-white">
-            <SelectValue placeholder="Select currency" />
-          </SelectTrigger>
-          <SelectContent className="z-50 bg-sand-50">
-            {CURRENCIES.map((currency) => (
-              <SelectItem
-                key={currency}
-                value={currency}
-                className="cursor-pointer hover:bg-earth-100"
-              >
-                {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Group Cost and Currency on the same line */}
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <Label>Cost</Label>
+          <Input
+            name="cost"
+            value={costInput}
+            onFocus={() => {
+              setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
+            }}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^\d.-]/g, '');
+              setCostInput(value);
+              const cost = value ? parseFloat(value) : null;
+              setFormData({ ...formData, cost });
+            }}
+            onBlur={() => {
+              const formatted = formatNumber(formData.cost);
+              setCostInput(formatted);
+            }}
+            placeholder="0"
+          />
+        </div>
+        <div className="flex-1">
+          <RequiredLabel>Currency</RequiredLabel>
+          <Select
+            value={formData.currency || 'USD'}
+            onValueChange={(value) => setFormData({ ...formData, currency: value })}
+          >
+            <SelectTrigger className="bg-white">
+              <SelectValue placeholder="Select currency" />
+            </SelectTrigger>
+            <SelectContent className="z-50 bg-sand-50">
+              {CURRENCIES.map((currency) => (
+                <SelectItem
+                  key={currency}
+                  value={currency}
+                  className="cursor-pointer hover:bg-earth-100"
+                >
+                  {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
