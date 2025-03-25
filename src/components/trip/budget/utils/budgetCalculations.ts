@@ -126,20 +126,17 @@ export const convertAmount = (
   amount: number | null,
   fromCurrency: string,
   selectedCurrency: string,
-  exchangeRates: ExchangeRate[]
+  exchangeRates: Record<string, Record<string, number>>
 ): number => {
   if (!amount) return 0;
   if (fromCurrency === selectedCurrency) return amount;
+  if (!exchangeRates[fromCurrency] || !exchangeRates['USD']) return amount;
 
-  const toUsdRate = exchangeRates.find(r =>
-    r.currency_from === fromCurrency &&
-    r.currency_to === 'USD'
-  )?.rate || 1;
-
-  const fromUsdRate = exchangeRates.find(r =>
-    r.currency_from === 'USD' &&
-    r.currency_to === selectedCurrency
-  )?.rate || 1;
+  // Convert to USD first
+  const toUsdRate = exchangeRates[fromCurrency]['USD'] || 1;
+  
+  // Then convert from USD to target currency
+  const fromUsdRate = exchangeRates['USD'][selectedCurrency] || 1;
 
   return amount * toUsdRate * fromUsdRate;
 };
