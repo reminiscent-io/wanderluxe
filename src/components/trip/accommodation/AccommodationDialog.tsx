@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AccommodationFormData } from '@/services/accommodation/accommodationService';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   initialData,
   onSuccess
 }) => {
+  const [formData, setFormData] = useState<AccommodationFormData | undefined>(undefined);
   const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
     arrival_date: null,
     departure_date: null
@@ -57,6 +59,22 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
       fetchTripDates();
     }
   }, [tripId, open]);
+
+  // Initialize form data when the dialog opens
+  useEffect(() => {
+    if (initialData) {
+      // Format the dates to match the expected format for input[type="date"]
+      const formattedCheckinDate = initialData.hotel_checkin_date?.split('T')[0];
+      const formattedCheckoutDate = initialData.hotel_checkout_date?.split('T')[0];
+      
+      const formData = {
+        ...initialData,
+        hotel_checkin_date: formattedCheckinDate,
+        hotel_checkout_date: formattedCheckoutDate
+      };
+      setFormData(formData);
+    }
+  }, [initialData]);
 
   const handleSubmit = async (data: any) => {
     try {
