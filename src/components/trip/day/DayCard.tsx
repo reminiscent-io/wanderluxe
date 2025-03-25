@@ -161,12 +161,13 @@ const DayCard: React.FC<DayCardProps> = ({
   // Normalize the day using date-fns
   const normalizedDay = format(parseISO(date), 'yyyy-MM-dd');
 
-  const filteredHotelStays = hotelStays.filter(stay => {
+  const filteredHotelStays = hotelStays?.filter(stay => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const checkinDate = format(parseISO(stay.hotel_checkin_date), 'yyyy-MM-dd');
-    const checkoutDate = format(parseISO(stay.hotel_checkout_date), 'yyyy-MM-dd');
-    return normalizedDay >= checkinDate && normalizedDay < checkoutDate;
-  });
+    const checkInDate = format(parseISO(stay.hotel_checkin_date), 'yyyy-MM-dd');
+    const checkOutDate = format(parseISO(stay.hotel_checkout_date), 'yyyy-MM-dd');
+    const currentDate = format(parseISO(normalizedDay), 'yyyy-MM-dd');
+    return currentDate >= checkInDate && currentDate <= checkOutDate;
+  }) || [];
 
   // Filter transportations based on normalized day using parseISO for proper date parsing.
   const filteredTransportations = transportations.filter(transport => {
