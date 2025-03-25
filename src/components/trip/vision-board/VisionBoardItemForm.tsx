@@ -89,7 +89,7 @@ const VisionBoardItemForm: React.FC<VisionBoardItemFormProps> = ({
           value={description} 
           onChange={e => setDescription(e.target.value)} 
           placeholder="Add some details..." 
-          rows={3} 
+          rows={1} 
         />
       </div>
 
