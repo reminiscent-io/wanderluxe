@@ -6,7 +6,7 @@ import { Pencil, Plus } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
-import { DayActivity, HotelStay, ActivityFormData } from '@/types/trip';
+import { DayActivity, HotelStay, ActivityFormData, Transportation } from '@/types/trip';
 import DayImage from './DayImage';
 import DayEditDialog from './DayEditDialog';
 import { toast } from 'sonner';
@@ -48,7 +48,7 @@ interface DayCardProps {
   onDelete: (id: string) => void;
   defaultImageUrl?: string;
   hotelStays?: HotelStay[];
-  transportations?: any[];
+  transportations?: Transportation[];
   originalImageUrl?: string | null;
 }
 
