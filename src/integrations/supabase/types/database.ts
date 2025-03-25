@@ -26,6 +26,8 @@ export type Database = {
           expense_paid: boolean
           hotel_checkin_date: string | null
           hotel_checkout_date: string | null
+          checkin_time: string | null
+          checkout_time: string | null          
           hotel_url: string | null
           final_accommodation_day: string | null
           expense_date: string | null
@@ -50,6 +52,8 @@ export type Database = {
           expense_paid?: boolean
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
           hotel_url?: string | null
           final_accommodation_day?: string | null
           expense_date?: string | null
@@ -74,6 +78,8 @@ export type Database = {
           expense_paid?: boolean
           hotel_checkin_date?: string | null
           hotel_checkout_date?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
           hotel_url?: string | null
           final_accommodation_day?: string | null
           expense_date?: string | null
