@@ -138,6 +138,8 @@ export const updateAccommodation = async (
         hotel: formData.hotel,
         hotel_details: formData.hotel_details || null,
         hotel_address: formData.hotel_address || null,
+        checkin_time: formData.checkin_time || null,
+        checkout_time: formData.checkout_time || null,
         hotel_phone: formData.hotel_phone || null,
         hotel_website: formData.hotel_website || null,
         hotel_url: formData.hotel_url || null,
