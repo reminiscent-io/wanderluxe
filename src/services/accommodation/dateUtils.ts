@@ -33,4 +33,4 @@ export const generateDateArray = (startDate: string, endDate: string): string[] 
 
 // We don't need to create an alias since we're already exporting the function with the correct name
 // If other parts of the app expect a function named 'generateDatesArray', uncomment the line below:
-// export const generateDatesArray = generateDateArray;
+export const generateDatesArray = generateDateArray;
