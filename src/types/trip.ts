@@ -108,8 +108,6 @@ export interface Transportation {
   cost: number | null;
   currency: Currency | null;
   is_paid: boolean;
-  is_arrival: boolean;
-  is_departure: boolean;
   created_at: string;
 }
 
