@@ -27,7 +27,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   onOpenChange,
   initialData,
   onSuccess,
-  buttonClassName = "bg-earth-600 hover:bg-earth-700 text-white font-semibold" //Added default value
+  buttonClassName = "bg-earth-500 hover:bg-earth-600 text-white font-semibold" //Added default value
 }) => {
   const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
     arrival_date: null,
