@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CURRENCIES, type Currency } from '@/utils/currencyConstants';
@@ -17,19 +16,22 @@ export function convertCurrency(
   toCurrency: string,
   rates: Record<string, Record<string, number>>
 ): number {
-  if (!amount || fromCurrency === toCurrency) return amount;
-  
-  // Try direct conversion
-  if (rates[fromCurrency]?.[toCurrency]) {
-    return amount * rates[fromCurrency][toCurrency];
+  // Force uppercase for consistency
+  const from = fromCurrency.toUpperCase();
+  const to = toCurrency.toUpperCase();
+
+  if (!amount || from === to) return amount;
+
+  // Direct conversion: if a rate from 'from' to 'to' exists, use it
+  if (rates[from]?.[to]) {
+    return amount * rates[from][to];
   }
-  
-  // If no direct rate, try converting through USD
-  if (rates[fromCurrency]?.['USD'] && rates['USD']?.[toCurrency]) {
-    const amountInUSD = amount * rates[fromCurrency]['USD'];
-    return amountInUSD * rates['USD'][toCurrency];
+
+  // Reverse conversion: if a rate from 'to' to 'from' exists, invert it
+  if (rates[to]?.[from]) {
+    return amount * (1 / rates[to][from]);
   }
-  
+
   console.warn(`No conversion rate found for ${fromCurrency} to ${toCurrency}`);
   return amount;
 }
@@ -43,7 +45,7 @@ export function useCurrencyRates() {
   const fetchRates = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const { data, error: fetchError } = await supabase
         .from('exchange_rates')
@@ -52,20 +54,22 @@ export function useCurrencyRates() {
         .in('currency_to', CURRENCIES);
 
       if (fetchError) throw fetchError;
-      
+
       console.log('Fetched exchange rates:', data);
 
       if (!data || data.length === 0) {
         throw new Error('No exchange rates found in database');
       }
 
-      // Transform the flat array into nested object structure
+      // Transform the flat array into nested object structure, enforcing uppercase keys
       const ratesMap: Record<string, Record<string, number>> = {};
       (data as ExchangeRate[]).forEach(rate => {
-        if (!ratesMap[rate.currency_from]) {
-          ratesMap[rate.currency_from] = {};
+        const from = rate.currency_from.toUpperCase();
+        const to = rate.currency_to.toUpperCase();
+        if (!ratesMap[from]) {
+          ratesMap[from] = {};
         }
-        ratesMap[rate.currency_from][rate.currency_to] = rate.rate;
+        ratesMap[from][to] = rate.rate;
       });
 
       console.log('Transformed rates map:', ratesMap);
@@ -83,7 +87,7 @@ export function useCurrencyRates() {
   // Fetch rates on component mount
   useEffect(() => {
     fetchRates();
-    
+
     // Set up real-time subscription for rate updates
     const subscription = supabase
       .channel('exchange_rates_changes')
