@@ -1,38 +1,30 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { CURRENCIES, type Currency } from '@/utils/currencyConstants';
 
-// Default exchange rates (as fallback)
-const DEFAULT_RATES = {
-  USD: 1,
-  EUR: 0.93,
-  GBP: 0.79,
-  JPY: 151.73,
-  AUD: 1.52,
-  CAD: 1.37
+// Type for exchange rate data from database
+type ExchangeRate = {
+  currency_from: string;
+  currency_to: string;
+  rate: number;
+  last_updated: string;
 };
 
-// Currency symbols mapping
-export const CURRENCY_SYMBOLS = {
-  USD: '$',
-  EUR: '€',
-  GBP: '£',
-  JPY: '¥',
-  AUD: 'A$',
-  CAD: 'C$'
-};
-
-export function convertCurrency(amount: number, fromCurrency: string, toCurrency: string, rates: Record<string, number> = DEFAULT_RATES): number {
-  if (fromCurrency === toCurrency) return amount;
+export function convertCurrency(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rates: Record<string, Record<string, number>>
+): number {
+  if (!amount || fromCurrency === toCurrency) return amount;
+  if (!rates[fromCurrency]?.[toCurrency]) return amount;
   
-  // Convert to USD first (our base currency)
-  const amountInUSD = fromCurrency === 'USD' ? amount : amount / rates[fromCurrency];
-  
-  // Then convert from USD to target currency
-  return toCurrency === 'USD' ? amountInUSD : amountInUSD * rates[toCurrency];
+  return amount * rates[fromCurrency][toCurrency];
 }
 
 export function useCurrencyRates() {
-  const [rates, setRates] = useState<Record<string, number>>(DEFAULT_RATES);
+  const [rates, setRates] = useState<Record<string, Record<string, number>>>({});
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,15 +34,28 @@ export function useCurrencyRates() {
     setError(null);
     
     try {
-      // You can replace this with a real API call to fetch exchange rates
-      // For example: const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      
-      // For now, we'll use our default rates
-      setRates(DEFAULT_RATES);
+      const { data, error: fetchError } = await supabase
+        .from('exchange_rates')
+        .select('*')
+        .in('currency_from', CURRENCIES)
+        .in('currency_to', CURRENCIES);
+
+      if (fetchError) throw fetchError;
+
+      // Transform the flat array into nested object structure
+      const ratesMap: Record<string, Record<string, number>> = {};
+      (data as ExchangeRate[]).forEach(rate => {
+        if (!ratesMap[rate.currency_from]) {
+          ratesMap[rate.currency_from] = {};
+        }
+        ratesMap[rate.currency_from][rate.currency_to] = rate.rate;
+      });
+
+      setRates(ratesMap);
       setLastUpdated(new Date().toISOString());
     } catch (err) {
-      setError('Failed to fetch currency rates');
       console.error('Error fetching currency rates:', err);
+      setError('Failed to fetch currency rates');
     } finally {
       setIsLoading(false);
     }
@@ -59,9 +64,22 @@ export function useCurrencyRates() {
   // Fetch rates on component mount
   useEffect(() => {
     fetchRates();
-    // You could add a refresh interval here if needed
-    // const interval = setInterval(fetchRates, 24 * 60 * 60 * 1000); // once a day
-    // return () => clearInterval(interval);
+    
+    // Set up real-time subscription for rate updates
+    const subscription = supabase
+      .channel('exchange_rates_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'exchange_rates'
+      }, () => {
+        fetchRates();
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return { rates, lastUpdated, isLoading, error, refreshRates: fetchRates };
