@@ -214,7 +214,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           value={activity.description || ''}
           onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
-          rows={2}
+          rows={1}
         />
       </div>
 
