@@ -18,6 +18,8 @@ interface AccommodationDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: Accommodation;
   onSuccess: () => void;
+  checkin_time?: string | null;
+  checkout_time?: string | null;
 }
 
 const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
@@ -25,7 +27,9 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   open,
   onOpenChange,
   initialData,
-  onSuccess
+  onSuccess,
+  checkin_time,
+  checkout_time
 }) => {
   const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
     arrival_date: null,
@@ -133,6 +137,8 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           onCancel={() => onOpenChange(false)}
           tripArrivalDate={tripDates.arrival_date}
           tripDepartureDate={tripDates.departure_date}
+          checkin_time={checkin_time}
+          checkout_time={checkout_time}
         />
       </DialogContent>
     </Dialog>
