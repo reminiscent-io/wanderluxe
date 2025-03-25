@@ -163,8 +163,8 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const filteredHotelStays = hotelStays.filter(stay => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const checkinDate = stay.hotel_checkin_date.split('T')[0];
-    const checkoutDate = stay.hotel_checkout_date.split('T')[0];
+    const checkinDate = stay.hotel_checkin_date;
+    const checkoutDate = stay.hotel_checkout_date;
     const dayDate = new Date(normalizedDay);
     return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
   });
