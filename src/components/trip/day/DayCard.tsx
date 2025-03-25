@@ -16,7 +16,7 @@ import DiningList from '../dining/DiningList';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import TransportationListItem from '@/components/trip/transportation/TransportationListItem';
 import { CURRENCIES } from '@/utils/currencyConstants';
-import DayActivityManager from './components/DayActivityManager'; 
+import DayActivityManager from './components/DayActivityManager';
 
 const initialActivity: ActivityFormData = { 
   title: '', 
@@ -25,6 +25,16 @@ const initialActivity: ActivityFormData = {
   end_time: '', 
   cost: '', 
   currency: CURRENCIES[0] 
+};
+
+// Helper function to convert 24-hour time (e.g. "15:00") to 12-hour format ("3:00pm")
+const formatTime12 = (time?: string) => {
+  if (!time) return '';
+  const [hourStr, minuteStr] = time.split(':');
+  const hour = parseInt(hourStr, 10);
+  const period = hour >= 12 ? 'pm' : 'am';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${minuteStr}${period}`;
 };
 
 interface DayCardProps {
@@ -175,7 +185,7 @@ const DayCard: React.FC<DayCardProps> = ({
   };
 
   // Import activity management functions from DayActivityManager
-  const { handleAddActivity, handleEditActivity, handleDeleteActivity } = DayActivityManager({ id, tripId, activities }); // :contentReference[oaicite:6]{index=6}&#8203;:contentReference[oaicite:7]{index=7}
+  const { handleAddActivity, handleEditActivity, handleDeleteActivity } = DayActivityManager({ id, tripId, activities });
 
   const handleActivityEditClick = (activity: DayActivity) => {
     if (activity.id) {
@@ -242,12 +252,12 @@ const DayCard: React.FC<DayCardProps> = ({
                           <p className="text-sm text-gray-500">{stay.hotel_address}</p>
                           {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === normalizedDay && (
                             <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              Check-in day
+                              Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ''}
                             </div>
                           )}
                           {stay.hotel_checkout_date && stay.hotel_checkout_date.split('T')[0] === normalizedDay && (
                             <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                              Check-out day
+                              Check-out {stay.checkout_time ? formatTime12(stay.checkout_time) : ''}
                             </div>
                           )}
                         </div>
