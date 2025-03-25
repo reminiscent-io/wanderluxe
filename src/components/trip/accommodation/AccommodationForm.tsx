@@ -145,7 +145,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
                 <textarea
                   {...field}
                   className="w-full p-2 border rounded-md"
-                  rows={3}
+                  rows={1}
                 />
               </FormControl>
             </FormItem>
