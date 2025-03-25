@@ -1,4 +1,3 @@
-
 import { Currency } from '@/utils/currencyConstants';
 
 // Define the form types (string-based for form handling)
@@ -79,6 +78,8 @@ export interface HotelStay {
   hotel: string;
   hotel_checkin_date: string;
   hotel_checkout_date: string;
+  checkin_time?: string;
+  checkout_time?: string;
   hotel_details: string | null;
   hotel_url: string | null;
   cost: number | null;

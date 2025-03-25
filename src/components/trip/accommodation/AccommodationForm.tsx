@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,6 +17,8 @@ const formSchema = z.object({
   hotel_url: z.string().url().optional().or(z.literal('')),
   hotel_checkin_date: z.string().min(1, "Check-in date is required"),
   hotel_checkout_date: z.string().min(1, "Check-out date is required"),
+  checkin_time: z.string().optional(),
+  checkout_time: z.string().optional(),
   cost: z.number().nullable(),
   currency: z.string().min(1, "Currency is required"),
   hotel_address: z.string().optional(),
@@ -70,6 +71,8 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       hotel_url: initialData?.hotel_url || '',
       hotel_checkin_date: initialData?.hotel_checkin_date || tripArrivalDate || '',
       hotel_checkout_date: initialData?.hotel_checkout_date || tripDepartureDate || '',
+      checkin_time: initialData?.checkin_time || '',
+      checkout_time: initialData?.checkout_time || '',
       cost: initialData?.cost || null,
       currency: initialData?.currency || 'USD',
       hotel_address: initialData?.hotel_address || '',
@@ -170,7 +173,26 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="checkin_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Check-in Time</FormLabel>
+                <FormControl>
+                  <input
+                    type="time"
+                    {...field}
+                    className="w-full p-2 border rounded-md"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="hotel_checkout_date"
@@ -180,6 +202,23 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
                 <FormControl>
                   <input
                     type="date"
+                    {...field}
+                    className="w-full p-2 border rounded-md"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="checkout_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Check-out Time</FormLabel>
+                <FormControl>
+                  <input
+                    type="time"
                     {...field}
                     className="w-full p-2 border rounded-md"
                   />
