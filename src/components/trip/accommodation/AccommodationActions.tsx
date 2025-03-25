@@ -312,7 +312,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
             value={formData.hotel_details || ''}
             onChange={handleInputChange}
             placeholder="Additional details about this stay"
-            rows={3}
+            rows={1}
           />
         </div>
 
