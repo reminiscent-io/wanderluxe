@@ -52,6 +52,12 @@ export function useCurrencyRates() {
         .in('currency_to', CURRENCIES);
 
       if (fetchError) throw fetchError;
+      
+      console.log('Fetched exchange rates:', data);
+
+      if (!data || data.length === 0) {
+        throw new Error('No exchange rates found in database');
+      }
 
       // Transform the flat array into nested object structure
       const ratesMap: Record<string, Record<string, number>> = {};
@@ -61,6 +67,8 @@ export function useCurrencyRates() {
         }
         ratesMap[rate.currency_from][rate.currency_to] = rate.rate;
       });
+
+      console.log('Transformed rates map:', ratesMap);
 
       setRates(ratesMap);
       setLastUpdated(new Date().toISOString());
