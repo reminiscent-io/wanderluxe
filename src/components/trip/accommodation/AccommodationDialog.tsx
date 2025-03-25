@@ -58,19 +58,6 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     }
   }, [tripId, open]);
 
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        ...initialData,
-        hotel_checkin_date: initialData.hotel_checkin_date?.split('T')[0],
-        hotel_checkout_date: initialData.hotel_checkout_date?.split('T')[0],
-        checkin_time: initialData.checkin_time?.slice(0, 5) || '14:00',
-        checkout_time: initialData.checkout_time?.slice(0, 5) || '11:00',
-        cost: initialData.cost?.toString() || '',
-      });
-    }
-  }, [initialData, form]);
-
   const handleSubmit = async (data: any) => {
     try {
       if (initialData?.stay_id) {
