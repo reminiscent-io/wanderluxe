@@ -60,9 +60,9 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     }
   }, [tripId, open]);
 
-  // Initialize form data when the dialog opens
+  // Initialize form data
   useEffect(() => {
-    if (open && initialData) {
+    if (initialData) {
       // Format the dates to match the expected format for input[type="date"]
       const formattedCheckinDate = initialData.hotel_checkin_date?.split('T')[0];
       const formattedCheckoutDate = initialData.hotel_checkout_date?.split('T')[0];
@@ -73,10 +73,15 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         hotel_checkout_date: formattedCheckoutDate
       };
       setFormData(formData);
-    } else if (!open) {
-      setFormData(undefined); // Reset form data when dialog closes
     }
-  }, [initialData, open]);
+  }, [initialData]);
+
+  // Reset form data when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setFormData(undefined);
+    }
+  }, [open]);
 
   const handleSubmit = async (data: any) => {
     try {
