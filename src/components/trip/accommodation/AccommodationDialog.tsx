@@ -18,18 +18,14 @@ interface AccommodationDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: Accommodation;
   onSuccess: () => void;
-  checkin_time?: string | null;
-  checkout_time?: string | null;
-}
+  }
 
 const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   tripId,
   open,
   onOpenChange,
   initialData,
-  onSuccess,
-  checkin_time,
-  checkout_time
+  onSuccess
 }) => {
   const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
     arrival_date: null,
@@ -74,6 +70,8 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
             hotel_url: data.hotel_url,
             hotel_checkin_date: data.hotel_checkin_date,
             hotel_checkout_date: data.hotel_checkout_date,
+            checkin_time: data.checkin_time,
+            checkout_time: data.checkout_time,
             cost: data.cost,
             currency: data.currency,
             hotel_address: data.hotel_address,
@@ -97,6 +95,8 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
             hotel_url: data.hotel_url,
             hotel_checkin_date: data.hotel_checkin_date,
             hotel_checkout_date: data.hotel_checkout_date,
+            checkin_time: data.checkin_time,
+            checkout_time: data.checkout_time,
             cost: data.cost,
             currency: data.currency,
             hotel_address: data.hotel_address,
