@@ -31,17 +31,24 @@ export type ExpensesQueryResult = {
   exchangeRates: any[];
 };
 
-// Helper function to fetch date from trip_days with error handling
+// Cache for trip day dates to prevent duplicate queries
+const dayDateCache: Record<string, string> = {};
+
+// Helper function to fetch date from trip_days with caching and error logging
 const fetchTripDayDate = async (dayId: string): Promise<string> => {
+  if (dayDateCache[dayId]) {
+    return dayDateCache[dayId];
+  }
   const { data, error } = await supabase
     .from('trip_days')
     .select('date')
     .eq('id', dayId)
-    .single();
+    .maybeSingle();
   if (error || !data) {
-    // Optionally, you could log error details here
+    console.error(`Error fetching date for day id ${dayId}:`, error);
     return "";
   }
+  dayDateCache[dayId] = data.date;
   return data.date;
 };
 
