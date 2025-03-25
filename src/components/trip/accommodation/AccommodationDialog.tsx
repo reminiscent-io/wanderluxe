@@ -170,13 +170,11 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         <AccommodationForm
-          initialData={initialData}
+          initialData={formData}
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
           tripArrivalDate={tripDates.arrival_date}
           tripDepartureDate={tripDates.departure_date}
-          //checkin_time={initialData?.checkin_time || '14:00'}
-          //checkout_time={initialData?.checkout_time || '11:00'}
           onDelete={handleDelete}
         />
       </DialogContent>
