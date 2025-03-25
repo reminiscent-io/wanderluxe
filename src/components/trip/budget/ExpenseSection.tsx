@@ -1,4 +1,4 @@
-
+/*
 import React from 'react';
 import ExpenseCard from './ExpenseCard';
 import ExpenseDetails from './ExpenseDetails';
@@ -51,3 +51,4 @@ const ExpenseSection: React.FC<ExpenseSectionProps> = ({
 };
 
 export default ExpenseSection;
+*/
