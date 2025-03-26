@@ -47,7 +47,8 @@ export const getDaysBetweenDates = (startDateStr: string, endDateStr: string): s
 
   // Include both start and end dates in the array
   while (current <= end) {
-    dateArray.push(current.toISOString().split('T')[0]);
+    // Use local date formatting to prevent conversion to UTC
+    dateArray.push(format(current, 'yyyy-MM-dd'));
     current.setDate(current.getDate() + 1);
   }
 
