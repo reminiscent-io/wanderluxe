@@ -30,26 +30,20 @@ export const formatToTime = (timeString?: string | null): string => {
 
 export const getDaysBetweenDates = (startDateStr: string, endDateStr: string): string[] => {
   const dateArray: string[] = [];
-  const start = new Date(startDateStr);
-  const end = new Date(endDateStr);
+  const start = parse(startDateStr, 'yyyy-MM-dd', new Date());
+  const end = parse(endDateStr, 'yyyy-MM-dd', new Date());
 
   // Validate dates
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
     throw new Error('Invalid date format');
   }
 
-  // Clone the start date to avoid modifying it
-  const current = new Date(start);
-
-  // Reset time part to avoid timezone issues
-  current.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-
+  let current = start;
+  
   // Include both start and end dates in the array
-  while (current <= end) {
-    // Use local date formatting to prevent conversion to UTC
+  while (!isAfter(current, end)) {
     dateArray.push(format(current, 'yyyy-MM-dd'));
-    current.setDate(current.getDate() + 1);
+    current = addDays(current, 1);
   }
 
   return dateArray;
