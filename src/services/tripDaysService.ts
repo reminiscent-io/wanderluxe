@@ -7,18 +7,25 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
   }
 
   try {
-    // Verify trip exists first
+    // Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('Authentication required');
+    }
+
+    // Verify trip exists and belongs to user
     const { data: tripExists, error: tripError } = await supabase
       .from('trips')
       .select('trip_id')
       .eq('trip_id', tripId)
+      .eq('user_id', user.id)
       .single();
 
     if (tripError || !tripExists) {
-      throw new Error('Trip must exist before creating days');
+      throw new Error('Trip must exist and belong to the current user');
     }
 
-    // First check which days already exist
+    // Check which days already exist
     const { data: existingDays } = await supabase
       .from('trip_days')
       .select('date')
@@ -31,10 +38,12 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
 
     if (newDates.length === 0) return;
 
+    // Create trip days with user_id
     const tripDays = newDates.map(date => ({
       trip_id: tripId,
       date: date,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      user_id: user.id
     }));
 
     const { error } = await supabase
