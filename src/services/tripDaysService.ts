@@ -3,6 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const createTripDays = async (tripId: string, dates: string[]) => {
   try {
+    // Validate user owns the trip
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      throw new Error('You must be logged in to create trip days');
+    }
+
+    const { data: trip, error: tripError } = await supabase
+      .from('trips')
+      .select('user_id')
+      .eq('trip_id', tripId)
+      .single();
+
+    if (tripError || !trip || trip.user_id !== session.user.id) {
+      throw new Error('Unauthorized: Invalid trip access');
+    }
+
     // First check which days already exist
     const { data: existingDays } = await supabase
       .from('trip_days')

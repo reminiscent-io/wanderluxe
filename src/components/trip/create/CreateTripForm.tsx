@@ -40,10 +40,22 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
     e.preventDefault();
     
     try {
-      // Insert the trip into the database
+      // Get current session and validate user
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         throw new Error('You must be logged in to create a trip');
+      }
+
+      // Verify user ID matches auth
+      const { data: userCheck, error: userError } = await supabase
+        .from('trips')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (userError) {
+        console.error('Error checking user:', userError);
+        throw new Error('Failed to validate user');
       }
 
       const { data: trip, error } = await supabase
