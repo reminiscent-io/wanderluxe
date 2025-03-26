@@ -181,12 +181,7 @@ const DayCard: React.FC<DayCardProps> = ({
       : transportStartDate;
     const dayDate = new Date(normalizedDay);
 
-    // Convert dates to UTC midnight for consistent comparison
-    const dayDateUTC = new Date(Date.UTC(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate()));
-    const startDateUTC = transportStartDate ? new Date(Date.UTC(new Date(transportStartDate).getFullYear(), new Date(transportStartDate).getMonth(), new Date(transportStartDate).getDate())) : null;
-    const endDateUTC = transportEndDate ? new Date(Date.UTC(new Date(transportEndDate).getFullYear(), new Date(transportEndDate).getMonth(), new Date(transportEndDate).getDate())) : startDateUTC;
-    
-    return startDateUTC && dayDateUTC >= startDateUTC && (!endDateUTC || dayDateUTC <= endDateUTC);
+    return dayDate >= new Date(transportStartDate) && dayDate <= new Date(transportEndDate);
   });
 
 
