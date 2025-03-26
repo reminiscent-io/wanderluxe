@@ -170,10 +170,23 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   // Filter transportations based on normalized day using parseISO for proper date parsing.
-    const filteredTransportations = transportations.filter(transport => {
-      if (!transport.start_date) return false;
-      return new Date(transport.start_date) === new Date(normalizedDay);
+  const filteredTransportations = transportations.filter(transport => {
+    if (!transport.start_date) {
+      console.log('No start_date for transport:', transport);
+      return false;
+    }
+    const transportDate = new Date(transport.start_date).getTime();
+    const normalizedDate = new Date(normalizedDay).getTime();
+    console.log('Comparing transport date vs. normalized day:', {
+      transportStartDate: transport.start_date,
+      normalizedDay,
+      transportDate,
+      normalizedDate,
+      isEqual: transportDate === normalizedDate
+    });
+    return transportDate === normalizedDate;
   });
+
 
   const handleHotelEdit = (stay: HotelStay) => {
     setEditHotelStay(stay);
