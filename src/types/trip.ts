@@ -102,6 +102,7 @@ export interface Transportation {
   confirmation_number: string | null;
   start_date: string;
   start_time: string | null;
+  end_date: string | null;
   end_time: string | null;
   departure_location: string | null;
   arrival_location: string | null;
