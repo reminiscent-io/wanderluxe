@@ -48,7 +48,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       }
 
       // Insert the trip into the database
-      const { data: trip, error } = await supabase
+      // First create the trip
+      const { data: trip, error: tripError } = await supabase
         .from('trips')
         .insert([{
           user_id: user.id,
@@ -60,14 +61,25 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
         .select()
         .single();
 
-      if (error) throw error;
-        
-      if (trip) {
-        // Generate an array of dates between start and end dates (inclusive)
+      if (tripError) throw tripError;
+      
+      if (trip?.trip_id) {
+        // Generate dates between start and end dates
         const days = getDaysBetweenDates(startDate, endDate);
         
-        // Create trip days in the database for each date
-        await createTripDays(trip.id, days);
+        // Create trip days with proper trip_id and user_id
+        const { error: daysError } = await supabase
+          .from('trip_days')
+          .insert(
+            days.map(date => ({
+              trip_id: trip.trip_id,
+              user_id: user.id,
+              date: date,
+              created_at: new Date().toISOString()
+            }))
+          );
+
+        if (daysError) throw daysError;
         
         // Call the parent's onSubmit callback
         onSubmit(e);
