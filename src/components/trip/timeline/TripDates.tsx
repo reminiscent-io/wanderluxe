@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { CalendarDays } from "lucide-react";
@@ -26,7 +27,7 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [newArrival, setNewArrival] = useState('');
   const [newDeparture, setNewDeparture] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   // Confirmation state
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{
@@ -72,14 +73,14 @@ const TripDates: React.FC<TripDatesProps> = ({
     // Generate date arrays
     const oldDates = generateDatesArray(oldArrival, oldDeparture);
     const newDates = generateDatesArray(newArrival, newDeparture);
-
+    
     // Find dates that are in oldDates but not in newDates
     const datesToRemove = oldDates.filter(date => !newDates.includes(date));
-
+    
     if (datesToRemove.length === 0) {
       return null; // No days to remove
     }
-
+    
     // Count activities for these days
     let activityCount = 0;
     try {
@@ -89,23 +90,23 @@ const TripDates: React.FC<TripDatesProps> = ({
         .select('day_id')
         .eq('trip_id', tripId)
         .in('date', datesToRemove);
-
+      
       if (daysError) throw daysError;
-
+      
       if (daysData && daysData.length > 0) {
         const dayIds = daysData.map(day => day.day_id);
-
+        
         // Count activities in these days
         const { count, error: activitiesError } = await supabase
           .from('day_activities')
           .select('*', { count: 'exact', head: true })
           .in('day_id', dayIds);
-
+        
         if (activitiesError) throw activitiesError;
-
+        
         activityCount = count || 0;
       }
-
+      
       return {
         dayCount: datesToRemove.length,
         activityCount,
@@ -123,14 +124,14 @@ const TripDates: React.FC<TripDatesProps> = ({
     // Generate date arrays
     const oldDates = generateDatesArray(oldArrival, oldDeparture);
     const newDates = generateDatesArray(newArrival, newDeparture);
-
+    
     // Find dates that are in newDates but not in oldDates (new days to add)
     const datesToAdd = newDates.filter(date => !oldDates.includes(date));
-
+    
     if (datesToAdd.length === 0) {
       return; // No new days to add
     }
-
+    
     try {
       // Create trip days for the new dates
       await createTripDays(tripId, datesToAdd);
@@ -150,28 +151,28 @@ const TripDates: React.FC<TripDatesProps> = ({
         .select('day_id')
         .eq('trip_id', tripId)
         .in('date', dates);
-
+      
       if (daysError) throw daysError;
-
+      
       if (daysData && daysData.length > 0) {
         const dayIds = daysData.map(day => day.day_id);
-
+        
         // Delete activities for these days
         const { error: activitiesError } = await supabase
           .from('day_activities')
           .delete()
           .in('day_id', dayIds);
-
+        
         if (activitiesError) throw activitiesError;
-
+        
         // Delete the trip days
         const { error: deleteDaysError } = await supabase
           .from('trip_days')
           .delete()
           .in('day_id', dayIds);
-
+        
         if (deleteDaysError) throw deleteDaysError;
-
+        
         console.log(`Removed ${dayIds.length} trip days and their activities`);
       }
     } catch (error) {
@@ -223,20 +224,20 @@ const TripDates: React.FC<TripDatesProps> = ({
 
   const handleConfirmDateChange = async () => {
     if (!pendingChanges) return;
-
+    
     setIsSubmitting(true);
     setShowConfirmation(false);
-
+    
     try {
       // Remove the affected days
       await removeTripDays(daysToRemove.dates);
-
+      
       // Save the new dates
       await saveDateChanges(
         pendingChanges.arrival_date || newArrival, 
         pendingChanges.departure_date || newDeparture
       );
-
+      
       // Clear pending changes
       setPendingChanges(null);
     } catch (error) {
