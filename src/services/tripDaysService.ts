@@ -2,7 +2,22 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const createTripDays = async (tripId: string, dates: string[]) => {
+  if (!tripId) {
+    throw new Error('Trip ID is required to create trip days');
+  }
+
   try {
+    // Verify trip exists first
+    const { data: tripExists, error: tripError } = await supabase
+      .from('trips')
+      .select('trip_id')
+      .eq('trip_id', tripId)
+      .single();
+
+    if (tripError || !tripExists) {
+      throw new Error('Trip must exist before creating days');
+    }
+
     // First check which days already exist
     const { data: existingDays } = await supabase
       .from('trip_days')
