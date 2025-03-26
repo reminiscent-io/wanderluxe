@@ -169,14 +169,16 @@ const DayCard: React.FC<DayCardProps> = ({
     return dayDate >= new Date(checkinDate) && dayDate < new Date(checkoutDate);
   });
 
-  // Filter transportations that are relevant to this day (departure or arrival)
+  // Filter transportations that are relevant to this day (departure and optionally arrival)
   const filteredTransportations = transportations.filter(transport => {
-    if (!transport.start_date || !transport.end_date) {
-      console.log('Missing dates for transport:', transport);
+    if (!transport.start_date) {
+      console.log('Missing start date for transport:', transport);
       return false;
     }
     const transportStartDate = new Date(transport.start_date).toISOString().split('T')[0];
-    const transportEndDate = new Date(transport.end_date).toISOString().split('T')[0];
+    const transportEndDate = transport.end_date 
+      ? new Date(transport.end_date).toISOString().split('T')[0]
+      : transportStartDate;
     const dayDate = normalizedDay;
 
     return dayDate >= transportStartDate && dayDate <= transportEndDate;
