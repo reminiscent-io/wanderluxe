@@ -3,17 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const createTripDays = async (tripId: string, dates: string[]) => {
   try {
-    // First verify the trip belongs to the authenticated user
-    const { data: trip, error: tripError } = await supabase
-      .from('trips')
-      .select('trip_id')
-      .eq('trip_id', tripId)
-      .single();
-
-    if (tripError) throw tripError;
-    if (!trip) throw new Error('Trip not found or access denied');
-
-    // Check which days already exist
+    // First check which days already exist
     const { data: existingDays } = await supabase
       .from('trip_days')
       .select('date')
