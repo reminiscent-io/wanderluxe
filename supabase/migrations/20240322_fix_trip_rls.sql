@@ -31,3 +31,51 @@ create policy "Users can delete their own trips"
 on trips for delete
 to authenticated
 using (auth.uid()::text = user_id::text);
+
+-- Enable RLS for trip_days
+alter table trip_days enable row level security;
+
+-- Create policies for trip_days
+create policy "Users can create their own trip days"
+on trip_days for insert
+to authenticated
+with check (
+  auth.uid()::text = (
+    select user_id::text 
+    from trips 
+    where trip_id = trip_days.trip_id
+  )
+);
+
+create policy "Users can view their own trip days"
+on trip_days for select
+to authenticated
+using (
+  auth.uid()::text = (
+    select user_id::text 
+    from trips 
+    where trip_id = trip_days.trip_id
+  )
+);
+
+create policy "Users can update their own trip days"
+on trip_days for update
+to authenticated
+using (
+  auth.uid()::text = (
+    select user_id::text 
+    from trips 
+    where trip_id = trip_days.trip_id
+  )
+);
+
+create policy "Users can delete their own trip days"
+on trip_days for delete
+to authenticated
+using (
+  auth.uid()::text = (
+    select user_id::text 
+    from trips 
+    where trip_id = trip_days.trip_id
+  )
+);
