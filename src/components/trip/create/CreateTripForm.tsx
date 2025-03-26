@@ -51,7 +51,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           destination,
           arrival_date: startDate,
           departure_date: endDate,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          cover_image_url: '' // Add empty cover image URL
         }])
         .select()
         .single();
@@ -63,8 +64,13 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           // Generate an array of dates between start and end dates (inclusive)
           const days = getDaysBetweenDates(startDate, endDate);
           
-          // Create trip days in the database for each date with both IDs
+          // Create trip days in the database for each date
           await createTripDays(trip.trip_id, days);
+          
+          // Call the parent's onSubmit callback with the event
+          if (onSubmit) {
+            onSubmit(e);
+          }
         } catch (daysError) {
           console.error('Error creating trip days:', daysError);
           throw daysError;
@@ -72,6 +78,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       }
     } catch (error) {
       console.error('Error creating trip:', error);
+      toast.error('Failed to create trip');
     }
   };
 
