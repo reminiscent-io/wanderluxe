@@ -73,7 +73,6 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           .insert(
             days.map(date => ({
               trip_id: trip.trip_id,
-              user_id: user.id,
               date: date,
               created_at: new Date().toISOString()
             }))
