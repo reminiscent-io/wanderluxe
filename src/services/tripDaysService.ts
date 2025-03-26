@@ -3,9 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const createTripDays = async (tripId: string, dates: string[]) => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     // First check which days already exist
     const { data: existingDays } = await supabase
       .from('trip_days')
@@ -22,8 +19,7 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
     const tripDays = newDates.map(date => ({
       trip_id: tripId,
       date: date,
-      created_at: new Date().toISOString(),
-      user_id: user.id // Add user_id to satisfy RLS policy
+      created_at: new Date().toISOString()
     }));
 
     const { error } = await supabase
