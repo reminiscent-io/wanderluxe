@@ -169,7 +169,7 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   // Filter transportations that are relevant to this day (departure and optionally arrival)
-  const filteredTransportations = transportations.filter(transport => {
+  const filteredTransportations = transportations?.filter((transport: Transportation) => {
     if (!transport.start_date) {
       console.log('Missing start date for transport:', transport);
       return false;
@@ -296,7 +296,7 @@ const DayCard: React.FC<DayCardProps> = ({
                             setSelectedTransportation(transport);
                             setIsTransportationDialogOpen(true);
                           }}
-                        
+
                         />
                       ))
                     ) : (
