@@ -1,6 +1,6 @@
 import React from 'react';
 import { format, parseISO } from 'date-fns';
-import { Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Pencil, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -9,7 +9,6 @@ interface DayHeaderProps {
   date: string;
   isOpen?: boolean;
   onEdit: () => void;
-  onDelete?: () => void;
   onToggle?: () => void;
 }
 
@@ -18,7 +17,6 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   date,
   isOpen = false,
   onEdit,
-  onDelete,
   onToggle
 }) => {
   const formattedDate = format(parseISO(date), 'EEEE, MMMM d');
@@ -45,7 +43,6 @@ const DayHeader: React.FC<DayHeaderProps> = ({
         </div>
       </div>
 
-      {/* We stop propagation only on the icon buttons, not the entire header */}
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <Button
           variant="ghost"
@@ -55,16 +52,6 @@ const DayHeader: React.FC<DayHeaderProps> = ({
         >
           <Pencil className="h-4 w-4" />
         </Button>
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-red-500 hover:text-red-700"
-            onClick={onDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
         <ChevronDown
           className={cn(
             'h-4 w-4 transition-transform duration-200 text-white',
