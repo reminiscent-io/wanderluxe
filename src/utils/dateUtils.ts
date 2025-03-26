@@ -31,17 +31,15 @@ export const formatToTime = (timeString?: string | null): string => {
 // Generate an array of date strings between start and end dates (inclusive)
 export const getDaysBetweenDates = (startDateStr: string, endDateStr: string): string[] => {
   try {
-    // Parse the date strings into Date objects, using UTC to avoid timezone issues
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
+    // Work with the date strings directly
+    const dateArray: string[] = [];
+    let currentDate = new Date(startDateStr + 'T00:00:00Z');
+    const endDate = new Date(endDateStr + 'T00:00:00Z');
 
     // Validate dates
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    if (isNaN(currentDate.getTime()) || isNaN(endDate.getTime())) {
       throw new Error('Invalid date format');
     }
-
-    const dateArray: string[] = [];
-    let currentDate = startDate;
 
     // Include both start and end dates in the array
     while (isBefore(currentDate, endDate) || isEqual(currentDate, endDate)) {
