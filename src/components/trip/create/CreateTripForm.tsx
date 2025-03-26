@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { getDaysBetweenDates } from '../../../utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 
-
 interface CreateTripFormProps {
   destination: string;
   setDestination: (value: string) => void;
@@ -18,7 +17,7 @@ interface CreateTripFormProps {
   coverImageUrl: string;
   setCoverImageUrl: (value: string) => void;
   isLoading: boolean;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (tripId: string) => void;
   onCancel: () => void;
 }
 
@@ -39,7 +38,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
@@ -58,17 +57,17 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
         .single();
 
       if (tripError) throw tripError;
-      
+
       if (trip) {
         try {
           // Generate an array of dates between start and end dates (inclusive)
           const days = getDaysBetweenDates(startDate, endDate);
-          
+
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
-          
-          // Call the parent's onSubmit callback
-          onSubmit(e);
+
+          // Call the parent's onSubmit callback with the tripId
+          onSubmit(trip.trip_id);
         } catch (daysError) {
           console.error('Error creating trip days:', daysError);
           throw daysError;
@@ -97,9 +96,10 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
         coverImageUrl={coverImageUrl}
         onImageChange={setCoverImageUrl}
       />
-
+      
       <FormActions
         isLoading={isLoading}
+        onSubmit={handleSubmit}
         onCancel={onCancel}
       />
     </form>

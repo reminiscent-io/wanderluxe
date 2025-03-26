@@ -13,45 +13,20 @@ const CreateTrip = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (tripId: string) => {
     setIsLoading(true);
-
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error('You must be logged in to create a trip');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('trips')
-        .insert([
-          {
-            user_id: user.id,
-            destination,
-            arrival_date: startDate,
-            departure_date: endDate,
-            cover_image_url: coverImageUrl
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
       toast.success('Trip created successfully!');
-      // Using trip_id which is the correct column name from the database
-      navigate(`/trip/${data.trip_id}`);
+      navigate(`/trip/${tripId}`);
     } catch (error) {
-      console.error('Error creating trip:', error);
-      toast.error('Failed to create trip');
+      console.error('Error navigating to trip:', error);
+      toast.error('Failed to navigate to trip');
     } finally {
       setIsLoading(false);
     }
   };
-
+  
+ 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl bg-white rounded-lg shadow-lg p-8">
