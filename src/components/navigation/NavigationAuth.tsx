@@ -39,6 +39,7 @@ const NavigationAuth = () => {
           >
             Create Trip
           </motion.button>
+          <UserAvatar />
           <Button
             variant="ghost"
             size="icon"
