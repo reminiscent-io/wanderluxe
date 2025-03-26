@@ -38,12 +38,11 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
 
     if (newDates.length === 0) return;
 
-    // Create trip days with user_id
+    // Create trip days (user_id will be inherited from trips table)
     const tripDays = newDates.map(date => ({
       trip_id: tripId,
       date: date,
-      created_at: new Date().toISOString(),
-      user_id: user.id
+      created_at: new Date().toISOString()
     }));
 
     const { error } = await supabase
