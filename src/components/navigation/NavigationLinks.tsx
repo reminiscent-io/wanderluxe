@@ -20,7 +20,7 @@ const NavigationLinks = () => {
           whileHover={{
             y: -2
           }}
-          className="text-sand-500 transition-colors"
+          className="text-sand-500 font-bold transition-colors"
         >
           {item}
         </motion.button>
