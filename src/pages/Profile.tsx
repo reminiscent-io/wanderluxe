@@ -8,8 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate("/auth");
+    } catch (error) {
+      toast.error("Failed to sign out");
+    }
+  };
   const { session } = useAuth();
   const [fullName, setFullName] = useState('');
   const [initials, setInitials] = useState('');
@@ -122,13 +135,24 @@ const Profile = () => {
               />
             </div>
 
-            <Button 
-              onClick={handleSave} 
-              disabled={isLoading}
-              className="w-full bg-earth-400 text-white hover:bg-earth-600"
-            >
-              {isLoading ? 'Saving...' : 'Save Changes'}
-            </Button>
+            <div className="space-y-4">
+              <Button 
+                onClick={handleSave} 
+                disabled={isLoading}
+                className="w-full bg-earth-400 text-white hover:bg-earth-600"
+              >
+                {isLoading ? 'Saving...' : 'Save Changes'}
+              </Button>
+              
+              <Button 
+                onClick={handleSignOut}
+                variant="outline" 
+                className="w-full border-destructive text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </div>

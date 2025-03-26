@@ -41,14 +41,6 @@ const NavigationAuth = () => {
             Create Trip
           </motion.button>
           <UserAvatar />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="text-earth-500 hover:bg-transparent"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
         </>
       ) : (
         <motion.button
