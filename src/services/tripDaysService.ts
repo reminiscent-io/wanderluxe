@@ -7,22 +7,15 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
   }
 
   try {
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('Authentication required');
-    }
-
-    // Verify trip exists and belongs to user
+    // Verify trip exists
     const { data: tripExists, error: tripError } = await supabase
       .from('trips')
       .select('trip_id')
       .eq('trip_id', tripId)
-      .eq('user_id', user.id)
       .single();
 
     if (tripError || !tripExists) {
-      throw new Error('Trip must exist and belong to the current user');
+      throw new Error('Trip must exist before creating days');
     }
 
     // Check which days already exist
