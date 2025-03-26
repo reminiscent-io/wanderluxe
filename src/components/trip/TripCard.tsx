@@ -50,7 +50,7 @@ const TripCard = ({
       transition={{ duration: 0.3 }}
     >
       <Card 
-        className={`hover:shadow-lg transition-shadow overflow-hidden cursor-pointer ${trip.hidden ? 'bg-gray-100' : ''}`}
+        className="hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
         onClick={(e) => {
           // Prevent navigation if the hide button is clicked
           if (e.defaultPrevented) return;
