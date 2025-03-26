@@ -59,7 +59,8 @@ const MyTrips = () => {
       const { error } = await supabase
         .from('trips')
         .update({ hidden: true })
-        .eq('trip_id', tripId);
+        .eq('trip_id', tripId)
+        .select();
 
       if (error) throw error;
 
