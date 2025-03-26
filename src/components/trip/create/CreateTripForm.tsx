@@ -79,7 +79,10 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      handleSubmit(e);
+    }} className="space-y-6">
       <DestinationInput
         destination={destination}
         setDestination={setDestination}
