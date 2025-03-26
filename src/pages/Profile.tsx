@@ -81,8 +81,8 @@ const Profile = () => {
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-2xl mx-auto">
           <div className="flex flex-col items-center gap-6 mb-8">
-            <Avatar className="h-24 w-24">
-              <AvatarFallback className="text-2xl">
+            <Avatar className="h-24 w-24 border-2 border-earth-500">
+              <AvatarFallback className="text-2xl bg-sand-50 text-earth-500">
                 {initials || session.user.email?.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
