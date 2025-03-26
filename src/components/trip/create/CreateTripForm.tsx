@@ -65,9 +65,6 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
-          
-          // Call the parent's onSubmit callback
-          onSubmit(e);
         } catch (daysError) {
           console.error('Error creating trip days:', daysError);
           throw daysError;
