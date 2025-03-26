@@ -175,13 +175,13 @@ const DayCard: React.FC<DayCardProps> = ({
       console.log('Missing start date for transport:', transport);
       return false;
     }
-    const transportStartDate = new Date(transport.start_date).toISOString().split('T')[0];
+    const transportStartDate = transport.start_date;
     const transportEndDate = transport.end_date 
-      ? new Date(transport.end_date).toISOString().split('T')[0]
+      ? transport.end_date
       : transportStartDate;
-    const dayDate = normalizedDay;
+    const dayDate = new Date(normalizedDay);
 
-    return dayDate >= transportStartDate && dayDate <= transportEndDate;
+    return dayDate >= new Date(transportStartDate) && dayDate <= new Date(transportEndDate);
   });
 
 
@@ -224,7 +224,6 @@ const DayCard: React.FC<DayCardProps> = ({
           date={date}
           isOpen={isExpanded}
           onEdit={handleEdit}
-          onDelete={() => onDelete(id)}
           onToggle={() => setIsExpanded(prev => !prev)}
         />
       </div>
@@ -249,13 +248,13 @@ const DayCard: React.FC<DayCardProps> = ({
                   <div className="space-y-2">
                     {filteredHotelStays.map((stay) => (
                       <div 
-                        key={stay.stay_id || stay.id} 
+                        key={stay.stay_id} 
                         onClick={() => handleHotelEdit(stay)}
                         className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
                       >
                         <div>
                           <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
-                          <p className="text-sm text-gray-500">{stay.hotel_address}</p>
+                          <p className="text-sm text-gray-500">{stay.hotel_address || stay.hotel_details}</p>
                           {stay.hotel_checkin_date && stay.hotel_checkin_date === normalizedDay && (
                             <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                               Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ''}
@@ -289,15 +288,16 @@ const DayCard: React.FC<DayCardProps> = ({
                   <h3 className="text-lg font-semibold text-white mb-2">Flights and Transportation</h3>
                   <div className="space-y-2">
                     {filteredTransportations && filteredTransportations.length > 0 ? (
-                      filteredTransportations.map((transport, idx) => (
+                      filteredTransportations.map((transport) => (
                         <TransportationListItem
-                          key={transport.id || idx}
+                          key={transport.id}
                           transportation={transport}
                           compact
                           onClick={() => {
                             setSelectedTransportation(transport);
                             setIsTransportationDialogOpen(true);
                           }}
+                        
                         />
                       ))
                     ) : (
