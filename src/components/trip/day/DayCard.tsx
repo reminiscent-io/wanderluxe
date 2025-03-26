@@ -175,8 +175,8 @@ const DayCard: React.FC<DayCardProps> = ({
       console.log('No start_date for transport:', transport);
       return false;
     }
-    const transportDate = new Date(transport.start_date).getTime();
-    const normalizedDate = new Date(normalizedDay).getTime();
+    const transportDate = new Date(transport.start_date);
+    const normalizedDate = new Date(normalizedDay);
     console.log('Comparing transport date vs. normalized day:', {
       transportStartDate: transport.start_date,
       normalizedDay,
@@ -259,7 +259,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         <div>
                           <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
                           <p className="text-sm text-gray-500">{stay.hotel_address}</p>
-                          {stay.hotel_checkin_date && stay.hotel_checkin_date.split('T')[0] === normalizedDay && (
+                          {stay.hotel_checkin_date && stay.hotel_checkin_date === normalizedDay && (
                             <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                               Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ''}
                             </div>
