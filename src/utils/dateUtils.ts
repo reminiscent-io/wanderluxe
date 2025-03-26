@@ -28,30 +28,30 @@ export const formatToTime = (timeString?: string | null): string => {
   }
 };
 
-// Generate an array of date strings between start and end dates (inclusive)
 export const getDaysBetweenDates = (startDateStr: string, endDateStr: string): string[] => {
-  try {
-    // Work with the date strings directly
-    const dateArray: string[] = [];
-    let currentDate = new Date(startDateStr + 'T00:00:00Z');
-    const endDate = new Date(endDateStr + 'T00:00:00Z');
+  const dateArray: string[] = [];
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
 
-    // Validate dates
-    if (isNaN(currentDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new Error('Invalid date format');
-    }
-
-    // Include both start and end dates in the array
-    while (isBefore(currentDate, endDate) || isEqual(currentDate, endDate)) {
-      dateArray.push(format(currentDate, 'yyyy-MM-dd'));
-      currentDate = addDays(currentDate, 1);
-    }
-
-    return dateArray;
-  } catch (error) {
-    console.error('Error generating days between dates:', error);
-    return [];
+  // Validate dates
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    throw new Error('Invalid date format');
   }
+
+  // Clone the start date to avoid modifying it
+  const current = new Date(start);
+
+  // Reset time part to avoid timezone issues
+  current.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  // Include both start and end dates in the array
+  while (current <= end) {
+    dateArray.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dateArray;
 };
 
 // Calculate the number of days between two dates
