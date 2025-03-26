@@ -16,10 +16,10 @@ const UserAvatar = () => {
 
   return (
     <Avatar 
-      className="cursor-pointer" 
+      className="cursor-pointer border-2 border-earth-500" 
       onClick={() => navigate('/profile')}
     >
-      <AvatarFallback>
+      <AvatarFallback className="bg-sand-50 text-earth-500">
         {getInitials(session.user.email || 'U')}
       </AvatarFallback>
     </Avatar>
