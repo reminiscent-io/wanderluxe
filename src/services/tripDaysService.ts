@@ -16,12 +16,8 @@ export const createTripDays = async (tripId: string, dates: string[]) => {
 
     if (newDates.length === 0) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     const tripDays = newDates.map(date => ({
       trip_id: tripId,
-      user_id: user.id,
       date: date,
       created_at: new Date().toISOString()
     }));
