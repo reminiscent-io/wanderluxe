@@ -56,6 +56,9 @@ const Profile = () => {
         .from('profiles')
         .update({
           full_name: fullName,
+          initials: initials,
+          home_location: homeLocation,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', session.user.id);
 
