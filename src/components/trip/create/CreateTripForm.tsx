@@ -40,10 +40,18 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
     e.preventDefault();
     
     try {
+      // Get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('You must be logged in to create a trip');
+      }
+
       // Insert the trip into the database
       const { data: trip, error } = await supabase
         .from('trips')
         .insert([{
+          user_id: user.id,
           destination,
           arrival_date: startDate,
           departure_date: endDate,
