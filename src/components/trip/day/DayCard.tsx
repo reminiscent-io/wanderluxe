@@ -175,16 +175,14 @@ const DayCard: React.FC<DayCardProps> = ({
       console.log('No start_date for transport:', transport);
       return false;
     }
-    const transportDate = new Date(transport.start_date);
-    const normalizedDate = new Date(normalizedDay);
+    const transportDate = new Date(transport.start_date).toISOString().split('T')[0];
     console.log('Comparing transport date vs. normalized day:', {
       transportStartDate: transport.start_date,
       normalizedDay,
       transportDate,
-      normalizedDate,
-      isEqual: transportDate === normalizedDate
+      isEqual: transportDate === normalizedDay
     });
-    return transportDate === normalizedDate;
+    return transportDate === normalizedDay;
   });
 
 
