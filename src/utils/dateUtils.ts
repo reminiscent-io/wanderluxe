@@ -1,4 +1,5 @@
-import { format, parse, addDays, isBefore, isEqual, differenceInDays } from 'date-fns';
+
+import { format, parse, addDays, isAfter } from 'date-fns';
 
 // Format a date string to display format (e.g., "Jan 1, 2024")
 export const formatDate = (dateString?: string | null): string => {
@@ -40,8 +41,7 @@ export const getDaysBetweenDates = (startDateStr: string, endDateStr: string): s
 
   let current = start;
   
-  // Include both start and end dates in the array
-  while (!isAfter(current, end)) {
+  while (current <= end) {
     dateArray.push(format(current, 'yyyy-MM-dd'));
     current = addDays(current, 1);
   }
