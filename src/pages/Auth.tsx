@@ -11,8 +11,10 @@ import { motion } from "framer-motion";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -27,6 +29,15 @@ const Auth = () => {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Passwords do not match",
+        className: "bg-earth-100/50 border-destructive",
+      });
+      return;
+    }
     try {
       setLoading(true);
       const { error } = await supabase.auth.signUp({
@@ -111,7 +122,10 @@ const Auth = () => {
             <CardTitle className="text-2xl text-center">Welcome to WanderLuxe</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleEmailSignIn} className="space-y-4">
+            <form
+              onSubmit={isSignUp ? handleEmailSignUp : handleEmailSignIn}
+              className="space-y-4"
+            >
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -136,23 +150,49 @@ const Auth = () => {
                   className="bg-white/50"
                 />
               </div>
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="bg-white/50"
+                  />
+                </div>
+              )}
               <div className="space-y-4">
                 <Button
                   type="submit"
                   className="w-full bg-[#888888] hover:bg-[#666666] text-white"
                   disabled={loading}
                 >
-                  Sign In
+                  {isSignUp ? "Sign Up" : "Sign In"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleEmailSignUp}
-                  disabled={loading}
-                >
-                  Sign Up
-                </Button>
+                {isSignUp ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setIsSignUp(false)}
+                    disabled={loading}
+                  >
+                    Back to Sign In
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setIsSignUp(true)}
+                    disabled={loading}
+                  >
+                    Sign Up
+                  </Button>
+                )}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
