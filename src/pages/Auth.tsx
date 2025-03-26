@@ -40,15 +40,43 @@ const Auth = () => {
     }
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
       if (error) throw error;
-      toast({
-        title: "Success!",
-        description: "Check your email for the confirmation link.",
-      });
+
+      // Create profile after successful signup
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              created_at: new Date().toISOString(),
+              full_name: null,
+              avatar_url: null
+            }
+          ]);
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Account created, but profile creation failed. Please contact support.",
+            className: "bg-earth-100/50 border-destructive",
+          });
+        } else {
+          toast({
+            title: "Success!",
+            description: "Account and profile created successfully. Check your email for verification.",
+          });
+        }
+      }
+
+
+      navigate("/my-trips");
     } catch (error: any) {
       toast({
         variant: "destructive",

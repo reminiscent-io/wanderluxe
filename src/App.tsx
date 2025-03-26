@@ -14,6 +14,7 @@ import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Profile from "./pages/Profile"; // Import the Profile component
 
 // Move queryClient inside the component to ensure proper React context
 const App = () => {
@@ -63,6 +64,7 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/profile" element={<Profile />} /> {/* Added Profile route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

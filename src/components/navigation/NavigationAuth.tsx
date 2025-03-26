@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import UserAvatar from "./UserAvatar";
 
 const NavigationAuth = () => {
   const navigate = useNavigate();
@@ -39,14 +40,7 @@ const NavigationAuth = () => {
           >
             Create Trip
           </motion.button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="text-earth-500 hover:bg-transparent"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <UserAvatar />
         </>
       ) : (
         <motion.button

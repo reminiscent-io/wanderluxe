@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from '../components/trip/TripCard';
@@ -34,8 +35,10 @@ const MyTrips = () => {
     }
   }, [session, navigate]);
 
+  const [showHidden, setShowHidden] = useState(false);
+
   const { data: trips, isLoading } = useQuery({
-    queryKey: ['my-trips'],
+    queryKey: ['my-trips', showHidden],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -45,7 +48,7 @@ const MyTrips = () => {
         .from('trips')
         .select(`*`)
         .eq('user_id', user.id)
-        .eq('hidden', false)
+        .eq('hidden', showHidden)
         .order('arrival_date', { ascending: true });
 
       if (error) throw error;
@@ -144,6 +147,16 @@ const MyTrips = () => {
             ))}
           </div>
         )}
+
+        <div className="flex justify-center mt-12">
+          <Button
+            variant="ghost"
+            onClick={() => setShowHidden(!showHidden)}
+            className="text-earth-500 hover:text-earth-600"
+          >
+            {showHidden ? 'Show Active Trips' : 'Show Hidden Trips'}
+          </Button>
+        </div>
 
         <AlertDialog
           open={isDeleteDialogOpen}
