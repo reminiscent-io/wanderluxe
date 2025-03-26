@@ -38,6 +38,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -79,10 +80,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   };
 
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      handleSubmit(e);
-    }} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <DestinationInput
         destination={destination}
         setDestination={setDestination}
