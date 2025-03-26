@@ -25,11 +25,17 @@ const CreateTrip = () => {
         return;
       }
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        toast.error('You must be logged in to create a trip');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('trips')
         .insert([
           {
-            user_id: user.id,
+            user_id: session.user.id,
             destination,
             arrival_date: startDate,
             departure_date: endDate,
