@@ -87,9 +87,9 @@ const TripCard = ({
                     size="icon" 
                     className="text-gray-500 hover:text-gray-600"
                     onClick={(e) => {
-                      // Stop event propagation to prevent card click
                       e.preventDefault();
                       e.stopPropagation();
+                      onHide(trip.trip_id);
                     }}
                   >
                     <EyeOff className="h-5 w-5" />
