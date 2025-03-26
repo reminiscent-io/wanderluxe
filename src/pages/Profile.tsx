@@ -81,12 +81,12 @@ const Profile = () => {
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-2xl mx-auto">
           <div className="flex flex-col items-center gap-6 mb-8">
-            <Avatar className="h-24 w-24 border-2 border-earth-500">
-              <AvatarFallback className="text-2xl bg-sand-50 text-earth-500">
+            <Avatar className="h-24 w-24 border-2 border-earth-500 hover:border-white">
+              <AvatarFallback className="text-3xl bg-sand-50 text-earth-500 hover:bg-earth-400 hover:text-white">
                 {initials || session.user.email?.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <h1 className="text-2xl font-bold">{session.user.email}</h1>
+            <h1 className="text-2xl font-thin">{session.user.email}</h1>
           </div>
 
           <div className="space-y-6 bg-white p-6 rounded-lg shadow">
@@ -125,7 +125,7 @@ const Profile = () => {
             <Button 
               onClick={handleSave} 
               disabled={isLoading}
-              className="w-full"
+              className="w-full bg-earth-400 text-white hover:bg-earth-600"
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </Button>
