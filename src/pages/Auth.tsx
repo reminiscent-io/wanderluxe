@@ -11,6 +11,8 @@ import { motion } from "framer-motion";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
   const navigate = useNavigate();
@@ -27,6 +29,15 @@ const Auth = () => {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Passwords do not match",
+        className: "bg-earth-100/50 border-destructive",
+      });
+      return;
+    }
     try {
       setLoading(true);
       const { error } = await supabase.auth.signUp({
@@ -38,6 +49,9 @@ const Auth = () => {
         title: "Success!",
         description: "Check your email for the confirmation link.",
       });
+      // Navigate after successful signup
+      navigate("/");
+
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -132,6 +146,18 @@ const Auth = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-white/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   className="bg-white/50"
                 />
