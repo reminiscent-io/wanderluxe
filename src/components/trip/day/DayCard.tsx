@@ -178,11 +178,12 @@ const DayCard: React.FC<DayCardProps> = ({
   // Normalize the day from the DayCard date prop.
   const normalizedDay = date.split("T")[0];
 
-  const filteredHotelStays = hotelStays.filter((stay) => {
+  const filteredHotelStays = hotelStays.filter((stay: HotelStay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
     const checkinDate = stay.hotel_checkin_date;
     const checkoutDate = stay.hotel_checkout_date;
     const dayDate = new Date(normalizedDay);
+    console.log("Normalized day date hotel:", normalizedDay); // Added console log
     return (
       dayDate >= new Date(checkinDate) && dayDate <= new Date(checkoutDate)
     ); //changed to <= from <
@@ -191,24 +192,24 @@ const DayCard: React.FC<DayCardProps> = ({
   // Filter transportations that are relevant to this day (departure and optionally arrival)
   const filteredTransportations = transportations?.filter(
     (transport: Transportation) => {
-      if (!transport.start_date) {
-        console.log("Missing start date for transport:", transport);
-        return false;
-      }
       const transportStartDate = transport.start_date;
       const transportEndDate = transport.end_date
         ? transport.end_date
         : transportStartDate;
-      const dayDate = new Date(normalizedDay);
+      const dayDate2 = new Date(normalizedDay);
+      console.log("Normalized day date for transport:", normalizedDay); // Added console log
+      console.log("transportStartDate date for transport:", transportStartDate); // Added console log
+      console.log("filteredTransportations for transport:", filteredTransportations); // Added console log
+      console.log("transportations for transport:", transportations); // Added console log
 
       return (
-        dayDate >= new Date(transportStartDate) &&
-        dayDate <= new Date(transportEndDate)
+        dayDate2 >= new Date(transportStartDate) &&
+        dayDate2 <= new Date(transportEndDate)
       );
     },
   );
 
-  const handleHotelEdit = (stay: HotelStay) => {
+  const handleHotelEdit = (stay) => {
     setEditHotelStay(stay);
     setIsHotelEditDialogOpen(true);
   };
