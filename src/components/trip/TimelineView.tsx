@@ -8,6 +8,7 @@ import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
+import { useTransportationEvents } from '@/hooks/use-transportation-events'; // NEW
 
 interface TimelineViewProps {
   tripId: string;
@@ -19,27 +20,25 @@ interface TimelineViewProps {
 
 const TimelineView: React.FC<TimelineViewProps> = ({
   tripId,
-  tripDates: initialTripDates
+  tripDates: initialTripDates,
 }) => {
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
+  const { transportations, refreshTransportation } = useTransportationEvents(tripId); // NEW
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // State for trip dates; initialized from props if available.
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
   }>({
     arrival_date: initialTripDates?.arrival_date || null,
-    departure_date: initialTripDates?.departure_date || null
+    departure_date: initialTripDates?.departure_date || null,
   });
 
-  // Preload Google Maps API when Timeline view mounts.
   useEffect(() => {
     loadGoogleMapsAPI();
   }, []);
 
-  // Sync trip dates from props when they are valid.
   useEffect(() => {
     const newArrival = initialTripDates?.arrival_date;
     const newDeparture = initialTripDates?.departure_date;
@@ -48,13 +47,12 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         console.log('Updating trip dates from props:', { newArrival, newDeparture });
         setTripDates({
           arrival_date: newArrival,
-          departure_date: newDeparture
+          departure_date: newDeparture,
         });
       }
     }
   }, [initialTripDates]);
 
-  // On mount, if dates are missing, fetch from DB.
   useEffect(() => {
     if (!tripDates.arrival_date || !tripDates.departure_date) {
       console.log('Trip dates missing on mount, fetching fresh data');
@@ -65,9 +63,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refreshEvents(), refreshDays()]);
-
-      // Fetch updated trip dates.
+      await Promise.all([refreshEvents(), refreshDays(), refreshTransportation()]); // UPDATED
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
@@ -79,7 +75,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           console.log('Setting trip dates from refresh:', data);
           setTripDates({
             arrival_date: data.arrival_date,
-            departure_date: data.departure_date
+            departure_date: data.departure_date,
           });
         } else {
           console.log('Skipping trip dates update - missing dates in data:', data);
@@ -92,7 +88,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     } finally {
       setIsRefreshing(false);
     }
-  }, [refreshEvents, refreshDays, tripId]);
+  }, [refreshEvents, refreshDays, refreshTransportation, tripId]);
 
   const fetchTripData = async () => {
     if (!tripId) return;
@@ -108,11 +104,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       if (data.arrival_date && data.departure_date) {
         console.log('Setting valid dates from DB:', {
           arrival: data.arrival_date,
-          departure: data.departure_date
+          departure: data.departure_date,
         });
         setTripDates({
           arrival_date: data.arrival_date,
-          departure_date: data.departure_date
+          departure_date: data.departure_date,
         });
       } else {
         console.log('DB returned incomplete date data, not updating state');
@@ -122,8 +118,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
 
-  const processedHotelStays = React.useMemo(() => 
-    events?.filter(event => event.hotel && event.stay_id).map(event => ({
+  const processedHotelStays =
+    events?.filter((event) => event.hotel && event.stay_id).map((event) => ({
       stay_id: event.stay_id,
       trip_id: tripId,
       hotel: event.hotel || '',
@@ -137,8 +133,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       hotel_phone: event.hotel_phone,
       hotel_place_id: event.hotel_place_id,
       hotel_website: event.hotel_website,
-    })) || []
-  , [events, tripId]);
+    })) || [];
 
   const handleDayDelete = async (dayId: string) => {
     try {
@@ -164,10 +159,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       )}
 
       <div className="flex flex-col gap-4">
-        {console.log('Rendering TripDates with:', { 
-          tripId, 
-          arrivalDate: tripDates.arrival_date, 
-          departureDate: tripDates.departure_date 
+        {console.log('Rendering TripDates with:', {
+          tripId,
+          arrivalDate: tripDates.arrival_date,
+          departureDate: tripDates.departure_date,
         })}
         {tripDates.arrival_date && tripDates.departure_date ? (
           <TripDates
@@ -193,13 +188,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           <TransportationSection
             tripId={tripId}
             onTransportationChange={handleRefresh}
+            transportations={transportations || []} {/* NEW prop */}
           />
         </div>
       </div>
-      <TimelineContent 
-        days={days} 
+      <TimelineContent
+        days={days}
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
         hotelStays={processedHotelStays}
+        transportations={transportations || []} {/* NEW: passed down to DayCard */}
         onDayDelete={handleDayDelete}
       />
     </div>
