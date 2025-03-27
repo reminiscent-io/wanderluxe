@@ -195,14 +195,13 @@ const DayCard: React.FC<DayCardProps> = ({
   console.log("Transportation type:", typeof transportations);
   console.log("Transportation array:", Array.isArray(transportations));
   
-  const safeTransportations = Array.isArray(transportations) ? transportations : [];
-  const filteredTransportations = safeTransportations.filter(
-    (transport: Transportation) => {
+  //const safeTransportations = Array.isArray(transportations) ? transportations : [];
+  const filteredTransportations = transportations.filter((transport: Transportation) => {
       const transportStartDate = transport.start_date;
       const transportEndDate = transport.end_date
         ? transport.end_date
         : transportStartDate;
-      const dayDate2 = new Date(normalizedDay);
+      const dayDate = new Date(normalizedDay);
       
       console.log("Checking transport:", {
         id: transport.id,
@@ -210,14 +209,13 @@ const DayCard: React.FC<DayCardProps> = ({
         endDate: transportEndDate,
         currentDay: normalizedDay,
         isWithinRange: (
-          dayDate2 >= new Date(transportStartDate) &&
-          dayDate2 <= new Date(transportEndDate)
+          dayDate >= new Date(transportStartDate) &&
+          dayDate <= new Date(transportEndDate)
         )
       });
 
       return (
-        dayDate2 >= new Date(transportStartDate) &&
-        dayDate2 <= new Date(transportEndDate)
+        dayDate >= new Date(transportStartDate) && dayDate <= new Date(transportEndDate)
       );
     },
   );
