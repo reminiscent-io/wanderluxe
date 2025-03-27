@@ -136,7 +136,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           onCancel={handleCancel}
           tripArrivalDate={tripDates?.arrival_date}
           tripDepartureDate={tripDates?.departure_date}
-          buttonClassName="bg-earth-600 hover:bg-earth-700 text-white font-semibold"
+          buttonClassName="bg-earth-400 hover:bg-earth-600 text-white font-semibold"
         />
       </DialogContent>
     </Dialog>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,7 @@ export function useTimelineEvents(tripId: string) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: events, isLoading } = useQuery({
-    queryKey: ['timeline-events', tripId],
+    queryKey: ['accommodations', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       
@@ -34,7 +33,7 @@ export function useTimelineEvents(tripId: string) {
   const refreshEvents = async () => {
     setIsRefreshing(true);
     try {
-      await queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+      await queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
     } finally {
       setIsRefreshing(false);
     }
@@ -80,6 +79,8 @@ export function useTimelineEvents(tripId: string) {
           hotel_url: data.hotel_url,
           hotel_checkin_date: data.hotel_checkin_date,
           hotel_checkout_date: data.hotel_checkout_date,
+          checkin_time: data.checkin_time,
+          checkout_time: data.checkout_time,
         })
         .eq('stay_id', data.id);
 
@@ -88,7 +89,7 @@ export function useTimelineEvents(tripId: string) {
     },
     onSuccess: () => {
       toast.success('Stay updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
     },
     onError: (error) => {
       console.error('Error:', error);
@@ -103,7 +104,7 @@ export function useTimelineEvents(tripId: string) {
     },
     onSuccess: () => {
       toast.success('Event deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['timeline-events', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
     },
     onError: (error) => {
       console.error('Error:', error);
