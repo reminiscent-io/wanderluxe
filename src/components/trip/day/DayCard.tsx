@@ -190,6 +190,9 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   // Filter transportations that are relevant to this day (departure and optionally arrival)
+  console.log("Raw transportations:", transportations);
+  console.log("Current normalized day:", normalizedDay);
+  
   const filteredTransportations = transportations?.filter(
     (transport: Transportation) => {
       const transportStartDate = transport.start_date;
@@ -197,10 +200,17 @@ const DayCard: React.FC<DayCardProps> = ({
         ? transport.end_date
         : transportStartDate;
       const dayDate2 = new Date(normalizedDay);
-      console.log("Normalized day date for transport:", normalizedDay); // Added console log
-      console.log("transportStartDate date for transport:", transportStartDate); // Added console log
-      console.log("filteredTransportations for transport:", filteredTransportations); // Added console log
-      console.log("transportations for transport:", transportations); // Added console log
+      
+      console.log("Checking transport:", {
+        id: transport.id,
+        startDate: transportStartDate,
+        endDate: transportEndDate,
+        currentDay: normalizedDay,
+        isWithinRange: (
+          dayDate2 >= new Date(transportStartDate) &&
+          dayDate2 <= new Date(transportEndDate)
+        )
+      });
 
       return (
         dayDate2 >= new Date(transportStartDate) &&
@@ -208,6 +218,8 @@ const DayCard: React.FC<DayCardProps> = ({
       );
     },
   );
+  
+  console.log("Filtered transportations:", filteredTransportations);
 
   const handleHotelEdit = (stay) => {
     setEditHotelStay(stay);
