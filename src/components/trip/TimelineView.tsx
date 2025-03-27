@@ -127,6 +127,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       hotel_url: event.hotel_url,
       hotel_checkin_date: event.hotel_checkin_date || '',
       hotel_checkout_date: event.hotel_checkout_date || '',
+      checkin_time: event.checkin_time || '',
+      checkout_time: event.checkout_time || '',
       cost: event.cost ? Number(event.cost) : null,
       currency: event.currency || 'USD',
       hotel_address: event.hotel_address,
@@ -134,23 +136,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       hotel_place_id: event.hotel_place_id,
       hotel_website: event.hotel_website,
     })) || [];
-
-  const handleDayDelete = async (dayId: string) => {
-    try {
-      const { error } = await supabase
-        .from('trip_days')
-        .delete()
-        .eq('day_id', dayId);
-
-      if (error) throw error;
-
-      toast.success('Day deleted successfully');
-      if (refreshDays) refreshDays();
-    } catch (error) {
-      console.error('Error deleting day:', error);
-      toast.error('Failed to delete day');
-    }
-  };
 
   return (
     <div className="relative space-y-8">
@@ -197,7 +182,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
         hotelStays={processedHotelStays}
         transportations={transportations || []}
-        onDayDelete={handleDayDelete}
       />
     </div>
   );
