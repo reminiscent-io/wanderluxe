@@ -67,7 +67,7 @@ const DayCard: React.FC<DayCardProps> = ({
   index,
   defaultImageUrl,
   hotelStays = [],
-  transportations = [],
+  transportations,
   originalImageUrl,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -190,7 +190,8 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   // Filter transportations that are relevant to this day (departure and optionally arrival)
-  console.log("Raw transportations:", transportations);
+  console.log("Raw transportations:", transportations || []);
+  console.log("Transportation prop type:", typeof transportations);
   console.log("Current normalized day:", normalizedDay);
   
   const filteredTransportations = transportations?.filter(
