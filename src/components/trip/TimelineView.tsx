@@ -8,7 +8,7 @@ import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
-import { useTransportationEvents } from '@/hooks/use-transportation-events'; // NEW
+import { useTransportationEvents } from '@/hooks/use-transportation-events';
 
 interface TimelineViewProps {
   tripId: string;
@@ -24,7 +24,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
-  const { transportations, refreshTransportation } = useTransportationEvents(tripId); // NEW
+  const { transportations, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [tripDates, setTripDates] = useState<{
@@ -63,7 +63,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refreshEvents(), refreshDays(), refreshTransportation()]); // UPDATED
+      await Promise.all([refreshEvents(), refreshDays(), refreshTransportation()]);
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
@@ -188,7 +188,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           <TransportationSection
             tripId={tripId}
             onTransportationChange={handleRefresh}
-            transportations={transportations || []} {/* NEW prop */}
+            transportations={transportations || []}
           />
         </div>
       </div>
@@ -196,7 +196,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         days={days}
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
         hotelStays={processedHotelStays}
-        transportations={transportations || []} {/* NEW: passed down to DayCard */}
+        transportations={transportations || []}
         onDayDelete={handleDayDelete}
       />
     </div>
