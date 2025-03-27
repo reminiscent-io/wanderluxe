@@ -188,7 +188,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           <TransportationSection
             tripId={tripId}
             onTransportationChange={handleRefresh}
-            transportations={transportations || []}
+            transportations={transportations}
           />
         </div>
       </div>
