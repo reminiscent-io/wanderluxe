@@ -192,8 +192,11 @@ const DayCard: React.FC<DayCardProps> = ({
   // Filter transportations that are relevant to this day (departure and optionally arrival)
   console.log("Raw transportations:", transportations);
   console.log("Current normalized day:", normalizedDay);
+  console.log("Transportation type:", typeof transportations);
+  console.log("Transportation array:", Array.isArray(transportations));
   
-  const filteredTransportations = transportations?.filter(
+  const safeTransportations = Array.isArray(transportations) ? transportations : [];
+  const filteredTransportations = safeTransportations.filter(
     (transport: Transportation) => {
       const transportStartDate = transport.start_date;
       const transportEndDate = transport.end_date
