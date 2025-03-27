@@ -53,5 +53,5 @@ export function useTransportationEvents(tripId: string) {
     };
   }, [tripId, queryClient, refreshTransportation]);
 
-  return { transportations: data, isLoading, refreshTransportation };
+  return { transportations: Transportations[], isLoading, refreshTransportation };
 }
