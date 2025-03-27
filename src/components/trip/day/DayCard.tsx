@@ -196,7 +196,8 @@ const DayCard: React.FC<DayCardProps> = ({
   console.log("Transportation array:", Array.isArray(transportations));
   
   //const safeTransportations = Array.isArray(transportations) ? transportations : [];
-  const filteredTransportations = transportations.filter((transport: Transportation) => {
+  const safeTransportations = transportations || [];
+  const filteredTransportations = safeTransportations.filter((transport: Transportation) => {
       const transportStartDate = transport.start_date;
       const transportEndDate = transport.end_date
         ? transport.end_date
