@@ -35,6 +35,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     departure_date: initialTripDates?.departure_date || null,
   });
 
+  //Load google maps api on the timeline page here
   useEffect(() => {
     loadGoogleMapsAPI();
   }, []);
