@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 export function useTransportationEvents(tripId: string) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data: transportationData, isLoading } = useQuery({
     queryKey: ['transportation', tripId],
     queryFn: async () => {
       if (!tripId) return [];
@@ -21,10 +21,12 @@ export function useTransportationEvents(tripId: string) {
         throw error;
       }
       console.log('Fetched transportation data:', data);
-      return data as Transportation[];
+      return data || [];
     },
     enabled: !!tripId,
   });
+
+  const transportations = transportationData || [];
 
   const refreshTransportation = async () => {
     await queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
@@ -53,6 +55,6 @@ export function useTransportationEvents(tripId: string) {
     };
   }, [tripId, queryClient, refreshTransportation]);
 
-  console.log('Transportations data:', data);
-  return { transportations: data, isLoading, refreshTransportation };
+  console.log('Transportations data:', transportations);
+  return { transportations, isLoading, refreshTransportation };
 }
