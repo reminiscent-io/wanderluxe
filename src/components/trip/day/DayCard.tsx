@@ -67,7 +67,7 @@ const DayCard: React.FC<DayCardProps> = ({
   index,
   defaultImageUrl,
   hotelStays = [],
-  transportations = [],
+  transportations,
   originalImageUrl,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
