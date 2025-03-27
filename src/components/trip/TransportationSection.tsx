@@ -5,45 +5,29 @@ import { Plus } from 'lucide-react';
 import TransportationList from './transportation/TransportationList';
 import TransportationDialog from './transportation/TransportationDialog';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { TransportationHeader } from './transportation/TransportationHeader';
+import { Transportation } from '@/types/trip';
 
 interface TransportationSectionProps {
   tripId: string;
   onTransportationChange: () => void;
+  transportations: Transportation[]; // NEW prop
   className?: string;
 }
 
 const TransportationSection: React.FC<TransportationSectionProps> = ({
   className,
   tripId,
-  onTransportationChange
+  onTransportationChange,
+  transportations,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
-  const { data: Transportations, isLoading, refetch } = useQuery({
-    queryKey: ['transportation', tripId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('transportation')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('start_date', { ascending: true });
-
-      if (error) {
-        console.error("Error fetching transportation data:", error);
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!tripId
-  });
-
   const handleEdit = (id: string) => {
-    const eventToEdit = Transportations?.find(event => event.id === id);
+    const eventToEdit = transportations.find((event) => event.id === id);
     if (eventToEdit) {
       setSelectedEvent(eventToEdit);
       setDialogOpen(true);
@@ -59,7 +43,6 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
       toast.error('Failed to delete transportation');
     } else {
       toast.success('Transportation deleted successfully');
-      refetch();
       onTransportationChange();
     }
   };
@@ -86,7 +69,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
           </Button>
 
           <TransportationList
-            transportations={Transportations || []}
+            transportations={transportations}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
@@ -99,7 +82,6 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         onOpenChange={setDialogOpen}
         initialData={selectedEvent}
         onSuccess={() => {
-          refetch();
           onTransportationChange();
           setSelectedEvent(null);
         }}
