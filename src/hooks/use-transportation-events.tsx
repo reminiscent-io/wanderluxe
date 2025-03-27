@@ -20,6 +20,7 @@ export function useTransportationEvents(tripId: string) {
         console.error('Error fetching transportation data:', error);
         throw error;
       }
+      console.log('Fetched transportation data:', data);
       return data as Transportation[];
     },
     enabled: !!tripId,
