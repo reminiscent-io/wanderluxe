@@ -43,7 +43,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Insert the trip into the database with user_id
+      // Insert the trip into the database with user_id and cover_image_url
       const { data: trip, error: tripError } = await supabase
         .from('trips')
         .insert([{
@@ -51,6 +51,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           destination,
           arrival_date: startDate,
           departure_date: endDate,
+          cover_image_url: coverImageUrl,
           created_at: new Date().toISOString()
         }])
         .select()
@@ -99,30 +100,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       
       <FormActions
         isLoading={isLoading}
-        onSubmit={async () => {
-          if (!coverImageUrl) {
-            console.warn('No cover image selected');
-          }
-          const { data, error } = await supabase
-            .from('trips')
-            .insert({
-              destination,
-              arrival_date: startDate,
-              departure_date: endDate,
-              cover_image_url: coverImageUrl,
-            })
-            .select()
-            .single();
-
-          if (error) {
-            console.error('Error creating trip:', error);
-            return;
-          }
-
-          if (data?.trip_id) {
-            onSubmit(data.trip_id);
-          }
-        }}
+        onSubmit={handleSubmit}
         onCancel={onCancel}
       />
     </form>
