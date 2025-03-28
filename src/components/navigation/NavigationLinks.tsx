@@ -17,9 +17,8 @@ const NavigationLinks = () => {
         <motion.button
           key={item}
           onClick={() => handleNavigation(item)}
-          whileHover={{
-            y: -2
-          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           className="text-sand-500 font-bold transition-colors"
         >
           {item}
