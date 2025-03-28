@@ -4,13 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
 import UserAvatar from "./UserAvatar";
 
 const NavigationAuth = () => {
   const navigate = useNavigate();
-  const { session, signOut } = useAuth();
-  const { toast } = useToast();
+  const { session } = useAuth();
 
   return (
     <div className="flex items-center space-x-4">
