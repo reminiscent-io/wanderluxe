@@ -333,8 +333,7 @@ const DayCard: React.FC<DayCardProps> = ({
                               </div>
                             )}
                           {stay.hotel_checkout_date &&
-                            stay.hotel_checkout_date.split("T")[0] ===
-                              normalizedDay && (
+                            stay.hotel_checkout_date === normalizedDay && (
                               <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
                                 Check-out{" "}
                                 {stay.checkout_time
