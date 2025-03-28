@@ -18,6 +18,8 @@ const UserAvatar = () => {
     <Avatar 
       className="cursor-pointer border-2 border-earth-500" 
       onClick={() => navigate('/profile')}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
     >
       <AvatarFallback className="bg-sand-50 text-earth-500">
         {getInitials(session.user.email || 'U')}
