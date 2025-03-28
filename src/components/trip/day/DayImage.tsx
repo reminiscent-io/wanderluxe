@@ -17,19 +17,19 @@ const DayImage: React.FC<DayImageProps> = ({
   className,
   ...props // Added to handle any other props passed to the component
 }) => {
-  const displayImageUrl = imageUrl || defaultImageUrl;
+  const displayImageUrl = imageUrl || 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?'; //Default image on dayCard
 
   console.log('DayImage rendering:', {
     dayId,
     title,
     imageUrl: imageUrl || 'undefined/null',
     defaultImageUrl: defaultImageUrl || 'undefined/null',
-    displayImageUrl: displayImageUrl || 'undefined/null',
+    displayImageUrl: displayImageUrl || defaultImageUrl,
     usingDefault: !imageUrl && !!defaultImageUrl
   });
 
   return (
-    <div className={cn('relative w-full bg-gray-200', className)} {...props}> {/* Added ...props to the div */}
+    <div className={cn('relative w-full bg-gray-200', className)} {...props}> 
       {displayImageUrl ? (
         <div className="relative overflow-hidden">
           <img

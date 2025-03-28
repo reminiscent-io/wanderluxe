@@ -8,7 +8,6 @@ import HotelStaysList from './accommodation/HotelStaysList';
 import AccommodationDialog from './accommodation/AccommodationDialog';
 import { formatDateRange } from '@/utils/dateUtils';
 import { useAccommodationHandlers } from './accommodation/hooks/useAccommodationHandlers';
-import { useTripDays } from '@/hooks/use-trip-days';
 import type { HotelStay } from '@/types/trip';
 
 interface AccommodationsSectionProps {
@@ -28,13 +27,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editHotelStay, setEditHotelStay] = useState<HotelStay | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const { days } = useTripDays(tripId);
-  const tripDates = {
-    arrival_date: days?.[0]?.date || null,
-    departure_date: days?.[days?.length - 1]?.date || null
-  };
-
+  
   const { handleDelete } = useAccommodationHandlers(tripId, onAccommodationChange);
 
   const handleEdit = (stayId: string) => {
