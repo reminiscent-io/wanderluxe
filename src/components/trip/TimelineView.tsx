@@ -24,7 +24,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
-  const { transportations, refreshTransportation } = useTransportationEvents(tripId);
+  const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [tripDates, setTripDates] = useState<{
@@ -138,6 +138,26 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       hotel_website: event.hotel_website,
     })) || [];
 
+  const processedTransportations =
+    transportationData?.filter((transport) => transport.type && transport.id).map((transport) => ({
+      id: transport.id,
+      trip_id: tripId,
+      type: transport.type,
+      provider: transport.provider,
+      details: transport.details,
+      confirmation_number: transport.confirmation_number,
+      start_date: transport.start_date,
+      start_time: transport.start_time,
+      end_date: transport.end_date,
+      end_time: transport.end_time,
+      departure_location: transport.departure_location,
+      arrival_location: transport.arrival_location,
+      cost: transport.cost ? Number(transport.cost) : null,
+      currency: transport.currency || 'USD',
+    })) || [];
+
+
+  
   return (
     <div className="relative space-y-8">
       {isRefreshing && (
@@ -174,7 +194,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           <TransportationSection
             tripId={tripId}
             onTransportationChange={handleRefresh}
-            transportations={transportations}
+            transportations={processedTransportations}
           />
         </div>
       </div>
@@ -182,7 +202,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         days={days}
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
         hotelStays={processedHotelStays}
-        transportations={transportations || []}
+        transportations={processedTransportations}
       />
     </div>
   );

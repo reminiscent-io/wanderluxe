@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Transportation } from '@/types/trip';
-import { toast } from 'sonner';
 
 export function useTransportationEvents(tripId: string) {
   const queryClient = useQueryClient();
@@ -21,19 +20,21 @@ export function useTransportationEvents(tripId: string) {
         throw error;
       }
       console.log('Fetched transportation data:', data);
-      return data || [];
+      return data as Transportation[];
     },
     enabled: !!tripId,
   });
 
   const transportations = transportationData || [];
 
-  const refreshTransportation = async () => {
+  // Memoize refresh function to avoid re-creating it on each render.
+  const refreshTransportation = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
-  };
+  }, [queryClient, tripId]);
 
   useEffect(() => {
     if (!tripId) return;
+
     const channel = supabase
       .channel('transportation-changes')
       .on(
@@ -53,8 +54,8 @@ export function useTransportationEvents(tripId: string) {
     return () => {
       channel.unsubscribe();
     };
-  }, [tripId, queryClient, refreshTransportation]);
+  }, [tripId, refreshTransportation]);
 
   console.log('Transportations data:', transportations);
-  return { transportations, isLoading, refreshTransportation };
+  return { transportations, transportationData, isLoading, refreshTransportation };
 }

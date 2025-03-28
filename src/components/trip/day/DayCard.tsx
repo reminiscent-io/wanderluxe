@@ -19,10 +19,11 @@ import AccommodationDialog from "@/components/trip/accommodation/AccommodationDi
 import ActivityDialogs from "@/components/trip/day/activities/ActivityDialogs";
 import DiningList from "../dining/DiningList";
 import TransportationDialog from "@/components/trip/transportation/TransportationDialog";
-import TransportationListItem from "@/components/trip/transportation/TransportationListItem";
 import { CURRENCIES } from "@/utils/currencyConstants";
 import DayActivityManager from "./components/DayActivityManager";
+import { useTransportationEvents } from "@/hooks/use-transportation-events";
 
+// Initial state for new activity
 const initialActivity: ActivityFormData = {
   title: "",
   description: "",
@@ -53,7 +54,7 @@ interface DayCardProps {
   onDelete: (id: string) => void;
   defaultImageUrl?: string;
   hotelStays?: HotelStay[];
-  transportations?: Transportation[];
+  // Removed transportations prop since we're now fetching via hook
   originalImageUrl?: string | null;
 }
 
@@ -67,14 +68,13 @@ const DayCard: React.FC<DayCardProps> = ({
   index,
   defaultImageUrl,
   hotelStays = [],
-  transportations,
   originalImageUrl,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
   const [imageUrlState, setImageUrl] = useState(
-    originalImageUrl || imageUrl || null,
+    originalImageUrl || imageUrl || null
   );
   const [isHotelDialogOpen, setIsHotelDialogOpen] = useState(false);
   const [editHotelStay, setEditHotelStay] = useState<HotelStay | null>(null);
@@ -101,7 +101,7 @@ const DayCard: React.FC<DayCardProps> = ({
       setImageUrl(originalImageUrl);
       console.log(
         "Updated imageUrlState from originalImageUrl:",
-        originalImageUrl,
+        originalImageUrl
       );
     }
   }, [originalImageUrl]);
@@ -120,7 +120,33 @@ const DayCard: React.FC<DayCardProps> = ({
     enabled: !!id,
   });
 
+  // Use transportation hook to get transportation events
+  const { transportations, isLoading: transportationLoading } =
+    useTransportationEvents(tripId);
+
   const dayTitle = title || format(parseISO(date), "EEEE");
+
+  // Helper to format transportation date/time details
+  const formatTransportTime = (transport: Transportation) => {
+    const startDate = transport.start_date
+      ? format(parseISO(transport.start_date), "MMM dd, yyyy")
+      : "";
+    const startTime = transport.start_time ? formatTime12(transport.start_time) : "";
+    const endDate = transport.end_date
+      ? format(parseISO(transport.end_date), "MMM dd, yyyy")
+      : "";
+    const endTime = transport.end_time ? formatTime12(transport.end_time) : "";
+
+    let startString = startDate;
+    if (startTime) startString += ` ${startTime}`;
+
+    let endString = "";
+    if (endDate) {
+      endString = endDate;
+      if (endTime) endString += ` ${endTime}`;
+    }
+    return endString ? `${startString} - ${endString}` : startString;
+  };
 
   const handleEdit = () => {
     console.log("Edit DayCard", id);
@@ -183,45 +209,41 @@ const DayCard: React.FC<DayCardProps> = ({
     const checkinDate = stay.hotel_checkin_date;
     const checkoutDate = stay.hotel_checkout_date;
     const dayDate = new Date(normalizedDay);
-    console.log("Normalized day date hotel:", normalizedDay); // Added console log
+    console.log("Normalized day date hotel:", normalizedDay);
     return (
       dayDate >= new Date(checkinDate) && dayDate <= new Date(checkoutDate)
-    ); //changed to <= from <
+    );
   });
 
-  // Filter transportations that are relevant to this day (departure and optionally arrival)
+  // Filter transportations relevant to this day
   console.log("Raw transportations:", transportations);
   console.log("Current normalized day:", normalizedDay);
-  console.log("Transportation type:", typeof transportations);
-  console.log("Transportation array:", Array.isArray(transportations));
-  
-  const safeTransportations = Array.isArray(transportations) ? transportations : [];
+  const safeTransportations = transportations || [];
   const filteredTransportations = safeTransportations.filter(
     (transport: Transportation) => {
       const transportStartDate = transport.start_date;
       const transportEndDate = transport.end_date
         ? transport.end_date
         : transportStartDate;
-      const dayDate2 = new Date(normalizedDay);
-      
+      const dayDate = new Date(normalizedDay);
+
       console.log("Checking transport:", {
         id: transport.id,
         startDate: transportStartDate,
         endDate: transportEndDate,
         currentDay: normalizedDay,
-        isWithinRange: (
-          dayDate2 >= new Date(transportStartDate) &&
-          dayDate2 <= new Date(transportEndDate)
-        )
+        isWithinRange:
+          dayDate >= new Date(transportStartDate) &&
+          dayDate <= new Date(transportEndDate),
       });
 
       return (
-        dayDate2 >= new Date(transportStartDate) &&
-        dayDate2 <= new Date(transportEndDate)
+        dayDate >= new Date(transportStartDate) &&
+        dayDate <= new Date(transportEndDate)
       );
-    },
+    }
   );
-  
+
   console.log("Filtered transportations:", filteredTransportations);
 
   const handleHotelEdit = (stay) => {
@@ -349,15 +371,23 @@ const DayCard: React.FC<DayCardProps> = ({
                     {filteredTransportations &&
                     filteredTransportations.length > 0 ? (
                       filteredTransportations.map((transport) => (
-                        <TransportationListItem
+                        <div
                           key={transport.id}
-                          transportation={transport}
-                          compact
                           onClick={() => {
                             setSelectedTransportation(transport);
                             setIsTransportationDialogOpen(true);
                           }}
-                        />
+                          className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
+                        >
+                          <div>
+                            <h4 className="font-medium text-gray-700">
+                              {transport.type}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              {formatTransportTime(transport)}
+                            </p>
+                          </div>
+                        </div>
                       ))
                     ) : (
                       <p className="text-white text-sm italic">
