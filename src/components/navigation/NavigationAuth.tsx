@@ -10,22 +10,7 @@ const NavigationAuth = () => {
   const navigate = useNavigate();
   const { session, signOut } = useAuth();
   const { toast } = useToast();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account.",
-      });
-      navigate("/auth");
-    } catch (error) {
-      toast({
-        title: "Error signing out",
-        description: "There was a problem signing out. Please try again.",
-        variant: "destructive",
-      });
-    }
+  
   };
 
   return (
