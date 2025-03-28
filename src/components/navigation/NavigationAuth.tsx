@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,6 @@ const NavigationAuth = () => {
   const navigate = useNavigate();
   const { session, signOut } = useAuth();
   const { toast } = useToast();
-  
-  };
 
   return (
     <div className="flex items-center space-x-4">
