@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { deleteAccommodation } from '@/services/accommodation/accommodationService';
@@ -22,7 +21,7 @@ export const useAccommodationHandlers = ({ onAccommodationChange }: UseAccommoda
       toast.success('Accommodation deleted successfully');
       // Only call onAccommodationChange if it exists
       if (typeof onAccommodationChange === 'function') {
-        await onAccommodationChange();
+        onAccommodationChange();
       }
     } catch (error) {
       if (error instanceof Error) {
