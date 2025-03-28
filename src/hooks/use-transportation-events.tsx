@@ -2,7 +2,6 @@ import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Transportation } from '@/types/trip';
-import { toast } from 'sonner';
 
 export function useTransportationEvents(tripId: string) {
   const queryClient = useQueryClient();
@@ -21,7 +20,7 @@ export function useTransportationEvents(tripId: string) {
         throw error;
       }
       console.log('Fetched transportation data:', data);
-      return data || [];
+      return data as Transportation[];
     },
     enabled: !!tripId,
   });
@@ -58,5 +57,5 @@ export function useTransportationEvents(tripId: string) {
   }, [tripId, refreshTransportation]);
 
   console.log('Transportations data:', transportations);
-  return { transportations, isLoading, refreshTransportation };
+  return { transportations, transportationData, isLoading, refreshTransportation };
 }
