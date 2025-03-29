@@ -69,24 +69,26 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         </Select>
       </div>
 
-      <div>
-        <RequiredLabel>From</RequiredLabel>
-        <Input
-          name="departure_location"
-          value={formData.departure_location || ''}
-          onChange={handleInputChange}
-          placeholder="Departure location"
-        />
-      </div>
-
-      <div>
-        <RequiredLabel>To</RequiredLabel>
-        <Input
-          name="arrival_location"
-          value={formData.arrival_location || ''}
-          onChange={handleInputChange}
-          placeholder="Arrival location"
-        />
+      {/* From and To inputs grouped horizontally */}
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <RequiredLabel>From</RequiredLabel>
+          <Input
+            name="departure_location"
+            value={formData.departure_location || ''}
+            onChange={handleInputChange}
+            placeholder="Departure location"
+          />
+        </div>
+        <div className="flex-1">
+          <RequiredLabel>To</RequiredLabel>
+          <Input
+            name="arrival_location"
+            value={formData.arrival_location || ''}
+            onChange={handleInputChange}
+            placeholder="Arrival location"
+          />
+        </div>
       </div>
 
       {/* Group Departure Date and Time on the same line */}

@@ -33,7 +33,7 @@ const initialActivity: ActivityFormData = {
   currency: CURRENCIES[0],
 };
 
-// Helper function to convert 24-hour time (e.g. "15:00") to 12-hour format ("3:00pm")
+// Helper function: converts 24-hour time (e.g. "15:00") to 12-hour format ("3:00pm")
 const formatTime12 = (time?: string) => {
   if (!time) return "";
   const [hourStr, minuteStr] = time.split(":");
@@ -41,6 +41,14 @@ const formatTime12 = (time?: string) => {
   const period = hour >= 12 ? "pm" : "am";
   const hour12 = hour % 12 === 0 ? 12 : hour % 12;
   return `${hour12}:${minuteStr}${period}`;
+};
+
+// Basic 24-hour time formatter (used for dining/activities)
+const formatTime24 = (time?: string) => {
+  if (!time) return "";
+  const [hours, minutes] = time.split(":");
+  if (!hours || !minutes) return "";
+  return `${hours}:${minutes}`;
 };
 
 interface DayCardProps {
@@ -54,9 +62,11 @@ interface DayCardProps {
   onDelete: (id: string) => void;
   defaultImageUrl?: string;
   hotelStays?: HotelStay[];
-  // Removed transportations prop since we're now fetching via hook
   originalImageUrl?: string | null;
 }
+
+// Utility function to get a normalized day (YYYY-MM-DD)
+const getNormalizedDay = (date: string) => date.split("T")[0];
 
 const DayCard: React.FC<DayCardProps> = ({
   id,
@@ -73,36 +83,29 @@ const DayCard: React.FC<DayCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
-  const [imageUrlState, setImageUrl] = useState(
-    originalImageUrl || imageUrl || null
-  );
-  const [isHotelDialogOpen, setIsHotelDialogOpen] = useState(false);
-  const [editHotelStay, setEditHotelStay] = useState<HotelStay | null>(null);
-  const [isHotelEditDialogOpen, setIsHotelEditDialogOpen] = useState(false);
+  const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
+
+  // Unified hotel dialog state for add/edit
+  const [hotelDialog, setHotelDialog] = useState<{ open: boolean; initialData?: HotelStay | null }>({
+    open: false,
+    initialData: null,
+  });
 
   // Activity dialog states
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [newActivity, setNewActivity] =
-    useState<ActivityFormData>(initialActivity);
-  const [activityEdit, setActivityEdit] =
-    useState<ActivityFormData>(initialActivity);
+  const [newActivity, setNewActivity] = useState<ActivityFormData>(initialActivity);
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>(initialActivity);
 
   // Transportation dialog states
-  const [isTransportationDialogOpen, setIsTransportationDialogOpen] =
-    useState(false);
-  const [selectedTransportation, setSelectedTransportation] =
-    useState<any>(null);
+  const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
+  const [selectedTransportation, setSelectedTransportation] = useState<Transportation | null>(null);
 
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (originalImageUrl) {
       setImageUrl(originalImageUrl);
-      console.log(
-        "Updated imageUrlState from originalImageUrl:",
-        originalImageUrl
-      );
     }
   }, [originalImageUrl]);
 
@@ -120,13 +123,12 @@ const DayCard: React.FC<DayCardProps> = ({
     enabled: !!id,
   });
 
-  // Use transportation hook to get transportation events
-  const { transportations, isLoading: transportationLoading } =
-    useTransportationEvents(tripId);
+  // Transportation events hook
+  const { transportations } = useTransportationEvents(tripId);
 
   const dayTitle = title || format(parseISO(date), "EEEE");
 
-  // Helper to format transportation date/time details
+  // Helper to format transportation details
   const formatTransportTime = (transport: Transportation) => {
     const startDate = transport.start_date
       ? format(parseISO(transport.start_date), "MMM dd, yyyy")
@@ -148,24 +150,18 @@ const DayCard: React.FC<DayCardProps> = ({
     return endString ? `${startString} - ${endString}` : startString;
   };
 
+  const refreshTripData = () => {
+    queryClient.invalidateQueries(["trip"]);
+  };
+
   const handleEdit = () => {
-    console.log("Edit DayCard", id);
     setIsEditing(true);
   };
 
   const handleSaveEdit = async (data: any) => {
     try {
-      if (data.title) {
-        setEditTitle(data.title);
-      }
-      if (data.image_url) {
-        setImageUrl(data.image_url);
-      }
-      console.log("Saving to database:", {
-        id,
-        title: data.title,
-        image_url: data.image_url,
-      });
+      if (data.title) setEditTitle(data.title);
+      if (data.image_url) setImageUrl(data.image_url);
       const { error, data: updatedData } = await supabase
         .from("trip_days")
         .update({
@@ -177,16 +173,14 @@ const DayCard: React.FC<DayCardProps> = ({
         .single();
 
       if (error) {
-        console.error("Error saving day edit:", error);
         toast.error("Failed to save changes");
         throw error;
       } else {
         toast.success("Day updated successfully");
-        console.log("Database updated successfully:", updatedData);
         if (updatedData.image_url) {
           setImageUrl(updatedData.image_url);
         }
-        queryClient.invalidateQueries(["trip"]);
+        refreshTripData();
       }
       setIsEditing(false);
     } catch (error) {
@@ -194,64 +188,29 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  const formatTime = (time?: string) => {
-    if (!time) return "";
-    const [hours, minutes] = time.split(":");
-    if (!hours || !minutes) return "";
-    return `${hours}:${minutes}`;
-  };
+  const normalizedDay = getNormalizedDay(date);
 
-  // Normalize the day from the DayCard date prop.
-  const normalizedDay = date.split("T")[0];
-
+  // Filter hotel stays for the current day
   const filteredHotelStays = hotelStays.filter((stay: HotelStay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const checkinDate = stay.hotel_checkin_date;
-    const checkoutDate = stay.hotel_checkout_date;
     const dayDate = new Date(normalizedDay);
-    console.log("Normalized day date hotel:", normalizedDay);
-    return (
-      dayDate >= new Date(checkinDate) && dayDate <= new Date(checkoutDate)
-    );
+    return dayDate >= new Date(stay.hotel_checkin_date) && dayDate <= new Date(stay.hotel_checkout_date);
   });
 
   // Filter transportations relevant to this day
-  console.log("Raw transportations:", transportations);
-  console.log("Current normalized day:", normalizedDay);
   const safeTransportations = transportations || [];
-  const filteredTransportations = safeTransportations.filter(
-    (transport: Transportation) => {
-      const transportStartDate = transport.start_date;
-      const transportEndDate = transport.end_date
-        ? transport.end_date
-        : transportStartDate;
-      const dayDate = new Date(normalizedDay);
+  const filteredTransportations = safeTransportations.filter((transport: Transportation) => {
+    const transportStartDate = transport.start_date;
+    const transportEndDate = transport.end_date ? transport.end_date : transportStartDate;
+    const dayDate = new Date(normalizedDay);
+    return dayDate >= new Date(transportStartDate) && dayDate <= new Date(transportEndDate);
+  });
 
-      console.log("Checking transport:", {
-        id: transport.id,
-        startDate: transportStartDate,
-        endDate: transportEndDate,
-        currentDay: normalizedDay,
-        isWithinRange:
-          dayDate >= new Date(transportStartDate) &&
-          dayDate <= new Date(transportEndDate),
-      });
-
-      return (
-        dayDate >= new Date(transportStartDate) &&
-        dayDate <= new Date(transportEndDate)
-      );
-    }
-  );
-
-  console.log("Filtered transportations:", filteredTransportations);
-
-  const handleHotelEdit = (stay) => {
-    setEditHotelStay(stay);
-    setIsHotelEditDialogOpen(true);
+  const handleHotelEdit = (stay: HotelStay) => {
+    setHotelDialog({ open: true, initialData: stay });
   };
 
-  // Import activity management functions from DayActivityManager
+  // Activity management functions imported from DayActivityManager
   const { handleAddActivity, handleEditActivity, handleDeleteActivity } =
     DayActivityManager({ id, tripId, activities });
 
@@ -302,13 +261,11 @@ const DayCard: React.FC<DayCardProps> = ({
             />
 
             <div className="relative z-10 w-full h-full p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Left column: Hotel + Transportation */}
+              {/* Left Column: Hotel & Transportation */}
               <div className="space-y-4 order-1">
-                {/* Hotel Stay */}
+                {/* Hotel Stay Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Hotel Stay
-                  </h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">Hotel Stay</h3>
                   <div className="space-y-2">
                     {filteredHotelStays.map((stay) => (
                       <div
@@ -317,30 +274,20 @@ const DayCard: React.FC<DayCardProps> = ({
                         className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
                       >
                         <div>
-                          <h4 className="font-medium text-gray-700">
-                            {stay.hotel}
-                          </h4>
+                          <h4 className="font-medium text-gray-700">{stay.hotel}</h4>
                           <p className="text-sm text-gray-500">
                             {stay.hotel_address || stay.hotel_details}
                           </p>
-                          {stay.hotel_checkin_date &&
-                            stay.hotel_checkin_date === normalizedDay && (
-                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                Check-in{" "}
-                                {stay.checkin_time
-                                  ? formatTime12(stay.checkin_time)
-                                  : ""}
-                              </div>
-                            )}
-                          {stay.hotel_checkout_date &&
-                            stay.hotel_checkout_date === normalizedDay && (
-                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                                Check-out{" "}
-                                {stay.checkout_time
-                                  ? formatTime12(stay.checkout_time)
-                                  : ""}
-                              </div>
-                            )}
+                          {stay.hotel_checkin_date === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ""}
+                            </div>
+                          )}
+                          {stay.hotel_checkout_date === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                              Check-out {stay.checkout_time ? formatTime12(stay.checkout_time) : ""}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -352,7 +299,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsHotelDialogOpen(true)}
+                      onClick={() => setHotelDialog({ open: true, initialData: null })}
                       className="w-full bg-white/10 text-white hover:bg-white/20 mt-2"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -361,14 +308,13 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
 
-                {/* Flights and Transportation */}
+                {/* Flights and Transportation Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">
                     Flights and Transportation
                   </h3>
                   <div className="space-y-2">
-                    {filteredTransportations &&
-                    filteredTransportations.length > 0 ? (
+                    {filteredTransportations && filteredTransportations.length > 0 ? (
                       filteredTransportations.map((transport) => (
                         <div
                           key={transport.id}
@@ -379,9 +325,7 @@ const DayCard: React.FC<DayCardProps> = ({
                           className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
                         >
                           <div>
-                            <h4 className="font-medium text-gray-700">
-                              {transport.type}
-                            </h4>
+                            <h4 className="font-medium text-gray-700">{transport.type}</h4>
                             <p className="text-sm text-gray-500">
                               {formatTransportTime(transport)}
                             </p>
@@ -409,13 +353,11 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
 
-              {/* Right column: Activities + Dining */}
+              {/* Right Column: Activities & Dining */}
               <div className="space-y-4 order-2">
-                {/* Activities */}
+                {/* Activities Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Activities
-                  </h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <div className="space-y-2">
                     {activities.map((activity) => (
                       <div
@@ -424,14 +366,11 @@ const DayCard: React.FC<DayCardProps> = ({
                         className="cursor-pointer flex justify-between items-center p-3 bg-white/90 rounded-lg shadow-sm hover:bg-white/100"
                       >
                         <div>
-                          <h4 className="font-medium text-gray-700">
-                            {activity.title}
-                          </h4>
+                          <h4 className="font-medium text-gray-700">{activity.title}</h4>
                           {activity.start_time && (
                             <p className="text-sm text-gray-500">
-                              {formatTime(activity.start_time)}
-                              {activity.end_time &&
-                                ` - ${formatTime(activity.end_time)}`}
+                              {formatTime24(activity.start_time)}
+                              {activity.end_time && ` - ${formatTime24(activity.end_time)}`}
                             </p>
                           )}
                         </div>
@@ -454,14 +393,12 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
 
-                {/* Dining (Reservations) */}
+                {/* Dining Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Dining
-                  </h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">Dining</h3>
                   <DiningList
                     reservations={reservations || []}
-                    formatTime={formatTime}
+                    formatTime={formatTime24}
                     dayId={id}
                   />
                 </div>
@@ -471,24 +408,16 @@ const DayCard: React.FC<DayCardProps> = ({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Dialog for adding/editing a new hotel stay */}
+      {/* Unified Dialog for Adding/Editing a Hotel Stay */}
       <AccommodationDialog
         tripId={tripId}
-        open={isHotelDialogOpen}
-        onOpenChange={setIsHotelDialogOpen}
-        onSuccess={() => queryClient.invalidateQueries(["trip"])}
+        open={hotelDialog.open}
+        onOpenChange={(open) => setHotelDialog({ ...hotelDialog, open })}
+        initialData={hotelDialog.initialData || undefined}
+        onSuccess={refreshTripData}
       />
 
-      {/* Dialog for editing an existing hotel stay */}
-      <AccommodationDialog
-        tripId={tripId}
-        open={isHotelEditDialogOpen}
-        onOpenChange={setIsHotelEditDialogOpen}
-        initialData={editHotelStay || undefined}
-        onSuccess={() => queryClient.invalidateQueries(["trip"])}
-      />
-
-      {/* Activity dialogs for adding and editing */}
+      {/* Activity Dialogs for Adding/Editing */}
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
         setIsAddingActivity={setIsAddingActivity}
@@ -504,14 +433,14 @@ const DayCard: React.FC<DayCardProps> = ({
         eventId={id}
       />
 
-      {/* Transportation Dialog for DayCard */}
+      {/* Transportation Dialog */}
       <TransportationDialog
         tripId={tripId}
         open={isTransportationDialogOpen}
         onOpenChange={setIsTransportationDialogOpen}
-        initialData={selectedTransportation}
+        initialData={selectedTransportation || undefined}
         onSuccess={() => {
-          queryClient.invalidateQueries(["trip"]);
+          refreshTripData();
           setSelectedTransportation(null);
         }}
       />
