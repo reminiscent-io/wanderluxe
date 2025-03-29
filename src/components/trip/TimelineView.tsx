@@ -18,7 +18,7 @@ interface TimelineViewProps {
   };
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
   useEffect(() => {
     // Track timeline view
     window.gtag('event', 'view_timeline', {
@@ -40,7 +40,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates }) => {
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [tripDates, setTripDates] = useState<{
+  const [tripDatesState, setTripDatesState] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
   }>({
