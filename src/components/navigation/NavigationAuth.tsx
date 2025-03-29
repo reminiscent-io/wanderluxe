@@ -11,7 +11,7 @@ const NavigationAuth = () => {
   const { session } = useAuth();
 
   return (
-    <div className="flex items-center space-x-4">
+    <motion.div className="flex items-center space-x-4">
       {session ? (
         <>
           <motion.button
@@ -34,7 +34,7 @@ const NavigationAuth = () => {
           Sign In
         </motion.button>
       )}
-    </div>
+    </motion.div>
   );
 };
 
