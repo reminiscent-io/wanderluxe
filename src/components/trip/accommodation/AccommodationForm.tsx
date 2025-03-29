@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import HotelSearchInput from './HotelSearchInput';
 import HotelContactInfo from './form/HotelContactInfo';
-import { AccommodationFormData } from '@/services/accommodation/types';
+import { AccommodationFormData } from '@/services/accommodation/accommodationService';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { Loader2 } from 'lucide-react';
