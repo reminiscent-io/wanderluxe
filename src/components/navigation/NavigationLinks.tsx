@@ -12,7 +12,7 @@ const NavigationLinks = () => {
   };
 
   return (
-    <div className="hidden space-x-8 md:flex">
+    <motion.div className="hidden space-x-8 md:flex">
       {["My Trips"].map(item => (
         <motion.button
           key={item}
@@ -24,7 +24,7 @@ const NavigationLinks = () => {
           {item}
         </motion.button>
       ))}
-    </div>
+    </motion.div>
   );
 };
 
