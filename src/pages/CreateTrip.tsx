@@ -13,9 +13,24 @@ const CreateTrip = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    // Track page view
+    window.gtag('event', 'page_view', {
+      page_title: 'Create Trip',
+      page_location: window.location.href,
+      page_path: window.location.pathname
+    });
+  }, []);
+
   const handleSubmit = async (tripId: string) => {
     setIsLoading(true);
     try {
+      // Track successful trip creation
+      window.gtag('event', 'trip_created', {
+        event_category: 'Trip',
+        event_label: destination,
+        value: 1
+      });
       toast.success('Trip created successfully!');
       navigate(`/trip/${tripId}`);
     } catch (error) {

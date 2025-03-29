@@ -18,10 +18,23 @@ interface TimelineViewProps {
   };
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({
-  tripId,
-  tripDates: initialTripDates,
-}) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates }) => {
+  useEffect(() => {
+    // Track timeline view
+    window.gtag('event', 'view_timeline', {
+      event_category: 'Trip',
+      event_label: tripId
+    });
+  }, [tripId]);
+
+  const trackTimelineAction = (action: string, details?: object) => {
+    window.gtag('event', action, {
+      event_category: 'Timeline',
+      event_label: tripId,
+      ...details
+    });
+  };
+
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
@@ -157,7 +170,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     })) || [];
 
 
-  
+
   return (
     <div className="relative space-y-8">
       {isRefreshing && (
@@ -203,6 +216,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
         hotelStays={processedHotelStays}
         transportations={processedTransportations}
+        onTimelineAction={trackTimelineAction} // added prop for timeline action tracking
       />
     </div>
   );
