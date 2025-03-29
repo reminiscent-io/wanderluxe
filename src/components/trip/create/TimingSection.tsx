@@ -19,7 +19,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   return (
     <div className="space-y-4">
       <Label className="text-sm font-medium text-gray-700">
-        When are you planning to travel?
+        When are you planning to travel? 
       </Label>
 
       <div className="space-y-4">
@@ -28,7 +28,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
             htmlFor="startDate"
             className="text-sm font-medium text-gray-700"
           >
-            Start Date
+            Start Date <span className="text-red-500"> *</span>
           </Label>
           <Input
             id="startDate"
@@ -43,7 +43,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
             htmlFor="endDate"
             className="text-sm font-medium text-gray-700"
           >
-            End Date
+            End Date <span className="text-red-500"> *</span>
           </Label>
           <Input
             id="endDate"
