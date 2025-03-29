@@ -40,7 +40,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [tripDatesState, setTripDatesState] = useState<{
+  const [localTripDates, setLocalTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
   }>({
@@ -57,18 +57,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     const newArrival = initialTripDates?.arrival_date;
     const newDeparture = initialTripDates?.departure_date;
     if (newArrival && newDeparture) {
-      if (newArrival !== tripDates.arrival_date || newDeparture !== tripDates.departure_date) {
+      if (newArrival !== localTripDates.arrival_date || newDeparture !== localTripDates.departure_date) {
         console.log('Updating trip dates from props:', { newArrival, newDeparture });
-        setTripDates({
+        setLocalTripDates({
           arrival_date: newArrival,
           departure_date: newDeparture,
         });
       }
     }
-  }, [initialTripDates]);
+  }, [initialTripDates, localTripDates]);
 
   useEffect(() => {
-    if (!tripDates.arrival_date || !tripDates.departure_date) {
+    if (!localTripDates.arrival_date || !localTripDates.departure_date) {
       console.log('Trip dates missing on mount, fetching fresh data');
       fetchTripData();
     }
@@ -87,7 +87,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       if (!error && data) {
         if (data.arrival_date && data.departure_date) {
           console.log('Setting trip dates from refresh:', data);
-          setTripDates({
+          setLocalTripDates({
             arrival_date: data.arrival_date,
             departure_date: data.departure_date,
           });
@@ -120,7 +120,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           arrival: data.arrival_date,
           departure: data.departure_date,
         });
-        setTripDates({
+        setLocalTripDates({
           arrival_date: data.arrival_date,
           departure_date: data.departure_date,
         });
@@ -180,14 +180,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       <div className="flex flex-col gap-4">
         {console.log('Rendering TripDates with:', {
           tripId,
-          arrivalDate: tripDates.arrival_date,
-          departureDate: tripDates.departure_date,
+          arrivalDate: localTripDates.arrival_date,
+          departureDate: localTripDates.departure_date,
         })}
-        {tripDates.arrival_date && tripDates.departure_date ? (
+        {localTripDates.arrival_date && localTripDates.departure_date ? (
           <TripDates
             tripId={tripId}
-            arrivalDate={tripDates.arrival_date}
-            departureDate={tripDates.departure_date}
+            arrivalDate={localTripDates.arrival_date}
+            departureDate={localTripDates.departure_date}
             onDatesChange={handleRefresh}
           />
         ) : (
