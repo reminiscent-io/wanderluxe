@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
 interface ActivityFormProps {
-  activity: ActivityFormData;             // Make sure this is always defined
+  activity: ActivityFormData;
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (activity: ActivityFormData) => void;
   onCancel: () => void;
@@ -13,15 +13,9 @@ interface ActivityFormProps {
   eventId: string;
 }
 
-// Include a null option for "no selection" (displayed as a dash)
 const hours = [null, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const minutes = [null, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-const ampmOptions = [null, 'AM', 'PM'];
 
-/**
- * Converts a 12-hour selection to a 24-hour "HH:MM" string.
- * If any part is null, returns an empty string to indicate no time selected.
- */
 function to24HourString(
   h: number | null,
   m: number | null,
@@ -38,19 +32,14 @@ function to24HourString(
   return `${hh}:${mm}`;
 }
 
-/**
- * Parses a "HH:MM" or "HH:MM:SS" 24-hour string into { hour, minute, ampm }.
- * If invalid, returns all nulls.
- */
 function parse24HourString(time?: string) {
   if (!time || typeof time !== 'string') {
     return { hour: null, minute: null, ampm: null };
   }
   try {
-    // Remove any seconds portion and only keep HH:MM
-    const timeWithoutSeconds = time.split('.')[0].split(':').slice(0, 2).join(':');
+    // Use only the first 5 characters (HH:MM) and ignore seconds
+    const timeWithoutSeconds = time.slice(0, 5);
     const [hoursStr, minutesStr] = timeWithoutSeconds.split(':');
-
     const hours24 = parseInt(hoursStr, 10);
     const minutes = parseInt(minutesStr, 10);
 
@@ -58,7 +47,6 @@ function parse24HourString(time?: string) {
       return { hour: null, minute: null, ampm: null };
     }
 
-    // Convert 24-hour to 12-hour format
     let hour12 = hours24 % 12;
     if (hour12 === 0) hour12 = 12;
     const ampm = hours24 >= 12 ? 'PM' : 'AM';
@@ -81,7 +69,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Local states for start/end times
+  // Local state for start and end times
   const [startHour, setStartHour] = useState<number | null>(null);
   const [startMinute, setStartMinute] = useState<number | null>(null);
   const [startAmPm, setStartAmPm] = useState<string | null>(null);
@@ -90,49 +78,41 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [endMinute, setEndMinute] = useState<number | null>(null);
   const [endAmPm, setEndAmPm] = useState<string | null>(null);
 
-  // Parse times from activity prop on first render or when format changes
+  // Use a ref so that we only initialize local state once.
+  const initialLoad = useRef(true);
   useEffect(() => {
-    // Track if this is a "source of truth" update from parent
-    const isParentUpdate = 
-      to24HourString(startHour, startMinute, startAmPm) !== activity.start_time ||
-      to24HourString(endHour, endMinute, endAmPm) !== activity.end_time;
-
-    // Only update local state if changes came from parent
-    if (isParentUpdate) {
-      if (activity?.start_time) {
+    if (initialLoad.current) {
+      if (activity.start_time) {
         const start = parse24HourString(activity.start_time);
         setStartHour(start.hour);
         setStartMinute(start.minute);
         setStartAmPm(start.ampm);
-      } else {
-        setStartHour(null);
-        setStartMinute(null);
-        setStartAmPm(null);
       }
-
-      if (activity?.end_time) {
+      if (activity.end_time) {
         const end = parse24HourString(activity.end_time);
         setEndHour(end.hour);
         setEndMinute(end.minute);
         setEndAmPm(end.ampm);
-      } else {
-        setEndHour(null);
-        setEndMinute(null);
-        setEndAmPm(null);
       }
+      initialLoad.current = false;
     }
-  }, [activity.start_time, activity.end_time]);
+  }, []); // runs only once on mount
 
-  // Handle time updates manually through change handlers instead of useEffect
-  const updateStartTime = () => {
+  // Update parent's activity when local start time changes.
+  useEffect(() => {
     const newStart = to24HourString(startHour, startMinute, startAmPm);
-    onActivityChange({ ...activity, start_time: newStart });
-  };
+    if (activity.start_time !== newStart) {
+      onActivityChange({ ...activity, start_time: newStart });
+    }
+  }, [startHour, startMinute, startAmPm]);
 
-  const updateEndTime = () => {
+  // Update parent's activity when local end time changes.
+  useEffect(() => {
     const newEnd = to24HourString(endHour, endMinute, endAmPm);
-    onActivityChange({ ...activity, end_time: newEnd });
-  };
+    if (activity.end_time !== newEnd) {
+      onActivityChange({ ...activity, end_time: newEnd });
+    }
+  }, [endHour, endMinute, endAmPm]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -141,7 +121,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       newErrors.title = 'Title is required';
     }
 
-    // If both times exist, ensure start <= end
     if (activity.start_time && activity.end_time) {
       if (activity.start_time > activity.end_time) {
         newErrors.time = 'End time must be after start time';
@@ -178,10 +157,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   };
 
   const handleCostChange = (value: string) => {
-    onActivityChange({
-      ...activity,
-      cost: value
-    });
+    onActivityChange({ ...activity, cost: value });
   };
 
   return (
@@ -196,9 +172,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="text"
           value={activity.title}
           onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
-          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-gray-300 p-2 focus:border-earth-500 focus:ring-earth-500 ${
-            errors.title ? 'border-red-500' : ''
-          }`}
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-gray-300 p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.title ? 'border-red-500' : ''}`}
           required
         />
         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
@@ -226,7 +200,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             Start Time
           </label>
           <div className="flex items-center gap-2 mt-1">
-            {/* Hour */}
             <select
               id="start-hour"
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
@@ -234,27 +207,20 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setStartHour(val);
-                setTimeout(updateStartTime, 0);
               }}
             >
               <option value="">–</option>
               {hours.slice(1).map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
+                <option key={h} value={h}>{h}</option>
               ))}
             </select>
-
             <span>:</span>
-
-            {/* Minute */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
               value={startMinute !== null ? startMinute : ''}
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setStartMinute(val);
-                setTimeout(updateStartTime, 0);
               }}
             >
               <option value="">–</option>
@@ -264,15 +230,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
                 </option>
               ))}
             </select>
-
-            {/* AM/PM */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
               value={startAmPm !== null ? startAmPm : ''}
               onChange={(e) => {
                 const val = e.target.value === '' ? null : e.target.value;
                 setStartAmPm(val);
-                setTimeout(updateStartTime, 0);
               }}
             >
               <option value="">–</option>
@@ -288,7 +251,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             End Time
           </label>
           <div className="flex items-center gap-2 mt-1">
-            {/* Hour */}
             <select
               id="end-hour"
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
@@ -296,27 +258,20 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setEndHour(val);
-                setTimeout(updateEndTime, 0);
               }}
             >
               <option value="">–</option>
               {hours.slice(1).map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
+                <option key={h} value={h}>{h}</option>
               ))}
             </select>
-
             <span>:</span>
-
-            {/* Minute */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
               value={endMinute !== null ? endMinute : ''}
               onChange={(e) => {
                 const val = e.target.value === '' ? null : Number(e.target.value);
                 setEndMinute(val);
-                setTimeout(updateEndTime, 0);
               }}
             >
               <option value="">–</option>
@@ -326,15 +281,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
                 </option>
               ))}
             </select>
-
-            {/* AM/PM */}
             <select
               className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
               value={endAmPm !== null ? endAmPm : ''}
               onChange={(e) => {
                 const val = e.target.value === '' ? null : e.target.value;
                 setEndAmPm(val);
-                setTimeout(updateEndTime, 0);
               }}
             >
               <option value="">–</option>
@@ -343,7 +295,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             </select>
           </div>
         </div>
-
         {errors.time && (
           <p className="col-span-2 text-xs text-red-500">{errors.time}</p>
         )}
@@ -360,9 +311,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="text"
             value={activity.cost || ''}
             onChange={(e) => handleCostChange(e.target.value)}
-            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${
-              errors.cost ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.cost ? 'border-red-500' : 'border-gray-300'}`}
           />
           {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
         </div>

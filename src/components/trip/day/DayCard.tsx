@@ -33,7 +33,6 @@ const initialActivity: ActivityFormData = {
   currency: CURRENCIES[0],
 };
 
-// Helper function: converts 24-hour time (e.g. "15:00") to 12-hour format ("3:00pm")
 const formatTime12 = (time?: string) => {
   if (!time) return "";
   const [hourStr, minuteStr] = time.split(":");
@@ -43,7 +42,6 @@ const formatTime12 = (time?: string) => {
   return `${hour12}:${minuteStr}${period}`;
 };
 
-// Basic 24-hour time formatter (used for dining/activities)
 const formatTime24 = (time?: string) => {
   if (!time) return "";
   const [hours, minutes] = time.split(":");
@@ -65,7 +63,6 @@ interface DayCardProps {
   originalImageUrl?: string | null;
 }
 
-// Utility function to get a normalized day (YYYY-MM-DD)
 const getNormalizedDay = (date: string) => date.split("T")[0];
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -76,6 +73,7 @@ const DayCard: React.FC<DayCardProps> = ({
   activities = [],
   imageUrl,
   index,
+  onDelete,
   defaultImageUrl,
   hotelStays = [],
   originalImageUrl,
@@ -85,19 +83,16 @@ const DayCard: React.FC<DayCardProps> = ({
   const [editTitle, setEditTitle] = useState(title);
   const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
 
-  // Unified hotel dialog state for add/edit
   const [hotelDialog, setHotelDialog] = useState<{ open: boolean; initialData?: HotelStay | null }>({
     open: false,
     initialData: null,
   });
 
-  // Activity dialog states
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [newActivity, setNewActivity] = useState<ActivityFormData>(initialActivity);
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>(initialActivity);
 
-  // Transportation dialog states
   const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
   const [selectedTransportation, setSelectedTransportation] = useState<Transportation | null>(null);
 
@@ -123,12 +118,9 @@ const DayCard: React.FC<DayCardProps> = ({
     enabled: !!id,
   });
 
-  // Transportation events hook
   const { transportations } = useTransportationEvents(tripId);
-
   const dayTitle = title || format(parseISO(date), "EEEE");
 
-  // Helper to format transportation details
   const formatTransportTime = (transport: Transportation) => {
     const startDate = transport.start_date
       ? format(parseISO(transport.start_date), "MMM dd, yyyy")
@@ -190,14 +182,12 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const normalizedDay = getNormalizedDay(date);
 
-  // Filter hotel stays for the current day
   const filteredHotelStays = hotelStays.filter((stay: HotelStay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
     const dayDate = new Date(normalizedDay);
     return dayDate >= new Date(stay.hotel_checkin_date) && dayDate <= new Date(stay.hotel_checkout_date);
   });
 
-  // Filter transportations relevant to this day
   const safeTransportations = transportations || [];
   const filteredTransportations = safeTransportations.filter((transport: Transportation) => {
     const transportStartDate = transport.start_date;
@@ -210,18 +200,18 @@ const DayCard: React.FC<DayCardProps> = ({
     setHotelDialog({ open: true, initialData: stay });
   };
 
-  // Activity management functions imported from DayActivityManager
   const { handleAddActivity, handleEditActivity, handleDeleteActivity } =
     DayActivityManager({ id, tripId, activities });
 
+  // Updated: Normalize time format by slicing off seconds for editing.
   const handleActivityEditClick = (activity: DayActivity) => {
     if (activity.id) {
       setEditingActivity(activity.id);
       setActivityEdit({
         title: activity.title,
         description: activity.description || "",
-        start_time: activity.start_time || "",
-        end_time: activity.end_time || "",
+        start_time: activity.start_time ? activity.start_time.slice(0, 5) : "",
+        end_time: activity.end_time ? activity.end_time.slice(0, 5) : "",
         cost: activity.cost ? String(activity.cost) : "",
         currency: activity.currency || "",
       });
@@ -261,9 +251,7 @@ const DayCard: React.FC<DayCardProps> = ({
             />
 
             <div className="relative z-10 w-full h-full p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Left Column: Hotel & Transportation */}
               <div className="space-y-4 order-1">
-                {/* Hotel Stay Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Hotel Stay</h3>
                   <div className="space-y-2">
@@ -308,7 +296,6 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
 
-                {/* Flights and Transportation Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">
                     Flights and Transportation
@@ -353,9 +340,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
               </div>
 
-              {/* Right Column: Activities & Dining */}
               <div className="space-y-4 order-2">
-                {/* Activities Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Activities</h3>
                   <div className="space-y-2">
@@ -393,7 +378,6 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                 </div>
 
-                {/* Dining Section */}
                 <div className="bg-black/10 backdrop-blur-sm rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-2">Dining</h3>
                   <DiningList
@@ -408,7 +392,6 @@ const DayCard: React.FC<DayCardProps> = ({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Unified Dialog for Adding/Editing a Hotel Stay */}
       <AccommodationDialog
         tripId={tripId}
         open={hotelDialog.open}
@@ -417,7 +400,6 @@ const DayCard: React.FC<DayCardProps> = ({
         onSuccess={refreshTripData}
       />
 
-      {/* Activity Dialogs for Adding/Editing */}
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
         setIsAddingActivity={setIsAddingActivity}
@@ -433,7 +415,6 @@ const DayCard: React.FC<DayCardProps> = ({
         eventId={id}
       />
 
-      {/* Transportation Dialog */}
       <TransportationDialog
         tripId={tripId}
         open={isTransportationDialogOpen}
