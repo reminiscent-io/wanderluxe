@@ -257,146 +257,153 @@ const DayCard: React.FC<DayCardProps> = ({
 
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleContent>
-          {/* Removed md:hidden so content is visible on all screen sizes */}
-          <div className="p-4 grid grid-cols-1 gap-4 bg-sand-300">
-            {/* HOTEL STAY */}
-            <div className="bg-gray-100 rounded-lg p-4">
-              <h3 className="text-base font-semibold mb-2">Hotel Stay</h3>
-              <div className="space-y-2">
-                {filteredHotelStays.map((stay) => (
-                  <div
-                    key={stay.stay_id}
-                    onClick={() => handleHotelEdit(stay)}
-                    className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
-                  >
-                    <div>
-                      <h4 className="font-medium text-gray-700 text-sm">{stay.hotel}</h4>
-                      <p className="text-xs text-gray-500">
-                        {stay.hotel_address || stay.hotel_details}
-                      </p>
-                      {stay.hotel_checkin_date === normalizedDay && (
-                        <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800">
-                          Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ""}
+          <div className="p-4 bg-sand-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left column: Hotel & Transportation */}
+              <div className="flex flex-col gap-4">
+                {/* HOTEL STAY */}
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <h3 className="text-base font-semibold mb-2">Hotel Stay</h3>
+                  <div className="space-y-2">
+                    {filteredHotelStays.map((stay) => (
+                      <div
+                        key={stay.stay_id}
+                        onClick={() => handleHotelEdit(stay)}
+                        className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                      >
+                        <div>
+                          <h4 className="font-medium text-gray-700 text-sm">{stay.hotel}</h4>
+                          <p className="text-xs text-gray-500">
+                            {stay.hotel_address || stay.hotel_details}
+                          </p>
+                          {stay.hotel_checkin_date === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800">
+                              Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ""}
+                            </div>
+                          )}
+                          {stay.hotel_checkout_date === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800">
+                              Check-out {stay.checkout_time ? formatTime12(stay.checkout_time) : ""}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {stay.hotel_checkout_date === normalizedDay && (
-                        <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800">
-                          Check-out {stay.checkout_time ? formatTime12(stay.checkout_time) : ""}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {filteredHotelStays.length === 0 && (
-                  <p className="text-gray-500 text-xs italic">
-                    No hotel stay booked this night
-                  </p>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setHotelDialog({ open: true, initialData: null })}
-                  className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Hotel Stay
-                </Button>
-              </div>
-            </div>
-
-            {/* TRANSPORTATION */}
-            <div className="bg-gray-100 rounded-lg p-4">
-              <h3 className="text-base font-semibold mb-2">Flights and Transportation</h3>
-              <div className="space-y-2">
-                {filteredTransportations.length > 0 ? (
-                  filteredTransportations.map((transport) => (
-                    <div
-                      key={transport.id}
-                      onClick={() => {
-                        setSelectedTransportation(transport);
-                        setIsTransportationDialogOpen(true);
-                      }}
-                      className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
-                    >
-                      <div>
-                        <h4 className="font-medium text-gray-700 text-sm">
-                          {transport.type}
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          {formatTransportTime(transport)}
-                        </p>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-xs italic">
-                    No transportation for this day
-                  </p>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedTransportation(null);
-                  setIsTransportationDialogOpen(true);
-                }}
-                className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Transportation
-              </Button>
-            </div>
-
-            {/* ACTIVITIES */}
-            <div className="bg-gray-100 rounded-lg p-4">
-              <h3 className="text-base font-semibold mb-2">Activities</h3>
-              <div className="space-y-2">
-                {activities.map((activity) => (
-                  <div
-                    key={activity.id || activity.title}
-                    onClick={() => handleActivityEditClick(activity)}
-                    className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
-                  >
-                    <div>
-                      <h4 className="font-medium text-gray-700 text-sm">
-                        {activity.title}
-                      </h4>
-                      {activity.start_time && (
-                        <p className="text-xs text-gray-500">
-                          {formatTime24(activity.start_time)}
-                          {activity.end_time && ` - ${formatTime24(activity.end_time)}`}
-                        </p>
-                      )}
-                    </div>
+                    ))}
+                    {filteredHotelStays.length === 0 && (
+                      <p className="text-gray-500 text-xs italic">
+                        No hotel stay booked this night
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setHotelDialog({ open: true, initialData: null })}
+                      className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Hotel Stay
+                    </Button>
                   </div>
-                ))}
-                {activities.length === 0 && (
-                  <p className="text-gray-500 text-xs italic">
-                    No activities for this day
-                  </p>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddingActivity(true)}
-                  className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Activity
-                </Button>
-              </div>
-            </div>
+                </div>
 
-            {/* DINING */}
-            <div className="bg-gray-100 rounded-lg p-4">
-              <h3 className="text-base font-semibold mb-2">Dining</h3>
-              <DiningList
-                reservations={reservations || []}
-                formatTime={formatTime24}
-                dayId={id}
-                className="text-xs"
-              />
+                {/* TRANSPORTATION */}
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <h3 className="text-base font-semibold mb-2">Flights and Transportation</h3>
+                  <div className="space-y-2">
+                    {filteredTransportations.length > 0 ? (
+                      filteredTransportations.map((transport) => (
+                        <div
+                          key={transport.id}
+                          onClick={() => {
+                            setSelectedTransportation(transport);
+                            setIsTransportationDialogOpen(true);
+                          }}
+                          className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                        >
+                          <div>
+                            <h4 className="font-medium text-gray-700 text-sm">
+                              {transport.type}
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              {formatTransportTime(transport)}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-xs italic">
+                        No transportation for this day
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTransportation(null);
+                      setIsTransportationDialogOpen(true);
+                    }}
+                    className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Transportation
+                  </Button>
+                </div>
+              </div>
+
+              {/* Right column: Activities & Dining */}
+              <div className="flex flex-col gap-4">
+                {/* ACTIVITIES */}
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <h3 className="text-base font-semibold mb-2">Activities</h3>
+                  <div className="space-y-2">
+                    {activities.map((activity) => (
+                      <div
+                        key={activity.id || activity.title}
+                        onClick={() => handleActivityEditClick(activity)}
+                        className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                      >
+                        <div>
+                          <h4 className="font-medium text-gray-700 text-sm">
+                            {activity.title}
+                          </h4>
+                          {activity.start_time && (
+                            <p className="text-xs text-gray-500">
+                              {formatTime24(activity.start_time)}
+                              {activity.end_time && ` - ${formatTime24(activity.end_time)}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {activities.length === 0 && (
+                      <p className="text-gray-500 text-xs italic">
+                        No activities for this day
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddingActivity(true)}
+                      className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Activity
+                    </Button>
+                  </div>
+                </div>
+
+                {/* DINING */}
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <h3 className="text-base font-semibold mb-2">Dining</h3>
+                  <DiningList
+                    reservations={reservations || []}
+                    formatTime={formatTime24}
+                    dayId={id}
+                    className="text-xs"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </CollapsibleContent>
