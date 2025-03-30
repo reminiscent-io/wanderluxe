@@ -23,7 +23,7 @@ const DayImage: React.FC<DayImageProps> = ({
   return (
     <div className={cn('relative w-full bg-gray-200', className)} {...props}>
       {displayImageUrl ? (
-        <div className="relative overflow-hidden rounded-lg w-full"> {/*Removed fixed height here*/}
+        <div className="relative overflow-hidden rounded-lg w-full h-full">
           {title && (
             <div className="absolute top-0 left-0 z-10 p-2">
               <h2 className="text-white text-xl font-bold drop-shadow-lg">
