@@ -62,20 +62,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           className="flex items-center gap-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white hover:bg-white/20"
-            onClick={onEdit}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 transition-transform duration-200 text-white",
-              isOpen && "rotate-180"
-            )}
-          />
+          
         </div>
       </div>
     </div>

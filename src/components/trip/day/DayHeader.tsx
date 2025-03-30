@@ -1,9 +1,8 @@
 import React from "react";
 import { format, parseISO } from "date-fns";
-import { Pencil, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import DayImage from "./DayImage";
+import { Pencil, ChevronDown } from "lucide-react";
 
 interface DayHeaderProps {
   title: string;
@@ -11,7 +10,6 @@ interface DayHeaderProps {
   isOpen?: boolean;
   onEdit: () => void;
   onToggle?: () => void;
-  // NEW: add these props so we can show the image on mobile
   dayId: string;
   imageUrl?: string | null;
   defaultImageUrl?: string;
@@ -23,19 +21,23 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   isOpen = false,
   onEdit,
   onToggle,
-  // new props
   dayId,
   imageUrl,
-  defaultImageUrl
+  defaultImageUrl,
 }) => {
-  const formattedDate = format(parseISO(date), "EEEE, MMMM d");
+  // Safely format the date
+  let formattedDate = "Invalid date";
+  try {
+    formattedDate = format(parseISO(date), "EEEE, MMMM d");
+  } catch (err) {
+    console.warn("Invalid date prop in DayHeader:", date);
+  }
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       {/* 
-        MOBILE IMAGE: only visible on small screens.
-        If you want a certain height, adjust "h-48" or 
-        add your own classes. 
+        Mobile-only image at the top 
+        (No overlay button on the image itself).
       */}
       <div className="md:hidden">
         <DayImage
@@ -47,7 +49,10 @@ const DayHeader: React.FC<DayHeaderProps> = ({
         />
       </div>
 
-      {/* Existing clickable header area */}
+      {/* 
+        The partially transparent "grey" header bar
+        (clickable to expand/collapse the day).
+      */}
       <div
         role="button"
         tabIndex={0}
@@ -58,27 +63,31 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             onToggle();
           }
         }}
-        className="w-full px-4 py-3 flex items-center justify-between 
-                   bg-black/20 backdrop-blur-sm hover:bg-black/30 
-                   transition-colors cursor-pointer"
+        className={cn(
+          "flex items-center justify-between px-4 py-3 cursor-pointer",
+          "bg-gray-800/30 backdrop-blur-sm hover:bg-gray-800/50",
+          "transition-colors"
+        )}
       >
-        <div className="flex flex-col gap-2">
-          <span className="text-lg font-medium text-white">{formattedDate}</span>
-          <h3 className="font-medium text-base text-white">{title}</h3>
+        {/* Left side: date & title */}
+        <div className="flex flex-col gap-1 text-white">
+          <span className="text-lg font-medium">{formattedDate}</span>  
         </div>
 
+        {/* Right side: edit button & chevron */}
         <div
           className="flex items-center gap-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white hover:bg-white/20"
+          {/* Edit button on the grey header (visible on mobile & desktop) */}
+          <button
             onClick={onEdit}
+            className="h-8 w-8 text-white hover:bg-white/20 flex items-center justify-center rounded"
           >
             <Pencil className="h-4 w-4" />
-          </Button>
+          </button>
+
+          {/* Collapse arrow */}
           <ChevronDown
             className={cn(
               "h-4 w-4 transition-transform duration-200 text-white",
