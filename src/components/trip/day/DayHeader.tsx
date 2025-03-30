@@ -34,7 +34,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   }
 
   return (
-    // Attach the toggle to the entire header container
+    // Attach the onClick on the outer container so the whole header is clickable
     <div
       className="relative w-full h-48 md:h-64 cursor-pointer"
       onClick={() => onToggle?.()}
@@ -46,7 +46,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
         }
       }}
     >
-      {/* Render the image to fill the header */}
+      {/* Render the image */}
       <DayImage
         dayId={dayId}
         title={title}
@@ -55,7 +55,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
         className="w-full h-full object-cover"
       />
 
-      {/* Blurred overlay bar, positioned at the bottom */}
+      {/* Blurred overlay bar at the bottom */}
       <div
         className={cn(
           "absolute bottom-0 left-0 w-full px-4 py-3 flex items-center justify-between",
@@ -67,7 +67,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           <span className="text-lg font-medium">{formattedDate}</span>
         </div>
 
-        {/* Right side: edit button & chevron (stop propagation) */}
+        {/* Right side: edit button & chevron */}
         <div
           className="flex items-center gap-2"
           onClick={(e) => e.stopPropagation()}

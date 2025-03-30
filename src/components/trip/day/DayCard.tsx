@@ -304,7 +304,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setHotelDialog({ open: true, initialData: null })}
-                  className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-2"
+                  className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Hotel Stay
@@ -349,7 +349,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   setSelectedTransportation(null);
                   setIsTransportationDialogOpen(true);
                 }}
-                className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-2"
+                className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Transportation
@@ -388,7 +388,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsAddingActivity(true)}
-                  className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-2"
+                  className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Activity
