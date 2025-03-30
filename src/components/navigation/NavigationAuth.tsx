@@ -1,8 +1,6 @@
 
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import UserAvatar from "./UserAvatar";
 
