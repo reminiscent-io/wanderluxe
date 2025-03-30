@@ -36,15 +36,20 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   return (
     // Attach the onClick on the outer container so the whole header is clickable
     <div
-      className="relative w-full h-48 md:h-64 cursor-pointer"
-      onClick={() => onToggle?.()}
+      role="button"
       tabIndex={0}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onToggle?.();
+      }}
       onKeyDown={(e) => {
         if ((e.key === "Enter" || e.key === " ") && onToggle) {
           e.preventDefault();
           onToggle();
         }
       }}
+      className="relative w-full h-48 md:h-64 cursor-pointer select-none"
     >
       {/* Render the image */}
       <DayImage
