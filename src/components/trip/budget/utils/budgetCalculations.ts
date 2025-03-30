@@ -1,6 +1,5 @@
 import { Currency, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 import { ExpenseItem } from '@/types/trip';
-import { Expense, ExchangeRate } from '@/integrations/supabase/types/models';
 
 export function formatCurrencyWithSymbol(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] || currency;
