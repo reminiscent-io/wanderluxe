@@ -49,7 +49,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           onToggle();
         }
       }}
-      className="relative w-full h-48 md:h-64 cursor-pointer select-none"
+      className="relative w-full cursor-pointer select-none"
     >
       {/* Render the image */}
       <DayImage
