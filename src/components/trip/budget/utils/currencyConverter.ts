@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { CURRENCIES, type Currency } from '@/utils/currencyConstants';
+import { CURRENCIES } from '@/utils/currencyConstants';
 
 // Type for exchange rate data from database
 type ExchangeRate = {
