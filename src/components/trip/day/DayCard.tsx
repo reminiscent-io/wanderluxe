@@ -100,14 +100,12 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const queryClient = useQueryClient();
 
-  // Re-sync image if original changes
   useEffect(() => {
     if (originalImageUrl) {
       setImageUrl(originalImageUrl);
     }
   }, [originalImageUrl]);
 
-  // Fetch dining reservations
   const { data: reservations } = useQuery({
     queryKey: ["reservations", id],
     queryFn: async () => {
@@ -122,9 +120,8 @@ const DayCard: React.FC<DayCardProps> = ({
     enabled: !!id,
   });
 
-  // Fetch transportation
   const { transportations } = useTransportationEvents(tripId);
-  const dayTitle = title || "Arrival day"; // fallback if no title
+  const dayTitle = title || "Arrival day";
 
   const formatTransportTime = (transport: Transportation) => {
     const startDate = transport.start_date
@@ -192,7 +189,6 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const normalizedDay = getNormalizedDay(date);
 
-  // Filter hotel stays for this day
   const filteredHotelStays = hotelStays.filter((stay: HotelStay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
     const dayDate = parseISO(normalizedDay);
@@ -203,7 +199,6 @@ const DayCard: React.FC<DayCardProps> = ({
     return diff >= 0 && diff <= total;
   });
 
-  // Filter transportations for this day
   const safeTransportations = transportations || [];
   const filteredTransportations = safeTransportations.filter(
     (transport: Transportation) => {
@@ -221,7 +216,6 @@ const DayCard: React.FC<DayCardProps> = ({
     setHotelDialog({ open: true, initialData: stay });
   };
 
-  // Manage day activities
   const { handleAddActivity, handleEditActivity, handleDeleteActivity } =
     DayActivityManager({ id, tripId, activities });
 
@@ -241,7 +235,6 @@ const DayCard: React.FC<DayCardProps> = ({
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6 bg-sand-300">
-      {/* Dialog for editing day info (title/image) */}
       <DayEditDialog
         open={isEditing}
         onOpenChange={setIsEditing}
@@ -251,7 +244,6 @@ const DayCard: React.FC<DayCardProps> = ({
         onSave={handleSaveEdit}
       />
 
-      {/* HEADER with DayImage rendered in DayHeader */}
       <DayHeader
         title={dayTitle}
         date={date}
@@ -265,8 +257,8 @@ const DayCard: React.FC<DayCardProps> = ({
 
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleContent>
-          {/* MOBILE CONTENT: Smaller text for mobile */}
-          <div className="md:hidden p-4 grid grid-cols-1 gap-4 bg-sand-300">
+          {/* Removed md:hidden so content is visible on all screen sizes */}
+          <div className="p-4 grid grid-cols-1 gap-4 bg-sand-300">
             {/* HOTEL STAY */}
             <div className="bg-gray-100 rounded-lg p-4">
               <h3 className="text-base font-semibold mb-2">Hotel Stay</h3>
@@ -410,7 +402,6 @@ const DayCard: React.FC<DayCardProps> = ({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* HOTEL DIALOG */}
       <AccommodationDialog
         tripId={tripId}
         open={hotelDialog.open}
@@ -419,7 +410,6 @@ const DayCard: React.FC<DayCardProps> = ({
         onSuccess={refreshTripData}
       />
 
-      {/* ACTIVITIES DIALOG */}
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
         setIsAddingActivity={setIsAddingActivity}
@@ -435,7 +425,6 @@ const DayCard: React.FC<DayCardProps> = ({
         eventId={id}
       />
 
-      {/* TRANSPORTATION DIALOG */}
       <TransportationDialog
         tripId={tripId}
         open={isTransportationDialogOpen}
