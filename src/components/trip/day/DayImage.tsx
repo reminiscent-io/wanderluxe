@@ -1,72 +1,53 @@
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-import React from "react";
-import { format, parseISO } from "date-fns";
-import { Pencil, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
-interface DayHeaderProps {
-  title: string;
-  date?: string;
-  isOpen?: boolean;
-  onEdit: () => void;
-  onToggle?: () => void;
+interface DayImageProps {
   dayId: string;
+  title?: string;
   imageUrl?: string | null;
   defaultImageUrl?: string;
+  className?: string;
 }
 
-const DayHeader: React.FC<DayHeaderProps> = ({
-  title,
-  date,
-  isOpen = false,
-  onEdit,
-  onToggle,
+const DayImage: React.FC<DayImageProps> = ({
   dayId,
+  title,
   imageUrl,
   defaultImageUrl,
+  className,
+  ...props // handle any other props passed to the component
 }) => {
-  const formattedDate = date ? format(parseISO(date), "EEEE, MMMM d") : null;
+  const displayImageUrl =
+    imageUrl || 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?';
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onToggle?.()}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && onToggle) {
-          e.preventDefault();
-          onToggle();
-        }
-      }}
-      className="relative w-full cursor-pointer"
-    >
-      <img
-        src={imageUrl || defaultImageUrl}
-        alt={title}
-        className="w-full h-48 md:h-64 object-cover"
-      />
-
-      <div
-        className={cn(
-          "absolute inset-0 flex items-start justify-between px-4 py-3",
-          "bg-black/30 hover:bg-black/40 transition-colors"
-        )}
-      >
-        <div className="flex flex-col gap-1 text-white">
-          {formattedDate && <span className="text-lg font-medium">{formattedDate}</span>}
-          <h3 className="text-base font-medium">{title}</h3>
+    <div className={cn('relative w-full bg-gray-200', className)} {...props}>
+      {displayImageUrl ? (
+        <div className="relative overflow-hidden rounded-lg w-full h-full">
+          {title && (
+            <div className="absolute top-0 left-0 z-10 p-2">
+              <h2 className="text-white text-xl font-bold drop-shadow-lg">
+                {title}
+              </h2>
+            </div>
+          )}
+          <img
+            src={displayImageUrl}
+            alt={title || 'Day image'}
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={(e) => {
+              console.error('Image failed to load:', displayImageUrl);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
         </div>
-
-        <div
-          className="flex items-center gap-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          
+      ) : (
+        <div className="flex items-center justify-center text-gray-400 h-[400px]">
+          No image available
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-export default DayHeader;
+export default DayImage;
