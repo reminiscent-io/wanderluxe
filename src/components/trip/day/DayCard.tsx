@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import DayHeader from "./DayHeader";
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
@@ -81,9 +81,14 @@ const DayCard: React.FC<DayCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
-  const [imageUrlState, setImageUrl] = useState(originalImageUrl || imageUrl || null);
+  const [imageUrlState, setImageUrl] = useState(
+    originalImageUrl || imageUrl || null
+  );
 
-  const [hotelDialog, setHotelDialog] = useState<{ open: boolean; initialData?: HotelStay | null }>({
+  const [hotelDialog, setHotelDialog] = useState<{
+    open: boolean;
+    initialData?: HotelStay | null;
+  }>({
     open: false,
     initialData: null,
   });
@@ -93,8 +98,10 @@ const DayCard: React.FC<DayCardProps> = ({
   const [newActivity, setNewActivity] = useState<ActivityFormData>(initialActivity);
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>(initialActivity);
 
-  const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
-  const [selectedTransportation, setSelectedTransportation] = useState<Transportation | null>(null);
+  const [isTransportationDialogOpen, setIsTransportationDialogOpen] =
+    useState(false);
+  const [selectedTransportation, setSelectedTransportation] =
+    useState<Transportation | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -125,11 +132,15 @@ const DayCard: React.FC<DayCardProps> = ({
     const startDate = transport.start_date
       ? format(parseISO(transport.start_date), "MMM dd, yyyy")
       : "";
-    const startTime = transport.start_time ? formatTime12(transport.start_time) : "";
+    const startTime = transport.start_time
+      ? formatTime12(transport.start_time)
+      : "";
     const endDate = transport.end_date
       ? format(parseISO(transport.end_date), "MMM dd, yyyy")
       : "";
-    const endTime = transport.end_time ? formatTime12(transport.end_time) : "";
+    const endTime = transport.end_time
+      ? formatTime12(transport.end_time)
+      : "";
 
     let startString = startDate;
     if (startTime) startString += ` ${startTime}`;
@@ -182,10 +193,17 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const normalizedDay = getNormalizedDay(date);
 
+  // Updated: Use differenceInCalendarDays to include checkout date.
   const filteredHotelStays = hotelStays.filter((stay: HotelStay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const dayDate = new Date(normalizedDay);
-    return dayDate >= new Date(stay.hotel_checkin_date) && dayDate <= new Date(stay.hotel_checkout_date);
+    const dayDate = parseISO(normalizedDay);
+    const checkinDate = parseISO(stay.hotel_checkin_date);
+    const checkoutDate = parseISO(stay.hotel_checkout_date);
+    // Calculate the difference in calendar days.
+    const diff = differenceInCalendarDays(dayDate, checkinDate);
+    const total = differenceInCalendarDays(checkoutDate, checkinDate);
+    // Include days from check-in (diff >= 0) up to and including checkout day (diff <= total)
+    return diff >= 0 && diff <= total;
   });
 
   const safeTransportations = transportations || [];

@@ -2,35 +2,43 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { deleteAccommodation } from '@/services/accommodation/accommodationService';
 import { Tables } from '@/integrations/supabase/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 type Accommodation = Tables<'accommodations'>;
 
 interface UseAccommodationHandlersProps {
+  tripId: string;
   onAccommodationChange: () => void;
 }
 
-export const useAccommodationHandlers = ({ onAccommodationChange }: UseAccommodationHandlersProps) => {
+export const useAccommodationHandlers = ({ tripId, onAccommodationChange }: UseAccommodationHandlersProps) => {
+  const queryClient = useQueryClient();
   const [isAddingAccommodation, setIsAddingAccommodation] = useState(false);
   const [editingStay, setEditingStay] = useState<(Accommodation & { stay_id: string }) | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDelete = async (stayId: string) => {
-    setIsLoading(true);
-    try {
-      await deleteAccommodation(stayId);
+  const mutation = useMutation({
+    mutationFn: async (stayId: string) => {
+      return await deleteAccommodation(stayId);
+    },
+    onSuccess: () => {
       toast.success('Accommodation deleted successfully');
-      // Only call onAccommodationChange if it exists
+      // Invalidate the accommodations query for this trip
+      queryClient.invalidateQueries(['accommodations', tripId]);
+      // Only call onAccommodationChange if it's a function
       if (typeof onAccommodationChange === 'function') {
         onAccommodationChange();
       }
-    } catch (error) {
+    },
+    onError: (error: unknown) => {
       if (error instanceof Error) {
         console.error('Error in delete operation:', error.message);
         toast.error(error.message || 'Error occurred while deleting');
       }
-    } finally {
-      setIsLoading(false);
     }
+  });
+
+  const handleDelete = async (stayId: string) => {
+    await mutation.mutateAsync(stayId);
   };
 
   return {
@@ -38,7 +46,7 @@ export const useAccommodationHandlers = ({ onAccommodationChange }: UseAccommoda
     setIsAddingAccommodation,
     editingStay,
     setEditingStay,
-    isLoading,
+    isLoading: mutation.isLoading,
     handleDelete
   };
 };
