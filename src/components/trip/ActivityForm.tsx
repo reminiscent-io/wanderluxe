@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
@@ -13,106 +13,40 @@ interface ActivityFormProps {
   eventId: string;
 }
 
-const hours = [null, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const minutes = [null, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-
-function to24HourString(
-  h: number | null,
-  m: number | null,
-  ampm: string | null
-): string {
-  if (h === null || m === null || ampm === null) {
-    return "";
-  }
-  let hour24 = h;
-  if (ampm === 'PM' && h !== 12) hour24 += 12;
-  if (ampm === 'AM' && h === 12) hour24 = 0;
-  const hh = String(hour24).padStart(2, '0');
-  const mm = String(m).padStart(2, '0');
-  return `${hh}:${mm}`;
-}
-
-function parse24HourString(time?: string) {
-  if (!time || typeof time !== 'string') {
-    return { hour: null, minute: null, ampm: null };
-  }
-  try {
-    // Use only the first 5 characters (HH:MM) and ignore seconds
-    const timeWithoutSeconds = time.slice(0, 5);
-    const [hoursStr, minutesStr] = timeWithoutSeconds.split(':');
-    const hours24 = parseInt(hoursStr, 10);
-    const minutes = parseInt(minutesStr, 10);
-
-    if (isNaN(hours24) || isNaN(minutes) || hours24 < 0 || hours24 > 23 || minutes < 0 || minutes > 59) {
-      return { hour: null, minute: null, ampm: null };
-    }
-
-    let hour12 = hours24 % 12;
-    if (hour12 === 0) hour12 = 12;
-    const ampm = hours24 >= 12 ? 'PM' : 'AM';
-
-    return { hour: hour12, minute: minutes, ampm };
-  } catch (error) {
-    console.error('Error parsing time:', time);
-    return { hour: null, minute: null, ampm: null };
-  }
-}
-
 const ActivityForm: React.FC<ActivityFormProps> = ({
   activity,
   onActivityChange,
   onSubmit,
   onCancel,
   submitLabel,
-  eventId
+  eventId,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Local state for start and end times
-  const [startHour, setStartHour] = useState<number | null>(null);
-  const [startMinute, setStartMinute] = useState<number | null>(null);
-  const [startAmPm, setStartAmPm] = useState<string | null>(null);
+  // New local state for time values
+  const [startTime, setStartTime] = useState(activity.start_time || "");
+  const [endTime, setEndTime] = useState(activity.end_time || "");
 
-  const [endHour, setEndHour] = useState<number | null>(null);
-  const [endMinute, setEndMinute] = useState<number | null>(null);
-  const [endAmPm, setEndAmPm] = useState<string | null>(null);
-
-  // Use a ref so that we only initialize local state once.
-  const initialLoad = useRef(true);
+  // Update local state when activity prop changes
   useEffect(() => {
-    if (initialLoad.current) {
-      if (activity.start_time) {
-        const start = parse24HourString(activity.start_time);
-        setStartHour(start.hour);
-        setStartMinute(start.minute);
-        setStartAmPm(start.ampm);
-      }
-      if (activity.end_time) {
-        const end = parse24HourString(activity.end_time);
-        setEndHour(end.hour);
-        setEndMinute(end.minute);
-        setEndAmPm(end.ampm);
-      }
-      initialLoad.current = false;
-    }
-  }, []); // runs only once on mount
+    if (activity.start_time) setStartTime(activity.start_time);
+    if (activity.end_time) setEndTime(activity.end_time);
+  }, [activity.start_time, activity.end_time]);
 
-  // Update parent's activity when local start time changes.
+  // Sync local startTime with parent activity
   useEffect(() => {
-    const newStart = to24HourString(startHour, startMinute, startAmPm);
-    if (activity.start_time !== newStart) {
-      onActivityChange({ ...activity, start_time: newStart });
+    if (activity.start_time !== startTime) {
+      onActivityChange({ ...activity, start_time: startTime });
     }
-  }, [startHour, startMinute, startAmPm]);
+  }, [startTime]);
 
-  // Update parent's activity when local end time changes.
+  // Sync local endTime with parent activity
   useEffect(() => {
-    const newEnd = to24HourString(endHour, endMinute, endAmPm);
-    if (activity.end_time !== newEnd) {
-      onActivityChange({ ...activity, end_time: newEnd });
+    if (activity.end_time !== endTime) {
+      onActivityChange({ ...activity, end_time: endTime });
     }
-  }, [endHour, endMinute, endAmPm]);
+  }, [endTime]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -196,104 +130,32 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       <div className="grid grid-cols-2 gap-4">
         {/* Start Time */}
         <div>
-          <label htmlFor="start-hour" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="start-time" className="block text-sm font-medium text-gray-700">
             Start Time
           </label>
-          <div className="flex items-center gap-2 mt-1">
-            <select
-              id="start-hour"
-              className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={startHour !== null ? startHour : ''}
-              onChange={(e) => {
-                const val = e.target.value === '' ? null : Number(e.target.value);
-                setStartHour(val);
-              }}
-            >
-              <option value="">–</option>
-              {hours.slice(1).map((h) => (
-                <option key={h} value={h}>{h}</option>
-              ))}
-            </select>
-            <span>:</span>
-            <select
-              className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={startMinute !== null ? startMinute : ''}
-              onChange={(e) => {
-                const val = e.target.value === '' ? null : Number(e.target.value);
-                setStartMinute(val);
-              }}
-            >
-              <option value="">–</option>
-              {minutes.slice(1).map((m) => (
-                <option key={m} value={m}>
-                  {m.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-            <select
-              className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={startAmPm !== null ? startAmPm : ''}
-              onChange={(e) => {
-                const val = e.target.value === '' ? null : e.target.value;
-                setStartAmPm(val);
-              }}
-            >
-              <option value="">–</option>
-              <option value="AM">AM</option>
-              <option value="PM">PM</option>
-            </select>
-          </div>
+          <input
+            id="start-time"
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            step="300" // 5-minute increments (300 seconds)
+            className="w-full p-2 border rounded-md"
+          />
         </div>
 
         {/* End Time */}
         <div>
-          <label htmlFor="end-hour" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="end-time" className="block text-sm font-medium text-gray-700">
             End Time
           </label>
-          <div className="flex items-center gap-2 mt-1">
-            <select
-              id="end-hour"
-              className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={endHour !== null ? endHour : ''}
-              onChange={(e) => {
-                const val = e.target.value === '' ? null : Number(e.target.value);
-                setEndHour(val);
-              }}
-            >
-              <option value="">–</option>
-              {hours.slice(1).map((h) => (
-                <option key={h} value={h}>{h}</option>
-              ))}
-            </select>
-            <span>:</span>
-            <select
-              className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={endMinute !== null ? endMinute : ''}
-              onChange={(e) => {
-                const val = e.target.value === '' ? null : Number(e.target.value);
-                setEndMinute(val);
-              }}
-            >
-              <option value="">–</option>
-              {minutes.slice(1).map((m) => (
-                <option key={m} value={m}>
-                  {m.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-            <select
-              className="rounded-md border border-gray-300 p-1 focus:border-earth-500 focus:ring-earth-500"
-              value={endAmPm !== null ? endAmPm : ''}
-              onChange={(e) => {
-                const val = e.target.value === '' ? null : e.target.value;
-                setEndAmPm(val);
-              }}
-            >
-              <option value="">–</option>
-              <option value="AM">AM</option>
-              <option value="PM">PM</option>
-            </select>
-          </div>
+          <input
+            id="end-time"
+            type="time"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            step="300" // 5-minute increments
+            className="w-full p-2 border rounded-md"
+          />
         </div>
         {errors.time && (
           <p className="col-span-2 text-xs text-red-500">{errors.time}</p>
