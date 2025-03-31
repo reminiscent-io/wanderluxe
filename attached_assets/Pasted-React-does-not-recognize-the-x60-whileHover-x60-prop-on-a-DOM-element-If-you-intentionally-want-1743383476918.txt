@@ -1,0 +1,13 @@
+React does not recognize the &#x60;whileHover&#x60; prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase &#x60;whilehover&#x60; instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+React does not recognize the &#x60;whileTap&#x60; prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase &#x60;whiletap&#x60; instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+Cannot access 'processedHotelStays' before initialization
+at TimelineView (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/src/components/trip/TimelineView.tsx?t=1743383448717:37:9)
+at react-stack-bottom-frame (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:16192:20)
+at renderWithHooks (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:4306:24)
+at updateFunctionComponent (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:5972:21)
+at beginWork (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:7048:20)
+at runWithFiberInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:726:18)
+at performUnitOfWork (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:10831:98)
+at workLoopSync (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:10692:43)
+at renderRootSync (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:10675:13)
+at performWorkOnRoot (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=14e7f68f:10323:46)
