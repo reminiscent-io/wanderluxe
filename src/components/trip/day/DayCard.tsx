@@ -321,7 +321,8 @@ const DayCard: React.FC<DayCardProps> = ({
                         >
                           <div>
                             <h4 className="font-medium text-gray-700 text-sm">
-                              {transport.type}
+                              {transport.type.charAt(0).toUpperCase() + transport.type.slice(1)}
+                              {transport.departure_location && transport.arrival_location && ` | ${transport.departure_location} → ${transport.arrival_location}`}
                             </h4>
                             <p className="text-xs text-gray-500">
                               {formatTransportTime(transport)}
@@ -368,8 +369,8 @@ const DayCard: React.FC<DayCardProps> = ({
                           </h4>
                           {activity.start_time && (
                             <p className="text-xs text-gray-500">
-                              {formatTime24(activity.start_time)}
-                              {activity.end_time && ` - ${formatTime24(activity.end_time)}`}
+                              {formatTime12(activity.start_time)}
+                              {activity.end_time && ` - ${formatTime12(activity.end_time)}`}
                             </p>
                           )}
                         </div>
