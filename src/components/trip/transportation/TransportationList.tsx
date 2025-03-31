@@ -23,7 +23,7 @@ const TransportationList: React.FC<TransportationListProps> = ({
 
   return (
     <div className="space-y-3 p-4">
-      {transportations.map((transportation) => (
+      {transportations.map((transportation, index) =>
         transportation && transportation.id ? (
           <TransportationListItem 
             key={transportation.id} 
@@ -32,11 +32,12 @@ const TransportationList: React.FC<TransportationListProps> = ({
             onDelete={() => onDelete(transportation.id)}
           />
         ) : (
-          <Card key={Math.random().toString()} className="p-4 bg-white">
+          <Card key={`incomplete-${index}`} className="p-4 bg-white">
             <p className="text-gray-500">Transportation data is incomplete.</p>
           </Card>
         )
-      ))}
+      )}
+
     </div>
   );
 };
