@@ -45,7 +45,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   console.log("RestaurantReservationForm received tripId:", tripId);
   
   // Correct state destructuring for Google Maps API loading status.
-  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+  const [setIsGoogleMapsLoaded] = useState(false);
   
   // Destructure the toast function from the custom hook.
   const { toast } = useToast();
