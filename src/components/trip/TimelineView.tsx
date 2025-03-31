@@ -20,20 +20,60 @@ interface TimelineViewProps {
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
   useEffect(() => {
-    // Track timeline view
+    // Track timeline view with enhanced parameters
     window.gtag('event', 'view_timeline', {
       event_category: 'Trip',
-      event_label: tripId
+      event_label: tripId,
+      trip_id: tripId,
+      has_accommodations: processedHotelStays.length > 0,
+      has_transportation: processedTransportations.length > 0,
+      days_count: days?.length || 0,
+      trip_duration: localTripDates.arrival_date && localTripDates.departure_date ? 
+        Math.ceil((new Date(localTripDates.departure_date).getTime() - new Date(localTripDates.arrival_date).getTime()) / (1000 * 60 * 60 * 24)) : 
+        0
     });
-  }, [tripId]);
+  }, [tripId, processedHotelStays, processedTransportations, days, localTripDates]);
 
   const trackTimelineAction = (action: string, details?: object) => {
     window.gtag('event', action, {
       event_category: 'Timeline',
       event_label: tripId,
+      trip_id: tripId,
+      timestamp: new Date().toISOString(),
       ...details
     });
   };
+
+  // Track important user interactions
+  const handleRefresh = useCallback(async () => {
+    trackTimelineAction('refresh_timeline');
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshEvents(), refreshDays(), refreshTransportation()]);
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
+
+      if (!error && data) {
+        if (data.arrival_date && data.departure_date) {
+          setLocalTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date,
+          });
+          trackTimelineAction('timeline_refresh_success');
+        }
+      }
+      toast.success('Timeline updated successfully');
+    } catch (error) {
+      console.error('Error refreshing timeline:', error);
+      toast.error('Failed to refresh timeline');
+      trackTimelineAction('timeline_refresh_error', { error: error?.message });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshEvents, refreshDays, refreshTransportation, tripId]);
 
   const { days, refreshDays } = useTripDays(tripId);
   const { events, refreshEvents } = useTimelineEvents(tripId);
