@@ -26,7 +26,7 @@ const TripDates: React.FC<TripDatesProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [newArrival, setNewArrival] = useState('');
   const [newDeparture, setNewDeparture] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [setIsSubmitting] = useState(false);
   
   // Confirmation state
   const [showConfirmation, setShowConfirmation] = useState(false);
