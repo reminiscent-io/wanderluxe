@@ -71,7 +71,6 @@ const DayCard: React.FC<DayCardProps> = ({
   activities = [],
   imageUrl,
   index,
-  onDelete,
   defaultImageUrl,
   hotelStays = [],
   originalImageUrl,
