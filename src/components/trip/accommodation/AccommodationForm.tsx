@@ -50,8 +50,6 @@ interface AccommodationFormProps {
   checkout_time?: string | null;
 }
 
-import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';
-
 const CURRENCY_OPTIONS = CURRENCIES.map(currency => ({
   label: `${currency} - ${CURRENCY_NAMES[currency]}`,
   value: currency
