@@ -34,55 +34,34 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   }
 
   return (
-    // Attach the onClick on the outer container so the whole header is clickable
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onToggle?.();
-      }}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && onToggle) {
+    <div className="relative w-full h-48 md:h-64">
+      {/* Toggle Button: wrapping the image and overlay */}
+      <button
+        type="button"
+        onClick={(e) => {
           e.preventDefault();
-          onToggle();
-        }
-      }}
-      className="relative w-full h-48 md:h-64 cursor-pointer select-none"
-    >
-      {/* Render the image */}
-      <DayImage
-        dayId={dayId}
-        title={title}
-        imageUrl={imageUrl}
-        defaultImageUrl={defaultImageUrl}
-        className="w-full h-full object-cover"
-      />
-
-      {/* Blurred overlay bar at the bottom */}
-      <div
-        className={cn(
-          "absolute bottom-0 left-0 w-full px-4 py-3 flex items-center justify-between",
-          "bg-gray-800/30 backdrop-blur-sm hover:bg-gray-800/50 transition-colors"
-        )}
+          onToggle?.();
+        }}
+        className="w-full h-full cursor-pointer select-none relative"
       >
-        {/* Left side: date & title */}
-        <div className="flex flex-col gap-1 text-white">
-          <span className="text-lg font-medium">{formattedDate}</span>
-        </div>
-
-        {/* Right side: edit button & chevron */}
+        <DayImage
+          dayId={dayId}
+          title={title}
+          imageUrl={imageUrl}
+          defaultImageUrl={defaultImageUrl}
+          className="w-full h-full object-cover"
+        />
         <div
-          className="flex items-center gap-2"
-          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "absolute bottom-0 left-0 w-full px-4 py-3 flex items-center justify-between",
+            "bg-gray-800/30 backdrop-blur-sm hover:bg-gray-800/50 transition-colors"
+          )}
         >
-          <button
-            onClick={onEdit}
-            className="h-8 w-8 text-white hover:bg-white/20 flex items-center justify-center rounded"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
+          {/* Left side: date & title */}
+          <div className="flex flex-col gap-1 text-white">
+            <span className="text-lg font-medium">{formattedDate}</span>
+          </div>
+          {/* Right side: chevron only */}
           <ChevronDown
             className={cn(
               "h-4 w-4 transition-transform duration-200 text-white",
@@ -90,7 +69,19 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             )}
           />
         </div>
-      </div>
+      </button>
+
+      {/* Separate Edit Button */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation(); // Prevents toggle button from triggering.
+          onEdit();
+        }}
+        className="absolute bottom-3 right-4 h-8 w-8 text-white hover:bg-white/20 flex items-center justify-center rounded"
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
     </div>
   );
 };
