@@ -114,35 +114,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     }
   }, []);
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      await Promise.all([refreshEvents(), refreshDays(), refreshTransportation()]);
-      const { data, error } = await supabase
-        .from('trips')
-        .select('arrival_date, departure_date')
-        .eq('trip_id', tripId)
-        .single();
-
-      if (!error && data) {
-        if (data.arrival_date && data.departure_date) {
-          console.log('Setting trip dates from refresh:', data);
-          setLocalTripDates({
-            arrival_date: data.arrival_date,
-            departure_date: data.departure_date,
-          });
-        } else {
-          console.log('Skipping trip dates update - missing dates in data:', data);
-        }
-      }
-      toast.success('Timeline updated successfully');
-    } catch (error) {
-      console.error('Error refreshing timeline:', error);
-      toast.error('Failed to refresh timeline');
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [refreshEvents, refreshDays, refreshTransportation, tripId]);
+  
 
   const fetchTripData = async () => {
     if (!tripId) return;
