@@ -19,7 +19,6 @@ export function useTransportationEvents(tripId: string) {
         console.error('Error fetching transportation data:', error);
         throw error;
       }
-      console.log('Fetched transportation data:', data);
       return data as Transportation[];
     },
     enabled: !!tripId,
@@ -55,7 +54,6 @@ export function useTransportationEvents(tripId: string) {
       channel.unsubscribe();
     };
   }, [tripId, refreshTransportation]);
-
-  console.log('Transportations data:', transportations);
+  
   return { transportations, transportationData, isLoading, refreshTransportation };
 }
