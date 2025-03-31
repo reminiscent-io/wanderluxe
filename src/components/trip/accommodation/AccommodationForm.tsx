@@ -10,6 +10,7 @@ import { AccommodationFormData } from '@/services/accommodation/accommodationSer
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { Loader2 } from 'lucide-react';
+import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';
 
 const formSchema = z.object({
   hotel: z.string().min(1, "Hotel name is required"),
@@ -88,6 +89,31 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
     }
   });
 
+  // NEW: Reset form values when trip dates change (if no initialData is provided)
+  useEffect(() => {
+    if (!initialData && (tripArrivalDate || tripDepartureDate)) {
+      form.reset({
+        hotel: '',
+        hotel_details: '',
+        hotel_url: '',
+        hotel_checkin_date: tripArrivalDate || '',
+        hotel_checkout_date: tripDepartureDate || '',
+        checkin_time: '15:00',
+        checkout_time: '11:00',
+        cost: null,
+        currency: 'USD',
+        hotel_address: '',
+        hotel_phone: '',
+        hotel_place_id: '',
+        hotel_website: '',
+        expense_type: 'accommodation',
+        is_paid: false,
+        expense_date: '',
+        order_index: 0
+      });
+    }
+  }, [tripArrivalDate, tripDepartureDate, initialData, form]);
+
   useEffect(() => {
     loadGoogleMapsAPI();
   }, []);
@@ -111,6 +137,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-6">
+        {/* Hotel Name Field */}
         <FormField
           control={form.control}
           name="hotel"
