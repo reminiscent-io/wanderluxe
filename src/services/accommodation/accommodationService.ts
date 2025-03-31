@@ -145,8 +145,6 @@ export const updateAccommodation = async (
         hotel_url: formData.hotel_url || null,
         hotel_checkin_date: formData.hotel_checkin_date,
         hotel_checkout_date: formData.hotel_checkout_date,
-        checkin_time: formData.checkin_time || null,
-        checkout_time: formData.checkout_time || null,
         cost: formData.cost ? parseFloat(formData.cost) : null,
         currency: formData.currency || null,
         hotel_place_id: formData.hotel_place_id || null,
