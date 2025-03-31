@@ -19,55 +19,32 @@ interface TimelineViewProps {
 }
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
-  const { days, refreshDays } = useTripDays(tripId);
-  const { events, refreshEvents } = useTimelineEvents(tripId);
-  const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const [localTripDates, setLocalTripDates] = useState<{
-    arrival_date: string | null;
-    departure_date: string | null;
-  }>({
-    arrival_date: initialTripDates?.arrival_date || null,
-    departure_date: initialTripDates?.departure_date || null,
-  });
-
-  const processedHotelStays = events?.filter((event) => event.hotel && event.stay_id).map((event) => ({
-    stay_id: event.stay_id,
-    trip_id: tripId,
-    hotel: event.hotel || '',
-    hotel_details: event.hotel_details,
-    hotel_url: event.hotel_url,
-    hotel_checkin_date: event.hotel_checkin_date || '',
-    hotel_checkout_date: event.hotel_checkout_date || '',
-    checkin_time: event.checkin_time || '',
-    checkout_time: event.checkout_time || '',
-    cost: event.cost ? Number(event.cost) : null,
-    currency: event.currency || 'USD',
-    hotel_address: event.hotel_address,
-    hotel_phone: event.hotel_phone,
-    hotel_place_id: event.hotel_place_id,
-    hotel_website: event.hotel_website,
-  })) || [];
-
-  const processedTransportations =
-    transportationData?.filter((transport) => transport.type && transport.id).map((transport) => ({
-      id: transport.id,
+  useEffect(() => {
+    // Track timeline view with enhanced parameters
+    window.gtag('event', 'view_timeline', {
+      event_category: 'Trip',
+      event_label: tripId,
       trip_id: tripId,
-      type: transport.type,
-      provider: transport.provider,
-      details: transport.details,
-      confirmation_number: transport.confirmation_number,
-      start_date: transport.start_date,
-      start_time: transport.start_time,
-      end_date: transport.end_date,
-      end_time: transport.end_time,
-      departure_location: transport.departure_location,
-      arrival_location: transport.arrival_location,
-      cost: transport.cost ? Number(transport.cost) : null,
-      currency: transport.currency || 'USD',
-    })) || [];
+      has_accommodations: processedHotelStays.length > 0,
+      has_transportation: processedTransportations.length > 0,
+      days_count: days?.length || 0,
+      trip_duration: localTripDates.arrival_date && localTripDates.departure_date ? 
+        Math.ceil((new Date(localTripDates.departure_date).getTime() - new Date(localTripDates.arrival_date).getTime()) / (1000 * 60 * 60 * 24)) : 
+        0
+    });
+  }, [tripId, processedHotelStays, processedTransportations, days, localTripDates]);
 
+  const trackTimelineAction = (action: string, details?: object) => {
+    window.gtag('event', action, {
+      event_category: 'Timeline',
+      event_label: tripId,
+      trip_id: tripId,
+      timestamp: new Date().toISOString(),
+      ...details
+    });
+  };
+
+  // Track important user interactions
   const handleRefresh = useCallback(async () => {
     trackTimelineAction('refresh_timeline');
     setIsRefreshing(true);
@@ -96,33 +73,20 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     } finally {
       setIsRefreshing(false);
     }
-  }, [refreshEvents, refreshDays, refreshTransportation, tripId, trackTimelineAction]);
+  }, [refreshEvents, refreshDays, refreshTransportation, tripId]);
 
-  useEffect(() => {
-    // Track timeline view with enhanced parameters
-    window.gtag('event', 'view_timeline', {
-      event_category: 'Trip',
-      event_label: tripId,
-      trip_id: tripId,
-      has_accommodations: processedHotelStays.length > 0,
-      has_transportation: processedTransportations.length > 0,
-      days_count: days?.length || 0,
-      trip_duration: localTripDates.arrival_date && localTripDates.departure_date ? 
-        Math.ceil((new Date(localTripDates.departure_date).getTime() - new Date(localTripDates.arrival_date).getTime()) / (1000 * 60 * 60 * 24)) : 
-        0
-    });
-  }, [tripId, processedHotelStays, processedTransportations, days, localTripDates]);
+  const { days, refreshDays } = useTripDays(tripId);
+  const { events, refreshEvents } = useTimelineEvents(tripId);
+  const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const trackTimelineAction = (action: string, details?: object) => {
-    window.gtag('event', action, {
-      event_category: 'Timeline',
-      event_label: tripId,
-      trip_id: tripId,
-      timestamp: new Date().toISOString(),
-      ...details
-    });
-  };
-
+  const [localTripDates, setLocalTripDates] = useState<{
+    arrival_date: string | null;
+    departure_date: string | null;
+  }>({
+    arrival_date: initialTripDates?.arrival_date || null,
+    departure_date: initialTripDates?.departure_date || null,
+  });
 
   //Load google maps api on the timeline page here
   useEffect(() => {
@@ -150,7 +114,35 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     }
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshEvents(), refreshDays(), refreshTransportation()]);
+      const { data, error } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
 
+      if (!error && data) {
+        if (data.arrival_date && data.departure_date) {
+          console.log('Setting trip dates from refresh:', data);
+          setLocalTripDates({
+            arrival_date: data.arrival_date,
+            departure_date: data.departure_date,
+          });
+        } else {
+          console.log('Skipping trip dates update - missing dates in data:', data);
+        }
+      }
+      toast.success('Timeline updated successfully');
+    } catch (error) {
+      console.error('Error refreshing timeline:', error);
+      toast.error('Failed to refresh timeline');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshEvents, refreshDays, refreshTransportation, tripId]);
 
   const fetchTripData = async () => {
     if (!tripId) return;
@@ -179,6 +171,44 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       console.error('Error fetching trip details:', error);
     }
   };
+
+  const processedHotelStays =
+    events?.filter((event) => event.hotel && event.stay_id).map((event) => ({
+      stay_id: event.stay_id,
+      trip_id: tripId,
+      hotel: event.hotel || '',
+      hotel_details: event.hotel_details,
+      hotel_url: event.hotel_url,
+      hotel_checkin_date: event.hotel_checkin_date || '',
+      hotel_checkout_date: event.hotel_checkout_date || '',
+      checkin_time: event.checkin_time || '',
+      checkout_time: event.checkout_time || '',
+      cost: event.cost ? Number(event.cost) : null,
+      currency: event.currency || 'USD',
+      hotel_address: event.hotel_address,
+      hotel_phone: event.hotel_phone,
+      hotel_place_id: event.hotel_place_id,
+      hotel_website: event.hotel_website,
+    })) || [];
+
+  const processedTransportations =
+    transportationData?.filter((transport) => transport.type && transport.id).map((transport) => ({
+      id: transport.id,
+      trip_id: tripId,
+      type: transport.type,
+      provider: transport.provider,
+      details: transport.details,
+      confirmation_number: transport.confirmation_number,
+      start_date: transport.start_date,
+      start_time: transport.start_time,
+      end_date: transport.end_date,
+      end_time: transport.end_time,
+      departure_location: transport.departure_location,
+      arrival_location: transport.arrival_location,
+      cost: transport.cost ? Number(transport.cost) : null,
+      currency: transport.currency || 'USD',
+    })) || [];
+
 
 
   return (
