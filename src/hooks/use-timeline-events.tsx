@@ -81,6 +81,8 @@ export function useTimelineEvents(tripId: string) {
           hotel_checkout_date: data.hotel_checkout_date,
           checkin_time: data.checkin_time,
           checkout_time: data.checkout_time,
+          cost: data.cost,
+          currency: data.currency,
         })
         .eq('stay_id', data.id);
 
