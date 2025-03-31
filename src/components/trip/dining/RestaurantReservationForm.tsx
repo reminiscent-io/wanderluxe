@@ -44,29 +44,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 }) => {
   console.log("RestaurantReservationForm received tripId:", tripId);
   
-  // Correct state destructuring for Google Maps API loading status.
-  const [setIsGoogleMapsLoaded] = useState(false);
-  
   // Destructure the toast function from the custom hook.
   const { toast } = useToast();
-
-  // Load Google Maps API.
-  useEffect(() => {
-    const loadAPI = async () => {
-      try {
-        const loaded = await loadGoogleMapsAPI();
-        if (loaded) {
-          setIsGoogleMapsLoaded(true);
-        } else {
-          toast('Failed to initialize restaurant search', { variant: 'error' });
-        }
-      } catch (error) {
-        console.error('Error initializing Google Places:', error);
-        toast('Failed to initialize restaurant search', { variant: 'error' });
-      }
-    };
-    loadAPI();
-  }, [toast]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
