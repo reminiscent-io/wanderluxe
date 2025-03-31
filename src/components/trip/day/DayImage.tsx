@@ -18,7 +18,7 @@ const DayImage: React.FC<DayImageProps> = ({
   ...props // handle any other props passed to the component
 }) => {
   const displayImageUrl =
-    imageUrl || 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?';
+    imageUrl || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f';
 
   return (
     <div className={cn('relative w-full bg-gray-200', className)} {...props}>
