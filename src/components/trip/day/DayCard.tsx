@@ -398,7 +398,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   <h3 className="text-base font-semibold mb-2">Dining</h3>
                   <DiningList
                     reservations={reservations || []}
-                    formatTime={formatTime24}
+                    formatTime={formatTime12}
                     dayId={id}
                     className="text-xs"
                   />
