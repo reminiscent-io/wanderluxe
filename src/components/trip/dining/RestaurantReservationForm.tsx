@@ -141,74 +141,22 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         <FormField
           control={form.control}
           name="reservation_time"
-          render={({ field }) => {
-            const parseTime = (value: string | null): [number, number, string] => {
-              if (!value) return [12, 0, 'AM'];
-              const [hourStr, minuteStr] = value.split(':');
-              const hourNum = parseInt(hourStr, 10);
-              const minuteNum = parseInt(minuteStr, 10);
-              const period = hourNum >= 12 ? 'PM' : 'AM';
-              const hour12 = hourNum % 12 || 12;
-              return [hour12, minuteNum, period];
-            };
-            
-            const [hour, minute, period] = parseTime(field.value);
-
-            const handleTimeChange = (newHour: number, newMinute: number, newPeriod: string) => {
-              let hour24 = newHour;
-              if (newPeriod === 'PM' && newHour < 12) {
-                hour24 = newHour + 12;
-              } else if (newPeriod === 'AM' && newHour === 12) {
-                hour24 = 0;
-              }
-              const timeString = `${hour24.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`;
-              field.onChange(timeString);
-            };
-
-            return (
-              <FormItem>
-                <FormLabel>
-                  Reservation Time <span className="text-red-500">*</span>
-                </FormLabel>
-                <div className="flex items-center space-x-2">
-                  <select
-                    className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
-                    value={hour}
-                    onChange={(e) => handleTimeChange(parseInt(e.target.value, 10), minute, period)}
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span>:</span>
-
-                  <select
-                    className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
-                    value={minute}
-                    onChange={(e) => handleTimeChange(hour, parseInt(e.target.value, 10), period)}
-                  >
-                    {[0, 15, 30, 45].map((m) => (
-                      <option key={m} value={m}>
-                        {m.toString().padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="h-10 px-3 py-2 bg-white border border-input rounded-md text-sm"
-                    value={period}
-                    onChange={(e) => handleTimeChange(hour, minute, e.target.value)}
-                  >
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                  </select>
-                </div>
-              </FormItem>
-            );
-          }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Reservation Time <span className="text-red-500">*</span>
+              </FormLabel>
+              <FormControl>
+                <input
+                  type="time"
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  step="300" // 5-minute increments
+                  className="w-full p-2 border rounded-md"
+                />
+              </FormControl>
+            </FormItem>
+          )}
         />
 
         {/* Number of People */}
