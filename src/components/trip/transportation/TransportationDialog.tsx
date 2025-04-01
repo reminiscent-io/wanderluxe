@@ -124,7 +124,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-h-[90vh] overflow-y-auto sm:max-w-[600px] p-4 sm:p-6">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
             {initialData ? 'Edit Transportation' : 'Add Transportation'}
