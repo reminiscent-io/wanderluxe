@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
 import { Button } from '@/components/ui/button';
 import { PencilIcon } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import ImageSection from '@/components/trip/create/ImageSection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -140,6 +140,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogTitle>Edit Cover Image</DialogTitle>
             <ImageSection
               coverImageUrl={imageUrl}
               onImageChange={handleImageChange}
