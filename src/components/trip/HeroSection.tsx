@@ -154,14 +154,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             className="h-full w-full object-cover"
             photographer={photographer}
             unsplashUsername={unsplashUsername}
-            objectPosition="center 100%"
+            objectPosition="center 40%"
           />
         ) : (
           <div className="h-full w-full bg-gray-200 animate-pulse"></div>
         )}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
 
         {/* Title and date overlay - centered */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-10 md:p-16 text-white z-10">
