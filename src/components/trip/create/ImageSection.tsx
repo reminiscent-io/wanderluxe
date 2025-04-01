@@ -71,41 +71,14 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
 
   const handleCropSave = async () => {
     try {
-      if (!selectedImage || !croppedAreaPixels) {
-        throw new Error('No image selected for cropping');
-      }
       const croppedImageUrl = await getCroppedImg(selectedImage, croppedAreaPixels);
-      
-      // Fetch the blob from the URL
-      const response = await fetch(croppedImageUrl);
-      const blob = await response.blob();
-      
-      // Create a file from the blob
-      const file = new File([blob], 'cropped-cover-image.jpg', { type: 'image/jpeg' });
-      
-      // Upload to Supabase storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('trip-images')
-        .upload(`cover-images/${Date.now()}-${file.name}`, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('trip-images')
-        .getPublicUrl(uploadData.path);
-
-      onImageChange(publicUrl);
+      onImageChange(croppedImageUrl);
       setShowCropper(false);
       setSelectedImage(null);
       setGeneratedImages([]);
-      
-      // Revoke the temporary blob URL to free up memory
-      URL.revokeObjectURL(croppedImageUrl);
-      
       toast.success('Image selected successfully');
     } catch (error) {
-      console.error('Error saving cropped image:', error);
+      console.error(error);
       toast.error('Failed to crop image');
     }
   };
