@@ -16,6 +16,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   endDate,
   onEndDateChange,
 }) => {
+  const isEndDateValid = !startDate || !endDate || new Date(endDate) >= new Date(startDate);
   return (
     <div className="space-y-4">
       <Label className="text-sm font-medium text-gray-700">
@@ -50,7 +51,11 @@ const TimingSection: React.FC<TimingSectionProps> = ({
             type="date"
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
+            className={!isEndDateValid ? "border-red-500" : ""}
           />
+          {!isEndDateValid && (
+            <p className="text-red-500 text-sm mt-1">End date cannot be before start date</p>
+          )}
         </div>
       </div>
     </div>
