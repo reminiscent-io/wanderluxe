@@ -71,14 +71,21 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
 
   const handleCropSave = async () => {
     try {
+      if (!selectedImage || !croppedAreaPixels) {
+        throw new Error('No image selected for cropping');
+      }
       const croppedImageUrl = await getCroppedImg(selectedImage, croppedAreaPixels);
-      onImageChange(croppedImageUrl);
-      setShowCropper(false);
-      setSelectedImage(null);
-      setGeneratedImages([]);
-      toast.success('Image selected successfully');
+      if (croppedImageUrl) {
+        onImageChange(croppedImageUrl);
+        setShowCropper(false);
+        setSelectedImage(null);
+        setGeneratedImages([]);
+        toast.success('Image selected successfully');
+      } else {
+        throw new Error('Failed to generate cropped image URL');
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Error saving cropped image:', error);
       toast.error('Failed to crop image');
     }
   };
