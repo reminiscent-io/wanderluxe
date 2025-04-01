@@ -26,6 +26,7 @@ const Hero = () => {
         <UnsplashImage
           src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568"
           className="w-full h-full object-cover min-h-[100vh]"
+          objectPosition="center center"
           alt="Travel background"
         />
         <div className="absolute inset-0 bg-black/30" />
