@@ -51,7 +51,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           destination,
           arrival_date: startDate,
           departure_date: endDate,
-          cover_image_url: coverImageUrl || '',
+          cover_image_url: coverImageUrl,
           created_at: new Date().toISOString()
         }])
         .select()

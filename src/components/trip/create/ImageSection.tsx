@@ -95,9 +95,7 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
         .from('trip-images')
         .getPublicUrl(uploadData.path);
 
-      // Ensure we're passing a valid URL string
-      const finalUrl = publicUrl || '';
-      onImageChange(finalUrl);
+      onImageChange(publicUrl);
       setShowCropper(false);
       setSelectedImage(null);
       setGeneratedImages([]);
