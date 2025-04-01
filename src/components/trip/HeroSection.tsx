@@ -154,7 +154,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             className="h-full w-full object-cover"
             photographer={photographer}
             unsplashUsername={unsplashUsername}
-            objectPosition="center 50%"
+            objectPosition="center 100%"
           />
         ) : (
           <div className="h-full w-full bg-gray-200 animate-pulse"></div>
