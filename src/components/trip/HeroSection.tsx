@@ -127,7 +127,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <Button
           variant="secondary"
           size="sm"
-          className="absolute bottom-4 right-4 opacity-70 hover:opacity-100 transition-opacity z-20 bg-black/20 backdrop-blur-sm"
+          className="absolute bottom-4 right-4 opacity-50 hover:opacity-100 transition-opacity z-20 bg-black/20 backdrop-blur-sm text-sand-50"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
