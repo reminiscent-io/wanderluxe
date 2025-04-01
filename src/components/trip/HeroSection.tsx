@@ -139,7 +139,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </Button>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <ImageSection
               coverImageUrl={imageUrl}
               onImageChange={handleImageChange}
