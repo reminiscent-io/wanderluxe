@@ -1,9 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
+import { Button } from '@/components/ui/button';
+import { PencilIcon } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import ImageSection from '@/components/trip/create/ImageSection';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface HeroSectionProps {
+  tripId: string;
   title: string;
   imageUrl: string;
   arrivalDate: string | null;
@@ -34,6 +41,7 @@ const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
 };
 
 const HeroSection: React.FC<HeroSectionProps> = ({
+  tripId,
   title,
   imageUrl,
   arrivalDate,
@@ -42,6 +50,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   unsplashUsername,
   isLoading = false,
 }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleImageChange = async (newImageUrl: string) => {
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .update({ cover_image_url: newImageUrl })
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+      setIsDialogOpen(false);
+      toast.success('Cover image updated successfully');
+    } catch (error) {
+      console.error('Error updating cover image:', error);
+      toast.error('Failed to update cover image');
+    }
+  };
   // Keep track of the last valid title for smooth transitions
   const [lastValidTitle, setLastValidTitle] = React.useState(title);
   const [lastValidDates, setLastValidDates] = React.useState({
@@ -98,7 +123,29 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative w-full mb-0">
-      <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden rounded-lg rounded-b-none">
+      <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden rounded-lg rounded-b-none group">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDialogOpen(true);
+          }}
+        >
+          <PencilIcon className="h-4 w-4 mr-2" />
+          Edit Cover
+        </Button>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <ImageSection
+              coverImageUrl={imageUrl}
+              onImageChange={handleImageChange}
+            />
+          </DialogContent>
+        </Dialog>
         {imageUrl ? (
           <UnsplashImage
             src={imageUrl}
