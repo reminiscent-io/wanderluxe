@@ -44,7 +44,7 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Activity <RequiredLabel className="inline">Title</RequiredLabel></DialogTitle>
+          <DialogTitle>Add New Activity</DialogTitle>
         </DialogHeader>
         <ActivityForm
           activity={activity}
