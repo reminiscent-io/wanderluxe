@@ -51,6 +51,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   isLoading = false,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(title);
 
   const handleImageChange = async (newImageUrl: string) => {
     try {
@@ -65,6 +67,33 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     } catch (error) {
       console.error('Error updating cover image:', error);
       toast.error('Failed to update cover image');
+    }
+  };
+
+  const handleTitleSubmit = async () => {
+    if (editedTitle.trim() === '') return;
+    
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .update({ destination: editedTitle })
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+      setIsEditing(false);
+      toast.success('Destination updated successfully');
+    } catch (error) {
+      console.error('Error updating destination:', error);
+      toast.error('Failed to update destination');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setEditedTitle(title);
     }
   };
   // Keep track of the last valid title for smooth transitions
@@ -165,13 +194,35 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Title and date overlay - centered */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-10 md:p-16 text-white z-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg text-center">
-            {isLoading ? (
-              <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
-            ) : (
-              lastValidTitle
-            )}
-          </h1>
+          {isLoading ? (
+            <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
+          ) : isEditing ? (
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={handleTitleSubmit}
+                className="text-4xl md:text-5xl font-bold bg-black/20 text-white rounded px-2 py-1 backdrop-blur-sm"
+                autoFocus
+              />
+            </div>
+          ) : (
+            <div className="group relative inline-block">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg text-center cursor-pointer" onClick={() => setIsEditing(true)}>
+                {lastValidTitle}
+              </h1>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => setIsEditing(true)}
+              >
+                <PencilIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
 
           <DateRangeDisplay 
             isLoading={isLoading}
