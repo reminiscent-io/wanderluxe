@@ -32,12 +32,12 @@ interface DiningListProps {
 }
 
 const DiningList: React.FC<DiningListProps> = ({
-  const queryClient = useQueryClient();
   reservations,
   formatTime,
   dayId,
 }) => {
   const { tripId } = useParams<{ tripId: string }>();
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingReservation, setEditingReservation] = useState<string | null>(null);
@@ -63,15 +63,15 @@ const DiningList: React.FC<DiningListProps> = ({
 
         if (error) throw error;
         toast.success('Reservation updated successfully');
+        await queryClient.invalidateQueries(['reservations', dayId]); //Added query invalidation here
       } else {
         const { error } = await supabase
           .from('reservations')
           .insert([processedData]);
 
         if (error) throw error;
+        await queryClient.invalidateQueries(['reservations', dayId]); //Added query invalidation here
         toast.success('Reservation added successfully');
-        // Invalidate and refetch reservations
-        queryClient.invalidateQueries(['reservations', dayId]);
       }
 
       setIsDialogOpen(false);
