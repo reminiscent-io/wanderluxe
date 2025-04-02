@@ -5,6 +5,7 @@ import RestaurantReservationDialog from './RestaurantReservationDialog';
 import RestaurantCard from './RestaurantCard';
 import DeleteReservationDialog from './DeleteReservationDialog';
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useParams } from 'react-router-dom';
 
@@ -31,6 +32,7 @@ interface DiningListProps {
 }
 
 const DiningList: React.FC<DiningListProps> = ({
+  const queryClient = useQueryClient();
   reservations,
   formatTime,
   dayId,
@@ -68,6 +70,8 @@ const DiningList: React.FC<DiningListProps> = ({
 
         if (error) throw error;
         toast.success('Reservation added successfully');
+        // Invalidate and refetch reservations
+        queryClient.invalidateQueries(['reservations', dayId]);
       }
 
       setIsDialogOpen(false);
