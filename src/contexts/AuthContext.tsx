@@ -20,10 +20,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    const ensureProfile = async (userId: string) => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .single();
+
+      if (!profile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: userId,
+              created_at: new Date().toISOString(),
+              full_name: null,
+              avatar_url: null
+            }
+          ]);
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+      }
+    };
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        ensureProfile(session.user.id);
+      }
     });
 
     // Listen for auth changes
@@ -32,6 +60,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        ensureProfile(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
