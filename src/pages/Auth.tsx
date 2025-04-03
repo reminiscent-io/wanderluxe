@@ -116,20 +116,13 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/my-trips`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
         },
       });
       if (error) throw error;
-      if (data) {
-        navigate('/my-trips');
-      }
     } catch (error: any) {
       toast({
         variant: "destructive",
