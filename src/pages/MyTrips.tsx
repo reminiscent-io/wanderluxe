@@ -26,14 +26,18 @@ const MyTrips = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { session } = useAuth();
+  const { session, isAuthLoading } = useAuth();
 
   // Redirect to auth if not logged in
   useEffect(() => {
-    if (!session) {
+    if (!isAuthLoading && !session) {
       navigate('/auth');
     }
-  }, [session, navigate]);
+  }, [session, isAuthLoading, navigate]);
+
+  if (isAuthLoading) {
+    return <div>Loading...</div>;
+  }
 
   const [showHidden, setShowHidden] = useState(false);
 
