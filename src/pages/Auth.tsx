@@ -128,6 +128,34 @@ const Auth = () => {
       });
       if (error) throw error;
       if (data) {
+        // Get the user after OAuth redirect
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Check if profile exists
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select()
+            .eq('id', user.id)
+            .single();
+            
+          // Create profile if it doesn't exist
+          if (!profile) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert([
+                {
+                  id: user.id,
+                  created_at: new Date().toISOString(),
+                  full_name: user.user_metadata?.full_name || null,
+                  avatar_url: user.user_metadata?.avatar_url || null
+                }
+              ]);
+            
+            if (profileError) {
+              console.error('Error creating profile:', profileError);
+            }
+          }
+        }
         navigate('/my-trips');
       }
     } catch (error: any) {
