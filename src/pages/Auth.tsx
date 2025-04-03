@@ -116,11 +116,10 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const redirectUrl = 'https://www.wanderluxe.io/my-trips';
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: `${window.location.origin}/my-trips`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
