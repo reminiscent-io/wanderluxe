@@ -26,18 +26,14 @@ const MyTrips = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { session, isAuthLoading } = useAuth();
+  const { session, loading } = useAuth();
 
-  // Redirect to auth if not logged in
+  // Wait for auth state to resolve
   useEffect(() => {
-    if (!isAuthLoading && !session) {
+    if (!loading && !session) {
       navigate('/auth');
     }
-  }, [session, isAuthLoading, navigate]);
-
-  if (isAuthLoading) {
-    return <div>Loading...</div>;
-  }
+  }, [session, loading, navigate]);
 
   const [showHidden, setShowHidden] = useState(false);
 
@@ -104,8 +100,13 @@ const MyTrips = () => {
     trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // If there's no session (after loading is complete), MyTrips will not render
   if (!session) {
-    return null; // Don't render anything while redirecting
+    return null;
   }
 
   return (
@@ -144,7 +145,7 @@ const MyTrips = () => {
                 key={trip.trip_id}
                 trip={{
                   ...trip,
-                  cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                  cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                 }}
                 onHide={() => handleHideTrip(trip.trip_id)}
               />
