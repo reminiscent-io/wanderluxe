@@ -116,10 +116,7 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const redirectUrl = window.location.hostname === 'wanderluxe.io' 
-        ? 'https://www.wanderluxe.io/my-trips'
-        : `${window.location.origin}/my-trips`;
-        
+      const redirectUrl = 'https://www.wanderluxe.io/my-trips';
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
