@@ -78,12 +78,14 @@ const Auth = () => {
 
       navigate("/my-trips");
     } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sign up. Please check your credentials.';
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
-        className: "bg-earth-100/50 border-destructive",
+        title: "Authentication Error",
+        description: errorMessage,
+        className: "bg-earth-100/50 border-destructive text-destructive",
       });
+      console.error('Auth error:', error);
     } finally {
       setLoading(false);
     }
@@ -104,12 +106,14 @@ const Auth = () => {
         navigate("/");
       }, 500);
     } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sign in. Please check your credentials.';
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
-        className: "bg-earth-100/50 border-destructive",
+        title: "Authentication Error",
+        description: errorMessage,
+        className: "bg-earth-100/50 border-destructive text-destructive",
       });
+      console.error('Auth error:', error);
       setLoading(false);
     }
   };
@@ -137,7 +141,7 @@ const Auth = () => {
             .select()
             .eq('id', user.id)
             .single();
-            
+
           // Create profile if it doesn't exist
           if (!profile) {
             const { error: profileError } = await supabase
@@ -150,7 +154,7 @@ const Auth = () => {
                   avatar_url: user.user_metadata?.avatar_url || null
                 }
               ]);
-            
+
             if (profileError) {
               console.error('Error creating profile:', profileError);
             }
@@ -159,12 +163,14 @@ const Auth = () => {
         navigate('/my-trips');
       }
     } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sign in with Google. Please try again.';
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
-        className: "bg-earth-100/50 border-destructive",
+        title: "Authentication Error",
+        description: errorMessage,
+        className: "bg-earth-100/50 border-destructive text-destructive",
       });
+      console.error('Auth error:', error);
     }
   };
 
