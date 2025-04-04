@@ -57,11 +57,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        ensureProfile(session.user.id);
+      
+      // Create profile on sign up or OAuth sign in
+      if (session?.user && (event === 'SIGNED_IN' || event === 'SIGNED_UP')) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select()
+          .eq('id', session.user.id)
+          .single();
+
+        if (!existingProfile) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: session.user.id,
+                created_at: new Date().toISOString(),
+                full_name: session.user.user_metadata?.full_name || null,
+                avatar_url: session.user.user_metadata?.avatar_url || null
+              }
+            ]);
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+        }
       }
     });
 
