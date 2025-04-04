@@ -93,15 +93,11 @@ const Auth = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) {
-        console.error('Sign in error:', error);
-        throw error;
-      }
-      console.log('Sign in successful:', data.user?.id);
+      if (error) throw error;
       setIsSliding(true);
       // Wait for animation to complete before navigating
       setTimeout(() => {
