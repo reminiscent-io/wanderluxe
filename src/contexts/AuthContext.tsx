@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const ensureProfile = async (userId: string) => {
+    const ensureProfile = async (userId: string, userData: any) => {
       const { data: profile } = await supabase
         .from('profiles')
         .select()
@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             {
               id: userId,
               created_at: new Date().toISOString(),
-              full_name: null,
-              avatar_url: null
+              full_name: userData?.user_metadata?.full_name || null,
+              avatar_url: userData?.user_metadata?.avatar_url || null
             }
           ]);
 
@@ -45,12 +45,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Get initial session
+    // Get initial session and check for existing profile
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        ensureProfile(session.user.id);
+        ensureProfile(session.user.id, session.user);
       }
     });
 
