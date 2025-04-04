@@ -101,7 +101,7 @@ const Auth = () => {
       setIsSliding(true);
       // Wait for animation to complete before navigating
       setTimeout(() => {
-        navigate("/");
+        navigate("/my-trips");
       }, 500);
     } catch (error: any) {
       toast({
