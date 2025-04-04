@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => ({
       '341343a7-80c4-4c6c-ba73-a83ca3e59dbd.lovableproject.com',
       '38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev',
       'wanderluxe.io',
-      'www.wanderluxe.io'
+      'www.wanderluxe.io',
+      'wanderluxe.replit.app'
     ]
   },
   plugins: [
