@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { format, parseISO, differenceInCalendarDays } from "date-fns";
+import { format, parseISO, startOfDay, addDays } from "date-fns";
 import DayHeader from "./DayHeader";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -190,13 +190,13 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const filteredHotelStays = hotelStays.filter((stay: HotelStay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const dayDate = parseISO(normalizedDay);
-    const checkinDate = parseISO(stay.hotel_checkin_date);
-    const checkoutDate = parseISO(stay.hotel_checkout_date);
-    const diff = differenceInCalendarDays(dayDate, checkinDate);
-    const total = differenceInCalendarDays(checkoutDate, checkinDate);
-    return diff >= 0 && diff <= total;
+    const dayDate = startOfDay(parseISO(normalizedDay));
+    const checkinDate = startOfDay(parseISO(stay.hotel_checkin_date));
+    const checkoutDate = startOfDay(parseISO(stay.hotel_checkout_date));
+    // Include day if it's on or after checkin and before checkout + 1 day
+    return dayDate >= checkinDate && dayDate < addDays(checkoutDate, 1);
   });
+
 
   const safeTransportations = transportations || [];
   const filteredTransportations = safeTransportations.filter(

@@ -16,6 +16,15 @@ interface TransportationListItemProps {
   compact?: boolean;
 }
 
+const formatTime12 = (time?: string) => {
+  if (!time) return "";
+  const [hourStr, minuteStr] = time.split(":");
+  const hour = parseInt(hourStr, 10);
+  const period = hour >= 12 ? "pm" : "am";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${minuteStr}${period}`;
+};
+
 const formatDate = (dateString: string) => {
   try {
     // Parse the date as ISO, normalize to start of day, then format
@@ -40,6 +49,14 @@ const getTransportationType = (type: string | null) => {
     .join(' ');
 };
 
+// Helper function to format time range
+const formatTimeRange = (startTime?: string, endTime?: string) => {
+  if (!startTime) return '';
+  return endTime 
+    ? `${formatTime12(startTime)} - ${formatTime12(endTime)}`
+    : `${formatTime12(startTime)}`;
+};
+
 const TransportationListItem: React.FC<TransportationListItemProps> = ({
   transportation,
   onEdit,
@@ -60,7 +77,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
           </h4>
           <p className="text-sm text-gray-500">
             {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
-            {transportation.start_time ? ` at ${transportation.start_time}` : ''}
+            {transportation.start_time && ` ${formatTimeRange(transportation.start_time, transportation.end_time)}`}
           </p>
         </div>
       </Card>
@@ -116,7 +133,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
             </div>
             <p className="text-sm text-gray-500">
               {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
-              {transportation.start_time ? ` at ${transportation.start_time}` : ''}
+              {transportation.start_time && ` ${formatTimeRange(transportation.start_time, transportation.end_time)}`}
             </p>
             {transportation.provider && (
               <p className="text-sm text-gray-500">Provider: {transportation.provider}</p>

@@ -5,8 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
-import ReactDatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 
 type Transportation = Tables<'transportation'>;
 
@@ -14,9 +12,6 @@ interface TransportationFormFieldsProps {
   formData: Partial<Transportation>;
   setFormData: (data: Partial<Transportation>) => void;
   formatCost: (value: number | undefined | null) => string;
-  // Pass in the trip dates as props
-  tripArrivalDate?: string;
-  tripDepartureDate?: string;
 }
 
 const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
@@ -28,9 +23,7 @@ const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
 const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   formData,
   setFormData,
-  formatCost,
-  tripArrivalDate,
-  tripDepartureDate,
+  formatCost
 }) => {
   // Local state for cost input to handle formatting on blur/focus
   const [costInput, setCostInput] = useState<string>(
@@ -41,24 +34,16 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
     setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
   }, [formData.cost]);
 
-  // Prefill the departure date (start_date) with tripArrivalDate if not set
-  useEffect(() => {
-    if (!formData.start_date && tripArrivalDate) {
-      setFormData({ ...formData, start_date: tripArrivalDate });
-    }
-  }, [tripArrivalDate]);
+  const formatNumber = (value: number | null) => {
+    if (value === null || isNaN(value)) return '';
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
-  };
-
-  // Format a number for display
-  const formatNumber = (value: number | null) => {
-    if (value === null || isNaN(value)) return '';
-    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
   };
 
   return (
@@ -132,17 +117,11 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
       <div className="flex space-x-4">
         <div className="flex-1">
           <Label>Arrival Date</Label>
-          <ReactDatePicker
-            selected={formData.end_date ? new Date(formData.end_date) : null}
-            onChange={(date: Date | null) => {
-              const dateStr = date ? date.toISOString().split('T')[0] : '';
-              setFormData({ ...formData, end_date: dateStr });
-            }}
-            placeholderText="Select arrival date"
-            // Highlight the trip departure date without pre-selecting it
-            highlightDates={tripDepartureDate ? [new Date(tripDepartureDate)] : []}
-            dateFormat="yyyy-MM-dd"
-            className="w-full p-2 border rounded"
+          <Input
+            type="date"
+            name="end_date"
+            value={formData.end_date || ''}
+            onChange={handleInputChange}
           />
         </div>
         <div className="flex-1">
