@@ -63,14 +63,14 @@ const DiningList: React.FC<DiningListProps> = ({
 
         if (error) throw error;
         toast.success('Reservation updated successfully');
-        await queryClient.invalidateQueries(['reservations', dayId]); //Added query invalidation here
+        await queryClient.invalidateQueries(['reservations', dayId]); 
       } else {
         const { error } = await supabase
           .from('reservations')
           .insert([processedData]);
 
         if (error) throw error;
-        await queryClient.invalidateQueries(['reservations', dayId]); //Added query invalidation here
+        await queryClient.invalidateQueries(['reservations', dayId]); 
         toast.success('Reservation added successfully');
       }
 
@@ -85,8 +85,6 @@ const DiningList: React.FC<DiningListProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!deletingReservation) return;
-
     try {
       const { error } = await supabase
         .from('reservations')
@@ -94,6 +92,13 @@ const DiningList: React.FC<DiningListProps> = ({
         .eq('id', deletingReservation);
 
       if (error) throw error;
+
+      // Invalidate both the specific day's reservations and the trip data
+      await Promise.all([
+        queryClient.invalidateQueries(['reservations', dayId]),
+        queryClient.invalidateQueries(['trip'])
+      ]);
+
       toast.success('Reservation deleted successfully');
       setDeletingReservation(null);
     } catch (error) {
@@ -147,7 +152,7 @@ const DiningList: React.FC<DiningListProps> = ({
         isSubmitting={isSubmitting}
         editingReservation={editingReservation ? reservations.find(r => r.id === editingReservation) : undefined}
         title={editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
-        tripId={tripId} // Pass tripId directly
+        tripId={tripId} 
       />
 
       {/* Dialog for Delete Confirmation */}
