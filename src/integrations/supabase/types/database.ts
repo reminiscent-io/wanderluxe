@@ -35,7 +35,7 @@ export type Database = {
           hotel_phone: string | null
           hotel_place_id: string | null
           hotel_website: string | null
-          amount_paid: number | null //added
+          amount_paid: number | null // Added amount_paid column
         }
         Insert: {
           stay_id?: string
@@ -62,7 +62,7 @@ export type Database = {
           hotel_phone?: string | null
           hotel_place_id?: string | null
           hotel_website?: string | null
-          amount_paid?: number | null //added
+          amount_paid?: number | null // Added amount_paid column
         }
         Update: {
           stay_id?: string
@@ -89,7 +89,7 @@ export type Database = {
           hotel_phone?: string | null
           hotel_place_id?: string | null
           hotel_website?: string | null
-          amount_paid?: number | null //added
+          amount_paid?: number | null // Added amount_paid column
         }
         Relationships: [
           {
@@ -174,7 +174,7 @@ export type Database = {
           start_time: string | null
           end_time: string | null
           cost: number | null
-          amount_paid: number | null, //added
+          amount_paid: number | null, // Added amount_paid column
           currency: string
           created_at: string
           order_index: number
@@ -187,7 +187,7 @@ export type Database = {
           start_time?: string | null
           end_time?: string | null
           cost?: number | null
-          amount_paid?: number | null, //added
+          amount_paid?: number | null, // Added amount_paid column
           currency?: string
           created_at?: string
           order_index: number
@@ -200,7 +200,7 @@ export type Database = {
           start_time?: string | null
           end_time?: string | null
           cost?: number | null
-          amount_paid?: number | null, //added
+          amount_paid?: number | null, // Added amount_paid column
           currency?: string
           created_at?: string
           order_index?: number
@@ -299,7 +299,6 @@ export type Database = {
           confirmation_number: string | null;
           notes: string | null;
           cost: number | null;
-          amount_paid: number | null; //added
           currency: string;
           created_at: string;
           order_index: number;
@@ -308,6 +307,7 @@ export type Database = {
           website: string | null;
           place_id: string | null;
           rating: number | null;
+          amount_paid: number | null //added amount_paid
         };
         Insert: {
           id?: string;
@@ -319,7 +319,6 @@ export type Database = {
           confirmation_number?: string | null;
           notes?: string | null;
           cost?: number | null;
-          amount_paid?: number | null; //added
           currency?: string;
           created_at?: string;
           order_index: number;
@@ -328,6 +327,7 @@ export type Database = {
           website?: string | null;
           place_id?: string | null;
           rating?: number | null;
+          amount_paid?: number | null //added amount_paid
         };
         Update: {
           id?: string;
@@ -339,7 +339,6 @@ export type Database = {
           confirmation_number?: string | null;
           notes?: string | null;
           cost?: number | null;
-          amount_paid?: number | null; //added
           currency?: string;
           created_at?: string;
           order_index?: number;
@@ -348,6 +347,7 @@ export type Database = {
           website?: string | null;
           place_id?: string | null;
           rating?: number | null;
+          amount_paid?: number | null //added amount_paid
         };
         Relationships: [
           {
@@ -388,7 +388,7 @@ export type Database = {
           departure_location: string | null
           arrival_location: string | null
           cost: number | null
-          amount_paid: number | null, //added
+          amount_paid: number | null, // Added amount_paid column
           currency: string
           created_at: string
           is_arrival: boolean
@@ -408,7 +408,7 @@ export type Database = {
           departure_location?: string | null
           arrival_location?: string | null
           cost?: number | null
-          amount_paid?: number | null, //added
+          amount_paid?: number | null, // Added amount_paid column
           currency?: string
           created_at?: string
           is_arrival?: boolean
@@ -428,7 +428,7 @@ export type Database = {
           departure_location?: string | null
           arrival_location?: string | null
           cost?: number | null
-          amount_paid?: number | null, //added
+          amount_paid?: number | null, // Added amount_paid column
           currency?: string
           created_at?: string
           is_arrival?: boolean
