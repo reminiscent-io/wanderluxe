@@ -190,11 +190,13 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const filteredHotelStays = hotelStays.filter((stay: HotelStay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const dayDate = startOfDay(parseISO(normalizedDay));
-    const checkinDate = startOfDay(parseISO(stay.hotel_checkin_date));
-    const checkoutDate = startOfDay(parseISO(stay.hotel_checkout_date));
-    // Include day if it's on or after checkin and before checkout + 1 day
-    return dayDate >= checkinDate && dayDate < addDays(checkoutDate, 1);
+    const checkinDate = stay.hotel_checkin_date;
+    const checkoutDate = stay.hotel_checkout_date;
+    const dayDate = new Date(normalizedDay);
+    return (
+      dayDate >= new Date(checkinDate) && 
+      dayDate <= new Date(checkoutDate)
+      );
   });
 
 
@@ -264,30 +266,39 @@ const DayCard: React.FC<DayCardProps> = ({
                 <div className="bg-gray-100 rounded-lg p-4">
                   <h3 className="text-base font-semibold mb-2">Hotel Stay</h3>
                   <div className="space-y-2">
-                    {filteredHotelStays.map((stay) => (
-                      <div
-                        key={stay.stay_id}
-                        onClick={() => handleHotelEdit(stay)}
-                        className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
-                      >
-                        <div>
-                          <h4 className="font-medium text-gray-700 text-sm">{stay.hotel}</h4>
-                          <p className="text-xs text-gray-500">
-                            {stay.hotel_address || stay.hotel_details}
-                          </p>
-                          {stay.hotel_checkin_date === normalizedDay && (
-                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800">
-                              Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ""}
-                            </div>
-                          )}
-                          {stay.hotel_checkout_date === normalizedDay && (
-                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800">
-                              Check-out {stay.checkout_time ? formatTime12(stay.checkout_time) : ""}
-                            </div>
-                          )}
+                    {filteredHotelStays.map((stay) => {
+                      console.log(
+                        "Normalized checkout:",
+                        getNormalizedDay(stay.hotel_checkout_date),
+                        "normalized day:",
+                        normalizedDay
+                      );
+                      return (
+                        <div
+                          key={stay.stay_id}
+                          onClick={() => handleHotelEdit(stay)}
+                          className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                        >
+                          <div>
+                            <h4 className="font-medium text-gray-700 text-sm">{stay.hotel}</h4>
+                            <p className="text-xs text-gray-500">
+                              {stay.hotel_address || stay.hotel_details}
+                            </p>
+                            {stay.hotel_checkin_date === normalizedDay && (
+                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800">
+                                Check-in {stay.checkin_time ? formatTime12(stay.checkin_time) : ""}
+                              </div>
+                            )}
+                            {stay.hotel_checkout_date === normalizedDay && (
+                              <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800">
+                                Check-out {stay.checkout_time ? formatTime12(stay.checkout_time) : ""}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+
                     {filteredHotelStays.length === 0 && (
                       <p className="text-gray-500 text-xs italic">
                         No hotel stay booked this night
