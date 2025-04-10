@@ -79,6 +79,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             departure_location: data.departure_location,
             arrival_location: data.arrival_location,
             cost: data.cost,
+            amount_paid: data.amount_paid,
             currency: data.currency
           })
           .eq('id', initialData.id);
@@ -102,6 +103,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             departure_location: data.departure_location,
             arrival_location: data.arrival_location,
             cost: data.cost,
+            amount_paid: data.amount_paid,
             currency: data.currency,
             created_at: new Date().toISOString()
           }]);

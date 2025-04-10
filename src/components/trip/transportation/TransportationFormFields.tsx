@@ -9,8 +9,8 @@ import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyCo
 type Transportation = Tables<'transportation'>;
 
 interface TransportationFormFieldsProps {
-  formData: Partial<Transportation>;
-  setFormData: (data: Partial<Transportation>) => void;
+  formData: Partial<Transportation & { amount_paid: number | null }>; // Added amount_paid
+  setFormData: (data: Partial<Transportation & { amount_paid: number | null }>) => void; // Added amount_paid
   formatCost: (value: number | undefined | null) => string;
 }
 
@@ -29,10 +29,15 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   const [costInput, setCostInput] = useState<string>(
     formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : ''
   );
+  const [amountPaidInput, setAmountPaidInput] = useState<string>(
+    formData.amount_paid !== undefined && formData.amount_paid !== null ? formData.amount_paid.toString() : ''
+  );
+
 
   useEffect(() => {
     setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
-  }, [formData.cost]);
+    setAmountPaidInput(formData.amount_paid !== undefined && formData.amount_paid !== null ? formData.amount_paid.toString() : '');
+  }, [formData.cost, formData.amount_paid]);
 
   const formatNumber = (value: number | null) => {
     if (value === null || isNaN(value)) return '';
@@ -40,10 +45,9 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    const parsedValue = name === 'cost' || name === 'amount_paid' ? (value ? parseFloat(value.replace(/[^\d.-]/g, '')) : null) : value;
+    setFormData({ ...formData, [name]: parsedValue });
   };
 
   return (
@@ -162,19 +166,9 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <Input
             name="cost"
             value={costInput}
-            onFocus={() => {
-              setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
-            }}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^\d.-]/g, '');
-              setCostInput(value);
-              const cost = value ? parseFloat(value) : null;
-              setFormData({ ...formData, cost });
-            }}
-            onBlur={() => {
-              const formatted = formatNumber(formData.cost);
-              setCostInput(formatted);
-            }}
+            onFocus={() => setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '')}
+            onChange={handleInputChange}
+            onBlur={() => setCostInput(formatNumber(formData.cost))}
             placeholder="0"
           />
         </div>
@@ -199,6 +193,21 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="flex space-x-4"> {/* Added div for Amount Paid */}
+        <div className="flex-1">
+          <Label>Amount Paid</Label>
+          <Input
+            name="amount_paid"
+            type="number"
+            value={amountPaidInput}
+            onFocus={() => setAmountPaidInput(formData.amount_paid !== undefined && formData.amount_paid !== null ? formData.amount_paid.toString() : '')}
+            onChange={handleInputChange}
+            onBlur={() => setAmountPaidInput(formatNumber(formData.amount_paid))}
+            placeholder="0"
+          />
         </div>
       </div>
 

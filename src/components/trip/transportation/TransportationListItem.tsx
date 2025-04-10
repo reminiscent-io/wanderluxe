@@ -144,6 +144,9 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
             {transportation.cost !== null && (
               <p className="text-sm font-medium mt-1">{formatCost(transportation.cost)}</p>
             )}
+            {transportation.amount_paid !== null && transportation.amount_paid > 0 && (
+              <p className="text-sm text-green-600 mt-1">Paid: {formatCost(transportation.amount_paid)}</p>
+            )}
           </div>
           <div className="flex space-x-1">
             {onEdit && (

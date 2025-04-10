@@ -35,6 +35,7 @@ export type Database = {
           hotel_phone: string | null
           hotel_place_id: string | null
           hotel_website: string | null
+          amount_paid: number | null //added
         }
         Insert: {
           stay_id?: string
@@ -61,6 +62,7 @@ export type Database = {
           hotel_phone?: string | null
           hotel_place_id?: string | null
           hotel_website?: string | null
+          amount_paid?: number | null //added
         }
         Update: {
           stay_id?: string
@@ -87,6 +89,7 @@ export type Database = {
           hotel_phone?: string | null
           hotel_place_id?: string | null
           hotel_website?: string | null
+          amount_paid?: number | null //added
         }
         Relationships: [
           {
@@ -171,6 +174,7 @@ export type Database = {
           start_time: string | null
           end_time: string | null
           cost: number | null
+          amount_paid: number | null, //added
           currency: string
           created_at: string
           order_index: number
@@ -183,6 +187,7 @@ export type Database = {
           start_time?: string | null
           end_time?: string | null
           cost?: number | null
+          amount_paid?: number | null, //added
           currency?: string
           created_at?: string
           order_index: number
@@ -195,6 +200,7 @@ export type Database = {
           start_time?: string | null
           end_time?: string | null
           cost?: number | null
+          amount_paid?: number | null, //added
           currency?: string
           created_at?: string
           order_index?: number
@@ -286,13 +292,14 @@ export type Database = {
         Row: {
           id: string;
           day_id: string;
-          trip_id: string; // added trip_id
+          trip_id: string; 
           restaurant_name: string;
           reservation_time: string | null;
           number_of_people: number | null;
           confirmation_number: string | null;
           notes: string | null;
           cost: number | null;
+          amount_paid: number | null; //added
           currency: string;
           created_at: string;
           order_index: number;
@@ -305,13 +312,14 @@ export type Database = {
         Insert: {
           id?: string;
           day_id: string;
-          trip_id: string; // added trip_id (required)
+          trip_id: string; 
           restaurant_name: string;
           reservation_time?: string | null;
           number_of_people?: number | null;
           confirmation_number?: string | null;
           notes?: string | null;
           cost?: number | null;
+          amount_paid?: number | null; //added
           currency?: string;
           created_at?: string;
           order_index: number;
@@ -324,13 +332,14 @@ export type Database = {
         Update: {
           id?: string;
           day_id?: string;
-          trip_id?: string; // added trip_id (optional)
+          trip_id?: string; 
           restaurant_name?: string;
           reservation_time?: string | null;
           number_of_people?: number | null;
           confirmation_number?: string | null;
           notes?: string | null;
           cost?: number | null;
+          amount_paid?: number | null; //added
           currency?: string;
           created_at?: string;
           order_index?: number;
@@ -379,6 +388,7 @@ export type Database = {
           departure_location: string | null
           arrival_location: string | null
           cost: number | null
+          amount_paid: number | null, //added
           currency: string
           created_at: string
           is_arrival: boolean
@@ -398,6 +408,7 @@ export type Database = {
           departure_location?: string | null
           arrival_location?: string | null
           cost?: number | null
+          amount_paid?: number | null, //added
           currency?: string
           created_at?: string
           is_arrival?: boolean
@@ -417,6 +428,7 @@ export type Database = {
           departure_location?: string | null
           arrival_location?: string | null
           cost?: number | null
+          amount_paid?: number | null, //added
           currency?: string
           created_at?: string
           is_arrival?: boolean

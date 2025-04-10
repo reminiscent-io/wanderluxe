@@ -20,6 +20,7 @@ export interface Expense {
   category: string;
   description: string;
   cost?: number | null;
+  amount_paid?: number | null;
   currency?: string | null;
   is_paid?: boolean;
   created_at?: string;

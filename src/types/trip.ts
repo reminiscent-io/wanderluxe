@@ -24,6 +24,7 @@ export interface DayActivity {
   order_index: number;
   created_at: string;
   is_paid: boolean;
+  amount_paid: number | null;
 }
 
 export interface TripDay {
@@ -60,6 +61,7 @@ export interface Accommodation {
   checkin_time: string;
   checkout_time: string;  
   cost: number | null;
+  amount_paid: number | null;
   currency: Currency | null;
   expense_type: string | null;
   is_paid: boolean;
@@ -85,6 +87,7 @@ export interface HotelStay {
   hotel_details: string | null;
   hotel_url: string | null;
   cost: number | null;
+  amount_paid: number | null;
   currency: Currency | null;
   hotel_address: string | null;
   hotel_phone: string | null;
@@ -107,6 +110,7 @@ export interface Transportation {
   departure_location: string | null;
   arrival_location: string | null;
   cost: number | null;
+  amount_paid: number | null;
   currency: Currency | null;
   is_paid: boolean;
   created_at: string;
@@ -121,6 +125,7 @@ export interface RestaurantReservation {
   notes: string | null;
   confirmation_number: string | null;
   cost: number | null;
+  amount_paid: number | null;
   currency: Currency | null;
   is_paid: boolean;
   address: string | null;
@@ -137,6 +142,7 @@ export interface ExpenseItem {
   category: string;
   description: string;
   cost: number | null;
+  amount_paid: number | null;
   currency: Currency | null;
   is_paid: boolean;
   created_at: string;

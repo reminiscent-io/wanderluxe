@@ -36,6 +36,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     details: '',
     confirmation_number: '',
     cost: null,
+    amount_paid: null, // Added amount_paid field
     currency: CURRENCIES[0] 
   };
 
