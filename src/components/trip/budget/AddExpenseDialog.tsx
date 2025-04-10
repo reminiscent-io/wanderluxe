@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -16,14 +15,14 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import CurrencySelector from './CurrencySelector';
 
+// Form schema
 const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
-  cost: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
-    message: "Cost must be a valid number",
-  }),
+  cost: z.number().min(0, "Cost must be a positive number"),
   date: z.string().optional(),
-  currency: z.string(),
-  isPaid: z.boolean()
+  currency: z.string().min(1, "Currency is required"),
+  isPaid: z.boolean().default(false),
+  amountPaid: z.number().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -37,6 +36,7 @@ interface AddExpenseDialogProps {
     date?: string; 
     currency: string;
     isPaid: boolean;
+    amountPaid?: number;
   }) => Promise<void>;
   defaultCurrency: string;
 }
@@ -54,7 +54,8 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       cost: "",
       date: new Date().toISOString().split('T')[0],
       currency: defaultCurrency,
-      isPaid: false
+      isPaid: false,
+      amountPaid: 0
     },
   });
 
@@ -64,7 +65,8 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       cost: Number(data.cost),
       date: data.date,
       currency: data.currency,
-      isPaid: data.isPaid
+      isPaid: data.isPaid,
+      amountPaid: data.amountPaid,
     });
     form.reset();
     onOpenChange(false);
@@ -156,24 +158,25 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
 
             <FormField
               control={form.control}
-              name="isPaid"
+              name="amountPaid"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between p-4 bg-earth-50 rounded-lg">
-                    <FormLabel className="text-base font-medium text-earth-600">
-                      Mark as paid
-                    </FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-earth-500"
-                      />
-                    </FormControl>
-                  </div>
+                  <FormLabel>Amount Paid</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="bg-white"
+                    />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
+
 
             <DialogFooter className="gap-2 sm:gap-0">
               <Button

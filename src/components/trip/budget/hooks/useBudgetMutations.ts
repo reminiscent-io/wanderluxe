@@ -10,6 +10,7 @@ interface ExpenseData {
   cost?: number;
   currency?: string;
   is_paid?: boolean;
+  amount_paid?: number;
   accommodation_id?: string;
   transportation_id?: string;
   activity_id?: string;

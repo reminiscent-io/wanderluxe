@@ -1,5 +1,16 @@
 import { Currency, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
-import { ExpenseItem } from '@/types/trip';
+
+export interface ExpenseItem {
+  id: string;
+  description: string;
+  cost: number | null;
+  currency: string | null;
+  is_paid: boolean;
+  amount_paid: number | null;
+  date: string | null;
+  category: string;
+  convertedCost?: number;
+}
 
 export function formatCurrencyWithSymbol(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] || currency;
@@ -51,6 +62,7 @@ export const mapToExpenseItems = (
         cost: activity.cost,
         currency: activity.currency || 'USD',
         is_paid: activity.is_paid || false,
+        amount_paid: activity.amount_paid || 0, // Added amount_paid
         date: activity.created_at
       });
     }
@@ -66,6 +78,7 @@ export const mapToExpenseItems = (
         cost: accommodation.cost,
         currency: accommodation.currency || 'USD',
         is_paid: accommodation.is_paid || false,
+        amount_paid: accommodation.amount_paid || 0, // Added amount_paid
         date: accommodation.hotel_checkin_date
       });
     }
@@ -87,6 +100,7 @@ export const mapToExpenseItems = (
         cost: transport.cost,
         currency: transport.currency || 'USD',
         is_paid: transport.is_paid || false,
+        amount_paid: transport.amount_paid || 0, // Added amount_paid
         date: transport.start_date
       });
     }
@@ -102,6 +116,7 @@ export const mapToExpenseItems = (
         cost: reservation.cost,
         currency: reservation.currency || 'USD',
         is_paid: reservation.is_paid || false,
+        amount_paid: reservation.amount_paid || 0, // Added amount_paid
         date: reservation.created_at
       });
     }
@@ -117,6 +132,7 @@ export const mapToExpenseItems = (
         cost: expense.cost,
         currency: expense.currency || 'USD',
         is_paid: expense.is_paid || false,
+        amount_paid: expense.amount_paid || 0, // Added amount_paid
         date: expense.date || expense.created_at
       });
     }
