@@ -22,6 +22,7 @@ const formSchema = z.object({
   number_of_people: z.number().optional().nullable(),
   notes: z.string().optional(),
   cost: z.number().optional().nullable(),
+  amount_paid: z.number().optional().nullable(),
   currency: z.string().optional().nullable(),
   place_id: z.string().optional(),
   rating: z.number().optional(),
@@ -55,6 +56,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       number_of_people: undefined,
       notes: '',
       cost: undefined,
+      amount_paid: undefined,
       currency: null,
       ...defaultValues,
     },
@@ -219,6 +221,30 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             )}
           />
         </div>
+        
+        <FormField
+          control={form.control}
+          name="amount_paid"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount Paid</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={(e) => {
+                    const formatted = handleCostBlur(e.target.value);
+                    field.onChange(Number(formatted.replace(/,/g, '')));
+                  }}
+                  className="bg-white"
+                  placeholder="Enter amount already paid (if any)"
+                />
+              </FormControl>
+              <p className="text-xs text-gray-500">Leave empty if nothing has been paid yet</p>
+            </FormItem>
+          )}
+        />
 
         <Button 
           type="submit" 

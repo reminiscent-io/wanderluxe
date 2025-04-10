@@ -76,6 +76,12 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
                     {CURRENCY_SYMBOLS[stay.currency] || '$'}{Number(stay.cost).toLocaleString()}
                   </p>
                 )}
+                {stay.amount_paid !== null && stay.amount_paid > 0 && (
+                  <p className="mb-1 text-green-600">
+                    <span className="font-medium">Paid: </span>
+                    {CURRENCY_SYMBOLS[stay.currency] || '$'}{Number(stay.amount_paid).toLocaleString()}
+                  </p>
+                )}
                 {stay.hotel_details && (
                   <p className="mb-1">
                     <span className="font-medium">Details: </span>

@@ -21,6 +21,7 @@ const formSchema = z.object({
   checkin_time: z.string().optional(),
   checkout_time: z.string().optional(),
   cost: z.number().nullable(),
+  amount_paid: z.number().nullable(),
   currency: z.string().min(1, "Currency is required"),
   hotel_address: z.string().optional(),
   hotel_phone: z.string().optional(),
@@ -75,6 +76,7 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       checkin_time: initialData?.checkin_time || '15:00',  // 3:00pm
       checkout_time: initialData?.checkout_time || '11:00', // 11:00am
       cost: initialData?.cost || null,
+      amount_paid: initialData?.amount_paid || null,
       currency: initialData?.currency || 'USD',
       hotel_address: initialData?.hotel_address || '',
       hotel_phone: initialData?.hotel_phone || '',
@@ -297,6 +299,26 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="amount_paid"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount Paid</FormLabel>
+              <FormControl>
+                <input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  className="w-full p-2 border rounded-md"
+                  placeholder="Enter amount already paid (if any)"
+                />
+              </FormControl>
+              <p className="text-xs text-gray-500">Leave empty if nothing has been paid yet</p>
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end gap-2 pt-4">
           <Button

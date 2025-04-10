@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Utensils, MapPin, Phone, Link as LinkIcon, Star, Clock, Users, Edit, Trash2 } from "lucide-react";
@@ -16,8 +15,10 @@ interface RestaurantCardProps {
     cost?: number;
     currency?: string;
     notes?: string;
+    amount_paid?: number | null; // Added amount_paid
   };
   formatTime: (time?: string) => string;
+  formatCost: (cost: number, currency: string) => string; // Added formatCost
   onEdit: (reservation: any) => void;
   onDelete: () => void;
 }
@@ -55,6 +56,7 @@ const InfoItem: React.FC<{
 const RestaurantCard: React.FC<RestaurantCardProps> = ({
   reservation,
   formatTime,
+  formatCost, // Added formatCost
   onEdit,
   onDelete
 }) => {
@@ -73,7 +75,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
               </span>
             )}
           </h5>
-          
+
           {reservation.address && (
             <InfoItem
               icon={<MapPin className="h-4 w-4 text-earth-400" />}
@@ -81,7 +83,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
               className="text-sm text-gray-600"
             />
           )}
-          
+
           <div className="flex flex-wrap gap-4 text-sm text-gray-600">
             {reservation.phone_number && (
               <IconLink
@@ -90,7 +92,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
                 text={reservation.phone_number}
               />
             )}
-            
+
             {reservation.website && (
               <IconLink
                 href={reservation.website}
@@ -100,7 +102,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
             )}
           </div>
         </div>
-        
+
         <div className="flex gap-2">
           <Button
             variant="ghost"
@@ -129,20 +131,25 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
             text={formatTime(reservation.reservation_time)}
           />
         )}
-        
+
         {reservation.number_of_people && (
           <InfoItem
             icon={<Users className="h-4 w-4 text-earth-400" />}
             text={`${reservation.number_of_people} people`}
           />
         )}
-        
+
         {reservation.cost && (
-          <InfoItem
-            icon={null}
-            text={`${reservation.cost} ${reservation.currency || 'USD'}`}
-            className="font-medium"
-          />
+          <p className="text-sm text-gray-700">
+            <span className="font-medium">Cost: </span>
+            {formatCost(reservation.cost, reservation.currency || 'USD')}
+          </p>
+        )}
+        {reservation.amount_paid !== null && reservation.amount_paid > 0 && (
+          <p className="text-sm text-green-600">
+            <span className="font-medium">Paid: </span>
+            {formatCost(reservation.amount_paid, reservation.currency || 'USD')}
+          </p>
         )}
       </div>
 
