@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Save } from "lucide-react";
 
 interface ExpenseTableProps {
   expenses: ExpenseItem[];
@@ -34,6 +34,12 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
     return acc;
   }, {} as Record<string, number>);
 
+  // Calculate category paid totals
+  const categoryPaidTotals = Object.entries(expensesByCategory).reduce((acc, [category, items]) => {
+    acc[category] = items.reduce((sum, item) => sum + (item.amount_paid || 0), 0);
+    return acc;
+  }, {} as Record<string, number>);
+
   // State for tracking edited amounts
   const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>({});
   
@@ -56,6 +62,13 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
     }
   };
 
+  // Handle blur to auto-save when user clicks away
+  const handleBlur = (expense: ExpenseItem) => {
+    if (editedAmounts[expense.id] !== undefined) {
+      handleSaveAmount(expense);
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -63,8 +76,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
           <TableHead>Date</TableHead>
           <TableHead>Description</TableHead>
           <TableHead className="text-right">Amount</TableHead>
-          <TableHead className="text-right">Paid</TableHead>
-          <TableHead className="w-[100px]"></TableHead>
+          <TableHead className="text-right">Amount Paid</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -98,24 +110,26 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      value={editedAmounts[expense.id] !== undefined ? editedAmounts[expense.id] : expense.amount_paid || ''}
-                      onChange={(e) => handleAmountChange(expense.id, e.target.value)}
-                      className="w-24 h-8 text-right"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => handleSaveAmount(expense)}
-                      disabled={editedAmounts[expense.id] === undefined}
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Input
+                        type="number"
+                        value={editedAmounts[expense.id] !== undefined ? editedAmounts[expense.id] : expense.amount_paid || ''}
+                        onChange={(e) => handleAmountChange(expense.id, e.target.value)}
+                        onBlur={() => handleBlur(expense)}
+                        className="w-24 h-8 text-right"
+                        placeholder="0.00"
+                      />
+                      {editedAmounts[expense.id] !== undefined && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-earth-600"
+                          onClick={() => handleSaveAmount(expense)}
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -125,8 +139,9 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                 <TableCell className="text-right">
                   {formatCurrency(categoryTotals[category], selectedCurrency)}
                 </TableCell>
-                <TableCell />
-                <TableCell />
+                <TableCell className="text-right">
+                  {formatCurrency(categoryPaidTotals[category], selectedCurrency)}
+                </TableCell>
               </TableRow>
             </React.Fragment>
           );
