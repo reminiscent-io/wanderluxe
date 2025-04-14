@@ -16,7 +16,6 @@ interface AddExpenseData {
   date?: string;
   currency: string;
   isPaid: boolean;
-  amountPaid?: number;
 }
 
 interface BudgetViewProps {
@@ -27,16 +26,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { selectedCurrency, handleCurrencyChange, lastUpdated: currencyLastUpdated } = useCurrencyState();
   const { data: expenses } = useExpenses(tripId);
   const { addExpense, updateExpense } = useBudgetMutations(tripId);
-  // Use the hook that provides expenses and exchange rates
   const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
 
-  // Transform the exchangeRates array into an object:
-  // { currency_from: { currency_to: rate, ... }, ... }
+  // Transform exchangeRates array into an object: { currency_from: { currency_to: rate, ... }, ... }
   const ratesObject = useMemo(() => {
     if (!exchangeRates || exchangeRates.length === 0) return {};
     const obj: Record<string, Record<string, number>> = {};
     exchangeRates.forEach((rate) => {
-      // Use the correct field names: currency_from and currency_to
       const from = rate.currency_from;
       const to = rate.currency_to;
       if (!obj[from]) {
@@ -47,7 +43,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     return obj;
   }, [exchangeRates]);
 
-  // Convert expenses to selected currency using the rates from the hook
+  // Convert expenses to the selected currency using rates
   const convertedExpenses = useMemo(() => {
     if (!expenses?.items || !Object.keys(ratesObject).length) return [];
     return expenses.items.map(expense => ({
@@ -68,16 +64,16 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       cost: data.cost,
       currency: data.currency,
       is_paid: data.isPaid,
-      amount_paid: data.amountPaid,
       category: 'Other' // Default category for manually added expenses
     });
     setIsAddingExpense(false);
   };
 
+  // Update function for saving the amount paid
   const handleUpdatePaidAmount = (id: string, amountPaid: number, category: string) => {
-    updateExpense.mutate({ 
-      id, 
-      data: { 
+    updateExpense.mutate({
+      id,
+      data: {
         amount_paid: amountPaid,
         category: category // Preserve the category when updating
       }
@@ -86,10 +82,10 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
   // Calculate totals using converted values
   const total = convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0);
-  const paidTotal = convertedExpenses.reduce((sum, item) => {
-    // Use amount_paid if it exists, otherwise 0
-    return sum + (item.amount_paid || 0);
-  }, 0);
+  const paidTotal = convertedExpenses.reduce(
+    (sum, item) => sum + (item.is_paid ? item.convertedCost : 0),
+    0
+  );
 
   const [isAddingExpense, setIsAddingExpense] = useState(false);
 
@@ -109,16 +105,14 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
       <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div data-lov-id="budget-card">
-          {convertedExpenses.length > 0 && (
-            <ExpenseTable
-              expenses={convertedExpenses}
-              selectedCurrency={selectedCurrency}
-              onUpdatePaidAmount={handleUpdatePaidAmount}
-            />
-          )}
-        </div>
+      <div className="bg-white rounded-lg shadow overflow-hidden" data-lov-id="budget-card">
+        {convertedExpenses.length > 0 && (
+          <ExpenseTable
+            expenses={convertedExpenses}
+            selectedCurrency={selectedCurrency}
+            onUpdatePaidAmount={handleUpdatePaidAmount}
+          />
+        )}
       </div>
 
       <AddExpenseDialog
