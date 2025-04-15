@@ -48,31 +48,12 @@ const Auth = () => {
 
       // Create profile after successful signup
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              created_at: new Date().toISOString(),
-              full_name: null,
-              avatar_url: null
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Account created, but profile creation failed. Please contact support.",
-            className: "bg-earth-100/50 border-destructive",
-          });
-        } else {
-          toast({
-            title: "Success!",
-            description: "Account and profile created successfully. Check your email for verification.",
-          });
-        }
+        // Profile creation will happen through a database trigger or backend function
+        // Don't try to manually create a profile from the client side
+        toast({
+          title: "Success!",
+          description: "Account created successfully. Check your email for verification.",
+        });
       }
 
 
