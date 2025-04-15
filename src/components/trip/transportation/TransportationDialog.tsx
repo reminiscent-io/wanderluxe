@@ -27,11 +27,11 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   onOpenChange,
   initialData,
   onSuccess,
-  buttonClassName = "bg-earth-500 hover:bg-earth-600 text-white font-semibold" //Added default value
+  buttonClassName = "bg-earth-500 hover:bg-earth-600 text-white font-semibold",
 }) => {
   const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
     arrival_date: null,
-    departure_date: null
+    departure_date: null,
   });
 
   useEffect(() => {
@@ -41,21 +41,18 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         .select('arrival_date, departure_date')
         .eq('trip_id', tripId)
         .single();
-
       if (!error && data) {
-        // Only update if we have valid dates
         if (data.arrival_date && data.departure_date) {
           console.log('TransportationDialog: Setting trip dates', data);
           setTripDates({
             arrival_date: data.arrival_date,
-            departure_date: data.departure_date
+            departure_date: data.departure_date,
           });
         } else {
           console.log('TransportationDialog: Skipping update - missing dates', data);
         }
       }
     };
-
     if (open) {
       fetchTripDates();
     }
@@ -63,54 +60,43 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
 
   const handleSubmit = async (data: Partial<TransportationType>) => {
     try {
+      // Consolidate common transportation fields
+      const basePayload = {
+        type: data.type,
+        provider: data.provider,
+        details: data.details,
+        confirmation_number: data.confirmation_number,
+        start_date: data.start_date,
+        start_time: data.start_time,
+        end_date: data.end_date,
+        end_time: data.end_time,
+        departure_location: data.departure_location,
+        arrival_location: data.arrival_location,
+        cost: data.cost,
+        currency: data.currency,
+      };
+
       if (initialData?.id) {
         // Update existing transportation event
         const { error } = await supabase
           .from('transportation')
-          .update({
-            type: data.type,
-            provider: data.provider,
-            details: data.details,
-            confirmation_number: data.confirmation_number,
-            start_date: data.start_date,
-            start_time: data.start_time,
-            end_date: data.end_date, // Include end_date
-            end_time: data.end_time,
-            departure_location: data.departure_location,
-            arrival_location: data.arrival_location,
-            cost: data.cost,
-            currency: data.currency
-          })
+          .update({ ...basePayload })
           .eq('id', initialData.id);
-
         if (error) throw error;
         toast.success('Transportation updated successfully');
       } else {
-        // Create new transportation event
+        // Create new transportation event with additional fields
         const { error } = await supabase
           .from('transportation')
           .insert([{
             trip_id: tripId,
-            type: data.type,
-            provider: data.provider,
-            details: data.details,
-            confirmation_number: data.confirmation_number,
-            start_date: data.start_date,
-            start_time: data.start_time,
-            end_date: data.end_date, // Include end_date
-            end_time: data.end_time,
-            departure_location: data.departure_location,
-            arrival_location: data.arrival_location,
-            cost: data.cost,
-            currency: data.currency,
-            created_at: new Date().toISOString()
+            ...basePayload,
+            created_at: new Date().toISOString(),
           }]);
-
         if (error) throw error;
         toast.success('Transportation added successfully');
       }
-
-      onSuccess?.(); // Use optional chaining
+      onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving transportation:', error);
@@ -134,8 +120,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           initialData={initialData || undefined}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          tripArrivalDate={tripDates?.arrival_date}
-          tripDepartureDate={tripDates?.departure_date}
+          tripArrivalDate={tripDates.arrival_date}
+          tripDepartureDate={tripDates.departure_date}
           buttonClassName="bg-earth-400 hover:bg-earth-600 text-white font-semibold"
         />
       </DialogContent>
