@@ -120,7 +120,9 @@ const DayCard: React.FC<DayCardProps> = ({
   });
 
   const { transportations } = useTransportationEvents(tripId);
-  const dayTitle = title || "Arrival day";
+  // Extract the day of week from the date
+  const dayOfWeek = format(parseISO(date), "EEEE");
+  const dayTitle = title || dayOfWeek;
 
   const formatTransportTime = (transport: Transportation) => {
     const startDate = transport.start_date
