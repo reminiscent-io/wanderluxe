@@ -99,6 +99,16 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const queryClient = useQueryClient();
 
+  // Sort activities by start time in descending order
+  const sortedActivities = [...activities].sort((a, b) => {
+    // Handle null/undefined start times (put them at the end)
+    if (!a.start_time) return 1;
+    if (!b.start_time) return -1;
+    
+    // Sort in descending order (latest first)
+    return b.start_time.localeCompare(a.start_time);
+  });
+
   useEffect(() => {
     if (originalImageUrl) {
       setImageUrl(originalImageUrl);
@@ -370,7 +380,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 <div className="bg-gray-100 rounded-lg p-4">
                   <h3 className="text-base font-semibold mb-2">Activities</h3>
                   <div className="space-y-2">
-                    {activities.map((activity) => (
+                    {sortedActivities.map((activity) => (
                       <div
                         key={activity.id || activity.title}
                         onClick={() => handleActivityEditClick(activity)}
@@ -389,7 +399,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         </div>
                       </div>
                     ))}
-                    {activities.length === 0 && (
+                    {sortedActivities.length === 0 && (
                       <p className="text-gray-500 text-xs italic">
                         No activities for this day
                       </p>
