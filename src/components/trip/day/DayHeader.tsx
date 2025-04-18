@@ -57,8 +57,19 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             "bg-gray-800/30 backdrop-blur-sm hover:bg-gray-800/50 transition-colors"
           )}
         >
-          {/* Left side: date & title */}
-          <div className="flex flex-col gap-1 text-white">
+          {/* Left side: edit button, date & title */}
+          <div className="flex items-center gap-2 text-white">
+            {/* Edit Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevents toggle button from triggering
+                onEdit();
+              }}
+              className="h-8 w-8 text-white hover:bg-white/20 flex items-center justify-center rounded"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
             <span className="text-lg font-medium">{formattedDate}</span>
           </div>
           {/* Right side: chevron only */}
@@ -69,18 +80,6 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             )}
           />
         </div>
-      </button>
-
-      {/* Separate Edit Button */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation(); // Prevents toggle button from triggering.
-          onEdit();
-        }}
-        className="absolute bottom-3 right-4 h-8 w-8 text-white hover:bg-white/20 flex items-center justify-center rounded"
-      >
-        <Pencil className="h-4 w-4" />
       </button>
     </div>
   );
