@@ -99,14 +99,14 @@ const DayCard: React.FC<DayCardProps> = ({
 
   const queryClient = useQueryClient();
 
-  // Sort activities by start time in descending order
+  // Sort activities by start time in ascending order
   const sortedActivities = [...activities].sort((a, b) => {
     // Handle null/undefined start times (put them at the end)
     if (!a.start_time) return 1;
     if (!b.start_time) return -1;
     
-    // Sort in descending order (latest first)
-    return b.start_time.localeCompare(a.start_time);
+    // Sort in ascending order (earliest first)
+    return a.start_time.localeCompare(b.start_time);
   });
 
   useEffect(() => {
