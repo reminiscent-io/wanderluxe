@@ -120,7 +120,7 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Vision Board</h2>
         <Button onClick={() => setIsAddingItem(true)}>
