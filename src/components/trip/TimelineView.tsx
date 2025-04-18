@@ -172,7 +172,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
 
   return (
-    <div className="relative space-y-8">
+    <div className="relative space-y-8 max-w-7xl mx-auto px-4 md:px-6">
       {isRefreshing && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
       )}
