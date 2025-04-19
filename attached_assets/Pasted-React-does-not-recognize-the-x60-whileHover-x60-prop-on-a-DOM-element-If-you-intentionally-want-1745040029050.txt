@@ -1,0 +1,70 @@
+React does not recognize the &#x60;whileHover&#x60; prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase &#x60;whilehover&#x60; instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+React does not recognize the &#x60;whileTap&#x60; prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase &#x60;whiletap&#x60; instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+In HTML, <button> cannot be a descendant of &lt;button&gt;.
+This will cause a hydration error.
+
+  ...
+    <Primitive.div dir="ltr" data-orientation="horizontal" data-lov-id="src/compon..." data-lov-name="Tabs" ...>
+      <div dir="ltr" data-orientation="horizontal" data-lov-id="src/compon..." data-lov-name="Tabs" ...>
+        <div>
+        <_c4>
+        <_c4 data-lov-id="src/compon..." data-lov-name="TabsContent" data-component-path="src/compon..." ...>
+          <TabsContent data-lov-id="src/compon..." data-lov-name="TabsContent" data-component-path="src/compon..." ...>
+            <Presence present={true}>
+              <Primitive.div data-state="active" data-orientation="horizontal" role="tabpanel" ...>
+                <div data-state="active" data-orientation="horizontal" role="tabpanel" aria-labelledby="radix-:rl:..." ...>
+                  <TimelineView data-lov-id="src/compon..." data-lov-name="TimelineView" ...>
+                    <div data-lov-id="src/compon..." data-lov-name="div" data-component-path="src/compon..." ...>
+                      <div>
+                      <div>
+                      <TimelineContent data-lov-id="src/compon..." data-lov-name="TimelineCo..." ...>
+                        <div data-lov-id="src/compon..." data-lov-name="div" data-component-path="src/compon..." ...>
+                          <DayCard data-lov-id="src/compon..." data-lov-name="DayCard" ...>
+                            <div data-lov-id="src/compon..." data-lov-name="div" data-component-path="src/compon..." ...>
+                              <DayEditDialog>
+                              <DayHeader data-lov-id="src/compon..." data-lov-name="DayHeader" ...>
+                                <div data-lov-id="src/compon..." data-lov-name="div" data-component-path="src/compon..." ...>
+>                                 <button
+>                                   data-lov-id="src/components/trip/day/DayHeader.tsx:39:6"
+>                                   data-lov-name="button"
+>                                   data-component-path="src/components/trip/day/DayHeader.tsx"
+>                                   data-component-line="39"
+>                                   data-component-file="DayHeader.tsx"
+>                                   data-component-name="button"
+>                                   data-component-content="%7B%22className%22%3A%22w-full%20h-full%20cursor-pointer%2..."
+>                                   type="button"
+>                                   onClick={function onClick}
+>                                   className="w-full h-full cursor-pointer select-none relative"
+>                                 >
+                                    <DayImage>
+                                    <div data-lov-id="src/compon..." data-lov-name="div" ...>
+                                      <div data-lov-id="src/compon..." data-lov-name="div" ...>
+>                                       <button
+>                                         data-lov-id="src/components/trip/day/DayHeader.tsx:63:12"
+>                                         data-lov-name="button"
+>                                         data-component-path="src/components/trip/day/DayHeader.tsx"
+>                                         data-component-line="63"
+>                                         data-component-file="DayHeader.tsx"
+>                                         data-component-name="button"
+>                                         data-component-content="%7B%22className%22%3A%22h-8%20w-8%20text-white%20hov..."
+>                                         type="button"
+>                                         onClick={function onClick}
+>                                         className="h-8 w-8 text-white hover:bg-white/20 flex items-center justify-ce..."
+>                                       >
+                                        ...
+                                      ...
+                              ...
+                          ...
+        ...
+
+Error fetching Perplexity API key: 
+FunctionsFetchError {name: "FunctionsFetchError", context: TypeError}
+context: Error
+name: "FunctionsFetchError"
+message: "Failed to send a request to the Edge Function"
+stack: "FunctionsFetchError: Failed to send a request to the Edge Function↵ at https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/@supabase_supabase-js.js?v=aaa7a834:1353:17"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+Failed to fetch
