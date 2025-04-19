@@ -9,19 +9,6 @@ type TravelOption = {
 
 export const sendResearchQuery = async (query: string, tripId: string) => {
   try {
-    // Check if API key exists
-    const { data: apiKeyData, error: apiKeyError } = await supabase
-      .from('user_settings')
-      .select('perplexity_api_key')
-      .single();
-      
-    if (apiKeyError || !apiKeyData?.perplexity_api_key) {
-      return { 
-        answer: "Please add your Perplexity API key in your profile settings to use the research assistant.",
-        suggestions: [] 
-      };
-    }
-    
     // Get trip details to include in the query context
     const { data: tripData } = await supabase
       .from('trips')
@@ -34,12 +21,26 @@ export const sendResearchQuery = async (query: string, tripId: string) => {
       ? `Context: Planning a trip to ${tripData.destination} from ${tripData.start_date} to ${tripData.end_date}.\n\nUser query: ${query}`
       : query;
     
+    // Get API key from Supabase secrets
+    const { data: secretData, error: secretError } = await supabase
+      .functions.invoke('get-perplexity-api-key', {
+        method: 'GET'
+      });
+
+    if (secretError || !secretData?.apiKey) {
+      console.error("Error fetching Perplexity API key:", secretError);
+      return { 
+        answer: "Unable to access the AI service. Please try again later.",
+        suggestions: [] 
+      };
+    }
+    
     // Call the Perplexity API
     const response = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKeyData.perplexity_api_key}`,
+        "Authorization": `Bearer ${secretData.apiKey}`,
       },
       body: JSON.stringify({
         model: "llama-3-sonar-small-32k-0718",
