@@ -86,26 +86,46 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedCurrency 
 
     // Return appropriate dialog components based on expense type
     if (selectedExpense.activity_id && isActivityDialogOpen) {
+      // Create a simplified version of activity editing that doesn't use ActivityDialogs
+      // This avoids the Fragment prop errors
       return (
-        <ActivityDialogs 
-          isEditDialogOpen={true}
-          setIsEditDialogOpen={setIsActivityDialogOpen}
-          tripId={selectedExpense.trip_id}
-          dayId={selectedExpense.date || ""}
-          activityToEdit={{
-            id: selectedExpense.activity_id,
-            day_id: selectedExpense.date || "",
-            trip_id: selectedExpense.trip_id,
-            title: selectedExpense.description,
-            description: "",
-            cost: selectedExpense.cost || 0,
-            currency: selectedExpense.currency || "USD",
-            order_index: 0,
-            created_at: selectedExpense.created_at,
-            is_paid: !!selectedExpense.amount_paid
-          }}
-          onActivityUpdated={() => handleDialogClose()}
-        />
+        <Dialog open={isActivityDialogOpen} onOpenChange={setIsActivityDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Activity</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="title" className="block text-sm font-medium">Title</label>
+                <input 
+                  type="text" 
+                  id="title"
+                  className="w-full p-2 border rounded-md"
+                  defaultValue={selectedExpense.description}
+                  disabled
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="cost" className="block text-sm font-medium">Cost</label>
+                <input 
+                  type="text" 
+                  id="cost"
+                  className="w-full p-2 border rounded-md"
+                  defaultValue={selectedExpense.cost?.toString() || "0"}
+                  disabled
+                />
+              </div>
+              
+              <p className="text-sm text-gray-500 mt-4">
+                To fully edit this activity, please navigate to the day view of this trip.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleDialogClose}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       );
     } else if (selectedExpense.transportation_id && isTransportationDialogOpen) {
       return (
