@@ -138,7 +138,7 @@ export interface ExpenseItem {
   description: string;
   cost: number | null;
   currency: Currency | null;
-  amount_paid: number | null;
+  is_paid: boolean;
   created_at: string;
   date: string | null;
   transportation_id: string | null;
