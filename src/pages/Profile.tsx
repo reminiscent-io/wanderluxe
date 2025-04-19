@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
@@ -10,6 +9,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const ProfileAPISettings = () => {
+  // Placeholder for API settings component.  Functionality needs to be added here.
+  return (
+    <div>
+      <p>API Settings will be implemented here.</p>
+    </div>
+  );
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -143,7 +151,7 @@ const Profile = () => {
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
-              
+
               <Button 
                 onClick={handleSignOut}
                 variant="outline" 
@@ -152,6 +160,9 @@ const Profile = () => {
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
+            </div>
+            <div className="mt-8 pt-8 border-t border-gray-200">
+              <ProfileAPISettings />
             </div>
           </div>
         </div>

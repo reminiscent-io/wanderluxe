@@ -6,6 +6,8 @@ import BookingView from "../BookingView";
 import VisionBoardView from "../vision-board/VisionBoardView";
 import { Calendar, BarChart2, List, Lightbulb } from 'lucide-react';
 import { Trip } from '@/types/trip';
+import ResearchView from "../research/ResearchView"; // Added import for ResearchView
+
 
 interface TripTabsProps {
   tripId: string | undefined;
@@ -45,6 +47,10 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
           <List className="w-5 h-5" />
           Booking
         </TabsTrigger>
+        <TabsTrigger value="research" className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0">
+          <Lightbulb className="w-5 h-5"/>
+          Research
+        </TabsTrigger> {/* Added Research tab */}
       </TabsList>
       </div>
 
@@ -72,6 +78,9 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
 
       <TabsContent value="booking" className="flex-1 overflow-auto">
         <BookingView tripId={tripId} />
+      </TabsContent>
+      <TabsContent value="research" className="flex-1 overflow-auto">
+        <ResearchView /> {/* Added Research tab content */}
       </TabsContent>
     </Tabs>
   );
