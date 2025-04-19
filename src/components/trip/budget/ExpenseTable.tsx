@@ -9,6 +9,7 @@ import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import RestaurantReservationDialog from '@/components/trip/dining/RestaurantReservationDialog';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
+import { DayActivity, Transportation } from '@/types/trip';
 
 interface ExpenseTableProps {
   expenses: ExpenseItem[];
@@ -18,6 +19,10 @@ interface ExpenseTableProps {
 const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedCurrency }) => {
   // Store the expense selected for editing
   const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
+  const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
+  const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
+  const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
+  const [isRestaurantDialogOpen, setIsRestaurantDialogOpen] = useState(false);
 
   // Group expenses by category
   const expensesByCategory = expenses.reduce((acc, expense) => {
@@ -37,94 +42,157 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedCurrency 
   const handleRowClick = (expense: ExpenseItem) => {
     console.log("Row clicked", expense);
     setSelectedExpense(expense);
+    
+    if (expense.activity_id) {
+      setIsActivityDialogOpen(true);
+    } else if (expense.transportation_id) {
+      setIsTransportationDialogOpen(true);
+    } else if (expense.accommodation_id) {
+      setIsAccommodationDialogOpen(true);
+    } else if (
+      expense.category?.toLowerCase() === 'dining' ||
+      expense.category?.toLowerCase() === 'restaurant'
+    ) {
+      setIsRestaurantDialogOpen(true);
+    }
+  };
+  
+  const handleDialogClose = () => {
+    setIsActivityDialogOpen(false);
+    setIsTransportationDialogOpen(false);
+    setIsAccommodationDialogOpen(false);
+    setIsRestaurantDialogOpen(false);
+    setSelectedExpense(null);
   };
 
   // Render the corresponding dialog based on the expense type or category
   const renderDialog = () => {
     if (!selectedExpense) return null;
 
-    if (selectedExpense.activity_id) {
-      // For now, we'll just show a placeholder since ActivityDialogs requires more complex props
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <p>Activity editing is not implemented in this view.</p>
-            <p>Activity ID: {selectedExpense.activity_id}</p>
-            <button 
-              onClick={() => setSelectedExpense(null)} 
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Close
-            </button>
-          </div>
+    // Create a generic dialog for fallback cases
+    const GenericDialog = () => (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="bg-white p-4 rounded shadow-lg">
+          <p>No edit dialog configured for this expense type.</p>
+          <button 
+            onClick={handleDialogClose} 
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Close
+          </button>
         </div>
+      </div>
+    );
+
+    // Return appropriate dialog components based on expense type
+    if (selectedExpense.activity_id && isActivityDialogOpen) {
+      return (
+        <ActivityDialogs 
+          isEditDialogOpen={true}
+          setIsEditDialogOpen={setIsActivityDialogOpen}
+          tripId={selectedExpense.trip_id}
+          dayId={selectedExpense.date || ""}
+          activityToEdit={{
+            id: selectedExpense.activity_id,
+            day_id: selectedExpense.date || "",
+            trip_id: selectedExpense.trip_id,
+            title: selectedExpense.description,
+            description: "",
+            cost: selectedExpense.cost || 0,
+            currency: selectedExpense.currency || "USD",
+            order_index: 0,
+            created_at: selectedExpense.created_at,
+            is_paid: !!selectedExpense.amount_paid
+          }}
+          onActivityUpdated={() => handleDialogClose()}
+        />
       );
-    } else if (selectedExpense.transportation_id) {
-      // For now, we'll just show a placeholder since TransportationDialog requires more complex props
+    } else if (selectedExpense.transportation_id && isTransportationDialogOpen) {
       return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <p>Transportation editing is not implemented in this view.</p>
-            <p>Transportation ID: {selectedExpense.transportation_id}</p>
-            <button 
-              onClick={() => setSelectedExpense(null)} 
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <TransportationDialog
+          tripId={selectedExpense.trip_id}
+          open={isTransportationDialogOpen}
+          onOpenChange={setIsTransportationDialogOpen}
+          initialData={{
+            id: selectedExpense.transportation_id,
+            trip_id: selectedExpense.trip_id,
+            type: "",
+            provider: "",
+            details: selectedExpense.description,
+            confirmation_number: null,
+            start_date: selectedExpense.date || "",
+            start_time: null,
+            end_date: null,
+            end_time: null,
+            departure_location: null,
+            arrival_location: null,
+            cost: selectedExpense.cost,
+            currency: selectedExpense.currency,
+            is_paid: !!selectedExpense.amount_paid,
+            created_at: selectedExpense.created_at
+          }}
+          onSuccess={handleDialogClose}
+        />
       );
-    } else if (selectedExpense.accommodation_id) {
-      // For now, we'll just show a placeholder since AccommodationDialog requires more complex props
+    } else if (selectedExpense.accommodation_id && isAccommodationDialogOpen) {
       return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <p>Accommodation editing is not implemented in this view.</p>
-            <p>Accommodation ID: {selectedExpense.accommodation_id}</p>
-            <button 
-              onClick={() => setSelectedExpense(null)} 
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <AccommodationDialog
+          tripId={selectedExpense.trip_id}
+          open={isAccommodationDialogOpen}
+          onOpenChange={setIsAccommodationDialogOpen}
+          initialData={{
+            stay_id: selectedExpense.accommodation_id,
+            trip_id: selectedExpense.trip_id,
+            title: selectedExpense.description,
+            description: null,
+            image_url: null,
+            hotel: selectedExpense.description,
+            hotel_details: null,
+            hotel_url: null,
+            hotel_checkin_date: selectedExpense.date || "",
+            hotel_checkout_date: selectedExpense.date || "",
+            checkin_time: "14:00:00",
+            checkout_time: "11:00:00",
+            cost: selectedExpense.cost,
+            currency: selectedExpense.currency,
+            expense_type: "accommodation",
+            is_paid: !!selectedExpense.amount_paid,
+            expense_date: selectedExpense.date,
+            hotel_address: null,
+            hotel_phone: null,
+            hotel_place_id: null,
+            hotel_website: null,
+            order_index: 0,
+            created_at: selectedExpense.created_at,
+            final_accommodation_day: null
+          }}
+          onSuccess={handleDialogClose}
+        />
       );
     } else if (
-      selectedExpense.category?.toLowerCase() === 'dining' ||
-      selectedExpense.category?.toLowerCase() === 'restaurant'
+      (selectedExpense.category?.toLowerCase() === 'dining' || 
+       selectedExpense.category?.toLowerCase() === 'restaurant') && 
+      isRestaurantDialogOpen
     ) {
-      // For now, we'll just show a placeholder since RestaurantReservationDialog requires more complex props
       return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <p>Restaurant reservation editing is not implemented in this view.</p>
-            <p>Category: {selectedExpense.category}</p>
-            <button 
-              onClick={() => setSelectedExpense(null)} 
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <RestaurantReservationDialog
+          isOpen={isRestaurantDialogOpen}
+          onOpenChange={setIsRestaurantDialogOpen}
+          onSubmit={() => handleDialogClose()}
+          isSubmitting={false}
+          editingReservation={{
+            restaurant_name: selectedExpense.description,
+            cost: selectedExpense.cost,
+            currency: selectedExpense.currency,
+            is_paid: !!selectedExpense.amount_paid,
+            reservation_time: selectedExpense.date ? `${selectedExpense.date}T19:00:00` : null
+          }}
+          title="Edit Restaurant Reservation"
+          tripId={selectedExpense.trip_id}
+        />
       );
     } else {
-      // Fallback: If no dialog matches, show a simple modal for debugging.
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <p>No edit dialog configured for this expense type.</p>
-            <button 
-              onClick={() => setSelectedExpense(null)} 
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      );
+      return <GenericDialog />;
     }
   };
 
