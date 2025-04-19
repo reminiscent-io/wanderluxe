@@ -1,0 +1,115 @@
+import React, { useState } from "react";
+import { createClient } from "@supabase/supabase-js"; // or import your preconfigured client
+import axios from "axios";
+import { toast } from "sonner";
+
+// For Supabase (ensure you set up your environment variables for URL & KEY)
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+
+type Message = {
+  id: string;
+  type: "user" | "bot";
+  content: string;
+  suggestions?: TravelOption[]; // Optionally, suggestions to add to itinerary
+};
+
+type TravelOption = {
+  title: string;
+  description?: string;
+  cost?: number;
+  // Other fields as needed
+};
+
+const ChatBotPage: React.FC = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const sendQuery = async () => {
+    if (!query.trim()) return;
+    // Add user message to conversation.
+    const userMessage: Message = { id: Date.now().toString(), type: "user", content: query };
+    setMessages((prev) => [...prev, userMessage]);
+    setQuery("");
+    setLoading(true);
+    try {
+      // Call your API route to query Perplexity.
+      const { data } = await axios.post("/api/chat", { query });
+      // Assume your API returns an object with { answer: string, suggestions: TravelOption[] }
+      const botMessage: Message = {
+        id: Date.now().toString(),
+        type: "bot",
+        content: data.answer,
+        suggestions: data.suggestions,
+      };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      toast.error("Failed to retrieve answer. Please try again.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add a travel option to itinerary
+  const handleAddToItinerary = async (option: TravelOption) => {
+    try {
+      // Insert the selected option into the "itinerary" table.
+      const { error } = await supabase.from("itinerary").insert([
+        {
+          // Adjust the field names to match your table.
+          trip_id: "your-trip-id", // Replace with current trip id in context
+          title: option.title,
+          description: option.description,
+          cost: option.cost,
+        },
+      ]);
+      if (error) throw error;
+      toast.success("Added to itinerary!");
+    } catch (error) {
+      console.error("Error adding to itinerary", error);
+      toast.error("Failed to add to itinerary");
+    }
+  };
+
+  return (
+    <div className="p-4 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Travel ChatBot</h1>
+      <div className="space-y-4">
+        {messages.map((msg) => (
+          <div key={msg.id} className={`p-2 rounded ${msg.type === "user" ? "bg-blue-100" : "bg-gray-200"}`}>
+            <p>{msg.content}</p>
+            {msg.type === "bot" && msg.suggestions && msg.suggestions.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {msg.suggestions.map((option, idx) => (
+                  <button
+                    key={idx}
+                    className="px-3 py-1 bg-green-500 text-white rounded"
+                    onClick={() => handleAddToItinerary(option)}
+                  >
+                    Add "{option.title}"
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {loading && <p>Loading...</p>}
+      </div>
+      <div className="mt-4 flex gap-2">
+        <input
+          type="text"
+          className="flex-1 border border-gray-300 rounded p-2"
+          placeholder="Ask for travel advice..."
+          value={query || ""}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <button onClick={sendQuery} className="px-4 py-2 bg-blue-600 text-white rounded">
+          Send
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ChatBotPage;
