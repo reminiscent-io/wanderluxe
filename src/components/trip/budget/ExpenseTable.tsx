@@ -6,9 +6,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 // Import the edit dialogs
 import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
-import TransportationDialog from 'src/components/trip/transportation/TransportationDialog';
-import RestaurantReservationDialog from 'src/components/trip/dining/RestaurantReservationDialog';
-import AccommodationDialog from 'src/components/trip/accommodation/AccommodationDialog';
+import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
+import RestaurantReservationDialog from '@/components/trip/dining/RestaurantReservationDialog';
+import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 
 interface ExpenseTableProps {
   expenses: ExpenseItem[];
