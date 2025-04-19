@@ -16,6 +16,9 @@ Deno.serve(async (req) => {
     // Return the API key from environment variables
     const apiKey = Deno.env.get('PERPLEXITY_API_KEY');
     
+    console.log('Environment variables available:', Object.keys(Deno.env.toObject()));
+    console.log('PERPLEXITY_API_KEY exists:', !!apiKey);
+    
     if (!apiKey) {
       throw new Error('PERPLEXITY_API_KEY environment variable is not set');
     }
