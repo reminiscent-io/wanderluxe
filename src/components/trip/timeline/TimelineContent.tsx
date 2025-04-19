@@ -52,7 +52,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               const checkinDate = new Date(stay.hotel_checkin_date.split('T')[0]);
               const checkoutDate = new Date(stay.hotel_checkout_date.split('T')[0]);
               
-              return dayDate >= checkinDate && dayDate < checkoutDate;
+              return dayDate >= checkinDate && dayDate <= checkoutDate;
             })}
           />
         );
