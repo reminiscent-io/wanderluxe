@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Import the edit dialogs
-import ActivityDialogs from 'src/components/trip/day/activities/ActivityDialogs';
+import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
 import TransportationDialog from 'src/components/trip/transportation/TransportationDialog';
 import RestaurantReservationDialog from 'src/components/trip/dining/RestaurantReservationDialog';
 import AccommodationDialog from 'src/components/trip/accommodation/AccommodationDialog';
@@ -44,12 +44,20 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedCurrency 
     if (!selectedExpense) return null;
 
     if (selectedExpense.activity_id) {
+      // For now, we'll just show a placeholder since ActivityDialogs requires more complex props
       return (
-        <ActivityDialogs 
-          open={true}
-          onClose={() => setSelectedExpense(null)}
-          expense={selectedExpense}
-        />
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-4 rounded shadow-lg">
+            <p>Activity editing is not implemented in this view.</p>
+            <p>Activity ID: {selectedExpense.activity_id}</p>
+            <button 
+              onClick={() => setSelectedExpense(null)} 
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       );
     } else if (selectedExpense.transportation_id) {
       return (
