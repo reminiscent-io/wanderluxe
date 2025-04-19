@@ -23,7 +23,7 @@ export interface DayActivity {
   currency: Currency | null;
   order_index: number;
   created_at: string;
-  is_paid: boolean;
+  amount_paid: number | null; // updated: replaced is_paid with amount_paid
 }
 
 export interface TripDay {
@@ -62,7 +62,7 @@ export interface Accommodation {
   cost: number | null;
   currency: Currency | null;
   expense_type: string | null;
-  is_paid: boolean;
+  amount_paid: number | null; // updated: replaced is_paid with amount_paid
   expense_date: string | null;
   hotel_address: string | null;
   hotel_phone: string | null;
@@ -108,7 +108,7 @@ export interface Transportation {
   arrival_location: string | null;
   cost: number | null;
   currency: Currency | null;
-  is_paid: boolean;
+  amount_paid: number | null; // updated: replaced is_paid with amount_paid
   created_at: string;
 }
 
@@ -122,7 +122,7 @@ export interface RestaurantReservation {
   confirmation_number: string | null;
   cost: number | null;
   currency: Currency | null;
-  is_paid: boolean;
+  amount_paid: number | null; // updated: replaced is_paid with amount_paid
   address: string | null;
   phone_number: string | null;
   place_id: string | null;
@@ -138,7 +138,7 @@ export interface ExpenseItem {
   description: string;
   cost: number | null;
   currency: Currency | null;
-  is_paid: boolean;
+  amount_paid: number | null; // updated: replaced is_paid with amount_paid
   created_at: string;
   date: string | null;
   transportation_id: string | null;
@@ -159,7 +159,7 @@ export interface AccommodationFormData {
   cost?: string | null;
   currency?: Currency;
   expense_type?: string;
-  is_paid: boolean;
+  amount_paid?: string | null; // updated: replaced is_paid with amount_paid (as a string for form handling)
   expense_date?: string;
   hotel_address?: string;
   hotel_phone?: string;

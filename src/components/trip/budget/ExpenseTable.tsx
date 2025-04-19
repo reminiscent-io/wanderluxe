@@ -2,19 +2,16 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExpenseItem, formatCurrency } from './utils/budgetCalculations';
 import { format } from 'date-fns';
-import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ExpenseTableProps {
   expenses: ExpenseItem[];
   selectedCurrency: string;
-  onUpdatePaidStatus: (id: string, isPaid: boolean, category: string) => void;
 }
 
 const ExpenseTable: React.FC<ExpenseTableProps> = ({
   expenses,
-  selectedCurrency,
-  onUpdatePaidStatus
+  selectedCurrency
 }) => {
   // Group expenses by category
   const expensesByCategory = expenses.reduce((acc, expense) => {
@@ -38,7 +35,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
           <TableHead>Date</TableHead>
           <TableHead>Description</TableHead>
           <TableHead className="text-right">Amount</TableHead>
-          <TableHead className="text-center">Paid</TableHead>
+          <TableHead className="text-center">Amount Paid</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -47,7 +44,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
           const sortedItems = items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           return (
             <React.Fragment key={category}>
-              {sortedItems.map((expense) => (
+              {sortedItems.map(expense => (
                 <TableRow key={expense.id} className="group hover:bg-sand-50">
                   <TableCell>
                     {expense.date ? format(new Date(expense.date), 'MMM d, yyyy') : '-'}
@@ -63,7 +60,9 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Original: {formatCurrency(expense.cost || 0, expense.currency || 'USD')}</p>
+                            <p>
+                              Original: {formatCurrency(expense.cost || 0, expense.currency || 'USD')}
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -72,11 +71,10 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({
                     )}
                   </TableCell>
                   <TableCell className="text-center">
-                    <Switch
-                      checked={expense.is_paid}
-                      //onCheckedChange={(checked) => onUpdatePaidStatus(expense.id, checked, category)}
-                      className="data-[state=checked]:bg-green-500"
-                    />
+                    {expense.amount_paid !== null && expense.amount_paid !== undefined
+                      ? formatCurrency(expense.amount_paid, expense.currency || selectedCurrency)
+                      : '-'
+                    }
                   </TableCell>
                 </TableRow>
               ))}
