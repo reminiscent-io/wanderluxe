@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
@@ -29,49 +28,39 @@ const ResearchView: React.FC = () => {
 
   const sendQuery = async () => {
     if (!query.trim()) return;
-    
-    // Add user message to conversation
-    const userMessage: Message = { id: Date.now().toString(), type: "user", content: query };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now().toString(), type: "user", content: query },
+    ]);
     setQuery("");
     setLoading(true);
-    
+
     try {
-      // Call your backend API to query Perplexity
-      const response = await fetch('/api/research-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          query,
-          tripId
-        }),
+      // INVOKE the Edge Function
+      const { data, error } = await supabase.functions.invoke("research-chat", {
+        body: JSON.stringify({ query, tripId }),
       });
-      
-      const data = await response.json();
-      
-      // Add bot response to messages
-      const botMessage: Message = {
-        id: Date.now().toString(),
-        type: "bot",
-        content: data.answer,
-        suggestions: data.suggestions,
-      };
-      
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Error calling research API:", error);
+      if (error) throw error;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "bot",
+          content: data.answer,
+          suggestions: data.suggestions,
+        },
+      ]);
+    } catch (err: any) {
+      console.error("Error calling research API:", err);
       toast.error("Failed to get a response. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Function to add a suggestion to the trip
   const handleAddToItinerary = async (option: TravelOption) => {
     try {
-      // Insert the activity into the activities table
       const { error } = await supabase.from("day_activities").insert([
         {
           trip_id: tripId,
@@ -79,10 +68,9 @@ const ResearchView: React.FC = () => {
           description: option.description || "",
           cost: option.cost || null,
           currency: "USD",
-          is_paid: false
+          is_paid: false,
         },
       ]);
-      
       if (error) throw error;
       toast.success(`Added "${option.title}" to your trip!`);
     } catch (error) {
@@ -92,7 +80,7 @@ const ResearchView: React.FC = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendQuery();
     }
@@ -111,27 +99,36 @@ const ResearchView: React.FC = () => {
         {messages.length === 0 ? (
           <div className="text-center py-12 border border-dashed rounded-lg">
             <p className="text-gray-500">
-              Try asking questions like "What are the best restaurants in Paris?" or "What activities should I do in Rome?"
+              Try asking questions like “What are the best restaurants in Paris?”
             </p>
           </div>
         ) : (
           messages.map((msg) => (
-            <Card key={msg.id} className={`${msg.type === "user" ? "bg-secondary/40 ml-10" : "mr-10"}`}>
+            <Card
+              key={msg.id}
+              className={
+                msg.type === "user" ? "bg-secondary/40 ml-10" : "mr-10"
+              }
+            >
               <CardContent className="pt-4">
-                <div className="font-medium mb-1">{msg.type === "user" ? "You" : "Research Assistant"}</div>
+                <div className="font-medium mb-1">
+                  {msg.type === "user" ? "You" : "Research Assistant"}
+                </div>
                 <div className="whitespace-pre-wrap">{msg.content}</div>
-                
-                {msg.type === "bot" && msg.suggestions && msg.suggestions.length > 0 && (
+
+                {msg.type === "bot" && msg.suggestions?.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <div className="w-full text-sm font-medium mb-1">Suggested activities:</div>
-                    {msg.suggestions.map((option, idx) => (
+                    <div className="w-full text-sm font-medium mb-1">
+                      Suggested activities:
+                    </div>
+                    {msg.suggestions.map((opt, i) => (
                       <Button
-                        key={idx}
+                        key={i}
                         size="sm"
                         variant="outline"
-                        onClick={() => handleAddToItinerary(option)}
+                        onClick={() => handleAddToItinerary(opt)}
                       >
-                        Add "{option.title}"
+                        Add “{opt.title}”
                       </Button>
                     ))}
                   </div>
@@ -140,7 +137,7 @@ const ResearchView: React.FC = () => {
             </Card>
           ))
         )}
-        
+
         {loading && (
           <div className="flex justify-center items-center py-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -157,15 +154,11 @@ const ResearchView: React.FC = () => {
           disabled={loading}
           className="flex-1"
         />
-        <Button 
-          onClick={sendQuery} 
-          disabled={loading || !query.trim()}
-        >
+        <Button onClick={sendQuery} disabled={loading || !query.trim()}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
     </div>
-  );
-};
+);
 
 export default ResearchView;
