@@ -1,3 +1,6 @@
 project_id = "arnengxblsfnezrqcsxw"
 [functions.generate-trip-content]
 verify_jwt = true
+
+[functions."research-chat"]
+  runtime = "edge"
