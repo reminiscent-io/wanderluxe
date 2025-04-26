@@ -1,5 +1,5 @@
 // 1) Import the Deno edge-server helper
-import { serve } from "https://deno.land/std@0.201.0/server/mod.ts";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 serve(async (req) => {
   // 2) CORS preflight
