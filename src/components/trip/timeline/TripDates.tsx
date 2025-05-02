@@ -289,19 +289,47 @@ const TripDates: React.FC<TripDatesProps> = ({
     }
   };
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
-    <div className="mb-8 flex items-center justify-between bg-white/80 backdrop-blur-sm p-5 rounded-lg shadow-sm text-base sm:text-lg max-w-5xl mx-auto">
-      <div className="flex items-center gap-6">
-        <CalendarDays className="h-6 w-6 text-earth-600 flex-shrink-0" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-12">
-          <TripDateDisplay label="Arrival" date={arrivalDate} />
-          <TripDateDisplay label="Departure" date={departureDate} />
+    <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm text-base sm:text-lg max-w-5xl mx-auto overflow-hidden">
+      <div 
+        className="p-5 flex items-center justify-between cursor-pointer" 
+        onClick={toggleCollapse}
+      >
+        <div className="flex items-center gap-4">
+          <CalendarDays className="h-6 w-6 text-earth-600 flex-shrink-0" />
+          <h3 className="font-medium">Trip Dates</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          {!isCollapsed && (
+            <Button variant="ghost" size="sm" onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(true);
+            }}>
+              Edit Dates
+            </Button>
+          )}
+          <div className="transition-transform duration-200" style={{ transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
       </div>
-
-      <Button variant="ghost" size="sm" className="ml-4" onClick={() => setIsOpen(true)}>
-        Edit Dates
-      </Button>
+      
+      {!isCollapsed && (
+        <div className="px-5 pb-5 pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-12 pt-2 border-t border-gray-100">
+            <TripDateDisplay label="Arrival" date={arrivalDate} />
+            <TripDateDisplay label="Departure" date={departureDate} />
+          </div>
+        </div>
+      )}
 
       <TripDateEditDialog
         isOpen={isOpen}
