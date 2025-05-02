@@ -247,7 +247,7 @@ const DayCard: React.FC<DayCardProps> = ({
   };
 
   return (
-    <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6 bg-sand-300">
+    <div className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-lg mb-6 bg-sand-300">
       <DayEditDialog
         open={isEditing}
         onOpenChange={setIsEditing}
