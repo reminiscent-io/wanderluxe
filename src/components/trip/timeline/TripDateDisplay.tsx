@@ -40,9 +40,9 @@ const TripDateDisplay: React.FC<TripDateDisplayProps> = ({ label, date }) => {
   };
 
   return (
-    <div>
-      <p className="text-sm text-gray-500 italic mb-1">{label}</p>
-      <p className="font-medium">
+    <div className="min-w-24">
+      <p className="text-sm text-gray-500 mb-1">{label}</p>
+      <p className="font-medium text-base sm:text-lg">
         {formatDate(date)}
       </p>
     </div>

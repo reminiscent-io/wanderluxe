@@ -290,16 +290,16 @@ const TripDates: React.FC<TripDatesProps> = ({
   };
 
   return (
-    <div className="mb-8 flex items-center justify-between bg-white/80 backdrop-blur-sm p-4 rounded-lg shadow-sm text-base sm:text-lg max-w-5xl mx-auto">
-      <div className="flex items-center gap-4">
-        <CalendarDays className="h-5 w-5 text-earth-600" />
-        <div className="grid grid-cols-2 gap-8">
+    <div className="mb-8 flex items-center justify-between bg-white/80 backdrop-blur-sm p-5 rounded-lg shadow-sm text-base sm:text-lg max-w-5xl mx-auto">
+      <div className="flex items-center gap-6">
+        <CalendarDays className="h-6 w-6 text-earth-600 flex-shrink-0" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-12">
           <TripDateDisplay label="Arrival" date={arrivalDate} />
           <TripDateDisplay label="Departure" date={departureDate} />
         </div>
       </div>
 
-      <Button variant="ghost" size="sm" onClick={() => setIsOpen(true)}>
+      <Button variant="ghost" size="sm" className="ml-4" onClick={() => setIsOpen(true)}>
         Edit Dates
       </Button>
 
