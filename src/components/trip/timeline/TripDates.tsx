@@ -298,24 +298,19 @@ const TripDates: React.FC<TripDatesProps> = ({
   return (
     <div className="h-full bg-white/0 rounded-lg shadow-sm text-sm sm:text-base overflow-hidden">
       <div 
+        className="p-4 flex items-center justify-between cursor-pointer" 
         onClick={toggleCollapse}
-        className="p-6 flex items-center justify-between cursor-pointer hover:bg-sand-100 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-5 w-5" />
-          <span className="text-lg font-medium">Trip Dates</span>
+        <div className="flex items-center gap-3">
+          <CalendarDays className="h-5 w-5 text-earth-600 flex-shrink-0" />
+          <h3 className="font-medium text-sm">Trip Dates</h3>
         </div>
         <div className="flex items-center gap-2">
           {!isCollapsed && (
-            <Button 
-              variant="outline" 
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(true);
-              }}
-              className="bg-earth-500 hover:bg-earth-600 text-sand-50 text-sm"
-              size="sm"
-            >
+            <Button variant="ghost" size="sm" onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(true);
+            }}>
               Edit Dates
             </Button>
           )}
