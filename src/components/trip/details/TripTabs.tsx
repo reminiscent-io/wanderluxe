@@ -15,7 +15,7 @@ interface TripTabsProps {
 const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
     <Tabs defaultValue="timeline" className="w-full flex flex-col mt-0">
-      <div className="w-full overflow-x-auto no-scrollbar">
+      <div className="w-full overflow-x-auto no-scrollbar flex justify-center">
         <TabsList className="flex w-fit mb-8 rounded-xl p-1 bg-transparent gap-2 px-4">
         <TabsTrigger 
           value="timeline"
