@@ -16,33 +16,33 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
   return (
     <Tabs defaultValue="timeline" className="w-full flex flex-col mt-0">
       <div className="w-full overflow-x-auto no-scrollbar flex justify-center">
-        <TabsList className="flex w-fit mb-8 rounded-xl p-1 bg-transparent gap-2 px-4">
+        <TabsList className="flex w-fit mb-8 rounded-xl p-1 bg-transparent gap-1 md:gap-2 px-2 md:px-4">
         <TabsTrigger 
           value="timeline"
-          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0"
+          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-3 md:px-8 py-3 md:py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-1 md:gap-2 flex-shrink-0 text-sm md:text-base"
         >
-          <Calendar className="w-5 h-5" />
+          <Calendar className="w-4 h-4 md:w-5 md:h-5" />
           Timeline
         </TabsTrigger>
         <TabsTrigger 
           value="vision-board"
-          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-2xl transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0"
+          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-3 md:px-8 py-3 md:py-4 rounded-lg md:rounded-2xl transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-1 md:gap-2 flex-shrink-0 text-sm md:text-base"
         >
-          <Lightbulb className="w-5 h-5" />
-          Vision Board
+          <Lightbulb className="w-4 h-4 md:w-5 md:h-5" />
+          Vision
         </TabsTrigger>
         <TabsTrigger 
           value="budget"
-          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0"
+          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-3 md:px-8 py-3 md:py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-1 md:gap-2 flex-shrink-0 text-sm md:text-base"
         >
-          <BarChart2 className="w-5 h-5" />
+          <BarChart2 className="w-4 h-4 md:w-5 md:h-5" />
           Budget
         </TabsTrigger>
         <TabsTrigger 
           value="booking"
-          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-8 py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-2 flex-shrink-0"
+          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-3 md:px-8 py-3 md:py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-1 md:gap-2 flex-shrink-0 text-sm md:text-base"
         >
-          <List className="w-5 h-5" />
+          <List className="w-4 h-4 md:w-5 md:h-5" />
           Booking
         </TabsTrigger>
       </TabsList>
