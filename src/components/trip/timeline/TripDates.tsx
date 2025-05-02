@@ -296,7 +296,7 @@ const TripDates: React.FC<TripDatesProps> = ({
   };
 
   return (
-    <div className="mb-8 bg-white/0 rounded-lg shadow-sm text-sm sm:text-base max-w-5xl mx-auto overflow-hidden">
+    <div className="h-full bg-white/0 rounded-lg shadow-sm text-sm sm:text-base overflow-hidden">
       <div 
         className="p-4 flex items-center justify-between cursor-pointer" 
         onClick={toggleCollapse}
