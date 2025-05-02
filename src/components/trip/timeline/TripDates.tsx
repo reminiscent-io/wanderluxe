@@ -289,7 +289,7 @@ const TripDates: React.FC<TripDatesProps> = ({
     }
   };
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
