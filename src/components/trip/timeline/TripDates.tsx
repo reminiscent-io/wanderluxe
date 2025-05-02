@@ -310,7 +310,7 @@ const TripDates: React.FC<TripDatesProps> = ({
             <Button variant="ghost" size="sm" onClick={(e) => {
               e.stopPropagation();
               setIsOpen(true);
-            }}>
+            }} className="shadow-sm">
               Edit Dates
             </Button>
           )}
