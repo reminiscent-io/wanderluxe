@@ -43,7 +43,7 @@ const AccommodationsSection: React.FC<AccommodationsSectionProps> = ({
   );
 
   return (
-    <Card className="bg-sand-50 shadow-md">
+    <Card className="bg-sand-50 shadow-md max-w-5xl mx-auto">
       <AccommodationHeader 
         isExpanded={isExpanded}
         onToggle={() => setIsExpanded(!isExpanded)}

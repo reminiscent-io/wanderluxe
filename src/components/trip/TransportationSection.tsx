@@ -48,7 +48,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
   };
 
   return (
-    <Card className="bg-sand-50 shadow-md">
+    <Card className="bg-sand-50 shadow-md max-w-5xl mx-auto">
       <TransportationHeader
         isExpanded={isExpanded}
         onToggle={() => setIsExpanded(!isExpanded)}
