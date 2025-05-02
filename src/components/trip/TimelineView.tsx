@@ -9,6 +9,7 @@ import TripDates from './timeline/TripDates';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
+import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 
 interface TimelineViewProps {
   tripId: string;
@@ -19,6 +20,9 @@ interface TimelineViewProps {
 }
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
+  // Keep the session alive while working on the timeline
+  useSessionKeepAlive(2 * 60 * 1000); // 2 minutes
+  
   useEffect(() => {
     // Track timeline view
     window.gtag('event', 'view_timeline', {

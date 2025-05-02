@@ -66,22 +66,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Set up a periodic session refresh to keep the token valid
-    // This will run every 5 minutes to refresh the session
+    // This will run every 10 minutes to refresh the session but without causing full page reloads
     const refreshInterval = setInterval(async () => {
-      const { data } = await supabase.auth.refreshSession();
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.session.user ?? null);
-      }
-    }, 5 * 60 * 1000); // 5 minutes
-
-    // Handle visibility change to refresh immediately when tab becomes visible again
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        const { data } = await supabase.auth.refreshSession();
+      try {
+        console.log("Refreshing session silently...");
+        const { data, error } = await supabase.auth.refreshSession();
         if (data.session) {
           setSession(data.session);
           setUser(data.session.user ?? null);
+          console.log("Session refreshed successfully");
+        } else if (error) {
+          console.warn("Session refresh error:", error);
+        }
+      } catch (err) {
+        console.error("Session refresh failed:", err);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+    
+    // Handle visibility change to refresh silently when tab becomes visible again
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          console.log("Tab visible - refreshing session silently");
+          const { data, error } = await supabase.auth.refreshSession();
+          if (data.session) {
+            setSession(data.session);
+            setUser(data.session.user ?? null);
+          } else if (error) {
+            console.warn("Session refresh error on visibility change:", error);
+          }
+        } catch (err) {
+          console.error("Session refresh failed on visibility change:", err);
         }
       }
     };
