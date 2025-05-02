@@ -296,14 +296,14 @@ const TripDates: React.FC<TripDatesProps> = ({
   };
 
   return (
-    <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm text-base sm:text-lg max-w-5xl mx-auto overflow-hidden">
+    <div className="mb-8 bg-white/0 rounded-lg shadow-sm text-sm sm:text-base max-w-5xl mx-auto overflow-hidden">
       <div 
-        className="p-5 flex items-center justify-between cursor-pointer" 
+        className="p-4 flex items-center justify-between cursor-pointer" 
         onClick={toggleCollapse}
       >
-        <div className="flex items-center gap-4">
-          <CalendarDays className="h-6 w-6 text-earth-600 flex-shrink-0" />
-          <h3 className="font-medium">Trip Dates</h3>
+        <div className="flex items-center gap-3">
+          <CalendarDays className="h-5 w-5 text-earth-600 flex-shrink-0" />
+          <h3 className="font-medium text-sm">Trip Dates</h3>
         </div>
         <div className="flex items-center gap-2">
           {!isCollapsed && (
@@ -323,8 +323,8 @@ const TripDates: React.FC<TripDatesProps> = ({
       </div>
       
       {!isCollapsed && (
-        <div className="px-5 pb-5 pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-12 pt-2 border-t border-gray-100">
+        <div className="px-4 pb-4 pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-8 pt-2 border-t border-gray-100/50">
             <TripDateDisplay label="Arrival" date={arrivalDate} />
             <TripDateDisplay label="Departure" date={departureDate} />
           </div>
