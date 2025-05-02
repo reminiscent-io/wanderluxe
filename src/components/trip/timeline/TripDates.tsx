@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Plus } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TripDateDisplay from './TripDateDisplay';
@@ -296,7 +296,7 @@ const TripDates: React.FC<TripDatesProps> = ({
   };
 
   return (
-    <div className="h-full bg-white/0 rounded-lg shadow-sm text-sm sm:text-base overflow-hidden">
+    <div className="bg-sand-50 rounded-lg shadow-md hover:bg-sand-100 text-lg font-medium sm:text-base overflow-hidden">
       <div 
         className="p-4 flex items-center justify-between cursor-pointer" 
         onClick={toggleCollapse}

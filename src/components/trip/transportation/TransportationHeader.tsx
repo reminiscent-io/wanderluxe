@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Car } from 'lucide-react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Car, Plus } from 'lucide-react';
 
 interface TransportationHeaderProps {
   isExpanded: boolean;
@@ -21,13 +20,10 @@ export const TransportationHeader: React.FC<TransportationHeaderProps> = ({
       >
         <div className="flex items-center gap-2">
           <Car className="h-5 w-5 text-earth-600" />
-          <span className="text-lg font-semibold">Transportation</span>
+          <span className="text-lg font-medium">Transportation</span>
         </div>
-        {isExpanded ? (
-          <ChevronUp className="h-5 w-5" />
-        ) : (
-          <ChevronDown className="h-5 w-5" />
-        )}
+        {/* plain Plus icon, same in both states */}
+        <Plus className="h-5 w-5" />
       </Button>
     </div>
   );
