@@ -14,10 +14,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader, Plus, Trash2, Share2 } from "lucide-react";
-import { Tables } from '@/integrations/supabase/types';
+import { TripShare } from '@/integrations/supabase/trip_shares_types';
 import { shareTrip } from '@/services/tripSharingService';
-
-type TripShare = Tables<'trip_shares'>;
 
 interface ShareTripDialogProps {
   tripId: string;
