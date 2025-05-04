@@ -21,7 +21,7 @@ interface TimelineViewProps {
 
 const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
   // Keep the session alive while working on the timeline
-  useSessionKeepAlive(2 * 60 * 1000); // 2 minutes
+  useSessionKeepAlive(10 * 60 * 1000); // 10 minutes - increased to prevent frequent refreshes
   
   useEffect(() => {
     // Track timeline view
