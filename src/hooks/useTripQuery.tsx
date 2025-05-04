@@ -85,12 +85,12 @@ export const useTripQuery = (tripId: string | undefined) => {
       console.log('Trip data fetched successfully:', data);
       return data as Trip;
     },
-    staleTime: 1000 * 30,
-    gcTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes - increased from 30 seconds
+    gcTime: 1000 * 60 * 10, // 10 minutes - increased from 5 minutes
     retry: 2,
     enabled: !!tripId,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Disabled refetch on window focus to prevent data loss
     placeholderData: previousTrip,
   });
 
