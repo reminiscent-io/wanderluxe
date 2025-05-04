@@ -1,51 +1,34 @@
 
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
-import dns from "node:dns";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+import { componentTagger } from "lovable-tagger";
 
-// Fix DNS resolution order for Node.js v17+
-dns.setDefaultResultOrder("verbatim");
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-export default defineConfig({
-  plugins: [react(), runtimeErrorOverlay(), themePlugin()],
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "0.0.0.0",
+    port: 8080,
+    strictPort: true,
+    hmr: {
+      clientPort: 443
+    },
+    allowedHosts: [
+      '341343a7-80c4-4c6c-ba73-a83ca3e59dbd.lovableproject.com',
+      '38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev',
+      'wanderluxe.io',
+      'www.wanderluxe.io',
+      'wanderluxe.replit.app'
+    ]
+  },
+  plugins: [
+    react(),
+    mode === 'development' &&
+    componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
-      "@db": path.resolve(__dirname, "db"),
-      "@": path.resolve(__dirname, "client", "src"),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
-  root: path.resolve(__dirname, "client"),
-  build: {
-    outDir: path.resolve(__dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    host: true,
-    strictPort: true,
-    port: 5173,
-    allowedHosts: true,
-    hmr: {
-      protocol: "wss",
-      clientPort: 443,
-    },
-    proxy: {
-      "/api": {
-        target: "http://0.0.0.0:8080",
-        changeOrigin: true,
-        secure: false,
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Origin', 'http://0.0.0.0:5173');
-          });
-        }
-      }
-    },
-  },
-});
+}));

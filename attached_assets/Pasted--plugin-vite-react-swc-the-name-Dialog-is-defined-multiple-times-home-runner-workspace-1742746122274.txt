@@ -1,0 +1,767 @@
+[plugin:vite:react-swc] × the name `Dialog` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:4:1]
+  1 │ 
+  2 │ import React from 'react';
+  3 │ import {
+  4 │   Dialog,
+    ·   ───┬──
+    ·      ╰── previous definition of `Dialog` here
+  5 │   DialogContent,
+  6 │   DialogHeader,
+  7 │   DialogTitle,
+  8 │   DialogDescription
+  9 │ } from "@/components/ui/dialog";
+ 10 │ import ActivityForm from '../ActivityForm';
+ 11 │ import { ActivityFormData } from '@/types/trip';
+ 12 │ 
+ 13 │ interface ActivityDialogsProps {
+ 14 │   isAddingActivity: boolean;
+ 15 │   setIsAddingActivity: (value: boolean) => void;
+ 16 │   editingActivity: string | null;
+ 17 │   setEditingActivity: (value: string | null) => void;
+ 18 │   newActivity: ActivityFormData;
+ 19 │   setNewActivity: (activity: ActivityFormData) => void;
+ 20 │   activityEdit: ActivityFormData;
+ 21 │   setActivityEdit: (activity: ActivityFormData) => void;
+ 22 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+ 23 │   onEditActivity: (id: string) => void;
+ 24 │   eventId: string;
+ 25 │ }
+ 26 │ 
+ 27 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+ 28 │   isAddingActivity,
+ 29 │   setIsAddingActivity,
+ 30 │   editingActivity,
+ 31 │   setEditingActivity,
+ 32 │   newActivity,
+ 33 │   setNewActivity,
+ 34 │   activityEdit,
+ 35 │   setActivityEdit,
+ 36 │   onAddActivity,
+ 37 │   onEditActivity,
+ 38 │   eventId,
+ 39 │ }) => {
+ 40 │   return (
+ 41 │     <>
+ 42 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+ 43 │         <DialogContent>
+ 44 │           <DialogHeader>
+ 45 │             <DialogTitle>Add New Activity</DialogTitle>
+ 46 │           </DialogHeader>
+ 47 │           <ActivityForm
+ 48 │             activity={newActivity}
+ 49 │             onActivityChange={setNewActivity}
+ 50 │             onSubmit={onAddActivity}
+ 51 │             onCancel={() => setIsAddingActivity(false)}
+ 52 │             submitLabel="Add Activity"
+ 53 │             eventId={eventId}
+ 54 │           />
+ 55 │         </DialogContent>
+ 56 │       </Dialog>
+ 57 │ 
+ 58 │       <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
+ 59 │         <DialogContent>
+ 60 │           <DialogHeader>
+ 61 │             <DialogTitle>Edit Activity</DialogTitle>
+ 62 │           </DialogHeader>
+ 63 │           <ActivityForm
+ 64 │             activity={activityEdit}
+ 65 │             onActivityChange={setActivityEdit}
+ 66 │             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+ 67 │             onCancel={() => setEditingActivity(null)}
+ 68 │             submitLabel="Save Changes"
+ 69 │             eventId={eventId}
+ 70 │           />
+ 71 │         </DialogContent>
+ 72 │       </Dialog>
+ 73 │     </>
+ 74 │   );
+ 75 │ };
+ 76 │ 
+ 77 │ export default ActivityDialogs;
+ 78 │ import React from 'react';
+ 79 │ import {
+ 80 │   Dialog,
+    ·   ───┬──
+    ·      ╰── `Dialog` redefined here
+ 81 │   DialogContent,
+ 82 │   DialogHeader,
+ 83 │   DialogTitle,
+    ╰────
+  × the name `DialogContent` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:5:1]
+  2 │ import React from 'react';
+  3 │ import {
+  4 │   Dialog,
+  5 │   DialogContent,
+    ·   ──────┬──────
+    ·         ╰── previous definition of `DialogContent` here
+  6 │   DialogHeader,
+  7 │   DialogTitle,
+  8 │   DialogDescription
+  9 │ } from "@/components/ui/dialog";
+ 10 │ import ActivityForm from '../ActivityForm';
+ 11 │ import { ActivityFormData } from '@/types/trip';
+ 12 │ 
+ 13 │ interface ActivityDialogsProps {
+ 14 │   isAddingActivity: boolean;
+ 15 │   setIsAddingActivity: (value: boolean) => void;
+ 16 │   editingActivity: string | null;
+ 17 │   setEditingActivity: (value: string | null) => void;
+ 18 │   newActivity: ActivityFormData;
+ 19 │   setNewActivity: (activity: ActivityFormData) => void;
+ 20 │   activityEdit: ActivityFormData;
+ 21 │   setActivityEdit: (activity: ActivityFormData) => void;
+ 22 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+ 23 │   onEditActivity: (id: string) => void;
+ 24 │   eventId: string;
+ 25 │ }
+ 26 │ 
+ 27 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+ 28 │   isAddingActivity,
+ 29 │   setIsAddingActivity,
+ 30 │   editingActivity,
+ 31 │   setEditingActivity,
+ 32 │   newActivity,
+ 33 │   setNewActivity,
+ 34 │   activityEdit,
+ 35 │   setActivityEdit,
+ 36 │   onAddActivity,
+ 37 │   onEditActivity,
+ 38 │   eventId,
+ 39 │ }) => {
+ 40 │   return (
+ 41 │     <>
+ 42 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+ 43 │         <DialogContent>
+ 44 │           <DialogHeader>
+ 45 │             <DialogTitle>Add New Activity</DialogTitle>
+ 46 │           </DialogHeader>
+ 47 │           <ActivityForm
+ 48 │             activity={newActivity}
+ 49 │             onActivityChange={setNewActivity}
+ 50 │             onSubmit={onAddActivity}
+ 51 │             onCancel={() => setIsAddingActivity(false)}
+ 52 │             submitLabel="Add Activity"
+ 53 │             eventId={eventId}
+ 54 │           />
+ 55 │         </DialogContent>
+ 56 │       </Dialog>
+ 57 │ 
+ 58 │       <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
+ 59 │         <DialogContent>
+ 60 │           <DialogHeader>
+ 61 │             <DialogTitle>Edit Activity</DialogTitle>
+ 62 │           </DialogHeader>
+ 63 │           <ActivityForm
+ 64 │             activity={activityEdit}
+ 65 │             onActivityChange={setActivityEdit}
+ 66 │             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+ 67 │             onCancel={() => setEditingActivity(null)}
+ 68 │             submitLabel="Save Changes"
+ 69 │             eventId={eventId}
+ 70 │           />
+ 71 │         </DialogContent>
+ 72 │       </Dialog>
+ 73 │     </>
+ 74 │   );
+ 75 │ };
+ 76 │ 
+ 77 │ export default ActivityDialogs;
+ 78 │ import React from 'react';
+ 79 │ import {
+ 80 │   Dialog,
+ 81 │   DialogContent,
+    ·   ──────┬──────
+    ·         ╰── `DialogContent` redefined here
+ 82 │   DialogHeader,
+ 83 │   DialogTitle,
+ 84 │   DialogDescription
+    ╰────
+  × the name `DialogHeader` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:6:1]
+  3 │ import {
+  4 │   Dialog,
+  5 │   DialogContent,
+  6 │   DialogHeader,
+    ·   ──────┬─────
+    ·         ╰── previous definition of `DialogHeader` here
+  7 │   DialogTitle,
+  8 │   DialogDescription
+  9 │ } from "@/components/ui/dialog";
+ 10 │ import ActivityForm from '../ActivityForm';
+ 11 │ import { ActivityFormData } from '@/types/trip';
+ 12 │ 
+ 13 │ interface ActivityDialogsProps {
+ 14 │   isAddingActivity: boolean;
+ 15 │   setIsAddingActivity: (value: boolean) => void;
+ 16 │   editingActivity: string | null;
+ 17 │   setEditingActivity: (value: string | null) => void;
+ 18 │   newActivity: ActivityFormData;
+ 19 │   setNewActivity: (activity: ActivityFormData) => void;
+ 20 │   activityEdit: ActivityFormData;
+ 21 │   setActivityEdit: (activity: ActivityFormData) => void;
+ 22 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+ 23 │   onEditActivity: (id: string) => void;
+ 24 │   eventId: string;
+ 25 │ }
+ 26 │ 
+ 27 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+ 28 │   isAddingActivity,
+ 29 │   setIsAddingActivity,
+ 30 │   editingActivity,
+ 31 │   setEditingActivity,
+ 32 │   newActivity,
+ 33 │   setNewActivity,
+ 34 │   activityEdit,
+ 35 │   setActivityEdit,
+ 36 │   onAddActivity,
+ 37 │   onEditActivity,
+ 38 │   eventId,
+ 39 │ }) => {
+ 40 │   return (
+ 41 │     <>
+ 42 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+ 43 │         <DialogContent>
+ 44 │           <DialogHeader>
+ 45 │             <DialogTitle>Add New Activity</DialogTitle>
+ 46 │           </DialogHeader>
+ 47 │           <ActivityForm
+ 48 │             activity={newActivity}
+ 49 │             onActivityChange={setNewActivity}
+ 50 │             onSubmit={onAddActivity}
+ 51 │             onCancel={() => setIsAddingActivity(false)}
+ 52 │             submitLabel="Add Activity"
+ 53 │             eventId={eventId}
+ 54 │           />
+ 55 │         </DialogContent>
+ 56 │       </Dialog>
+ 57 │ 
+ 58 │       <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
+ 59 │         <DialogContent>
+ 60 │           <DialogHeader>
+ 61 │             <DialogTitle>Edit Activity</DialogTitle>
+ 62 │           </DialogHeader>
+ 63 │           <ActivityForm
+ 64 │             activity={activityEdit}
+ 65 │             onActivityChange={setActivityEdit}
+ 66 │             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+ 67 │             onCancel={() => setEditingActivity(null)}
+ 68 │             submitLabel="Save Changes"
+ 69 │             eventId={eventId}
+ 70 │           />
+ 71 │         </DialogContent>
+ 72 │       </Dialog>
+ 73 │     </>
+ 74 │   );
+ 75 │ };
+ 76 │ 
+ 77 │ export default ActivityDialogs;
+ 78 │ import React from 'react';
+ 79 │ import {
+ 80 │   Dialog,
+ 81 │   DialogContent,
+ 82 │   DialogHeader,
+    ·   ──────┬─────
+    ·         ╰── `DialogHeader` redefined here
+ 83 │   DialogTitle,
+ 84 │   DialogDescription
+ 85 │ } from "@/components/ui/dialog";
+    ╰────
+  × the name `DialogTitle` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:7:1]
+  4 │   Dialog,
+  5 │   DialogContent,
+  6 │   DialogHeader,
+  7 │   DialogTitle,
+    ·   ─────┬─────
+    ·        ╰── previous definition of `DialogTitle` here
+  8 │   DialogDescription
+  9 │ } from "@/components/ui/dialog";
+ 10 │ import ActivityForm from '../ActivityForm';
+ 11 │ import { ActivityFormData } from '@/types/trip';
+ 12 │ 
+ 13 │ interface ActivityDialogsProps {
+ 14 │   isAddingActivity: boolean;
+ 15 │   setIsAddingActivity: (value: boolean) => void;
+ 16 │   editingActivity: string | null;
+ 17 │   setEditingActivity: (value: string | null) => void;
+ 18 │   newActivity: ActivityFormData;
+ 19 │   setNewActivity: (activity: ActivityFormData) => void;
+ 20 │   activityEdit: ActivityFormData;
+ 21 │   setActivityEdit: (activity: ActivityFormData) => void;
+ 22 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+ 23 │   onEditActivity: (id: string) => void;
+ 24 │   eventId: string;
+ 25 │ }
+ 26 │ 
+ 27 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+ 28 │   isAddingActivity,
+ 29 │   setIsAddingActivity,
+ 30 │   editingActivity,
+ 31 │   setEditingActivity,
+ 32 │   newActivity,
+ 33 │   setNewActivity,
+ 34 │   activityEdit,
+ 35 │   setActivityEdit,
+ 36 │   onAddActivity,
+ 37 │   onEditActivity,
+ 38 │   eventId,
+ 39 │ }) => {
+ 40 │   return (
+ 41 │     <>
+ 42 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+ 43 │         <DialogContent>
+ 44 │           <DialogHeader>
+ 45 │             <DialogTitle>Add New Activity</DialogTitle>
+ 46 │           </DialogHeader>
+ 47 │           <ActivityForm
+ 48 │             activity={newActivity}
+ 49 │             onActivityChange={setNewActivity}
+ 50 │             onSubmit={onAddActivity}
+ 51 │             onCancel={() => setIsAddingActivity(false)}
+ 52 │             submitLabel="Add Activity"
+ 53 │             eventId={eventId}
+ 54 │           />
+ 55 │         </DialogContent>
+ 56 │       </Dialog>
+ 57 │ 
+ 58 │       <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
+ 59 │         <DialogContent>
+ 60 │           <DialogHeader>
+ 61 │             <DialogTitle>Edit Activity</DialogTitle>
+ 62 │           </DialogHeader>
+ 63 │           <ActivityForm
+ 64 │             activity={activityEdit}
+ 65 │             onActivityChange={setActivityEdit}
+ 66 │             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+ 67 │             onCancel={() => setEditingActivity(null)}
+ 68 │             submitLabel="Save Changes"
+ 69 │             eventId={eventId}
+ 70 │           />
+ 71 │         </DialogContent>
+ 72 │       </Dialog>
+ 73 │     </>
+ 74 │   );
+ 75 │ };
+ 76 │ 
+ 77 │ export default ActivityDialogs;
+ 78 │ import React from 'react';
+ 79 │ import {
+ 80 │   Dialog,
+ 81 │   DialogContent,
+ 82 │   DialogHeader,
+ 83 │   DialogTitle,
+    ·   ─────┬─────
+    ·        ╰── `DialogTitle` redefined here
+ 84 │   DialogDescription
+ 85 │ } from "@/components/ui/dialog";
+ 86 │ import ActivityForm from '../ActivityForm';
+    ╰────
+  × the name `DialogDescription` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:8:1]
+  5 │   DialogContent,
+  6 │   DialogHeader,
+  7 │   DialogTitle,
+  8 │   DialogDescription
+    ·   ────────┬────────
+    ·           ╰── previous definition of `DialogDescription` here
+  9 │ } from "@/components/ui/dialog";
+ 10 │ import ActivityForm from '../ActivityForm';
+ 11 │ import { ActivityFormData } from '@/types/trip';
+ 12 │ 
+ 13 │ interface ActivityDialogsProps {
+ 14 │   isAddingActivity: boolean;
+ 15 │   setIsAddingActivity: (value: boolean) => void;
+ 16 │   editingActivity: string | null;
+ 17 │   setEditingActivity: (value: string | null) => void;
+ 18 │   newActivity: ActivityFormData;
+ 19 │   setNewActivity: (activity: ActivityFormData) => void;
+ 20 │   activityEdit: ActivityFormData;
+ 21 │   setActivityEdit: (activity: ActivityFormData) => void;
+ 22 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+ 23 │   onEditActivity: (id: string) => void;
+ 24 │   eventId: string;
+ 25 │ }
+ 26 │ 
+ 27 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+ 28 │   isAddingActivity,
+ 29 │   setIsAddingActivity,
+ 30 │   editingActivity,
+ 31 │   setEditingActivity,
+ 32 │   newActivity,
+ 33 │   setNewActivity,
+ 34 │   activityEdit,
+ 35 │   setActivityEdit,
+ 36 │   onAddActivity,
+ 37 │   onEditActivity,
+ 38 │   eventId,
+ 39 │ }) => {
+ 40 │   return (
+ 41 │     <>
+ 42 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+ 43 │         <DialogContent>
+ 44 │           <DialogHeader>
+ 45 │             <DialogTitle>Add New Activity</DialogTitle>
+ 46 │           </DialogHeader>
+ 47 │           <ActivityForm
+ 48 │             activity={newActivity}
+ 49 │             onActivityChange={setNewActivity}
+ 50 │             onSubmit={onAddActivity}
+ 51 │             onCancel={() => setIsAddingActivity(false)}
+ 52 │             submitLabel="Add Activity"
+ 53 │             eventId={eventId}
+ 54 │           />
+ 55 │         </DialogContent>
+ 56 │       </Dialog>
+ 57 │ 
+ 58 │       <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
+ 59 │         <DialogContent>
+ 60 │           <DialogHeader>
+ 61 │             <DialogTitle>Edit Activity</DialogTitle>
+ 62 │           </DialogHeader>
+ 63 │           <ActivityForm
+ 64 │             activity={activityEdit}
+ 65 │             onActivityChange={setActivityEdit}
+ 66 │             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+ 67 │             onCancel={() => setEditingActivity(null)}
+ 68 │             submitLabel="Save Changes"
+ 69 │             eventId={eventId}
+ 70 │           />
+ 71 │         </DialogContent>
+ 72 │       </Dialog>
+ 73 │     </>
+ 74 │   );
+ 75 │ };
+ 76 │ 
+ 77 │ export default ActivityDialogs;
+ 78 │ import React from 'react';
+ 79 │ import {
+ 80 │   Dialog,
+ 81 │   DialogContent,
+ 82 │   DialogHeader,
+ 83 │   DialogTitle,
+ 84 │   DialogDescription
+    ·   ────────┬────────
+    ·           ╰── `DialogDescription` redefined here
+ 85 │ } from "@/components/ui/dialog";
+ 86 │ import ActivityForm from '../ActivityForm';
+ 87 │ import { ActivityFormData } from '@/types/trip';
+    ╰────
+  × the name `ActivityForm` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:10:1]
+  7 │   DialogTitle,
+  8 │   DialogDescription
+  9 │ } from "@/components/ui/dialog";
+ 10 │ import ActivityForm from '../ActivityForm';
+    ·        ──────┬─────
+    ·              ╰── previous definition of `ActivityForm` here
+ 11 │ import { ActivityFormData } from '@/types/trip';
+ 12 │ 
+ 13 │ interface ActivityDialogsProps {
+ 14 │   isAddingActivity: boolean;
+ 15 │   setIsAddingActivity: (value: boolean) => void;
+ 16 │   editingActivity: string | null;
+ 17 │   setEditingActivity: (value: string | null) => void;
+ 18 │   newActivity: ActivityFormData;
+ 19 │   setNewActivity: (activity: ActivityFormData) => void;
+ 20 │   activityEdit: ActivityFormData;
+ 21 │   setActivityEdit: (activity: ActivityFormData) => void;
+ 22 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+ 23 │   onEditActivity: (id: string) => void;
+ 24 │   eventId: string;
+ 25 │ }
+ 26 │ 
+ 27 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+ 28 │   isAddingActivity,
+ 29 │   setIsAddingActivity,
+ 30 │   editingActivity,
+ 31 │   setEditingActivity,
+ 32 │   newActivity,
+ 33 │   setNewActivity,
+ 34 │   activityEdit,
+ 35 │   setActivityEdit,
+ 36 │   onAddActivity,
+ 37 │   onEditActivity,
+ 38 │   eventId,
+ 39 │ }) => {
+ 40 │   return (
+ 41 │     <>
+ 42 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+ 43 │         <DialogContent>
+ 44 │           <DialogHeader>
+ 45 │             <DialogTitle>Add New Activity</DialogTitle>
+ 46 │           </DialogHeader>
+ 47 │           <ActivityForm
+ 48 │             activity={newActivity}
+ 49 │             onActivityChange={setNewActivity}
+ 50 │             onSubmit={onAddActivity}
+ 51 │             onCancel={() => setIsAddingActivity(false)}
+ 52 │             submitLabel="Add Activity"
+ 53 │             eventId={eventId}
+ 54 │           />
+ 55 │         </DialogContent>
+ 56 │       </Dialog>
+ 57 │ 
+ 58 │       <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
+ 59 │         <DialogContent>
+ 60 │           <DialogHeader>
+ 61 │             <DialogTitle>Edit Activity</DialogTitle>
+ 62 │           </DialogHeader>
+ 63 │           <ActivityForm
+ 64 │             activity={activityEdit}
+ 65 │             onActivityChange={setActivityEdit}
+ 66 │             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+ 67 │             onCancel={() => setEditingActivity(null)}
+ 68 │             submitLabel="Save Changes"
+ 69 │             eventId={eventId}
+ 70 │           />
+ 71 │         </DialogContent>
+ 72 │       </Dialog>
+ 73 │     </>
+ 74 │   );
+ 75 │ };
+ 76 │ 
+ 77 │ export default ActivityDialogs;
+ 78 │ import React from 'react';
+ 79 │ import {
+ 80 │   Dialog,
+ 81 │   DialogContent,
+ 82 │   DialogHeader,
+ 83 │   DialogTitle,
+ 84 │   DialogDescription
+ 85 │ } from "@/components/ui/dialog";
+ 86 │ import ActivityForm from '../ActivityForm';
+    ·        ──────┬─────
+    ·              ╰── `ActivityForm` redefined here
+ 87 │ import { ActivityFormData } from '@/types/trip';
+ 88 │ 
+ 89 │ interface ActivityDialogsProps {
+    ╰────
+  × the name `ActivityDialogs` is defined multiple times
+     ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:27:1]
+  24 │   eventId: string;
+  25 │ }
+  26 │ 
+  27 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+     ·       ───────┬───────
+     ·              ╰── previous definition of `ActivityDialogs` here
+  28 │   isAddingActivity,
+  29 │   setIsAddingActivity,
+  30 │   editingActivity,
+  31 │   setEditingActivity,
+  32 │   newActivity,
+  33 │   setNewActivity,
+  34 │   activityEdit,
+  35 │   setActivityEdit,
+  36 │   onAddActivity,
+  37 │   onEditActivity,
+  38 │   eventId,
+  39 │ }) => {
+  40 │   return (
+  41 │     <>
+  42 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+  43 │         <DialogContent>
+  44 │           <DialogHeader>
+  45 │             <DialogTitle>Add New Activity</DialogTitle>
+  46 │           </DialogHeader>
+  47 │           <ActivityForm
+  48 │             activity={newActivity}
+  49 │             onActivityChange={setNewActivity}
+  50 │             onSubmit={onAddActivity}
+  51 │             onCancel={() => setIsAddingActivity(false)}
+  52 │             submitLabel="Add Activity"
+  53 │             eventId={eventId}
+  54 │           />
+  55 │         </DialogContent>
+  56 │       </Dialog>
+  57 │ 
+  58 │       <Dialog open={!!editingActivity} onOpenChange={() => setEditingActivity(null)}>
+  59 │         <DialogContent>
+  60 │           <DialogHeader>
+  61 │             <DialogTitle>Edit Activity</DialogTitle>
+  62 │           </DialogHeader>
+  63 │           <ActivityForm
+  64 │             activity={activityEdit}
+  65 │             onActivityChange={setActivityEdit}
+  66 │             onSubmit={() => editingActivity && onEditActivity(editingActivity)}
+  67 │             onCancel={() => setEditingActivity(null)}
+  68 │             submitLabel="Save Changes"
+  69 │             eventId={eventId}
+  70 │           />
+  71 │         </DialogContent>
+  72 │       </Dialog>
+  73 │     </>
+  74 │   );
+  75 │ };
+  76 │ 
+  77 │ export default ActivityDialogs;
+  78 │ import React from 'react';
+  79 │ import {
+  80 │   Dialog,
+  81 │   DialogContent,
+  82 │   DialogHeader,
+  83 │   DialogTitle,
+  84 │   DialogDescription
+  85 │ } from "@/components/ui/dialog";
+  86 │ import ActivityForm from '../ActivityForm';
+  87 │ import { ActivityFormData } from '@/types/trip';
+  88 │ 
+  89 │ interface ActivityDialogsProps {
+  90 │   isAddingActivity: boolean;
+  91 │   setIsAddingActivity: (value: boolean) => void;
+  92 │   editingActivity: string | null;
+  93 │   setEditingActivity: (value: string | null) => void;
+  94 │   newActivity: ActivityFormData;
+  95 │   setNewActivity: (value: ActivityFormData) => void;
+  96 │   activityEdit: ActivityFormData;
+  97 │   setActivityEdit: (value: ActivityFormData) => void;
+  98 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+  99 │   onEditActivity: (activityId: string) => Promise<void>;
+ 100 │   eventId: string;
+ 101 │ }
+ 102 │ 
+ 103 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+     ·       ───────┬───────
+     ·              ╰── `ActivityDialogs` redefined here
+ 104 │   isAddingActivity,
+ 105 │   setIsAddingActivity,
+ 106 │   editingActivity,
+     ╰────
+  × the name `default` is exported multiple times
+     ╭─[/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:77:1]
+  74 │   );
+  75 │ };
+  76 │ 
+  77 │ export default ActivityDialogs;
+     · ───────────────┬───────────────
+     ·                ╰── previous exported here
+  78 │ import React from 'react';
+  79 │ import {
+  80 │   Dialog,
+  81 │   DialogContent,
+  82 │   DialogHeader,
+  83 │   DialogTitle,
+  84 │   DialogDescription
+  85 │ } from "@/components/ui/dialog";
+  86 │ import ActivityForm from '../ActivityForm';
+  87 │ import { ActivityFormData } from '@/types/trip';
+  88 │ 
+  89 │ interface ActivityDialogsProps {
+  90 │   isAddingActivity: boolean;
+  91 │   setIsAddingActivity: (value: boolean) => void;
+  92 │   editingActivity: string | null;
+  93 │   setEditingActivity: (value: string | null) => void;
+  94 │   newActivity: ActivityFormData;
+  95 │   setNewActivity: (value: ActivityFormData) => void;
+  96 │   activityEdit: ActivityFormData;
+  97 │   setActivityEdit: (value: ActivityFormData) => void;
+  98 │   onAddActivity: (activity: ActivityFormData) => Promise<void>;
+  99 │   onEditActivity: (activityId: string) => Promise<void>;
+ 100 │   eventId: string;
+ 101 │ }
+ 102 │ 
+ 103 │ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
+ 104 │   isAddingActivity,
+ 105 │   setIsAddingActivity,
+ 106 │   editingActivity,
+ 107 │   setEditingActivity,
+ 108 │   newActivity,
+ 109 │   setNewActivity,
+ 110 │   activityEdit,
+ 111 │   setActivityEdit,
+ 112 │   onAddActivity,
+ 113 │   onEditActivity,
+ 114 │   eventId
+ 115 │ }) => {
+ 116 │   const initialActivity: ActivityFormData = { 
+ 117 │     title: '', 
+ 118 │     description: '', 
+ 119 │     start_time: '', 
+ 120 │     end_time: '', 
+ 121 │     cost: '', 
+ 122 │     currency: 'USD' 
+ 123 │   };
+ 124 │ 
+ 125 │   const handleAddClose = () => {
+ 126 │     setIsAddingActivity(false);
+ 127 │     // Reset form data
+ 128 │     setNewActivity(initialActivity);
+ 129 │   };
+ 130 │ 
+ 131 │   const handleEditClose = () => {
+ 132 │     setEditingActivity(null);
+ 133 │     // Reset form data
+ 134 │     setActivityEdit(initialActivity);
+ 135 │   };
+ 136 │ 
+ 137 │   return (
+ 138 │     <>
+ 139 │       {/* Add Activity Dialog */}
+ 140 │       <Dialog open={isAddingActivity} onOpenChange={setIsAddingActivity}>
+ 141 │         <DialogContent className="sm:max-w-md">
+ 142 │           <DialogHeader>
+ 143 │             <DialogTitle>Add Activity</DialogTitle>
+ 144 │             <DialogDescription>
+ 145 │               Add a new activity to your trip day
+ 146 │             </DialogDescription>
+ 147 │           </DialogHeader>
+ 148 │           <ActivityForm
+ 149 │             formData={newActivity}
+ 150 │             onChange={setNewActivity}
+ 151 │             onSubmit={async () => {
+ 152 │               await onAddActivity(newActivity);
+ 153 │               handleAddClose();
+ 154 │             }}
+ 155 │             onCancel={handleAddClose}
+ 156 │             submitLabel="Add Activity"
+ 157 │           />
+ 158 │         </DialogContent>
+ 159 │       </Dialog>
+ 160 │ 
+ 161 │       {/* Edit Activity Dialog */}
+ 162 │       <Dialog 
+ 163 │         open={!!editingActivity} 
+ 164 │         onOpenChange={(open) => {
+ 165 │           if (!open) handleEditClose();
+ 166 │         }}
+ 167 │       >
+ 168 │         <DialogContent className="sm:max-w-md">
+ 169 │           <DialogHeader>
+ 170 │             <DialogTitle>Edit Activity</DialogTitle>
+ 171 │             <DialogDescription>
+ 172 │               Modify your activity details
+ 173 │             </DialogDescription>
+ 174 │           </DialogHeader>
+ 175 │           <ActivityForm
+ 176 │             formData={activityEdit}
+ 177 │             onChange={setActivityEdit}
+ 178 │             onSubmit={async () => {
+ 179 │               if (editingActivity) {
+ 180 │                 await onEditActivity(editingActivity);
+ 181 │               }
+ 182 │             }}
+ 183 │             onCancel={handleEditClose}
+ 184 │             submitLabel="Save Changes"
+ 185 │           />
+ 186 │         </DialogContent>
+ 187 │       </Dialog>
+ 188 │     </>
+ 189 │   );
+ 190 │ };
+ 191 │ 
+ 192 │ export default ActivityDialogs;
+     · ───────────────┬───────────────
+     ·                ╰── exported more than once
+     ╰────
+
+Advice:   ☞ Exported identifiers must be unique
+/home/runner/workspace/src/components/trip/day/ActivityDialogs.tsx:4:1
+14 |    isAddingActivity: boolean;
+15 |    setIsAddingActivity: (value: boolean) => void;
+16 |    editingActivity: string | null;
+   |                    ^
+17 |    setEditingActivity: (value: string | null) => void;
+18 |    newActivity: ActivityFormData;
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.

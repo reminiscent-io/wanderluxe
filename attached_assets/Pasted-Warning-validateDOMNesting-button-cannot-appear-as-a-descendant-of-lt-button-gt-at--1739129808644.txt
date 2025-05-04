@@ -1,0 +1,48 @@
+Warning: validateDOMNesting(...): <button> cannot appear as a descendant of &lt;button&gt;.
+    at button
+    at div
+    at div
+    at DayHeader (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/components/trip/day/DayHeader.tsx:15:22)
+    at div
+    at button
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-FKPFFM3I.js?v=8905ee82:41:13
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/@radix-ui_react-collapsible.js?v=8905ee82:77:13
+    at div
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-FKPFFM3I.js?v=8905ee82:41:13
+    at Provider (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-RYWAULHW.js?v=8905ee82:48:15)
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/@radix-ui_react-collapsible.js?v=8905ee82:40:7
+    at div
+    at _c (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/components/ui/card.tsx:12:53)
+    at div
+    at MotionComponent (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/framer-motion.js?v=8905ee82:950:40)
+    at DayCard (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/components/trip/day/DayCard.tsx:69:20)
+    at div
+    at div
+    at MotionComponent (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/framer-motion.js?v=8905ee82:950:40)
+    at div
+    at TimelineContent (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/components/trip/timeline/TimelineContent.tsx:18:28)
+    at div
+    at TimelineView (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/components/trip/TimelineView.tsx:24:25)
+    at div
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-FKPFFM3I.js?v=8905ee82:41:13
+    at Presence (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-42XBD3DF.js?v=8905ee82:24:11)
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8905ee82:446:13
+    at _c4 (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/components/ui/tabs.tsx:36:61)
+    at div
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-FKPFFM3I.js?v=8905ee82:41:13
+    at Provider (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-RYWAULHW.js?v=8905ee82:48:15)
+    at https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8905ee82:324:7
+    at div
+    at div
+    at div
+    at TripDetails (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/pages/TripDetails.tsx:25:24)
+    at ProtectedRoute (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/components/ProtectedRoute.tsx:14:27)
+    at RenderedRoute (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=8905ee82:4069:5)
+    at Routes (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=8905ee82:4508:5)
+    at Router (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=8905ee82:4451:15)
+    at BrowserRouter (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=8905ee82:5196:5)
+    at Provider (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/chunk-RYWAULHW.js?v=8905ee82:48:15)
+    at TooltipProvider (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8905ee82:58:5)
+    at AuthProvider (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/src/contexts/AuthContext.tsx:18:32)
+    at QueryClientProvider (https://b60938f6-1bff-4d26-80e8-c7f7a4519f0a-00-2lidi74n8eg1i.spock.replit.dev/node_modules/.vite/deps/@tanstack_react-query.js?v=8905ee82:2794:3)
+    at App

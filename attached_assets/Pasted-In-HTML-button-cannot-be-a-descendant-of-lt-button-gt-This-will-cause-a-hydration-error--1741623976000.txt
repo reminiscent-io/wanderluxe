@@ -1,0 +1,91 @@
+In HTML, <button> cannot be a descendant of &lt;button&gt;.
+This will cause a hydration error.
+
+  ...
+    <fieldset data-lov-id="src/compon..." data-lov-name="motion.fie..." data-component-path="src/compon..." ...>
+      <AccommodationGroup data-lov-id="src/compon..." data-lov-name="Accommodat..." data-component-path="src/compon..." ...>
+        <div data-lov-id="src/compon..." data-lov-name="div" data-component-path="src/compon..." data-component-line="22" ...>
+          <_c>
+          <div data-lov-id="src/compon..." data-lov-name="div" data-component-path="src/compon..." ...>
+            <DayCard data-lov-id="src/compon..." data-lov-name="DayCard" data-component-path="src/compon..." ...>
+              <Collapsible data-lov-id="src/compon..." data-lov-name="Collapsible" data-component-path="src/compon..." ...>
+                <CollapsibleProvider scope={undefined} disabled={undefined} contentId="radix-:r1i:" open={false} ...>
+                  <Primitive.div data-state="closed" data-disabled={undefined} data-lov-id="src/compon..." ...>
+                    <div data-state="closed" data-disabled={undefined} data-lov-id="src/compon..." ...>
+                      <DayHeader data-lov-id="src/compon..." data-lov-name="DayHeader" ...>
+                        <CollapsibleTrigger data-lov-id="src/compon..." data-lov-name="Collapsibl..." ...>
+                          <Primitive.button type="button" aria-controls="radix-:r1i:" aria-expanded={false} ...>
+>                           <button
+>                             type="button"
+>                             aria-controls="radix-:r1i:"
+>                             aria-expanded={false}
+>                             data-state="closed"
+>                             data-disabled={undefined}
+>                             disabled={undefined}
+>                             data-lov-id="src/components/trip/day/DayHeader.tsx:26:4"
+>                             data-lov-name="CollapsibleTrigger"
+>                             data-component-path="src/components/trip/day/DayHeader.tsx"
+>                             data-component-line="26"
+>                             data-component-file="DayHeader.tsx"
+>                             data-component-name="CollapsibleTrigger"
+>                             data-component-content="%7B%22className%22%3A%22w-full%20px-4%20py-3%20flex%20items-cent..."
+>                             className="w-full px-4 py-3 flex items-center justify-between bg-sand-50/50 hover:bg-san..."
+>                             onClick={function handleEvent}
+>                             ref={null}
+>                           >
+                              <div>
+                              <div data-lov-id="src/compon..." data-lov-name="div" data-component-path="src/compon..." ...>
+                                <_c data-lov-id="src/compon..." data-lov-name="Button" ...>
+>                                 <button
+>                                   data-lov-id="src/components/trip/day/DayHeader.tsx:34:8"
+>                                   data-lov-name="Button"
+>                                   data-component-path="src/components/trip/day/DayHeader.tsx"
+>                                   data-component-line="34"
+>                                   data-component-file="DayHeader.tsx"
+>                                   data-component-name="Button"
+>                                   data-component-content="%7B%22className%22%3A%22h-8%20w-8%22%7D"
+>                                   className={"inline-flex items-center justify-center gap-2 whitespace-nowrap round..."}
+>                                   ref={null}
+>                                   onClick={function onClick}
+>                                 >
+                                ...
+                      ...
+            ...
+
+WanderLuxe
+My Trips
+Create Trip
+
+ItalyUnsplash
+Italy
+February 13th, 2025 - February 14th, 2025
+
+Vision Board
+Timeline
+Budget
+Packing List
+Arrival
+
+Feb 13, 2025
+
+Departure
+
+Feb 14, 2025
+
+Edit Dates
+
+Accommodations
+
+Flight and Transportation
+
+St. Regis Residence Club, Aspen
+Feb 13 - Feb 14, 2025
+
+
+Thursday, February 13
+Explore
+
+
+
+Friday, February 14
+Friday
