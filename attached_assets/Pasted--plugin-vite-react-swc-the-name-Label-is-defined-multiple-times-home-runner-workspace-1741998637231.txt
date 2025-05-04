@@ -1,0 +1,505 @@
+[plugin:vite:react-swc] × the name `Label` is defined multiple times
+     ╭─[/home/runner/workspace/src/components/trip/dining/RestaurantSearchInput.tsx:3:1]
+   1 │ import React, { useEffect, useRef, useState } from 'react';
+   2 │ import { Input } from "@/components/ui/input";
+   3 │ import { Label } from "@/components/ui/label";
+     ·          ──┬──
+     ·            ╰── previous definition of `Label` here
+   4 │ import { supabase } from "@/integrations/supabase/client";
+   5 │ import { toast } from "sonner";
+   6 │ 
+   7 │ interface RestaurantDetails {
+   8 │   name: string;
+   9 │   formatted_address?: string;
+  10 │   formatted_phone_number?: string;
+  11 │   website?: string;
+  12 │   place_id: string;
+  13 │   rating?: number;
+  14 │   trip_id?: string;
+  15 │ }
+  16 │ 
+  17 │ interface RestaurantSearchInputProps {
+  18 │   onPlaceSelect: (place: RestaurantDetails) => void;
+  19 │   defaultValue?: string;
+  20 │   tripId?: string;
+  21 │ }
+  22 │ 
+  23 │ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
+  24 │   onPlaceSelect,
+  25 │   defaultValue = '',
+  26 │   tripId
+  27 │ }) => {
+  28 │   const [inputValue, setInputValue] = useState(defaultValue);
+  29 │   const [isLoading, setIsLoading] = useState(true);
+  30 │   const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  31 │   const inputRef = useRef<HTMLInputElement>(null);
+  32 │ 
+  33 │   useEffect(() => {
+  34 │     // Focus the input field when component mounts with a higher priority
+  35 │     if (inputRef.current) {
+  36 │       const focusAttempt = () => {
+  37 │         if (inputRef.current) {
+  38 │           inputRef.current.focus();
+  39 │         }
+  40 │       };
+  41 │       focusAttempt();
+  42 │       const timers = [
+  43 │         setTimeout(focusAttempt, 10),
+  44 │         setTimeout(focusAttempt, 50),
+  45 │         setTimeout(focusAttempt, 100)
+  46 │       ];
+  47 │       return () => {
+  48 │         timers.forEach(timer => clearTimeout(timer));
+  49 │       };
+  50 │     }
+  51 │   }, []);
+  52 │ 
+  53 │   useEffect(() => {
+  54 │     const loadAPI = async () => {
+  55 │       try {
+  56 │         const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
+  57 │         const isLoaded = await loadGoogleMapsAPI();
+  58 │         if (isLoaded) {
+  59 │           setIsLoading(false);
+  60 │           initializeAutocomplete();
+  61 │         } else {
+  62 │           setIsLoading(false);
+  63 │           toast.error('Failed to initialize restaurant search');
+  64 │         }
+  65 │       } catch (error) {
+  66 │         console.error('Error initializing Google Places:', error);
+  67 │         toast.error('Failed to initialize restaurant search');
+  68 │         setIsLoading(false);
+  69 │       }
+  70 │     };
+  71 │ 
+  72 │     loadAPI();
+  73 │   }, []);
+  74 │ 
+  75 │   const initializeAutocomplete = () => {
+  76 │     if (!inputRef.current || !window.google) return;
+  77 │ 
+  78 │     try {
+  79 │       // Clean up previous instance if it exists
+  80 │       if (autoCompleteRef.current) {
+  81 │         google.maps.event.clearInstanceListeners(autoCompleteRef.current);
+  82 │       }
+  83 │ 
+  84 │       const options: google.maps.places.AutocompleteOptions = {
+  85 │         fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
+  86 │         types: ['restaurant', 'food']
+  87 │       };
+  88 │ 
+  89 │       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
+  90 │ 
+  91 │       autoCompleteRef.current.addListener('place_changed', () => {
+  92 │         if (!autoCompleteRef.current) return;
+  93 │ 
+  94 │         const place = autoCompleteRef.current.getPlace();
+  95 │         console.log('Selected restaurant:', place);
+  96 │ 
+  97 │         if (!place?.name) {
+  98 │           toast.error('Please select a valid restaurant from the dropdown');
+  99 │           return;
+ 100 │         }
+ 101 │ 
+ 102 │         const restaurantDetails: RestaurantDetails = {
+ 103 │           name: place.name,
+ 104 │           place_id: place.place_id || `custom-${Date.now()}`,
+ 105 │           formatted_address: place.formatted_address,
+ 106 │           formatted_phone_number: place.formatted_phone_number,
+ 107 │           website: place.website,
+ 108 │           rating: place.rating,
+ 109 │           trip_id: tripId
+ 110 │         };
+ 111 │ 
+ 112 │         setInputValue(place.name);
+ 113 │         onPlaceSelect(restaurantDetails);
+ 114 │       });
+ 115 │     } catch (error) {
+ 116 │       console.error('Error initializing autocomplete:', error);
+ 117 │       toast.error('Failed to initialize restaurant search');
+ 118 │     }
+ 119 │   };
+ 120 │ 
+ 121 │   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ 122 │     const newValue = e.target.value;
+ 123 │     setInputValue(newValue);
+ 124 │ 
+ 125 │     // Allow direct input without requiring selection
+ 126 │     if (newValue === '') {
+ 127 │       onPlaceSelect({
+ 128 │         name: '',
+ 129 │         place_id: `custom-${Date.now()}`
+ 130 │       });
+ 131 │     }
+ 132 │   };
+ 133 │ 
+ 134 │   return (
+ 135 │     <div className="space-y-2">
+ 136 │       <Label htmlFor="restaurant">Restaurant Name</Label>
+ 137 │       <div className="relative">
+ 138 │         <Input
+ 139 │           ref={inputRef}
+ 140 │           type="text"
+ 141 │           id="restaurant"
+ 142 │           value={inputValue}
+ 143 │           onChange={handleInputChange}
+ 144 │           placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
+ 145 │           className="w-full bg-white"
+ 146 │           disabled={isLoading}
+ 147 │           autoComplete="off"
+ 148 │         />
+ 149 │       </div>
+ 150 │ 
+ 151 │       {/* Updated styles for Google autocomplete dropdown */}
+ 152 │       <style jsx global>{`
+ 153 │         .pac-container {
+ 154 │           z-index: 15000 !important;
+ 155 │           width: auto !important;
+ 156 │           position: absolute !important;
+ 157 │           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+ 158 │           border-radius: 6px;
+ 159 │           overflow: hidden;
+ 160 │           margin-top: 2px;
+ 161 │         }
+ 162 │ 
+ 163 │         .pac-item {
+ 164 │           padding: 8px 12px;
+ 165 │           cursor: pointer;
+ 166 │           font-family: inherit;
+ 167 │           font-size: 14px;
+ 168 │         }
+ 169 │ 
+ 170 │         .pac-item:hover {
+ 171 │           background-color: #f9fafb;
+ 172 │         }
+ 173 │ 
+ 174 │         .pac-item-selected {
+ 175 │           background-color: #f3f4f6;
+ 176 │         }
+ 177 │ 
+ 178 │         /* Remove interfering pseudo-element by disabling pointer events on it */
+ 179 │         .pac-container:after {
+ 180 │           content: "";
+ 181 │           position: absolute;
+ 182 │           top: 0;
+ 183 │           right: 0;
+ 184 │           bottom: 0;
+ 185 │           left: 0;
+ 186 │           pointer-events: none;
+ 187 │           z-index: -1;
+ 188 │         }
+ 189 │       `}</style>
+ 190 │     </div>
+ 191 │   );
+ 192 │ };
+ 193 │ 
+ 194 │ const handleSaveReservation = async (reservationData, tripId) => {
+ 195 │   try {
+ 196 │     if (!tripId) {
+ 197 │       console.error("Missing trip_id - cannot save reservation");
+ 198 │       throw new Error("Missing trip_id");
+ 199 │     }
+ 200 │     
+ 201 │     const dataWithTripId = {
+ 202 │       ...reservationData,
+ 203 │       trip_id: tripId,
+ 204 │     };
+ 205 │ 
+ 206 │     const result = await supabase
+ 207 │       .from('restaurant_reservations')
+ 208 │       .insert(dataWithTripId);
+ 209 │ 
+ 210 │     if (result.error) {
+ 211 │       console.error("Error saving reservation:", result.error);
+ 212 │       throw result.error;
+ 213 │     }
+ 214 │ 
+ 215 │     return result.data;
+ 216 │   } catch (error) {
+ 217 │     console.error("Error saving reservation:", error);
+ 218 │     throw error;
+ 219 │   }
+ 220 │ };
+ 221 │ 
+ 222 │ export default RestaurantSearchInput;
+ 223 │ import React from 'react';
+ 224 │ import { Label } from "@/components/ui/label";
+     ·          ──┬──
+     ·            ╰── `Label` redefined here
+ 225 │ import GooglePlacesAutocomplete from '../accommodation/GooglePlacesAutocomplete';
+ 226 │ 
+ 227 │ interface RestaurantSearchInputProps {
+     ╰────
+  × the name `RestaurantSearchInput` is defined multiple times
+     ╭─[/home/runner/workspace/src/components/trip/dining/RestaurantSearchInput.tsx:23:1]
+  20 │   tripId?: string;
+  21 │ }
+  22 │ 
+  23 │ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
+     ·       ──────────┬──────────
+     ·                 ╰── previous definition of `RestaurantSearchInput` here
+  24 │   onPlaceSelect,
+  25 │   defaultValue = '',
+  26 │   tripId
+  27 │ }) => {
+  28 │   const [inputValue, setInputValue] = useState(defaultValue);
+  29 │   const [isLoading, setIsLoading] = useState(true);
+  30 │   const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  31 │   const inputRef = useRef<HTMLInputElement>(null);
+  32 │ 
+  33 │   useEffect(() => {
+  34 │     // Focus the input field when component mounts with a higher priority
+  35 │     if (inputRef.current) {
+  36 │       const focusAttempt = () => {
+  37 │         if (inputRef.current) {
+  38 │           inputRef.current.focus();
+  39 │         }
+  40 │       };
+  41 │       focusAttempt();
+  42 │       const timers = [
+  43 │         setTimeout(focusAttempt, 10),
+  44 │         setTimeout(focusAttempt, 50),
+  45 │         setTimeout(focusAttempt, 100)
+  46 │       ];
+  47 │       return () => {
+  48 │         timers.forEach(timer => clearTimeout(timer));
+  49 │       };
+  50 │     }
+  51 │   }, []);
+  52 │ 
+  53 │   useEffect(() => {
+  54 │     const loadAPI = async () => {
+  55 │       try {
+  56 │         const { loadGoogleMapsAPI } = await import('@/utils/googleMapsLoader');
+  57 │         const isLoaded = await loadGoogleMapsAPI();
+  58 │         if (isLoaded) {
+  59 │           setIsLoading(false);
+  60 │           initializeAutocomplete();
+  61 │         } else {
+  62 │           setIsLoading(false);
+  63 │           toast.error('Failed to initialize restaurant search');
+  64 │         }
+  65 │       } catch (error) {
+  66 │         console.error('Error initializing Google Places:', error);
+  67 │         toast.error('Failed to initialize restaurant search');
+  68 │         setIsLoading(false);
+  69 │       }
+  70 │     };
+  71 │ 
+  72 │     loadAPI();
+  73 │   }, []);
+  74 │ 
+  75 │   const initializeAutocomplete = () => {
+  76 │     if (!inputRef.current || !window.google) return;
+  77 │ 
+  78 │     try {
+  79 │       // Clean up previous instance if it exists
+  80 │       if (autoCompleteRef.current) {
+  81 │         google.maps.event.clearInstanceListeners(autoCompleteRef.current);
+  82 │       }
+  83 │ 
+  84 │       const options: google.maps.places.AutocompleteOptions = {
+  85 │         fields: ['name', 'place_id', 'formatted_address', 'formatted_phone_number', 'website', 'rating'],
+  86 │         types: ['restaurant', 'food']
+  87 │       };
+  88 │ 
+  89 │       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
+  90 │ 
+  91 │       autoCompleteRef.current.addListener('place_changed', () => {
+  92 │         if (!autoCompleteRef.current) return;
+  93 │ 
+  94 │         const place = autoCompleteRef.current.getPlace();
+  95 │         console.log('Selected restaurant:', place);
+  96 │ 
+  97 │         if (!place?.name) {
+  98 │           toast.error('Please select a valid restaurant from the dropdown');
+  99 │           return;
+ 100 │         }
+ 101 │ 
+ 102 │         const restaurantDetails: RestaurantDetails = {
+ 103 │           name: place.name,
+ 104 │           place_id: place.place_id || `custom-${Date.now()}`,
+ 105 │           formatted_address: place.formatted_address,
+ 106 │           formatted_phone_number: place.formatted_phone_number,
+ 107 │           website: place.website,
+ 108 │           rating: place.rating,
+ 109 │           trip_id: tripId
+ 110 │         };
+ 111 │ 
+ 112 │         setInputValue(place.name);
+ 113 │         onPlaceSelect(restaurantDetails);
+ 114 │       });
+ 115 │     } catch (error) {
+ 116 │       console.error('Error initializing autocomplete:', error);
+ 117 │       toast.error('Failed to initialize restaurant search');
+ 118 │     }
+ 119 │   };
+ 120 │ 
+ 121 │   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ 122 │     const newValue = e.target.value;
+ 123 │     setInputValue(newValue);
+ 124 │ 
+ 125 │     // Allow direct input without requiring selection
+ 126 │     if (newValue === '') {
+ 127 │       onPlaceSelect({
+ 128 │         name: '',
+ 129 │         place_id: `custom-${Date.now()}`
+ 130 │       });
+ 131 │     }
+ 132 │   };
+ 133 │ 
+ 134 │   return (
+ 135 │     <div className="space-y-2">
+ 136 │       <Label htmlFor="restaurant">Restaurant Name</Label>
+ 137 │       <div className="relative">
+ 138 │         <Input
+ 139 │           ref={inputRef}
+ 140 │           type="text"
+ 141 │           id="restaurant"
+ 142 │           value={inputValue}
+ 143 │           onChange={handleInputChange}
+ 144 │           placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
+ 145 │           className="w-full bg-white"
+ 146 │           disabled={isLoading}
+ 147 │           autoComplete="off"
+ 148 │         />
+ 149 │       </div>
+ 150 │ 
+ 151 │       {/* Updated styles for Google autocomplete dropdown */}
+ 152 │       <style jsx global>{`
+ 153 │         .pac-container {
+ 154 │           z-index: 15000 !important;
+ 155 │           width: auto !important;
+ 156 │           position: absolute !important;
+ 157 │           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+ 158 │           border-radius: 6px;
+ 159 │           overflow: hidden;
+ 160 │           margin-top: 2px;
+ 161 │         }
+ 162 │ 
+ 163 │         .pac-item {
+ 164 │           padding: 8px 12px;
+ 165 │           cursor: pointer;
+ 166 │           font-family: inherit;
+ 167 │           font-size: 14px;
+ 168 │         }
+ 169 │ 
+ 170 │         .pac-item:hover {
+ 171 │           background-color: #f9fafb;
+ 172 │         }
+ 173 │ 
+ 174 │         .pac-item-selected {
+ 175 │           background-color: #f3f4f6;
+ 176 │         }
+ 177 │ 
+ 178 │         /* Remove interfering pseudo-element by disabling pointer events on it */
+ 179 │         .pac-container:after {
+ 180 │           content: "";
+ 181 │           position: absolute;
+ 182 │           top: 0;
+ 183 │           right: 0;
+ 184 │           bottom: 0;
+ 185 │           left: 0;
+ 186 │           pointer-events: none;
+ 187 │           z-index: -1;
+ 188 │         }
+ 189 │       `}</style>
+ 190 │     </div>
+ 191 │   );
+ 192 │ };
+ 193 │ 
+ 194 │ const handleSaveReservation = async (reservationData, tripId) => {
+ 195 │   try {
+ 196 │     if (!tripId) {
+ 197 │       console.error("Missing trip_id - cannot save reservation");
+ 198 │       throw new Error("Missing trip_id");
+ 199 │     }
+ 200 │     
+ 201 │     const dataWithTripId = {
+ 202 │       ...reservationData,
+ 203 │       trip_id: tripId,
+ 204 │     };
+ 205 │ 
+ 206 │     const result = await supabase
+ 207 │       .from('restaurant_reservations')
+ 208 │       .insert(dataWithTripId);
+ 209 │ 
+ 210 │     if (result.error) {
+ 211 │       console.error("Error saving reservation:", result.error);
+ 212 │       throw result.error;
+ 213 │     }
+ 214 │ 
+ 215 │     return result.data;
+ 216 │   } catch (error) {
+ 217 │     console.error("Error saving reservation:", error);
+ 218 │     throw error;
+ 219 │   }
+ 220 │ };
+ 221 │ 
+ 222 │ export default RestaurantSearchInput;
+ 223 │ import React from 'react';
+ 224 │ import { Label } from "@/components/ui/label";
+ 225 │ import GooglePlacesAutocomplete from '../accommodation/GooglePlacesAutocomplete';
+ 226 │ 
+ 227 │ interface RestaurantSearchInputProps {
+ 228 │   value: string;
+ 229 │   onChange: (restaurantName: string, placeDetails?: google.maps.places.PlaceResult) => void;
+ 230 │ }
+ 231 │ 
+ 232 │ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
+     ·       ──────────┬──────────
+     ·                 ╰── `RestaurantSearchInput` redefined here
+ 233 │   value,
+ 234 │   onChange
+ 235 │ }) => {
+     ╰────
+  × the name `default` is exported multiple times
+     ╭─[/home/runner/workspace/src/components/trip/dining/RestaurantSearchInput.tsx:222:1]
+ 219 │   }
+ 220 │ };
+ 221 │ 
+ 222 │ export default RestaurantSearchInput;
+     · ──────────────────┬──────────────────
+     ·                   ╰── previous exported here
+ 223 │ import React from 'react';
+ 224 │ import { Label } from "@/components/ui/label";
+ 225 │ import GooglePlacesAutocomplete from '../accommodation/GooglePlacesAutocomplete';
+ 226 │ 
+ 227 │ interface RestaurantSearchInputProps {
+ 228 │   value: string;
+ 229 │   onChange: (restaurantName: string, placeDetails?: google.maps.places.PlaceResult) => void;
+ 230 │ }
+ 231 │ 
+ 232 │ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
+ 233 │   value,
+ 234 │   onChange
+ 235 │ }) => {
+ 236 │   return (
+ 237 │     <div className="space-y-2">
+ 238 │       <Label htmlFor="restaurant">Restaurant Name *</Label>
+ 239 │       <GooglePlacesAutocomplete
+ 240 │         value={value}
+ 241 │         onChange={onChange}
+ 242 │         placeholder="Start typing to search for restaurants..."
+ 243 │       />
+ 244 │     </div>
+ 245 │   );
+ 246 │ };
+ 247 │ 
+ 248 │ export default RestaurantSearchInput;
+     · ──────────────────┬──────────────────
+     ·                   ╰── exported more than once
+     ╰────
+
+Advice:   ☞ Exported identifiers must be unique
+/home/runner/workspace/src/components/trip/dining/RestaurantSearchInput.tsx:3:1
+33 |    useEffect(() => {
+34 |      // Focus the input field when component mounts with a higher priority
+35 |      if (inputRef.current) {
+   |                             ^
+36 |        const focusAttempt = () => {
+37 |          if (inputRef.current) {
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.

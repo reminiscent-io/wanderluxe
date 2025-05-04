@@ -1,0 +1,16 @@
+Invalid time format: 14:05:00
+at t.value (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Cannot read properties of undefined (reading 'start_time')
+at ActivityForm (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/src/components/trip/ActivityForm.tsx?t=1742510098667:157:18)
+at react-stack-bottom-frame (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:16192:20)
+at renderWithHooks (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:4306:24)
+at updateFunctionComponent (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:5972:21)
+at beginWork (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:7048:20)
+at runWithFiberInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:726:18)
+at performUnitOfWork (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10831:98)
+at workLoopSync (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10692:43)
+at renderRootSync (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10675:13)
+at performWorkOnRoot (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10323:46)

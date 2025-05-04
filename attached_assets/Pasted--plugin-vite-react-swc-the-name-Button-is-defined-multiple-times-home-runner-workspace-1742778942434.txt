@@ -1,0 +1,88 @@
+[plugin:vite:react-swc] × the name `Button` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/transportation/TransportationHeader.tsx:2:1]
+  1 │ 
+  2 │ import { Button } from "@/components/ui/button";
+    ·          ───┬──
+    ·             ╰── previous definition of `Button` here
+  3 │ import { Plane, Plus } from "lucide-react";
+  4 │ 
+  5 │ interface TransportationHeaderProps {
+  6 │   isExpanded: boolean;
+  7 │   onToggle: () => void;
+  8 │ }
+  9 │ 
+ 10 │ const TransportationHeader = ({ isExpanded, onToggle }: TransportationHeaderProps) => {
+ 11 │   return (
+ 12 │     <Button
+ 13 │       onClick={onToggle}
+ 14 │       variant="ghost"
+ 15 │       className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
+ 16 │     >
+ 17 │       <div className="flex items-center gap-2">
+ 18 │         <Plane className="h-5 w-5" />
+ 19 │         <span className="text-lg font-medium">Transportation</span>
+ 20 │       </div>
+ 21 │       <Plus className="h-5 w-5" />
+ 22 │     </Button>
+ 23 │   );
+ 24 │ };
+ 25 │ 
+ 26 │ export default TransportationHeader;
+ 27 │ import React from 'react';
+ 28 │ import { Car } from 'lucide-react';
+ 29 │ import { Button } from '@/components/ui/button';
+    ·          ───┬──
+    ·             ╰── `Button` redefined here
+ 30 │ import { ChevronDown, ChevronUp } from 'lucide-react';
+ 31 │ 
+ 32 │ interface TransportationHeaderProps {
+    ╰────
+  × the name `TransportationHeader` is defined multiple times
+    ╭─[/home/runner/workspace/src/components/trip/transportation/TransportationHeader.tsx:10:1]
+  7 │   onToggle: () => void;
+  8 │ }
+  9 │ 
+ 10 │ const TransportationHeader = ({ isExpanded, onToggle }: TransportationHeaderProps) => {
+    ·       ──────────┬─────────
+    ·                 ╰── previous definition of `TransportationHeader` here
+ 11 │   return (
+ 12 │     <Button
+ 13 │       onClick={onToggle}
+ 14 │       variant="ghost"
+ 15 │       className="w-full justify-between p-6 hover:bg-sand-100 transition-colors"
+ 16 │     >
+ 17 │       <div className="flex items-center gap-2">
+ 18 │         <Plane className="h-5 w-5" />
+ 19 │         <span className="text-lg font-medium">Transportation</span>
+ 20 │       </div>
+ 21 │       <Plus className="h-5 w-5" />
+ 22 │     </Button>
+ 23 │   );
+ 24 │ };
+ 25 │ 
+ 26 │ export default TransportationHeader;
+ 27 │ import React from 'react';
+ 28 │ import { Car } from 'lucide-react';
+ 29 │ import { Button } from '@/components/ui/button';
+ 30 │ import { ChevronDown, ChevronUp } from 'lucide-react';
+ 31 │ 
+ 32 │ interface TransportationHeaderProps {
+ 33 │   isExpanded: boolean;
+ 34 │   onToggle: () => void;
+ 35 │ }
+ 36 │ 
+ 37 │ export const TransportationHeader: React.FC<TransportationHeaderProps> = ({
+    ·              ──────────┬─────────
+    ·                        ╰── `TransportationHeader` redefined here
+ 38 │   isExpanded,
+ 39 │   onToggle,
+ 40 │ }) => {
+    ╰────
+/home/runner/workspace/src/components/trip/transportation/TransportationHeader.tsx:2:1
+1  |  
+2  |  import { Button } from "@/components/ui/button";
+   |            ^
+3  |  import { Plane, Plus } from "lucide-react";
+4  |
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.

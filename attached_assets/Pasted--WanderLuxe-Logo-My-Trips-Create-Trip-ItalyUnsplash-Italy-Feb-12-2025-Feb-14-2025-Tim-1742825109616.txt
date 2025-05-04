@@ -1,0 +1,265 @@
+
+WanderLuxe Logo
+My Trips
+Create Trip
+
+ItalyUnsplash
+Italy
+Feb 12, 2025 - Feb 14, 2025
+
+Timeline
+Vision Board
+Budget
+Packing List
+Arrival
+
+Feb 12, 2025
+
+Departure
+
+Feb 14, 2025
+
+Edit Dates
+
+Accommodations
+
+Transportation
+Wednesday, February 12
+Arrival day
+
+
+Arrival day
+Hotel Stay
+St. Regis Residence Club, Aspen
+315 E Dean St Building 1, Aspen, CO 81611, USA
+
+Check-in day
+Add Hotel Stay
+Flights and Transportation
+No transportation for this day
+
+Add Transportation
+Activities
+Wednesday Test 3
+13:00 - 14:00
+
+Add Activity
+Dining
+Red Hook Tavern
+4.3
+329 Van Brunt St, Brooklyn, NY 11231, USA
+Website
+
+
+08:00
+Add Reservation
+Thursday, February 13
+Explore
+
+
+Explore
+Hotel Stay
+St. Regis Residence Club, Aspen
+315 E Dean St Building 1, Aspen, CO 81611, USA
+
+Add Hotel Stay
+Flights and Transportation
+No transportation for this day
+
+Add Transportation
+Activities
+Skiing
+14:05
+
+Test 2
+Test 3
+Test 5
+Add Activity
+Dining
+Pizza Loves Sauce
+4.8
+147 E Houston St, New York, NY 10002, USA
+(917) 765-8029
+Website
+
+
+05:00
+2 people
+2 USD
+Emily: West Village
+4.5
+35 Downing St, New York, NY 10014, USA
+(917) 935-6434
+Website
+
+
+14:00
+Add Reservation
+Friday, February 14
+Skiing
+
+
+Skiing
+Hotel Stay
+No hotel stay booked this night
+
+Add Hotel Stay
+Flights and Transportation
+No transportation for this day
+
+Add Transportation
+Activities
+Test 1
+Add Activity
+Dining
+Add Reservation
+Edit Restaurant Reservation
+Enter the details for your restaurant reservation.
+
+Please fill out the restaurant reservation form.
+Restaurant Name *
+Balaboosta
+Reservation Time *
+
+5
+:
+
+00
+
+AM
+Number of People
+2
+Notes
+Cost
+2
+Currency
+USD
+Save Reservation
+Close
+[plugin:vite:react-swc] × the name `handleActivityEdit` is defined multiple times
+     ╭─[/home/runner/workspace/src/components/trip/day/DayCard.tsx:165:1]
+ 162 │     setIsHotelEditDialogOpen(true);
+ 163 │   };
+ 164 │ 
+ 165 │   const handleActivityEdit = async (activityId: string) => {
+     ·         ─────────┬────────
+     ·                  ╰── previous definition of `handleActivityEdit` here
+ 166 │     console.log("Editing activity with id:", activityId);
+ 167 │     try {
+ 168 │       if (!activityEdit.title.trim()) {
+ 169 │         toast.error('Activity title is required');
+ 170 │         return Promise.reject(new Error('Activity title is required'));
+ 171 │       }
+ 172 │ 
+ 173 │       const costAsNumber = activityEdit.cost && activityEdit.cost.trim() !== '' 
+ 174 │         ? parseFloat(activityEdit.cost) 
+ 175 │         : null;
+ 176 │ 
+ 177 │       const updatedActivity = {
+ 178 │         title: activityEdit.title.trim(),
+ 179 │         description: activityEdit.description?.trim() || null,
+ 180 │         start_time: activityEdit.start_time || null,
+ 181 │         end_time: activityEdit.end_time || null,
+ 182 │         cost: costAsNumber,
+ 183 │         currency: activityEdit.currency || 'USD',
+ 184 │       };
+ 185 │ 
+ 186 │       const { data, error } = await supabase
+ 187 │         .from('day_activities')
+ 188 │         .update(updatedActivity)
+ 189 │         .eq('id', activityId)
+ 190 │         .select('*')
+ 191 │         .single();
+ 192 │ 
+ 193 │       if (error) {
+ 194 │         console.error('Error updating activity:', error);
+ 195 │         toast.error('Failed to update activity');
+ 196 │         throw error;
+ 197 │       }
+ 198 │ 
+ 199 │       toast.success('Activity updated successfully');
+ 200 │       queryClient.invalidateQueries(['trip']);
+ 201 │       setEditingActivity(null);
+ 202 │       return Promise.resolve();
+ 203 │     } catch (error) {
+ 204 │       console.error('Error editing activity:', error);
+ 205 │       return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+ 206 │     }
+ 207 │   };
+ 208 │ 
+ 209 │   const handleAddActivity = async (activity: ActivityFormData) => {
+ 210 │     console.log("Adding activity:", activity);
+ 211 │     try {
+ 212 │       if (!activity.title.trim()) {
+ 213 │         toast.error('Activity title is required');
+ 214 │         return Promise.reject(new Error('Activity title is required'));
+ 215 │       }
+ 216 │ 
+ 217 │       const costAsNumber = activity.cost && activity.cost.trim() !== '' 
+ 218 │         ? parseFloat(activity.cost) 
+ 219 │         : null;
+ 220 │ 
+ 221 │       const newActivity = {
+ 222 │         day_id: id,
+ 223 │         trip_id: tripId,
+ 224 │         title: activity.title.trim(),
+ 225 │         description: activity.description?.trim() || null,
+ 226 │         start_time: activity.start_time || null,
+ 227 │         end_time: activity.end_time || null,
+ 228 │         cost: costAsNumber,
+ 229 │         currency: activity.currency || 'USD',
+ 230 │         order_index: activities.length,
+ 231 │       };
+ 232 │ 
+ 233 │       const { data, error } = await supabase
+ 234 │         .from('day_activities')
+ 235 │         .insert(newActivity)
+ 236 │         .select('*')
+ 237 │         .single();
+ 238 │ 
+ 239 │       if (error) {
+ 240 │         console.error('Error saving activity:', error);
+ 241 │         toast.error('Failed to save activity');
+ 242 │         throw error;
+ 243 │       }
+ 244 │ 
+ 245 │       toast.success('Activity added successfully');
+ 246 │       queryClient.invalidateQueries(['trip']);
+ 247 │       return Promise.resolve();
+ 248 │     } catch (error) {
+ 249 │       console.error('Error adding activity:', error);
+ 250 │       return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+ 251 │     }
+ 252 │   };
+ 253 │ 
+ 254 │   const handleDeleteActivity = async (activityId: string) => {
+ 255 │     try {
+ 256 │       const { error } = await supabase
+ 257 │         .from('day_activities')
+ 258 │         .delete()
+ 259 │         .eq('id', activityId);
+ 260 │ 
+ 261 │       if (error) {
+ 262 │         console.error('Error deleting activity:', error);
+ 263 │         toast.error('Failed to delete activity');
+ 264 │         throw error;
+ 265 │       }
+ 266 │ 
+ 267 │       toast.success('Activity deleted successfully');
+ 268 │       queryClient.invalidateQueries(['trip']);
+ 269 │       setEditingActivity(null);
+ 270 │     } catch (error) {
+ 271 │       console.error('Error deleting activity:', error);
+ 272 │     }
+ 273 │   };
+ 274 │ 
+ 275 │   const handleActivityEdit = (activity: DayActivity) => {
+     ·         ─────────┬────────
+     ·                  ╰── `handleActivityEdit` redefined here
+ 276 │     if (activity.id) {
+ 277 │       setEditingActivity(activity.id);
+ 278 │       setActivityEdit({
+     ╰────
+/home/runner/workspace/src/components/trip/day/DayCard.tsx:165:1
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.

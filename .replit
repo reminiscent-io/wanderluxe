@@ -1,52 +1,24 @@
-
-modules = ["nodejs-20", "postgresql-16", "web"]
+modules = ["nodejs-20", "web"]
 run = "npm run dev"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
+run = ["sh", "-c", "npm run dev"]
 deploymentTarget = "cloudrun"
-build = ["npm", "run", "build"]
-run = ["sh", "-c", """
-
-npm run db:push
-"""]
-
-[workflows]
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Database Setup"
-
-[[workflows.workflow]]
-name = "Database Setup"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx drizzle-kit push"
-
-[[ports]]
-localPort = 3000
-externalPort = 3000
-
-[[ports]]
-localPort = 5173
-externalPort = 80
 
 [[ports]]
 localPort = 8080
-externalPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 8082
+externalPort = 3000
+
+[objectStorage]
+defaultBucketID = "replit-objstore-852a1cd5-5447-4cfc-b160-424e3a606d77"

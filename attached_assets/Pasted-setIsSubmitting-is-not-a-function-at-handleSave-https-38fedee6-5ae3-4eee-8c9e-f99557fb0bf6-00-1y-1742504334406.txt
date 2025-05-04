@@ -1,0 +1,19 @@
+setIsSubmitting is not a function
+at handleSave (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/src/components/trip/timeline/TripDates.tsx:65:9)
+at processDispatchQueue (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:11577:19)
+at https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:11988:11
+at batchedUpdates$1 (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:2539:42)
+at dispatchEventForPluginEventSystem (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:11683:9)
+at dispatchEvent (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:14608:13)
+at dispatchDiscreteEvent (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:14589:62)
+Objects are not valid as a React child (found: object with keys {title, variant}). If you meant to render a collection of children, use an array instead.
+at throwOnInvalidObjectType (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:3421:15)
+at reconcileChildFibersImpl (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:4022:13)
+at https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:4042:35
+at reconcileChildren (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:5796:53)
+at beginWork (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:7214:104)
+at runWithFiberInDEV (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:726:18)
+at performUnitOfWork (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10831:98)
+at workLoopSync (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10692:43)
+at renderRootSync (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10675:13)
+at performWorkOnRoot (https://38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=7fd62f07:10323:46)
