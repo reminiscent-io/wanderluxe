@@ -71,7 +71,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       throw shareError;
     }
 
-    // Send email notification
+    // Send email notification directly using SendGrid API
     await sendShareNotification(email, tripDestination, session.user.email || '');
 
     return true;
@@ -90,25 +90,46 @@ export const sendShareNotification = async (
   sharedByEmail: string
 ): Promise<void> => {
   try {
-    // Check if we have the SendGrid API key
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw new Error('Not authenticated');
-    }
-
-    // Call a Supabase Edge Function to send the email
-    // This assumes you have a Supabase Edge Function set up
-    const { error } = await supabase.functions.invoke('send-share-notification', {
-      body: { 
-        recipientEmail,
-        tripDestination,
-        sharedByEmail
-      }
+    // Use SendGrid directly with the API key from environment
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_SENDGRID_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [
+          {
+            to: [{ email: recipientEmail }],
+            subject: `Trip to ${tripDestination} has been shared with you`,
+          },
+        ],
+        from: { email: 'noreply@yourtravelapp.com', name: 'Travel Planner' },
+        content: [
+          {
+            type: 'text/html',
+            value: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>A Trip Has Been Shared With You</h2>
+                <p><strong>${sharedByEmail}</strong> has shared their trip to <strong>${tripDestination}</strong> with you.</p>
+                <p>Sign in to view and collaborate on planning this exciting trip!</p>
+                <div style="margin: 25px 0;">
+                  <a href="${window.location.origin}" style="background-color: #4a6855; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                    View Trip
+                  </a>
+                </div>
+                <p style="color: #666; font-size: 14px;">If you don't have an account yet, you can sign up with this email address to access the shared trip.</p>
+              </div>
+            `,
+          },
+        ],
+      }),
     });
 
-    if (error) {
-      console.error('Error sending share notification:', error);
-      throw error;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('SendGrid API error:', errorData);
+      throw new Error(`Failed to send email: ${response.statusText}`);
     }
   } catch (error) {
     console.error('Error in sendShareNotification:', error);
