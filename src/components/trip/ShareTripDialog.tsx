@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -13,9 +13,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader, Plus, Trash2, Share2 } from "lucide-react";
+import { Loader, Plus, Trash2, Share2, AlertTriangle } from "lucide-react";
 import { TripShare } from '@/integrations/supabase/trip_shares_types';
 import { shareTrip } from '@/services/tripSharingService';
+import { checkSendGridApiKey } from '@/utils/env';
 
 interface ShareTripDialogProps {
   tripId: string;
@@ -34,8 +35,15 @@ export const ShareTripDialog: React.FC<ShareTripDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasSendGridKey, setHasSendGridKey] = useState<boolean>(false);
   const { user } = useAuth();
 
+  useEffect(() => {
+    // Check if SendGrid API key is available
+    const hasApiKey = import.meta.env.VITE_SENDGRID_API_KEY ? true : false;
+    setHasSendGridKey(hasApiKey);
+  }, []);
+  
   React.useEffect(() => {
     if (open) {
       fetchExistingShares();
@@ -151,6 +159,16 @@ export const ShareTripDialog: React.FC<ShareTripDialogProps> = ({
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
+            {!hasSendGridKey && (
+              <div className="flex items-center space-x-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
+                <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                <div className="text-sm">
+                  <p>Email notifications are currently unavailable.</p>
+                  <p>Users will still be able to access shared trips when they sign in with the shared email.</p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               {emails.map((email, index) => (
                 <div key={index} className="flex items-center space-x-2">
