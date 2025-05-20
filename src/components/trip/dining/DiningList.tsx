@@ -102,12 +102,24 @@ const DiningList: React.FC<DiningListProps> = ({
 
   const handleDelete = async () => {
     try {
+      // Find the reservation data to get trip_id before deleting
+      const reservationToDelete = reservations.find(r => r.id === deletingReservation);
+      
+      if (!reservationToDelete) {
+        throw new Error("Reservation not found");
+      }
+      
+      // Include trip_id in the filter to help with RLS policies
       const { error } = await supabase
         .from('reservations')
         .delete()
-        .eq('id', deletingReservation);
+        .eq('id', deletingReservation)
+        .eq('trip_id', tripId); // Ensure the trip_id is included for RLS
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error details:', error);
+        throw error;
+      }
 
       // Invalidate both the specific day's reservations and the trip data
       await Promise.all([
