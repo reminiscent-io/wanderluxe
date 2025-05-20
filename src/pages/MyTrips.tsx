@@ -44,49 +44,51 @@ const MyTrips = () => {
   const { data: myTrips, isLoading: isLoadingMyTrips } = useQuery({
     queryKey: ['my-trips', showHidden],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      try {
+        console.log('Fetching user trips...');
+        const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) throw new Error('No user found');
+        if (!user) {
+          console.log('No user found');
+          throw new Error('No user found');
+        }
 
-      // First get trips
-      const { data: tripsData, error: tripsError } = await supabase
-        .from('trips')
-        .select(`*`)
-        .eq('user_id', user.id)
-        .eq('hidden', showHidden)
-        .order('arrival_date', { ascending: true });
+        console.log('User found, fetching trips for user:', user.id);
 
-      if (tripsError) throw tripsError;
-      
-      if (!tripsData || tripsData.length === 0) {
-        return [] as Trip[]; // Return empty array if no trips found
-      }
-      
-      // Get which trips are shared with others
-      const tripIds = tripsData.map(trip => trip.trip_id);
-      
-      const { data: sharesData, error: sharesError } = await supabase
-        .from('trip_shares')
-        .select('trip_id, count(*)')
-        .in('trip_id', tripIds)
-        .group('trip_id');
+        // First get trips
+        const { data: tripsData, error: tripsError } = await supabase
+          .from('trips')
+          .select(`*`)
+          .eq('user_id', user.id)
+          .eq('hidden', showHidden)
+          .order('arrival_date', { ascending: true });
+
+        if (tripsError) {
+          console.error('Error fetching trips:', tripsError);
+          throw tripsError;
+        }
         
-      // Create a map of shared trip counts
-      const sharesMap: Record<string, number> = {};
-      
-      if (!sharesError && sharesData) {
-        // Create a lookup of trip shares
-        sharesData.forEach(share => {
-          sharesMap[share.trip_id] = share.count;
-        });
+        console.log('Trips data:', tripsData?.length, tripsData);
+        
+        if (!tripsData || tripsData.length === 0) {
+          console.log('No trips found');
+          return [] as Trip[]; // Return empty array if no trips found
+        }
+        
+        // Get which trips are shared with others
+        const tripIds = tripsData.map(trip => trip.trip_id);
+        console.log('Trip IDs:', tripIds);
+        
+        // Original approach - just returning trips data directly without sharing info
+        return tripsData.map(trip => ({
+          ...trip,
+          isShared: false,
+          shareCount: 0
+        }));
+      } catch (error) {
+        console.error('Error in myTrips query:', error);
+        throw error;
       }
-      
-      // Always annotate trips with sharing information (even if there are no shares)
-      return tripsData.map(trip => ({
-        ...trip,
-        isShared: sharesMap[trip.trip_id] > 0,
-        shareCount: sharesMap[trip.trip_id] || 0
-      }));
     },
     enabled: !!session // Only run query if user is authenticated
   });
@@ -152,17 +154,25 @@ const MyTrips = () => {
     }
   };
 
-  // Filter trips based on search query
-  const filteredMyTrips = myTrips?.filter(trip =>
-    trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  console.log('myTrips data for filtering:', myTrips);
+  
+  // Filter trips based on search query (with additional null checks)
+  const filteredMyTrips = myTrips && Array.isArray(myTrips) 
+    ? myTrips.filter(trip => 
+        trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+  
+  console.log('Filtered my trips:', filteredMyTrips?.length);
 
   // Filter shared trips, ensuring we handle undefined trips properly
-  const filteredSharedTrips = sharedTrips
-    .filter(trip => trip && trip.destination) // Filter out any undefined trips
-    .filter(trip =>
-      trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const filteredSharedTrips = sharedTrips && Array.isArray(sharedTrips)
+    ? sharedTrips
+        .filter(trip => trip && trip.destination) // Filter out any undefined trips
+        .filter(trip =>
+          trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    : [];
 
   if (!session) {
     return null; // Don't render anything while redirecting
