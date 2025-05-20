@@ -31,7 +31,7 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
         }, 
         () => {
           console.log('Reservation changed, refreshing data...');
-          queryClient.invalidateQueries({queryKey: ['reservations', dayId]});
+          queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]});
           queryClient.invalidateQueries({queryKey: ['trip', tripId]});
         }
       )

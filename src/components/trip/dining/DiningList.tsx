@@ -29,12 +29,14 @@ interface DiningListProps {
   }>;
   formatTime: (time?: string) => string;
   dayId: string;
+  className?: string;
 }
 
 const DiningList: React.FC<DiningListProps> = ({
   reservations,
   formatTime,
   dayId,
+  className
 }) => {
   const { tripId } = useParams<{ tripId: string }>();
   const queryClient = useQueryClient();
@@ -124,8 +126,8 @@ const DiningList: React.FC<DiningListProps> = ({
       // Invalidate both the specific day's reservations and the trip data
       // Include tripId to ensure proper refresh for shared trips
       await Promise.all([
-        queryClient.invalidateQueries(['reservations', dayId, tripId]),
-        queryClient.invalidateQueries(['trip', tripId])
+        queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}),
+        queryClient.invalidateQueries({queryKey: ['trip', tripId]})
       ]);
 
       toast.success('Reservation deleted successfully');
@@ -142,7 +144,7 @@ const DiningList: React.FC<DiningListProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${className || ''}`}>
       {/* List of Reservations */}
       <div className="space-y-3">
         {[...reservations]
