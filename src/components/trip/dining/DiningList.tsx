@@ -57,20 +57,35 @@ const DiningList: React.FC<DiningListProps> = ({
       };
 
       if (editingReservation) {
+        // For updates, explicitly include trip_id to help with RLS policies
         const { error } = await supabase
           .from('reservations')
-          .update(processedData)
+          .update({
+            ...processedData,
+            trip_id: tripId // Make sure trip_id is included for RLS
+          })
           .eq('id', editingReservation);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error details:', error);
+          throw error;
+        }
         toast.success('Reservation updated successfully');
         await queryClient.invalidateQueries(['reservations', dayId]); 
       } else {
+        // For inserts, explicitly include both day_id and trip_id for RLS policies
         const { error } = await supabase
           .from('reservations')
-          .insert([processedData]);
+          .insert([{
+            ...processedData,
+            day_id: dayId,
+            trip_id: tripId // Make sure trip_id is included for RLS
+          }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error details:', error);
+          throw error;
+        }
         await queryClient.invalidateQueries(['reservations', dayId]); 
         toast.success('Reservation added successfully');
       }
