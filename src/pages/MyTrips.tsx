@@ -71,7 +71,17 @@ const MyTrips = () => {
   });
   
   // Extract actual trip data from the shared trips result
-  const sharedTrips = sharedTripsResult?.data?.map(share => share.trips) || [];
+  const sharedTrips = sharedTripsResult?.data?.map(share => {
+    // Make sure we correctly map the trip data from the response
+    if (share && share.trips) {
+      return {
+        ...share.trips,
+        isShared: true,
+        sharedById: share.shared_by_user_id
+      };
+    }
+    return null;
+  }).filter(trip => trip !== null) || [];
 
   const handleHideTrip = async (tripId: string) => {
     try {
@@ -225,7 +235,7 @@ const MyTrips = () => {
                           ...trip,
                           cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
-                        isShared={true}
+                        // The trip already has isShared & sharedById properties from our earlier transformation
                       />
                     ))}
                   </div>
