@@ -143,12 +143,13 @@ export const getSharedTrips = async () => {
       return { data: [], error: new Error('Not authenticated') };
     }
 
-    // Get all trips shared with the user's email
+    // Get all trips shared with the user's email, including owner profile info
     const { data, error } = await supabase
       .from('trip_shares')
       .select(`
         *,
-        trips (*)
+        trips (*),
+        owner:shared_by_user_id (id, email, full_name)
       `)
       .eq('shared_with_email', user.email)
       .order('created_at', { ascending: false });
@@ -163,7 +164,9 @@ export const getSharedTrips = async () => {
       ...share,
       trips: share.trips || null,
       shared_with_email: share.shared_with_email,
-      shared_by_user_id: share.shared_by_user_id
+      shared_by_user_id: share.shared_by_user_id,
+      owner_name: share.owner?.full_name || '',
+      owner_email: share.owner?.email || ''
     })) as SharedTripWithDetails[];
 
     return { data: processedData || [], error: null };
