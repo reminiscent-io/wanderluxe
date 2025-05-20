@@ -178,7 +178,11 @@ const DiningList: React.FC<DiningListProps> = ({
         onOpenChange={setIsDialogOpen}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
-        editingReservation={editingReservation ? reservations.find(r => r.id === editingReservation) : undefined}
+        editingReservation={
+          editingReservation 
+            ? reservations.find(r => r.id === editingReservation) 
+            : { day_id: dayId, trip_id: tripId } // Include day_id for new reservations
+        }
         title={editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
         tripId={tripId} 
       />
