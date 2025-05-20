@@ -71,7 +71,7 @@ const DiningList: React.FC<DiningListProps> = ({
           throw error;
         }
         toast.success('Reservation updated successfully');
-        await queryClient.invalidateQueries(['reservations', dayId]); 
+        await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
       } else {
         // For inserts, explicitly include both day_id and trip_id for RLS policies
         const { error } = await supabase
@@ -86,7 +86,7 @@ const DiningList: React.FC<DiningListProps> = ({
           console.error('Insert error details:', error);
           throw error;
         }
-        await queryClient.invalidateQueries(['reservations', dayId]); 
+        await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
         toast.success('Reservation added successfully');
       }
 
@@ -122,9 +122,10 @@ const DiningList: React.FC<DiningListProps> = ({
       }
 
       // Invalidate both the specific day's reservations and the trip data
+      // Include tripId to ensure proper refresh for shared trips
       await Promise.all([
-        queryClient.invalidateQueries(['reservations', dayId]),
-        queryClient.invalidateQueries(['trip'])
+        queryClient.invalidateQueries(['reservations', dayId, tripId]),
+        queryClient.invalidateQueries(['trip', tripId])
       ]);
 
       toast.success('Reservation deleted successfully');
