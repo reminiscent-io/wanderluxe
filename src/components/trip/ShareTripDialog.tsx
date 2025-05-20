@@ -42,6 +42,25 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
 
   useEffect(() => {
     setHasSendGridKey(checkSendGridApiKey());
+    
+    // Fetch current user info
+    const getUserInfo = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', data.user.id)
+          .single();
+          
+        setCurrentUser({
+          fullName: profileData?.full_name || null,
+          email: data.user.email || null
+        });
+      }
+    };
+    
+    getUserInfo();
   }, []);
 
   // Load existing shares when dialog opens
@@ -240,11 +259,11 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
               <div className="flex items-center gap-2 rounded-md border p-2">
                 <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
                   {/* Display user initials */}
-                  {supabase.auth.user()?.user_metadata?.full_name 
-                    ? supabase.auth.user()?.user_metadata?.full_name.split(' ').map((name:string) => name[0]).join('').toUpperCase().substring(0, 2)
-                    : 'U'}
+                  {currentUser.fullName 
+                    ? currentUser.fullName.split(' ').map(name => name[0]).join('').toUpperCase().substring(0, 2)
+                    : currentUser.email ? currentUser.email[0].toUpperCase() : 'U'}
                 </div>
-                <span className="text-sm">{supabase.auth.user()?.user_metadata?.full_name || supabase.auth.user()?.email}</span>
+                <span className="text-sm">{currentUser.fullName || currentUser.email || 'You'}</span>
               </div>
             </div>
           </div>
