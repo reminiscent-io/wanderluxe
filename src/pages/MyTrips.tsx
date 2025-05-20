@@ -40,7 +40,7 @@ const MyTrips = () => {
   const [showHidden, setShowHidden] = useState(false);
   const [activeTab, setActiveTab] = useState("my-trips");
 
-  // Query for user's own trips
+  // Query for user's own trips with info on whether they're shared
   const { data: myTrips, isLoading: isLoadingMyTrips } = useQuery({
     queryKey: ['my-trips', showHidden],
     queryFn: async () => {
@@ -48,15 +48,45 @@ const MyTrips = () => {
 
       if (!user) throw new Error('No user found');
 
-      const { data, error } = await supabase
+      // First get trips
+      const { data: tripsData, error: tripsError } = await supabase
         .from('trips')
         .select(`*`)
         .eq('user_id', user.id)
         .eq('hidden', showHidden)
         .order('arrival_date', { ascending: true });
 
-      if (error) throw error;
-      return data as Trip[];
+      if (tripsError) throw tripsError;
+      
+      if (!tripsData || tripsData.length === 0) {
+        return [] as Trip[]; // Return empty array if no trips found
+      }
+      
+      // Get which trips are shared with others
+      const tripIds = tripsData.map(trip => trip.trip_id);
+      
+      const { data: sharesData, error: sharesError } = await supabase
+        .from('trip_shares')
+        .select('trip_id, count(*)')
+        .in('trip_id', tripIds)
+        .group('trip_id');
+        
+      // Create a map of shared trip counts
+      const sharesMap: Record<string, number> = {};
+      
+      if (!sharesError && sharesData) {
+        // Create a lookup of trip shares
+        sharesData.forEach(share => {
+          sharesMap[share.trip_id] = share.count;
+        });
+      }
+      
+      // Always annotate trips with sharing information (even if there are no shares)
+      return tripsData.map(trip => ({
+        ...trip,
+        isShared: sharesMap[trip.trip_id] > 0,
+        shareCount: sharesMap[trip.trip_id] || 0
+      }));
     },
     enabled: !!session // Only run query if user is authenticated
   });
