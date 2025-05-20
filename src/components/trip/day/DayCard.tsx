@@ -21,6 +21,7 @@ import TransportationDialog from "@/components/trip/transportation/Transportatio
 import { CURRENCIES } from "@/utils/currencyConstants";
 import DayActivityManager from "./components/DayActivityManager";
 import { useTransportationEvents } from "@/hooks/use-transportation-events";
+import { useReservationsRealtime } from "@/hooks/useReservationsRealtime";
 
 const initialActivity: ActivityFormData = {
   title: "",
@@ -115,27 +116,8 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   }, [originalImageUrl]);
 
-  const { data: reservations } = useQuery({
-    queryKey: ["reservations", id, tripId],
-    queryFn: async () => {
-      // Include the tripId in the query to ensure proper RLS policy evaluation for shared trips
-      const { data, error } = await supabase
-        .from("reservations")
-        .select("*")
-        .eq("day_id", id)
-        .eq("trip_id", tripId) // Add this to ensure proper RLS policy evaluation
-        .order("order_index");
-      
-      if (error) {
-        console.error("Error fetching reservations:", error);
-        throw error;
-      }
-      
-      console.log(`Loaded ${data?.length || 0} reservations for day ${id} in trip ${tripId}`);
-      return data;
-    },
-    enabled: !!id && !!tripId,
-  });
+  // Use the real-time hook for reservations to get instant updates across devices
+  const { reservations } = useReservations(id, tripId);
 
   const { transportations } = useTransportationEvents(tripId);
   // Extract the day of week from the date
