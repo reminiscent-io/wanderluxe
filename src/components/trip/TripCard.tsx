@@ -15,6 +15,8 @@ interface TripCardProps {
     isShared?: boolean; 
     sharedById?: string;
     shareCount?: number;
+    owner_name?: string;
+    owner_email?: string;
   };
   isExample?: boolean;
   onHide?: (tripId: string) => void;
@@ -112,7 +114,13 @@ const TripCard = ({
                 </h3>
                 {isShared && (
                   <Badge variant="outline" className="flex items-center gap-1 border-blue-400 text-blue-500">
-                    <Users className="h-3 w-3" />
+                    {trip.owner_name ? (
+                      <div className="h-5 w-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
+                        {trip.owner_name.split(' ').map(name => name[0]).join('').toUpperCase().substring(0, 2)}
+                      </div>
+                    ) : (
+                      <Users className="h-3 w-3" />
+                    )}
                     <span>Shared with me</span>
                   </Badge>
                 )}
