@@ -8,9 +8,14 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trip } from '@/types/trip';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TripCardProps {
-  trip: Trip & { isShared?: boolean; sharedById?: string };
+  trip: Trip & { 
+    isShared?: boolean; 
+    sharedById?: string;
+    shareCount?: number;
+  };
   isExample?: boolean;
   onHide?: (tripId: string) => void;
   isShared?: boolean;
@@ -25,6 +30,7 @@ const TripCard = ({
   const navigate = useNavigate();
   // Use either the isShared prop or check if the trip object has isShared property
   const tripIsShared = isShared || trip.isShared;
+  const shareCount = trip.shareCount || 0;
 
   const formatDateRange = (trip: Trip) => {
     // If arrival and departure dates are available, use those
@@ -70,6 +76,25 @@ const TripCard = ({
           />
           {/* Updated overlay to match hero section style */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+          
+          {/* Display shared badge in top-right corner with count if owned by user */}
+          {!isShared && tripIsShared && shareCount > 0 && (
+            <div className="absolute top-3 right-3">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="flex items-center gap-1 bg-blue-500/80 border-blue-400 text-white backdrop-blur-sm">
+                      <Users className="h-3 w-3" />
+                      <span>Shared with {shareCount}</span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>This trip is shared with {shareCount} {shareCount === 1 ? 'person' : 'people'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
         <CardContent className="p-6">
           <div className="flex justify-between items-start">
@@ -78,10 +103,10 @@ const TripCard = ({
                 <h3 className="text-xl font-semibold text-gray-900">
                   {trip.destination}
                 </h3>
-                {tripIsShared && (
+                {isShared && (
                   <Badge variant="outline" className="flex items-center gap-1 border-blue-400 text-blue-500">
                     <Users className="h-3 w-3" />
-                    <span>Shared</span>
+                    <span>Shared with me</span>
                   </Badge>
                 )}
               </div>
@@ -90,7 +115,7 @@ const TripCard = ({
               </p>
             </div>
             
-            {!isExample && !tripIsShared && onHide && (
+            {!isExample && !isShared && onHide && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -123,7 +148,7 @@ const TripCard = ({
               </AlertDialog>
             )}
             
-            {!isExample && tripIsShared && (
+            {isShared && (
               <div className="flex items-center">
                 <Share2 className="h-5 w-5 text-blue-500" />
               </div>
