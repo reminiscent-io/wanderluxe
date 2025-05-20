@@ -47,10 +47,11 @@ const DiningList: React.FC<DiningListProps> = ({
     setIsSubmitting(true);
     try {
       console.log("DiningList processing data with tripId:", tripId);
+      // Make sure we include all necessary fields for trip sharing to work
       const processedData = {
         ...data,
         day_id: dayId,
-        trip_id: tripId,
+        trip_id: tripId, // This is critical for proper permission handling in shared trips
         order_index: reservations.length,
         reservation_time: data.reservation_time || null
       };

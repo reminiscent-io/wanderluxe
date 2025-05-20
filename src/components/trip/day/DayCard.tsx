@@ -116,17 +116,25 @@ const DayCard: React.FC<DayCardProps> = ({
   }, [originalImageUrl]);
 
   const { data: reservations } = useQuery({
-    queryKey: ["reservations", id],
+    queryKey: ["reservations", id, tripId],
     queryFn: async () => {
+      // Include the tripId in the query to ensure proper RLS policy evaluation for shared trips
       const { data, error } = await supabase
         .from("reservations")
         .select("*")
         .eq("day_id", id)
+        .eq("trip_id", tripId) // Add this to ensure proper RLS policy evaluation
         .order("order_index");
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching reservations:", error);
+        throw error;
+      }
+      
+      console.log(`Loaded ${data?.length || 0} reservations for day ${id} in trip ${tripId}`);
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && !!tripId,
   });
 
   const { transportations } = useTransportationEvents(tripId);
