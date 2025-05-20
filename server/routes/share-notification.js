@@ -16,6 +16,11 @@ if (process.env.SENDGRID_API_KEY) {
 
 const router = express.Router();
 
+// Health check for notification endpoint
+router.get('/api/send-share-notification/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Share notification endpoint
 router.post('/api/send-share-notification', async (req, res) => {
   try {

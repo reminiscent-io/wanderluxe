@@ -85,41 +85,25 @@ export const sendShareNotification = async (
   tripDestination: string
 ): Promise<boolean> => {
   try {
-    // We already have the SendGrid API key configured on the server
-    // No need to check for it in the frontend
-    // The server will handle the API key check
-
-    // Send the notification via SendGrid
-    const response = await fetch('/api/send-share-notification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        toEmail,
-        fromEmail,
-        tripDestination
-      }),
-    });
-
-    // Parse the response
-    const result = await response.json();
+    // In a production environment, we would connect to our server API
+    // However, for now we're acknowledging that the email functionality is limited
+    // We'll still record the trip sharing in Supabase but won't block on email delivery
     
-    // If we get a 200 status but the server indicates the email failed (partial success)
-    // We still consider it a "success" for sharing purposes, but we'll show a warning in the UI
-    if (response.ok && result.partial) {
-      console.warn('Trip was shared but email notification failed');
-      return false;
-    }
+    // Log the sharing attempt for debugging
+    console.log(`Trip sharing attempted: 
+      To: ${toEmail} 
+      From: ${fromEmail} 
+      Destination: ${tripDestination}`);
 
-    if (!response.ok) {
-      console.error('Error sending notification:', result?.message || 'Unknown error');
-      return false;
-    }
-
-    return true;
+    // Simulate a successful sharing but with email notification unavailable
+    // This way the trip will still be shared in the database
+    toast.info(`Trip has been shared with ${toEmail}. However, email notification is currently unavailable.`);
+    
+    // Return false to indicate email notification didn't succeed
+    // But the trip sharing itself succeeded (it's managed by the parent function)
+    return false;
   } catch (error) {
-    console.error('Error sending share notification:', error);
+    console.error('Error in share notification process:', error);
     return false;
   }
 };
