@@ -223,16 +223,19 @@ const MyTrips = () => {
               <>
                 {filteredMyTrips && filteredMyTrips.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredMyTrips.map((trip) => (
-                      <TripCard
-                        key={trip.trip_id}
-                        trip={{
-                          ...trip,
-                          cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                        }}
-                        onHide={() => handleHideTrip(trip.trip_id)}
-                      />
-                    ))}
+                    {filteredMyTrips.map((trip) => {
+                      console.log('Rendering trip card for:', trip.destination);
+                      return (
+                        <TripCard
+                          key={trip.trip_id}
+                          trip={{
+                            ...trip,
+                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          }}
+                          onHide={() => handleHideTrip(trip.trip_id)}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12">
