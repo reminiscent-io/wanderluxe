@@ -28,6 +28,13 @@ const TripCard = ({
   isShared
 }: TripCardProps) => {
   const navigate = useNavigate();
+  console.log('TripCard rendering with trip:', {
+    tripId: trip.trip_id,
+    destination: trip.destination,
+    isSharedProp: isShared,
+    tripIsSharedProp: trip.isShared,
+    shareCount: trip.shareCount
+  });
   // Use either the isShared prop or check if the trip object has isShared property
   const tripIsShared = isShared || trip.isShared;
   const shareCount = trip.shareCount || 0;
