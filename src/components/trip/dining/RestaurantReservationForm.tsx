@@ -67,11 +67,17 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       console.error('Trip ID is required');
       return;
     }
+    
+    console.log('Processing form submission with trip_id:', effectiveTripId);
+    
+    // Ensure both day_id and trip_id are included for RLS policy requirements
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: effectiveTripId
+      trip_id: effectiveTripId, // Make sure trip_id is explicitly set
+      day_id: defaultValues?.day_id // Preserve day_id if editing existing reservation
     };
+    
     onSubmit(processedData);
   });
 
