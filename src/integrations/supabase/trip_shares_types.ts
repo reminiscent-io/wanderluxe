@@ -23,4 +23,6 @@ export interface SharedTripWithDetails extends TripShare {
     arrival_date: string | null;
     departure_date: string | null;
   };
+  owner_name?: string;
+  owner_email?: string;
 }
