@@ -143,13 +143,12 @@ export const getSharedTrips = async () => {
       return { data: [], error: new Error('Not authenticated') };
     }
 
-    // Get all trips shared with the user's email, including owner profile info
+    // Get all trips shared with the user's email
     const { data, error } = await supabase
       .from('trip_shares')
       .select(`
         *,
-        trips (*),
-        owner:shared_by_user_id (id, email, full_name)
+        trips (*)
       `)
       .eq('shared_with_email', user.email)
       .order('created_at', { ascending: false });
@@ -159,14 +158,21 @@ export const getSharedTrips = async () => {
       return { data: [], error };
     }
 
-    // Transform the data to match the expected structure
-    const processedData = data?.map(share => ({
-      ...share,
-      trips: share.trips || null,
-      shared_with_email: share.shared_with_email,
-      shared_by_user_id: share.shared_by_user_id,
-      owner_name: share.owner?.full_name || '',
-      owner_email: share.owner?.email || ''
+    // Get owner information for each shared trip
+    const processedData = await Promise.all(data.map(async (share) => {
+      // Fetch the owner's profile information
+      const { data: ownerData } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', share.shared_by_user_id)
+        .single();
+        
+      return {
+        ...share,
+        trips: share.trips || null,
+        owner_name: ownerData?.full_name || '',
+        owner_email: ownerData?.email || ''
+      };
     })) as SharedTripWithDetails[];
 
     return { data: processedData || [], error: null };

@@ -35,6 +35,10 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   const [isLoading, setIsLoading] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
   const [hasSendGridKey, setHasSendGridKey] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{fullName: string | null, email: string | null}>({
+    fullName: null,
+    email: null
+  });
 
   useEffect(() => {
     setHasSendGridKey(checkSendGridApiKey());
@@ -229,6 +233,21 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
               </div>
             </div>
           )}
+          
+          <div className="border-t pt-4 mt-2">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">Trip owner:</p>
+              <div className="flex items-center gap-2 rounded-md border p-2">
+                <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
+                  {/* Display user initials */}
+                  {supabase.auth.user()?.user_metadata?.full_name 
+                    ? supabase.auth.user()?.user_metadata?.full_name.split(' ').map((name:string) => name[0]).join('').toUpperCase().substring(0, 2)
+                    : 'U'}
+                </div>
+                <span className="text-sm">{supabase.auth.user()?.user_metadata?.full_name || supabase.auth.user()?.email}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <DialogFooter className="flex sm:justify-between">
