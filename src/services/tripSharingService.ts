@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { TripShare, SharedTripWithDetails } from '@/integrations/supabase/trip_shares_types';
 
 /**
  * Share a trip with a specific email address
@@ -9,75 +10,69 @@ import { toast } from 'sonner';
  */
 export const shareTrip = async (tripId: string, email: string, tripDestination: string): Promise<boolean> => {
   try {
-    // Check if trip exists
+    // Check if the trip exists and the current user has access to it
     const { data: tripData, error: tripError } = await supabase
       .from('trips')
-      .select('trip_id, user_id, destination')
+      .select('*')
       .eq('trip_id', tripId)
       .single();
 
     if (tripError || !tripData) {
-      console.error('Trip not found:', tripError);
-      throw new Error('Trip not found');
+      console.error('Error checking trip access:', tripError);
+      toast.error("Couldn't verify trip access");
+      return false;
     }
 
-    // Get current user
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('Not authenticated');
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('You must be logged in to share trips');
+      return false;
     }
 
-    // Check if user is the owner of the trip
-    if (tripData.user_id !== session.user.id) {
-      // Check if the user has been shared this trip
-      const { data: shareData, error: shareCheckError } = await supabase
-        .from('trip_shares')
-        .select('id')
-        .eq('trip_id', tripId)
-        .eq('shared_with_email', session.user.email)
-        .single();
-
-      if (shareCheckError || !shareData) {
-        throw new Error('You do not have permission to share this trip');
-      }
-    }
-
-    // Check if this trip is already shared with this email
-    const { data: existingShare, error: existingShareError } = await supabase
+    // Check if already shared with this email
+    const { data: existingShare } = await supabase
       .from('trip_shares')
-      .select('id')
+      .select('*')
       .eq('trip_id', tripId)
-      .eq('shared_with_email', email)
-      .single();
+      .eq('shared_with_email', email.toLowerCase().trim())
+      .maybeSingle();
 
     if (existingShare) {
-      // Already shared, just return success
+      toast.info('This trip is already shared with this email address');
       return true;
     }
 
-    // Create share
+    // Create the share record
     const { error: shareError } = await supabase
       .from('trip_shares')
       .insert({
         trip_id: tripId,
-        shared_by_user_id: session.user.id,
-        shared_with_email: email,
-        created_at: new Date().toISOString(),
+        shared_by_user_id: user.id,
+        shared_with_email: email.toLowerCase().trim()
       });
 
     if (shareError) {
       console.error('Error sharing trip:', shareError);
-      throw shareError;
+      toast.error('Failed to share the trip. Please try again.');
+      return false;
     }
 
-    // Send email notification directly using SendGrid API
-    await sendShareNotification(email, tripDestination, session.user.email || '');
+    // Send email notification
+    const notificationSent = await sendShareNotification(email, user.email || 'A WanderLuxe user', tripDestination);
+    
+    // Even if notification fails, the trip is still shared in the database
+    if (!notificationSent) {
+      toast.warning('Trip shared, but email notification could not be sent');
+    } else {
+      toast.success('Trip shared successfully and notification sent');
+    }
 
     return true;
   } catch (error) {
-    console.error('Error in shareTrip:', error);
-    throw error;
+    console.error('Error sharing trip:', error);
+    toast.error('An unexpected error occurred');
+    return false;
   }
 };
 
@@ -85,56 +80,72 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
  * Send an email notification to a user that a trip has been shared with them
  */
 export const sendShareNotification = async (
-  recipientEmail: string, 
-  tripDestination: string,
-  sharedByEmail: string
-): Promise<void> => {
+  toEmail: string,
+  fromEmail: string,
+  tripDestination: string
+): Promise<boolean> => {
   try {
-    // Use SendGrid directly with the API key from environment
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    // We already have the SendGrid API key configured on the server
+    // No need to check for it in the frontend
+    // The server will handle the API key check
+
+    // Send the notification via SendGrid
+    const response = await fetch('/api/send-share-notification', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_SENDGRID_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        personalizations: [
-          {
-            to: [{ email: recipientEmail }],
-            subject: `Trip to ${tripDestination} has been shared with you`,
-          },
-        ],
-        from: { email: 'noreply@yourtravelapp.com', name: 'Travel Planner' },
-        content: [
-          {
-            type: 'text/html',
-            value: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2>A Trip Has Been Shared With You</h2>
-                <p><strong>${sharedByEmail}</strong> has shared their trip to <strong>${tripDestination}</strong> with you.</p>
-                <p>Sign in to view and collaborate on planning this exciting trip!</p>
-                <div style="margin: 25px 0;">
-                  <a href="${window.location.origin}" style="background-color: #4a6855; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                    View Trip
-                  </a>
-                </div>
-                <p style="color: #666; font-size: 14px;">If you don't have an account yet, you can sign up with this email address to access the shared trip.</p>
-              </div>
-            `,
-          },
-        ],
+        toEmail,
+        fromEmail,
+        tripDestination
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('SendGrid API error:', errorData);
-      throw new Error(`Failed to send email: ${response.statusText}`);
+    // Parse the response
+    const result = await response.json();
+    
+    // If we get a 200 status but the server indicates the email failed (partial success)
+    // We still consider it a "success" for sharing purposes, but we'll show a warning in the UI
+    if (response.ok && result.partial) {
+      console.warn('Trip was shared but email notification failed');
+      return false;
     }
+
+    if (!response.ok) {
+      console.error('Error sending notification:', result?.message || 'Unknown error');
+      return false;
+    }
+
+    return true;
   } catch (error) {
-    console.error('Error in sendShareNotification:', error);
-    // Don't throw here, we don't want to fail the share if just the email fails
-    // Just log the error
+    console.error('Error sending share notification:', error);
+    return false;
+  }
+};
+
+/**
+ * Remove a trip share
+ */
+export const removeTripShare = async (shareId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('trip_shares')
+      .delete()
+      .eq('id', shareId);
+
+    if (error) {
+      console.error('Error removing trip share:', error);
+      toast.error('Failed to remove the share');
+      return false;
+    }
+
+    toast.success('Trip access removed');
+    return true;
+  } catch (error) {
+    console.error('Error removing trip share:', error);
+    toast.error('An unexpected error occurred');
+    return false;
   }
 };
 
@@ -143,32 +154,60 @@ export const sendShareNotification = async (
  */
 export const getSharedTrips = async () => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session || !session.user.email) {
-      return [];
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { data: [], error: new Error('Not authenticated') };
     }
 
-    // Get all trips shared with this email
-    const { data: sharedTrips, error } = await supabase
+    // Get all trips shared with the user's email
+    const { data, error } = await supabase
       .from('trip_shares')
       .select(`
-        id,
-        trip_id,
-        shared_by_user_id,
-        created_at,
-        trips:trip_id(*)
+        *,
+        trips (*)
       `)
-      .eq('shared_with_email', session.user.email);
+      .eq('shared_with_email', user.email)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching shared trips:', error);
-      throw error;
+      return { data: [], error };
     }
 
-    return sharedTrips;
+    // Transform the data to match the expected structure
+    const processedData = data?.map(share => ({
+      ...share,
+      trips: share.trips || null,
+      shared_with_email: share.shared_with_email,
+      shared_by_user_id: share.shared_by_user_id
+    })) as SharedTripWithDetails[];
+
+    return { data: processedData || [], error: null };
   } catch (error) {
-    console.error('Error in getSharedTrips:', error);
-    throw error;
+    console.error('Error fetching shared trips:', error);
+    return { data: [], error };
+  }
+};
+
+/**
+ * Get all users who have access to a specific trip
+ */
+export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('trip_shares')
+      .select('*')
+      .eq('trip_id', tripId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching trip shares:', error);
+      return [];
+    }
+
+    return data as TripShare[];
+  } catch (error) {
+    console.error('Error fetching trip shares:', error);
+    return [];
   }
 };
