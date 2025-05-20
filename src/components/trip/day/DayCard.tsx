@@ -21,6 +21,7 @@ import TransportationDialog from "@/components/trip/transportation/Transportatio
 import { CURRENCIES } from "@/utils/currencyConstants";
 import DayActivityManager from "./components/DayActivityManager";
 import { useTransportationEvents } from "@/hooks/use-transportation-events";
+import { useReservationsRealtime } from "@/hooks/useReservationsRealtime";
 import { useReservations } from "@/hooks/use-reservations";
 
 const initialActivity: ActivityFormData = {
@@ -117,7 +118,7 @@ const DayCard: React.FC<DayCardProps> = ({
   }, [originalImageUrl]);
 
   // Use the real-time hook for reservations to get instant updates across devices
-  const { reservations } = useReservations(id, tripId);
+  const { reservations } = useReservationsRealtime(id, tripId);
 
   const { transportations } = useTransportationEvents(tripId);
   // Extract the day of week from the date
