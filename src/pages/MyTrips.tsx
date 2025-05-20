@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
+import { getSharedTrips } from '@/services/tripSharingService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const MyTrips = () => {
   const navigate = useNavigate();
@@ -36,8 +38,10 @@ const MyTrips = () => {
   }, [session, navigate]);
 
   const [showHidden, setShowHidden] = useState(false);
+  const [activeTab, setActiveTab] = useState("my-trips");
 
-  const { data: trips, isLoading } = useQuery({
+  // Query for user's own trips
+  const { data: myTrips, isLoading: isLoadingMyTrips } = useQuery({
     queryKey: ['my-trips', showHidden],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,6 +60,18 @@ const MyTrips = () => {
     },
     enabled: !!session // Only run query if user is authenticated
   });
+  
+  // Query for trips shared with the user
+  const { data: sharedTripsResult, isLoading: isLoadingSharedTrips } = useQuery({
+    queryKey: ['shared-trips'],
+    queryFn: async () => {
+      return await getSharedTrips();
+    },
+    enabled: !!session // Only run query if user is authenticated
+  });
+  
+  // Extract actual trip data from the shared trips result
+  const sharedTrips = sharedTripsResult?.data?.map(share => share.trips) || [];
 
   const handleHideTrip = async (tripId: string) => {
     try {
@@ -96,9 +112,17 @@ const MyTrips = () => {
     }
   };
 
-  const filteredTrips = trips?.filter(trip =>
+  // Filter trips based on search query
+  const filteredMyTrips = myTrips?.filter(trip =>
     trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Filter shared trips, ensuring we handle undefined trips properly
+  const filteredSharedTrips = sharedTrips
+    .filter(trip => trip && trip.destination) // Filter out any undefined trips
+    .filter(trip =>
+      trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   if (!session) {
     return null; // Don't render anything while redirecting
@@ -123,40 +147,97 @@ const MyTrips = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        
+        <Tabs
+          defaultValue="my-trips"
+          className="mb-8"
+          value={activeTab}
+          onValueChange={setActiveTab}
+        >
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+            <TabsTrigger value="my-trips">My Trips</TabsTrigger>
+            <TabsTrigger value="shared-trips">Shared With Me</TabsTrigger>
+          </TabsList>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-64 bg-gray-100 rounded-lg animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTrips?.map((trip) => (
-              <TripCard
-                key={trip.trip_id}
-                trip={{
-                  ...trip,
-                  cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                }}
-                onHide={() => handleHideTrip(trip.trip_id)}
-              />
-            ))}
-          </div>
-        )}
+          <TabsContent value="my-trips">
+            {isLoadingMyTrips ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-64 bg-gray-100 rounded-lg animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : (
+              <>
+                {filteredMyTrips && filteredMyTrips.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMyTrips.map((trip) => (
+                      <TripCard
+                        key={trip.trip_id}
+                        trip={{
+                          ...trip,
+                          cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                        }}
+                        onHide={() => handleHideTrip(trip.trip_id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-earth-500 mb-4">You haven't created any trips yet</p>
+                    <Button onClick={() => navigate('/create-trip')}>Create Your First Trip</Button>
+                  </div>
+                )}
+              </>
+            )}
 
-        <div className="flex justify-center mt-12">
-          <Button
-            variant="ghost"
-            onClick={() => setShowHidden(!showHidden)}
-            className="text-earth-500 hover:text-earth-600"
-          >
-            {showHidden ? 'Show Active Trips' : 'Show Hidden Trips'}
-          </Button>
-        </div>
+            <div className="flex justify-center mt-12">
+              <Button
+                variant="ghost"
+                onClick={() => setShowHidden(!showHidden)}
+                className="text-earth-500 hover:text-earth-600"
+              >
+                {showHidden ? 'Show Active Trips' : 'Show Hidden Trips'}
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="shared-trips">
+            {isLoadingSharedTrips ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-64 bg-gray-100 rounded-lg animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : (
+              <>
+                {filteredSharedTrips && filteredSharedTrips.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredSharedTrips.map((trip) => (
+                      <TripCard
+                        key={trip.trip_id}
+                        trip={{
+                          ...trip,
+                          cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                        }}
+                        isShared={true}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-earth-500">No trips have been shared with you yet</p>
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
 
         <AlertDialog
           open={isDeleteDialogOpen}

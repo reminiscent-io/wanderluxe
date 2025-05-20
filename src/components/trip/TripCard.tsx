@@ -1,25 +1,30 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { EyeOff } from 'lucide-react';
+import { EyeOff, Share2, Users } from 'lucide-react';
 import { format, getYear, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trip } from '@/types/trip';
+import { Badge } from '@/components/ui/badge';
 
 interface TripCardProps {
-  trip: Trip;
+  trip: Trip & { isShared?: boolean; sharedById?: string };
   isExample?: boolean;
-  onHide: (tripId: string) => void;
+  onHide?: (tripId: string) => void;
+  isShared?: boolean;
 }
 
 const TripCard = ({
   trip,
   isExample = false,
-  onHide
+  onHide,
+  isShared
 }: TripCardProps) => {
   const navigate = useNavigate();
+  // Use either the isShared prop or check if the trip object has isShared property
+  const tripIsShared = isShared || trip.isShared;
 
   const formatDateRange = (trip: Trip) => {
     // If arrival and departure dates are available, use those
@@ -73,13 +78,19 @@ const TripCard = ({
                 <h3 className="text-xl font-semibold text-gray-900">
                   {trip.destination}
                 </h3>
+                {tripIsShared && (
+                  <Badge variant="outline" className="flex items-center gap-1 border-blue-400 text-blue-500">
+                    <Users className="h-3 w-3" />
+                    <span>Shared</span>
+                  </Badge>
+                )}
               </div>
               <p className="text-sm text-gray-500 mt-2">
                 {formatDateRange(trip)}
               </p>
             </div>
             
-            {!isExample && (
+            {!isExample && !tripIsShared && onHide && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -110,6 +121,12 @@ const TripCard = ({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            )}
+            
+            {!isExample && tripIsShared && (
+              <div className="flex items-center">
+                <Share2 className="h-5 w-5 text-blue-500" />
+              </div>
             )}
           </div>
         </CardContent>

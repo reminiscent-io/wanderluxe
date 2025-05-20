@@ -1,84 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
+import {
+  Dialog,
+  DialogContent,
   DialogDescription,
-  DialogFooter
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Share2, PlusCircle, X, Mail, AlertCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Loader, Plus, Trash2, Share2, AlertTriangle } from "lucide-react";
-import { TripShare } from '@/integrations/supabase/trip_shares_types';
-import { shareTrip } from '@/services/tripSharingService';
+import { shareTrip, getTripShares, removeTripShare } from '@/services/tripSharingService';
+import { supabase } from '@/integrations/supabase/client';
 import { checkSendGridApiKey } from '@/utils/env';
+import { TripShare } from '@/integrations/supabase/trip_shares_types';
 
 interface ShareTripDialogProps {
   tripId: string;
   tripDestination: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const ShareTripDialog: React.FC<ShareTripDialogProps> = ({
-  tripId,
-  tripDestination,
-  open,
-  onOpenChange
-}) => {
+const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareTripDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Use controlled state if provided by parent
+  const dialogOpen = open !== undefined ? open : isOpen;
+  const setDialogOpen = onOpenChange || setIsOpen;
   const [emails, setEmails] = useState<string[]>(['']);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasSendGridKey, setHasSendGridKey] = useState<boolean>(false);
-  const { user } = useAuth();
+  const [hasSendGridKey, setHasSendGridKey] = useState(false);
 
   useEffect(() => {
-    // Check if SendGrid API key is available
-    const hasApiKey = import.meta.env.VITE_SENDGRID_API_KEY ? true : false;
-    setHasSendGridKey(hasApiKey);
+    setHasSendGridKey(checkSendGridApiKey());
   }, []);
-  
-  React.useEffect(() => {
-    if (open) {
+
+  // Load existing shares when dialog opens
+  useEffect(() => {
+    if (dialogOpen) {
       fetchExistingShares();
     }
-  }, [open, tripId]);
+  }, [dialogOpen]);
 
   const fetchExistingShares = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('trip_shares')
-        .select('*')
-        .eq('trip_id', tripId);
-
-      if (error) throw error;
-      setExistingShares(data || []);
+      const shares = await getTripShares(tripId);
+      setExistingShares(shares);
     } catch (error) {
       console.error('Error fetching existing shares:', error);
-      toast.error('Failed to load shared users');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleAddEmail = () => {
-    setEmails([...emails, '']);
-  };
-
-  const handleRemoveEmail = (index: number) => {
-    const newEmails = [...emails];
-    newEmails.splice(index, 1);
-    if (newEmails.length === 0) {
-      setEmails(['']);
-    } else {
-      setEmails(newEmails);
     }
   };
 
@@ -88,166 +65,186 @@ export const ShareTripDialog: React.FC<ShareTripDialogProps> = ({
     setEmails(newEmails);
   };
 
-  const handleRemoveShare = async (shareId: string) => {
-    try {
-      const { error } = await supabase
-        .from('trip_shares')
-        .delete()
-        .eq('id', shareId);
+  const addEmailField = () => {
+    setEmails([...emails, '']);
+  };
 
-      if (error) throw error;
-      
-      setExistingShares(existingShares.filter(share => share.id !== shareId));
-      toast.success('User removed from trip sharing');
-    } catch (error) {
-      console.error('Error removing share:', error);
-      toast.error('Failed to remove user from sharing');
+  const removeEmailField = (index: number) => {
+    if (emails.length === 1) {
+      setEmails(['']);
+    } else {
+      const newEmails = [...emails];
+      newEmails.splice(index, 1);
+      setEmails(newEmails);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateEmails = () => {
+    // Basic email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const nonEmptyEmails = emails.filter(email => email.trim() !== '');
+    
+    if (nonEmptyEmails.length === 0) {
+      toast.error('Please enter at least one email address');
+      return false;
+    }
+
+    for (const email of nonEmptyEmails) {
+      if (!emailRegex.test(email)) {
+        toast.error(`Invalid email format: ${email}`);
+        return false;
+      }
+    }
+
+    return nonEmptyEmails;
+  };
+
+  const handleSave = async () => {
+    const validEmails = validateEmails();
+    if (!validEmails) return;
+
     setIsSubmitting(true);
-
+    
     try {
-      // Filter out empty emails
-      const validEmails = emails.filter(email => email.trim() !== '');
+      let successCount = 0;
       
-      if (validEmails.length === 0) {
-        toast.error('Please enter at least one valid email address');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Validate email format
-      const invalidEmails = validEmails.filter(email => !isValidEmail(email));
-      if (invalidEmails.length > 0) {
-        toast.error(`Invalid email format: ${invalidEmails.join(', ')}`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Share trip with each email
       for (const email of validEmails) {
-        await shareTrip(tripId, email.trim(), tripDestination);
+        const success = await shareTrip(tripId, email, tripDestination);
+        if (success) {
+          successCount++;
+        }
       }
-
-      toast.success('Trip shared successfully!');
-      setEmails(['']);
-      fetchExistingShares();
+      
+      if (successCount > 0) {
+        toast.success(`Trip shared with ${successCount} ${successCount === 1 ? 'person' : 'people'}`);
+        // Reset form
+        setEmails(['']);
+        // Refresh the list of shares
+        fetchExistingShares();
+      }
     } catch (error) {
       console.error('Error sharing trip:', error);
-      toast.error('Failed to share trip. Please try again.');
+      toast.error('Failed to share the trip. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isValidEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const handleRemoveShare = async (shareId: string) => {
+    try {
+      const success = await removeTripShare(shareId);
+      if (success) {
+        fetchExistingShares();
+      }
+    } catch (error) {
+      console.error('Error removing share:', error);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="flex items-center gap-2">
+          <Share2 className="h-4 w-4" />
+          Share
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Share Trip</DialogTitle>
           <DialogDescription>
-            Share your trip with friends or family by email
+            Enter email addresses of people you'd like to share this trip with.
           </DialogDescription>
         </DialogHeader>
+        
+        {!hasSendGridKey && (
+          <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-50 text-yellow-800 mb-4">
+            <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium">Email notifications are disabled</p>
+              <p>Recipients will still have access to the trip but won't be notified by email.</p>
+            </div>
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {!hasSendGridKey && (
-              <div className="flex items-center space-x-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
-                <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0" />
-                <div className="text-sm">
-                  <p>Email notifications are currently unavailable.</p>
-                  <p>Users will still be able to access shared trips when they sign in with the shared email.</p>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              {emails.map((email, index) => (
-                <div key={index} className="flex items-center space-x-2">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Email addresses</p>
+            
+            {emails.map((email, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    type="email"
+                    placeholder="email@example.com"
                     value={email}
                     onChange={(e) => handleEmailChange(index, e.target.value)}
-                    placeholder="email@example.com"
-                    className="flex-1"
+                    className="pl-9"
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveEmail(index)}
-                    disabled={emails.length === 1}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
-              ))}
-              
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={handleAddEmail}
-              >
-                <Plus className="h-4 w-4 mr-2" /> Add Another Email
-              </Button>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center py-4">
-                <Loader className="h-6 w-6 animate-spin" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeEmailField(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            ) : (
-              <>
-                {existingShares.length > 0 && (
-                  <div className="space-y-2 mt-6">
-                    <Label>Currently Shared With</Label>
-                    <div className="border rounded-md overflow-hidden">
-                      {existingShares.map((share) => (
-                        <div key={share.id} className="flex items-center justify-between p-3 border-b last:border-b-0">
-                          <span className="truncate">{share.shared_with_email}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveShare(share.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+            ))}
           </div>
+          
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={addEmailField}
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add Another
+          </Button>
 
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  Sharing...
-                </>
-              ) : (
-                <>
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share Trip
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+          {existingShares.length > 0 && (
+            <div className="space-y-2 border-t pt-4 mt-6">
+              <p className="text-sm font-medium">Currently shared with</p>
+              
+              <div className="space-y-2">
+                {existingShares.map((share) => (
+                  <div key={share.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{share.shared_with_email}</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveShare(share.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex sm:justify-between">
+          <Button
+            variant="secondary"
+            onClick={() => setDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={isSubmitting || isLoading}
+          >
+            Share Trip
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

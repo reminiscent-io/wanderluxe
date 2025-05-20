@@ -1,24 +1,26 @@
-// This file defines the types for the trip_shares table
-// You would need to generate an updated Database type when you have access to the Supabase schema
+/**
+ * Type definitions for trip sharing functionality
+ */
 
-import { Tables as ExistingTables } from './types';
-
-// Extend the existing tables type with our new trip_shares table
-export interface TripShareTables extends ExistingTables {
-  trip_shares: {
-    id: string;
-    trip_id: string;
-    shared_by_user_id: string;
-    shared_with_email: string;
-    created_at: string;
-  };
-}
-
-// Define the trip_shares table structure
 export interface TripShare {
   id: string;
   trip_id: string;
   shared_by_user_id: string;
   shared_with_email: string;
   created_at: string;
+}
+
+export interface SharedTripWithDetails extends TripShare {
+  trips?: {
+    trip_id: string;
+    user_id: string;
+    destination: string;
+    start_date: string;
+    end_date: string;
+    cover_image_url: string | null;
+    created_at: string;
+    hidden: boolean;
+    arrival_date: string | null;
+    departure_date: string | null;
+  };
 }
