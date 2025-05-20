@@ -27,7 +27,7 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
           event: '*', 
           schema: 'public', 
           table: 'reservations',
-          filter: `trip_id=eq.${tripId}` 
+          filter: `trip_id=eq.${tripId} AND day_id=eq.${dayId}` 
         }, 
         () => {
           console.log('Reservation changed, refreshing data...');
