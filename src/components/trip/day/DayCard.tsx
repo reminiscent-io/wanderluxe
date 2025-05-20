@@ -21,7 +21,7 @@ import TransportationDialog from "@/components/trip/transportation/Transportatio
 import { CURRENCIES } from "@/utils/currencyConstants";
 import DayActivityManager from "./components/DayActivityManager";
 import { useTransportationEvents } from "@/hooks/use-transportation-events";
-import { useReservationsRealtime } from "@/hooks/useReservationsRealtime";
+import { useReservations } from "@/hooks/use-reservations";
 
 const initialActivity: ActivityFormData = {
   title: "",
