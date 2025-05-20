@@ -115,6 +115,7 @@ export interface Transportation {
 export interface RestaurantReservation {
   id: string;
   day_id: string;
+  trip_id: string; // Add trip_id field for proper RLS policy evaluation in shared trips
   restaurant_name: string;
   reservation_time: string | null;
   number_of_people: number | null;
