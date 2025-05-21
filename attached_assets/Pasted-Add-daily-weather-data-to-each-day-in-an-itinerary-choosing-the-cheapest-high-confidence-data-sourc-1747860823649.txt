@@ -1,0 +1,104 @@
+Add daily weather data to each day in an itinerary, choosing the cheapest/high-confidence data source for the date’s horizon.
+
+🗂️ Tech context
+Stack Next.js 14 (app router) + TypeScript + React 18
+
+State / fetch SWR on the client; simple fetch on the server (no dedicated backend framework)
+
+Runtime Edge-compatible (Vercel) but Redis available via Upstash
+
+Current code
+
+types/Trip.ts — each TripDay already has date, lat, lon.
+
+components/DayCard.tsx — renders per-day UI (no weather yet).
+
+/api folder exists for serverless routes.
+
+🌤️ Source-selection rules
+Δ Days from Today	Source constant	Real provider endpoint	Notes
+< 0	"none"	none	Past — return null.
+0 – 10	"openweather"	OpenWeather One-Call 3.0 daily	Free tier.
+11 – 45	"accuweather"	AccuWeather 45-Day	Paid key; deterministic but lower confidence.
+46 – 548	"openweather18m"	OpenWeather day_summary	Up to 18 mo ahead.
+> 548	"climateNormals"	Tomorrow.io Climate Normals	30-year averages.
+
+📝 Deliverables
+1 Shared types
+types/Weather.ts
+
+ts
+Copy
+Edit
+export type WeatherDayDTO = {
+  isoDate: string;     // YYYY-MM-DD
+  source: 'openweather' | 'accuweather' | 'openweather18m' | 'climateNormals';
+  hiC: number;         // degrees C
+  loC: number;
+  precipMM: number;    // total precip
+  icon: string;        // weather condition code
+  confidence: 'high' | 'medium' | 'low';
+} | null;
+2 Source chooser (pure util)
+lib/chooseWeatherSource.ts
+
+ts
+Copy
+Edit
+import { differenceInCalendarDays } from 'date-fns';
+export type DayWeatherSource = /* …as in table above… */;
+
+export function chooseWeatherSource(date: Date): DayWeatherSource { /* implement */ }
+3 Fetcher modules
+Create one file per provider in lib/weather/ exporting
+fetchX(lat: number, lon: number, date: string): Promise<WeatherDayDTO>.
+
+Implement only the fields shown in WeatherDayDTO.
+Handle provider-specific retries & error normalization inside each module.
+
+4 Redis cache wrapper
+lib/cacheWeather.ts
+
+Key: weather:{isoDate}:{lat}:{lon}
+
+TTL:
+
+3 h for OpenWeather / AccuWeather
+
+24 h for OpenWeather 18 m & Climate Normals
+
+Expose getOrSetWeather(...) that first checks Redis, then fetches and caches.
+
+5 Serverless API route
+/app/api/weather/route.ts (Edge runtime OK)
+
+Accepts POST { days: TripDay[] }.
+
+For each day call chooseWeatherSource ➜ relevant fetcher ➜ normalize ➜ cache.
+
+Return { [isoDate]: WeatherDayDTO }.
+
+6 Client hook
+hooks/useTripWeather.ts
+
+ts
+Copy
+Edit
+export function useTripWeather(days: TripDay[]) {
+  // SWRImmutable keyed by JSON.stringify(days)
+}
+7 UI integration
+Extend DayCard.tsx to accept a WeatherDayDTO.
+
+Show icon + hi/lo; overlay a badge with Forecast, Extended, or Seasonal Avg. based on source.
+
+Reduce card opacity to 80 % when confidence === 'low'.
+
+8 Env vars (add to Replit Secrets)
+ini
+Copy
+Edit
+OPENWEATHER_KEY=xxxx
+ACCUWEATHER_KEY=xxxx
+TOMORROW_KEY=xxxx
+REDIS_URL=rediss://…
