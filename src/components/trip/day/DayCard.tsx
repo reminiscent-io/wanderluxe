@@ -173,6 +173,7 @@ const DayCard: React.FC<DayCardProps> = ({
       const updateObj: any = {
         title: data.title,
         image_url: data.image_url,
+        image_position: data.image_position, // Add the image_position to be saved to the database
       };
       
       try {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import DayImage from "./DayImage";
+import { supabase } from "@/integrations/supabase/client";
 import { Pencil, ChevronDown } from "lucide-react";
 
 interface DayHeaderProps {
@@ -29,13 +30,44 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   
   // Load image position from localStorage when component mounts
   useEffect(() => {
+    // First check if there's a position in localStorage
     const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
     if (savedPosition) {
+      console.log(`DayHeader: Using position from localStorage for day ${dayId}:`, savedPosition);
       setImagePosition(savedPosition);
+
       // Force reflow to ensure the position is applied
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
       }, 20);
+    } else {
+      // If not in localStorage, get it from the database
+      const fetchImagePosition = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('trip_days')
+            .select('image_position')
+            .eq('day_id', dayId)
+            .single();
+            
+          if (!error && data && data.image_position) {
+            console.log(`DayHeader: Using position from DB for day ${dayId}:`, data.image_position);
+            setImagePosition(data.image_position);
+            
+            // Also save to localStorage for future quick access
+            localStorage.setItem(`day_image_position_${dayId}`, data.image_position);
+            
+            // Force reflow to ensure the position is applied
+            setTimeout(() => {
+              window.dispatchEvent(new Event('resize'));
+            }, 20);
+          }
+        } catch (err) {
+          console.error('Error loading image position from DB:', err);
+        }
+      };
+      
+      fetchImagePosition();
     }
   }, [dayId]);
   
