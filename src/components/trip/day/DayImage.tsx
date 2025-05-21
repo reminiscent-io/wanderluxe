@@ -25,18 +25,42 @@ const DayImage: React.FC<DayImageProps> = ({
   // Initialize with provided objectPosition, but prefer localStorage value if available
   const [imagePosition, setImagePosition] = useState(objectPosition);
   
-  // Load image position from localStorage when component mounts or when dayId changes
+  // Load image position from database or localStorage when component mounts or when dayId changes
   useEffect(() => {
-    const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
-    if (savedPosition) {
-      console.log(`DayImage: Loaded position for day ${dayId}:`, savedPosition);
-      setImagePosition(savedPosition);
-      
-      // Force a layout recalculation to apply the new position
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 10);
-    }
+    const loadImagePosition = async () => {
+      try {
+        // Try to get position from database first
+        const { data, error } = await supabase
+          .from('trip_days')
+          .select('image_position')
+          .eq('day_id', dayId)
+          .single();
+        
+        if (!error && data && data.image_position) {
+          console.log(`DayImage: Loaded position from DB for day ${dayId}:`, data.image_position);
+          setImagePosition(data.image_position);
+          
+          // Also update localStorage for quick access
+          localStorage.setItem(`day_image_position_${dayId}`, data.image_position);
+        } else {
+          // Fallback to localStorage if data not in DB
+          const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
+          if (savedPosition) {
+            console.log(`DayImage: Loaded position from localStorage for day ${dayId}:`, savedPosition);
+            setImagePosition(savedPosition);
+          }
+        }
+        
+        // Force a layout recalculation to apply the new position
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 10);
+      } catch (err) {
+        console.error('Error loading image position:', err);
+      }
+    };
+    
+    loadImagePosition();
   }, [dayId]);
   
   // Update position when objectPosition prop changes
