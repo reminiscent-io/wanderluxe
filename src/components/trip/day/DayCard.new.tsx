@@ -10,7 +10,7 @@ import {
   DayActivity,
   HotelStay,
   ActivityFormData,
-  Transportation
+  Transportation,
 } from "@/types/trip";
 import DayEditDialog from "./DayEditDialog";
 import { toast } from "sonner";
@@ -122,29 +122,13 @@ const DayCard: React.FC<DayCardProps> = ({
       setImageUrl(originalImageUrl);
     }
   }, [originalImageUrl]);
-  
+
   // Normalize the day for consistent date format
   const normalizedDay = getNormalizedDay(date);
   
-  // Get weather data for this day if latitude and longitude are provided
-  const { getWeatherForDay } = useTripWeather(
-    latitude && longitude ? [{ 
-      day_id: id, 
-      date: normalizedDay, 
-      latitude, 
-      longitude 
-    }] : undefined
-  );
-  
-  // Get the weather data for this particular day
-  const weatherData = latitude && longitude ? getWeatherForDay(id) : null;
-
   // Use the real-time hook for reservations to get instant updates across devices
   const { reservations } = useReservationsRealtime(id, tripId);
   const { transportations } = useTransportationEvents(tripId);
-
-  // Normalize the day for consistent date format
-  const normalizedDay = getNormalizedDay(date);
   
   // Get weather data for this day if latitude and longitude are provided
   const { getWeatherForDay } = useTripWeather(
@@ -291,7 +275,7 @@ const DayCard: React.FC<DayCardProps> = ({
         start_time: activity.start_time ? activity.start_time.slice(0, 5) : "",
         end_time: activity.end_time ? activity.end_time.slice(0, 5) : "",
         cost: activity.cost ? String(activity.cost) : "",
-        currency: activity.currency || "",
+        currency: activity.currency || CURRENCIES[0],
       });
     }
   };
@@ -452,14 +436,14 @@ const DayCard: React.FC<DayCardProps> = ({
                     ))}
                     {sortedActivities.length === 0 && (
                       <p className="text-gray-500 text-xs italic">
-                        No activities for this day
+                        No activities planned for this day
                       </p>
                     )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsAddingActivity(true)}
                       className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
+                      onClick={() => setIsAddingActivity(true)}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Activity
@@ -471,10 +455,9 @@ const DayCard: React.FC<DayCardProps> = ({
                 <div className="bg-gray-100 rounded-lg p-4">
                   <h3 className="text-base font-semibold mb-2">Dining</h3>
                   <DiningList
-                    reservations={reservations || []}
-                    formatTime={formatTime12}
                     dayId={id}
-                    className="text-xs"
+                    tripId={tripId}
+                    reservations={reservations || []}
                   />
                 </div>
               </div>
@@ -483,38 +466,42 @@ const DayCard: React.FC<DayCardProps> = ({
         </CollapsibleContent>
       </Collapsible>
 
-      <AccommodationDialog
-        tripId={tripId}
-        open={hotelDialog.open}
-        onOpenChange={(open) => setHotelDialog({ ...hotelDialog, open })}
-        initialData={hotelDialog.initialData || undefined}
-        onSuccess={refreshTripData}
-      />
-
+      {/* Activity Dialog */}
       <ActivityDialogs
-        isAddingActivity={isAddingActivity}
-        setIsAddingActivity={setIsAddingActivity}
-        editingActivity={editingActivity}
-        setEditingActivity={setEditingActivity}
+        dayId={id}
+        tripId={tripId}
+        addDialogOpen={isAddingActivity}
+        editDialogOpen={editingActivity !== null}
+        activityId={editingActivity}
         newActivity={newActivity}
-        setNewActivity={setNewActivity}
         activityEdit={activityEdit}
-        setActivityEdit={setActivityEdit}
+        onNewActivityChange={setNewActivity}
+        onActivityEditChange={setActivityEdit}
+        onAddDialogOpenChange={setIsAddingActivity}
+        onEditDialogOpenChange={() => setEditingActivity(null)}
         onAddActivity={handleAddActivity}
         onEditActivity={handleEditActivity}
         onDeleteActivity={handleDeleteActivity}
-        eventId={id}
       />
 
-      <TransportationDialog
+      {/* Hotel Dialog */}
+      <AccommodationDialog
+        open={hotelDialog.open}
+        onOpenChange={(open) => setHotelDialog({ ...hotelDialog, open })}
         tripId={tripId}
+        initialHotel={hotelDialog.initialData}
+        defaultDates={{
+          startDate: normalizedDay,
+          endDate: normalizedDay,
+        }}
+      />
+
+      {/* Transportation Dialog */}
+      <TransportationDialog
         open={isTransportationDialogOpen}
         onOpenChange={setIsTransportationDialogOpen}
-        initialData={selectedTransportation || undefined}
-        onSuccess={() => {
-          refreshTripData();
-          setSelectedTransportation(null);
-        }}
+        tripId={tripId}
+        transportation={selectedTransportation}
       />
     </div>
   );

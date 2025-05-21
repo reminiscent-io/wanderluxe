@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 import DayImage from "./DayImage";
 import { supabase } from "@/integrations/supabase/client";
 import { Pencil, ChevronDown } from "lucide-react";
+import WeatherDisplay from "./components/WeatherDisplay";
+
+import { WeatherDayDTO } from "@/types/Weather";
 
 interface DayHeaderProps {
   title: string;
@@ -14,6 +17,7 @@ interface DayHeaderProps {
   dayId: string;
   imageUrl?: string | null;
   defaultImageUrl?: string;
+  weatherData?: WeatherDayDTO;
 }
 
 const DayHeader: React.FC<DayHeaderProps> = ({
@@ -25,6 +29,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   dayId,
   imageUrl,
   defaultImageUrl,
+  weatherData,
 }) => {
   const [imagePosition, setImagePosition] = useState<string>("center 50%");
   
@@ -119,6 +124,14 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             </button>
             <span className="text-lg font-medium">{formattedDate}</span>
           </div>
+          
+          {/* Middle: Weather display if available */}
+          {weatherData && (
+            <div className="absolute right-12 bottom-3 bg-white/90 rounded-lg">
+              <WeatherDisplay weatherData={weatherData} />
+            </div>
+          )}
+          
           {/* Right side: chevron only */}
           <ChevronDown
             className={cn(
