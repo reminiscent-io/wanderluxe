@@ -28,9 +28,12 @@ const DayImage: React.FC<DayImageProps> = ({
   useEffect(() => {
     const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
     if (savedPosition) {
+      console.log(`Loaded position for day ${dayId}:`, savedPosition);
       setImagePosition(savedPosition);
+    } else {
+      console.log(`No saved position for day ${dayId}, using default:`, objectPosition);
     }
-  }, [dayId]);
+  }, [dayId, objectPosition]);
 
   return (
     <div className={cn('relative w-full bg-gray-200 h-full', className)} {...props}>
