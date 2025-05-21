@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { shareTrip, getTripShares, removeTripShare } from '@/services/tripSharingService';
 import { supabase } from '@/integrations/supabase/client';
-import { checkSendGridApiKey } from '@/utils/env';
+// We're now using Supabase Edge Functions for email
 import { TripShare } from '@/integrations/supabase/trip_shares_types';
 
 interface ShareTripDialogProps {
@@ -34,15 +34,12 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
-  const [hasSendGridKey, setHasSendGridKey] = useState(false);
   const [currentUser, setCurrentUser] = useState<{fullName: string | null, email: string | null}>({
     fullName: null,
     email: null
   });
 
   useEffect(() => {
-    setHasSendGridKey(checkSendGridApiKey());
-    
     // Fetch current user info
     const getUserInfo = async () => {
       const { data } = await supabase.auth.getUser();
@@ -179,16 +176,6 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
             Enter email addresses of people you'd like to share this trip with.
           </DialogDescription>
         </DialogHeader>
-        
-        {!hasSendGridKey && (
-          <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-50 text-yellow-800 mb-4">
-            <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium">Email notifications are disabled</p>
-              <p>Recipients will still have access to the trip but won't be notified by email.</p>
-            </div>
-          </div>
-        )}
 
         <div className="space-y-4">
           <div className="space-y-2">
