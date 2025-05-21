@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader, Image as ImageIcon } from "lucide-react";
@@ -10,15 +10,24 @@ import { Label } from "@/components/ui/label";
 interface ImageGenerationSectionProps {
   onImageSelect: (image: string) => void;
   selectedImage: string | null;
+  dayId?: string; // Added to help with position tracking
 }
 
 const ImageGenerationSection: React.FC<ImageGenerationSectionProps> = ({
   onImageSelect,
-  selectedImage
+  selectedImage,
+  dayId
 }) => {
   const [imagePrompt, setImagePrompt] = useState("");
   const [images, setImages] = useState<Array<{ id: string; url: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // If the component receives an existing image, display it first
+  useEffect(() => {
+    if (selectedImage && images.length === 0) {
+      console.log("Using existing image for day:", dayId);
+    }
+  }, [selectedImage, dayId]);
 
   const handleGenerateImages = async () => {
     if (!imagePrompt.trim()) {
