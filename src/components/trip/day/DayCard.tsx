@@ -495,6 +495,19 @@ const DayCard: React.FC<DayCardProps> = ({
           setSelectedTransportation(null);
         }}
       />
+
+      <RestaurantReservationDialog
+        isOpen={diningDialogOpen}
+        onOpenChange={setDiningDialogOpen}
+        onSubmit={(data) => {
+          queryClient.invalidateQueries({queryKey: ['reservations', id, tripId]});
+          setDiningDialogOpen(false);
+        }}
+        isSubmitting={false}
+        editingReservation={{ day_id: id, trip_id: tripId }}
+        title="Add Restaurant Reservation"
+        tripId={tripId}
+      />
     </div>
   );
 };
