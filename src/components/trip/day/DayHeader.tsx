@@ -44,7 +44,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   }
 
   return (
-    <div className="relative w-full h-48 md:h-64">
+    <div className="relative w-full h-48 md:h-64 overflow-hidden">
       {/* Toggle Button: wrapping the image and overlay */}
       <button
         type="button"
@@ -52,7 +52,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           e.preventDefault();
           onToggle?.();
         }}
-        className="w-full h-full cursor-pointer select-none relative"
+        className="w-full h-full cursor-pointer select-none relative overflow-hidden"
       >
         <DayImage
           dayId={dayId}
