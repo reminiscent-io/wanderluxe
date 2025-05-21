@@ -6,6 +6,7 @@ import TimelineContent from './timeline/TimelineContent';
 import AccommodationsSection from './AccommodationsSection';
 import TransportationSection from './TransportationSection';
 import TripDates from './timeline/TripDates';
+import ExportPdfButton from './ExportPdfButton';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
@@ -213,6 +214,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             transportations={processedTransportations}
           />
         </div>
+      </div>
+      
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold">Trip Timeline</h2>
+        <ExportPdfButton 
+          tripId={tripId} 
+          className="bg-earth-500 hover:bg-earth-600 text-white"
+        />
       </div>
       <TimelineContent
         days={days}
