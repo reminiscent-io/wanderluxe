@@ -34,6 +34,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   onSubmit,
   onCancel
 }) => {
+  const [imagePosition, setImagePosition] = useState<string>("center 50%");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +68,11 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
 
+          // Save the image position for this trip in localStorage
+          if (imagePosition && coverImageUrl) {
+            localStorage.setItem(`trip_image_position_${trip.trip_id}`, imagePosition);
+          }
+          
           // Call the parent's onSubmit callback with the tripId
           onSubmit(trip.trip_id);
         } catch (daysError) {
@@ -96,6 +102,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       <ImageSection
         coverImageUrl={coverImageUrl}
         onImageChange={setCoverImageUrl}
+        objectPosition={imagePosition}
+        onPositionChange={setImagePosition}
       />
       
       <FormActions
