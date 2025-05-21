@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import ImageGenerationSection from './dialogs/ImageGenerationSection';
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DayEditDialogProps {
   open: boolean;
@@ -34,13 +35,39 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imagePosition, setImagePosition] = useState<number>(50); // Default 50%
   const [isSaving, setIsSaving] = useState(false);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
 
-  // Load the image position from localStorage if available
+  // Load the current day image and position when dialog opens
   useEffect(() => {
-    const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
-    if (savedPosition) {
-      const positionValue = parseInt(savedPosition.split('%')[1], 10);
-      setImagePosition(positionValue);
+    if (open && dayId) {
+      // Load current image
+      const loadDayImage = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('trip_days')
+            .select('image_url')
+            .eq('day_id', dayId)
+            .single();
+            
+          if (!error && data && data.image_url) {
+            setCurrentImage(data.image_url);
+            setSelectedImage(data.image_url);
+          }
+        } catch (error) {
+          console.error('Error loading day image:', error);
+        }
+      };
+      
+      loadDayImage();
+      
+      // Load position from localStorage
+      const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
+      if (savedPosition) {
+        const positionMatch = savedPosition.match(/center\s+(\d+)%/);
+        if (positionMatch && positionMatch[1]) {
+          setImagePosition(parseInt(positionMatch[1], 10));
+        }
+      }
     }
   }, [dayId, open]);
 
@@ -174,6 +201,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             <ImageGenerationSection
               onImageSelect={setSelectedImage}
               selectedImage={selectedImage}
+              dayId={dayId}
             />
           </div>
         </div>
