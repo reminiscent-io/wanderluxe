@@ -40,32 +40,47 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   // Load the current day image and position when dialog opens
   useEffect(() => {
     if (open && dayId) {
-      // Load current image and position data
+      // Load current image and position data from database
       const loadDayImage = async () => {
         try {
           const { data, error } = await supabase
             .from('trip_days')
-            .select('image_url')
+            .select('image_url, image_position')
             .eq('day_id', dayId)
             .single();
             
-          if (!error && data && data.image_url) {
-            setCurrentImage(data.image_url);
-            setSelectedImage(data.image_url);
+          if (!error && data) {
+            // Set the image from database if available
+            if (data.image_url) {
+              setCurrentImage(data.image_url);
+              setSelectedImage(data.image_url);
+            }
+            
+            // Set position from database if available
+            if (data.image_position) {
+              const positionMatch = data.image_position.match(/center\s+(\d+)%/);
+              if (positionMatch && positionMatch[1]) {
+                setImagePosition(parseInt(positionMatch[1], 10));
+                // Also update localStorage for quick access
+                localStorage.setItem(`day_image_position_${dayId}`, data.image_position);
+              }
+            }
           }
         } catch (error) {
-          console.error('Error loading day image:', error);
+          console.error('Error loading day image data:', error);
         }
       };
       
       loadDayImage();
       
-      // Load position from localStorage (we'll continue using localStorage as the primary source of position data)
-      const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
-      if (savedPosition) {
-        const positionMatch = savedPosition.match(/center\s+(\d+)%/);
-        if (positionMatch && positionMatch[1]) {
-          setImagePosition(parseInt(positionMatch[1], 10));
+      // Fallback to localStorage if needed
+      if (!currentImage) {
+        const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
+        if (savedPosition) {
+          const positionMatch = savedPosition.match(/center\s+(\d+)%/);
+          if (positionMatch && positionMatch[1]) {
+            setImagePosition(parseInt(positionMatch[1], 10));
+          }
         }
       }
     }
