@@ -22,18 +22,25 @@ const DayImage: React.FC<DayImageProps> = ({
   const displayImageUrl =
     imageUrl || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f';
     
+  // Initialize with provided objectPosition, but prefer localStorage value if available
   const [imagePosition, setImagePosition] = useState(objectPosition);
   
-  // Load image position from localStorage when component mounts
+  // Load image position from localStorage when component mounts or when dayId changes
   useEffect(() => {
     const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
     if (savedPosition) {
-      console.log(`Loaded position for day ${dayId}:`, savedPosition);
+      console.log(`DayImage: Loaded position for day ${dayId}:`, savedPosition);
       setImagePosition(savedPosition);
-    } else {
-      console.log(`No saved position for day ${dayId}, using default:`, objectPosition);
     }
-  }, [dayId, objectPosition]);
+  }, [dayId]);
+  
+  // Update position when objectPosition prop changes
+  useEffect(() => {
+    if (objectPosition && objectPosition !== "center 50%") {
+      console.log(`DayImage: Updated from prop - day ${dayId}:`, objectPosition);
+      setImagePosition(objectPosition);
+    }
+  }, [objectPosition, dayId]);
 
   return (
     <div className={cn('relative w-full bg-gray-200 h-full', className)} {...props}>
@@ -46,24 +53,24 @@ const DayImage: React.FC<DayImageProps> = ({
               </h2>
             </div>
           )}
-          <img
-            src={displayImageUrl}
-            alt={title || 'Day image'}
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ 
-              objectPosition: imagePosition, 
-              objectFit: "cover",
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%" 
-            }}
-            onError={(e) => {
-              console.error('Image failed to load:', displayImageUrl);
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+          {/* Force image to respect the vertical position by removing any conflicting styles */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden">
+            <img
+              src={displayImageUrl}
+              alt={title || 'Day image'}
+              className="absolute w-full h-full object-cover"
+              style={{ 
+                objectPosition: imagePosition,
+                transform: 'translate3d(0, 0, 0)', /* Force hardware acceleration */
+                width: '100%',
+                height: '100%'
+              }}
+              onError={(e) => {
+                console.error('Image failed to load:', displayImageUrl);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-center text-gray-400 h-[400px]">
