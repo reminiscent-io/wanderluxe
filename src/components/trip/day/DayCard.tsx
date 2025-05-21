@@ -299,7 +299,7 @@ const DayCard: React.FC<DayCardProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setHotelDialog({ open: true, initialData: null })}
-                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                      className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -357,7 +357,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         setSelectedTransportation(null);
                         setIsTransportationDialogOpen(true);
                       }}
-                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                      className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -403,7 +403,7 @@ const DayCard: React.FC<DayCardProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setIsAddingActivity(true)}
-                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                      className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -444,7 +444,7 @@ const DayCard: React.FC<DayCardProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setDiningDialogOpen(true)}
-                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                      className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>

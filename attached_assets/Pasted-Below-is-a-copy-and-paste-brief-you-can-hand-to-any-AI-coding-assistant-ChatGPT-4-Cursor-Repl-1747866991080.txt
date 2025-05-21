@@ -1,0 +1,119 @@
+Below is a **copy-and-paste brief** you can hand to any AI coding assistant (ChatGPT-4, Cursor, Replit Ghostwriter, etc.).
+It tells the agent exactly **what to build**, **how to wire it into your repo**, and **how to respect your Tailwind design tokens**.
+
+---
+
+## 📑 AI Prompt — “Add Itinerary-to-PDF Feature”
+
+> ### 0 . Context
+>
+> * Codebase: monorepo using **Next.js 14 + TypeScript + Tailwind 3**.
+> * Style assets live in:
+>
+>   * `tailwind.config.ts` – custom palettes `sand-*`, `earth-*`, semantic tokens (`background`, `foreground`, `border`, `primary`, `muted`, etc.).
+>   * `src/lib/theme.ts` – typography utilities (`h1`, `h2`, `p`, `muted`, `small`, …).
+> * Requirement: ingest a **travel-itinerary JSON** and output two A4 PDFs:
+>
+>   * **Visual** – includes hero banner + thumbnails.
+>   * **Plain** – identical layout, but all raster images hidden.
+> * We already use **Playwright** in CI; reuse its headless-Chromium for PDF rendering.
+
+> ### 1 . Tasks
+>
+> 1. **Data model**
+>
+>    * Add `types/itinerary.ts` with `Hero`, `Day`, `Item` unions (`hotel | flight | activity | dining`), etc.
+> 2. **Server endpoint**
+>
+>    * `/api/itinerary/pdf` (`POST` JSON → PDF) built with `NextResponse`.
+>    * Query param `?plain=true` toggles the no-image stylesheet.
+> 3. **Template**
+>
+>    * Place an `.hbs` file in `src/templates/itinerary.hbs`.
+>    * Semantic HTML as outlined below (header, `.day`, `.item`).
+> 4. **Styling**
+>
+>    * No hard-coded hex. Only Tailwind classes using:
+>
+>      * background surfaces → `bg-sand-50`.
+>      * borders → `border-sand-100`.
+>      * text → `text-foreground`, muted → `text-muted`.
+>    * Typography via `h1`, `h2`, `h3`, `small`, `muted` classes from `theme.ts`.
+>    * Timeline rail → `border-l-2 border-sand-200`.
+>    * Card → `rounded-xl shadow-sm break-inside-avoid-page`.
+>    * Create a tiny plugin in `tailwind.config.ts` that exposes
+>
+>      ```ts
+>      plugin(({ addUtilities }) => {
+>        addUtilities({
+>          '.break-inside-avoid-page': { breakInside: 'avoid-page' }
+>        })
+>      })
+>      ```
+>    * Add a `print:hidden` utility in `@layer utilities` to hide images for the plain PDF.
+> 5. **Playwright render**
+>
+>    ```ts
+>    const browser = await chromium.launch();
+>    const page = await browser.newPage({ viewport: { width: 794, height: 1123 } }); // A4 @ 96 dpi
+>    await page.setContent(renderedHtml, { waitUntil: 'networkidle' });
+>    if (plain) await page.addStyleTag({ content: '.print\\:hidden{display:none!important}' });
+>    const pdf = await page.pdf({ format: 'A4', margin: { top: '1cm', bottom: '1cm' } });
+>    ```
+> 6. **Sample data & unit test**
+>
+>    * Add `sampleData.json` (same schema as brief).
+>    * Jest test posts the sample and asserts `pdf.length > 50 000` and `pdfPlain.length < pdf.length`.
+> 7. **Docs**
+>
+>    * Update `README.md` with cURL and `pnpm test` instructions.
+
+> ### 2 . HTML + Tailwind blueprint
+>
+> ```html
+> <header class="hero bg-background text-foreground px-6 py-8 print:pb-0">
+>   <img src="{{hero.bannerUrl}}" alt="" class="banner w-full h-40 object-cover rounded-lg mb-6 print:hidden">
+>   <h1 class="h1">{{hero.title}}</h1>
+>   <p class="text-lg text-muted">{{hero.dateRange}}</p>
+> </header>
+>
+> {{#each days}}
+> <section class="day relative mt-10 break-inside-avoid-page">
+>   <h2 class="h2 mb-4">{{formatDate date}}</h2>
+>
+>   <div class="absolute left-[10%] top-0 bottom-0 border-l-2 border-sand-200"></div>
+>
+>   <div class="grid gap-10" style="grid-template-columns: 25% 1fr">
+>     {{#each items}}
+>     <article class="item relative col-span-2 flex gap-4 p-4 rounded-xl shadow-sm border
+>                    bg-sand-50 border-sand-100 break-inside-avoid-page">
+>       <span class="absolute -left-[25%] w-[25%] text-right small text-muted">
+>         {{displayTime this}}
+>       </span>
+>       <div class="flex-1">
+>         <h3 class="h3 mb-1">{{title}}</h3>
+>         <p class="muted mb-2">{{subtitle this}}</p>
+>         <ul class="flex flex-wrap small gap-2">
+>           {{#each meta}}<li class="flex items-center gap-1">{{icon}}{{label}}</li>{{/each}}
+>         </ul>
+>       </div>
+>       {{#if thumb}}
+>       <img src="{{thumb}}" class="thumb w-24 h-24 object-cover rounded-lg ml-auto print:hidden">
+>       {{/if}}
+>     </article>
+>     {{/each}}
+>   </div>
+> </section>
+> {{/each}}
+> ```
+>
+> ### 3 . Acceptance
+>
+> * `pnpm dev` → POST to `/api/itinerary/pdf` returns 200 + correct PDFs.
+> * Visual PDF shows hero and thumbnails; plain PDF hides them but page-count identical.
+> * All classes compile with existing `tailwind.config.ts`; **no new hard-coded styles** except the tiny plugin.
+> * Lighthouse print-emulation audit ≥ 95 / 100.
+
+---
+
+💡 **Copy these instructions verbatim** into your AI coding agent. It will scaffold the route, the template, Tailwind utilities, Playwright script, tests, and docs—all perfectly matching your color palettes and typography tokens.
