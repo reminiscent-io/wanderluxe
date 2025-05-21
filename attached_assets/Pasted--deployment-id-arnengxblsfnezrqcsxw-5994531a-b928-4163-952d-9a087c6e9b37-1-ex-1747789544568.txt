@@ -1,0 +1,79 @@
+[
+  {
+    "deployment_id": "arnengxblsfnezrqcsxw_5994531a-b928-4163-952d-9a087c6e9b37_1",
+    "execution_id": "0c1a82db-0ab5-4a54-bc08-819369720400",
+    "execution_time_ms": 157,
+    "function_id": "5994531a-b928-4163-952d-9a087c6e9b37",
+    "project_ref": "arnengxblsfnezrqcsxw",
+    "request": [
+      {
+        "headers": [
+          {
+            "accept": "*/*",
+            "accept_encoding": "gzip, br",
+            "connection": "Keep-Alive",
+            "content_length": "105",
+            "cookie": null,
+            "host": "arnengxblsfnezrqcsxw.supabase.co",
+            "user_agent": "node",
+            "x_client_info": null
+          }
+        ],
+        "host": "arnengxblsfnezrqcsxw.supabase.co",
+        "method": "POST",
+        "pathname": "/functions/v1/send-email",
+        "port": null,
+        "protocol": "https:",
+        "sb": [
+          {
+            "apikey": [],
+            "auth_user": null,
+            "jwt": [
+              {
+                "apikey": [],
+                "authorization": [
+                  {
+                    "invalid": null,
+                    "payload": [
+                      {
+                        "algorithm": "HS256",
+                        "expires_at": 2054093622,
+                        "issuer": "supabase",
+                        "key_id": null,
+                        "role": "service_role",
+                        "session_id": null,
+                        "signature_prefix": "TBFj8h",
+                        "subject": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "search": null,
+        "url": "https://arnengxblsfnezrqcsxw.supabase.co/functions/v1/send-email"
+      }
+    ],
+    "response": [
+      {
+        "headers": [
+          {
+            "content_length": "89",
+            "content_type": "application/json",
+            "date": "Wed, 21 May 2025 00:56:34 GMT",
+            "server": "cloudflare",
+            "vary": "Accept-Encoding",
+            "x_sb_compute_multiplier": null,
+            "x_sb_edge_region": "us-east-1",
+            "x_sb_resource_multiplier": null,
+            "x_served_by": "supabase-edge-runtime"
+          }
+        ],
+        "status_code": 500
+      }
+    ],
+    "version": "1"
+  }
+]
