@@ -3,6 +3,7 @@ run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"
+packages = ["supabase-cli"]
 
 [deployment]
 run = ["sh", "-c", "npm run dev"]

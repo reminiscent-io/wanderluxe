@@ -92,8 +92,10 @@ export const sendShareNotification = async (
       From: ${fromEmail} 
       Destination: ${tripDestination}`);
 
-    // Get the Supabase URL from environment
+    // Get the Supabase URL and anon key from environment
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
     if (!supabaseUrl) {
       console.error('SUPABASE_URL is not defined');
       toast.error('Configuration error. Please contact support.');
@@ -105,7 +107,7 @@ export const sendShareNotification = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // No Authorization header needed since we've made the function public
+        'Authorization': `Bearer ${supabaseAnonKey}` // Add authorization header
       },
       body: JSON.stringify({
         toEmail,
@@ -114,16 +116,22 @@ export const sendShareNotification = async (
       })
     });
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (e) {
+      console.error('Failed to parse response:', e);
+      result = { success: false, message: 'Invalid response from email service' };
+    }
 
     if (!response.ok || !result.success) {
       console.error('Email notification failed:', result.message || 'Unknown error');
-      toast.warning(`Trip has been shared with ${toEmail}, but email notification couldn't be sent.`);
+      toast.warning(`Trip shared with ${toEmail}, but email notification couldn't be sent.`);
       return false;
     }
 
     // Success!
-    toast.success(`Trip has been shared with ${toEmail} successfully!`);
+    toast.success(`Trip shared with ${toEmail} successfully and notification sent!`);
     return true;
   } catch (error) {
     console.error('Error in share notification process:', error);
