@@ -76,19 +76,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const handlePositionChange = async (newPosition: string) => {
     setImagePosition(newPosition);
     
+    // Save to localStorage for immediate persistence
+    localStorage.setItem(`trip_image_position_${tripId}`, newPosition);
+    
+    // Also attempt to save to database for future compatibility
     try {
-      const { error } = await supabase
+      // We'll attempt this, but it will fail until the column is added
+      await supabase
         .from('trips')
         .update({ image_position: newPosition })
         .eq('trip_id', tripId);
-
-      if (error) {
-        console.error('Error updating image position:', error);
-        // We don't show an error toast here since the position still visually works
-        // and we don't want to disrupt the user experience
-      }
     } catch (error) {
-      console.error('Error updating image position:', error);
+      // We expect this error for now, so we'll just ignore it
+      // console.error('Error updating image position:', error);
     }
   };
 
@@ -142,23 +142,32 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [arrivalDate, departureDate]);
 
-  // Fetch the image position from the database when component mounts
+  // Load image position from localStorage when component mounts
   React.useEffect(() => {
+    // Try to load from localStorage first
+    const savedPosition = localStorage.getItem(`trip_image_position_${tripId}`);
+    if (savedPosition) {
+      setImagePosition(savedPosition);
+    }
+    
+    // Also try to fetch from database for future compatibility
     const fetchTripDetails = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('trips')
           .select('image_position')
           .eq('trip_id', tripId)
           .single();
-
-        if (error) throw error;
         
+        // Only update if we got a valid position from database
         if (data?.image_position) {
           setImagePosition(data.image_position);
+          // Update localStorage with latest from database
+          localStorage.setItem(`trip_image_position_${tripId}`, data.image_position);
         }
       } catch (error) {
-        console.error('Error fetching trip details:', error);
+        // We expect this error until the column is added, so no need for error message
+        // console.error('Error fetching trip details:', error);
       }
     };
 
