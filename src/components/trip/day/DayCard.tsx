@@ -162,12 +162,19 @@ const DayCard: React.FC<DayCardProps> = ({
     try {
       if (data.title) setEditTitle(data.title);
       if (data.image_url) setImageUrl(data.image_url);
+      
+      // Save the image position to localStorage
+      if (data.image_position) {
+        localStorage.setItem(`day_image_position_${id}`, data.image_position);
+        console.log(`Saved image position for day ${id}:`, data.image_position);
+      }
 
       const { error, data: updatedData } = await supabase
         .from("trip_days")
         .update({
           title: data.title,
           image_url: data.image_url,
+          // We'll add image_position to the database once the column is added
         })
         .eq("day_id", id)
         .select("*")
