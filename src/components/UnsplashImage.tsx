@@ -23,11 +23,11 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   console.log('UnsplashImage rendering with objectPosition:', objectPosition);
   
   return (
-    <div className="relative min-h-[300px] overflow-hidden">
+    <div className="relative min-h-[300px] overflow-hidden h-full">
       <img
         src={src}
         alt={alt}
-        className={className}
+        className={`${className} w-full h-full object-cover`}
         style={{ objectPosition }}
       />
       {showAttribution && (

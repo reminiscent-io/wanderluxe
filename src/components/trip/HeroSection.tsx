@@ -265,14 +265,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           </DialogContent>
         </Dialog>
         {imageUrl ? (
-          <UnsplashImage
-            src={imageUrl}
-            alt={lastValidTitle}
-            className="h-full w-full object-cover"
-            photographer={photographer}
-            unsplashUsername={unsplashUsername}
-            objectPosition={imagePosition}
-          />
+          <div className="absolute inset-0 w-full h-full">
+            <UnsplashImage
+              src={imageUrl}
+              alt={lastValidTitle}
+              className="h-full w-full object-cover"
+              photographer={photographer}
+              unsplashUsername={unsplashUsername}
+              objectPosition={imagePosition}
+            />
+          </div>
         ) : (
           <div className="h-full w-full bg-gray-200 animate-pulse"></div>
         )}
