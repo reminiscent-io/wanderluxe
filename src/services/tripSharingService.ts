@@ -78,6 +78,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
 
 /**
  * Send an email notification to a user that a trip has been shared with them
+ * Using Supabase Edge Function for email delivery
  */
 export const sendShareNotification = async (
   toEmail: string,
@@ -91,11 +92,20 @@ export const sendShareNotification = async (
       From: ${fromEmail} 
       Destination: ${tripDestination}`);
 
-    // Make an actual API call to our Express server endpoint
-    const response = await fetch('/api/send-share-notification', {
+    // Get the Supabase URL from environment
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('SUPABASE_URL is not defined');
+      toast.error('Configuration error. Please contact support.');
+      return false;
+    }
+
+    // Call the Supabase Edge Function for email sending
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // No Authorization header needed since we've made the function public
       },
       body: JSON.stringify({
         toEmail,
@@ -108,17 +118,12 @@ export const sendShareNotification = async (
 
     if (!response.ok || !result.success) {
       console.error('Email notification failed:', result.message || 'Unknown error');
-      
-      // If it's a partial success (trip shared but email failed)
-      if (result.partial) {
-        toast.warning(`Trip has been shared with ${toEmail}, but email notification couldn't be sent.`);
-      } else {
-        toast.error(`Failed to send notification email to ${toEmail}.`);
-      }
+      toast.warning(`Trip has been shared with ${toEmail}, but email notification couldn't be sent.`);
       return false;
     }
 
     // Success!
+    toast.success(`Trip has been shared with ${toEmail} successfully!`);
     return true;
   } catch (error) {
     console.error('Error in share notification process:', error);
