@@ -31,6 +31,11 @@ const DayImage: React.FC<DayImageProps> = ({
     if (savedPosition) {
       console.log(`DayImage: Loaded position for day ${dayId}:`, savedPosition);
       setImagePosition(savedPosition);
+      
+      // Force a layout recalculation to apply the new position
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 10);
     }
   }, [dayId]);
   
@@ -39,6 +44,11 @@ const DayImage: React.FC<DayImageProps> = ({
     if (objectPosition && objectPosition !== "center 50%") {
       console.log(`DayImage: Updated from prop - day ${dayId}:`, objectPosition);
       setImagePosition(objectPosition);
+      
+      // Force a re-render to apply the position
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
     }
   }, [objectPosition, dayId]);
 
@@ -63,7 +73,17 @@ const DayImage: React.FC<DayImageProps> = ({
                 objectPosition: imagePosition,
                 transform: 'translate3d(0, 0, 0)', /* Force hardware acceleration */
                 width: '100%',
-                height: '100%'
+                height: '100%',
+                transition: 'object-position 0.2s ease-out' /* Add smooth transition */
+              }}
+              onLoad={(e) => {
+                // Force the browser to recognize the image position by briefly changing a property
+                const img = e.currentTarget;
+                const originalOpacity = img.style.opacity;
+                img.style.opacity = '0.99';
+                setTimeout(() => {
+                  img.style.opacity = originalOpacity;
+                }, 50);
               }}
               onError={(e) => {
                 console.error('Image failed to load:', displayImageUrl);

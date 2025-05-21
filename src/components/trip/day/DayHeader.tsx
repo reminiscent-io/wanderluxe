@@ -32,6 +32,10 @@ const DayHeader: React.FC<DayHeaderProps> = ({
     const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
     if (savedPosition) {
       setImagePosition(savedPosition);
+      // Force reflow to ensure the position is applied
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 20);
     }
   }, [dayId]);
   

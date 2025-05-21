@@ -40,7 +40,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   // Load the current day image and position when dialog opens
   useEffect(() => {
     if (open && dayId) {
-      // Load current image
+      // Load current image and position data
       const loadDayImage = async () => {
         try {
           const { data, error } = await supabase
@@ -60,7 +60,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
       
       loadDayImage();
       
-      // Load position from localStorage
+      // Load position from localStorage (we'll continue using localStorage as the primary source of position data)
       const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
       if (savedPosition) {
         const positionMatch = savedPosition.match(/center\s+(\d+)%/);
