@@ -85,25 +85,44 @@ export const sendShareNotification = async (
   tripDestination: string
 ): Promise<boolean> => {
   try {
-    // In a production environment, we would connect to our server API
-    // However, for now we're acknowledging that the email functionality is limited
-    // We'll still record the trip sharing in Supabase but won't block on email delivery
-    
     // Log the sharing attempt for debugging
     console.log(`Trip sharing attempted: 
       To: ${toEmail} 
       From: ${fromEmail} 
       Destination: ${tripDestination}`);
 
-    // Simulate a successful sharing but with email notification unavailable
-    // This way the trip will still be shared in the database
-    toast.info(`Trip has been shared with ${toEmail}. However, email notification is currently unavailable.`);
-    
-    // Return false to indicate email notification didn't succeed
-    // But the trip sharing itself succeeded (it's managed by the parent function)
-    return false;
+    // Make an actual API call to our Express server endpoint
+    const response = await fetch('/api/send-share-notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        toEmail,
+        fromEmail,
+        tripDestination
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      console.error('Email notification failed:', result.message || 'Unknown error');
+      
+      // If it's a partial success (trip shared but email failed)
+      if (result.partial) {
+        toast.warning(`Trip has been shared with ${toEmail}, but email notification couldn't be sent.`);
+      } else {
+        toast.error(`Failed to send notification email to ${toEmail}.`);
+      }
+      return false;
+    }
+
+    // Success!
+    return true;
   } catch (error) {
     console.error('Error in share notification process:', error);
+    toast.error(`Failed to send notification email to ${toEmail}.`);
     return false;
   }
 };
