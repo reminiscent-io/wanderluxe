@@ -66,22 +66,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Set up a periodic session refresh to keep the token valid
-    // This will run every 10 minutes to refresh the session but without causing full page reloads
+    // This will run every 20 minutes to refresh the session but without causing full page reloads
+    // Using a longer interval reduces frequency of network requests
     const refreshInterval = setInterval(async () => {
       try {
         console.log("Refreshing session silently...");
-        const { data, error } = await supabase.auth.refreshSession();
-        if (data.session) {
-          setSession(data.session);
-          setUser(data.session.user ?? null);
-          console.log("Session refreshed successfully");
-        } else if (error) {
-          console.warn("Session refresh error:", error);
+        // Use a more resilient approach with timeout and error handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        try {
+          const { data, error } = await supabase.auth.refreshSession();
+          clearTimeout(timeoutId);
+          
+          if (data.session) {
+            setSession(data.session);
+            setUser(data.session.user ?? null);
+            console.log("Session refreshed successfully");
+          } else if (error) {
+            console.warn("Session refresh error:", error);
+          }
+        } catch (fetchErr) {
+          console.warn("Session refresh network error:", fetchErr);
         }
       } catch (err) {
         console.error("Session refresh failed:", err);
       }
-    }, 10 * 60 * 1000); // 10 minutes
+    }, 20 * 60 * 1000); // 20 minutes (increased from 10)
     
     // Handle visibility change to refresh silently when tab becomes visible again
     const handleVisibilityChange = async () => {
