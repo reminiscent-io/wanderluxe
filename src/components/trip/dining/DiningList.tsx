@@ -164,16 +164,7 @@ const DiningList: React.FC<DiningListProps> = ({
         ))}
       </div>
 
-      {/* Add Reservation Button (mirroring Add Hotel Stay) */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setIsDialogOpen(true)}
-        className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-2"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add Reservation
-      </Button>
+      {/* Add button is now in the header of the day card */}
 
       {/* Dialog for Add/Edit Reservation */}
       <RestaurantReservationDialog
