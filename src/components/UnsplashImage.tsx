@@ -7,6 +7,8 @@ interface UnsplashImageProps {
   className?: string;
   showAttribution?: boolean;
   objectPosition?: string;
+  photographer?: string;
+  unsplashUsername?: string;
 }
 
 const UnsplashImage: React.FC<UnsplashImageProps> = ({ 
@@ -14,8 +16,12 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   alt = "Image",
   className = "",
   showAttribution = true,
-  objectPosition = "center"
+  objectPosition = "center",
+  photographer,
+  unsplashUsername
 }) => {
+  console.log('UnsplashImage rendering with objectPosition:', objectPosition);
+  
   return (
     <div className="relative min-h-[300px] overflow-hidden">
       <img
@@ -26,14 +32,25 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
       />
       {showAttribution && (
         <div className="absolute bottom-4 right-4 text-white text-sm bg-black/50 px-2 py-1 rounded backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity">
-          <a
-            href="https://unsplash.com?utm_source=travel_planner&utm_medium=referral"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Unsplash
-          </a>
+          {photographer && unsplashUsername ? (
+            <a
+              href={`https://unsplash.com/@${unsplashUsername}?utm_source=travel_planner&utm_medium=referral`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              {photographer} / Unsplash
+            </a>
+          ) : (
+            <a
+              href="https://unsplash.com?utm_source=travel_planner&utm_medium=referral"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Unsplash
+            </a>
+          )}
         </div>
       )}
     </div>
