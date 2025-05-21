@@ -16,7 +16,8 @@ export const useTripDays = (tripId: string | undefined) => {
         .from('trip_days')
         .select(`
           *,
-          day_activities (*)
+          day_activities (*),
+          image_position
         `)
         .eq('trip_id', tripId)
         .order('date');
