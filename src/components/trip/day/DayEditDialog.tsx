@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import ImageGenerationSection from './dialogs/ImageGenerationSection';
 import { toast } from "sonner";
 
@@ -18,7 +19,7 @@ interface DayEditDialogProps {
   dayId: string;
   currentTitle: string;
   onTitleChange: (title: string) => void;
-  onSave: (data: { title: string; image_url?: string }) => Promise<void>;
+  onSave: (data: { title: string; image_url?: string; image_position?: string }) => Promise<void>;
 }
 
 const DayEditDialog: React.FC<DayEditDialogProps> = ({
@@ -31,17 +32,41 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 }) => {
   const [title, setTitle] = useState(currentTitle);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imagePosition, setImagePosition] = useState<number>(50); // Default 50%
   const [isSaving, setIsSaving] = useState(false);
+
+  // Load the image position from localStorage if available
+  useEffect(() => {
+    const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
+    if (savedPosition) {
+      const positionValue = parseInt(savedPosition.split('%')[1], 10);
+      setImagePosition(positionValue);
+    }
+  }, [dayId, open]);
 
   useEffect(() => {
     setTitle(currentTitle);
   }, [currentTitle]);
 
+  // Save position to localStorage whenever it changes
+  useEffect(() => {
+    if (imagePosition) {
+      localStorage.setItem(`day_image_position_${dayId}`, `center ${imagePosition}%`);
+    }
+  }, [imagePosition, dayId]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Create update data with current title
-      const updateData: { title: string; image_url?: string } = { title };
+      // Create update data with current title and image position
+      const updateData: { 
+        title: string; 
+        image_url?: string; 
+        image_position?: string 
+      } = { 
+        title,
+        image_position: `center ${imagePosition}%`
+      };
       
       // Only include image_url if an image was selected
       if (selectedImage) {
@@ -60,6 +85,16 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handlePositionChange = (value: number[]) => {
+    setImagePosition(value[0]);
+  };
+
+  // Quick adjustment buttons for +/- 10%
+  const adjustPosition = (amount: number) => {
+    const newPosition = Math.max(0, Math.min(100, imagePosition + amount));
+    setImagePosition(newPosition);
   };
 
   return (
@@ -85,6 +120,54 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
               placeholder="Enter day title"
             />
           </div>
+
+          {/* Image Position Adjustment */}
+          {selectedImage && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">
+                Image Position
+              </Label>
+              <div className="flex items-center justify-between mb-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustPosition(-10)}
+                  className="px-2 h-8"
+                >
+                  Move Up 10%
+                </Button>
+                <span className="text-sm text-gray-500">{imagePosition}%</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustPosition(10)}
+                  className="px-2 h-8"
+                >
+                  Move Down 10%
+                </Button>
+              </div>
+              <Slider 
+                defaultValue={[imagePosition]} 
+                min={0} 
+                max={100} 
+                step={1}
+                value={[imagePosition]}
+                onValueChange={handlePositionChange}
+              />
+              
+              {/* Preview of the selected image with position applied */}
+              <div className="mt-4 relative h-32 overflow-hidden rounded-md">
+                <img 
+                  src={selectedImage} 
+                  alt="Selected image with position applied" 
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ objectPosition: `center ${imagePosition}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Image Generation Section */}
           <div className="space-y-1">

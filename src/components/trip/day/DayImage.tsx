@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface DayImageProps {
@@ -7,6 +7,7 @@ interface DayImageProps {
   imageUrl?: string | null;
   defaultImageUrl?: string;
   className?: string;
+  objectPosition?: string;
 }
 
 const DayImage: React.FC<DayImageProps> = ({
@@ -15,10 +16,21 @@ const DayImage: React.FC<DayImageProps> = ({
   imageUrl,
   defaultImageUrl,
   className,
+  objectPosition = "center 50%",
   ...props // handle any other props passed to the component
 }) => {
   const displayImageUrl =
     imageUrl || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f';
+    
+  const [imagePosition, setImagePosition] = useState(objectPosition);
+  
+  // Load image position from localStorage when component mounts
+  useEffect(() => {
+    const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
+    if (savedPosition) {
+      setImagePosition(savedPosition);
+    }
+  }, [dayId]);
 
   return (
     <div className={cn('relative w-full bg-gray-200', className)} {...props}>
@@ -35,6 +47,7 @@ const DayImage: React.FC<DayImageProps> = ({
             src={displayImageUrl}
             alt={title || 'Day image'}
             className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: imagePosition, objectFit: "cover" }}
             onError={(e) => {
               console.error('Image failed to load:', displayImageUrl);
               e.currentTarget.style.display = 'none';
