@@ -53,24 +53,24 @@ const DayImage: React.FC<DayImageProps> = ({
               </h2>
             </div>
           )}
-          <img
-            src={displayImageUrl}
-            alt={title || 'Day image'}
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ 
-              objectPosition: imagePosition, 
-              objectFit: "cover",
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%" 
-            }}
-            onError={(e) => {
-              console.error('Image failed to load:', displayImageUrl);
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+          {/* Force image to respect the vertical position by removing any conflicting styles */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden">
+            <img
+              src={displayImageUrl}
+              alt={title || 'Day image'}
+              className="absolute w-full h-full object-cover"
+              style={{ 
+                objectPosition: imagePosition,
+                transform: 'translate3d(0, 0, 0)', /* Force hardware acceleration */
+                width: '100%',
+                height: '100%'
+              }}
+              onError={(e) => {
+                console.error('Image failed to load:', displayImageUrl);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-center text-gray-400 h-[400px]">
