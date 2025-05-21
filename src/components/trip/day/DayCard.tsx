@@ -290,7 +290,17 @@ const DayCard: React.FC<DayCardProps> = ({
               <div className="flex flex-col gap-4">
                 {/* HOTEL STAY */}
                 <div className="bg-gray-100 rounded-lg p-4">
-                  <h3 className="text-base font-semibold mb-2">Hotel Stay</h3>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold">Hotel Stay</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setHotelDialog({ open: true, initialData: null })}
+                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     {filteredHotelStays.map((stay) => {
                       console.log(
@@ -330,15 +340,6 @@ const DayCard: React.FC<DayCardProps> = ({
                         No hotel stay booked this night
                       </p>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setHotelDialog({ open: true, initialData: null })}
-                      className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Hotel Stay
-                    </Button>
                   </div>
                 </div>
 
