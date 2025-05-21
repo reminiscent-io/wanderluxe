@@ -1,25 +1,45 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import { Upload, X, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Slider } from "@/components/ui/slider";
 
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
   onRemove?: () => void;
+  objectPosition?: string;
+  onPositionChange?: (position: string) => void;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ 
+  value, 
+  onChange, 
+  onRemove,
+  objectPosition = "center",
+  onPositionChange
+}) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string>('');
+  const [position, setPosition] = useState<number>(50); // Default is center (50%)
 
   useEffect(() => {
     if (value) {
       setPreview(value);
     }
   }, [value]);
+
+  // Initialize position from objectPosition prop
+  useEffect(() => {
+    if (objectPosition && objectPosition.includes('%')) {
+      const positionMatch = objectPosition.match(/center\s+(\d+)%/);
+      if (positionMatch && positionMatch[1]) {
+        setPosition(parseInt(positionMatch[1], 10));
+      }
+    }
+  }, [objectPosition]);
 
   // Handle paste events globally when the component is mounted
   useEffect(() => {
@@ -93,23 +113,79 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) 
     }
   };
 
+  const handlePositionChange = (newPosition: number[]) => {
+    const pos = newPosition[0];
+    setPosition(pos);
+    
+    if (onPositionChange) {
+      onPositionChange(`center ${pos}%`);
+    }
+  };
+
+  const handleQuickAdjust = (direction: 'up' | 'down') => {
+    const change = direction === 'up' ? -10 : 10;
+    const newPosition = Math.min(Math.max(position + change, 0), 100);
+    setPosition(newPosition);
+    
+    if (onPositionChange) {
+      onPositionChange(`center ${newPosition}%`);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {preview ? (
-        <div className="relative">
-          <img
-            src={preview}
-            alt="Preview"
-            className="w-full h-48 object-cover rounded-lg"
-          />
-          <Button
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2"
-            onClick={handleRemove}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        <div className="space-y-3">
+          <div className="relative">
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-full h-48 object-cover rounded-lg"
+              style={{ objectPosition: `center ${position}%` }}
+            />
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2"
+              onClick={handleRemove}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {onPositionChange && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">Vertical Position</span>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => handleQuickAdjust('up')}
+                    className="h-6 w-6"
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => handleQuickAdjust('down')}
+                    className="h-6 w-6"
+                  >
+                    <ArrowDown className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+              <Slider
+                value={[position]}
+                min={0}
+                max={100}
+                step={1}
+                onValueChange={handlePositionChange}
+                className="mt-2"
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="relative">

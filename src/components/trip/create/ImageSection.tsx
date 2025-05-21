@@ -12,6 +12,8 @@ import UnsplashImage from '@/components/UnsplashImage';
 interface ImageSectionProps {
   coverImageUrl: string;
   onImageChange: (url: string) => void;
+  objectPosition?: string;
+  onPositionChange?: (position: string) => void;
 }
 
 interface UnsplashImage {
@@ -20,10 +22,16 @@ interface UnsplashImage {
   description: string;
 }
 
-const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChange }) => {
+const ImageSection: React.FC<ImageSectionProps> = ({ 
+  coverImageUrl, 
+  onImageChange, 
+  objectPosition = "center", 
+  onPositionChange 
+}) => {
   const [imageKeywords, setImageKeywords] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<UnsplashImage[]>([]);
+  const [selectedImagePosition, setSelectedImagePosition] = useState(objectPosition);
 
   const generateImage = async () => {
     if (!imageKeywords.trim()) {
@@ -59,6 +67,13 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
     onImageChange(imageUrl);
     setGeneratedImages([]);
     toast.success('Image selected successfully');
+  };
+
+  const handlePositionChange = (position: string) => {
+    setSelectedImagePosition(position);
+    if (onPositionChange) {
+      onPositionChange(position);
+    }
   };
 
   return (
@@ -114,6 +129,8 @@ const ImageSection: React.FC<ImageSectionProps> = ({ coverImageUrl, onImageChang
           value={coverImageUrl}
           onChange={onImageChange}
           onRemove={() => onImageChange('')}
+          objectPosition={selectedImagePosition}
+          onPositionChange={handlePositionChange}
         />
       </div>
     </div>
