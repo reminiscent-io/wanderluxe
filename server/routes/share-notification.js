@@ -46,7 +46,7 @@ router.post('/api/send-share-notification', async (req, res) => {
     const emailContent = {
       to: toEmail,
       from: {
-        email: 'no-reply@wanderluxe.app',
+        email: 'kevin@wanderluxe.io',
         name: 'WanderLuxe',
       },
       subject: emailSubject,
