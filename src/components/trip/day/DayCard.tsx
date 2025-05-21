@@ -169,38 +169,45 @@ const DayCard: React.FC<DayCardProps> = ({
         console.log(`Saved image position for day ${id}:`, data.image_position);
       }
 
-      // Prepare update object
+      // Prepare the update object - only include fields that exist in the database
       const updateObj: any = {
         title: data.title,
         image_url: data.image_url,
       };
       
-      // Also attempt to add image_position to database for future compatibility
-      if (data.image_position) {
-        // This will be ignored until the column is added to the table
-        updateObj.image_position = data.image_position;
-      }
-
-      const { error, data: updatedData } = await supabase
-        .from("trip_days")
-        .update(updateObj)
-        .eq("day_id", id)
-        .select("*")
-        .single();
-
-      if (error) {
-        toast.error("Failed to save changes");
-        throw error;
-      } else {
-        toast.success("Day updated successfully");
-        if (updatedData.image_url) {
-          setImageUrl(updatedData.image_url);
+      try {
+        const { error, data: updatedData } = await supabase
+          .from("trip_days")
+          .update(updateObj)
+          .eq("day_id", id)
+          .select("*")
+          .single();
+          
+        // Handle database update result
+        if (error) {
+          throw error;
+        } else {
+          // Update UI with db data if successful
+          if (updatedData.title) {
+            setEditTitle(updatedData.title);
+          }
+          if (updatedData.image_url) {
+            setImageUrl(updatedData.image_url);
+          }
         }
-        refreshTripData();
+      } catch (updateError) {
+        console.error("Error updating trip day:", updateError);
+        toast.error("Failed to save changes to database, but local changes were applied");
+        return; // Exit early so we don't show additional errors
       }
+
+      // Successfully saved changes locally
+      toast.success("Day updated successfully");
+      refreshTripData();
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving day edit:", error);
+      toast.error("Failed to save changes");
     }
   };
 
