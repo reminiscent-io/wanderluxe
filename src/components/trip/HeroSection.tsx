@@ -55,6 +55,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [imagePosition, setImagePosition] = useState<string>("center 50%");
 
   const handleImageChange = async (newImageUrl: string) => {
     try {
@@ -69,6 +70,25 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     } catch (error) {
       console.error('Error updating cover image:', error);
       toast.error('Failed to update cover image');
+    }
+  };
+
+  const handlePositionChange = async (newPosition: string) => {
+    setImagePosition(newPosition);
+    
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .update({ image_position: newPosition })
+        .eq('trip_id', tripId);
+
+      if (error) {
+        console.error('Error updating image position:', error);
+        // We don't show an error toast here since the position still visually works
+        // and we don't want to disrupt the user experience
+      }
+    } catch (error) {
+      console.error('Error updating image position:', error);
     }
   };
 
@@ -121,6 +141,29 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       });
     }
   }, [arrivalDate, departureDate]);
+
+  // Fetch the image position from the database when component mounts
+  React.useEffect(() => {
+    const fetchTripDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('trips')
+          .select('image_position')
+          .eq('trip_id', tripId)
+          .single();
+
+        if (error) throw error;
+        
+        if (data?.image_position) {
+          setImagePosition(data.image_position);
+        }
+      } catch (error) {
+        console.error('Error fetching trip details:', error);
+      }
+    };
+
+    fetchTripDetails();
+  }, [tripId]);
 
   // Compute formatted date range using the last valid dates
   const formattedDateRange = React.useMemo(() => {
@@ -197,6 +240,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             <ImageSection
               coverImageUrl={imageUrl}
               onImageChange={handleImageChange}
+              objectPosition={imagePosition}
+              onPositionChange={handlePositionChange}
             />
           </DialogContent>
         </Dialog>
@@ -207,7 +252,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             className="h-full w-full object-cover"
             photographer={photographer}
             unsplashUsername={unsplashUsername}
-            objectPosition="center 100%"
+            objectPosition={imagePosition}
           />
         ) : (
           <div className="h-full w-full bg-gray-200 animate-pulse"></div>
