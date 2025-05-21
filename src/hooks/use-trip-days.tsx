@@ -73,6 +73,7 @@ export const useTripDays = (tripId: string | undefined) => {
       description?: string;
       image_url?: string;
       date?: string;
+      image_position?: string;
     }) => {
       const { error } = await supabase
         .from('trip_days')
@@ -80,7 +81,8 @@ export const useTripDays = (tripId: string | undefined) => {
           title: updatedDay.title,
           description: updatedDay.description,
           image_url: updatedDay.image_url,
-          date: updatedDay.date
+          date: updatedDay.date,
+          image_position: updatedDay.image_position
         })
         .eq('day_id', updatedDay.id);
 
