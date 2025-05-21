@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import AccommodationDialog from "@/components/trip/accommodation/AccommodationDialog";
 import ActivityDialogs from "@/components/trip/day/activities/ActivityDialogs";
 import DiningList from "../dining/DiningList";
+import RestaurantReservationDialog from "../dining/RestaurantReservationDialog";
 import TransportationDialog from "@/components/trip/transportation/TransportationDialog";
 import { CURRENCIES } from "@/utils/currencyConstants";
 import DayActivityManager from "./components/DayActivityManager";
@@ -98,6 +99,8 @@ const DayCard: React.FC<DayCardProps> = ({
     useState(false);
   const [selectedTransportation, setSelectedTransportation] =
     useState<Transportation | null>(null);
+  
+  const [diningDialogOpen, setDiningDialogOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -437,6 +440,14 @@ const DayCard: React.FC<DayCardProps> = ({
                 <div className="bg-gray-100 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">Dining</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDiningDialogOpen(true)}
+                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                   <DiningList
                     reservations={reservations || []}
