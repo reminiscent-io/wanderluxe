@@ -22,18 +22,25 @@ const DayImage: React.FC<DayImageProps> = ({
   const displayImageUrl =
     imageUrl || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f';
     
+  // Initialize with provided objectPosition, but prefer localStorage value if available
   const [imagePosition, setImagePosition] = useState(objectPosition);
   
-  // Load image position from localStorage when component mounts
+  // Load image position from localStorage when component mounts or when dayId changes
   useEffect(() => {
     const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
     if (savedPosition) {
-      console.log(`Loaded position for day ${dayId}:`, savedPosition);
+      console.log(`DayImage: Loaded position for day ${dayId}:`, savedPosition);
       setImagePosition(savedPosition);
-    } else {
-      console.log(`No saved position for day ${dayId}, using default:`, objectPosition);
     }
-  }, [dayId, objectPosition]);
+  }, [dayId]);
+  
+  // Update position when objectPosition prop changes
+  useEffect(() => {
+    if (objectPosition && objectPosition !== "center 50%") {
+      console.log(`DayImage: Updated from prop - day ${dayId}:`, objectPosition);
+      setImagePosition(objectPosition);
+    }
+  }, [objectPosition, dayId]);
 
   return (
     <div className={cn('relative w-full bg-gray-200 h-full', className)} {...props}>
