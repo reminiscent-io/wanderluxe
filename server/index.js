@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import shareNotificationRoutes from './routes/share-notification.js';
+import tripPdfRoutes from './routes/trip-pdf.js';
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // Register routes
 app.use(shareNotificationRoutes);
+app.use(tripPdfRoutes);
 
 // Simple health check route
 app.get('/api/health', (req, res) => {
