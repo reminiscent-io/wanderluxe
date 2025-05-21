@@ -133,11 +133,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     setImagePosition(value[0]);
   };
 
-  // Quick adjustment buttons for +/- 10%
-  const adjustPosition = (amount: number) => {
-    const newPosition = Math.max(0, Math.min(100, imagePosition + amount));
-    setImagePosition(newPosition);
-  };
+  // No longer needed as we removed the adjustment buttons
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -167,46 +163,37 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           {selectedImage && (
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">
-                Image Position
+                Image Position 
+                <span className="text-sm text-gray-500 ml-2">
+                  ({imagePosition}%)
+                </span>
               </Label>
-              <div className="flex items-center justify-between mb-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => adjustPosition(-10)}
-                  className="px-2 h-8"
-                >
-                  Move Up 10%
-                </Button>
-                <span className="text-sm text-gray-500">{imagePosition}%</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => adjustPosition(10)}
-                  className="px-2 h-8"
-                >
-                  Move Down 10%
-                </Button>
-              </div>
-              <Slider 
-                defaultValue={[imagePosition]} 
-                min={0} 
-                max={100} 
-                step={1}
-                value={[imagePosition]}
-                onValueChange={handlePositionChange}
-              />
               
-              {/* Preview of the selected image with position applied */}
-              <div className="mt-4 relative h-32 overflow-hidden rounded-md">
-                <img 
-                  src={selectedImage} 
-                  alt="Selected image with position applied" 
-                  className="absolute inset-0 h-full w-full object-cover"
-                  style={{ objectPosition: `center ${imagePosition}%` }}
-                />
+              {/* Image preview and vertical slider layout */}
+              <div className="flex mt-4 h-32 gap-4">
+                {/* Vertical slider on the left */}
+                <div className="h-full flex items-center">
+                  <Slider 
+                    defaultValue={[imagePosition]} 
+                    min={0} 
+                    max={100} 
+                    step={1}
+                    value={[imagePosition]}
+                    onValueChange={handlePositionChange}
+                    orientation="vertical"
+                    className="h-full"
+                  />
+                </div>
+                
+                {/* Preview of the selected image with position applied */}
+                <div className="relative flex-1 overflow-hidden rounded-md">
+                  <img 
+                    src={selectedImage} 
+                    alt="Selected image with position applied" 
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ objectPosition: `center ${imagePosition}%` }}
+                  />
+                </div>
               </div>
             </div>
           )}
