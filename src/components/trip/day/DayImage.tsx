@@ -33,7 +33,7 @@ const DayImage: React.FC<DayImageProps> = ({
   }, [dayId]);
 
   return (
-    <div className={cn('relative w-full bg-gray-200', className)} {...props}>
+    <div className={cn('relative w-full bg-gray-200 h-full', className)} {...props}>
       {displayImageUrl ? (
         <div className="relative overflow-hidden rounded-lg w-full h-full">
           {title && (
@@ -47,7 +47,15 @@ const DayImage: React.FC<DayImageProps> = ({
             src={displayImageUrl}
             alt={title || 'Day image'}
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: imagePosition, objectFit: "cover" }}
+            style={{ 
+              objectPosition: imagePosition, 
+              objectFit: "cover",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%" 
+            }}
             onError={(e) => {
               console.error('Image failed to load:', displayImageUrl);
               e.currentTarget.style.display = 'none';
