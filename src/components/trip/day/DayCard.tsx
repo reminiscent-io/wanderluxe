@@ -345,7 +345,20 @@ const DayCard: React.FC<DayCardProps> = ({
 
                 {/* TRANSPORTATION */}
                 <div className="bg-gray-100 rounded-lg p-4">
-                  <h3 className="text-base font-semibold mb-2">Flights and Transportation</h3>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold">Flights and Transportation</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTransportation(null);
+                        setIsTransportationDialogOpen(true);
+                      }}
+                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     {filteredTransportations.length > 0 ? (
                       filteredTransportations.map((transport) => (
@@ -374,18 +387,6 @@ const DayCard: React.FC<DayCardProps> = ({
                       </p>
                     )}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedTransportation(null);
-                      setIsTransportationDialogOpen(true);
-                    }}
-                    className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Transportation
-                  </Button>
                 </div>
               </div>
 
@@ -393,7 +394,17 @@ const DayCard: React.FC<DayCardProps> = ({
               <div className="flex flex-col gap-4">
                 {/* ACTIVITIES */}
                 <div className="bg-gray-100 rounded-lg p-4">
-                  <h3 className="text-base font-semibold mb-2">Activities</h3>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold">Activities</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddingActivity(true)}
+                      className="bg-white/10 text-gray-500 hover:bg-white/20 h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     {sortedActivities.map((activity) => (
                       <div
@@ -419,21 +430,14 @@ const DayCard: React.FC<DayCardProps> = ({
                         No activities for this day
                       </p>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsAddingActivity(true)}
-                      className="w-full bg-white/10 text-gray-500 hover:bg-white/20 mt-1"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Activity
-                    </Button>
                   </div>
                 </div>
 
                 {/* DINING */}
                 <div className="bg-gray-100 rounded-lg p-4">
-                  <h3 className="text-base font-semibold mb-2">Dining</h3>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold">Dining</h3>
+                  </div>
                   <DiningList
                     reservations={reservations || []}
                     formatTime={formatTime12}
