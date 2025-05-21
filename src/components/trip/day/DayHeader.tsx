@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import DayImage from "./DayImage";
@@ -25,6 +25,16 @@ const DayHeader: React.FC<DayHeaderProps> = ({
   imageUrl,
   defaultImageUrl,
 }) => {
+  const [imagePosition, setImagePosition] = useState<string>("center 50%");
+  
+  // Load image position from localStorage when component mounts
+  useEffect(() => {
+    const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
+    if (savedPosition) {
+      setImagePosition(savedPosition);
+    }
+  }, [dayId]);
+  
   // Safely format the date
   let formattedDate = "Invalid date";
   try {
@@ -50,6 +60,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           imageUrl={imageUrl}
           defaultImageUrl={defaultImageUrl}
           className="w-full h-full object-cover"
+          objectPosition={imagePosition}
         />
         <div
           className={cn(
