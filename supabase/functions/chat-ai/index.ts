@@ -138,19 +138,55 @@ serve(async (req) => {
         .order('day_number', { ascending: true })
     ])
 
+    // Determine hotel type and location context
+    const primaryHotel = accommodations?.[0]
+    let locationContext = tripData.destination
+    let budgetLevel = 'mid-range'
+    
+    if (primaryHotel) {
+      locationContext = primaryHotel.hotel_address || tripData.destination
+      // Determine budget level from hotel cost
+      if (primaryHotel.cost && primaryHotel.final_accommodation_day && primaryHotel.initial_accommodation_day) {
+        const startDate = new Date(primaryHotel.initial_accommodation_day)
+        const endDate = new Date(primaryHotel.final_accommodation_day)
+        const timeDiff = endDate.getTime() - startDate.getTime()
+        const daysDiff = Math.max(1, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)))
+        const dailyCost = primaryHotel.cost / daysDiff
+        
+        if (dailyCost > 400) budgetLevel = 'luxury'
+        else if (dailyCost > 200) budgetLevel = 'upscale'
+        else if (dailyCost < 100) budgetLevel = 'budget-conscious'
+      }
+      
+      // Detect luxury hotel names/brands
+      const luxuryBrands = ['Ritz', 'Four Seasons', 'St. Regis', 'Mandarin Oriental', 'Park Hyatt', 'Edition', 'Bulgari', 'Aman', 'Rosewood', 'Peninsula']
+      if (luxuryBrands.some(brand => primaryHotel.hotel.toLowerCase().includes(brand.toLowerCase()))) {
+        budgetLevel = 'luxury'
+      }
+    }
+
     // Prepare comprehensive trip context
     const tripContext = `
 TRIP OVERVIEW:
-- Destination: ${tripData.destination}
+- Trip Title/Theme: ${tripData.destination}
+- Primary Location: ${locationContext}
 - Arrival Date: ${tripData.arrival_date || 'Not set'}
 - Departure Date: ${tripData.departure_date || 'Not set'}
 - Duration: ${tripDays?.length || 0} days
+- Budget Level: ${budgetLevel}
 
-ACCOMMODATIONS:${accommodations?.length ? 
-  accommodations.map(acc => `
+PRIMARY ACCOMMODATION:${primaryHotel ? `
+- Hotel: ${primaryHotel.hotel}
+- Location: ${primaryHotel.hotel_address}
+- Dates: ${primaryHotel.initial_accommodation_day} to ${primaryHotel.final_accommodation_day}
+- Cost: ${primaryHotel.cost} ${primaryHotel.currency}
+- Budget Category: ${budgetLevel}` : '\n- No primary accommodation set'}
+
+OTHER ACCOMMODATIONS:${accommodations?.length > 1 ? 
+  accommodations.slice(1).map(acc => `
   - ${acc.hotel} (${acc.hotel_address})
     Dates: ${acc.initial_accommodation_day} to ${acc.final_accommodation_day}
-    Cost: ${acc.cost} ${acc.currency}`).join('') : '\n  - No accommodations booked yet'}
+    Cost: ${acc.cost} ${acc.currency}`).join('') : '\n  - None'}
 
 EXISTING RESTAURANT RESERVATIONS:${reservations?.length ?
   reservations.map(res => `
@@ -209,23 +245,37 @@ Previous conversation:
 ${conversationHistory}
 
 INSTRUCTIONS:
-- Use the trip details above to provide contextually relevant suggestions
-- Avoid recommending restaurants where reservations already exist unless specifically asked
-- Consider existing activities when suggesting new ones to avoid conflicts or redundancy
-- Respect the user's vision board preferences and interests
-- Be aware of their accommodation locations when suggesting nearby activities
-- Consider their transportation arrangements when giving timing advice
+- Use hotel location as your PRIMARY geographic anchor, not the trip title/theme
+- Match recommendations to the budget level indicated by their accommodation choices
+- If budget level is 'luxury': Focus on high-end, exclusive experiences, fine dining, private tours
+- If budget level is 'budget-conscious': Emphasize value, free activities, affordable dining options
+- If budget level is 'upscale' or 'mid-range': Balance quality with reasonable pricing
+- Be conversational and engaging - ask follow-up questions when you need more context
+- When unsure about preferences, timing, or specifics, ask clarifying questions
+- Use the hotel address/location to suggest nearby activities and restaurants
+- Avoid recommending places where they already have reservations
 - Reference their existing plans naturally in conversations
-- Focus on luxury experiences, hidden gems, and personalized recommendations
+- Be enthusiastic and encouraging about their trip plans
 - Provide specific, actionable advice with links when helpful
 - Keep responses well-structured with headers and formatting for readability
 
-When suggesting restaurants, activities, or experiences, consider:
-1. Proximity to their existing accommodations and activities
-2. Timing that works with their existing schedule
-3. Their stated interests from the vision board
-4. Avoiding redundancy with existing bookings
-5. Complement their existing transportation and logistics`
+ENGAGEMENT GUIDELINES:
+- If a request is vague, ask 1-2 specific questions to better help them
+- Examples: "What type of cuisine are you in the mood for?" or "Are you looking for morning or evening activities?"
+- Show enthusiasm: "That sounds amazing!" or "Great choice with [hotel name]!"
+- Reference their hotel location specifically: "Since you're staying near [area], I'd recommend..."
+
+BUDGET-CONSCIOUS RECOMMENDATIONS:
+- Luxury hotels (${budgetLevel === 'luxury' ? 'ACTIVE' : 'inactive'}): Private experiences, Michelin restaurants, exclusive access
+- Budget hotels (${budgetLevel === 'budget-conscious' ? 'ACTIVE' : 'inactive'}): Free activities, local markets, affordable eats, public transport tips
+- Mid/Upscale (${budgetLevel === 'upscale' || budgetLevel === 'mid-range' ? 'ACTIVE' : 'inactive'}): Quality experiences at reasonable prices
+
+When suggesting restaurants, activities, or experiences, prioritize:
+1. Proximity to their hotel location (not just destination city)
+2. Budget alignment with their accommodation level
+3. Timing that works with their existing schedule
+4. Their stated interests from the vision board
+5. Avoiding redundancy with existing bookings`
           },
           {
             role: 'user',

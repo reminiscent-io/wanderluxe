@@ -141,14 +141,15 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[600px]">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-earth-800">Trip Assistant</h3>
-        <p className="text-sm text-earth-600">Ask me anything about your trip or get suggestions for activities!</p>
-      </div>
+    <div className="max-w-5xl mx-auto">
+      <div className="flex flex-col h-full max-h-[600px]">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-earth-800">Trip Assistant</h3>
+          <p className="text-sm text-earth-600">Ask me anything about your trip or get suggestions for activities!</p>
+        </div>
 
-      {/* Messages Area */}
-      <Card className="flex-1 mb-4">
+        {/* Messages Area */}
+        <Card className="flex-1 mb-4">
         <CardContent className="p-0">
           <ScrollArea className="h-96 p-4">
             {messages.length === 0 ? (
@@ -282,24 +283,25 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         </CardContent>
       </Card>
 
-      {/* Input Area */}
-      <div className="flex gap-2">
-        <Input
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Ask about your trip or request suggestions..."
-          disabled={isLoading}
-          className="flex-1"
-        />
-        <Button
-          onClick={sendMessage}
-          disabled={!newMessage.trim() || isLoading}
-          size="icon"
-          className="bg-earth-500 hover:bg-earth-600"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
+        {/* Input Area */}
+        <div className="flex gap-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ask about your trip or request suggestions..."
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button
+            onClick={sendMessage}
+            disabled={!newMessage.trim() || isLoading}
+            size="icon"
+            className="bg-earth-500 hover:bg-earth-600"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
