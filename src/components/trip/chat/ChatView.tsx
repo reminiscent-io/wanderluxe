@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Upload, Paperclip, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +17,17 @@ interface ChatMessage {
   message: string;
   timestamp: string;
   user_id?: string;
+  attachments?: {
+    type: 'image' | 'pdf';
+    url: string;
+    name: string;
+  }[];
+  extractedData?: {
+    type: 'hotel' | 'flight' | 'reservation' | 'activity';
+    data: any;
+    missingFields?: string[];
+    readyToAdd?: boolean;
+  };
 }
 
 interface ChatViewProps {
@@ -28,7 +39,9 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
