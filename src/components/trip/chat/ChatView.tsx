@@ -176,6 +176,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
     try {
       // Call the Edge Function with attachment support
+      console.log('Calling edge function with:', { message: userMessage, tripId, attachments });
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: userMessage,
@@ -184,6 +185,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         }
       });
 
+      console.log('Edge function response:', { data, error });
       if (error) throw error;
 
       // Replace temp message and add AI response
