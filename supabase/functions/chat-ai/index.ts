@@ -272,6 +272,8 @@ TRIP DAYS:${tripDays?.length
     /* ---------- OpenAI Vision Analysis for Receipts ---------- */
     let extractedData = null;
     if (attachments && attachments.length > 0) {
+      console.log("Processing attachment:", attachments[0]);
+      console.log("OpenAI API Key available:", !!Deno.env.get("OPENAI_API_KEY"));
       try {
         const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -366,6 +368,9 @@ Set readyToAdd to true only if ALL required fields are present.`
         
       } catch (error) {
         console.error("Error analyzing receipt with OpenAI:", error);
+        console.error("OpenAI API Key exists:", !!Deno.env.get("OPENAI_API_KEY"));
+        console.error("Attachment URL:", attachments[0]?.url);
+        console.error("Full error details:", JSON.stringify(error, null, 2));
         // Continue with regular chat if vision analysis fails
       }
     }
