@@ -4,7 +4,15 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
+
+// Compiled luxury hotel regex for better performance
+const luxuryHotelRegex = new RegExp(
+  ['Ritz', 'Four Seasons', 'St\\.? Regis', 'Mandarin Oriental', 'Park Hyatt', 
+   'Edition', 'Bulgari', 'Aman', 'Rosewood', 'Peninsula'].join('|'), 
+  'i'
+)
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -34,11 +42,22 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    // Parse request body
-    const { message, tripId } = await req.json()
+    // Parse and validate request body
+    let body
+    try {
+      body = await req.json()
+    } catch {
+      throw new Error('Invalid JSON in request body')
+    }
 
-    if (!message || !tripId) {
-      throw new Error('Message and tripId are required')
+    const { message, tripId } = body
+
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      throw new Error('Message is required and must be a non-empty string')
+    }
+
+    if (!tripId || typeof tripId !== 'string') {
+      throw new Error('TripId is required and must be a string')
     }
 
     // Verify user has access to this trip and get comprehensive trip data
@@ -158,9 +177,8 @@ serve(async (req) => {
         else if (dailyCost < 100) budgetLevel = 'budget-conscious'
       }
       
-      // Detect luxury hotel names/brands
-      const luxuryBrands = ['Ritz', 'Four Seasons', 'St. Regis', 'Mandarin Oriental', 'Park Hyatt', 'Edition', 'Bulgari', 'Aman', 'Rosewood', 'Peninsula']
-      if (luxuryBrands.some(brand => primaryHotel.hotel.toLowerCase().includes(brand.toLowerCase()))) {
+      // Detect luxury hotel names/brands using compiled regex
+      if (luxuryHotelRegex.test(primaryHotel.hotel)) {
         budgetLevel = 'luxury'
       }
     }
@@ -356,14 +374,23 @@ When suggesting restaurants, activities, or experiences, prioritize:
 
   } catch (error) {
     console.error('Error in chat-ai function:', error)
+    
+    // Determine appropriate status code based on error type
+    let status = 500
+    if (error.message.includes('Unauthorized')) status = 401
+    if (error.message.includes('access denied') || error.message.includes('Access denied')) status = 403
+    if (error.message.includes('not found') || error.message.includes('Not found')) status = 404
+    if (error.message.includes('required') || error.message.includes('Invalid JSON')) status = 400
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
+        timestamp: new Date().toISOString()
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status,
       }
     )
   }
