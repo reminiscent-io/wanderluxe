@@ -4,7 +4,8 @@ import TimelineView from "../TimelineView";
 import BudgetView from "../BudgetView";
 import BookingView from "../BookingView";
 import VisionBoardView from "../vision-board/VisionBoardView";
-import { Calendar, BarChart2, List, Lightbulb } from 'lucide-react';
+import ChatView from "../chat/ChatView";
+import { Calendar, BarChart2, List, Lightbulb, MessageCircle } from 'lucide-react';
 import { Trip } from '@/types/trip';
 
 interface TripTabsProps {
@@ -23,6 +24,13 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
         >
           <Calendar className="w-4 h-4 md:w-5 md:h-5" />
           Timeline
+        </TabsTrigger>
+        <TabsTrigger 
+          value="chat"
+          className="data-[state=active]:bg-earth-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-earth-500 px-3 md:px-8 py-3 md:py-4 rounded-lg transition-all duration-200 hover:bg-earth-100 data-[state=active]:hover:bg-earth-600 flex items-center gap-1 md:gap-2 flex-shrink-0 text-sm md:text-base"
+        >
+          <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
+          Chat
         </TabsTrigger>
         <TabsTrigger 
           value="vision-board"
@@ -64,6 +72,10 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
               : null
           }}
         />
+      </TabsContent>
+
+      <TabsContent value="chat" className="flex-1 overflow-auto">
+        <ChatView tripId={tripId || ''} />
       </TabsContent>
 
       <TabsContent value="budget" className="flex-1 overflow-auto">
