@@ -8,6 +8,8 @@ import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessage {
   id: string;
@@ -188,8 +190,66 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                        <p className={`text-xs mt-1 ${
+                        {message.role === 'ai' ? (
+                          <div className="text-sm prose prose-sm max-w-none prose-headings:text-gray-800 prose-headings:font-semibold prose-strong:text-gray-800 prose-a:text-earth-600 hover:prose-a:text-earth-700 prose-a:no-underline hover:prose-a:underline prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800">
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a: ({ href, children, ...props }) => (
+                                  <a 
+                                    href={href} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-earth-600 hover:text-earth-700 font-medium transition-colors duration-200"
+                                    {...props}
+                                  >
+                                    {children}
+                                  </a>
+                                ),
+                                h3: ({ children, ...props }) => (
+                                  <h3 className="text-base font-semibold text-gray-800 mt-3 mb-2 first:mt-0" {...props}>
+                                    {children}
+                                  </h3>
+                                ),
+                                h4: ({ children, ...props }) => (
+                                  <h4 className="text-sm font-semibold text-gray-800 mt-2 mb-1" {...props}>
+                                    {children}
+                                  </h4>
+                                ),
+                                strong: ({ children, ...props }) => (
+                                  <strong className="font-semibold text-gray-800" {...props}>
+                                    {children}
+                                  </strong>
+                                ),
+                                ul: ({ children, ...props }) => (
+                                  <ul className="list-disc list-inside space-y-1 my-2" {...props}>
+                                    {children}
+                                  </ul>
+                                ),
+                                ol: ({ children, ...props }) => (
+                                  <ol className="list-decimal list-inside space-y-1 my-2" {...props}>
+                                    {children}
+                                  </ol>
+                                ),
+                                li: ({ children, ...props }) => (
+                                  <li className="text-gray-800" {...props}>
+                                    {children}
+                                  </li>
+                                ),
+                                p: ({ children, ...props }) => (
+                                  <p className="text-gray-800 mb-2 last:mb-0" {...props}>
+                                    {children}
+                                  </p>
+                                )
+                              }}
+                            >
+                              {message.message}
+                            </ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                        )}
+                        <p className={`text-xs mt-2 ${
                           message.role === 'user' ? 'text-earth-200' : 'text-gray-500'
                         }`}>
                           {new Date(message.timestamp).toLocaleTimeString()}
