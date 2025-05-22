@@ -1,0 +1,95 @@
+Objective:
+Develop an AI-powered chat interface for WanderLuxe using the Perplexity API. The chat should allow users to interact with their trip data (browse, add activities, etc.), store chat logs per trip, and support shared access for collaborative planning. The backend logic should run in a Supabase Edge Function, with all code managed via Replit.
+
+1. Supabase Edge Function Setup
+Create a new Supabase Edge Function for the chatbot logic.
+
+Use the Supabase Dashboard or CLI (supabase functions new chat-ai) to scaffold the function.
+
+Name the function clearly (e.g., chat-ai).
+
+Store your Perplexity API key securely as an environment variable in Supabase.
+
+In the Supabase Dashboard, go to Edge Functions > Secrets.
+
+Add a variable (e.g., PERPLEXITY_API_KEY) and input your key.
+
+2. Database Schema for Chat Logs
+Create a chat_logs table in Supabase with at least the following fields:
+
+id (primary key)
+
+trip_id (foreign key, relates to the trip)
+
+user_id (for audit and multi-user support)
+
+role (either 'user' or 'ai')
+
+message (text)
+
+timestamp
+
+Ensure Row-Level Security (RLS) is enabled so only users with trip access can read/write chat logs.
+
+3. Edge Function Logic
+On receiving a chat request:
+
+Authenticate the user (use Supabase Auth JWT; this is handled automatically if you call via Supabase client).
+
+Retrieve relevant trip context from Supabase (dates, location, hotels, etc.).
+
+Fetch the last N chat log entries for the trip to provide conversational context.
+
+Construct a prompt for Perplexity using the user message and trip context.
+
+Call the Perplexity API using the stored API key.
+
+Receive and parse the AI response.
+
+Store both the user message and AI response in the chat_logs table, linked to the trip.
+
+Return the AI response (and optionally the updated chat log) to the frontend.
+
+4. Frontend Integration (Replit/React)
+Build a chat UI that:
+
+Sends user messages (with trip/session info) to the Edge Function endpoint.
+
+Receives and displays the AI response.
+
+Streams or refreshes chat logs so all users with access to the trip see updates in real time (use Supabase real-time features if needed).
+
+Ensure the UI gracefully handles errors and loading states.
+
+5. Collaboration & Access Control
+Ensure that chat logs are visible to all users who have access to the trip.
+
+Enforce access rules in both the Edge Function and Supabase RLS policies.
+
+6. Testing & Deployment
+Test the Edge Function locally using the Supabase CLI (supabase functions serve chat-ai).
+
+Deploy to production with supabase functions deploy chat-ai.
+
+Test the full chat workflow end-to-end, including multi-user access and chat log visibility.
+
+7. Best Practices
+Do not expose the Perplexity API key in frontend code; only use it within the Edge Function.
+
+Keep all business logic (trip context fetching, chat log storage, API calls) inside the Edge Function for security and maintainability.
+
+Use source control for your Edge Function code; avoid making production edits directly in the Supabase Dashboard.
+
+Document the API contract between frontend and Edge Function for future maintainers.
+
+References for Implementation
+Supabase Edge Functions: 
+
+Perplexity API integration: 
+
+Example: OpenAI/Supabase Edge Function integration (similar process): 
+
+Real-time chat log streaming: 
+
+Summary:
+Build a secure, scalable, and collaborative AI chat feature using Supabase Edge Functions as the backend orchestrator, Perplexity API for AI responses, and Supabase for chat log storage and access control. All logic should reside in the Edge Function, and the frontend should interact only via authenticated API calls.
