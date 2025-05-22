@@ -84,12 +84,83 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !user || !tripId) return;
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    const userMessage = newMessage.trim();
+    const file = files[0];
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image (JPG, PNG) or PDF file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadedFiles([file]);
+    setNewMessage(`📎 ${file.name} - Ready to analyze receipt`);
+  };
+
+  const uploadToSupabase = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user?.id}/${tripId}/${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('chat-attachments')
+      .upload(fileName, file);
+
+    if (error) throw error;
+    
+    const { data: urlData } = supabase.storage
+      .from('chat-attachments')
+      .getPublicUrl(fileName);
+    
+    return urlData.publicUrl;
+  };
+
+  const sendMessage = async () => {
+    if ((!newMessage.trim() && uploadedFiles.length === 0) || !user || !tripId) return;
+
+    const userMessage = newMessage.trim() || "Analyze this receipt";
     setNewMessage('');
     setIsLoading(true);
+
+    let attachments: any[] = [];
+    
+    // Upload files if any
+    if (uploadedFiles.length > 0) {
+      try {
+        for (const file of uploadedFiles) {
+          const url = await uploadToSupabase(file);
+          attachments.push({
+            type: file.type.startsWith('image/') ? 'image' : 'pdf',
+            url,
+            name: file.name
+          });
+        }
+      } catch (error) {
+        console.error('Error uploading files:', error);
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload file. Please try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+    }
 
     // Add user message to UI immediately
     const tempUserMessage: ChatMessage = {
@@ -97,16 +168,19 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       role: 'user',
       message: userMessage,
       timestamp: new Date().toISOString(),
-      user_id: user.id
+      user_id: user.id,
+      attachments: attachments.length > 0 ? attachments : undefined
     };
     setMessages(prev => [...prev, tempUserMessage]);
+    setUploadedFiles([]);
 
     try {
-      // Call the Edge Function
+      // Call the Edge Function with attachment support
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: userMessage,
-          tripId: tripId
+          tripId: tripId,
+          attachments: attachments
         }
       });
 
@@ -132,6 +206,112 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       
       // Remove the temporary message on error
       setMessages(prev => prev.filter(msg => msg.id !== tempUserMessage.id));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addToItinerary = async (extractedData: any) => {
+    try {
+      setIsLoading(true);
+      
+      // Call appropriate API based on data type
+      let endpoint = '';
+      let payload = {};
+      
+      switch (extractedData.type) {
+        case 'hotel':
+          endpoint = 'accommodations';
+          payload = {
+            trip_id: tripId,
+            hotel: extractedData.data.hotel_name,
+            hotel_address: extractedData.data.address,
+            initial_accommodation_day: extractedData.data.check_in_date,
+            final_accommodation_day: extractedData.data.check_out_date,
+            cost: extractedData.data.total_cost,
+            currency: extractedData.data.currency || 'USD'
+          };
+          break;
+        case 'flight':
+          endpoint = 'transportation';
+          payload = {
+            trip_id: tripId,
+            type: 'Flight',
+            departure_location: extractedData.data.departure_city,
+            arrival_location: extractedData.data.arrival_city,
+            departure_time: extractedData.data.departure_time,
+            arrival_time: extractedData.data.arrival_time,
+            cost: extractedData.data.total_cost,
+            currency: extractedData.data.currency || 'USD'
+          };
+          break;
+        case 'reservation':
+          // Find the appropriate day for the reservation
+          const reservationDate = extractedData.data.date || extractedData.data.reservation_date;
+          const { data: dayData } = await supabase
+            .from('trip_days')
+            .select('day_id')
+            .eq('trip_id', tripId)
+            .eq('date', reservationDate)
+            .single();
+          
+          if (dayData) {
+            endpoint = 'reservations';
+            payload = {
+              trip_id: tripId,
+              day_id: dayData.day_id,
+              restaurant_name: extractedData.data.restaurant_name,
+              cuisine_type: extractedData.data.cuisine_type || 'Unknown',
+              reservation_time: extractedData.data.time,
+              party_size: extractedData.data.party_size || 2,
+              notes: extractedData.data.notes || ''
+            };
+          }
+          break;
+        case 'activity':
+          // Find the appropriate day for the activity
+          const activityDate = extractedData.data.date || extractedData.data.activity_date;
+          const { data: activityDayData } = await supabase
+            .from('trip_days')
+            .select('day_id')
+            .eq('trip_id', tripId)
+            .eq('date', activityDate)
+            .single();
+          
+          if (activityDayData) {
+            endpoint = 'day_activities';
+            payload = {
+              trip_id: tripId,
+              day_id: activityDayData.day_id,
+              title: extractedData.data.activity_name,
+              description: extractedData.data.description || '',
+              time: extractedData.data.time,
+              cost: extractedData.data.cost,
+              currency: extractedData.data.currency || 'USD'
+            };
+          }
+          break;
+      }
+
+      if (endpoint && Object.keys(payload).length > 0) {
+        const { error } = await supabase
+          .from(endpoint)
+          .insert(payload);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success!",
+          description: `${extractedData.type.charAt(0).toUpperCase() + extractedData.type.slice(1)} added to your itinerary.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error adding to itinerary:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to itinerary. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -261,7 +441,28 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                             </ReactMarkdown>
                           </div>
                         ) : (
-                          <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                          <div>
+                            {/* Show attachments if any */}
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="mb-3">
+                                {message.attachments.map((attachment, index) => (
+                                  <div key={index} className="flex items-center gap-2 p-2 bg-earth-400/20 rounded-md mb-2">
+                                    <Paperclip className="h-4 w-4" />
+                                    <span className="text-sm font-medium">{attachment.name}</span>
+                                  </div>
+                                ))}
+                                {message.attachments.filter(a => a.type === 'image').map((attachment, index) => (
+                                  <img 
+                                    key={index}
+                                    src={attachment.url} 
+                                    alt={attachment.name}
+                                    className="max-w-48 max-h-32 object-cover rounded mt-2"
+                                  />
+                                ))}
+                              </div>
+                            )}
+                            <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                          </div>
                         )}
                         <p className={`text-xs mt-2 ${
                           message.role === 'user' ? 'text-earth-200' : 'text-gray-500'
@@ -270,6 +471,46 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Show extracted data with "Add to Itinerary" button */}
+                    {message.extractedData && (
+                      <div className="mt-2 max-w-[80%] ml-10">
+                        <Card className="bg-green-50 border-green-200">
+                          <CardContent className="p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Plus className="h-4 w-4 text-green-600" />
+                              <span className="font-medium text-green-800">
+                                {message.extractedData.type.charAt(0).toUpperCase() + message.extractedData.type.slice(1)} Detected
+                              </span>
+                            </div>
+                            
+                            <div className="text-sm text-green-700 mb-3 font-mono bg-green-100 p-2 rounded">
+                              <pre className="whitespace-pre-wrap text-xs">
+                                {JSON.stringify(message.extractedData.data, null, 2)}
+                              </pre>
+                            </div>
+
+                            {message.extractedData.missingFields && message.extractedData.missingFields.length > 0 && (
+                              <div className="text-sm text-amber-600 mb-2 p-2 bg-amber-50 rounded">
+                                <strong>Missing required fields:</strong> {message.extractedData.missingFields.join(', ')}
+                              </div>
+                            )}
+
+                            {message.extractedData.readyToAdd && (
+                              <Button
+                                onClick={() => addToItinerary(message.extractedData)}
+                                disabled={isLoading}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Add to Itinerary
+                              </Button>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {isLoading && (
@@ -296,19 +537,58 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         </CardContent>
       </Card>
 
+        {/* File upload preview */}
+        {uploadedFiles.length > 0 && (
+          <div className="mb-3 p-3 bg-earth-50 rounded-md border border-earth-200">
+            {uploadedFiles.map((file, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4 text-earth-600" />
+                <span className="text-sm text-earth-700">{file.name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUploadedFiles([])}
+                  className="ml-auto text-earth-600 hover:text-earth-800"
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Input Area */}
         <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="Upload receipt or document"
+            className="border-earth-300 text-earth-600 hover:bg-earth-50"
+          >
+            <Upload className="h-4 w-4" />
+          </Button>
+          
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask about your trip or request suggestions..."
+            placeholder="Ask about your trip or upload a receipt to add to your itinerary..."
             disabled={isLoading}
             className="flex-1"
           />
           <Button
             onClick={sendMessage}
-            disabled={!newMessage.trim() || isLoading}
+            disabled={isLoading || (!newMessage.trim() && uploadedFiles.length === 0)}
             size="icon"
             className="bg-earth-500 hover:bg-earth-600"
           >
