@@ -275,10 +275,24 @@ TRIP DAYS:${tripDays?.length
       console.log("Processing attachment:", attachments[0]);
       console.log("OpenAI API Key available:", !!Deno.env.get("OPENAI_API_KEY"));
       try {
+        // Generate a signed URL for OpenAI to access the private image
+        const imageUrl = attachments[0].url;
+        const fileName = imageUrl.split('/').slice(-3).join('/'); // Extract user_id/trip_id/filename
+        
+        const { data: signedUrlData, error: signedUrlError } = await supabaseClient.storage
+          .from('chat-attachments')
+          .createSignedUrl(fileName, 3600); // 1 hour expiry
+        
+        if (signedUrlError) {
+          console.error("Error creating signed URL:", signedUrlError);
+          throw new Error(`Failed to create signed URL: ${signedUrlError.message}`);
+        }
+        
+        const accessibleImageUrl = signedUrlData.signedUrl;
         const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
+            Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -347,7 +361,8 @@ Set readyToAdd to true only if ALL required fields are present.`
                   {
                     type: "image_url",
                     image_url: {
-                      url: attachments[0].url
+                      url: accessibleImageUrl,
+                      detail: "high"
                     }
                   }
                 ]
