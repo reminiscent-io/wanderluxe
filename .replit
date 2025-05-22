@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "postgresql-16"]
+modules = ["nodejs-20", "web", "postgresql-16", "bun"]
 run = "npm run dev"
 
 [nix]
@@ -27,3 +27,15 @@ externalPort = 3000
 
 [objectStorage]
 defaultBucketID = "replit-objstore-852a1cd5-5447-4cfc-b160-424e3a606d77"
+
+[workflows]
+runButton = "Run Development Server"
+
+[[workflows.workflow]]
+name = "Run Development Server"
+author = 39001524
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bun run dev"
