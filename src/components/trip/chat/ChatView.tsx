@@ -49,11 +49,21 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     
     setIsLoadingHistory(true);
     try {
-      // For now, we'll start with an empty chat until backend is set up
-      setMessages([]);
+      const { data, error } = await supabase
+        .from('chat_logs')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('timestamp', { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
     } catch (error) {
       console.error('Error loading chat history:', error);
-      setMessages([]);
+      toast({
+        title: "Error",
+        description: "Failed to load chat history. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoadingHistory(false);
     }
@@ -67,35 +77,46 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     setIsLoading(true);
 
     // Add user message to UI immediately
-    const userMessageObj: ChatMessage = {
-      id: `user-${Date.now()}`,
+    const tempUserMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
       role: 'user',
       message: userMessage,
       timestamp: new Date().toISOString(),
       user_id: user.id
     };
-    setMessages(prev => [...prev, userMessageObj]);
+    setMessages(prev => [...prev, tempUserMessage]);
 
     try {
-      // Simulate AI response for now (will be replaced with actual backend)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const aiResponse: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        role: 'ai',
-        message: "Hi! I'm your trip assistant. The chat functionality is being set up and will soon be powered by AI to help you plan your trip, suggest activities, and answer questions about your destination. For now, this is a preview of what's coming!",
-        timestamp: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
+      // Call the Edge Function
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: userMessage,
+          tripId: tripId
+        }
+      });
+
+      if (error) throw error;
+
+      // Replace temp message and add AI response
+      setMessages(prev => {
+        const filtered = prev.filter(msg => msg.id !== tempUserMessage.id);
+        return [
+          ...filtered,
+          data.userMessage,
+          data.aiMessage
+        ];
+      });
 
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: "Chat Setup In Progress",
-        description: "The AI chat functionality is being configured. You can see the interface preview for now.",
-        variant: "default",
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
       });
+      
+      // Remove the temporary message on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempUserMessage.id));
     } finally {
       setIsLoading(false);
     }
