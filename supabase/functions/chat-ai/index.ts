@@ -67,7 +67,7 @@ serve(async (req) => {
       throw new Error("Invalid JSON in request body");
     }
 
-    const { message, tripId } = body;
+    const { message, tripId, attachments } = body;
     if (!message || typeof message !== "string" || !message.trim()) {
       throw new Error("Message is required and must be a non-empty string");
     }
@@ -269,6 +269,107 @@ TRIP DAYS:${tripDays?.length
       chatHistory?.reverse().map((m) => `${m.role}: ${m.message}`).join("\n") ||
       "";
 
+    /* ---------- OpenAI Vision Analysis for Receipts ---------- */
+    let extractedData = null;
+    if (attachments && attachments.length > 0) {
+      try {
+        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+            messages: [
+              {
+                role: "system",
+                content: `You are an expert receipt and document analyzer for a travel planning app. Analyze the uploaded image and extract structured data for travel items.
+
+CLASSIFY the document as one of: hotel, flight, reservation, activity
+
+Extract relevant data based on type:
+
+HOTEL:
+- hotel_name (required)
+- address (required) 
+- check_in_date (required, format: YYYY-MM-DD)
+- check_out_date (required, format: YYYY-MM-DD)
+- total_cost (number)
+- currency (default: USD)
+- confirmation_number
+
+FLIGHT:
+- airline (required)
+- departure_city (required)
+- arrival_city (required) 
+- departure_time (required, format: YYYY-MM-DD HH:MM)
+- arrival_time (required, format: YYYY-MM-DD HH:MM)
+- flight_number
+- total_cost (number)
+- currency (default: USD)
+
+RESERVATION:
+- restaurant_name (required)
+- date (required, format: YYYY-MM-DD)
+- time (required, format: HH:MM)
+- party_size (number)
+- cuisine_type
+- notes
+
+ACTIVITY:
+- activity_name (required)
+- date (required, format: YYYY-MM-DD)
+- time (format: HH:MM)
+- description
+- cost (number)
+- currency (default: USD)
+
+Respond in JSON format:
+{
+  "type": "hotel|flight|reservation|activity",
+  "data": { extracted fields },
+  "missingFields": ["field1", "field2"],
+  "readyToAdd": boolean
+}
+
+Set readyToAdd to true only if ALL required fields are present.`
+              },
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: "Please analyze this receipt and extract the travel data:"
+                  },
+                  {
+                    type: "image_url",
+                    image_url: {
+                      url: attachments[0].url
+                    }
+                  }
+                ]
+              }
+            ],
+            max_tokens: 1000,
+            response_format: { type: "json_object" }
+          })
+        });
+
+        if (!openaiResponse.ok) {
+          throw new Error(`OpenAI API error: ${openaiResponse.statusText}`);
+        }
+
+        const openaiResult = await openaiResponse.json();
+        const extractedText = openaiResult.choices[0].message.content;
+        extractedData = JSON.parse(extractedText);
+        
+      } catch (error) {
+        console.error("Error analyzing receipt with OpenAI:", error);
+        // Continue with regular chat if vision analysis fails
+      }
+    }
+
     /* ---------- Perplexity call ---------- */
     const perplexityResponse = await fetch(
       "https://api.perplexity.ai/chat/completions",
@@ -361,6 +462,19 @@ INSTRUCTIONS:
       timestamp: new Date().toISOString(),
     });
 
+    /* ---------- Generate AI response message based on extracted data ---------- */
+    let finalAiMessage = aiMessage;
+    if (extractedData) {
+      const dataType = extractedData.type;
+      const missingFields = extractedData.missingFields || [];
+      
+      if (extractedData.readyToAdd) {
+        finalAiMessage = `Great! I've analyzed your ${dataType} receipt and extracted all the necessary information. The data looks complete and ready to add to your itinerary!\n\n${aiMessage}`;
+      } else if (missingFields.length > 0) {
+        finalAiMessage = `I've analyzed your ${dataType} receipt and extracted most of the information, but I need a few more details:\n\n**Missing information:** ${missingFields.join(', ')}\n\nCould you please provide these details so I can add this ${dataType} to your itinerary?\n\n${aiMessage}`;
+      }
+    }
+
     /* ---------- Response to caller ---------- */
     return new Response(
       JSON.stringify({
@@ -371,12 +485,14 @@ INSTRUCTIONS:
           message,
           timestamp: new Date().toISOString(),
           user_id: user.id,
+          attachments: attachments || undefined,
         },
         aiMessage: {
           id: aiMessageId,
           role: "ai",
-          message: aiMessage,
+          message: finalAiMessage,
           timestamp: new Date().toISOString(),
+          extractedData: extractedData || undefined,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
