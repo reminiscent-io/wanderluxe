@@ -20,7 +20,7 @@ const TermsOfService: React.FC = () => {
                 Welcome to <strong>WanderLuxe</strong> (the "Site"), owned and operated by <strong>Reminiscent Technologies LLC</strong> ("we," "us," or "our"). By accessing or using the Site, you agree to be bound by these Terms of Service ("Terms"). If you do not agree, please do not use the Site.
               </p>
               <p>
-                WanderLuxe provides travel-related services, content, and features including trip planning tools, travel itineraries, and integration with third‑party services. We use <strong>Supabase</strong> for authentication and data storage, and offer <strong>Google Sign‑In</strong> as an option. Additional third‑party APIs (such as weather data and location services) may also be used.
+                WanderLuxe provides travel-related services, content, and features including trip planning tools, travel itineraries, AI-powered travel assistance, and integration with third‑party services. We use <strong>Supabase</strong> for authentication and data storage, and offer <strong>Google Sign‑In</strong> as an option. Additional third‑party APIs (such as weather data, location services, and AI services) may also be used.
               </p>
             </div>
             <div className="pb-6 border-b">
@@ -39,9 +39,44 @@ const TermsOfService: React.FC = () => {
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">4. Third‑Party APIs and Services</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">4. AI-Powered Services and Document Processing</h2>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">AI Travel Assistant</h3>
+                  <p>
+                    WanderLuxe provides an AI-powered travel assistant that uses <strong>Perplexity AI</strong> to provide personalized travel recommendations, suggestions, and information. Your conversations with the AI assistant are processed through Perplexity's services and are subject to their terms of use and privacy policies.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Receipt and Document Analysis</h3>
+                  <p>
+                    Our platform includes receipt analysis functionality powered by <strong>OpenAI's GPT-4 Vision</strong> technology. When you upload receipts, booking confirmations, or other travel documents, they are:
+                  </p>
+                  <ul className="list-disc ml-6 mt-2 space-y-1">
+                    <li>Securely stored on our servers using Supabase storage infrastructure</li>
+                    <li>Processed by OpenAI's vision AI to extract travel-related information</li>
+                    <li>Accessible only to you and authorized WanderLuxe systems</li>
+                    <li>Subject to both our privacy practices and OpenAI's data usage policies</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Data Processing and Storage</h3>
+                  <p>
+                    By uploading documents or using AI features, you acknowledge that:
+                  </p>
+                  <ul className="list-disc ml-6 mt-2 space-y-1">
+                    <li>Uploaded documents are stored securely on our servers with encryption</li>
+                    <li>Document content may be shared with AI service providers for processing</li>
+                    <li>We implement appropriate security measures but cannot guarantee absolute security</li>
+                    <li>You should not upload documents containing highly sensitive information like social security numbers or full financial account details</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="pb-6 border-b">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">5. Third‑Party APIs and Services</h2>
               <p>
-                Our Site integrates with various third‑party services and APIs. Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services.
+                Our Site integrates with various third‑party services and APIs including but not limited to Perplexity AI, OpenAI, Google services, and mapping providers. Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services and are not responsible for their availability, accuracy, or practices.
               </p>
             </div>
             <div className="pb-6 border-b">
