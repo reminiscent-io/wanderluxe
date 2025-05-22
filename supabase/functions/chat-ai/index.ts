@@ -41,7 +41,7 @@ serve(async (req) => {
       throw new Error('Message and tripId are required')
     }
 
-    // Verify user has access to this trip
+    // Verify user has access to this trip and get comprehensive trip data
     const { data: tripData, error: tripError } = await supabaseClient
       .from('trips')
       .select(`
@@ -49,7 +49,8 @@ serve(async (req) => {
         destination,
         arrival_date,
         departure_date,
-        user_id
+        user_id,
+        cover_image_url
       `)
       .eq('trip_id', tripId)
       .single()
@@ -74,20 +75,112 @@ serve(async (req) => {
       }
     }
 
-    // Get recent chat history for context
-    const { data: chatHistory } = await supabaseClient
-      .from('chat_logs')
-      .select('role, message')
-      .eq('trip_id', tripId)
-      .order('timestamp', { ascending: false })
-      .limit(10)
+    // Get comprehensive trip data
+    const [
+      { data: chatHistory },
+      { data: accommodations },
+      { data: activities },
+      { data: reservations },
+      { data: transportation },
+      { data: expenses },
+      { data: visionBoard },
+      { data: tripDays }
+    ] = await Promise.all([
+      // Chat history
+      supabaseClient
+        .from('chat_logs')
+        .select('role, message')
+        .eq('trip_id', tripId)
+        .order('timestamp', { ascending: false })
+        .limit(10),
+      
+      // Accommodations
+      supabaseClient
+        .from('accommodations')
+        .select('hotel, hotel_address, initial_accommodation_day, final_accommodation_day, cost, currency')
+        .eq('trip_id', tripId),
+      
+      // Activities
+      supabaseClient
+        .from('day_activities')
+        .select('title, description, time, cost, currency')
+        .eq('trip_id', tripId),
+      
+      // Restaurant reservations
+      supabaseClient
+        .from('reservations')
+        .select('restaurant_name, cuisine_type, reservation_time, party_size, notes')
+        .eq('trip_id', tripId),
+      
+      // Transportation
+      supabaseClient
+        .from('transportation')
+        .select('type, departure_location, arrival_location, departure_time, arrival_time, cost, currency')
+        .eq('trip_id', tripId),
+      
+      // Expenses/Budget
+      supabaseClient
+        .from('expenses')
+        .select('description, cost, currency, expense_type')
+        .eq('trip_id', tripId),
+      
+      // Vision board (user preferences)
+      supabaseClient
+        .from('vision_board_items')
+        .select('title, description, category, image_url')
+        .eq('trip_id', tripId),
+      
+      // Trip days structure
+      supabaseClient
+        .from('trip_days')
+        .select('date, day_number')
+        .eq('trip_id', tripId)
+        .order('day_number', { ascending: true })
+    ])
 
-    // Prepare context about the trip
+    // Prepare comprehensive trip context
     const tripContext = `
-Trip Details:
+TRIP OVERVIEW:
 - Destination: ${tripData.destination}
 - Arrival Date: ${tripData.arrival_date || 'Not set'}
 - Departure Date: ${tripData.departure_date || 'Not set'}
+- Duration: ${tripDays?.length || 0} days
+
+ACCOMMODATIONS:${accommodations?.length ? 
+  accommodations.map(acc => `
+  - ${acc.hotel} (${acc.hotel_address})
+    Dates: ${acc.initial_accommodation_day} to ${acc.final_accommodation_day}
+    Cost: ${acc.cost} ${acc.currency}`).join('') : '\n  - No accommodations booked yet'}
+
+EXISTING RESTAURANT RESERVATIONS:${reservations?.length ?
+  reservations.map(res => `
+  - ${res.restaurant_name} (${res.cuisine_type})
+    Time: ${res.reservation_time}, Party: ${res.party_size}
+    ${res.notes ? `Notes: ${res.notes}` : ''}`).join('') : '\n  - No restaurant reservations yet'}
+
+PLANNED ACTIVITIES:${activities?.length ?
+  activities.map(act => `
+  - ${act.title}: ${act.description}
+    ${act.time ? `Time: ${act.time}` : ''}
+    ${act.cost ? `Cost: ${act.cost} ${act.currency}` : ''}`).join('') : '\n  - No activities planned yet'}
+
+TRANSPORTATION:${transportation?.length ?
+  transportation.map(trans => `
+  - ${trans.type}: ${trans.departure_location} → ${trans.arrival_location}
+    Departure: ${trans.departure_time}, Arrival: ${trans.arrival_time}
+    ${trans.cost ? `Cost: ${trans.cost} ${trans.currency}` : ''}`).join('') : '\n  - No transportation booked yet'}
+
+BUDGET/EXPENSES:${expenses?.length ?
+  expenses.map(exp => `
+  - ${exp.description}: ${exp.cost} ${exp.currency} (${exp.expense_type})`).join('') : '\n  - No expenses tracked yet'}
+
+USER INTERESTS/VISION BOARD:${visionBoard?.length ?
+  visionBoard.map(vision => `
+  - ${vision.title} (${vision.category}): ${vision.description}`).join('') : '\n  - No preferences specified yet'}
+
+TRIP DAYS:${tripDays?.length ?
+  tripDays.map(day => `
+  - Day ${day.day_number}: ${day.date}`).join('') : '\n  - No daily structure set'}
 `
 
     // Prepare chat history for context
@@ -108,14 +201,31 @@ Trip Details:
         messages: [
           {
             role: 'system',
-            content: `You are a helpful travel assistant for WanderLuxe, a luxury travel planning platform. Help users plan their trip with personalized suggestions for activities, dining, accommodations, and local insights.
+            content: `You are a sophisticated travel assistant for WanderLuxe, a luxury travel planning platform. You have comprehensive knowledge of the user's trip details and should provide highly personalized recommendations.
 
 ${tripContext}
 
 Previous conversation:
 ${conversationHistory}
 
-Provide helpful, specific, and actionable advice. Focus on luxury experiences, hidden gems, and personalized recommendations based on the trip details. Keep responses concise but informative.`
+INSTRUCTIONS:
+- Use the trip details above to provide contextually relevant suggestions
+- Avoid recommending restaurants where reservations already exist unless specifically asked
+- Consider existing activities when suggesting new ones to avoid conflicts or redundancy
+- Respect the user's vision board preferences and interests
+- Be aware of their accommodation locations when suggesting nearby activities
+- Consider their transportation arrangements when giving timing advice
+- Reference their existing plans naturally in conversations
+- Focus on luxury experiences, hidden gems, and personalized recommendations
+- Provide specific, actionable advice with links when helpful
+- Keep responses well-structured with headers and formatting for readability
+
+When suggesting restaurants, activities, or experiences, consider:
+1. Proximity to their existing accommodations and activities
+2. Timing that works with their existing schedule
+3. Their stated interests from the vision board
+4. Avoiding redundancy with existing bookings
+5. Complement their existing transportation and logistics`
           },
           {
             role: 'user',
