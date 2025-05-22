@@ -1,0 +1,118 @@
+“Realign the timeline & polish the PDF”
+0 · Context
+Stack Next 14 (Typescript) + Tailwind 3 (custom “sand/earth” palettes & semantic tokens) + Playwright for page.pdf().
+
+Problem The time-rail on the left drifts because it is rendered from a separate array, so rows don’t stay in lock-step with their cards.
+
+Goal Bind each time-label to its card inside a single CSS-grid row, keep everything page-safe, and apply a few extra visual refinements.
+
+1 · Data pipeline
+ts
+Copy
+Edit
+// types/Itinerary.ts
+type ItemBase = { id:string; type:'hotel'|'flight'|'activity'|'dining';
+                 allDay?:boolean; multiDay?:boolean;
+                 start?:string; end?:string; thumb?:string };
+export type Day = { date:string; label?:string; items:ItemBase[] };
+ts
+Copy
+Edit
+// helpers/sort.ts  (use everywhere)
+export const sortItems = (a:ItemBase,b:ItemBase)=>
+  (a.allDay||a.multiDay?0:Date.parse(a.start!))
+  - (b.allDay||b.multiDay?0:Date.parse(b.start!));
+Use that to day.items.sort(sortItems) before render so HTML order == visual order.
+
+2 · Template refactor
+Put timeline label and card in the same grid row:
+
+hbs
+Copy
+Edit
+{{#each days}}
+<section class="day relative mt-10 break-inside-avoid-page">
+  <h2 class="h2 mb-4">{{label title=this}}</h2>
+
+  {{#each (sort items)}}
+  <div class="day-row grid gap-6"
+       style="grid-template-columns:25% 1fr">
+
+    <span class="time-label text-right pr-4 small text-muted">
+      {{timeLabel this}}
+    </span>
+
+    <article class="item-card flex gap-4 p-4 rounded-xl shadow-sm border
+                    bg-sand-50 border-sand-100 break-inside-avoid-page">
+      <div class="flex-1">
+        <h3 class="h3 mb-1">{{title}}</h3>
+        <p class="muted mb-2">{{subtitle this}}</p>
+        <ul class="flex flex-wrap small gap-2">{{meta this}}</ul>
+      </div>
+      {{#if thumb}}
+      <img src="{{thumb}}" class="w-24 h-24 object-cover rounded-lg ml-auto print:hidden">
+      {{/if}}
+    </article>
+
+  </div>
+  {{/each}}
+</section>
+{{/each}}
+Vertical rail
+
+css
+Copy
+Edit
+.day-row{position:relative;}
+.day-row::before{
+  content:'';position:absolute;left:12%;top:0;bottom:0;
+  border-left:2px solid theme('colors.sand.200');
+}
+3 · Tailwind plugin upgrade
+ts
+Copy
+Edit
+// tailwind.config.ts
+plugin(({addUtilities})=>{
+  addUtilities({
+    '.break-inside-avoid-page':{breakInside:'avoid-page'},
+    '.print\\:hidden':{'@media print':{display:'none !important'}}
+  })
+})
+4 · Print polish
+Running footer in @page → trip name left, counter(page) right.
+
+Hero banner: .banner w-full h-40 object-cover rounded-lg mb-6 print:hidden.
+
+Icons: keep Font Awesome glyphs; they remain in the no-image version.
+
+Plain variant — if ?plain=true, inject body class via Playwright:
+
+ts
+Copy
+Edit
+if (plain) await page.addStyleTag({content:'.print\\:hidden{display:none!important}'});
+5 · Test
+Jest: post sample JSON, assert (a) labels equal card count, (b) visual PDF larger than plain PDF, (c) no “Widow/orphan” console warnings from Chrome.
+
+6 · Deliverables
+pages/api/itinerary/pdf.ts (endpoint).
+
+templates/itinerary.hbs + helpers.
+
+Updated tailwind.config.ts.
+
+__tests__/pdf.spec.ts.
+
+README.md snippet:
+
+bash
+Copy
+Edit
+curl -X POST http://localhost:3000/api/itinerary/pdf \
+  -H "Content-Type:application/json" \
+  -d @sample.json --output visual.pdf
+curl -X POST http://localhost:3000/api/itinerary/pdf?plain=true \
+  -H "Content-Type:application/json" \
+  -d @sample.json --output plain.pdf
+🔑 Key acceptance — Every time-label sits exactly opposite its card, hero & thumbnails hide correctly in plain mode, and all colors/typography come exclusively from our Tailwind palette & theme.ts.
