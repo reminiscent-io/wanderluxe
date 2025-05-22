@@ -1,0 +1,168 @@
+// Supabase Edge Function: chat-ai-edge.ts
+// Fully refactored with security, performance and cost improvements.
+
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jwtVerify } from "https://deno.land/x/jose@v5.2.0/index.ts";
+import { z } from "https://deno.land/x/zod@v3.22.2/mod.ts";
+
+/* -------------------------------------------------------------------------- */
+/* 𝟙  Constants & Helpers                                                      */
+/* -------------------------------------------------------------------------- */
+
+// CORS — open for demo; tighten in prod.
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+} as const;
+
+// Env‑var accessor that fails fast at cold‑start.
+const env = (key: string): string => {
+  const val = Deno.env.get(key);
+  if (!val) throw new Error(`Environment variable \"${key}\" is required.`);
+  return val;
+};
+
+const SUPABASE_URL = env("SUPABASE_URL");
+const SERVICE_ROLE_KEY = env("SUPABASE_SERVICE_ROLE_KEY");
+const PPLX_API_KEY = env("PERPLEXITY_API_KEY");
+const JWT_SECRET = env("JWT_SECRET");
+
+// Service‑role client (bypasses RLS where the function needs to write).
+const supabaseSvc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+// Unified JSON responder.
+const respond = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+
+// Compile once at load.
+const luxuryRe = new RegExp(
+  [
+    "Ritz",
+    "Four Seasons",
+    "St\\. Regis",
+    "Mandarin Oriental",
+    "Park Hyatt",
+    "Edition",
+    "Bulgari",
+    "Aman",
+    "Rosewood",
+    "Peninsula",
+  ].join("|"),
+  "i",
+);
+
+/* -------------------------------------------------------------------------- */
+/* 𝟚  Edge Function Entry                                                     */
+/* -------------------------------------------------------------------------- */
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return respond(200, { ok: true });
+
+  /* ── 1. Bearer JWT ------------------------------------------------------- */
+  const jwt = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!jwt) return respond(401, { error: "Missing bearer token" });
+
+  let userId: string;
+  try {
+    const { payload } = await jwtVerify(jwt, JWT_SECRET);
+    userId = payload.sub as string;
+  } catch {
+    return respond(401, { error: "Invalid or expired JWT" });
+  }
+
+  /* ── 2. Validate body ---------------------------------------------------- */
+  let body: { message: string; tripId: string };
+  try {
+    body = z
+      .object({
+        message: z.string().min(1),
+        tripId: z.string().uuid(),
+      })
+      .parse(await req.json());
+  } catch (err) {
+    return respond(422, { error: "Bad request", details: err });
+  }
+  const { message, tripId } = body;
+
+  /* ── 3. Fetch trip context (single RPC) ---------------------------------- */
+  const { data: ctx, error: ctxErr } = await supabaseSvc.rpc(
+    "rpc_fetch_trip_context",
+    { p_trip_id: tripId, p_uid: userId },
+  );
+
+  if (ctxErr) {
+    const status = ctxErr.code === "P0001" ? 403 : 404; // forbidden or not‑found
+    return respond(status, { error: ctxErr.message });
+  }
+
+  /* ── 4. Derive budget level & prompt ------------------------------------ */
+  const primaryHotel = ctx.accommodations?.[0];
+  let budgetLevel = "mid-range";
+  if (primaryHotel?.cost && primaryHotel?.nights) {
+    const daily = primaryHotel.cost / primaryHotel.nights;
+    if (daily > 400 || luxuryRe.test(primaryHotel.hotel)) budgetLevel = "luxury";
+    else if (daily > 200) budgetLevel = "upscale";
+    else if (daily < 100) budgetLevel = "budget-conscious";
+  }
+
+  const systemPrompt = `You are WanderLuxe Copilot, an expert travel planner.\n\n` +
+    `CONTEXT:\n${JSON.stringify({ trip: ctx.trip, budgetLevel, primaryHotel })}`;
+
+  /* ── 5. Call Perplexity (streaming) ------------------------------------- */
+  const pplxRes = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${PPLX_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "sonar-pro-online",
+      stream: true,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message },
+      ],
+    }),
+  });
+
+  if (!pplxRes.ok || !pplxRes.body) {
+    const msg = await pplxRes.text();
+    return respond(500, {
+      error: `Perplexity error ${pplxRes.status}: ${msg}`,
+    });
+  }
+
+  /* ── 6. Split stream: save chat + send to client ------------------------ */
+  const [branchDb, branchClient] = pplxRes.body.tee();
+
+  // Background: accumulate stream → insert both user + ai messages.
+  (async () => {
+    const decoder = new TextDecoder();
+    let full = "";
+    for await (const chunk of branchDb) full += decoder.decode(chunk, { stream: true });
+    const aiContent = full.match(/"content":"([\s\S]*?)"/m)?.[1]?.replace(/\\n/g, "\n") ?? "";
+
+    await supabaseSvc.from("chat_logs").insert([
+      { trip_id: tripId, user_id: userId, role: "user", message },
+      { trip_id: tripId, user_id: userId, role: "ai", message: aiContent },
+    ]);
+  })();
+
+  // Response: live SSE downlink to caller.
+  return new Response(branchClient, {
+    status: 200,
+    headers: {
+      ...CORS_HEADERS,
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
+});
