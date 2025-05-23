@@ -169,15 +169,15 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           Share
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
           <DialogDescription>
             Enter email addresses of people you'd like to share this trip with.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 px-1">
           <div className="space-y-2">
             <p className="text-sm font-medium">Email addresses</p>
             
@@ -256,7 +256,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           </div>
         </div>
 
-        <DialogFooter className="flex sm:justify-between">
+        <DialogFooter className="flex sm:justify-between flex-shrink-0 border-t pt-4 mt-4">
           <Button
             variant="secondary"
             onClick={() => setDialogOpen(false)}
