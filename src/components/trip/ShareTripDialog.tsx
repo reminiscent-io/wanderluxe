@@ -26,12 +26,12 @@ interface ShareTripDialogProps {
 
 const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareTripDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Use controlled state if provided by parent
   const dialogOpen = open !== undefined ? open : isOpen;
   const setDialogOpen = onOpenChange || setIsOpen;
   const [emails, setEmails] = useState<string[]>(['']);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
   const [currentUser, setCurrentUser] = useState<{fullName: string | null, email: string | null}>({
@@ -49,14 +49,14 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           .select('full_name')
           .eq('id', data.user.id)
           .single();
-          
+
         setCurrentUser({
           fullName: profileData?.full_name || null,
           email: data.user.email || null
         });
       }
     };
-    
+
     getUserInfo();
   }, []);
 
@@ -103,7 +103,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
     // Basic email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const nonEmptyEmails = emails.filter(email => email.trim() !== '');
-    
+
     if (nonEmptyEmails.length === 0) {
       toast.error('Please enter at least one email address');
       return false;
@@ -124,17 +124,17 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
     if (!validEmails) return;
 
     setIsSubmitting(true);
-    
+
     try {
       let successCount = 0;
-      
+
       for (const email of validEmails) {
         const success = await shareTrip(tripId, email, tripDestination);
         if (success) {
           successCount++;
         }
       }
-      
+
       if (successCount > 0) {
         toast.success(`Trip shared with ${successCount} ${successCount === 1 ? 'person' : 'people'}`);
         // Reset form
@@ -169,7 +169,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           Share
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Share Trip</DialogTitle>
           <DialogDescription>
@@ -180,7 +180,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
         <div className="space-y-4">
           <div className="space-y-2">
             <p className="text-sm font-medium">Email addresses</p>
-            
+
             {emails.map((email, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div className="relative flex-1">
@@ -203,7 +203,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
               </div>
             ))}
           </div>
-          
+
           <Button 
             type="button" 
             variant="outline" 
@@ -218,7 +218,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           {existingShares.length > 0 && (
             <div className="space-y-2 border-t pt-4 mt-6">
               <p className="text-sm font-medium">Currently shared with</p>
-              
+
               <div className="space-y-2">
                 {existingShares.map((share) => (
                   <div key={share.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
@@ -239,7 +239,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
               </div>
             </div>
           )}
-          
+
           <div className="border-t pt-4 mt-2">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium">Trip owner:</p>
