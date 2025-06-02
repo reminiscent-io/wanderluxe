@@ -89,7 +89,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileDown className="h-5 w-5" />
@@ -97,7 +97,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="space-y-6 py-2">
           {/* Visual Options */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -262,14 +262,18 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-4 border-t">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsOpen(false)}
+            className="w-full sm:w-auto"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleExport}
             disabled={isLoading}
-            className="bg-earth-500 hover:bg-earth-600"
+            className="bg-earth-500 hover:bg-earth-600 w-full sm:w-auto"
           >
             {isLoading ? (
               <>
