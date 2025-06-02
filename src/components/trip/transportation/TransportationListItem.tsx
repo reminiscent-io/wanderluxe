@@ -119,54 +119,79 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   }
 
   return (
-    <Card className="p-4 rounded-lg shadow-sm bg-white">
-      <div className="flex flex-col space-y-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-medium">
-                {transportation.departure_location} to {transportation.arrival_location}
-              </h3>
-              <Badge variant="outline" className="capitalize">
-                {getTransportationType(transportation.type)}
-              </Badge>
-            </div>
-            <p className="text-sm text-gray-500">
-              {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
-              {transportation.start_time && ` ${formatTimeRange(transportation.start_time, transportation.end_time)}`}
-            </p>
-            {transportation.provider && (
-              <p className="text-sm text-gray-500">Provider: {transportation.provider}</p>
-            )}
-            {transportation.details && (
-              <p className="text-sm mt-1">{transportation.details}</p>
-            )}
-            {transportation.cost !== null && (
-              <p className="text-sm font-medium mt-1">{formatCost(transportation.cost)}</p>
-            )}
+    <Card className="p-3 sm:p-4 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow">
+      <div className="space-y-3">
+        {/* Header with transportation type and actions */}
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Badge variant="secondary" className="capitalize flex-shrink-0 text-xs">
+              {getTransportationType(transportation.type)}
+            </Badge>
           </div>
-          <div className="flex space-x-1">
+          <div className="flex space-x-1 flex-shrink-0">
             {onEdit && (
               <Button 
                 variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
+                size="sm" 
+                className="h-8 w-8 p-0"
                 onClick={onEdit}
+                aria-label="Edit transportation"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-3 w-3" />
               </Button>
             )}
             {onDelete && (
               <Button 
                 variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-red-500"
+                size="sm" 
+                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                 onClick={onDelete}
+                aria-label="Delete transportation"
               >
-                <Trash className="h-4 w-4" />
+                <Trash className="h-3 w-3" />
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Route display - prominent From → To */}
+        <div className="flex items-center gap-2 text-base sm:text-lg font-medium text-gray-900">
+          <span className="truncate">{transportation.departure_location}</span>
+          <span className="text-gray-400 flex-shrink-0">→</span>
+          <span className="truncate">{transportation.arrival_location}</span>
+        </div>
+
+        {/* Date and time */}
+        <div className="text-sm text-gray-600">
+          {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
+          {transportation.start_time && (
+            <span className="ml-2 text-gray-500">
+              {formatTimeRange(transportation.start_time, transportation.end_time)}
+            </span>
+          )}
+        </div>
+
+        {/* Additional details in compact layout */}
+        <div className="space-y-1 text-sm">
+          {transportation.provider && (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="font-medium text-gray-500 text-xs">Provider:</span>
+              <span className="text-xs">{transportation.provider}</span>
+            </div>
+          )}
+          
+          {transportation.cost !== null && (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="font-medium text-gray-500 text-xs">Cost:</span>
+              <span className="text-xs font-medium">{formatCost(transportation.cost)}</span>
+            </div>
+          )}
+
+          {transportation.details && (
+            <div className="text-xs text-gray-600 mt-2">
+              <span className="font-medium text-gray-500">Details:</span> {transportation.details}
+            </div>
+          )}
         </div>
       </div>
     </Card>

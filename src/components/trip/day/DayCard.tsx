@@ -153,6 +153,14 @@ const DayCard: React.FC<DayCardProps> = ({
     return endString ? `${startString} - ${endString}` : startString;
   };
 
+  const getTransportationType = (type: string | null) => {
+    if (!type) return 'Unknown';
+    return type
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const refreshTripData = () => {
     queryClient.invalidateQueries(["trip"]);
   };
@@ -389,7 +397,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         >
                           <div>
                             <h4 className="font-medium text-gray-700 text-sm">
-                              {transport.type.charAt(0).toUpperCase() + transport.type.slice(1)}
+                              {getTransportationType(transport.type)}
                               {transport.departure_location && transport.arrival_location && ` | ${transport.departure_location} → ${transport.arrival_location}`}
                             </h4>
                             <p className="text-xs text-gray-500">
