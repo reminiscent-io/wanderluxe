@@ -36,93 +36,107 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
   };
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-3 p-2 sm:p-4">
       {hotelStays.map((stay) => (
         <Card 
           key={stay.stay_id} 
-          className="p-4 bg-white hover:shadow-md transition-shadow"
+          className="p-3 sm:p-4 bg-white hover:shadow-md transition-shadow"
         >
-          <div className="flex justify-between items-start">
-            <div className="flex-1 mr-4">
-              <h3 className="font-semibold text-lg text-gray-900">{stay.hotel}</h3>
+          {/* Mobile-first layout with responsive adjustments */}
+          <div className="space-y-3">
+            {/* Header with hotel name and actions */}
+            <div className="flex justify-between items-start gap-2">
+              <h3 className="font-semibold text-base sm:text-lg text-gray-900 flex-1 min-w-0">
+                {stay.hotel}
+              </h3>
+              <div className="flex space-x-1 flex-shrink-0">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onEdit(stay.stay_id)}
+                  aria-label="Edit accommodation"
+                  className="h-8 w-8 p-0"
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onDelete(stay.stay_id)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                  aria-label="Delete accommodation"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
 
-              <div className="mt-2 text-sm text-gray-700">
-                <p className="mb-1">
-                  <span className="font-medium">Nights: </span>
+            {/* Check-in/Check-out dates - prominent display */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-green-50 text-green-700 text-xs rounded p-2">
+                <div className="font-medium">Check-in:</div>
+                <div>{formatDate(stay.hotel_checkin_date)}</div>
+              </div>
+              <div className="bg-amber-50 text-amber-700 text-xs rounded p-2">
+                <div className="font-medium">Check-out:</div>
+                <div>{formatDate(stay.hotel_checkout_date)}</div>
+              </div>
+            </div>
+
+            {/* Hotel details - condensed layout */}
+            <div className="text-sm text-gray-700 space-y-1">
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="font-medium text-xs text-gray-500">Nights:</span>
+                <span className="text-xs">
                   {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
-                </p>
-                {stay.hotel_address && (
-                  <p className="mb-1 line-clamp-2">
-                    <span className="font-medium">Address: </span>
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stay.hotel_address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      {stay.hotel_address}
-                    </a>
-                  </p>
-                )}
+                </span>
+              </div>
+
+              {stay.hotel_address && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                  <span className="font-medium text-xs text-gray-500 flex-shrink-0">Address:</span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stay.hotel_address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-xs leading-tight break-words"
+                  >
+                    {stay.hotel_address}
+                  </a>
+                </div>
+              )}
+
+              {/* Secondary info in a more compact layout */}
+              <div className="flex flex-wrap gap-3 text-xs">
                 {stay.hotel_phone && (
-                  <p className="mb-1">
-                    <span className="font-medium">Phone: </span>
-                    {stay.hotel_phone}
-                  </p>
+                  <div>
+                    <span className="font-medium text-gray-500">Phone:</span> {stay.hotel_phone}
+                  </div>
                 )}
                 {stay.cost && (
-                  <p className="mb-1">
-                    <span className="font-medium">Cost: </span>
+                  <div>
+                    <span className="font-medium text-gray-500">Cost:</span> 
                     {CURRENCY_SYMBOLS[stay.currency] || '$'}{Number(stay.cost).toLocaleString()}
-                  </p>
-                )}
-                {stay.hotel_details && (
-                  <p className="mb-1">
-                    <span className="font-medium">Details: </span>
-                    {stay.hotel_details}
-                  </p>
+                  </div>
                 )}
               </div>
+
+              {stay.hotel_details && (
+                <div className="text-xs">
+                  <span className="font-medium text-gray-500">Details:</span> {stay.hotel_details}
+                </div>
+              )}
 
               {stay.hotel_website && (
                 <a 
                   href={stay.hotel_website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-800 inline-block mt-2"
+                  className="text-xs text-blue-600 hover:text-blue-800 inline-block"
                 >
                   Visit hotel website
                 </a>
               )}
-            </div>
-
-            <div className="flex space-x-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => onEdit(stay.stay_id)}
-                aria-label="Edit accommodation"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => onDelete(stay.stay_id)}
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                aria-label="Delete accommodation"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex mt-3 space-x-2">
-            <div className="flex-1 bg-green-50 text-green-700 text-xs rounded p-2">
-              <span className="font-medium">Check-in:</span> {formatDate(stay.hotel_checkin_date)}
-            </div>
-            <div className="flex-1 bg-amber-50 text-amber-700 text-xs rounded p-2">
-              <span className="font-medium">Check-out:</span> {formatDate(stay.hotel_checkout_date)}
             </div>
           </div>
         </Card>
