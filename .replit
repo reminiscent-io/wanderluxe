@@ -6,9 +6,9 @@ channel = "stable-24_05"
 packages = ["supabase-cli"]
 
 [deployment]
-run = ["sh", "-c", "npm run preview"]
+run = ["sh", "-c", "bun run preview"]
 deploymentTarget = "cloudrun"
-build = ["sh", "-c", "npm run build"]
+build = ["sh", "-c", "bun run build"]
 
 [[ports]]
 localPort = 3000

@@ -230,8 +230,8 @@ const DayCard: React.FC<DayCardProps> = ({
 
 
   const safeTransportations = transportations || [];
-  const filteredTransportations = safeTransportations.filter(
-    (transport: Transportation) => {
+  const filteredTransportations = safeTransportations
+    .filter((transport: Transportation) => {
       const transportStartDate = transport.start_date;
       const transportEndDate = transport.end_date ? transport.end_date : transportStartDate;
       const dayDate = new Date(normalizedDay);
@@ -239,8 +239,22 @@ const DayCard: React.FC<DayCardProps> = ({
         dayDate >= new Date(transportStartDate) &&
         dayDate <= new Date(transportEndDate)
       );
-    }
-  );
+    })
+    .sort((a: Transportation, b: Transportation) => {
+      // Sort by start time first
+      if (a.start_time && b.start_time) {
+        const timeComparison = a.start_time.localeCompare(b.start_time);
+        if (timeComparison !== 0) return timeComparison;
+      }
+      // If start times are equal or missing, sort by end time
+      if (a.end_time && b.end_time) {
+        return a.end_time.localeCompare(b.end_time);
+      }
+      // Handle cases where one has time and the other doesn't
+      if (a.start_time && !b.start_time) return -1;
+      if (!a.start_time && b.start_time) return 1;
+      return 0;
+    });
 
   const handleHotelEdit = (stay: HotelStay) => {
     setHotelDialog({ open: true, initialData: stay });

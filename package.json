@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --port 8080 --host"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
