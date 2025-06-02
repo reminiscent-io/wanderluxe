@@ -116,6 +116,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                   onCheckedChange={(checked) =>
                     setOptions(prev => ({ ...prev, showImages: checked }))
                   }
+                  className="data-[state=checked]:bg-sand-500"
                 />
               </div>
               
@@ -129,6 +130,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                   onCheckedChange={(checked) =>
                     setOptions(prev => ({ ...prev, showCosts: checked }))
                   }
+                  className="data-[state=checked]:bg-sand-500"
                 />
               </div>
             </div>
@@ -223,6 +225,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                   id="section-accommodation"
                   checked={options.sections.accommodation}
                   onCheckedChange={(checked) => updateSection('accommodation', checked)}
+                  className="data-[state=checked]:bg-sand-500"
                 />
               </div>
               
@@ -234,6 +237,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                   id="section-transportation"
                   checked={options.sections.transportation}
                   onCheckedChange={(checked) => updateSection('transportation', checked)}
+                  className="data-[state=checked]:bg-sand-500"
                 />
               </div>
               
@@ -245,6 +249,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                   id="section-activities"
                   checked={options.sections.activities}
                   onCheckedChange={(checked) => updateSection('activities', checked)}
+                  className="data-[state=checked]:bg-sand-500"
                 />
               </div>
               
@@ -256,6 +261,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                   id="section-dining"
                   checked={options.sections.dining}
                   onCheckedChange={(checked) => updateSection('dining', checked)}
+                  className="data-[state=checked]:bg-sand-500"
                 />
               </div>
             </div>
