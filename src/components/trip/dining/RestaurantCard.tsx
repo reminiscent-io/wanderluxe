@@ -59,7 +59,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
   onDelete
 }) => {
   return (
-    <div className="p-4 bg-sand-50 rounded-lg space-y-3 hover:bg-sand-100 transition-colors">
+    <div className="p-3 bg-sand-50 rounded-lg space-y-2 hover:bg-sand-100 transition-colors">
       {/* Header section */}
       <div className="flex items-start justify-between">
         <div className="space-y-2">
