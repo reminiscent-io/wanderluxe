@@ -314,7 +314,7 @@ const DayCard: React.FC<DayCardProps> = ({
               {/* Left column: Hotel & Transportation */}
               <div className="flex flex-col gap-4">
                 {/* HOTEL STAY */}
-                <div className="bg-gray-100 rounded-lg p-4">
+                <div className="bg-gray-100 rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">Hotel Stay</h3>
                     <Button
@@ -338,7 +338,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         <div
                           key={stay.stay_id}
                           onClick={() => handleHotelEdit(stay)}
-                          className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                          className="cursor-pointer flex justify-between items-center p-1.5 bg-white rounded-lg shadow-sm hover:bg-gray-50"
                         >
                           <div>
                             <h4 className="font-medium text-gray-700 text-sm">{stay.hotel}</h4>
@@ -369,7 +369,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
 
                 {/* TRANSPORTATION */}
-                <div className="bg-gray-100 rounded-lg p-4">
+                <div className="bg-gray-100 rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">Flights and Transportation</h3>
                     <Button
@@ -393,7 +393,7 @@ const DayCard: React.FC<DayCardProps> = ({
                             setSelectedTransportation(transport);
                             setIsTransportationDialogOpen(true);
                           }}
-                          className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                          className="cursor-pointer flex justify-between items-center p-1.5 bg-white rounded-lg shadow-sm hover:bg-gray-50"
                         >
                           <div>
                             <h4 className="font-medium text-gray-700 text-sm">
@@ -418,7 +418,7 @@ const DayCard: React.FC<DayCardProps> = ({
               {/* Right column: Activities & Dining */}
               <div className="flex flex-col gap-4">
                 {/* ACTIVITIES */}
-                <div className="bg-gray-100 rounded-lg p-4">
+                <div className="bg-gray-100 rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">Activities</h3>
                     <Button
@@ -435,7 +435,7 @@ const DayCard: React.FC<DayCardProps> = ({
                       <div
                         key={activity.id || activity.title}
                         onClick={() => handleActivityEditClick(activity)}
-                        className="cursor-pointer flex justify-between items-center p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                        className="cursor-pointer flex justify-between items-center p-1.5 bg-white rounded-lg shadow-sm hover:bg-gray-50"
                       >
                         <div>
                           <h4 className="font-medium text-gray-700 text-sm">
@@ -459,7 +459,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
 
                 {/* DINING */}
-                <div className="bg-gray-100 rounded-lg p-4">
+                <div className="bg-gray-100 rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">Dining</h3>
                     <Button
