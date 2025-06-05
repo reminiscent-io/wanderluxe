@@ -1,6 +1,14 @@
 
 import React from 'react';
-import { formatCurrency } from '../utils/budgetCalculations';
+
+// Simple currency formatter that accepts string currency codes
+const formatCurrency = (amount: number | null, currency: string): string => {
+  if (amount === null) return '-';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
+};
 
 interface BudgetSummaryProps {
   total: number;
