@@ -66,25 +66,16 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       description: data.description,
       cost: data.cost,
       currency: data.currency,
-      is_paid: data.isPaid,
-      category: 'Other' // Default category for manually added expenses
+      category: data.category,
+      date: data.date
     });
     setIsAddingExpense(false);
   };
 
-  const handleUpdatePaidStatus = (id: string, isPaid: boolean, category: string) => {
-    updateExpense.mutate({ 
-      id, 
-      data: { 
-        is_paid: isPaid,
-        category: category // Preserve the category when updating
-      }
-    });
-  };
+  // Remove the paid status update function since we've deprecated the is_paid feature
 
   // Calculate totals using converted values
   const total = convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0);
-  const paidTotal = convertedExpenses.reduce((sum, item) => sum + (item.is_paid ? item.convertedCost : 0), 0);
 
   const [isAddingExpense, setIsAddingExpense] = useState(false);
 
@@ -98,7 +89,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
       <BudgetSummary
         total={total}
-        paidTotal={paidTotal}
         selectedCurrency={selectedCurrency}
       />
 
@@ -110,7 +100,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
             <ExpenseTable
               expenses={convertedExpenses}
               selectedCurrency={selectedCurrency}
-              onUpdatePaidStatus={handleUpdatePaidStatus}
             />
           )}
         </div>
