@@ -15,7 +15,6 @@ interface AddExpenseData {
   cost: number;
   date?: string;
   currency: string;
-  category: string;
 }
 
 interface BudgetViewProps {
@@ -66,7 +65,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       description: data.description,
       cost: data.cost,
       currency: data.currency,
-      category: data.category
+      date: data.date
     });
     setIsAddingExpense(false);
   };

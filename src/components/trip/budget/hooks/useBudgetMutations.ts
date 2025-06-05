@@ -5,14 +5,10 @@ import { toast } from 'sonner';
 
 interface ExpenseData {
   trip_id: string;
-  category: string;
   description: string;
   cost?: number;
   currency?: string;
-  is_paid?: boolean;
-  accommodation_id?: string;
-  transportation_id?: string;
-  activity_id?: string;
+  date?: string;
 }
 
 export const useBudgetMutations = (tripId: string) => {
@@ -21,7 +17,7 @@ export const useBudgetMutations = (tripId: string) => {
   const addExpense = useMutation({
     mutationFn: async (data: ExpenseData) => {
       const { error } = await supabase
-        .from('expenses')
+        .from('other_expenses')
         .insert([data]);
 
       if (error) throw error;
