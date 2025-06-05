@@ -22,13 +22,51 @@ export const useBudgetMutations = (tripId: string) => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Expense added successfully');
+    onMutate: async (newExpense) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['expenses', tripId] });
+
+      // Snapshot the previous value
+      const previousExpenses = queryClient.getQueryData(['expenses', tripId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['expenses', tripId], (old: any) => {
+        if (!old) return old;
+        
+        const optimisticExpense = {
+          id: `temp-${Date.now()}`,
+          trip_id: newExpense.trip_id,
+          category: 'Other',
+          description: newExpense.description,
+          cost: newExpense.cost,
+          currency: newExpense.currency,
+          is_paid: false,
+          created_at: new Date().toISOString(),
+          date: newExpense.date || new Date().toISOString().split('T')[0]
+        };
+
+        return {
+          ...old,
+          items: [...(old.items || []), optimisticExpense]
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousExpenses };
     },
-    onError: (error) => {
-      console.error('Error adding expense:', error);
+    onError: (err, newExpense, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['expenses', tripId], context?.previousExpenses);
+      console.error('Error adding expense:', err);
       toast.error('Failed to add expense');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    },
+    onSuccess: () => {
+      toast.success('Expense added successfully');
     }
   });
 

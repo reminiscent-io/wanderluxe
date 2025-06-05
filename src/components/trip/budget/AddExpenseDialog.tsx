@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -39,23 +39,37 @@ interface AddExpenseDialogProps {
     currency: string;
   }) => Promise<void>;
   defaultCurrency: string;
+  defaultDate?: string;
 }
 
 const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   open,
   onOpenChange,
   onSubmit,
-  defaultCurrency
+  defaultCurrency,
+  defaultDate
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
       cost: "",
-      date: new Date().toISOString().split('T')[0],
+      date: defaultDate || new Date().toISOString().split('T')[0],
       currency: defaultCurrency
     },
   });
+
+  // Reset form with updated default date when dialog opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        description: "",
+        cost: "",
+        date: defaultDate || new Date().toISOString().split('T')[0],
+        currency: defaultCurrency
+      });
+    }
+  }, [open, defaultDate, defaultCurrency, form]);
 
   const handleSubmit = async (data: FormValues) => {
     await onSubmit({
