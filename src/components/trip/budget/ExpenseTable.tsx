@@ -1,8 +1,16 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCurrency } from './utils/budgetCalculations';
 import { format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+// Simple currency formatter that accepts string currency codes
+const formatCurrency = (amount: number | null, currency: string): string => {
+  if (amount === null) return '-';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
+};
 
 interface ExpenseItem {
   id: string;

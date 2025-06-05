@@ -66,8 +66,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       description: data.description,
       cost: data.cost,
       currency: data.currency,
-      category: data.category,
-      date: data.date
+      category: data.category
     });
     setIsAddingExpense(false);
   };
