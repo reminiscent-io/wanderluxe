@@ -9,12 +9,21 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CurrencySelector from './CurrencySelector';
+
+// Define expense categories based on the existing system
+const EXPENSE_CATEGORIES = [
+  'Activities',
+  'Accommodations', 
+  'Transportation',
+  'Dining',
+  'Other'
+] as const;
 
 const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
@@ -23,7 +32,7 @@ const formSchema = z.object({
   }),
   date: z.string().optional(),
   currency: z.string(),
-  isPaid: z.boolean()
+  category: z.string().min(1, "Category is required")
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -36,7 +45,7 @@ interface AddExpenseDialogProps {
     cost: number; 
     date?: string; 
     currency: string;
-    isPaid: boolean;
+    category: string;
   }) => Promise<void>;
   defaultCurrency: string;
 }
@@ -54,7 +63,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       cost: "",
       date: new Date().toISOString().split('T')[0],
       currency: defaultCurrency,
-      isPaid: false
+      category: "Other"
     },
   });
 
@@ -64,7 +73,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       cost: Number(data.cost),
       date: data.date,
       currency: data.currency,
-      isPaid: data.isPaid
+      category: data.category
     });
     form.reset();
     onOpenChange(false);
@@ -156,21 +165,25 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
 
             <FormField
               control={form.control}
-              name="isPaid"
+              name="category"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between p-4 bg-earth-50 rounded-lg">
-                    <FormLabel className="text-base font-medium text-earth-600">
-                      Mark as paid
-                    </FormLabel>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-earth-500"
-                      />
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
                     </FormControl>
-                  </div>
+                    <SelectContent>
+                      {EXPENSE_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />

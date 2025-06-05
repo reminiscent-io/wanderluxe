@@ -15,7 +15,7 @@ interface AddExpenseData {
   cost: number;
   date?: string;
   currency: string;
-  isPaid: boolean;
+  category: string;
 }
 
 interface BudgetViewProps {
