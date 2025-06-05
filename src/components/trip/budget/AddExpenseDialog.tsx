@@ -16,14 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CurrencySelector from './CurrencySelector';
 
-// Define expense categories based on the existing system
-const EXPENSE_CATEGORIES = [
-  'Activities',
-  'Accommodations', 
-  'Transportation',
-  'Dining',
-  'Other'
-] as const;
+
 
 const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
@@ -31,8 +24,7 @@ const formSchema = z.object({
     message: "Cost must be a valid number",
   }),
   date: z.string().optional(),
-  currency: z.string(),
-  category: z.string().min(1, "Category is required")
+  currency: z.string()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -45,7 +37,6 @@ interface AddExpenseDialogProps {
     cost: number; 
     date?: string; 
     currency: string;
-    category: string;
   }) => Promise<void>;
   defaultCurrency: string;
 }
@@ -62,8 +53,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       description: "",
       cost: "",
       date: new Date().toISOString().split('T')[0],
-      currency: defaultCurrency,
-      category: "Other"
+      currency: defaultCurrency
     },
   });
 
@@ -72,8 +62,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       description: data.description,
       cost: Number(data.cost),
       date: data.date,
-      currency: data.currency,
-      category: data.category
+      currency: data.currency
     });
     form.reset();
     onOpenChange(false);
@@ -163,30 +152,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {EXPENSE_CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
