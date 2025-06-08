@@ -167,12 +167,41 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   const handleUpdatePermission = async (shareId: string, currentPermission: PermissionLevel) => {
     try {
       const newPermission: PermissionLevel = currentPermission === 'read' ? 'edit' : 'read';
+      console.log(`Attempting to change permission for share ${shareId} from ${currentPermission} to ${newPermission}`);
+      
+      // Optimistically update the UI first
+      setExistingShares(prevShares => 
+        prevShares.map(share => 
+          share.id === shareId 
+            ? { ...share, permission_level: newPermission }
+            : share
+        )
+      );
+      
       const success = await updateTripSharePermission(shareId, newPermission);
-      if (success) {
-        fetchExistingShares();
+      if (!success) {
+        console.log('Permission update failed, reverting UI changes');
+        // Revert the optimistic update if it failed
+        setExistingShares(prevShares => 
+          prevShares.map(share => 
+            share.id === shareId 
+              ? { ...share, permission_level: currentPermission }
+              : share
+          )
+        );
+      } else {
+        console.log('Permission update successful');
       }
     } catch (error) {
       console.error('Error updating permission:', error);
+      // Revert the optimistic update on error
+      setExistingShares(prevShares => 
+        prevShares.map(share => 
+          share.id === shareId 
+            ? { ...share, permission_level: currentPermission }
+            : share
+        )
+      );
     }
   };
 
@@ -275,10 +304,10 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleUpdatePermission(share.id, share.permission_level)}
+                          onClick={() => handleUpdatePermission(share.id, share.permission_level || 'edit')}
                           className="h-auto p-1"
                         >
-                          {share.permission_level === 'read' ? (
+                          {(share.permission_level || 'edit') === 'read' ? (
                             <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs hover:bg-blue-100 transition-colors">
                               <Eye className="h-3 w-3" />
                               View Only

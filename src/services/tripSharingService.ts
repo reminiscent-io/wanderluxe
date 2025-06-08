@@ -45,14 +45,22 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
     }
 
     // Create the share record
+    const shareData: any = {
+      trip_id: tripId,
+      shared_by_user_id: user.id,
+      shared_with_email: email.toLowerCase().trim()
+    };
+
+    // Only add permission_level if it's supported (after migration)
+    try {
+      shareData.permission_level = permissionLevel;
+    } catch (e) {
+      // Column doesn't exist yet, will default to 'edit' after migration
+    }
+
     const { error: shareError } = await supabase
       .from('trip_shares')
-      .insert({
-        trip_id: tripId,
-        shared_by_user_id: user.id,
-        shared_with_email: email.toLowerCase().trim(),
-        permission_level: permissionLevel
-      });
+      .insert(shareData);
 
     if (shareError) {
       console.error('Error sharing trip:', shareError);
@@ -147,17 +155,32 @@ export const sendShareNotification = async (
  */
 export const updateTripSharePermission = async (shareId: string, newPermissionLevel: PermissionLevel): Promise<boolean> => {
   try {
-    const { error } = await supabase
+    // First, let's get the current share to ensure it exists
+    const { data: currentShare, error: fetchError } = await supabase
+      .from('trip_shares')
+      .select('*')
+      .eq('id', shareId)
+      .single();
+
+    if (fetchError || !currentShare) {
+      console.error('Error fetching current share:', fetchError);
+      toast.error('Could not find the share to update');
+      return false;
+    }
+
+    // Update the permission level
+    const { error: updateError } = await supabase
       .from('trip_shares')
       .update({ permission_level: newPermissionLevel })
       .eq('id', shareId);
 
-    if (error) {
-      console.error('Error updating trip share permission:', error);
+    if (updateError) {
+      console.error('Error updating trip share permission:', updateError);
       toast.error('Failed to update permission level');
       return false;
     }
 
+    console.log(`Permission updated for share ${shareId}: ${currentShare.permission_level || 'edit'} -> ${newPermissionLevel}`);
     toast.success(`Permission updated to ${newPermissionLevel === 'read' ? 'view only' : 'full access'}`);
     return true;
   } catch (error) {
@@ -257,7 +280,14 @@ export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
       return [];
     }
 
-    return data as TripShare[];
+    // Ensure permission_level has a default value for backward compatibility
+    const processedData = (data || []).map(share => ({
+      ...share,
+      permission_level: (share as any).permission_level || 'edit'
+    }));
+
+    console.log('Fetched trip shares:', processedData);
+    return processedData as TripShare[];
   } catch (error) {
     console.error('Error fetching trip shares:', error);
     return [];
