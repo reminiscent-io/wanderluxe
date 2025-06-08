@@ -65,7 +65,7 @@ interface ChatViewProps {
 /*******************************
  *  Constants
  ******************************/
-const TYPING_DELAY_MS = 2; // 2 ms/char ≈500 chars/s
+const TYPING_DELAY_MS = 0.5; // 0.5 ms/char ≈2000 chars/s
 
 /*******************************
  *  Component
@@ -682,7 +682,7 @@ const MessageBubble: React.FC<BubbleProps> = ({
                 <Plus className="h-4 w-4 text-green-600" />
                 <span className="font-medium text-green-800">
                   {msg.extractedData.type.charAt(0).toUpperCase() +
-                    msg.extractedData.type.slice(1)}{" ""}
+                    msg.extractedData.type.slice(1)}{" "}
                   Detected
                 </span>
               </div>
@@ -718,3 +718,4 @@ const MessageBubble: React.FC<BubbleProps> = ({
 };
 
 export default ChatView;
+`
