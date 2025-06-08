@@ -52,7 +52,7 @@ import remarkGfm from 'remark-gfm';
 /*****************************
  * UI constants
  *****************************/
-const TYPING_DELAY_MS = 2; // 2 ms per char → ~500 chars/s
+const TYPING_DELAY_MS = 50; // 2 ms per char → ~500 chars/s
 const MAX_BUBBLE_WIDTH = '65ch';
 
 /*****************************
@@ -124,11 +124,21 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       try {
         const { data, error } = await supabase
           .from('chat_logs')
-          .select('*')
+          .select('id, role, message, timestamp, user_id')
           .eq('trip_id', tripId)
           .order('timestamp', { ascending: true });
         if (error) throw error;
-        setMessages(data || []);
+        
+        // Validate and filter messages to ensure they match our interface
+        const validMessages = (data || []).filter((msg): msg is ChatMessage => {
+          return msg && 
+                 typeof msg.id === 'string' && 
+                 (msg.role === 'user' || msg.role === 'ai') && 
+                 typeof msg.message === 'string' && 
+                 typeof msg.timestamp === 'string';
+        });
+        
+        setMessages(validMessages);
       } catch (err) {
         console.error('Error loading chat history', err);
         toast({
@@ -354,6 +364,12 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
               ) : (
                 <div className="space-y-4">
                   {messages.map((msg, idx) => {
+                    // Safety check for message structure
+                    if (!msg || !msg.role || !msg.id) {
+                      console.warn('Invalid message structure:', msg);
+                      return null;
+                    }
+                    
                     const prev = messages[idx - 1];
                     const showAvatar = !prev || prev.role !== msg.role;
                     const isUser = msg.role === 'user';
