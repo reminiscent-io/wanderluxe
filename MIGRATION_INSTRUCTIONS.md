@@ -1,27 +1,30 @@
-# Database Migration for Permission Levels
+# Critical Database Migration Required
 
-## Run these SQL commands in Supabase SQL Editor:
+## Problem
+Your permission system has conflicting Row Level Security (RLS) policies causing:
+1. Permission changes appearing to work but not persisting
+2. "Row violates row-level security policy" errors when adding activities
+3. View-only users still able to make changes
 
-```sql
--- Step 1: Add permission_level column to trip_shares table
-ALTER TABLE trip_shares 
-ADD COLUMN permission_level VARCHAR(20) NOT NULL DEFAULT 'edit';
+## Solution
+Run the complete SQL script `RLS_ENFORCEMENT_MIGRATION.sql` in your Supabase SQL Editor.
 
--- Step 2: Add constraint to ensure only valid permission levels
-ALTER TABLE trip_shares 
-ADD CONSTRAINT trip_shares_permission_level_check 
-CHECK (permission_level IN ('read', 'edit'));
+## Steps
+1. Go to Supabase Dashboard → SQL Editor
+2. Copy the entire contents of `RLS_ENFORCEMENT_MIGRATION.sql`
+3. Paste and execute the script
+4. Test permission toggling and activity creation
 
--- Step 3: Update existing records to have 'edit' permission (maintaining current behavior)
-UPDATE trip_shares SET permission_level = 'edit' WHERE permission_level IS NULL;
-```
+## What This Fixes
+- **Removes duplicate policies** causing conflicts
+- **Implements proper permission enforcement** at database level
+- **Fixes day_activities table** RLS policy errors
+- **Enables persistent permission changes** in the UI
 
-## Steps to apply in Supabase:
+## After Migration
+- Permission toggles will persist when dialog is closed/reopened
+- View-only users will be blocked from all database modifications
+- Activity creation will work properly for users with edit permissions
+- All database operations will respect the granular permission system
 
-1. Go to your Supabase Dashboard
-2. Navigate to SQL Editor
-3. Copy and paste the above SQL commands
-4. Run them one by one or all at once
-5. Verify the migration worked by checking the trip_shares table structure
-
-After running these commands, the permission system will work correctly.
+The migration is safe and backward-compatible. All existing data and permissions will be preserved.
