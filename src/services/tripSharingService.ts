@@ -1,14 +1,15 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { TripShare, SharedTripWithDetails } from '@/integrations/supabase/trip_shares_types';
+import { TripShare, SharedTripWithDetails, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
 
 /**
  * Share a trip with a specific email address
  * @param tripId The ID of the trip to share
  * @param email Email address to share the trip with
  * @param tripDestination The trip destination (used for email notification)
+ * @param permissionLevel Permission level for the shared user ('read' or 'edit')
  */
-export const shareTrip = async (tripId: string, email: string, tripDestination: string): Promise<boolean> => {
+export const shareTrip = async (tripId: string, email: string, tripDestination: string, permissionLevel: PermissionLevel = 'edit'): Promise<boolean> => {
   try {
     // Check if the trip exists and the current user has access to it
     const { data: tripData, error: tripError } = await supabase
@@ -49,7 +50,8 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       .insert({
         trip_id: tripId,
         shared_by_user_id: user.id,
-        shared_with_email: email.toLowerCase().trim()
+        shared_with_email: email.toLowerCase().trim(),
+        permission_level: permissionLevel
       });
 
     if (shareError) {
@@ -136,6 +138,31 @@ export const sendShareNotification = async (
   } catch (error) {
     console.error('Error in share notification process:', error);
     toast.error(`Failed to send notification email to ${toEmail}.`);
+    return false;
+  }
+};
+
+/**
+ * Update permission level for an existing trip share
+ */
+export const updateTripSharePermission = async (shareId: string, newPermissionLevel: PermissionLevel): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('trip_shares')
+      .update({ permission_level: newPermissionLevel })
+      .eq('id', shareId);
+
+    if (error) {
+      console.error('Error updating trip share permission:', error);
+      toast.error('Failed to update permission level');
+      return false;
+    }
+
+    toast.success(`Permission updated to ${newPermissionLevel === 'read' ? 'view only' : 'full access'}`);
+    return true;
+  } catch (error) {
+    console.error('Error updating trip share permission:', error);
+    toast.error('An unexpected error occurred');
     return false;
   }
 };
