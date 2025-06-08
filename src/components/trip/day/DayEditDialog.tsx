@@ -59,7 +59,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             // Set position from database if available
             if (data.image_position) {
               const positionMatch = data.image_position.match(/center\s+(\d+)%/);
-              if (positionMatch && positionMatch[1]) {
+              if (positionMatch?.[1]) {
                 setImagePosition(parseInt(positionMatch[1], 10));
                 // Also update localStorage for quick access
                 localStorage.setItem(`day_image_position_${dayId}`, data.image_position);
@@ -163,7 +163,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           {selectedImage && (
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">
-                Image Position 
+                Image Position{" "}
                 <span className="text-sm text-gray-500 ml-2">
                   ({imagePosition}%)
                 </span>
@@ -189,7 +189,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                 <div className="relative flex-1 overflow-hidden rounded-md">
                   <img 
                     src={selectedImage} 
-                    alt="Selected image with position applied" 
+                    alt="Selected with position applied" 
                     className="absolute inset-0 h-full w-full object-cover"
                     style={{ objectPosition: `center ${imagePosition}%` }}
                   />
