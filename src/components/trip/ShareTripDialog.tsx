@@ -167,12 +167,41 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   const handleUpdatePermission = async (shareId: string, currentPermission: PermissionLevel) => {
     try {
       const newPermission: PermissionLevel = currentPermission === 'read' ? 'edit' : 'read';
+      console.log(`Attempting to change permission for share ${shareId} from ${currentPermission} to ${newPermission}`);
+      
+      // Optimistically update the UI first
+      setExistingShares(prevShares => 
+        prevShares.map(share => 
+          share.id === shareId 
+            ? { ...share, permission_level: newPermission }
+            : share
+        )
+      );
+      
       const success = await updateTripSharePermission(shareId, newPermission);
-      if (success) {
-        fetchExistingShares();
+      if (!success) {
+        console.log('Permission update failed, reverting UI changes');
+        // Revert the optimistic update if it failed
+        setExistingShares(prevShares => 
+          prevShares.map(share => 
+            share.id === shareId 
+              ? { ...share, permission_level: currentPermission }
+              : share
+          )
+        );
+      } else {
+        console.log('Permission update successful');
       }
     } catch (error) {
       console.error('Error updating permission:', error);
+      // Revert the optimistic update on error
+      setExistingShares(prevShares => 
+        prevShares.map(share => 
+          share.id === shareId 
+            ? { ...share, permission_level: currentPermission }
+            : share
+        )
+      );
     }
   };
 
