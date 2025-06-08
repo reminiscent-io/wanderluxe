@@ -155,37 +155,34 @@ export const sendShareNotification = async (
  */
 export const updateTripSharePermission = async (shareId: string, newPermissionLevel: PermissionLevel): Promise<boolean> => {
   try {
-    // First, let's get the current share to ensure it exists
-    const { data: currentShare, error: fetchError } = await supabase
+    console.log(`Starting permission update for share ${shareId} to ${newPermissionLevel}`);
+    
+    // Direct update approach with comprehensive error handling
+    const { data: updateResult, error: updateError } = await supabase
       .from('trip_shares')
-      .select('*')
+      .update({ permission_level: newPermissionLevel } as any)
       .eq('id', shareId)
+      .select('*')
       .single();
-
-    if (fetchError || !currentShare) {
-      console.error('Error fetching current share:', fetchError);
-      toast.error('Could not find the share to update');
-      return false;
-    }
-
-    // Update the permission level
-    const { error: updateError } = await supabase
-      .from('trip_shares')
-      .update({ permission_level: newPermissionLevel })
-      .eq('id', shareId);
 
     if (updateError) {
       console.error('Error updating trip share permission:', updateError);
-      toast.error('Failed to update permission level');
+      toast.error(`Failed to update permission: ${updateError.message}`);
       return false;
     }
 
-    console.log(`Permission updated for share ${shareId}: ${currentShare.permission_level || 'edit'} -> ${newPermissionLevel}`);
+    if (!updateResult) {
+      console.error('No data returned from update operation');
+      toast.error('Permission update failed - no data returned');
+      return false;
+    }
+
+    console.log('Permission update successful:', updateResult);
     toast.success(`Permission updated to ${newPermissionLevel === 'read' ? 'view only' : 'full access'}`);
     return true;
   } catch (error) {
     console.error('Error updating trip share permission:', error);
-    toast.error('An unexpected error occurred');
+    toast.error('An unexpected error occurred while updating permissions');
     return false;
   }
 };

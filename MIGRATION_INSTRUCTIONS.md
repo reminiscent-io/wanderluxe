@@ -1,166 +1,30 @@
-# Database Migration for Permission Levels
+# Critical Database Migration Required
 
-## Run these SQL commands in Supabase SQL Editor:
+## Problem
+Your permission system has conflicting Row Level Security (RLS) policies causing:
+1. Permission changes appearing to work but not persisting
+2. "Row violates row-level security policy" errors when adding activities
+3. View-only users still able to make changes
 
-```sql
--- Step 1: Add permission_level column to trip_shares table
-ALTER TABLE trip_shares 
-ADD COLUMN permission_level VARCHAR(20) NOT NULL DEFAULT 'edit';
+## Solution
+Run the complete SQL script `RLS_ENFORCEMENT_MIGRATION.sql` in your Supabase SQL Editor.
 
--- Step 2: Add constraint to ensure only valid permission levels
-ALTER TABLE trip_shares 
-ADD CONSTRAINT trip_shares_permission_level_check 
-CHECK (permission_level IN ('read', 'edit'));
+## Steps
+1. Go to Supabase Dashboard → SQL Editor
+2. Copy the entire contents of `RLS_ENFORCEMENT_MIGRATION.sql`
+3. Paste and execute the script
+4. Test permission toggling and activity creation
 
--- Step 3: Update existing records to have 'edit' permission (maintaining current behavior)
-UPDATE trip_shares SET permission_level = 'edit' WHERE permission_level IS NULL;
+## What This Fixes
+- **Removes duplicate policies** causing conflicts
+- **Implements proper permission enforcement** at database level
+- **Fixes day_activities table** RLS policy errors
+- **Enables persistent permission changes** in the UI
 
--- Step 4: Create helper function to check if user has edit permission for a trip
-CREATE OR REPLACE FUNCTION user_has_edit_permission(trip_id_param UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-  -- Check if user owns the trip
-  IF EXISTS (
-    SELECT 1 FROM trips 
-    WHERE trip_id = trip_id_param 
-    AND user_id = auth.uid()
-  ) THEN
-    RETURN TRUE;
-  END IF;
+## After Migration
+- Permission toggles will persist when dialog is closed/reopened
+- View-only users will be blocked from all database modifications
+- Activity creation will work properly for users with edit permissions
+- All database operations will respect the granular permission system
 
-  -- Check if user has edit permission via sharing
-  IF EXISTS (
-    SELECT 1 FROM trip_shares ts
-    JOIN auth.users u ON u.email = ts.shared_with_email
-    WHERE ts.trip_id = trip_id_param 
-    AND u.id = auth.uid()
-    AND ts.permission_level = 'edit'
-  ) THEN
-    RETURN TRUE;
-  END IF;
-
-  RETURN FALSE;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Step 5: Update RLS policies for all trip-related tables to enforce edit permissions
-
--- Update trips table policies
-DROP POLICY IF EXISTS "Users can update their own trips" ON trips;
-CREATE POLICY "Users can update their own trips or shared trips with edit permission" ON trips
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
--- Update trip_days table policies
-DROP POLICY IF EXISTS "Users can update trip days for their trips" ON trip_days;
-CREATE POLICY "Users can update trip days for trips with edit permission" ON trip_days
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert trip days for their trips" ON trip_days;
-CREATE POLICY "Users can insert trip days for trips with edit permission" ON trip_days
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete trip days for their trips" ON trip_days;
-CREATE POLICY "Users can delete trip days for trips with edit permission" ON trip_days
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-
--- Update accommodations table policies
-DROP POLICY IF EXISTS "Users can update accommodations for their trips" ON accommodations;
-CREATE POLICY "Users can update accommodations for trips with edit permission" ON accommodations
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert accommodations for their trips" ON accommodations;
-CREATE POLICY "Users can insert accommodations for trips with edit permission" ON accommodations
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete accommodations for their trips" ON accommodations;
-CREATE POLICY "Users can delete accommodations for trips with edit permission" ON accommodations
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-
--- Update transportation table policies
-DROP POLICY IF EXISTS "Users can update transportation for their trips" ON transportation;
-CREATE POLICY "Users can update transportation for trips with edit permission" ON transportation
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert transportation for their trips" ON transportation;
-CREATE POLICY "Users can insert transportation for trips with edit permission" ON transportation
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete transportation for their trips" ON transportation;
-CREATE POLICY "Users can delete transportation for trips with edit permission" ON transportation
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-
--- Update reservations table policies
-DROP POLICY IF EXISTS "Users can update reservations for their trips" ON reservations;
-CREATE POLICY "Users can update reservations for trips with edit permission" ON reservations
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert reservations for their trips" ON reservations;
-CREATE POLICY "Users can insert reservations for trips with edit permission" ON reservations
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete reservations for their trips" ON reservations;
-CREATE POLICY "Users can delete reservations for trips with edit permission" ON reservations
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-
--- Update day_activities table policies
-DROP POLICY IF EXISTS "Users can update activities for their trips" ON day_activities;
-CREATE POLICY "Users can update activities for trips with edit permission" ON day_activities
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert activities for their trips" ON day_activities;
-CREATE POLICY "Users can insert activities for trips with edit permission" ON day_activities
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete activities for their trips" ON day_activities;
-CREATE POLICY "Users can delete activities for trips with edit permission" ON day_activities
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-
--- Update expenses table policies
-DROP POLICY IF EXISTS "Users can update expenses for their trips" ON expenses;
-CREATE POLICY "Users can update expenses for trips with edit permission" ON expenses
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert expenses for their trips" ON expenses;
-CREATE POLICY "Users can insert expenses for trips with edit permission" ON expenses
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete expenses for their trips" ON expenses;
-CREATE POLICY "Users can delete expenses for trips with edit permission" ON expenses
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-
--- Update other_expenses table policies
-DROP POLICY IF EXISTS "Users can update other expenses for their trips" ON other_expenses;
-CREATE POLICY "Users can update other expenses for trips with edit permission" ON other_expenses
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert other expenses for their trips" ON other_expenses;
-CREATE POLICY "Users can insert other expenses for trips with edit permission" ON other_expenses
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete other expenses for their trips" ON other_expenses;
-CREATE POLICY "Users can delete other expenses for trips with edit permission" ON other_expenses
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-
--- Update vision_board_items table policies  
-DROP POLICY IF EXISTS "Users can update vision board items for their trips" ON vision_board_items;
-CREATE POLICY "Users can update vision board items for trips with edit permission" ON vision_board_items
-  FOR UPDATE USING (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can insert vision board items for their trips" ON vision_board_items;
-CREATE POLICY "Users can insert vision board items for trips with edit permission" ON vision_board_items
-  FOR INSERT WITH CHECK (user_has_edit_permission(trip_id));
-
-DROP POLICY IF EXISTS "Users can delete vision board items for their trips" ON vision_board_items;
-CREATE POLICY "Users can delete vision board items for trips with edit permission" ON vision_board_items
-  FOR DELETE USING (user_has_edit_permission(trip_id));
-```
-
-## Steps to apply in Supabase:
-
-1. Go to your Supabase Dashboard
-2. Navigate to SQL Editor
-3. Copy and paste the above SQL commands
-4. Run them one by one or all at once
-5. Verify the migration worked by checking the trip_shares table structure
-
-After running these commands, the permission system will work correctly with proper Row Level Security enforcement.
+The migration is safe and backward-compatible. All existing data and permissions will be preserved.
