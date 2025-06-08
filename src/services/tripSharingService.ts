@@ -143,6 +143,31 @@ export const sendShareNotification = async (
 };
 
 /**
+ * Update permission level for an existing trip share
+ */
+export const updateTripSharePermission = async (shareId: string, newPermissionLevel: PermissionLevel): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('trip_shares')
+      .update({ permission_level: newPermissionLevel })
+      .eq('id', shareId);
+
+    if (error) {
+      console.error('Error updating trip share permission:', error);
+      toast.error('Failed to update permission level');
+      return false;
+    }
+
+    toast.success(`Permission updated to ${newPermissionLevel === 'read' ? 'view only' : 'full access'}`);
+    return true;
+  } catch (error) {
+    console.error('Error updating trip share permission:', error);
+    toast.error('An unexpected error occurred');
+    return false;
+  }
+};
+
+/**
  * Remove a trip share
  */
 export const removeTripShare = async (shareId: string): Promise<boolean> => {

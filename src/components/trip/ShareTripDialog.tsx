@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { shareTrip, getTripShares, removeTripShare } from '@/services/tripSharingService';
+import { shareTrip, getTripShares, removeTripShare, updateTripSharePermission } from '@/services/tripSharingService';
 import { supabase } from '@/integrations/supabase/client';
 // We're now using Supabase Edge Functions for email
 import { TripShare, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
@@ -33,6 +33,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   const dialogOpen = open !== undefined ? open : isOpen;
   const setDialogOpen = onOpenChange || setIsOpen;
   const [emails, setEmails] = useState<string[]>(['']);
+  const [permissionLevel, setPermissionLevel] = useState<PermissionLevel>('edit');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
@@ -131,7 +132,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
       let successCount = 0;
       
       for (const email of validEmails) {
-        const success = await shareTrip(tripId, email, tripDestination);
+        const success = await shareTrip(tripId, email, tripDestination, permissionLevel);
         if (success) {
           successCount++;
         }
@@ -160,6 +161,18 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
       }
     } catch (error) {
       console.error('Error removing share:', error);
+    }
+  };
+
+  const handleUpdatePermission = async (shareId: string, currentPermission: PermissionLevel) => {
+    try {
+      const newPermission: PermissionLevel = currentPermission === 'read' ? 'edit' : 'read';
+      const success = await updateTripSharePermission(shareId, newPermission);
+      if (success) {
+        fetchExistingShares();
+      }
+    } catch (error) {
+      console.error('Error updating permission:', error);
     }
   };
 
@@ -217,6 +230,36 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
             Add Another
           </Button>
 
+          <div className="space-y-3 border-t pt-4 mt-4">
+            <p className="text-sm font-medium">Permission Level</p>
+            <RadioGroup 
+              value={permissionLevel} 
+              onValueChange={(value) => setPermissionLevel(value as PermissionLevel)}
+              className="grid grid-cols-2 gap-4"
+            >
+              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
+                <RadioGroupItem value="read" id="read" />
+                <Label htmlFor="read" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <Eye className="h-4 w-4 text-blue-600" />
+                  <div>
+                    <div className="font-medium">View Only</div>
+                    <div className="text-xs text-muted-foreground">Can view trip details but cannot edit</div>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
+                <RadioGroupItem value="edit" id="edit" />
+                <Label htmlFor="edit" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <Edit className="h-4 w-4 text-green-600" />
+                  <div>
+                    <div className="font-medium">Full Access</div>
+                    <div className="text-xs text-muted-foreground">Can view and edit all trip details</div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           {existingShares.length > 0 && (
             <div className="space-y-2 border-t pt-4 mt-6">
               <p className="text-sm font-medium">Currently shared with</p>
@@ -224,9 +267,22 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
               <div className="space-y-2">
                 {existingShares.map((share) => (
                   <div key={share.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{share.shared_with_email}</span>
+                      <div className="flex items-center gap-1 ml-auto mr-2">
+                        {share.permission_level === 'read' ? (
+                          <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs">
+                            <Eye className="h-3 w-3" />
+                            View Only
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs">
+                            <Edit className="h-3 w-3" />
+                            Full Access
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <Button
                       type="button"
