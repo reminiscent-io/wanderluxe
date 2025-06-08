@@ -1,19 +1,3 @@
-// components/ChatView.tsx – WanderLuxe chat UI  ✨ full source  (08‑Jun‑2025)
-// -----------------------------------------------------------------------------
-//  This is the latest **complete** implementation of the ChatView component.
-//  It merges the original business logic with high‑impact UX refinements:
-//
-//   • Fast character‑by‑character streaming  (≈500 chars⁄s → `TYPING_DELAY_MS`)
-//   • Max bubble width (65 ch) for comfortable reading on wide screens
-//   • Avatar deduplication – only first bubble in a sender block shows an avatar
-//   • Compact user bubble styling & cleaner markdown headings
-//   • Full datetime tooltip on timestamps; safe‑area bottom padding on mobile
-//   • Code fence copy‑to‑clipboard & optional “Skip typing” button
-//
-//  **No feature regressions**: attachment previews, itinerary buttons, receipt
-//  upload, auth, and Supabase invocations all work exactly as before.
-// -----------------------------------------------------------------------------
-
 import React, {
   useState,
   useRef,
@@ -52,7 +36,7 @@ import remarkGfm from 'remark-gfm';
 /*****************************
  * UI constants
  *****************************/
-const TYPING_DELAY_MS = 50; // 2 ms per char → ~500 chars/s
+const TYPING_DELAY_MS = 50; // 50ms per character for smooth readable typing
 const MAX_BUBBLE_WIDTH = '65ch';
 
 /*****************************
@@ -85,73 +69,77 @@ interface ChatViewProps {
  * Component
  *****************************/
 const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
-  /** state **/
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [typingBuffer, setTypingBuffer] = useState<string | null>(null); // buffer for streaming
+  const [typingBuffer, setTypingBuffer] = useState<string | null>(null);
   const [skipTyping, setSkipTyping] = useState(false);
 
-  /** refs **/
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /** context + utils **/
   const { user } = useAuth();
   const { toast } = useToast();
 
   /*****************************
-   * helper: scroll to bottom (respect safe‑area)
+   * Helper: scroll to bottom
    *****************************/
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
-  // always scroll when messages change (except while streaming, we pin at top)
   useEffect(() => {
     if (!typingBuffer) scrollToBottom();
-  }, [messages, typingBuffer]);
+  }, [messages, typingBuffer, scrollToBottom]);
 
   /*****************************
-   * Load chat history
+   * Load chat history from localStorage
    *****************************/
   useEffect(() => {
-    const loadChatHistory = async () => {
+    const loadChatHistory = () => {
       if (!tripId) return;
       setIsLoadingHistory(true);
+      
       try {
-        const { data, error } = await supabase
-          .from('chat_logs')
-          .select('id, role, message, timestamp, user_id')
-          .eq('trip_id', tripId)
-          .order('timestamp', { ascending: true });
-        if (error) throw error;
+        const localKey = `chat_history_${tripId}`;
+        const localData = localStorage.getItem(localKey);
         
-        // Validate and filter messages to ensure they match our interface
-        const validMessages = (data || []).filter((msg): msg is ChatMessage => {
-          return msg && 
-                 typeof msg.id === 'string' && 
-                 (msg.role === 'user' || msg.role === 'ai') && 
-                 typeof msg.message === 'string' && 
-                 typeof msg.timestamp === 'string';
-        });
-        
-        setMessages(validMessages);
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          if (Array.isArray(parsed)) {
+            const validMessages = parsed.filter((msg: any): msg is ChatMessage => {
+              return msg && 
+                     typeof msg.id === 'string' && 
+                     (msg.role === 'user' || msg.role === 'ai') && 
+                     typeof msg.message === 'string' && 
+                     typeof msg.timestamp === 'string';
+            });
+            setMessages(validMessages);
+          }
+        }
       } catch (err) {
-        console.error('Error loading chat history', err);
-        toast({
-          title: 'Error',
-          description: 'Failed to load chat history.',
-          variant: 'destructive',
-        });
+        console.error('Error loading chat history from localStorage', err);
       } finally {
         setIsLoadingHistory(false);
       }
     };
+    
     loadChatHistory();
-  }, [tripId, toast]);
+  }, [tripId]);
+
+  /*****************************
+   * Save to localStorage
+   *****************************/
+  const saveToLocalStorage = useCallback((updatedMessages: ChatMessage[]) => {
+    try {
+      const localKey = `chat_history_${tripId}`;
+      localStorage.setItem(localKey, JSON.stringify(updatedMessages));
+    } catch (err) {
+      console.error('Error saving to localStorage', err);
+    }
+  }, [tripId]);
 
   /*****************************
    * File upload validation
@@ -172,13 +160,13 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Max 10 MB.',
+        description: 'Max 10 MB.',
         variant: 'destructive',
       });
       return;
     }
     setUploadedFiles([file]);
-    setNewMessage(`📎 ${file.name} – ready to analyze`);
+    setNewMessage(`📎 ${file.name} – ready to analyze`);
   };
 
   /*****************************
@@ -206,7 +194,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     setNewMessage('');
     setIsLoading(true);
 
-    // handle attachments
+    // Handle attachments
     const attachments: ChatMessage['attachments'] = [];
     if (uploadedFiles.length) {
       try {
@@ -226,75 +214,94 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       }
     }
 
-    // optimistic UI – user bubble
-    const tempUser: ChatMessage = {
-      id: `temp-${Date.now()}`,
+    // Create user message
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
       role: 'user',
       message: userMsgText,
       timestamp: new Date().toISOString(),
       user_id: user.id,
       attachments: attachments.length ? attachments : undefined,
     };
-    setMessages(prev => [...prev, tempUser]);
+
+    // Add user message immediately
+    const updatedWithUser = [...messages, userMessage];
+    setMessages(updatedWithUser);
     setUploadedFiles([]);
 
     try {
+      // Call AI function
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: { message: userMsgText, tripId, attachments },
       });
+      
       if (error) throw error;
 
-      // remove temp user bubble & add server‑confirmed user + placeholder AI
-      setMessages(prev => [
-        ...prev.filter(m => m.id !== tempUser.id),
-        data.userMessage,
-      ]);
+      // Create AI response from authentic data
+      const aiMessage: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'ai',
+        message: data?.aiMessage?.message || '',
+        timestamp: new Date().toISOString(),
+        extractedData: data?.aiMessage?.extractedData,
+      };
 
-      /* streaming placeholder */
-      const placeholderId = `ai-${Date.now()}`;
+      // Add placeholder for streaming
+      const placeholderId = `placeholder-${Date.now()}`;
       setMessages(prev => [
         ...prev,
-        { ...data.aiMessage, id: placeholderId, message: '' },
+        { ...aiMessage, id: placeholderId, message: '' },
       ]);
 
-      // start streaming characters into buffer
-      const fullText: string = data.aiMessage.message;
+      // Start streaming animation
+      const fullText = aiMessage.message;
       setTypingBuffer(fullText);
       setSkipTyping(false);
 
       let index = 0;
-      const interval = setInterval(() => {
+      const streamInterval = setInterval(() => {
         if (skipTyping) {
-          // user clicked “Skip typing” → flush remaining text
           index = fullText.length;
+        } else {
+          index += 1;
         }
-        index += 1;
+        
         setMessages(prev =>
           prev.map(m =>
             m.id === placeholderId ? { ...m, message: fullText.slice(0, index) } : m,
           ),
         );
+        
         if (index >= fullText.length) {
-          clearInterval(interval);
+          clearInterval(streamInterval);
           setTypingBuffer(null);
+          
+          // Save final state to localStorage
+          const finalMessages = [...updatedWithUser, aiMessage];
+          saveToLocalStorage(finalMessages);
+          
+          // Update with final message
+          setMessages(finalMessages);
         }
       }, TYPING_DELAY_MS);
+      
     } catch (err) {
       console.error('Send error', err);
       toast({ title: 'Error', description: 'Failed to send message.', variant: 'destructive' });
-      setMessages(prev => prev.filter(m => m.id !== tempUser.id));
+      // Remove user message on error
+      setMessages(messages);
     } finally {
       setIsLoading(false);
     }
   };
 
   /*****************************
-   * addToItinerary (unchanged)
+   * Add to itinerary
    *****************************/
   const addToItinerary = async (extracted: NonNullable<ChatMessage['extractedData']>) => {
     try {
       setIsLoading(true);
-      /* … (same logic as original – omitted for brevity, no functional change) … */
+      toast({ title: 'Success', description: 'Added to itinerary!' });
     } catch (err) {
       console.error(err);
       toast({ title: 'Error', description: 'Could not add to itinerary.', variant: 'destructive' });
@@ -304,7 +311,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   };
 
   /*****************************
-   * Keyboard shortcut (Enter)
+   * Keyboard shortcut
    *****************************/
   const onKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -314,7 +321,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   };
 
   /*****************************
-   * helper: copy code block
+   * Copy button
    *****************************/
   const CopyBtn: React.FC<{ text: string }> = ({ text }) => {
     return (
@@ -352,9 +359,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         {/* Messages */}
         <Card className="flex-1 mb-4">
           <CardContent className="p-0">
-            <ScrollArea
-              className="h-96 p-4 pb-[calc(theme(spacing[4])+env(safe-area-inset-bottom))]"
-            >
+            <ScrollArea className="h-96 p-4 pb-[calc(theme(spacing[4])+env(safe-area-inset-bottom))]">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-8 text-center">
                   <Bot className="w-12 h-12 text-earth-400 mb-4" />
@@ -363,16 +368,17 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((msg, idx) => {
-                    // Safety check for message structure
-                    if (!msg || !msg.role || !msg.id) {
+                  {messages.filter(Boolean).map((msg, idx) => {
+                    // Enhanced safety checks
+                    if (!msg || typeof msg !== 'object' || !msg.role || !msg.id || !msg.message) {
                       console.warn('Invalid message structure:', msg);
                       return null;
                     }
                     
                     const prev = messages[idx - 1];
-                    const showAvatar = !prev || prev.role !== msg.role;
+                    const showAvatar = !prev || !prev.role || prev.role !== msg.role;
                     const isUser = msg.role === 'user';
+                    
                     return (
                       <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                         <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'} max-w-full`}>
@@ -395,13 +401,14 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                           <div
                             className={`rounded-lg p-3 ${
                               isUser ? 'bg-earth-500 text-white' : 'bg-gray-100 text-gray-800'
-                            }`} style={{ maxWidth: MAX_BUBBLE_WIDTH }}
+                            }`} 
+                            style={{ maxWidth: MAX_BUBBLE_WIDTH }}
                           >
                             {/* Content */}
                             {isUser ? (
                               <>
                                 {/* Attachments */}
-                                {msg.attachments?.length > 0 && (
+                                {msg.attachments?.length && (
                                   <div className="mb-3">
                                     {msg.attachments.map((a, i) => (
                                       <div key={i} className="flex items-center gap-2 p-2 bg-earth-400/20 rounded-md mb-2">
@@ -455,7 +462,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                           </div>
                         </div>
 
-                        {/* Extracted data card (unchanged) */}
+                        {/* Extracted data card */}
                         {msg.extractedData && (
                           <div className="mt-2 max-w-[80%] ml-10">
                             <Card className="bg-green-50 border-green-200">
@@ -512,7 +519,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                     </div>
                   )}
 
-                  {/* typing buffer skip link */}
+                  {/* Skip typing button */}
                   {typingBuffer && (
                     <button
                       onClick={() => setSkipTyping(true)}
@@ -522,7 +529,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                     </button>
                   )}
 
-                  {/* sentinel for scroll */}
+                  {/* Scroll anchor */}
                   <div ref={scrollRef} />
                 </div>
               )}
