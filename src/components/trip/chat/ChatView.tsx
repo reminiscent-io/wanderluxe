@@ -7,16 +7,11 @@
 //  “Add to Itinerary” buttons, etc. – are preserved.
 // -----------------------------------------------------------------------------
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import {
-  Button,
-  Input,
-  ScrollArea,
-  Card,
-  CardContent,
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui"; // ← adjust barrel‑export path if different
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Send,
   Bot,
