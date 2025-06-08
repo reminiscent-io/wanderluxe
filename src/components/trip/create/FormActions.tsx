@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 
 interface FormActionsProps {
   isLoading: boolean;
+  onSubmit?: (e: React.FormEvent) => void;
   onCancel: () => void;
 }
 
 const FormActions: React.FC<FormActionsProps> = ({
   isLoading,
+  onSubmit,
   onCancel
 }) => {
   return (
