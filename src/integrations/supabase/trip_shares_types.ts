@@ -2,11 +2,14 @@
  * Type definitions for trip sharing functionality
  */
 
+export type PermissionLevel = 'read' | 'edit';
+
 export interface TripShare {
   id: string;
   trip_id: string;
   shared_by_user_id: string;
   shared_with_email: string;
+  permission_level: PermissionLevel;
   created_at: string;
 }
 

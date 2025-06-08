@@ -9,13 +9,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, PlusCircle, X, Mail, AlertCircle } from 'lucide-react';
+import { Share2, PlusCircle, X, Mail, AlertCircle, Eye, Edit } from 'lucide-react';
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { shareTrip, getTripShares, removeTripShare } from '@/services/tripSharingService';
 import { supabase } from '@/integrations/supabase/client';
 // We're now using Supabase Edge Functions for email
-import { TripShare } from '@/integrations/supabase/trip_shares_types';
+import { TripShare, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
 
 interface ShareTripDialogProps {
   tripId: string;
