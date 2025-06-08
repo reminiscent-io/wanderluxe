@@ -275,10 +275,10 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleUpdatePermission(share.id, share.permission_level)}
+                          onClick={() => handleUpdatePermission(share.id, share.permission_level || 'edit')}
                           className="h-auto p-1"
                         >
-                          {share.permission_level === 'read' ? (
+                          {(share.permission_level || 'edit') === 'read' ? (
                             <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs hover:bg-blue-100 transition-colors">
                               <Eye className="h-3 w-3" />
                               View Only

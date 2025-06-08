@@ -9,7 +9,7 @@ export interface TripShare {
   trip_id: string;
   shared_by_user_id: string;
   shared_with_email: string;
-  permission_level: PermissionLevel;
+  permission_level?: PermissionLevel; // Optional for backward compatibility
   created_at: string;
 }
 
