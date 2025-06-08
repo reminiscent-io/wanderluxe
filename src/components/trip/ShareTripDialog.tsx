@@ -271,17 +271,25 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{share.shared_with_email}</span>
                       <div className="flex items-center gap-1 ml-auto mr-2">
-                        {share.permission_level === 'read' ? (
-                          <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs">
-                            <Eye className="h-3 w-3" />
-                            View Only
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs">
-                            <Edit className="h-3 w-3" />
-                            Full Access
-                          </div>
-                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleUpdatePermission(share.id, share.permission_level)}
+                          className="h-auto p-1"
+                        >
+                          {share.permission_level === 'read' ? (
+                            <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs hover:bg-blue-100 transition-colors">
+                              <Eye className="h-3 w-3" />
+                              View Only
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs hover:bg-green-100 transition-colors">
+                              <Edit className="h-3 w-3" />
+                              Full Access
+                            </div>
+                          )}
+                        </Button>
                       </div>
                     </div>
                     <Button
