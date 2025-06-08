@@ -279,7 +279,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
           <Button 
             onClick={handleExport}
             disabled={isLoading}
-            className="bg-earth-500 hover:bg-earth-600 w-full sm:w-auto"
+            className="bg-earth-500 hover:bg-earth-600 text-white w-full sm:w-auto"
           >
             {isLoading ? (
               <>
