@@ -60,6 +60,102 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
   const { events: hotelStays } = useTimelineEvents(tripId);
   const { transportationData: transportations } = useTransportationEvents(tripId);
 
+  /* ---------- helper functions for PDF generation ---------- */
+  const buildHotelTimelineItems = (day: any, options: PdfExportOptions) => {
+    if (!options.sections.accommodation) return [];
+
+    return hotelStays
+      ?.filter(stay => {
+        if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
+        const d = parseISO(day.date);
+        return (
+          d >= parseISO(stay.hotel_checkin_date) &&
+          d <= parseISO(stay.hotel_checkout_date)
+        );
+      })
+      .map(stay => {
+        const d = parseISO(day.date);
+        const checkIn = parseISO(stay.hotel_checkin_date);
+        const checkOut = parseISO(stay.hotel_checkout_date);
+
+        const isCheckIn = fnsFormat(d, 'yyyy-MM-dd') === fnsFormat(checkIn, 'yyyy-MM-dd');
+        const isCheckOut = fnsFormat(d, 'yyyy-MM-dd') === fnsFormat(checkOut, 'yyyy-MM-dd');
+
+        const rawTime = isCheckIn
+          ? stay.checkin_time
+          : isCheckOut
+          ? stay.checkout_time
+          : null;
+
+        return {
+          type: 'accommodation',
+          title: isCheckIn
+            ? `Check-in: ${stay.hotel}`
+            : isCheckOut
+            ? `Check-out: ${stay.hotel}`
+            : `Stay at ${stay.hotel}`,
+          details: stay.hotel_details ?? '',
+          location: stay.hotel_address ?? '',
+          cost: stay.cost ? `${stay.currency} ${stay.cost}` : '',
+          time: formatTime(rawTime),
+          sortKey: minutesFromTime(formatTime(rawTime)),
+          image_url: (stay as any).image_url ?? null,
+        };
+      }) ?? [];
+  };
+
+  const buildTransportationTimelineItems = (day: any, options: PdfExportOptions) => {
+    if (!options.sections.transportation) return [];
+
+    return transportations
+      ?.filter(t => t.start_date === day.date || t.start_date === day.date.split('T')[0])
+      .map(t => ({
+        type: 'transportation',
+        title: t.type === 'flight'
+          ? `Flight${t.provider ? ': ' + t.provider : ''}`
+          : t.type.charAt(0).toUpperCase() + t.type.slice(1),
+        details: t.details ?? '',
+        location: `From: ${t.departure_location ?? 'N/A'} → ${t.arrival_location ?? 'N/A'}`,
+        cost: t.cost ? `${t.currency} ${t.cost}` : '',
+        time: formatTime(t.start_time),
+        sortKey: minutesFromTime(formatTime(t.start_time)),
+      })) ?? [];
+  };
+
+  const buildActivityTimelineItems = (day: any, options: PdfExportOptions) => {
+    if (!options.sections.activities) return [];
+
+    return day.activities?.map((a: any) => ({
+      type: 'activity',
+      title: a.title ?? 'Activity',
+      details: a.description ?? '',
+      location: '',
+      cost: a.cost && a.currency ? `${a.currency} ${a.cost}` : '',
+      time: formatTime(a.start_time),
+      sortKey: minutesFromTime(formatTime(a.start_time)),
+    })) ?? [];
+  };
+
+  const getItemIcon = (type: string) => {
+    return type === 'accommodation' ? '🏨' : type === 'transportation' ? '✈️' : '🗓️';
+  };
+
+  const shouldShowItemDetails = (item: any, options: PdfExportOptions) => {
+    return {
+      showDetails: options.detailLevel === 'full' || (options.detailLevel === 'summary' && item.details),
+      showLocation: options.detailLevel !== 'minimal' && item.location,
+      showCost: options.showCosts && item.cost,
+    };
+  };
+
+  const generateItemThumbnail = (item: any, options: PdfExportOptions) => {
+    return item.type === 'accommodation' && item.image_url && options.showImages
+      ? `<div class="thumbnail" style="width:96px;height:96px;overflow:hidden;border-radius:8px;margin-left:auto;">
+           <img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">
+         </div>`
+      : '';
+  };
+
   /** Build and print PDF with customization options ---------------------- */
   const createCustomPdf = async (options: PdfExportOptions) => {
     if (!tripId) {
@@ -87,85 +183,9 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
       /* 2 ▸ Build timeline per-day --------------------------------------- */
       const processedDays =
         days?.map(day => {
-          /* hotel items */
-          const hotelTimelineItems = options.sections.accommodation
-            ? hotelStays
-                ?.filter(stay => {
-                  if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-                  const d = parseISO(day.date);
-                  return (
-                    d >= parseISO(stay.hotel_checkin_date) &&
-                    d <= parseISO(stay.hotel_checkout_date)
-                  );
-                })
-                .map(stay => {
-                  const d = parseISO(day.date);
-                  const checkIn = parseISO(stay.hotel_checkin_date);
-                  const checkOut = parseISO(stay.hotel_checkout_date);
-
-                  const isCheckIn = fnsFormat(d, 'yyyy-MM-dd') === fnsFormat(checkIn, 'yyyy-MM-dd');
-                  const isCheckOut =
-                    fnsFormat(d, 'yyyy-MM-dd') === fnsFormat(checkOut, 'yyyy-MM-dd');
-
-                  const rawTime = isCheckIn
-                    ? stay.checkin_time
-                    : isCheckOut
-                    ? stay.checkout_time
-                    : null;
-
-                  return {
-                    type: 'accommodation',
-                    title: isCheckIn
-                      ? `Check-in: ${stay.hotel}`
-                      : isCheckOut
-                      ? `Check-out: ${stay.hotel}`
-                      : `Stay at ${stay.hotel}`,
-                    details: stay.hotel_details ?? '',
-                    location: stay.hotel_address ?? '',
-                    cost: stay.cost ? `${stay.currency} ${stay.cost}` : '',
-                    time: formatTime(rawTime),
-                    sortKey: minutesFromTime(formatTime(rawTime)),
-                    image_url: (stay as any).image_url ?? null,
-                  };
-                }) ?? []
-            : [];
-
-          /* transportation */
-          const transportationTimelineItems = options.sections.transportation
-            ? transportations
-                ?.filter(
-                  t =>
-                    t.start_date === day.date || t.start_date === day.date.split('T')[0],
-                )
-                .map(t => ({
-                  type: 'transportation',
-                  title:
-                    t.type === 'flight'
-                      ? `Flight${t.provider ? ': ' + t.provider : ''}`
-                      : t.type.charAt(0).toUpperCase() + t.type.slice(1),
-                  details: t.details ?? '',
-                  location: `From: ${t.departure_location ?? 'N/A'} → ${
-                    t.arrival_location ?? 'N/A'
-                  }`,
-                  cost: t.cost ? `${t.currency} ${t.cost}` : '',
-                  time: formatTime(t.start_time),
-                  sortKey: minutesFromTime(formatTime(t.start_time)),
-                })) ?? []
-            : [];
-
-          /* activities */
-          const activityTimelineItems = options.sections.activities
-            ? day.activities?.map(a => ({
-                type: 'activity',
-                title: a.title ?? 'Activity',
-                details: a.description ?? '',
-                location: '',
-                cost:
-                  a.cost && a.currency ? `${a.currency} ${a.cost}` : '',
-                time: formatTime(a.start_time),
-                sortKey: minutesFromTime(formatTime(a.start_time)),
-              })) ?? []
-            : [];
+          const hotelTimelineItems = buildHotelTimelineItems(day, options);
+          const transportationTimelineItems = buildTransportationTimelineItems(day, options);
+          const activityTimelineItems = buildActivityTimelineItems(day, options);
 
           const allTimelineItems = [
             ...hotelTimelineItems,
@@ -180,7 +200,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
       const getStyles = () => {
         const layoutClass = options.layout === 'timeline' ? 'timeline' : 
                            options.layout === 'daily' ? 'daily' : 'list';
-        
+
         return {
           hero: `
             width:100%;height:200px;background:#f8f7f4;display:flex;flex-direction:column;justify-content:flex-end;padding:20px;position:relative;margin-bottom:24px;border-radius:8px;overflow:hidden;
@@ -220,7 +240,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
           `,
         };
       };
-      
+
       const styles = getStyles();
 
       /* 4 ▸ HTML ---------------------------------------------------------- */
@@ -231,7 +251,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
 
         <div class="footer" style="${styles.footer}">
           <div>${tripData.destination ?? 'Trip'} · ${dateRange}</div>
-          <div>Page <span class="pageNumber"></span> / <span class="totalPages"></span></div>
+          <div>Page <span class="pageNumber"></span> / <span class="totalPages"></span></div>
         </div>
 
         <div class="hero banner" style="${styles.hero}">
@@ -246,10 +266,9 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
       `;
 
       processedDays.forEach(day => {
-        const header =
-          day.title?.trim()
-            ? `${day.title} – ${formatDate(day.date)}`
-            : formatDate(day.date);
+        const header = day.title?.trim()
+          ? `${day.title} – ${formatDate(day.date)}`
+          : formatDate(day.date);
 
         html += `
           <section style="position:relative;break-inside:avoid-page;">
@@ -269,19 +288,10 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
             </div>`;
         }
 
-        day.timelineItems.forEach(item => {
-          const icon =
-            item.type === 'accommodation'
-              ? '🏨'
-              : item.type === 'transportation'
-              ? '✈️'
-              : '🗓️';
-
-          // Apply detail level filtering
-          const showDetails = options.detailLevel === 'full' || 
-                             (options.detailLevel === 'summary' && item.details);
-          const showLocation = options.detailLevel !== 'minimal' && item.location;
-          const showCost = options.showCosts && item.cost;
+        day.timelineItems.forEach((item: any) => {
+          const icon = getItemIcon(item.type);
+          const { showDetails, showLocation, showCost } = shouldShowItemDetails(item, options);
+          const thumbnail = generateItemThumbnail(item, options);
 
           html += `
             <div class="day-row" style="${styles.dayRow}">
@@ -300,11 +310,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
                       ${showCost ? `<div>Cost: ${item.cost}</div>` : ''}
                     </div>
                   </div>
-                  ${item.type === 'accommodation' && item.image_url && options.showImages
-                    ? `<div class="thumbnail" style="width:96px;height:96px;overflow:hidden;border-radius:8px;margin-left:auto;">
-                         <img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">
-                       </div>`
-                    : ''}
+                  ${thumbnail}
                 </div>
               </article>
             </div>

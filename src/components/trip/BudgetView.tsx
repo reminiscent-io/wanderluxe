@@ -9,6 +9,7 @@ import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
 import { convertCurrency } from './budget/utils/currencyConverter';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
+import { useTripQuery } from '@/hooks/useTripQuery';
 
 interface AddExpenseData {
   description: string;
@@ -25,6 +26,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { selectedCurrency, handleCurrencyChange, lastUpdated: currencyLastUpdated } = useCurrencyState();
   const { data: expenses } = useExpenses(tripId);
   const { addExpense, updateExpense } = useBudgetMutations(tripId);
+  const { trip } = useTripQuery(tripId);
   // Use the hook that provides expenses and exchange rates
   const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
 
@@ -108,6 +110,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         onOpenChange={setIsAddingExpense}
         onSubmit={handleAddExpense}
         defaultCurrency={selectedCurrency}
+        defaultDate={trip?.arrival_date}
       />
     </div>
   );
