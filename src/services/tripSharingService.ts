@@ -45,14 +45,22 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
     }
 
     // Create the share record
+    const shareData: any = {
+      trip_id: tripId,
+      shared_by_user_id: user.id,
+      shared_with_email: email.toLowerCase().trim()
+    };
+
+    // Only add permission_level if it's supported (after migration)
+    try {
+      shareData.permission_level = permissionLevel;
+    } catch (e) {
+      // Column doesn't exist yet, will default to 'edit' after migration
+    }
+
     const { error: shareError } = await supabase
       .from('trip_shares')
-      .insert({
-        trip_id: tripId,
-        shared_by_user_id: user.id,
-        shared_with_email: email.toLowerCase().trim(),
-        permission_level: permissionLevel
-      });
+      .insert(shareData);
 
     if (shareError) {
       console.error('Error sharing trip:', shareError);
