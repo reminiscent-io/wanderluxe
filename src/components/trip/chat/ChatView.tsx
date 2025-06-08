@@ -718,4 +718,3 @@ const MessageBubble: React.FC<BubbleProps> = ({
 };
 
 export default ChatView;
-`
