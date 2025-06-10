@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useCustomPageTracking } from '@/hooks/usePageTracking';
+import { analytics } from '@/services/analyticsService';
 import CreateTripForm from '../components/trip/create/CreateTripForm';
 
 const CreateTrip = () => {
@@ -13,28 +15,33 @@ const CreateTrip = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Use custom page tracking with specific title
+  useCustomPageTracking('Create Trip');
+
   useEffect(() => {
-    // Track page view
-    window.gtag('event', 'page_view', {
-      page_title: 'Create Trip',
-      page_location: window.location.href,
-      page_path: window.location.pathname
-    });
+    // Track form start
+    analytics.trackForm('start', 'create_trip_form');
   }, []);
 
   const handleSubmit = async (tripId: string) => {
     setIsLoading(true);
     try {
       // Track successful trip creation
-      window.gtag('event', 'trip_created', {
-        event_category: 'Trip',
-        event_label: destination,
-        value: 1
+      analytics.trackTrip('trip_created', tripId, destination, {
+        start_date: startDate,
+        end_date: endDate,
+        has_cover_image: !!coverImageUrl
+      });
+      analytics.trackForm('submit', 'create_trip_form', {
+        destination,
+        trip_duration_days: startDate && endDate ? 
+          Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) : null
       });
       toast.success('Trip created successfully!');
       navigate(`/trip/${tripId}`);
     } catch (error) {
       console.error('Error navigating to trip:', error);
+      analytics.trackError('navigation_error', error instanceof Error ? error.message : 'Unknown error', 'create_trip_submit');
       toast.error('Failed to navigate to trip');
     } finally {
       setIsLoading(false);

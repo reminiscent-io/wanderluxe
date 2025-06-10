@@ -7,6 +7,7 @@ import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { useReservations } from '@/hooks/use-reservations';
 import { supabase } from '@/integrations/supabase/client';
+import { analytics } from '@/services/analyticsService';
 import {
   format as fnsFormat,
   format as formatDateHelper,
