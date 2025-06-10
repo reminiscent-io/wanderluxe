@@ -50,14 +50,28 @@ const DiningList: React.FC<DiningListProps> = ({
     setIsSubmitting(true);
     try {
       console.log("DiningList processing data with tripId:", tripId);
+      console.log("Received form data:", data);
+      
+      // Validate required fields
+      if (!data.restaurant_name?.trim()) {
+        throw new Error('Restaurant name is required');
+      }
+      
+      if (!dayId || !tripId) {
+        throw new Error('Day ID and Trip ID are required');
+      }
+      
       // Make sure we include all necessary fields for trip sharing to work
       const processedData = {
         ...data,
         day_id: dayId,
         trip_id: tripId, // This is critical for proper permission handling in shared trips
         order_index: reservations.length,
-        reservation_time: data.reservation_time || null
+        reservation_time: data.reservation_time || null,
+        currency: data.currency || 'USD' // Ensure currency has a default
       };
+      
+      console.log("Final processed data for database:", processedData);
 
       if (editingReservation) {
         // For updates, explicitly include trip_id to help with RLS policies
@@ -96,8 +110,22 @@ const DiningList: React.FC<DiningListProps> = ({
 
         if (error) {
           console.error('Insert error details:', error);
+          console.error('Error code:', error.code);
+          console.error('Error hint:', error.hint);
+          console.error('Error details:', error.details);
           analytics.trackError('reservation_insert_failed', error.message, 'restaurant_reservations');
-          throw error;
+          
+          // Provide more specific error messages
+          let errorMessage = 'Failed to save reservation';
+          if (error.message.includes('check')) {
+            errorMessage = 'Please check all required fields are filled correctly';
+          } else if (error.message.includes('foreign key')) {
+            errorMessage = 'Trip or day information is invalid';
+          } else if (error.message.includes('unique')) {
+            errorMessage = 'A reservation with these details already exists';
+          }
+          
+          throw new Error(errorMessage);
         }
         
         // Track successful reservation creation
