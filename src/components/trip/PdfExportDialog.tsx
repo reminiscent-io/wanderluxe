@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { FileDown, Loader2, Image, DollarSign, FileText, Layout } from 'lucide-react';
 import { toast } from 'sonner';
+import { analytics } from '@/services/analyticsService';
 
 interface PdfExportDialogProps {
   tripId: string;

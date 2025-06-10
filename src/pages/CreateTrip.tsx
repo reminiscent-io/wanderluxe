@@ -27,15 +27,21 @@ const CreateTrip = () => {
     setIsLoading(true);
     try {
       // Track successful trip creation
-      window.gtag('event', 'trip_created', {
-        event_category: 'Trip',
-        event_label: destination,
-        value: 1
+      analytics.trackTrip('trip_created', tripId, destination, {
+        start_date: startDate,
+        end_date: endDate,
+        has_cover_image: !!coverImageUrl
+      });
+      analytics.trackForm('submit', 'create_trip_form', {
+        destination,
+        trip_duration_days: startDate && endDate ? 
+          Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) : null
       });
       toast.success('Trip created successfully!');
       navigate(`/trip/${tripId}`);
     } catch (error) {
       console.error('Error navigating to trip:', error);
+      analytics.trackError('navigation_error', error instanceof Error ? error.message : 'Unknown error', 'create_trip_submit');
       toast.error('Failed to navigate to trip');
     } finally {
       setIsLoading(false);
