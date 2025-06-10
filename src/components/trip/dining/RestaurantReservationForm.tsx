@@ -12,19 +12,19 @@ import { useToast } from "@/components/ui/use-toast";
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
-// Define your form schema
+// Define your form schema - matching database requirements
 const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
   address: z.string().optional(),
   phone_number: z.string().optional(),
   website: z.string().optional(),
   reservation_time: z.string().optional().nullable(),
-  number_of_people: z.number().optional().nullable(),
+  number_of_people: z.number().min(1, "Must be at least 1 person").optional().nullable(),
   notes: z.string().optional(),
-  cost: z.number().optional().nullable(),
-  currency: z.string().optional().nullable(),
+  cost: z.number().min(0, "Cost must be positive").optional().nullable(),
+  currency: z.string().optional(), // Remove nullable since database expects string
   place_id: z.string().optional(),
-  rating: z.number().optional(),
+  rating: z.number().min(0).max(5).optional().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,33 +51,50 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       restaurant_name: '',
+      address: '',
+      phone_number: '',
+      website: '',
       reservation_time: null,
       number_of_people: undefined,
       notes: '',
       cost: undefined,
-      currency: null,
+      currency: '',
+      place_id: '',
+      rating: undefined,
       ...defaultValues,
     },
   });
 
   const handleSubmitForm = form.handleSubmit((data) => {
+    console.log('Form validation passed, data:', data);
+    console.log('Form errors:', form.formState.errors);
+    
     // Use the tripId prop or a default from editing values if available.
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
       console.error('Trip ID is required');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Trip ID is missing. Please try again.",
+      });
       return;
     }
     
     console.log('Processing form submission with trip_id:', effectiveTripId);
     
-    // Ensure both day_id and trip_id are included for RLS policy requirements
+    // Clean and prepare data for submission
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      trip_id: effectiveTripId, // Make sure trip_id is explicitly set
-      day_id: (defaultValues as any)?.day_id // Preserve day_id if editing existing reservation
+      currency: data.currency || 'USD', // Default to USD if no currency selected
+      number_of_people: data.number_of_people || null,
+      cost: data.cost || null,
+      trip_id: effectiveTripId,
+      day_id: (defaultValues as any)?.day_id
     };
     
+    console.log('Processed data for submission:', processedData);
     onSubmit(processedData);
   });
 
