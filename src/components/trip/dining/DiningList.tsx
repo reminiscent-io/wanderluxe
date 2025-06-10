@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useParams } from 'react-router-dom';
+import { analytics } from '@/services/analyticsService';
 
 interface DiningListProps {
   reservations: Array<{
@@ -70,8 +71,17 @@ const DiningList: React.FC<DiningListProps> = ({
 
         if (error) {
           console.error('Update error details:', error);
+          analytics.trackError('reservation_update_failed', error.message, 'restaurant_reservations');
           throw error;
         }
+        
+        // Track successful reservation update
+        analytics.trackInteraction('reservation_updated', 'restaurant_form', {
+          trip_id: tripId,
+          has_google_place_id: !!data.place_id,
+          is_manual_entry: !data.place_id
+        });
+        
         toast.success('Reservation updated successfully');
         await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
       } else {
@@ -86,8 +96,20 @@ const DiningList: React.FC<DiningListProps> = ({
 
         if (error) {
           console.error('Insert error details:', error);
+          analytics.trackError('reservation_insert_failed', error.message, 'restaurant_reservations');
           throw error;
         }
+        
+        // Track successful reservation creation
+        analytics.trackInteraction('reservation_created', 'restaurant_form', {
+          trip_id: tripId,
+          has_google_place_id: !!data.place_id,
+          is_manual_entry: !data.place_id,
+          has_cost: !!data.cost,
+          has_phone: !!data.phone_number,
+          has_website: !!data.website
+        });
+        
         await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
         toast.success('Reservation added successfully');
       }
