@@ -94,7 +94,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitForm} className="space-y-4">
+      <form onSubmit={handleSubmitForm} className="space-y-4 px-1">
         {/* Restaurant Name */}
         <FormField
           control={form.control}
@@ -191,7 +191,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   value={field.value || ''}
                   onChange={field.onChange}
                   step="300" // 5-minute increments
-                  className="w-full p-2 border rounded-md"
+                  className="w-full p-3 border rounded-md bg-white text-base"
                 />
               </FormControl>
             </FormItem>
@@ -210,7 +210,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   type="number"
                   {...field}
                   onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                  className="bg-white"
+                  className="bg-white text-base p-3"
+                  min="1"
+                  max="20"
                 />
               </FormControl>
             </FormItem>
@@ -225,14 +227,18 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} className="bg-white" rows={1} />
+                <Textarea 
+                  {...field} 
+                  className="bg-white text-base p-3 min-h-[80px]" 
+                  placeholder="Special requests, dietary restrictions, etc."
+                />
               </FormControl>
             </FormItem>
           )}
         />
 
         {/* Cost & Currency */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="cost"
@@ -248,7 +254,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       const formatted = handleCostBlur(e.target.value);
                       field.onChange(Number(formatted.replace(/,/g, '')));
                     }}
-                    className="bg-white"
+                    className="bg-white text-base p-3"
+                    placeholder="0.00"
                   />
                 </FormControl>
               </FormItem>
@@ -265,7 +272,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   <select
                     {...field}
                     value={field.value || ''}
-                    className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+                    className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-earth-500 focus:ring-earth-500 text-base"
                   >
                     <option value="">Select currency</option>
                     {CURRENCIES.map(currency => (
@@ -283,7 +290,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         <Button 
           type="submit" 
           disabled={isSubmitting} 
-          className="w-full bg-sand-500 hover:bg-sand-600 text-white"
+          className="w-full bg-sand-500 hover:bg-sand-600 text-white p-3 text-base font-medium mt-6"
         >
           {isSubmitting ? (
             <>
