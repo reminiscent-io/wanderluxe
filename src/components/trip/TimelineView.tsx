@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
+import { analytics } from '@/services/analyticsService';
 
 interface TimelineViewProps {
   tripId: string;
@@ -25,17 +26,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   useSessionKeepAlive(10 * 60 * 1000); // 10 minutes - increased to prevent frequent refreshes
   
   useEffect(() => {
-    // Track timeline view
-    window.gtag('event', 'view_timeline', {
-      event_category: 'Trip',
-      event_label: tripId
+    // Track timeline view with enhanced data
+    analytics.trackTrip('view_timeline', tripId, undefined, {
+      has_dates: !!(initialTripDates?.arrival_date && initialTripDates?.departure_date)
     });
-  }, [tripId]);
+  }, [tripId, initialTripDates]);
 
   const trackTimelineAction = (action: string, details?: object) => {
-    window.gtag('event', action, {
-      event_category: 'Timeline',
-      event_label: tripId,
+    analytics.trackInteraction(action, 'timeline', {
+      trip_id: tripId,
       ...details
     });
   };
