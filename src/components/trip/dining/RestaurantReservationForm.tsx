@@ -31,7 +31,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
   onSubmit: (data: FormValues & { trip_id: string }) => void; 
-  defaultValues?: Partial<FormValues> & { trip_id?: string };
+  defaultValues?: Partial<FormValues> & { trip_id?: string; day_id?: string };
   isSubmitting?: boolean;
   tripId: string; 
 }
@@ -75,7 +75,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
       trip_id: effectiveTripId, // Make sure trip_id is explicitly set
-      day_id: defaultValues?.day_id // Preserve day_id if editing existing reservation
+      day_id: (defaultValues as any)?.day_id // Preserve day_id if editing existing reservation
     };
     
     onSubmit(processedData);
@@ -118,6 +118,60 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   }
                 }}
               />
+            </FormItem>
+          )}
+        />
+
+        {/* Address - show for manual entries or when address is available */}
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Restaurant address"
+                  className="bg-white"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {/* Phone Number */}
+        <FormField
+          control={form.control}
+          name="phone_number"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone Number</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Restaurant phone number"
+                  className="bg-white"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {/* Website */}
+        <FormField
+          control={form.control}
+          name="website"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Website</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Restaurant website"
+                  className="bg-white"
+                />
+              </FormControl>
             </FormItem>
           )}
         />
