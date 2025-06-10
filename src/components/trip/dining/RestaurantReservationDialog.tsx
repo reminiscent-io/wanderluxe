@@ -24,12 +24,19 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   console.log("RestaurantReservationDialog received tripId:", tripId);
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
-        <div aria-describedby="restaurant-reservation-description">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>Enter the details for your restaurant reservation.</DialogDescription>
-          </DialogHeader>
+      <DialogContent 
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="sm:max-w-[425px] max-h-[95vh] flex flex-col"
+      >
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>Enter the details for your restaurant reservation.</DialogDescription>
+        </DialogHeader>
+        
+        <div 
+          aria-describedby="restaurant-reservation-description"
+          className="flex-1 overflow-y-auto"
+        >
           <p id="restaurant-reservation-description" className="sr-only">
             Please fill out the restaurant reservation form.
           </p>
