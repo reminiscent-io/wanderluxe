@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useCustomPageTracking } from '@/hooks/usePageTracking';
+import { analytics } from '@/services/analyticsService';
 import CreateTripForm from '../components/trip/create/CreateTripForm';
 
 const CreateTrip = () => {
@@ -13,13 +15,12 @@ const CreateTrip = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Use custom page tracking with specific title
+  useCustomPageTracking('Create Trip');
+
   useEffect(() => {
-    // Track page view
-    window.gtag('event', 'page_view', {
-      page_title: 'Create Trip',
-      page_location: window.location.href,
-      page_path: window.location.pathname
-    });
+    // Track form start
+    analytics.trackForm('start', 'create_trip_form');
   }, []);
 
   const handleSubmit = async (tripId: string) => {
