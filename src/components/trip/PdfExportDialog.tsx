@@ -57,11 +57,39 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
   const handleExport = async () => {
     setIsLoading(true);
     try {
+      // Track PDF export attempt
+      analytics.trackMedia('pdf_export_start', 'pdf', {
+        trip_id: tripId,
+        options: {
+          layout: options.layout,
+          detail_level: options.detailLevel,
+          show_images: options.showImages,
+          show_costs: options.showCosts,
+          sections_count: Object.values(options.sections).filter(Boolean).length
+        }
+      });
+
       await onExport(options);
+      
+      // Track successful export
+      analytics.trackMedia('pdf_export_success', 'pdf', {
+        trip_id: tripId,
+        export_type: options.showImages ? 'visual' : 'plain',
+        layout: options.layout
+      });
+      
       setIsOpen(false);
       toast.success('PDF exported successfully');
     } catch (error) {
       console.error('Export failed:', error);
+      
+      // Track export failure
+      analytics.trackError('pdf_export_failed', error instanceof Error ? error.message : 'Unknown error', 'pdf_export');
+      analytics.trackMedia('pdf_export_error', 'pdf', {
+        trip_id: tripId,
+        error_type: error instanceof Error ? error.name : 'Unknown'
+      });
+      
       toast.error('Failed to export PDF');
     } finally {
       setIsLoading(false);
