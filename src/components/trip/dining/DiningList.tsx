@@ -47,17 +47,21 @@ const DiningList: React.FC<DiningListProps> = ({
   const [deletingReservation, setDeletingReservation] = useState<string | null>(null);
 
   const handleSubmit = async (data: any) => {
+    console.log("=== STARTING RESERVATION SUBMISSION ===");
+    console.log("DiningList processing data with tripId:", tripId);
+    console.log("DayId:", dayId);
+    console.log("Received form data:", data);
+    
     setIsSubmitting(true);
     try {
-      console.log("DiningList processing data with tripId:", tripId);
-      console.log("Received form data:", data);
-      
       // Validate required fields
       if (!data.restaurant_name?.trim()) {
+        console.error("Validation failed: Restaurant name is missing");
         throw new Error('Restaurant name is required');
       }
       
       if (!dayId || !tripId) {
+        console.error("Validation failed: Missing IDs", { dayId, tripId });
         throw new Error('Day ID and Trip ID are required');
       }
       
@@ -72,6 +76,7 @@ const DiningList: React.FC<DiningListProps> = ({
       };
       
       console.log("Final processed data for database:", processedData);
+      console.log("Current reservations count:", reservations.length);
 
       if (editingReservation) {
         // For updates, explicitly include trip_id to help with RLS policies
@@ -163,9 +168,16 @@ const DiningList: React.FC<DiningListProps> = ({
       setIsDialogOpen(false);
       setEditingReservation(null);
     } catch (error) {
-      console.error('Error saving reservation:', error);
-      toast.error(editingReservation ? 'Failed to update reservation' : 'Failed to save reservation');
+      console.error('=== RESERVATION SUBMISSION ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.error('================================');
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(editingReservation ? `Failed to update reservation: ${errorMessage}` : `Failed to save reservation: ${errorMessage}`);
     } finally {
+      console.log("=== ENDING RESERVATION SUBMISSION ===");
+      console.log("Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };
