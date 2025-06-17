@@ -111,6 +111,7 @@ WanderLuxe is a comprehensive travel planning application built with React, Type
 - **Backup**: Supabase automated backups and point-in-time recovery
 
 ## Changelog
+- June 17, 2025. Fixed major Tailwind CSS configuration issues. Downgraded from Tailwind CSS 4+ to stable 3.4 version to resolve @reference directive errors. Updated PostCSS configuration to standard setup. Completed Shadcn UI color system with all required tokens. Converted config from TypeScript to JavaScript to fix module resolution. Build process now works properly with all Tailwind classes functional.
 - June 17, 2025. Successfully switched from Bun to npm package manager, resolving significant dev server issues. Updated all packages to latest versions. Fixed security vulnerabilities (0 remaining). Resolved PostCSS/Tailwind CSS configuration issues by converting to CommonJS format. Development server now runs properly on npm with Vite.
 - June 15, 2025. Initial setup
 
