@@ -90,12 +90,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       currency: data.currency || 'USD', // Default to USD if no currency selected
       number_of_people: data.number_of_people || null,
       cost: data.cost || null,
-      // Ensure empty strings become null for optional fields
-      address: data.address?.trim() || null,
-      phone_number: data.phone_number?.trim() || null,
-      website: data.website?.trim() || null,
-      notes: data.notes?.trim() || null,
-      place_id: data.place_id?.trim() || null,
       trip_id: effectiveTripId,
       day_id: (defaultValues as any)?.day_id
     };
