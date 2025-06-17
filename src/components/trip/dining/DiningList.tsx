@@ -47,21 +47,17 @@ const DiningList: React.FC<DiningListProps> = ({
   const [deletingReservation, setDeletingReservation] = useState<string | null>(null);
 
   const handleSubmit = async (data: any) => {
-    console.log("=== STARTING RESERVATION SUBMISSION ===");
-    console.log("DiningList processing data with tripId:", tripId);
-    console.log("DayId:", dayId);
-    console.log("Received form data:", data);
-    
     setIsSubmitting(true);
     try {
+      console.log("DiningList processing data with tripId:", tripId);
+      console.log("Received form data:", data);
+      
       // Validate required fields
       if (!data.restaurant_name?.trim()) {
-        console.error("Validation failed: Restaurant name is missing");
         throw new Error('Restaurant name is required');
       }
       
       if (!dayId || !tripId) {
-        console.error("Validation failed: Missing IDs", { dayId, tripId });
         throw new Error('Day ID and Trip ID are required');
       }
       
@@ -76,7 +72,6 @@ const DiningList: React.FC<DiningListProps> = ({
       };
       
       console.log("Final processed data for database:", processedData);
-      console.log("Current reservations count:", reservations.length);
 
       if (editingReservation) {
         // For updates, explicitly include trip_id to help with RLS policies
@@ -105,51 +100,33 @@ const DiningList: React.FC<DiningListProps> = ({
         await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
       } else {
         // For inserts, explicitly include both day_id and trip_id for RLS policies
-        console.log('About to insert reservation with data:', {
-          ...processedData,
-          day_id: dayId,
-          trip_id: tripId
-        });
-        
-        const { data: insertResult, error } = await supabase
+        const { error } = await supabase
           .from('reservations')
           .insert([{
             ...processedData,
             day_id: dayId,
             trip_id: tripId // Make sure trip_id is included for RLS
-          }])
-          .select();
+          }]);
 
         if (error) {
-          console.error('=== RESERVATION INSERT ERROR ===');
-          console.error('Full error object:', error);
-          console.error('Error message:', error.message);
+          console.error('Insert error details:', error);
           console.error('Error code:', error.code);
           console.error('Error hint:', error.hint);
           console.error('Error details:', error.details);
-          console.error('================================');
           analytics.trackError('reservation_insert_failed', error.message, 'restaurant_reservations');
           
           // Provide more specific error messages
           let errorMessage = 'Failed to save reservation';
-          if (error.message.includes('violates row-level security policy')) {
-            errorMessage = 'Permission denied - please check if you have edit access to this trip';
-          } else if (error.message.includes('check')) {
+          if (error.message.includes('check')) {
             errorMessage = 'Please check all required fields are filled correctly';
           } else if (error.message.includes('foreign key')) {
             errorMessage = 'Trip or day information is invalid';
           } else if (error.message.includes('unique')) {
             errorMessage = 'A reservation with these details already exists';
-          } else if (error.code) {
-            errorMessage = `Database error (${error.code}): ${error.message}`;
           }
           
           throw new Error(errorMessage);
         }
-        
-        console.log('=== RESERVATION INSERT SUCCESS ===');
-        console.log('Insert result:', insertResult);
-        console.log('==================================');
         
         // Track successful reservation creation
         analytics.trackInteraction('reservation_created', 'restaurant_form', {
@@ -168,16 +145,9 @@ const DiningList: React.FC<DiningListProps> = ({
       setIsDialogOpen(false);
       setEditingReservation(null);
     } catch (error) {
-      console.error('=== RESERVATION SUBMISSION ERROR ===');
-      console.error('Error object:', error);
-      console.error('Error message:', error instanceof Error ? error.message : String(error));
-      console.error('================================');
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(editingReservation ? `Failed to update reservation: ${errorMessage}` : `Failed to save reservation: ${errorMessage}`);
+      console.error('Error saving reservation:', error);
+      toast.error(editingReservation ? 'Failed to update reservation' : 'Failed to save reservation');
     } finally {
-      console.log("=== ENDING RESERVATION SUBMISSION ===");
-      console.log("Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };

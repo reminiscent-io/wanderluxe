@@ -1,120 +1,124 @@
-# WanderLuxe - Travel Planning Application
+# WanderLuxe Travel Planning Application
 
 ## Overview
-
-WanderLuxe is a comprehensive travel planning application built with React, TypeScript, and Supabase. The application enables users to create, manage, and share detailed trip itineraries with features including accommodation booking, restaurant reservations, activity planning, and AI-powered travel assistance. The platform uses a modern tech stack with real-time collaboration capabilities and granular permission management.
+WanderLuxe is a comprehensive travel planning platform built with React, TypeScript, and Supabase. The application enables users to create, manage, and share detailed travel itineraries with AI-powered assistance, real-time collaboration features, and sophisticated trip management capabilities.
 
 ## System Architecture
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite for fast development and optimized production builds
-- **UI Framework**: Tailwind CSS with Radix UI components for consistent design
-- **State Management**: TanStack Query (React Query) for server state and caching
-- **Routing**: React Router for client-side navigation
-- **Forms**: React Hook Form with Zod validation for type-safe form handling
+- **Build Tool**: Vite for fast development and optimized builds
+- **UI Library**: Shadcn/ui components built on Radix UI primitives
+- **Styling**: Tailwind CSS with custom theming
+- **State Management**: React Query (TanStack Query) for server state
+- **Routing**: React Router v6 for client-side navigation
+- **Authentication**: Supabase Auth with Google OAuth integration
 
 ### Backend Architecture
-- **Database**: PostgreSQL via Supabase with Row Level Security (RLS) policies
-- **Authentication**: Supabase Auth with Google OAuth integration
-- **Real-time**: Supabase subscriptions for live collaboration
-- **Edge Functions**: Supabase Edge Functions for server-side logic
-- **File Storage**: Supabase Storage for image uploads and attachments
+- **Database**: PostgreSQL via Supabase
+- **Real-time Updates**: Supabase real-time subscriptions
+- **Authentication**: Row-level security (RLS) policies
+- **File Storage**: Supabase Storage for images and attachments
+- **Edge Functions**: Supabase Functions for server-side logic
 
 ### Data Storage Solutions
-- **Primary Database**: Supabase PostgreSQL with comprehensive trip data model
-- **Real-time Subscriptions**: Live updates for shared trips and collaborative editing
-- **File Storage**: Supabase buckets for logos, trip images, and chat attachments
-- **Caching**: TanStack Query for intelligent client-side caching
+- **Primary Database**: PostgreSQL with comprehensive schema including:
+  - Users and profiles management
+  - Trip creation and management
+  - Day-by-day itinerary planning
+  - Accommodations, transportation, and activities
+  - Restaurant reservations and expenses
+  - Trip sharing with granular permissions
+- **File Storage**: Supabase Storage buckets for logos and chat attachments
+- **Real-time Synchronization**: Automatic updates across shared trips
 
 ## Key Components
 
-### Trip Management
-- Trip creation with destination, dates, and cover images
-- Multi-day itinerary planning with activities, accommodations, and dining
-- Real-time collaboration with granular permission levels (read/edit)
-- Trip sharing via email with notification system
+### Trip Management System
+- **Trip Creation**: Multi-step form with destination, dates, and cover images
+- **Itinerary Planning**: Day-by-day breakdown with activities, meals, and accommodations
+- **Collaboration**: Real-time sharing with read/edit permission levels
+- **Expense Tracking**: Multi-currency support with automatic conversion
 
-### Activity Planning
-- Day-by-day activity scheduling with drag-and-drop reordering
-- Restaurant reservations with Google Places integration
-- Transportation planning with cost tracking
-- Hotel accommodation management with check-in/check-out handling
+### AI Integration
+- **Travel Assistant**: Conversational AI powered by Perplexity AI and OpenAI
+- **Content Generation**: Automated trip descriptions and recommendations
+- **Image Generation**: AI-powered destination imagery
+- **Smart Suggestions**: Context-aware travel recommendations
 
-### User Experience
-- AI-powered travel assistant using Perplexity API
-- Google Maps integration for location search and place details
-- Responsive design optimized for mobile and desktop
-- Comprehensive form validation and error handling
+### Permission System
+- **Granular Access Control**: Read-only vs edit permissions for shared trips
+- **Email-based Sharing**: Share trips via email with automatic notifications
+- **Real-time Synchronization**: Changes reflected instantly across all users
 
-### Collaboration Features
-- Trip sharing with email-based invitations
-- Permission-based access control (read-only vs edit access)
-- Real-time updates across all shared users
-- SendGrid email notifications for trip sharing
+### External Service Integrations
+- **Google Maps/Places**: Location search and place details
+- **Unsplash**: High-quality destination photography
+- **SendGrid**: Email notifications for trip sharing
+- **Multiple AI Providers**: Perplexity AI and OpenAI for different use cases
 
 ## Data Flow
 
 ### Trip Creation Flow
-1. User creates trip with basic details (destination, dates, cover image)
-2. System generates trip days automatically based on date range
-3. Trip data stored in PostgreSQL with RLS policies applied
-4. User can add activities, accommodations, and reservations to specific days
+1. User inputs destination and dates via form
+2. AI generates trip content and suggested cover image
+3. Trip days are automatically created based on date range
+4. User can add accommodations, activities, and reservations
+5. Real-time updates sync across all shared users
 
 ### Sharing Flow
-1. Trip owner invites users via email with specified permission level
-2. SendGrid sends notification email to invited user
-3. Shared user gains access based on permission level
-4. Real-time updates propagate to all users with access
+1. Trip owner initiates sharing via email
+2. Permission level is set (read/edit)
+3. Email notification sent via SendGrid
+4. Recipient gains access based on permission level
+5. All changes sync in real-time via Supabase subscriptions
 
-### Real-time Updates
-1. Supabase subscriptions monitor changes to trip-related tables
-2. TanStack Query invalidates relevant queries on data changes
-3. UI updates automatically without page refresh
-4. Optimistic updates provide immediate feedback
+### AI Assistant Flow
+1. User initiates conversation in trip context
+2. Messages processed through AI providers
+3. Responses include travel recommendations and suggestions
+4. Context maintained throughout conversation
+5. Integration with trip data for personalized advice
 
 ## External Dependencies
 
-### Third-Party Services
-- **Supabase**: Database, authentication, real-time subscriptions, edge functions
-- **Google Maps/Places API**: Location search and place details
-- **SendGrid**: Email notifications for trip sharing
-- **Perplexity AI**: Travel recommendations and AI assistance
-- **Unsplash**: Stock photography for trip covers
+### Core Services
+- **Supabase**: Database, authentication, real-time subscriptions, storage
+- **Google Maps API**: Location services and place details
+- **Perplexity AI**: Travel-specific AI assistance
+- **OpenAI**: General AI capabilities and chat
+- **SendGrid**: Transactional email delivery
+- **Unsplash**: Stock photography API
 
-### Key Libraries
-- **@supabase/supabase-js**: Supabase client for database operations
-- **@tanstack/react-query**: Server state management and caching
-- **@radix-ui/react-***: Accessible UI components
-- **framer-motion**: Smooth animations and transitions
-- **date-fns**: Date manipulation and formatting
-- **zod**: Schema validation for forms and API responses
+### Development Tools
+- **Vite**: Development server and build tool
+- **ESLint**: Code linting and formatting
+- **TypeScript**: Type safety and development experience
+- **Tailwind CSS**: Utility-first styling framework
 
 ## Deployment Strategy
 
-### Production Environment
-- **Hosting**: Replit with Cloud Run deployment target
-- **Build Process**: Vite production build with TypeScript compilation
-- **Environment Variables**: Supabase credentials managed through Replit Secrets
-- **Domain**: wanderluxe.io with www subdomain support
+### Replit Environment
+- **Primary Platform**: Replit with Node.js 20 runtime
+- **Database**: PostgreSQL 16 module for local development
+- **Package Manager**: Bun for improved performance
+- **Development Server**: Vite dev server on port 8080
+- **Preview Deployment**: Bun preview build
 
-### Development Environment
-- **Local Development**: Vite dev server on port 8080
-- **Database**: Supabase cloud instance with development environment
-- **Hot Reload**: Vite HMR for instant feedback during development
-- **TypeScript**: Strict type checking with comprehensive type definitions
+### Build Configuration
+- **Production Build**: `bun run build` generates optimized assets
+- **Preview Mode**: `bun run preview` for production testing
+- **Environment Variables**: Managed through Replit Secrets
+- **CORS Configuration**: Allowlist for multiple domains including production
 
-### Database Management
-- **Migrations**: SQL migration files for schema changes
-- **RLS Policies**: Comprehensive row-level security for data protection
-- **Indexes**: Optimized database indexes for performance
-- **Backup**: Supabase automated backups and point-in-time recovery
+### Security Considerations
+- Row-level security policies for all database operations
+- API key management through environment variables
+- Secure authentication flow with proper session management
+- Input validation and sanitization throughout the application
 
 ## Changelog
-- June 17, 2025. Fixed major Tailwind CSS configuration issues. Downgraded from Tailwind CSS 4+ to stable 3.4 version to resolve @reference directive errors. Updated PostCSS configuration to standard setup. Completed Shadcn UI color system with all required tokens. Converted config from TypeScript to JavaScript to fix module resolution. Build process now works properly with all Tailwind classes functional.
-- June 17, 2025. Successfully switched from Bun to npm package manager, resolving significant dev server issues. Updated all packages to latest versions. Fixed security vulnerabilities (0 remaining). Resolved PostCSS/Tailwind CSS configuration issues by converting to CommonJS format. Development server now runs properly on npm with Vite.
-- June 15, 2025. Initial setup
+- June 17, 2025. Initial setup
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
