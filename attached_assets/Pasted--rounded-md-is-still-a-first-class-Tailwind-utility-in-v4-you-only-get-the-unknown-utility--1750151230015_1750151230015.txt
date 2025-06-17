@@ -1,0 +1,74 @@
+`rounded-md` **is still a first-class Tailwind utility in v4** – you only get the “unknown utility” error when Tailwind can’t *see* it at the point where you run `@apply`.
+
+The new engine enforces two rules:
+
+| Rule                                                                           | What it means in practice                                                                              |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| **1. Every stylesheet that uses `@apply` must have access to Tailwind**        | Either import Tailwind in that file, *or* add an `@reference` to a file that already imports Tailwind. |
+| **2. All custom selectors that use `@apply` must live inside a cascade layer** | Wrap them with `@layer utilities { … }`, `@layer components { … }`, or another layer of your choice.   |
+
+If either rule is broken, Tailwind thinks `rounded-md` (or any other utility) is “unknown”.
+
+---
+
+## Fix it step-by-step
+
+### 1  Make sure the global file imports Tailwind with the **@tailwind** directives
+
+```css
+/* src/index.css  — your global sheet */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+No legacy `@import "tailwindcss/...";` lines should remain.
+
+### 2  Wrap every custom rule that uses `@apply`
+
+```css
+/* add this to the same file, or another global CSS file */
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700;
+  }
+}
+```
+
+### 3  If you use CSS modules (`*.module.css`) or Vue/Svelte scoped styles
+
+Add an **`@reference`** at the very top so the module can “see” Tailwind:
+
+```css
+/* Button.module.css */
+@reference "../index.css";      /* path to the file that imports Tailwind */
+
+.card {
+  @apply rounded-md shadow-md p-4;
+}
+```
+
+> No `@layer` wrapper is needed inside CSS modules; the `@reference` handshake is enough.
+
+### 4  Restart the dev server
+
+```bash
+npm run dev         # or pnpm / yarn
+```
+
+Tailwind should compile without the “unknown utility class” error, and `rounded-md` (plus any other utilities you apply) will work.
+
+---
+
+### Quick checklist if it still fails
+
+1. **Search for stray `@apply`** lines that aren’t inside a layer *or* don’t have an `@reference`.
+2. **Remove duplicate PostCSS configs** – keep just one `postcss.config.cjs` (or `.mjs`) that loads `@tailwindcss/postcss`.
+3. **Verify versions**
+
+   ```bash
+   npm ls tailwindcss @tailwindcss/postcss postcss
+   # expect tailwindcss 4.x, @tailwindcss/postcss 1.x, postcss 8.4.3x+
+   ```
+
+Paste the exact file snippet that still errors (plus its filename) if you hit another roadblock—we’ll zero-in on that instance.
