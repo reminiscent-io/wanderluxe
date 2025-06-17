@@ -1,8 +1,6 @@
-/* ────────────────── Tailwind core layers ────────────────── */
-@import "tailwindcss";
-
-/* Reference Tailwind for @apply compatibility */
-@config "./tailwind.config.js";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ────────────────── Utilities (no @apply) ────────────────── */
 @layer utilities {
