@@ -1,8 +1,14 @@
+/* Reference Tailwind utilities for @apply compatibility (required in v4+ for modules/components) */
+@reference "tailwindcss";
+
+/* ────────────────── Tailwind core layers ────────────────── */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ────────────────── Utilities (no @apply) ────────────────── */
 @layer utilities {
+  /* hide native scrollbars */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -10,22 +16,21 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  /* Tailwind styles for Google Maps autocomplete */
+}
+
+/* ────────────────── Components (all rules that use @apply) ────────────────── */
+@layer components {
+  /* Google Maps Autocomplete popup */
   .pac-container {
     @apply z-[10000] rounded-md border border-gray-300 shadow-lg mt-1 bg-white;
     pointer-events: auto !important;
   }
-  .pac-item {
-    @apply p-2 cursor-pointer font-sans;
-  }
-  .pac-item:hover {
-    @apply bg-gray-100;
-  }
-  .pac-item-selected {
-    @apply bg-gray-200;
-  }
+  .pac-item           { @apply p-2 cursor-pointer font-sans; }
+  .pac-item:hover     { @apply bg-gray-100; }
+  .pac-item-selected  { @apply bg-gray-200; }
 }
 
+/* ────────────────── Design tokens & dark-mode overrides ────────────────── */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -47,7 +52,9 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --radius: 0.5rem; /* Ensure this matches your tailwind.config.js borderRadius */
+
+    /* sidebar palette */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -78,6 +85,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -89,56 +97,25 @@
   }
 }
 
+/* ────────────────── Base element defaults ────────────────── */
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
-  body {
-    @apply bg-background text-foreground antialiased;
-  }
+  body { @apply bg-background text-foreground antialiased; }
 
-  h1 {
-    @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl;
-  }
+  h1 { @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl; }
+  h2 { @apply scroll-m-20 text-3xl font-semibold tracking-tight; }
+  h3 { @apply scroll-m-20 text-2xl font-semibold tracking-tight; }
+  h4 { @apply scroll-m-20 text-xl font-semibold tracking-tight; }
 
-  h2 {
-    @apply scroll-m-20 text-3xl font-semibold tracking-tight;
-  }
+  p  { @apply leading-7; }
 
-  h3 {
-    @apply scroll-m-20 text-2xl font-semibold tracking-tight;
-  }
+  ul { @apply my-6 ml-6 list-disc [&>li]:mt-2; }
 
-  h4 {
-    @apply scroll-m-20 text-xl font-semibold tracking-tight;
-  }
+  blockquote { @apply mt-6 border-l-2 pl-6 italic; }
 
-  p {
-    @apply leading-7;
-  }
-
-  ul {
-    @apply my-6 ml-6 list-disc [&>li]:mt-2;
-  }
-
-  blockquote {
-    @apply mt-6 border-l-2 pl-6 italic;
-  }
-
-  .lead {
-    @apply text-xl text-muted-foreground;
-  }
-
-  .large {
-    @apply text-lg font-semibold;
-  }
-
-  .small {
-    @apply text-sm font-medium leading-none;
-  }
-
-  .muted {
-    @apply text-sm text-muted-foreground;
-  }
+  .lead   { @apply text-xl text-muted-foreground; }
+  .large  { @apply text-lg font-semibold; }
+  .small  { @apply text-sm font-medium leading-none; }
+  .muted  { @apply text-sm text-muted-foreground; }
 }
