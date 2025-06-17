@@ -1,6 +1,3 @@
-/* Reference Tailwind utilities for @apply compatibility (required in v4+ for modules/components) */
-@reference "tailwindcss";
-
 /* ────────────────── Tailwind core layers ────────────────── */
 @tailwind base;
 @tailwind components;
