@@ -1,11 +1,1 @@
 run = "npm run dev"
-
-[workflows]
-runButton = "Start app"
-
-[[workflows.workflow]]
-name = "Start app"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
