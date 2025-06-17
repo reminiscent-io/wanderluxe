@@ -111,7 +111,7 @@ WanderLuxe is a comprehensive travel planning application built with React, Type
 - **Backup**: Supabase automated backups and point-in-time recovery
 
 ## Changelog
-- June 17, 2025. Switched from Bun to npm package manager due to dev server issues. Updated all packages to latest versions. Fixed security vulnerabilities.
+- June 17, 2025. Switched from Bun to npm package manager due to dev server issues. Updated all packages to latest versions. Fixed security vulnerabilities. Created proper npm-based workflow configuration.
 - June 15, 2025. Initial setup
 
 ## User Preferences
