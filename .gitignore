@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Cache directories that should not be watched
+.cache
+.bun
+.vite
+.next
+.turbo
+.parcel-cache
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
