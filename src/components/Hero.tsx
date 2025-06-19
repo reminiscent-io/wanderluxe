@@ -45,7 +45,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex justify-center items-center w-full px-4"
           >
-            <motion.div
+            <motion.button
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               transition={{ 
@@ -57,10 +57,8 @@ const Hero = () => {
                 transition: { duration: 0.3 }
               }}
               onClick={() => navigate('/my-trips')}
-              style={{ cursor: 'pointer' }}
-              as="button"
               aria-label="Go to My Trips"
-              className="w-full"
+              className="w-full cursor-pointer bg-transparent border-none p-0"
             >
               <LogoFromSupabase 
                 logoName="White Full" 
@@ -68,7 +66,7 @@ const Hero = () => {
                 fallbackClassName="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
                 fallbackText="WanderLuxe"
               />
-            </motion.div>
+            </motion.button>
           </motion.div>
           {/* Button hidden as requested */}
         </div>

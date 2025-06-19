@@ -11,8 +11,17 @@ export const useTripSubscription = (tripId: string | undefined) => {
 
     console.log('Setting up real-time subscription for trip:', tripId);
 
-    const channel = supabase
-      .channel(`trip-${tripId}`)
+    // Use a unique channel name with timestamp to prevent conflicts
+    const channelName = `trip-${tripId}-${Date.now()}`;
+    const channel = supabase.channel(channelName);
+
+    // Check if channel is already subscribed to prevent duplicate subscriptions
+    if (channel.state === 'subscribed') {
+      console.log('Channel already subscribed, skipping');
+      return;
+    }
+
+    channel
       .on(
         'postgres_changes',
         {
@@ -23,11 +32,8 @@ export const useTripSubscription = (tripId: string | undefined) => {
         },
         (payload) => {
           console.log('Trip update received:', payload);
-          // Analyze the payload for critical changes
           const newData = payload.new;
           
-          // Only invalidate the query if we're getting meaningful data
-          // This prevents null values from being pulled in erroneously
           if (newData && 
               (newData.arrival_date !== null || 
                newData.departure_date !== null)) {
@@ -55,6 +61,9 @@ export const useTripSubscription = (tripId: string | undefined) => {
 
     return () => {
       console.log('Cleaning up real-time subscription');
+      if (channel.state === 'subscribed') {
+        channel.unsubscribe();
+      }
       supabase.removeChannel(channel);
     };
   }, [tripId, queryClient]);
