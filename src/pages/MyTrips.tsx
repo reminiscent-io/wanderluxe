@@ -45,15 +45,11 @@ const MyTrips = () => {
     queryKey: ['my-trips', showHidden],
     queryFn: async () => {
       try {
-        console.log('Fetching user trips...');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-          console.log('No user found');
           throw new Error('No user found');
         }
-
-        console.log('User found, fetching trips for user:', user.id);
 
         // First get trips
         const { data: tripsData, error: tripsError } = await supabase
@@ -64,20 +60,15 @@ const MyTrips = () => {
           .order('arrival_date', { ascending: true });
 
         if (tripsError) {
-          console.error('Error fetching trips:', tripsError);
           throw tripsError;
         }
         
-        console.log('Trips data:', tripsData?.length, tripsData);
-        
         if (!tripsData || tripsData.length === 0) {
-          console.log('No trips found');
           return [] as Trip[]; // Return empty array if no trips found
         }
         
         // Get which trips are shared with others
         const tripIds = tripsData.map(trip => trip.trip_id);
-        console.log('Trip IDs:', tripIds);
         
         // Original approach - just returning trips data directly without sharing info
         return tripsData.map(trip => ({
@@ -86,7 +77,6 @@ const MyTrips = () => {
           shareCount: 0
         }));
       } catch (error) {
-        console.error('Error in myTrips query:', error);
         throw error;
       }
     },
@@ -128,7 +118,6 @@ const MyTrips = () => {
       toast.success('Trip hidden successfully');
       queryClient.invalidateQueries({ queryKey: ['my-trips'] });
     } catch (error) {
-      console.error('Error hiding trip:', error);
       toast.error('Failed to hide trip');
     }
   };
@@ -149,21 +138,16 @@ const MyTrips = () => {
       setSelectedTrip(null);
       queryClient.invalidateQueries({ queryKey: ['my-trips'] });
     } catch (error) {
-      console.error('Error deleting trip:', error);
       toast.error('Failed to delete trip');
     }
   };
 
-  console.log('myTrips data for filtering:', myTrips);
-  
   // Filter trips based on search query (with additional null checks)
   const filteredMyTrips = myTrips && Array.isArray(myTrips) 
     ? myTrips.filter(trip => 
         trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
-  
-  console.log('Filtered my trips:', filteredMyTrips?.length);
 
   // Filter shared trips, ensuring we handle undefined trips properly
   const filteredSharedTrips = sharedTrips && Array.isArray(sharedTrips)
@@ -223,19 +207,18 @@ const MyTrips = () => {
               <>
                 {filteredMyTrips && filteredMyTrips.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredMyTrips.map((trip) => {
-                      console.log('Rendering trip card for:', trip.destination);
-                      return (
-                        <TripCard
-                          key={trip.trip_id}
-                          trip={{
-                            ...trip,
-                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                          }}
-                          onHide={() => handleHideTrip(trip.trip_id)}
-                        />
-                      );
-                    })}
+                    {filteredMyTrips.map((trip) => (
+                      <TripCard
+                        key={trip.trip_id}
+                        trip={{
+                          ...trip,
+                          start_date: trip.arrival_date,
+                          end_date: trip.departure_date,
+                          cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                        }}
+                        onHide={() => handleHideTrip(trip.trip_id)}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
