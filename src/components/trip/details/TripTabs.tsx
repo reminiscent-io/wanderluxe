@@ -5,6 +5,7 @@ import BudgetView from "../BudgetView";
 import BookingView from "../BookingView";
 import VisionBoardView from "../vision-board/VisionBoardView";
 import ChatView from "../chat/ChatView";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Calendar, BarChart2, List, Lightbulb, MessageCircle } from 'lucide-react';
 import { Trip } from '@/types/trip';
 
@@ -61,17 +62,19 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
       </TabsContent>
 
       <TabsContent value="timeline" className="flex-1 overflow-auto">
-        <TimelineView 
-          tripId={tripId}
-          tripDates={{
-            arrival_date: displayData?.arrival_date && displayData.arrival_date.trim() !== '' 
-              ? displayData.arrival_date 
-              : null,
-            departure_date: displayData?.departure_date && displayData.departure_date.trim() !== '' 
-              ? displayData.departure_date 
-              : null
-          }}
-        />
+        <ErrorBoundary>
+          <TimelineView 
+            tripId={tripId}
+            tripDates={{
+              arrival_date: displayData?.arrival_date && displayData.arrival_date.trim() !== '' 
+                ? displayData.arrival_date 
+                : null,
+              departure_date: displayData?.departure_date && displayData.departure_date.trim() !== '' 
+                ? displayData.departure_date 
+                : null
+            }}
+          />
+        </ErrorBoundary>
       </TabsContent>
 
       <TabsContent value="chat" className="flex-1 overflow-auto">

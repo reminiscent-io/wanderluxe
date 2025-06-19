@@ -14,36 +14,16 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
   const queryClient = useQueryClient();
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Set up real-time subscription for reservations
+  // Set up real-time subscription for reservations - temporarily disabled for debugging
   useEffect(() => {
     if (!dayId || !tripId) return;
 
-    // Subscribe to changes on the reservations table
-    const channel = supabase
-      .channel(`reservations-${tripId}-${dayId}`)
-      .on(
-        'postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'reservations',
-          filter: `trip_id=eq.${tripId} AND day_id=eq.${dayId}` 
-        }, 
-        () => {
-          console.log('Reservation changed, refreshing data...');
-          queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]});
-          queryClient.invalidateQueries({queryKey: ['trip', tripId]});
-        }
-      )
-      .subscribe((status) => {
-        console.log(`Subscription status for reservations (${dayId}):`, status);
-        setIsSubscribed(status === 'SUBSCRIBED');
-      });
+    console.log(`Reservation subscription temporarily disabled for day ${dayId}`);
+    setIsSubscribed(false);
 
     // Cleanup subscription on unmount
     return () => {
-      console.log(`Cleaning up reservation subscription for day ${dayId}`);
-      channel.unsubscribe();
+      console.log(`Subscription cleanup - no active reservations subscriptions for day ${dayId}`);
     };
   }, [dayId, tripId, queryClient]);
 

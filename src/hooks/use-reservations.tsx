@@ -15,30 +15,12 @@ export function useReservations(dayId: string, tripId: string | undefined) {
   const queryClient = useQueryClient();
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Set up real-time subscription
+  // Set up real-time subscription - temporarily disabled for debugging
   useEffect(() => {
     if (!dayId || !tripId) return;
 
-    // Create a channel subscription for real-time updates
-    const channel = supabase
-      .channel(`reservations-${dayId}`)
-      .on(
-        'postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'reservations',
-          filter: `day_id=eq.${dayId}` 
-        }, 
-        () => {
-          console.log(`Reservation changes detected for day ${dayId}`);
-          queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]});
-        }
-      )
-      .subscribe((status) => {
-        console.log(`Reservation subscription status for day ${dayId}: ${status}`);
-        setIsSubscribed(status === 'SUBSCRIBED');
-      });
+    console.log(`Reservation subscription temporarily disabled for day ${dayId}`);
+    setIsSubscribed(false);
 
     // Clean up subscription on unmount
     return () => {
