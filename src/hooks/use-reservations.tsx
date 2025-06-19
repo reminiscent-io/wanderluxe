@@ -24,8 +24,7 @@ export function useReservations(dayId: string, tripId: string | undefined) {
 
     // Clean up subscription on unmount
     return () => {
-      console.log('Cleaning up reservation subscription');
-      channel.unsubscribe();
+      console.log('Subscription cleanup - no active reservations subscriptions');
     };
   }, [dayId, tripId, queryClient]);
 
