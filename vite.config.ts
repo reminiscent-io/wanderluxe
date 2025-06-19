@@ -20,7 +20,13 @@ export default defineConfig(({ mode }) => ({
       'wanderluxe.io',
       'www.wanderluxe.io',
       'wanderluxe.replit.app'
-    ]
+    ],
+      watch: {
+        ignored: [
+          "**/.cache/**",
+          "**/node_modules/**",
+        ],
+      },
   },
   plugins: [
     react(),
