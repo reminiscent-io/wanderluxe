@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
-import { MapPin, AlertCircle } from 'lucide-react';
 
 interface RestaurantSearchInputProps {
   value: string;
@@ -16,8 +15,6 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   autoFocus
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [hasGooglePlaces, setHasGooglePlaces] = useState(false);
-  const [isManualEntry, setIsManualEntry] = useState(false);
   const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -25,12 +22,12 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
     const loadAPI = async () => {
       const loaded = await loadGoogleMapsAPI();
       if (loaded) {
-        setHasGooglePlaces(true);
+        setIsLoading(false);
         initializeAutocomplete();
       } else {
-        console.warn('Google Places API not available, falling back to manual entry');
+        setIsLoading(false);
+        toast('Failed to initialize restaurant search', { variant: 'error' });
       }
-      setIsLoading(false);
     };
     loadAPI();
   }, []);
@@ -56,57 +53,16 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
         const place = autoCompleteRef.current.getPlace();
-        if (place?.name) {
-          setIsManualEntry(false);
-          onChange(place.name, place);
+        if (!place?.name) {
+          toast('Please select a valid restaurant from the dropdown', { variant: 'error' });
+          return;
         }
+        onChange(place.name, place);
       });
     } catch (error) {
       console.error('Error initializing autocomplete:', error);
-      setHasGooglePlaces(false);
+      toast('Failed to initialize restaurant search', { variant: 'error' });
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setIsManualEntry(true);
-    onChange(newValue);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      // Allow manual entry on Enter press
-      if (value.trim()) {
-        setIsManualEntry(true);
-      }
-    }
-  };
-
-  const getPlaceholder = () => {
-    if (isLoading) return "Loading...";
-    if (hasGooglePlaces) return "Search for a restaurant or enter manually...";
-    return "Enter restaurant name...";
-  };
-
-  const getHelpText = () => {
-    if (!hasGooglePlaces) {
-      return (
-        <div className="flex items-center gap-1 text-sm text-amber-600 mt-1">
-          <AlertCircle className="h-3 w-3" />
-          <span>Enter restaurant details manually</span>
-        </div>
-      );
-    }
-    if (isManualEntry && value.trim()) {
-      return (
-        <div className="flex items-center gap-1 text-sm text-blue-600 mt-1">
-          <MapPin className="h-3 w-3" />
-          <span>Manual entry - you can add address details in the form below</span>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (
@@ -117,16 +73,19 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           type="text"
           id="restaurant"
           value={value}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder={getPlaceholder()}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
+          placeholder={isLoading ? "Loading..." : "Search for a restaurant..."}
           className="bg-white"
           disabled={isLoading}
           autoFocus={autoFocus}
           autoComplete="off"
         />
       </div>
-      {getHelpText()}
     </div>
   );
 };

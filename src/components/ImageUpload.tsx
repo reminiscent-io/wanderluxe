@@ -5,7 +5,6 @@ import { Upload, X, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { analytics } from '@/services/analyticsService';
 
 interface ImageUploadProps {
   value: string;
@@ -67,16 +66,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     try {
       setUploading(true);
 
-      // Track image upload attempt
-      analytics.trackMedia('image_upload_start', 'image', {
-        file_size: file.size,
-        file_type: file.type,
-        file_name: file.name
-      });
-
       // Validate file size
       if (file.size > 5 * 1024 * 1024) {
-        analytics.trackError('image_upload_size_error', 'File too large', 'image_upload');
         toast.error('File size must be less than 5MB');
         return;
       }
@@ -98,25 +89,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
       setPreview(publicUrl);
       onChange(publicUrl);
-      
-      // Track successful upload
-      analytics.trackMedia('image_upload_success', 'image', {
-        file_size: file.size,
-        file_type: file.type,
-        upload_method: 'manual_select'
-      });
-      
       toast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Error uploading image:', error);
-      
-      // Track upload failure
-      analytics.trackError('image_upload_failed', error instanceof Error ? error.message : 'Unknown error', 'image_upload');
-      analytics.trackMedia('image_upload_error', 'image', {
-        error_type: error instanceof Error ? error.name : 'Unknown',
-        file_size: file.size
-      });
-      
       toast.error('Failed to upload image');
     } finally {
       setUploading(false);

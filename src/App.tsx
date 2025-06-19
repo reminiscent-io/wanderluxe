@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { AnalyticsWrapper } from "@/components/AnalyticsWrapper";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import CreateTrip from "./pages/CreateTrip";
@@ -36,40 +35,38 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <AnalyticsWrapper>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route
-                    path="/create-trip"
-                    element={
-                      <ProtectedRoute>
-                        <CreateTrip />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/my-trips"
-                    element={
-                      <ProtectedRoute>
-                        <MyTrips />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/trip/:tripId"
-                    element={
-                      <ProtectedRoute>
-                        <TripDetails />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/profile" element={<Profile />} /> {/* Added Profile route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </AnalyticsWrapper>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route
+                  path="/create-trip"
+                  element={
+                    <ProtectedRoute>
+                      <CreateTrip />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/my-trips"
+                  element={
+                    <ProtectedRoute>
+                      <MyTrips />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/trip/:tripId"
+                  element={
+                    <ProtectedRoute>
+                      <TripDetails />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/profile" element={<Profile />} /> {/* Added Profile route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

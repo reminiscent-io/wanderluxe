@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { analytics } from "@/services/analyticsService";
 
 interface AuthContextType {
   session: Session | null;
@@ -58,19 +57,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         ensureProfile(session.user.id);
-        // Track authentication events
-        if (event === 'SIGNED_IN') {
-          analytics.trackAuth('login');
-        } else if (event === 'SIGNED_UP') {
-          analytics.trackAuth('signup');
-        }
-      } else if (event === 'SIGNED_OUT') {
-        analytics.trackAuth('logout');
       }
     });
 

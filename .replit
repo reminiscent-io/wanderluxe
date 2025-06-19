@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "web", "postgresql-16", "bun"]
-run = "bun run dev"
+run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"

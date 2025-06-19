@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { toast } from 'sonner';
 import ImageSection from "./ImageSection";
 import TimingSection from "./TimingSection";
 import DestinationInput from "./DestinationInput";
@@ -41,64 +40,30 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
     e.preventDefault();
     if (isLoading) return;
 
-    // Validate required fields
-    if (!destination.trim()) {
-      toast.error('Please enter a destination');
-      return;
-    }
-    if (!startDate) {
-      toast.error('Please select a start date');
-      return;
-    }
-    if (!endDate) {
-      toast.error('Please select an end date');
-      return;
-    }
-    if (new Date(startDate) > new Date(endDate)) {
-      toast.error('End date must be after start date');
-      return;
-    }
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('You must be logged in to create a trip');
-        throw new Error('User not authenticated');
-      }
-
-      console.log('Creating trip with data:', {
-        destination: destination.trim(),
-        startDate,
-        endDate,
-        coverImageUrl
-      });
+      if (!user) throw new Error('User not authenticated');
 
       // Insert the trip into the database with user_id and cover_image_url
       const { data: trip, error: tripError } = await supabase
         .from('trips')
         .insert([{
           user_id: user.id,
-          destination: destination.trim(),
+          destination,
           arrival_date: startDate,
           departure_date: endDate,
-          cover_image_url: coverImageUrl || null,
+          cover_image_url: coverImageUrl,
           created_at: new Date().toISOString()
         }])
         .select()
         .single();
 
-      if (tripError) {
-        console.error('Trip creation error:', tripError);
-        toast.error(`Failed to create trip: ${tripError.message}`);
-        throw tripError;
-      }
+      if (tripError) throw tripError;
 
       if (trip) {
-        console.log('Trip created successfully:', trip);
         try {
           // Generate an array of dates between start and end dates (inclusive)
           const days = getDaysBetweenDates(startDate, endDate);
-          console.log('Creating trip days:', days);
 
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
@@ -112,15 +77,11 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           onSubmit(trip.trip_id);
         } catch (daysError) {
           console.error('Error creating trip days:', daysError);
-          toast.error('Trip created but failed to set up itinerary days');
           throw daysError;
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating trip:', error);
-      if (!error.message?.includes('Failed to create trip')) {
-        toast.error('An unexpected error occurred while creating the trip');
-      }
     }
   };
 
