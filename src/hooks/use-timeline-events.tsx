@@ -39,30 +39,16 @@ export function useTimelineEvents(tripId: string) {
     }
   };
 
-  // Set up real-time subscription for accommodation changes
+  // Set up real-time subscription for accommodation changes - temporarily disabled for debugging
   useEffect(() => {
     if (!tripId) return;
     
-    const channel = supabase
-      .channel('accommodation-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'accommodations',
-          filter: `trip_id=eq.${tripId}`,
-        },
-        () => {
-          refreshEvents();
-        }
-      )
-      .subscribe();
+    console.log('Timeline events subscription temporarily disabled for debugging');
 
     return () => {
-      channel.unsubscribe();
+      console.log('Subscription cleanup - no active timeline subscriptions');
     };
-  }, [tripId, queryClient]);
+  }, [tripId]);
 
   const updateEvent = useMutation({
     mutationFn: async (data: any) => {

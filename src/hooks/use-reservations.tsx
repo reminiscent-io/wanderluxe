@@ -26,7 +26,7 @@ export function useReservations(dayId: string, tripId: string | undefined) {
     return () => {
       console.log('Subscription cleanup - no active reservations subscriptions');
     };
-  }, [dayId, tripId, queryClient]);
+  }, [dayId, tripId]);
 
   // Query for reservations
   const { data, isLoading, error } = useQuery({
