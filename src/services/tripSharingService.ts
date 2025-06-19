@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { analytics } from '@/services/analyticsService';
 import { TripShare, SharedTripWithDetails, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
 
 /**
@@ -65,18 +64,9 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
 
     if (shareError) {
       console.error('Error sharing trip:', shareError);
-      analytics.trackError('trip_share_failed', shareError.message, 'trip_sharing');
       toast.error('Failed to share the trip. Please try again.');
       return false;
     }
-
-    // Track successful trip sharing
-    analytics.trackShare('trip', 'email', tripId);
-    analytics.trackTrip('trip_shared', tripId, tripDestination, {
-      shared_with_email: email,
-      permission_level: permissionLevel,
-      shared_by: user.email
-    });
 
     // Send email notification
     const notificationSent = await sendShareNotification(email, user.email || 'A WanderLuxe user', tripDestination);

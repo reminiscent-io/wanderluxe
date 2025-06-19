@@ -1,7 +1,8 @@
-# WanderLuxe Travel Planning Application
+# WanderLuxe - Travel Planning Application
 
 ## Overview
-WanderLuxe is a comprehensive travel planning platform built with React, TypeScript, and Supabase. The application enables users to create, manage, and share detailed travel itineraries with AI-powered assistance, real-time collaboration features, and sophisticated trip management capabilities.
+
+WanderLuxe is a comprehensive travel planning web application built with React, TypeScript, and Supabase. The application enables users to create, manage, and share detailed travel itineraries with features including accommodation booking, activity planning, expense tracking, and AI-powered travel assistance.
 
 ## System Architecture
 
@@ -9,116 +10,129 @@ WanderLuxe is a comprehensive travel planning platform built with React, TypeScr
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite for fast development and optimized builds
 - **UI Library**: Shadcn/ui components built on Radix UI primitives
-- **Styling**: Tailwind CSS with custom theming
-- **State Management**: React Query (TanStack Query) for server state
-- **Routing**: React Router v6 for client-side navigation
-- **Authentication**: Supabase Auth with Google OAuth integration
+- **Styling**: Tailwind CSS with custom design system (sand/earth color palette)
+- **State Management**: TanStack Query (React Query) for server state
+- **Routing**: React Router for client-side navigation
+- **Forms**: React Hook Form with Zod validation
 
 ### Backend Architecture
 - **Database**: PostgreSQL via Supabase
-- **Real-time Updates**: Supabase real-time subscriptions
-- **Authentication**: Row-level security (RLS) policies
+- **Authentication**: Supabase Auth with Google OAuth integration
+- **Real-time**: Supabase real-time subscriptions for live updates
+- **API**: Supabase Edge Functions for serverless backend logic
 - **File Storage**: Supabase Storage for images and attachments
-- **Edge Functions**: Supabase Functions for server-side logic
 
-### Data Storage Solutions
-- **Primary Database**: PostgreSQL with comprehensive schema including:
-  - Users and profiles management
-  - Trip creation and management
-  - Day-by-day itinerary planning
-  - Accommodations, transportation, and activities
-  - Restaurant reservations and expenses
-  - Trip sharing with granular permissions
-- **File Storage**: Supabase Storage buckets for logos and chat attachments
-- **Real-time Synchronization**: Automatic updates across shared trips
+### Database Design
+The application uses a normalized PostgreSQL schema with the following core entities:
+- **trips**: Main trip records with destinations and date ranges
+- **trip_days**: Individual days within trips
+- **day_activities**: Activities scheduled for specific days
+- **accommodations**: Hotel/lodging information
+- **transportation**: Travel arrangements between locations
+- **reservations**: Restaurant and dining reservations
+- **trip_shares**: Permission-based trip sharing system
+- **profiles**: User profile information
 
 ## Key Components
 
-### Trip Management System
-- **Trip Creation**: Multi-step form with destination, dates, and cover images
-- **Itinerary Planning**: Day-by-day breakdown with activities, meals, and accommodations
-- **Collaboration**: Real-time sharing with read/edit permission levels
-- **Expense Tracking**: Multi-currency support with automatic conversion
+### Trip Management
+- **Trip Creation**: Form-based trip creation with destination search via Google Places API
+- **Trip Sharing**: Granular permission system (read/edit) for sharing trips with other users
+- **Trip Timeline**: Day-by-day itinerary management with drag-and-drop functionality
+
+### Activity Planning
+- **Day Activities**: Time-based activity scheduling with cost tracking
+- **Accommodations**: Hotel booking management with check-in/check-out dates
+- **Transportation**: Travel arrangement tracking between locations
+- **Dining**: Restaurant reservation management
 
 ### AI Integration
-- **Travel Assistant**: Conversational AI powered by Perplexity AI and OpenAI
-- **Content Generation**: Automated trip descriptions and recommendations
-- **Image Generation**: AI-powered destination imagery
-- **Smart Suggestions**: Context-aware travel recommendations
+- **Travel Assistant**: Conversational AI powered by OpenAI GPT-4 and Perplexity AI
+- **Content Generation**: AI-generated trip descriptions and recommendations
+- **Image Generation**: AI-powered cover image generation for trips
 
-### Permission System
-- **Granular Access Control**: Read-only vs edit permissions for shared trips
-- **Email-based Sharing**: Share trips via email with automatic notifications
-- **Real-time Synchronization**: Changes reflected instantly across all users
-
-### External Service Integrations
-- **Google Maps/Places**: Location search and place details
-- **Unsplash**: High-quality destination photography
-- **SendGrid**: Email notifications for trip sharing
-- **Multiple AI Providers**: Perplexity AI and OpenAI for different use cases
+### Sharing & Collaboration
+- **Permission Levels**: Read-only and edit permissions for shared trips
+- **Email Notifications**: SendGrid integration for sharing notifications
+- **Real-time Updates**: Live collaboration with instant updates across users
 
 ## Data Flow
 
+### Authentication Flow
+1. User signs in via Supabase Auth (email/password or Google OAuth)
+2. Session established with JWT tokens
+3. Row Level Security (RLS) policies enforce data access permissions
+4. User profile created/updated in profiles table
+
 ### Trip Creation Flow
-1. User inputs destination and dates via form
-2. AI generates trip content and suggested cover image
-3. Trip days are automatically created based on date range
-4. User can add accommodations, activities, and reservations
-5. Real-time updates sync across all shared users
+1. User fills trip creation form with destination and dates
+2. Google Places API provides location suggestions and validation
+3. Trip record created in trips table
+4. Trip days automatically generated based on date range
+5. Cover image optionally generated via AI or selected manually
 
 ### Sharing Flow
-1. Trip owner initiates sharing via email
-2. Permission level is set (read/edit)
-3. Email notification sent via SendGrid
-4. Recipient gains access based on permission level
-5. All changes sync in real-time via Supabase subscriptions
+1. Trip owner enters email address and permission level
+2. Trip share record created in trip_shares table
+3. Email notification sent via SendGrid Edge Function
+4. Shared user gains access based on permission level
+5. RLS policies enforce read/edit permissions at database level
 
-### AI Assistant Flow
-1. User initiates conversation in trip context
-2. Messages processed through AI providers
-3. Responses include travel recommendations and suggestions
-4. Context maintained throughout conversation
-5. Integration with trip data for personalized advice
+### Real-time Updates
+1. Supabase real-time subscriptions established for active trips
+2. Database changes broadcast to all connected clients
+3. UI updates automatically without page refresh
+4. Optimistic updates for improved user experience
 
 ## External Dependencies
 
 ### Core Services
-- **Supabase**: Database, authentication, real-time subscriptions, storage
-- **Google Maps API**: Location services and place details
-- **Perplexity AI**: Travel-specific AI assistance
-- **OpenAI**: General AI capabilities and chat
-- **SendGrid**: Transactional email delivery
-- **Unsplash**: Stock photography API
+- **Supabase**: Database, authentication, real-time, storage, edge functions
+- **Google Places API**: Location search and geocoding
+- **OpenAI API**: AI chat assistant and content generation
+- **Perplexity AI**: Enhanced search and travel recommendations
+- **SendGrid**: Email notifications for trip sharing
+- **Unsplash API**: Stock photography for trip imagery
 
 ### Development Tools
-- **Vite**: Development server and build tool
-- **ESLint**: Code linting and formatting
-- **TypeScript**: Type safety and development experience
-- **Tailwind CSS**: Utility-first styling framework
+- **Bun**: Fast JavaScript runtime and package manager
+- **ESLint**: Code linting and quality enforcement
+- **TypeScript**: Static type checking
+- **Tailwind CSS**: Utility-first CSS framework
+
+### UI Components
+- **Radix UI**: Accessible component primitives
+- **Lucide React**: Icon library
+- **Framer Motion**: Animation library
+- **React Hook Form**: Form state management
+- **Date-fns**: Date manipulation utilities
 
 ## Deployment Strategy
 
-### Replit Environment
-- **Primary Platform**: Replit with Node.js 20 runtime
-- **Database**: PostgreSQL 16 module for local development
-- **Package Manager**: Bun for improved performance
-- **Development Server**: Vite dev server on port 8080
-- **Preview Deployment**: Bun preview build
+### Environment Configuration
+- **Development**: Local development with Vite dev server on port 8080
+- **Production**: Cloud Run deployment via Replit
+- **Database**: Hosted PostgreSQL via Supabase
+- **CDN**: Static assets served via Replit/Cloud Run
 
-### Build Configuration
-- **Production Build**: `bun run build` generates optimized assets
-- **Preview Mode**: `bun run preview` for production testing
-- **Environment Variables**: Managed through Replit Secrets
-- **CORS Configuration**: Allowlist for multiple domains including production
+### Build Process
+1. TypeScript compilation and type checking
+2. Vite bundling with code splitting
+3. CSS optimization and minification
+4. Asset optimization and compression
+5. Environment variable injection
 
 ### Security Considerations
-- Row-level security policies for all database operations
-- API key management through environment variables
-- Secure authentication flow with proper session management
-- Input validation and sanitization throughout the application
+- Row Level Security (RLS) policies enforce data access
+- JWT-based authentication with automatic token refresh
+- CORS configuration for API security
+- Environment variables for sensitive credentials
+- Input validation and sanitization
 
 ## Changelog
-- June 17, 2025. Initial setup
+
+- June 19, 2025. Initial setup
 
 ## User Preferences
+
 Preferred communication style: Simple, everyday language.
