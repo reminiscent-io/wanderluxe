@@ -34,26 +34,12 @@ export function useTransportationEvents(tripId: string) {
   useEffect(() => {
     if (!tripId) return;
 
-    const channel = supabase
-      .channel('transportation-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transportation',
-          filter: `trip_id=eq.${tripId}`,
-        },
-        () => {
-          refreshTransportation();
-        }
-      )
-      .subscribe();
+    console.log('Transportation subscription temporarily disabled for debugging');
 
     return () => {
-      channel.unsubscribe();
+      console.log('Subscription cleanup - no active transportation subscriptions');
     };
-  }, [tripId, refreshTransportation]);
+  }, [tripId]);
   
   return { transportations, transportationData, isLoading, refreshTransportation };
 }
