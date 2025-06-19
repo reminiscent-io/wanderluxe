@@ -259,6 +259,8 @@ const MyTrips = () => {
                         key={trip.trip_id}
                         trip={{
                           ...trip,
+                          start_date: trip.arrival_date,
+                          end_date: trip.departure_date,
                           cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
                         // The trip already has isShared & sharedById properties from our earlier transformation

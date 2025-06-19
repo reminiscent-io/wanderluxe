@@ -63,7 +63,6 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       .insert(shareData);
 
     if (shareError) {
-      console.error('Error sharing trip:', shareError);
       toast.error('Failed to share the trip. Please try again.');
       return false;
     }
@@ -80,7 +79,6 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
 
     return true;
   } catch (error) {
-    console.error('Error sharing trip:', error);
     toast.error('An unexpected error occurred');
     return false;
   }
@@ -96,18 +94,11 @@ export const sendShareNotification = async (
   tripDestination: string
 ): Promise<boolean> => {
   try {
-    // Log the sharing attempt for debugging
-    console.log(`Trip sharing attempted: 
-      To: ${toEmail} 
-      From: ${fromEmail} 
-      Destination: ${tripDestination}`);
-
     // Get the Supabase URL and anon key from environment
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
     if (!supabaseUrl) {
-      console.error('SUPABASE_URL is not defined');
       toast.error('Configuration error. Please contact support.');
       return false;
     }
@@ -130,7 +121,6 @@ export const sendShareNotification = async (
     try {
       result = await response.json();
     } catch (e) {
-      console.error('Failed to parse response:', e);
       result = { success: false, message: 'Invalid response from email service' };
     }
 
