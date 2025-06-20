@@ -132,6 +132,11 @@ The application uses a normalized PostgreSQL schema with the following core enti
 ## Changelog
 
 - June 19, 2025. Initial setup
+- June 19, 2025. Fixed multiple development errors:
+  - Resolved Framer Motion prop conflicts by properly wrapping components with motion elements
+  - Fixed Supabase subscription lifecycle issues causing "tried to subscribe multiple times" errors
+  - Added error boundary protection to prevent component crashes
+  - Improved component stability and error handling throughout the application
 
 ## User Preferences
 

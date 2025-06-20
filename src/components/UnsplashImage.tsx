@@ -20,7 +20,6 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   photographer,
   unsplashUsername
 }) => {
-  console.log('UnsplashImage rendering with objectPosition:', objectPosition);
   
   return (
     <div className="relative min-h-[300px] overflow-hidden h-full w-full">
