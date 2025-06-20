@@ -43,10 +43,10 @@ export function useTimelineEvents(tripId: string) {
   useEffect(() => {
     if (!tripId) return;
     
-    console.log('Timeline events subscription temporarily disabled for debugging');
+
 
     return () => {
-      console.log('Subscription cleanup - no active timeline subscriptions');
+
     };
   }, [tripId]);
 
