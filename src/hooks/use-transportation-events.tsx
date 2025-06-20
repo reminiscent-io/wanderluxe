@@ -34,10 +34,10 @@ export function useTransportationEvents(tripId: string) {
   useEffect(() => {
     if (!tripId) return;
 
-    console.log('Transportation subscription temporarily disabled for debugging');
+
 
     return () => {
-      console.log('Subscription cleanup - no active transportation subscriptions');
+
     };
   }, [tripId]);
   
