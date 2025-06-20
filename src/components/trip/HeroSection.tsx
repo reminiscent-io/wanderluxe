@@ -202,7 +202,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [lastValidDates]);
 
-  console.log('HeroSection rendering with:', { formattedDateRange, imagePosition });
+
 
   return (
     <div className="relative w-full mb-0">

@@ -30,7 +30,7 @@ const DayImage: React.FC<DayImageProps> = ({
     // Use localStorage as the primary source of truth for quick access
     const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
     if (savedPosition) {
-      console.log(`DayImage: Loaded position from localStorage for day ${dayId}:`, savedPosition);
+
       setImagePosition(savedPosition);
       
       // Force a layout recalculation to apply the new position
@@ -44,7 +44,7 @@ const DayImage: React.FC<DayImageProps> = ({
   useEffect(() => {
     // If nothing in localStorage, use the provided position from props
     if (objectPosition !== "center 50%" && !localStorage.getItem(`day_image_position_${dayId}`)) {
-      console.log(`DayImage: Using provided objectPosition for day ${dayId}:`, objectPosition);
+
       setImagePosition(objectPosition);
     }
   }, [dayId, objectPosition]);
@@ -52,7 +52,7 @@ const DayImage: React.FC<DayImageProps> = ({
   // Update position when objectPosition prop changes
   useEffect(() => {
     if (objectPosition && objectPosition !== "center 50%") {
-      console.log(`DayImage: Updated from prop - day ${dayId}:`, objectPosition);
+
       setImagePosition(objectPosition);
       
       // Force a re-render to apply the position

@@ -184,11 +184,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
       <div className="flex flex-col md:flex-row gap-6 mb-6">
         <div className="w-full md:w-1/3">
-          {console.log('Rendering TripDates with:', {
-            tripId,
-            arrivalDate: localTripDates.arrival_date,
-            departureDate: localTripDates.departure_date,
-          })}
           {localTripDates.arrival_date && localTripDates.departure_date ? (
             <TripDates
               tripId={tripId}

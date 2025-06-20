@@ -33,7 +33,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
     // First check if there's a position in localStorage
     const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
     if (savedPosition) {
-      console.log(`DayHeader: Using position from localStorage for day ${dayId}:`, savedPosition);
+
       setImagePosition(savedPosition);
 
       // Force reflow to ensure the position is applied
@@ -51,7 +51,7 @@ const DayHeader: React.FC<DayHeaderProps> = ({
             .single();
             
           if (!error && data && data.image_position) {
-            console.log(`DayHeader: Using position from DB for day ${dayId}:`, data.image_position);
+
             setImagePosition(data.image_position);
             
             // Also save to localStorage for future quick access
