@@ -18,12 +18,12 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
   useEffect(() => {
     if (!dayId || !tripId) return;
 
-    console.log(`Reservation subscription temporarily disabled for day ${dayId}`);
+
     setIsSubscribed(false);
 
     // Cleanup subscription on unmount
     return () => {
-      console.log(`Subscription cleanup - no active reservations subscriptions for day ${dayId}`);
+
     };
   }, [dayId, tripId, queryClient]);
 
@@ -37,7 +37,7 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
     queryFn: async () => {
       if (!dayId || !tripId) return [];
       
-      console.log(`Loading reservations for day ${dayId} in trip ${tripId}`);
+
       
       const { data, error } = await supabase
         .from('reservations')
@@ -52,7 +52,7 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
         throw error;
       }
       
-      console.log(`Loaded ${data?.length || 0} reservations for day ${dayId} in trip ${tripId}`);
+
       return data || [];
     },
     enabled: !!dayId && !!tripId

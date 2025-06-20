@@ -328,12 +328,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   </div>
                   <div className="space-y-2">
                     {filteredHotelStays.map((stay) => {
-                      console.log(
-                        "Normalized checkout:",
-                        getNormalizedDay(stay.hotel_checkout_date),
-                        "normalized day:",
-                        normalizedDay
-                      );
+
                       return (
                         <div
                           key={stay.stay_id}

@@ -24,7 +24,7 @@ export function useTimelineEvents(tripId: string) {
         throw error;
       }
       
-      console.log('Fetched accommodations data:', data);
+
       return data as HotelStay[];
     },
     enabled: !!tripId,
