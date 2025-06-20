@@ -76,18 +76,32 @@ const DiningList: React.FC<DiningListProps> = ({
         await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
       } else {
         // For inserts, explicitly include both day_id and trip_id for RLS policies
-        const { error } = await supabase
+        const insertData = {
+          ...processedData,
+          day_id: dayId,
+          trip_id: tripId // Make sure trip_id is included for RLS
+        };
+        
+        console.log('Attempting to insert reservation with data:', insertData);
+        
+        const { data: insertResult, error } = await supabase
           .from('reservations')
-          .insert([{
-            ...processedData,
-            day_id: dayId,
-            trip_id: tripId // Make sure trip_id is included for RLS
-          }]);
+          .insert([insertData])
+          .select(); // Add select to get the inserted data back
 
         if (error) {
-          console.error('Insert error details:', error);
+          console.error('Insert error details:', {
+            error,
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            insertData
+          });
           throw error;
         }
+        
+        console.log('Insert successful, result:', insertResult);
         await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
         toast.success('Reservation added successfully');
       }
