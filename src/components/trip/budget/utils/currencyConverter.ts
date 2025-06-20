@@ -55,7 +55,7 @@ export function useCurrencyRates() {
 
       if (fetchError) throw fetchError;
 
-      console.log('Fetched exchange rates:', data);
+
 
       if (!data || data.length === 0) {
         throw new Error('No exchange rates found in database');
@@ -72,7 +72,7 @@ export function useCurrencyRates() {
         ratesMap[from][to] = rate.rate;
       });
 
-      console.log('Transformed rates map:', ratesMap);
+
 
       setRates(ratesMap);
       setLastUpdated(new Date().toISOString());
