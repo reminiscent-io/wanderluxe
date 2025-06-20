@@ -1,0 +1,1012 @@
+[
+  {
+    "schemaname": "cron",
+    "tablename": "job",
+    "policyname": "cron_job_policy",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(username = CURRENT_USER)",
+    "with_check": null
+  },
+  {
+    "schemaname": "cron",
+    "tablename": "job_run_details",
+    "policyname": "cron_job_run_details_policy",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(username = CURRENT_USER)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations",
+    "policyname": "accommodations_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations",
+    "policyname": "accommodations_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations",
+    "policyname": "accommodations_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations",
+    "policyname": "accommodations_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations_days",
+    "policyname": "accommodations_days_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM accommodations a\n  WHERE ((a.stay_id = accommodations_days.stay_id) AND user_has_edit_permission(a.trip_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations_days",
+    "policyname": "accommodations_days_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM accommodations a\n  WHERE ((a.stay_id = accommodations_days.stay_id) AND user_has_edit_permission(a.trip_id))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations_days",
+    "policyname": "accommodations_days_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM accommodations a\n  WHERE ((a.stay_id = accommodations_days.stay_id) AND user_has_read_permission(a.trip_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "accommodations_days",
+    "policyname": "accommodations_days_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM accommodations a\n  WHERE ((a.stay_id = accommodations_days.stay_id) AND user_has_edit_permission(a.trip_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "chat_logs",
+    "policyname": "Users can delete their own chat messages",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "chat_logs",
+    "policyname": "Users can insert chat logs for accessible trips",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())\nUNION\n SELECT trip_shares.trip_id\n   FROM trip_shares\n  WHERE (trip_shares.shared_by_user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "chat_logs",
+    "policyname": "Users can read chat logs for accessible trips",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())\nUNION\n SELECT trip_shares.trip_id\n   FROM trip_shares\n  WHERE (trip_shares.shared_by_user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "chat_logs",
+    "policyname": "Users can update their own chat messages",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "currencies",
+    "policyname": "Authenticated users can read currencies",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "currencies",
+    "policyname": "Service role can modify currencies",
+    "cmd": "ALL",
+    "roles": "{service_role}",
+    "permissive": "PERMISSIVE",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "day_activities",
+    "policyname": "day_activities_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM trip_days td\n  WHERE ((td.day_id = day_activities.day_id) AND user_has_edit_permission(td.trip_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "day_activities",
+    "policyname": "day_activities_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM trip_days td\n  WHERE ((td.day_id = day_activities.day_id) AND user_has_edit_permission(td.trip_id))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "day_activities",
+    "policyname": "day_activities_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM trip_days td\n  WHERE ((td.day_id = day_activities.day_id) AND user_has_read_permission(td.trip_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "day_activities",
+    "policyname": "day_activities_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM trip_days td\n  WHERE ((td.day_id = day_activities.day_id) AND user_has_edit_permission(td.trip_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "exchange_rates",
+    "policyname": "Allow anyone to read exchange rates",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "expenses",
+    "policyname": "Users can insert expenses for their own trips",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM trips\n  WHERE ((trips.trip_id = expenses.trip_id) AND (trips.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "expenses",
+    "policyname": "expenses_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "expenses",
+    "policyname": "expenses_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "expenses",
+    "policyname": "expenses_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "expenses",
+    "policyname": "expenses_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "Allow delete other expenses with edit permission",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "Allow insert other expenses with edit permission",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "Allow read access to other expenses",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "Allow update other expenses with edit permission",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "Users can manage their own expenses",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "other_expenses_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "other_expenses_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "other_expenses_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "other_expenses",
+    "policyname": "other_expenses_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Allow authenticated users to update their own profiles",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(( SELECT auth.uid() AS uid) = id)",
+    "with_check": "(( SELECT auth.uid() AS uid) = id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Allow authenticated users to view their own profiles",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(( SELECT auth.uid() AS uid) = id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Public profiles are viewable by everyone",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Users can insert their own profile",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(auth.uid() = id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Users can update their own profile",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(auth.uid() = id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "reservations",
+    "policyname": "reservations_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "reservations",
+    "policyname": "reservations_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "reservations",
+    "policyname": "reservations_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "reservations",
+    "policyname": "reservations_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Allow delete transportation with edit permission",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Allow insert transportation with edit permission",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Allow read access to transportation",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Allow update transportation with edit permission",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can delete their own transportation events",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM trips\n  WHERE ((trips.trip_id = transportation.trip_id) AND (trips.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can delete their transportation events",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can insert their own transportation events",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM trips\n  WHERE ((trips.trip_id = transportation.trip_id) AND (trips.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can insert their transportation events",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can update their own transportation events",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM trips\n  WHERE ((trips.trip_id = transportation.trip_id) AND (trips.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can update their transportation events",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())))",
+    "with_check": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can view their own transportation events",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM trips\n  WHERE ((trips.trip_id = transportation.trip_id) AND (trips.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "Users can view their transportation events",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(trip_id IN ( SELECT trips.trip_id\n   FROM trips\n  WHERE (trips.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "transportation_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "transportation_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "transportation_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "transportation",
+    "policyname": "transportation_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "Allow delete trip days with edit permission",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "Allow insert trip days with edit permission",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "Allow read access to trip days",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "Allow update trip days with edit permission",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "trip_days_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "trip_days_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "trip_days_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_days",
+    "policyname": "trip_days_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_shares",
+    "policyname": "Trip owners can share trips",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "((EXISTS ( SELECT 1\n   FROM trips\n  WHERE ((trips.trip_id = trips.trip_id) AND (trips.user_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM trip_shares trip_shares_1\n  WHERE ((trip_shares_1.trip_id = trip_shares_1.trip_id) AND (trip_shares_1.shared_with_email = auth.email())))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_shares",
+    "policyname": "Trips shared with user are viewable",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "((auth.uid() = shared_by_user_id) OR (auth.email() = shared_with_email))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_shares",
+    "policyname": "Users can delete shares they created",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "((auth.uid() = shared_by_user_id) OR (EXISTS ( SELECT 1\n   FROM trips\n  WHERE ((trips.trip_id = trips.trip_id) AND (trips.user_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow authenticated users to insert trips",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow delete for owners only",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow insert for authenticated users",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow read access to owned and shared trips",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow update with edit permission",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow users to delete their own trips",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow users to update their own trips",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Allow users to view their own trips",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Enable insert for authenticated users",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "Users can create their own trips",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "trip_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "trip_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "trip_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trips",
+    "policyname": "trip_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "Allow delete vision board items with edit permission",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "Allow insert vision board items with edit permission",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "Allow read access to vision board items",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "Allow update vision board items with edit permission",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "vision_board_items_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "vision_board_items_insert_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "user_has_edit_permission(trip_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "vision_board_items_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_read_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vision_board_items",
+    "policyname": "vision_board_items_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "user_has_edit_permission(trip_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "Allow authenticated users to upload images",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "(bucket_id = 'trip-images'::text)"
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "Allow public read access",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "(bucket_id = 'trip-images'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "Allow users to delete their own images",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "((bucket_id = 'trip-images'::text) AND (auth.uid() = owner))",
+    "with_check": null
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "Allow users to update their own images",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "permissive": "PERMISSIVE",
+    "qual": "((bucket_id = 'trip-images'::text) AND (auth.uid() = owner))",
+    "with_check": null
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "chat_attachments_delete_policy",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "((bucket_id = 'chat-attachments'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))",
+    "with_check": null
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "chat_attachments_select_policy",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "((bucket_id = 'chat-attachments'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))",
+    "with_check": null
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "chat_attachments_update_policy",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": "((bucket_id = 'chat-attachments'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))",
+    "with_check": null
+  },
+  {
+    "schemaname": "storage",
+    "tablename": "objects",
+    "policyname": "chat_attachments_upload_policy",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "permissive": "PERMISSIVE",
+    "qual": null,
+    "with_check": "((bucket_id = 'chat-attachments'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))"
+  }
+]
