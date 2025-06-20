@@ -47,7 +47,7 @@ export function useReservations(dayId: string, tripId: string | undefined) {
         throw error;
       }
       
-      console.log(`Loaded ${data?.length || 0} reservations for day ${dayId}`);
+
       return data || [];
     },
     enabled: !!dayId && !!tripId
