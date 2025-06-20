@@ -46,9 +46,18 @@ const DiningList: React.FC<DiningListProps> = ({
   const [deletingReservation, setDeletingReservation] = useState<string | null>(null);
 
   const handleSubmit = async (data: any) => {
+    console.log("=== HANDLESUBMIT CALLED ===");
+    console.log("Initial state - isSubmitting:", isSubmitting);
+    console.log("tripId:", tripId);
+    console.log("dayId:", dayId);
+    
     setIsSubmitting(true);
+    console.log("Set isSubmitting to true");
+    
     try {
       console.log("DiningList processing data with tripId:", tripId);
+      console.log("Raw form data received:", data);
+      
       // Make sure we include all necessary fields for trip sharing to work
       const processedData = {
         ...data,
@@ -57,21 +66,40 @@ const DiningList: React.FC<DiningListProps> = ({
         order_index: reservations.length,
         reservation_time: data.reservation_time || null
       };
+      
+      console.log("Processed data before database operation:", processedData);
 
+      console.log('About to perform database operation, editing:', editingReservation);
+      
       if (editingReservation) {
+        console.log('Performing UPDATE operation');
         // For updates, explicitly include trip_id to help with RLS policies
-        const { error } = await supabase
+        const updateData = {
+          ...processedData,
+          trip_id: tripId // Make sure trip_id is included for RLS
+        };
+        
+        console.log('Update data:', updateData);
+        
+        const { data: updateResult, error } = await supabase
           .from('reservations')
-          .update({
-            ...processedData,
-            trip_id: tripId // Make sure trip_id is included for RLS
-          })
-          .eq('id', editingReservation);
+          .update(updateData)
+          .eq('id', editingReservation)
+          .select();
 
         if (error) {
-          console.error('Update error details:', error);
+          console.error('Update error details:', {
+            error,
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            updateData
+          });
           throw error;
         }
+        
+        console.log('Update successful, result:', updateResult);
         toast.success('Reservation updated successfully');
         await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
       } else {
@@ -110,8 +138,15 @@ const DiningList: React.FC<DiningListProps> = ({
       setEditingReservation(null);
     } catch (error) {
       console.error('Error saving reservation:', error);
+      console.error('Error details:', {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack,
+        code: error?.code
+      });
       toast.error(editingReservation ? 'Failed to update reservation' : 'Failed to save reservation');
     } finally {
+      console.log('Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };

@@ -69,16 +69,25 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     }
     
     console.log('Processing form submission with trip_id:', effectiveTripId);
+    console.log('Form data before processing:', data);
+    console.log('Default values:', defaultValues);
     
     // Ensure both day_id and trip_id are included for RLS policy requirements
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
       trip_id: effectiveTripId, // Make sure trip_id is explicitly set
-      day_id: defaultValues?.day_id // Preserve day_id if editing existing reservation
+      day_id: (defaultValues as any)?.day_id // Preserve day_id if editing existing reservation
     };
     
-    onSubmit(processedData);
+    console.log('Final processed data being submitted:', processedData);
+    console.log('About to call onSubmit function');
+    try {
+      onSubmit(processedData);
+      console.log('onSubmit called successfully');
+    } catch (error) {
+      console.error('Error calling onSubmit:', error);
+    }
   });
 
   // Format cost on blur.
