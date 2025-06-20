@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import { Input } from "@/components/ui/input";
@@ -142,21 +142,22 @@ const MyTrips = () => {
     }
   };
 
-  // Filter trips based on search query (with additional null checks)
-  const filteredMyTrips = myTrips && Array.isArray(myTrips) 
-    ? myTrips.filter(trip => 
-        trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  // Memoize filtered trips to prevent unnecessary re-renders
+  const filteredMyTrips = useMemo(() => {
+    if (!myTrips || !Array.isArray(myTrips)) return [];
+    return myTrips.filter(trip => 
+      trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [myTrips, searchQuery]);
 
-  // Filter shared trips, ensuring we handle undefined trips properly
-  const filteredSharedTrips = sharedTrips && Array.isArray(sharedTrips)
-    ? sharedTrips
-        .filter(trip => trip && trip.destination) // Filter out any undefined trips
-        .filter(trip =>
-          trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-    : [];
+  const filteredSharedTrips = useMemo(() => {
+    if (!sharedTrips || !Array.isArray(sharedTrips)) return [];
+    return sharedTrips
+      .filter(trip => trip && trip.destination) // Filter out any undefined trips
+      .filter(trip =>
+        trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+  }, [sharedTrips, searchQuery]);
 
   if (!session) {
     return null; // Don't render anything while redirecting

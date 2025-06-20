@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { EyeOff, Share2, Users } from 'lucide-react';
 import { format, getYear, parseISO } from 'date-fns';
@@ -30,13 +30,7 @@ const TripCard = ({
   isShared
 }: TripCardProps) => {
   const navigate = useNavigate();
-  console.log('TripCard rendering with trip:', {
-    tripId: trip.trip_id,
-    destination: trip.destination,
-    isSharedProp: isShared,
-    tripIsSharedProp: trip.isShared,
-    shareCount: trip.shareCount
-  });
+  
   // Use either the isShared prop or check if the trip object has isShared property
   const tripIsShared = isShared || trip.isShared;
   const shareCount = trip.shareCount || 0;
@@ -175,4 +169,4 @@ const TripCard = ({
   );
 };
 
-export default TripCard;
+export default memo(TripCard);
