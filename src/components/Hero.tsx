@@ -1,27 +1,31 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
 
 const Hero = () => {
-  const [scrollY, setScrollY] = useState(0);
+  const parallaxRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      if (parallaxRef.current) {
+        const scrollY = window.scrollY;
+        parallaxRef.current.style.transform = `translateY(${scrollY * 0.5}px)`;
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
       <div
+        ref={parallaxRef}
         className="absolute inset-0 min-h-[100vh]"
-        style={{ transform: `translateY(${scrollY * 0.5}px)` }}
       >
         <UnsplashImage
           src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568"
