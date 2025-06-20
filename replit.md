@@ -137,6 +137,11 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed Supabase subscription lifecycle issues causing "tried to subscribe multiple times" errors
   - Added error boundary protection to prevent component crashes
   - Improved component stability and error handling throughout the application
+- June 20, 2025. Optimized component rendering performance:
+  - Fixed excessive re-rendering in Hero component by replacing state-based parallax with direct DOM manipulation
+  - Optimized TripCard components with React.memo and removed debug logging
+  - Added useMemo to trip filtering in MyTrips page to prevent unnecessary recalculations
+  - Significantly improved scroll performance and eliminated console spam
 
 ## User Preferences
 
