@@ -14,8 +14,6 @@ import TransportationSection from '@/components/trip/TransportationSection';
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
 
-  console.log('TripDetails rendering with tripId:', tripId);
-
   // Use the custom hook for trip data fetching
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
 
