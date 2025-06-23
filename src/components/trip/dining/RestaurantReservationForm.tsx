@@ -30,7 +30,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
-  onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>; 
+  onSubmit: (data: FormValues & { trip_id: string }) => void; 
   defaultValues?: Partial<FormValues> & { trip_id?: string };
   isSubmitting?: boolean;
   tripId: string; 
