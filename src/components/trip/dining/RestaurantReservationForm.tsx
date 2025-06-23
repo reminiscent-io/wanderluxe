@@ -71,8 +71,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // Submit handler
   // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitForm = form.handleSubmit(async (data) => {
+    console.log('RestaurantReservationForm - handleSubmitForm called with:', data);
+    console.log('RestaurantReservationForm - form validation errors:', form.formState.errors);
+    
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
+      console.log('RestaurantReservationForm - Missing trip ID');
       toast({
         variant: 'destructive',
         title: 'Missing trip',
@@ -87,11 +91,15 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       day_id: (defaultValues as any)?.day_id,
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
+    
+    console.log('RestaurantReservationForm - processedData:', processedData);
+    console.log('RestaurantReservationForm - About to call onSubmit prop');
 
     try {
       await onSubmit(processedData);
+      console.log('RestaurantReservationForm - onSubmit completed successfully');
     } catch (err) {
-      console.error(err);
+      console.error('RestaurantReservationForm - onSubmit error:', err);
       toast({
         variant: 'destructive',
         title: 'Save failed',
