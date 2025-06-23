@@ -1,249 +1,217 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import RestaurantReservationDialog from "./RestaurantReservationDialog";
-import RestaurantCard from "./RestaurantCard";
-import DeleteReservationDialog from "./DeleteReservationDialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { useParams } from "react-router-dom";
-
-/***************************
- * Query‑key helper
- ***************************/
-const reservationsKey = (tripId: string | undefined, dayId: string) => [
-  "reservations",
-  tripId ?? "__no_trip__",
-  dayId,
-] as const;
-
-/***************************
- * Types
- ***************************/
-console.log("DiningList v4 (canvas) loaded at", new Date().toISOString());
-
-
-interface Reservation {
-  id: string;
-  day_id: string;
-  trip_id: string;
-  restaurant_name: string;
-  reservation_time?: string;
-  number_of_people?: number;
-  confirmation_number?: string;
-  notes?: string;
-  cost?: number;
-  currency?: string;
-  address?: string;
-  phone_number?: string;
-  website?: string;
-  rating?: number;
-  created_at: string;
-}
+import React, {
+  useState,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import RestaurantCard from './RestaurantCard';
+import RestaurantReservationDialog from './RestaurantReservationDialog';
+import DeleteReservationDialog from './DeleteReservationDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { reservationsKey } from '@/utils/queryKeys';
 
 interface DiningListProps {
-  reservations: Reservation[];
+  reservations: Array<{
+    id: string;
+    day_id: string;
+    trip_id: string;
+    restaurant_name: string;
+    reservation_time?: string;
+    number_of_people?: number;
+    confirmation_number?: string;
+    notes?: string;
+    cost?: number;
+    currency?: string;
+    address?: string;
+    phone_number?: string;
+    website?: string;
+    rating?: number;
+    created_at: string;
+  }>;
   formatTime: (time?: string) => string;
   dayId: string;
+  tripId: string;
   className?: string;
 }
 
-/***************************
- * Component
- ***************************/
-const DiningList: React.FC<DiningListProps> = ({
-  reservations,
-  formatTime,
-  dayId,
-  className,
-}) => {
-  const { tripId } = useParams<{ tripId: string }>();
-  const queryClient = useQueryClient();
+/**
+ * Fully self-contained dining list:
+ * • Renders its own heading & “+” button
+ * • Owns add/edit dialog and delete confirmation
+ * • Surfaces DB errors and refreshes cache (or realtime) automatically
+ */
+const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
+  (
+    { reservations, formatTime, dayId, tripId, className = '' },
+    ref
+  ): JSX.Element => {
+    const qc = useQueryClient();
 
-  // UI state
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingReservation, setEditingReservation] = useState<string | null>(
-    null,
-  );
-  const [deletingReservation, setDeletingReservation] = useState<string | null>(
-    null,
-  );
+    /* ---------- local state ---------- */
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  /***************************
-   * Helpers
-   ***************************/
-  const invalidateReservations = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: reservationsKey(tripId, dayId),
-    });
-  }, [queryClient, tripId, dayId]);
+    /* expose “open dialog” to parent if ever needed */
+    useImperativeHandle(ref, () => ({
+      openAddDialog: () => setIsDialogOpen(true),
+    }));
 
-  /***************************
-   * Submit logic
-   ***************************/
-  const rawHandleSubmit = useCallback(
-    async (data: any) => {
-      if (!tripId) {
-        toast.error("Trip ID is missing – can’t save reservation.");
-        return;
-      }
+    /* ---------- save (insert / update) ---------- */
+    const handleSave = useCallback(
+      async (raw: any) => {
+        setIsSubmitting(true);
 
-      console.log("=== HANDLE SUBMIT ===", { data, tripId, dayId });
-      setIsSubmitting(true);
+        const payload = {
+          ...raw,
+          day_id: dayId,
+          trip_id: tripId,
+          order_index:
+            raw.order_index !== undefined
+              ? raw.order_index
+              : reservations.length,
+          reservation_time: raw.reservation_time || null,
+        };
 
-      const processedData = {
-        ...data,
-        day_id: dayId,
-        trip_id: tripId,
-        order_index:
-          data.order_index !== undefined ? data.order_index : reservations.length,
-        reservation_time: data.reservation_time || null,
-      };
+        try {
+          if (editingId) {
+            /* ----- UPDATE ----- */
+            const { data, status } = await supabase
+              .from('reservations')
+              .update(payload)
+              .eq('id', editingId)
+              .select()
+              .throwOnError();
 
+            console.log('UPDATE status', status, 'data', data);
+            toast.success('Reservation updated');
+          } else {
+            /* ----- INSERT ----- */
+            const { data, status } = await supabase
+              .from('reservations')
+              .insert([payload])
+              .select()
+              .throwOnError();
+
+            console.log('INSERT status', status, 'data', data);
+            if (data.length === 0) {
+              toast.error(
+                'Row saved, but SELECT policy is hiding it. Check RLS.'
+              );
+            } else {
+              toast.success('Reservation added');
+            }
+          }
+
+          /* fallback: ensure list refetches */
+          await qc.invalidateQueries({
+            queryKey: reservationsKey(tripId, dayId),
+          });
+
+          setIsDialogOpen(false);
+          setEditingId(null);
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to save reservation');
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+      [dayId, tripId, editingId, reservations.length, qc]
+    );
+
+    /* ---------- delete ---------- */
+    const handleDelete = useCallback(async () => {
+      if (!deletingId) return;
       try {
-        if (editingReservation) {
-          /***** UPDATE *****/
-          const { data: upd, error, status } = await supabase
-            .from("reservations")
-            .update(processedData)
-            .eq("id", editingReservation)
-            .select()
-            .throwOnError();
+        await supabase
+          .from('reservations')
+          .delete()
+          .eq('id', deletingId)
+          .eq('trip_id', tripId)
+          .throwOnError();
 
-          console.log("UPDATE status", status, upd);
+        toast.success('Reservation deleted');
 
-          if (upd.length === 0) {
-            throw new Error(
-              "Row passed UPDATE but was hidden by SELECT policy. Check reservations_select_policy.",
-            );
-          }
-
-          toast.success("Reservation updated successfully");
-        } else {
-          /***** INSERT *****/
-          const { data: ins, error, status } = await supabase
-            .from("reservations")
-            .insert([processedData])
-            .select()
-            .throwOnError();
-
-          console.log("INSERT status", status, ins);
-
-          if (ins.length === 0) {
-            throw new Error(
-              "Row inserted but hidden by SELECT policy. Check reservations_select_policy.",
-            );
-          }
-
-          toast.success("Reservation added successfully");
-        }
-
-        await invalidateReservations();
-        setIsDialogOpen(false);
-        setEditingReservation(null);
-      } catch (err: any) {
-        console.error("Error saving reservation", err);
-        toast.error(
-          editingReservation ? "Failed to update reservation" : "Failed to save reservation",
-        );
+        await qc.invalidateQueries({
+          queryKey: reservationsKey(tripId, dayId),
+        });
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to delete reservation');
       } finally {
-        setIsSubmitting(false);
+        setDeletingId(null);
       }
-    },
-    [editingReservation, reservations.length, dayId, tripId, invalidateReservations],
-  );
+    }, [deletingId, tripId, dayId, qc]);
 
-  // Keep a stable ref so the dialog never captures a stale function
-  const handleSubmitRef = useRef(rawHandleSubmit);
-  useEffect(() => {
-    handleSubmitRef.current = rawHandleSubmit;
-  }, [rawHandleSubmit]);
+    /* ---------- render ---------- */
+    return (
+      <div ref={ref} className={`space-y-4 ${className}`}>
+        {/* heading */}
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-base font-semibold">Dining</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDialogOpen(true)}
+            className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
 
-  const submitReservation = useCallback(async (data: any) => {
-    console.log("=== DIRECT CALL TO HANDLESUBMIT ===");
-    await handleSubmitRef.current(data);
-  }, []);
+        {/* list */}
+        <div className="space-y-3">
+          {[...reservations]
+            .sort((a, b) =>
+              (a.reservation_time || '').localeCompare(
+                b.reservation_time || ''
+              )
+            )
+            .map((r) => (
+              <RestaurantCard
+                key={r.id}
+                reservation={r}
+                formatTime={formatTime}
+                onEdit={() => {
+                  setEditingId(r.id);
+                  setIsDialogOpen(true);
+                }}
+                onDelete={() => setDeletingId(r.id)}
+              />
+            ))}
+        </div>
 
-  /***************************
-   * Delete logic
-   ***************************/
-  const handleDelete = useCallback(async () => {
-    if (!tripId || !deletingReservation) return;
+        {/* add / edit */}
+        <RestaurantReservationDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          onSubmit={handleSave}
+          isSubmitting={isSubmitting}
+          editingReservation={
+            editingId
+              ? reservations.find((r) => r.id === editingId)
+              : { day_id: dayId, trip_id: tripId, order_index: reservations.length }
+          }
+          title={editingId ? 'Edit Reservation' : 'Add Reservation'}
+          tripId={tripId}
+        />
 
-    try {
-      const { data, error } = await supabase
-        .from("reservations")
-        .delete()
-        .eq("id", deletingReservation)
-        .eq("trip_id", tripId)
-        .select()
-        .throwOnError();
-
-      if (data.length === 0) {
-        throw new Error(
-          "Row deleted but SELECT policy hid it; ensure delete policy matches select policy.",
-        );
-      }
-
-      await invalidateReservations();
-      toast.success("Reservation deleted successfully");
-      setDeletingReservation(null);
-    } catch (err: any) {
-      console.error("Error deleting reservation", err);
-      toast.error("Failed to delete reservation");
-    }
-  }, [tripId, deletingReservation, invalidateReservations]);
-
-  const handleEdit = useCallback((reservation: Reservation) => {
-    setEditingReservation(reservation.id);
-    setIsDialogOpen(true);
-  }, []);
-
-  /***************************
-   * Render
-   ***************************/
-  return (
-    <div className={`space-y-4 ${className || ""}`}>
-      {/* Reservation list */}
-      <div className="space-y-3">
-        {[...reservations]
-          .sort((a, b) => (a.reservation_time || "").localeCompare(b.reservation_time || ""))
-          .map((reservation) => (
-            <RestaurantCard
-              key={reservation.id}
-              reservation={reservation}
-              formatTime={formatTime}
-              onEdit={handleEdit}
-              onDelete={() => setDeletingReservation(reservation.id)}
-            />
-          ))}
+        {/* delete confirm */}
+        <DeleteReservationDialog
+          isOpen={!!deletingId}
+          onOpenChange={() => setDeletingId(null)}
+          onDelete={handleDelete}
+        />
       </div>
+    );
+  }
+);
 
-      {/* Dialog */}
-      <RestaurantReservationDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSubmit={submitReservation}
-        isSubmitting={isSubmitting}
-        editingReservation={
-          editingReservation
-            ? reservations.find((r) => r.id === editingReservation)
-            : { day_id: dayId, trip_id: tripId, order_index: reservations.length }
-        }
-        title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
-        tripId={tripId}
-      />
-
-      {/* Delete confirmation */}
-      <DeleteReservationDialog
-        isOpen={!!deletingReservation}
-        onOpenChange={() => setDeletingReservation(null)}
-        onDelete={handleDelete}
-      />
-    </div>
-  );
-};
-
+DiningList.displayName = 'DiningList';
 export default DiningList;
