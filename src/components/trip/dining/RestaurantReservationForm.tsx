@@ -72,12 +72,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     console.log('Form data before processing:', data);
     console.log('Default values:', defaultValues);
     
-    // Ensure both day_id and trip_id are included for RLS policy requirements
+    // Ensure all required fields are included for database insertion
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
       trip_id: effectiveTripId, // Make sure trip_id is explicitly set
-      day_id: (defaultValues as any)?.day_id // Preserve day_id if editing existing reservation
+      day_id: (defaultValues as any)?.day_id, // Preserve day_id if editing existing reservation
+      order_index: (defaultValues as any)?.order_index || 0 // Include order_index for NOT NULL constraint
     };
     
     console.log('Final processed data being submitted:', processedData);

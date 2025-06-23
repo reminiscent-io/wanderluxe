@@ -103,14 +103,21 @@ const DiningList: React.FC<DiningListProps> = ({
         toast.success('Reservation updated successfully');
         await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
       } else {
+        console.log('Performing INSERT operation');
         // For inserts, explicitly include both day_id and trip_id for RLS policies
         const insertData = {
           ...processedData,
           day_id: dayId,
-          trip_id: tripId // Make sure trip_id is included for RLS
+          trip_id: tripId, // Make sure trip_id is included for RLS
+          order_index: processedData.order_index || reservations.length // Ensure order_index is set for NOT NULL constraint
         };
         
         console.log('Attempting to insert reservation with data:', insertData);
+        console.log('Required fields check:');
+        console.log('  - day_id:', insertData.day_id);
+        console.log('  - restaurant_name:', insertData.restaurant_name);
+        console.log('  - trip_id:', insertData.trip_id);
+        console.log('  - order_index:', insertData.order_index);
         
         const { data: insertResult, error } = await supabase
           .from('reservations')
@@ -224,7 +231,7 @@ const DiningList: React.FC<DiningListProps> = ({
         editingReservation={
           editingReservation 
             ? reservations.find(r => r.id === editingReservation) 
-            : { day_id: dayId, trip_id: tripId } // Include day_id for new reservations
+            : { day_id: dayId, trip_id: tripId, order_index: reservations.length } // Include all required fields for new reservations
         }
         title={editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
         tripId={tripId} 
