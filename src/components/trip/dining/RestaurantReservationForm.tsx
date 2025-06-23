@@ -30,7 +30,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
-  onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>; 
+  onSubmit: (data: FormValues & { trip_id: string }) => void; 
   defaultValues?: Partial<FormValues> & { trip_id?: string };
   isSubmitting?: boolean;
   tripId: string; 
@@ -84,8 +84,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     console.log('Final processed data being submitted:', processedData);
     console.log('About to call onSubmit function');
     try {
-      await onSubmit(processedData);
-      console.log('onSubmit called successfully');
+      const result = await onSubmit(processedData);
+      console.log('onSubmit called successfully, result:', result);
     } catch (error) {
       console.error('Error calling onSubmit:', error);
     }
