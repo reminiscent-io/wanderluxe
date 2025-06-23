@@ -21,6 +21,12 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   title,
   tripId,
 }) => {
+  console.log('RestaurantReservationDialog - onSubmit function:', typeof onSubmit);
+
+  const handleFormSubmit = (data: any) => {
+    console.log('RestaurantReservationDialog - handleFormSubmit called with:', data);
+    onSubmit(data);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -34,7 +40,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             Please fill out the restaurant reservation form.
           </p>
           <RestaurantReservationForm
-            onSubmit={onSubmit}
+            onSubmit={handleFormSubmit}
             isSubmitting={isSubmitting}
             defaultValues={editingReservation}
             tripId={tripId}
