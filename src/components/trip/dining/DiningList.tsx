@@ -63,7 +63,7 @@ const DiningList: React.FC<DiningListProps> = ({
         ...data,
         day_id: dayId,
         trip_id: tripId, // This is critical for proper permission handling in shared trips
-        order_index: reservations.length,
+        order_index: data.order_index !== undefined ? data.order_index : reservations.length,
         reservation_time: data.reservation_time || null
       };
       
@@ -226,7 +226,17 @@ const DiningList: React.FC<DiningListProps> = ({
       <RestaurantReservationDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onSubmit={handleSubmit}
+        onSubmit={async (data) => {
+          console.log("Direct onSubmit called - about to call handleSubmit");
+          console.log("handleSubmit function exists:", typeof handleSubmit);
+          try {
+            await handleSubmit(data);
+            console.log("handleSubmit completed successfully");
+          } catch (error) {
+            console.error("Error in handleSubmit:", error);
+            throw error;
+          }
+        }}
         isSubmitting={isSubmitting}
         editingReservation={
           editingReservation 
