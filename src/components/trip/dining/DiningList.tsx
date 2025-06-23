@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import RestaurantReservationDialog from './RestaurantReservationDialog';
+import React, {
+  useState,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import RestaurantCard from './RestaurantCard';
+import RestaurantReservationDialog from './RestaurantReservationDialog';
 import DeleteReservationDialog from './DeleteReservationDialog';
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { useParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { reservationsKey } from '@/utils/queryKeys';
 
 interface DiningListProps {
   reservations: Array<{
     id: string;
-    day_id: string; 
+    day_id: string;
     trip_id: string;
     restaurant_name: string;
     reservation_time?: string;
@@ -25,170 +30,188 @@ interface DiningListProps {
     phone_number?: string;
     website?: string;
     rating?: number;
-    created_at: string;   
+    created_at: string;
   }>;
   formatTime: (time?: string) => string;
   dayId: string;
+  tripId: string;
   className?: string;
 }
 
-const DiningList: React.FC<DiningListProps> = ({
-  reservations,
-  formatTime,
-  dayId,
-  className
-}) => {
-  const { tripId } = useParams<{ tripId: string }>();
-  const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingReservation, setEditingReservation] = useState<string | null>(null);
-  const [deletingReservation, setDeletingReservation] = useState<string | null>(null);
+/**
+ * Fully self-contained dining list:
+ * • Renders its own heading & “+” button
+ * • Owns add/edit dialog and delete confirmation
+ * • Surfaces DB errors and refreshes cache (or realtime) automatically
+ */
+const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
+  (
+    { reservations, formatTime, dayId, tripId, className = '' },
+    ref
+  ): JSX.Element => {
+    const qc = useQueryClient();
 
-  const handleSubmit = async (data: any) => {
-    setIsSubmitting(true);
-    try {
-      console.log("DiningList processing data with tripId:", tripId);
-      // Make sure we include all necessary fields for trip sharing to work
-      const processedData = {
-        ...data,
-        day_id: dayId,
-        trip_id: tripId, // This is critical for proper permission handling in shared trips
-        order_index: reservations.length,
-        reservation_time: data.reservation_time || null
-      };
+    /* ---------- local state ---------- */
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
-      if (editingReservation) {
-        // For updates, explicitly include trip_id to help with RLS policies
-        const { error } = await supabase
-          .from('reservations')
-          .update({
-            ...processedData,
-            trip_id: tripId // Make sure trip_id is included for RLS
-          })
-          .eq('id', editingReservation);
+    /* expose “open dialog” to parent if ever needed */
+    useImperativeHandle(ref, () => ({
+      openAddDialog: () => setIsDialogOpen(true),
+    }));
 
-        if (error) {
-          console.error('Update error details:', error);
-          throw error;
+    /* ---------- save (insert / update) ---------- */
+    const handleSave = useCallback(
+      async (raw: any) => {
+        setIsSubmitting(true);
+
+        const payload = {
+          ...raw,
+          day_id: dayId,
+          trip_id: tripId,
+          order_index:
+            raw.order_index !== undefined
+              ? raw.order_index
+              : reservations.length,
+          reservation_time: raw.reservation_time || null,
+        };
+
+        try {
+          if (editingId) {
+            /* ----- UPDATE ----- */
+            const { data, status } = await supabase
+              .from('reservations')
+              .update(payload)
+              .eq('id', editingId)
+              .select()
+              .throwOnError();
+
+            console.log('UPDATE status', status, 'data', data);
+            toast.success('Reservation updated');
+          } else {
+            /* ----- INSERT ----- */
+            const { data, status } = await supabase
+              .from('reservations')
+              .insert([payload])
+              .select()
+              .throwOnError();
+
+            console.log('INSERT status', status, 'data', data);
+            if (data.length === 0) {
+              toast.error(
+                'Row saved, but SELECT policy is hiding it. Check RLS.'
+              );
+            } else {
+              toast.success('Reservation added');
+            }
+          }
+
+          /* fallback: ensure list refetches */
+          await qc.invalidateQueries({
+            queryKey: reservationsKey(tripId, dayId),
+          });
+
+          setIsDialogOpen(false);
+          setEditingId(null);
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to save reservation');
+        } finally {
+          setIsSubmitting(false);
         }
-        toast.success('Reservation updated successfully');
-        await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
-      } else {
-        // For inserts, explicitly include both day_id and trip_id for RLS policies
-        const { error } = await supabase
+      },
+      [dayId, tripId, editingId, reservations.length, qc]
+    );
+
+    /* ---------- delete ---------- */
+    const handleDelete = useCallback(async () => {
+      if (!deletingId) return;
+      try {
+        await supabase
           .from('reservations')
-          .insert([{
-            ...processedData,
-            day_id: dayId,
-            trip_id: tripId // Make sure trip_id is included for RLS
-          }]);
+          .delete()
+          .eq('id', deletingId)
+          .eq('trip_id', tripId)
+          .throwOnError();
 
-        if (error) {
-          console.error('Insert error details:', error);
-          throw error;
-        }
-        await queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}); 
-        toast.success('Reservation added successfully');
+        toast.success('Reservation deleted');
+
+        await qc.invalidateQueries({
+          queryKey: reservationsKey(tripId, dayId),
+        });
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to delete reservation');
+      } finally {
+        setDeletingId(null);
       }
+    }, [deletingId, tripId, dayId, qc]);
 
-      setIsDialogOpen(false);
-      setEditingReservation(null);
-    } catch (error) {
-      console.error('Error saving reservation:', error);
-      toast.error(editingReservation ? 'Failed to update reservation' : 'Failed to save reservation');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    /* ---------- render ---------- */
+    return (
+      <div ref={ref} className={`space-y-4 ${className}`}>
+        {/* heading */}
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-base font-semibold">Dining</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDialogOpen(true)}
+            className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
 
-  const handleDelete = async () => {
-    try {
-      // Find the reservation data to get trip_id before deleting
-      const reservationToDelete = reservations.find(r => r.id === deletingReservation);
-      
-      if (!reservationToDelete) {
-        throw new Error("Reservation not found");
-      }
-      
-      // Include trip_id in the filter to help with RLS policies
-      const { error } = await supabase
-        .from('reservations')
-        .delete()
-        .eq('id', deletingReservation)
-        .eq('trip_id', tripId); // Ensure the trip_id is included for RLS
+        {/* list */}
+        <div className="space-y-3">
+          {[...reservations]
+            .sort((a, b) =>
+              (a.reservation_time || '').localeCompare(
+                b.reservation_time || ''
+              )
+            )
+            .map((r) => (
+              <RestaurantCard
+                key={r.id}
+                reservation={r}
+                formatTime={formatTime}
+                onEdit={() => {
+                  setEditingId(r.id);
+                  setIsDialogOpen(true);
+                }}
+                onDelete={() => setDeletingId(r.id)}
+              />
+            ))}
+        </div>
 
-      if (error) {
-        console.error('Delete error details:', error);
-        throw error;
-      }
+        {/* add / edit */}
+        <RestaurantReservationDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          onSubmit={handleSave}
+          isSubmitting={isSubmitting}
+          editingReservation={
+            editingId
+              ? reservations.find((r) => r.id === editingId)
+              : { day_id: dayId, trip_id: tripId, order_index: reservations.length }
+          }
+          title={editingId ? 'Edit Reservation' : 'Add Reservation'}
+          tripId={tripId}
+        />
 
-      // Invalidate both the specific day's reservations and the trip data
-      // Include tripId to ensure proper refresh for shared trips
-      await Promise.all([
-        queryClient.invalidateQueries({queryKey: ['reservations', dayId, tripId]}),
-        queryClient.invalidateQueries({queryKey: ['trip', tripId]})
-      ]);
-
-      toast.success('Reservation deleted successfully');
-      setDeletingReservation(null);
-    } catch (error) {
-      console.error('Error deleting reservation:', error);
-      toast.error('Failed to delete reservation');
-    }
-  };
-
-  const handleEdit = (reservation: any) => {
-    setEditingReservation(reservation.id);
-    setIsDialogOpen(true);
-  };
-
-  return (
-    <div className={`space-y-4 ${className || ''}`}>
-      {/* List of Reservations */}
-      <div className="space-y-3">
-        {[...reservations]
-          .sort((a, b) => {
-            const timeA = a.reservation_time || '';
-            const timeB = b.reservation_time || '';
-            return timeA.localeCompare(timeB);
-          })
-          .map((reservation) => (
-            <RestaurantCard
-              key={reservation.id}
-              reservation={reservation}
-              formatTime={formatTime}
-              onEdit={handleEdit}
-              onDelete={() => setDeletingReservation(reservation.id)}
-            />
-        ))}
+        {/* delete confirm */}
+        <DeleteReservationDialog
+          isOpen={!!deletingId}
+          onOpenChange={() => setDeletingId(null)}
+          onDelete={handleDelete}
+        />
       </div>
+    );
+  }
+);
 
-      {/* Add button is now in the header of the day card */}
-
-      {/* Dialog for Add/Edit Reservation */}
-      <RestaurantReservationDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        editingReservation={
-          editingReservation 
-            ? reservations.find(r => r.id === editingReservation) 
-            : { day_id: dayId, trip_id: tripId } // Include day_id for new reservations
-        }
-        title={editingReservation ? 'Edit Restaurant Reservation' : 'Add Restaurant Reservation'}
-        tripId={tripId} 
-      />
-
-      {/* Dialog for Delete Confirmation */}
-      <DeleteReservationDialog
-        isOpen={!!deletingReservation}
-        onOpenChange={() => setDeletingReservation(null)}
-        onDelete={handleDelete}
-      />
-    </div>
-  );
-};
-
+DiningList.displayName = 'DiningList';
 export default DiningList;

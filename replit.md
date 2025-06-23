@@ -143,6 +143,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added useMemo to trip filtering in MyTrips page to prevent unnecessary recalculations
   - Cleaned up console logging across Timeline, Budget, and reservation components
   - Significantly improved scroll performance and eliminated console spam throughout the application
+- June 20, 2025. Fixed reservation insertion issues:
+  - Identified RLS policy mismatch - policies were checking trip_id directly but reservations table lacked this column
+  - Updated database schema to add trip_id column to reservations table with proper foreign key constraints
+  - Fixed NOT NULL constraint violations by ensuring order_index field is included in all reservation insertions
+  - Added comprehensive error logging throughout reservation submission chain to track data flow
+  - Made all submission handlers async to properly handle database operations
 
 ## User Preferences
 

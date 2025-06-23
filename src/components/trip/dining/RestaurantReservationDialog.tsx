@@ -5,7 +5,7 @@ import RestaurantReservationForm from './RestaurantReservationForm';
 interface RestaurantReservationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
   isSubmitting: boolean;
   editingReservation?: any;
   title: string;
@@ -21,6 +21,19 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   title,
   tripId,
 }) => {
+  console.log('RestaurantReservationDialog - onSubmit function:', typeof onSubmit);
+
+  const handleFormSubmit = async (data: any) => {
+    console.log('RestaurantReservationDialog - handleFormSubmit called with:', data);
+    console.log('RestaurantReservationDialog - About to call onSubmit prop');
+    try {
+      await onSubmit(data);
+      console.log('RestaurantReservationDialog - onSubmit completed successfully');
+    } catch (error) {
+      console.error('RestaurantReservationDialog - Error calling onSubmit:', error);
+      throw error;
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -34,7 +47,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             Please fill out the restaurant reservation form.
           </p>
           <RestaurantReservationForm
-            onSubmit={onSubmit}
+            onSubmit={handleFormSubmit}
             isSubmitting={isSubmitting}
             defaultValues={editingReservation}
             tripId={tripId}
