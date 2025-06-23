@@ -23,9 +23,17 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 }) => {
   console.log('RestaurantReservationDialog - onSubmit function:', typeof onSubmit);
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = async (data: any) => {
     console.log('RestaurantReservationDialog - handleFormSubmit called with:', data);
-    onSubmit(data);
+    console.log('RestaurantReservationDialog - About to call onSubmit prop');
+    try {
+      const result = await onSubmit(data);
+      console.log('RestaurantReservationDialog - onSubmit returned:', result);
+      return result;
+    } catch (error) {
+      console.error('RestaurantReservationDialog - Error calling onSubmit:', error);
+      throw error;
+    }
   };
 
   return (
