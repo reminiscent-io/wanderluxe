@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -9,31 +9,41 @@ import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
-// Define your form schema
+// Converts blank / NaN values coming from <input type="number"> into undefined so they
+// pass Zod's optional() validation.
+const toNullableNumber = (val: unknown) => {
+  if (val === '' || val === null || typeof val === 'undefined') return undefined;
+  if (typeof val === 'number' && !Number.isNaN(val)) return val;
+  const num = Number(val);
+  return Number.isNaN(num) ? undefined : num;
+};
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Schema
+// ────────────────────────────────────────────────────────────────────────────────
 const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
+  reservation_time: z.string().min(1, "Reservation time is required"),
   address: z.string().optional(),
   phone_number: z.string().optional(),
   website: z.string().optional(),
-  reservation_time: z.string().optional().nullable(),
-  number_of_people: z.number().optional().nullable(),
+  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive()).optional(),
   notes: z.string().optional(),
-  cost: z.number().optional().nullable(),
+  cost: z.preprocess(toNullableNumber, z.number()).optional(),
   currency: z.string().optional().nullable(),
   place_id: z.string().optional(),
-  rating: z.number().optional(),
+  rating: z.preprocess(toNullableNumber, z.number()).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
-  onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>; 
-  defaultValues?: Partial<FormValues> & { trip_id?: string };
+  onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>;
+  defaultValues?: Partial<FormValues> & { trip_id?: string; day_id?: string; order_index?: number };
   isSubmitting?: boolean;
-  tripId: string; 
+  tripId: string;
 }
 
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
@@ -42,61 +52,57 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   isSubmitting = false,
   tripId,
 }) => {
-  console.log("RestaurantReservationForm received tripId:", tripId);
-  
-  // Destructure the toast function from the custom hook.
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       restaurant_name: '',
-      reservation_time: null,
-      number_of_people: null,
+      reservation_time: '',
+      number_of_people: undefined,
       notes: '',
-      cost: null,
-      currency: null,
+      cost: undefined,
+      currency: undefined,
       ...defaultValues,
     },
   });
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Submit handler
+  // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitForm = form.handleSubmit(async (data) => {
-    // Use the tripId prop or a default from editing values if available.
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
-      console.error('Trip ID is required');
+      toast({
+        variant: 'destructive',
+        title: 'Missing trip',
+        description: 'Trip ID is required to save this reservation.',
+      });
       return;
     }
-    
-    console.log('Processing form submission with trip_id:', effectiveTripId);
-    console.log('Form data before processing:', data);
-    console.log('Default values:', defaultValues);
-    
-    // Ensure all required fields are included for database insertion
-    // Convert undefined and empty values to null for database compatibility
+
     const processedData = {
       ...data,
-      reservation_time: data.reservation_time === '' ? null : data.reservation_time,
-      number_of_people: data.number_of_people === undefined || data.number_of_people === '' ? null : data.number_of_people,
-      cost: data.cost === undefined || data.cost === '' || data.cost === 0 ? null : data.cost,
-      currency: data.currency === '' ? null : data.currency,
-      notes: data.notes || '',
-      trip_id: effectiveTripId, // Make sure trip_id is explicitly set
-      day_id: (defaultValues as any)?.day_id, // Preserve day_id if editing existing reservation
-      order_index: (defaultValues as any)?.order_index || 0 // Include order_index for NOT NULL constraint
+      trip_id: effectiveTripId,
+      day_id: (defaultValues as any)?.day_id,
+      order_index: (defaultValues as any)?.order_index ?? 0,
     };
-    
-    console.log('Final processed data being submitted:', processedData);
-    console.log('About to call onSubmit function');
+
     try {
       await onSubmit(processedData);
-      console.log('onSubmit called successfully');
-    } catch (error) {
-      console.error('Error calling onSubmit:', error);
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: 'destructive',
+        title: 'Save failed',
+        description: 'We could not save your reservation. Please try again.',
+      });
     }
   });
 
-  // Format cost on blur.
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Helpers
+  // ──────────────────────────────────────────────────────────────────────────────
   const handleCostBlur = (value: string) => {
     const numericValue = Number(value.replace(/,/g, ''));
     if (!isNaN(numericValue)) {
@@ -107,6 +113,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     return value;
   };
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // UI
+  // ──────────────────────────────────────────────────────────────────────────────
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitForm} className="space-y-4">
@@ -129,7 +138,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     form.setValue('phone_number', details.formatted_phone_number || '');
                     form.setValue('website', details.website || '');
                     form.setValue('place_id', details.place_id || '');
-                    form.setValue('rating', details.rating || 0);
+                    form.setValue('rating', details.rating || undefined);
                   }
                 }}
               />
@@ -169,8 +178,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <FormControl>
                 <Input
                   type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  value={field.value ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.valueAsNumber;
+                    field.onChange(Number.isNaN(v) ? undefined : v);
+                  }}
                   className="bg-white"
                 />
               </FormControl>
@@ -203,11 +215,16 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 <FormControl>
                   <Input
                     type="text"
-                    {...field}
+                    value={field.value ?? ''}
                     onChange={(e) => field.onChange(e.target.value)}
                     onBlur={(e) => {
                       const formatted = handleCostBlur(e.target.value);
-                      field.onChange(Number(formatted.replace(/,/g, '')));
+                      field.onChange(
+                        Number.isNaN(Number(formatted.replace(/,/g, '')))
+                          ? undefined
+                          : Number(formatted.replace(/,/g, ''))
+                      );
+                      e.target.value = formatted;
                     }}
                     className="bg-white"
                   />
@@ -229,7 +246,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
                   >
                     <option value="">Select currency</option>
-                    {CURRENCIES.map(currency => (
+                    {CURRENCIES.map((currency) => (
                       <option key={currency} value={currency}>
                         {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
                       </option>
@@ -241,9 +258,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        <Button 
-          type="submit" 
-          disabled={isSubmitting} 
+        <Button
+          type="submit"
+          disabled={isSubmitting}
           className="w-full bg-sand-500 hover:bg-sand-600 text-white"
         >
           {isSubmitting ? (
