@@ -30,7 +30,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
-  onSubmit: (data: FormValues & { trip_id: string }) => void; 
+  onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>; 
   defaultValues?: Partial<FormValues> & { trip_id?: string };
   isSubmitting?: boolean;
   tripId: string; 
@@ -60,7 +60,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     },
   });
 
-  const handleSubmitForm = form.handleSubmit(async (data) => {
+  const handleSubmitForm = form.handleSubmit((data) => {
     // Use the tripId prop or a default from editing values if available.
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
@@ -84,8 +84,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     console.log('Final processed data being submitted:', processedData);
     console.log('About to call onSubmit function');
     try {
-      const result = await onSubmit(processedData);
-      console.log('onSubmit called successfully, result:', result);
+      onSubmit(processedData);
+      console.log('onSubmit called successfully');
     } catch (error) {
       console.error('Error calling onSubmit:', error);
     }
