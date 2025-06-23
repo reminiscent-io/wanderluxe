@@ -227,8 +227,9 @@ const DiningList: React.FC<DiningListProps> = ({
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onSubmit={async (data) => {
-          console.log("=== WRAPPER ONSUBMIT CALLED ===");
-          console.log("Received data:", data);
+          console.log("=== DIRECT CALL TO HANDLESUBMIT ===");
+          console.log("Data received:", data);
+          console.log("handleSubmit function:", typeof handleSubmit);
           await handleSubmit(data);
         }}
         isSubmitting={isSubmitting}
