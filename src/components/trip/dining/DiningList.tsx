@@ -226,18 +226,7 @@ const DiningList: React.FC<DiningListProps> = ({
       <RestaurantReservationDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onSubmit={async (data) => {
-          console.log("DiningList onSubmit wrapper called with:", data);
-          console.log("About to call handleSubmit function");
-          try {
-            const result = await handleSubmit(data);
-            console.log("handleSubmit returned:", result);
-            return result;
-          } catch (error) {
-            console.error("Error in handleSubmit:", error);
-            throw error;
-          }
-        }}
+        onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         editingReservation={
           editingReservation 
