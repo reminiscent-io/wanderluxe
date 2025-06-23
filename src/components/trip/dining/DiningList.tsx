@@ -226,7 +226,11 @@ const DiningList: React.FC<DiningListProps> = ({
       <RestaurantReservationDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onSubmit={handleSubmit}
+        onSubmit={async (data) => {
+          console.log("=== WRAPPER ONSUBMIT CALLED ===");
+          console.log("Received data:", data);
+          await handleSubmit(data);
+        }}
         isSubmitting={isSubmitting}
         editingReservation={
           editingReservation 
