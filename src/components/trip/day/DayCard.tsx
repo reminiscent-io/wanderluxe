@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 import DayHeader from './DayHeader';
@@ -20,11 +20,12 @@ import {
   ActivityFormData,
   Transportation,
 } from '@/types/trip';
-import { CURRENCIES } from '@/utils/currencyConstants';
 import DayActivityManager from './components/DayActivityManager';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
+import { CURRENCIES } from '@/utils/currencyConstants';
 
+/* ---------- helpers ---------- */
 const initialActivity: ActivityFormData = {
   title: '',
   description: '',
@@ -34,7 +35,6 @@ const initialActivity: ActivityFormData = {
   currency: CURRENCIES[0],
 };
 
-/* helpers */
 const formatTime12 = (time?: string) => {
   if (!time) return '';
   const [hourStr, minuteStr] = time.split(':');
@@ -72,7 +72,7 @@ const DayCard: React.FC<DayCardProps> = ({
   hotelStays = [],
   originalImageUrl,
 }) => {
-  /* ---------- state ---------- */
+  /* ---------- UI state ---------- */
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
@@ -97,12 +97,9 @@ const DayCard: React.FC<DayCardProps> = ({
   const [selectedTransportation, setSelectedTransportation] =
     useState<Transportation | null>(null);
 
+  /* ---------- data ---------- */
   const qc = useQueryClient();
-
-  /* ---------- realtime reservations ---------- */
   const { reservations } = useReservationsRealtime(id, tripId);
-
-  /* ---------- other hooks ---------- */
   const { transportations } = useTransportationEvents(tripId);
 
   /* ---------- derived ---------- */
@@ -115,15 +112,41 @@ const DayCard: React.FC<DayCardProps> = ({
     return a.start_time.localeCompare(b.start_time);
   });
 
-  /* ---------- sync originalImageUrl ---------- */
+  const normalizedDay = getNormalizedDay(date);
+
+  const filteredHotelStays = hotelStays.filter((stay) => {
+    if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
+    const dayDate = new Date(normalizedDay);
+    return (
+      dayDate >= new Date(stay.hotel_checkin_date) &&
+      dayDate <= new Date(stay.hotel_checkout_date)
+    );
+  });
+
+  const safeTransportations = transportations || [];
+  const filteredTransportations = safeTransportations
+    .filter((t) => {
+      const start = t.start_date;
+      const end = t.end_date ? t.end_date : start;
+      const dayDate = new Date(normalizedDay);
+      return dayDate >= new Date(start) && dayDate <= new Date(end);
+    })
+    .sort((a, b) => {
+      if (a.start_time && b.start_time)
+        return a.start_time.localeCompare(b.start_time);
+      if (a.start_time) return -1;
+      if (b.start_time) return 1;
+      return 0;
+    });
+
+  /* ---------- effects ---------- */
   useEffect(() => {
     if (originalImageUrl) setImageUrl(originalImageUrl);
   }, [originalImageUrl]);
 
-  /* ---------- refresh trip helper ---------- */
+  /* ---------- helpers ---------- */
   const refreshTripData = () => qc.invalidateQueries(['trip']);
 
-  /* ---------- Day edit save ---------- */
   const handleSaveEdit = async (data: any) => {
     try {
       if (data.title) setEditTitle(data.title);
@@ -142,7 +165,7 @@ const DayCard: React.FC<DayCardProps> = ({
         image_position: data.image_position,
       };
 
-      const { error, data: updatedData } = await supabase
+      const { error, data: updated } = await supabase
         .from('trip_days')
         .update(updateObj)
         .eq('day_id', id)
@@ -151,8 +174,8 @@ const DayCard: React.FC<DayCardProps> = ({
 
       if (error) throw error;
 
-      if (updatedData.title) setEditTitle(updatedData.title);
-      if (updatedData.image_url) setImageUrl(updatedData.image_url);
+      if (updated.title) setEditTitle(updated.title);
+      if (updated.image_url) setImageUrl(updated.image_url);
 
       toast.success('Day updated successfully');
       refreshTripData();
@@ -163,7 +186,6 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  /* ---------- activity helpers via manager ---------- */
   const {
     handleAddActivity,
     handleEditActivity,
@@ -184,10 +206,10 @@ const DayCard: React.FC<DayCardProps> = ({
     }
   };
 
-  /* ---------- render ---------- */
+  /* ---------- rendering ---------- */
   return (
     <div className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-lg mb-6 bg-sand-300">
-      {/* edit-day dialog */}
+      {/* ---------- Day edit dialog ---------- */}
       <DayEditDialog
         open={isEditing}
         onOpenChange={setIsEditing}
@@ -197,7 +219,7 @@ const DayCard: React.FC<DayCardProps> = ({
         onSave={handleSaveEdit}
       />
 
-      {/* header bar */}
+      {/* ---------- Header ---------- */}
       <DayHeader
         title={dayTitle}
         date={date}
@@ -209,21 +231,189 @@ const DayCard: React.FC<DayCardProps> = ({
         defaultImageUrl={defaultImageUrl}
       />
 
-      {/* collapsible content */}
+      {/* ---------- Collapsible content ---------- */}
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleContent>
           <div className="p-4 bg-sand-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* ---------- LEFT column: hotel & transport ---------- */}
-              {/* HOTEL STAY */}
-              {/* (existing hotel stay block unchanged — omitted for brevity) */}
-              {/* TRANSPORTATION */}
-              {/* (existing transportation block unchanged — omitted for brevity) */}
+              {/* ========== LEFT COLUMN ========== */}
+              <div className="flex flex-col gap-4">
+                {/* HOTEL STAY */}
+                <div className="bg-gray-100 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold">Hotel Stay</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setHotelDialog({ open: true, initialData: null })
+                      }
+                      className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-              {/* ---------- RIGHT column: activities & dining ---------- */}
+                  <div className="space-y-2">
+                    {filteredHotelStays.map((stay) => (
+                      <div
+                        key={stay.stay_id}
+                        onClick={() => setHotelDialog({ open: true, initialData: stay })}
+                        className="cursor-pointer flex justify-between items-center p-1.5 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                      >
+                        <div>
+                          <h4 className="font-medium text-gray-700 text-sm">
+                            {stay.hotel}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            {stay.hotel_address || stay.hotel_details}
+                          </p>
+                          {stay.hotel_checkin_date === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800">
+                              Check-in{' '}
+                              {stay.checkin_time
+                                ? formatTime12(stay.checkin_time)
+                                : ''}
+                            </div>
+                          )}
+                          {stay.hotel_checkout_date === normalizedDay && (
+                            <div className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800">
+                              Check-out{' '}
+                              {stay.checkout_time
+                                ? formatTime12(stay.checkout_time)
+                                : ''}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {filteredHotelStays.length === 0 && (
+                      <p className="text-gray-500 text-xs italic">
+                        No hotel stay booked this night
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* TRANSPORTATION */}
+                <div className="bg-gray-100 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold">
+                      Flights and Transportation
+                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTransportation(null);
+                        setIsTransportationDialogOpen(true);
+                      }}
+                      className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {filteredTransportations.length > 0 ? (
+                      filteredTransportations.map((transport) => (
+                        <div
+                          key={transport.id}
+                          onClick={() => {
+                            setSelectedTransportation(transport);
+                            setIsTransportationDialogOpen(true);
+                          }}
+                          className="cursor-pointer flex justify-between items-center p-1.5 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                        >
+                          <div>
+                            <h4 className="font-medium text-gray-700 text-sm">
+                              {transport.type
+                                ?.split('_')
+                                .map(
+                                  (w) => w.charAt(0).toUpperCase() + w.slice(1)
+                                )
+                                .join(' ')}
+                              {transport.departure_location &&
+                                transport.arrival_location &&
+                                ` | ${transport.departure_location} → ${transport.arrival_location}`}
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              {(() => {
+                                const sd = transport.start_date
+                                  ? format(parseISO(transport.start_date), 'MMM dd, yyyy')
+                                  : '';
+                                const st = transport.start_time
+                                  ? formatTime12(transport.start_time)
+                                  : '';
+                                const ed = transport.end_date
+                                  ? format(parseISO(transport.end_date), 'MMM dd, yyyy')
+                                  : '';
+                                const et = transport.end_time
+                                  ? formatTime12(transport.end_time)
+                                  : '';
+                                const start = st ? `${sd} ${st}` : sd;
+                                const end = ed ? `${ed} ${et}` : '';
+                                return end ? `${start} - ${end}` : start;
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-xs italic">
+                        No transportation for this day
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ========== RIGHT COLUMN ========== */}
               <div className="flex flex-col gap-4">
                 {/* ACTIVITIES */}
-                {/* (existing activities block unchanged — omitted for brevity) */}
+                <div className="bg-gray-100 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold">Activities</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddingActivity(true)}
+                      className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {sortedActivities.map((activity) => (
+                      <div
+                        key={activity.id}
+                        onClick={() => handleActivityEditClick(activity)}
+                        className="cursor-pointer flex justify-between items-center p-1.5 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+                      >
+                        <div>
+                          <h4 className="font-medium text-gray-700 text-sm">
+                            {activity.title}
+                          </h4>
+                          {activity.start_time && (
+                            <p className="text-xs text-gray-500">
+                              {formatTime12(activity.start_time)}
+                              {activity.end_time &&
+                                ` - ${formatTime12(activity.end_time)}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {sortedActivities.length === 0 && (
+                      <p className="text-gray-500 text-xs italic">
+                        No activities for this day
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 {/* DINING */}
                 <div className="bg-gray-100 rounded-lg p-3">
@@ -241,7 +431,7 @@ const DayCard: React.FC<DayCardProps> = ({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* accommodation dialog */}
+      {/* ACCOMMODATION dialog */}
       <AccommodationDialog
         tripId={tripId}
         open={hotelDialog.open}
@@ -250,7 +440,7 @@ const DayCard: React.FC<DayCardProps> = ({
         onSuccess={refreshTripData}
       />
 
-      {/* activity dialogs */}
+      {/* ACTIVITY dialogs */}
       <ActivityDialogs
         isAddingActivity={isAddingActivity}
         setIsAddingActivity={setIsAddingActivity}
@@ -266,7 +456,7 @@ const DayCard: React.FC<DayCardProps> = ({
         eventId={id}
       />
 
-      {/* transportation dialog */}
+      {/* TRANSPORTATION dialog */}
       <TransportationDialog
         tripId={tripId}
         open={isTransportationDialogOpen}
