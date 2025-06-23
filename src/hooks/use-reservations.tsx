@@ -30,7 +30,7 @@ export function useReservations(dayId: string, tripId: string | undefined) {
 
   // Query for reservations
   const { data, isLoading, error } = useQuery({
-    queryKey: ['reservations', dayId, tripId],
+    queryKey: ['reservations', tripId, dayId],
     queryFn: async () => {
       if (!dayId || !tripId) return [];
       
