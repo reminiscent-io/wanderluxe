@@ -33,7 +33,7 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
         (payload) => {
           console.log('Reservation change detected:', payload);
           queryClient.invalidateQueries({
-            queryKey: ['reservations', dayId, tripId],
+            queryKey: ['reservations', tripId, dayId],
           });
         }
       )
@@ -56,7 +56,7 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ['reservations', dayId, tripId],
+    queryKey: ['reservations', tripId, dayId],
     queryFn: async () => {
       if (!dayId || !tripId) return [];
       
