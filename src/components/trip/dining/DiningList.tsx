@@ -146,7 +146,7 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
         });
         
         /* also invalidate trip data like activities do */
-        await qc.invalidateQueries(['trip']);
+        await qc.invalidateQueries({ queryKey: ['trip'] });
       } catch (err) {
         console.error(err);
         toast.error('Failed to delete reservation');
