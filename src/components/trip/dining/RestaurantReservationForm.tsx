@@ -269,7 +269,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-sand-500 hover:bg-sand-600 text-white"
+          className="w-full bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
+          onClick={(e) => {
+            console.log('Save button clicked');
+            console.log('Form state:', form.formState);
+            console.log('Form values:', form.getValues());
+            console.log('Form errors:', form.formState.errors);
+          }}
         >
           {isSubmitting ? (
             <>
@@ -280,6 +286,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             'Save Reservation'
           )}
         </Button>
+        
+        {/* Debug info */}
+        <div className="text-xs text-gray-500 mt-2">
+          <div>Form valid: {form.formState.isValid ? 'Yes' : 'No'}</div>
+          <div>Errors: {JSON.stringify(form.formState.errors)}</div>
+          <div>Values: {JSON.stringify(form.getValues())}</div>
+        </div>
       </form>
     </Form>
   );
