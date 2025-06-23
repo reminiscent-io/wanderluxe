@@ -53,10 +53,13 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
         const place = autoCompleteRef.current.getPlace();
+        console.log('RestaurantSearchInput - place_changed event:', place);
         if (!place?.name) {
+          console.log('RestaurantSearchInput - No place name found');
           toast('Please select a valid restaurant from the dropdown', { variant: 'error' });
           return;
         }
+        console.log('RestaurantSearchInput - Calling onChange with:', place.name, place);
         onChange(place.name, place);
       });
     } catch (error) {

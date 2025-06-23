@@ -26,6 +26,18 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   const handleFormSubmit = async (data: any) => {
     console.log('RestaurantReservationDialog - handleFormSubmit called with:', data);
     console.log('RestaurantReservationDialog - About to call onSubmit prop');
+    
+    // Check for Google Places data
+    if (data.place_id) {
+      console.log('RestaurantReservationDialog - Google Places data detected:', {
+        place_id: data.place_id,
+        address: data.address,
+        phone_number: data.phone_number,
+        website: data.website,
+        rating: data.rating
+      });
+    }
+    
     try {
       await onSubmit(data);
       console.log('RestaurantReservationDialog - onSubmit completed successfully');
