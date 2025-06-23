@@ -52,9 +52,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     defaultValues: {
       restaurant_name: '',
       reservation_time: null,
-      number_of_people: undefined,
+      number_of_people: null,
       notes: '',
-      cost: undefined,
+      cost: null,
       currency: null,
       ...defaultValues,
     },
@@ -73,9 +73,14 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     console.log('Default values:', defaultValues);
     
     // Ensure all required fields are included for database insertion
+    // Convert undefined and empty values to null for database compatibility
     const processedData = {
       ...data,
       reservation_time: data.reservation_time === '' ? null : data.reservation_time,
+      number_of_people: data.number_of_people === undefined || data.number_of_people === '' ? null : data.number_of_people,
+      cost: data.cost === undefined || data.cost === '' || data.cost === 0 ? null : data.cost,
+      currency: data.currency === '' ? null : data.currency,
+      notes: data.notes || '',
       trip_id: effectiveTripId, // Make sure trip_id is explicitly set
       day_id: (defaultValues as any)?.day_id, // Preserve day_id if editing existing reservation
       order_index: (defaultValues as any)?.order_index || 0 // Include order_index for NOT NULL constraint
