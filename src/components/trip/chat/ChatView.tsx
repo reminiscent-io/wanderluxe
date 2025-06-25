@@ -101,20 +101,20 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     const loadChatHistory = () => {
       if (!tripId) return;
       setIsLoadingHistory(true);
-      
+
       try {
         const localKey = `chat_history_${tripId}`;
         const localData = localStorage.getItem(localKey);
-        
+
         if (localData) {
           const parsed = JSON.parse(localData);
           if (Array.isArray(parsed)) {
             const validMessages = parsed.filter((msg: any): msg is ChatMessage => {
-              return msg && 
-                     typeof msg.id === 'string' && 
-                     (msg.role === 'user' || msg.role === 'ai') && 
-                     typeof msg.message === 'string' && 
-                     typeof msg.timestamp === 'string';
+              return msg &&
+                typeof msg.id === 'string' &&
+                (msg.role === 'user' || msg.role === 'ai') &&
+                typeof msg.message === 'string' &&
+                typeof msg.timestamp === 'string';
             });
             setMessages(validMessages);
           }
@@ -125,7 +125,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         setIsLoadingHistory(false);
       }
     };
-    
+
     loadChatHistory();
   }, [tripId]);
 
@@ -234,7 +234,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: { message: userMsgText, tripId, attachments },
       });
-      
+
       if (error) throw error;
 
       // Create AI response from authentic data
@@ -265,26 +265,26 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         } else {
           index += 1;
         }
-        
+
         setMessages(prev =>
           prev.map(m =>
             m.id === placeholderId ? { ...m, message: fullText.slice(0, index) } : m,
           ),
         );
-        
+
         if (index >= fullText.length) {
           clearInterval(streamInterval);
           setTypingBuffer(null);
-          
+
           // Save final state to localStorage
           const finalMessages = [...updatedWithUser, aiMessage];
           saveToLocalStorage(finalMessages);
-          
+
           // Update with final message
           setMessages(finalMessages);
         }
       }, TYPING_DELAY_MS);
-      
+
     } catch (err) {
       console.error('Send error', err);
       toast({ title: 'Error', description: 'Failed to send message.', variant: 'destructive' });
@@ -374,11 +374,11 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                       console.warn('Invalid message structure:', msg);
                       return null;
                     }
-                    
+
                     const prev = messages[idx - 1];
                     const showAvatar = !prev || !prev.role || prev.role !== msg.role;
                     const isUser = msg.role === 'user';
-                    
+
                     return (
                       <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                         <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'} max-w-full`}>
@@ -399,9 +399,8 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
                             </Avatar>
                           )}
                           <div
-                            className={`rounded-lg p-3 ${
-                              isUser ? 'bg-earth-500 text-white' : 'bg-gray-100 text-gray-800'
-                            }`} 
+                            className={`rounded-lg p-3 ${isUser ? 'bg-earth-500 text-white' : 'bg-gray-100 text-gray-800'
+                              }`}
                             style={{ maxWidth: MAX_BUBBLE_WIDTH }}
                           >
                             {/* Content */}
