@@ -189,9 +189,19 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const body = JSON.stringify({ message: prompt, tripId, attachments });
 
       /* ---------- 3 / Supabase Auth token ---------- */
-      const { data: session } = await supabase.auth.getSession();
+      const { data: session, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication error - please refresh and try again.');
+      }
+      
       const token = session.session?.access_token;
-      if (!token) throw new Error('Authentication expired – sign in again.');
+      if (!token) {
+        console.error('No access token found in session:', session);
+        throw new Error('Authentication expired – please sign in again.');
+      }
+      
+      console.log('Using auth token for edge function call');
 
       /* ---------- 4 / Call Edge Function ---------- */
       const res = await fetch(API_ENDPOINT, {
@@ -203,6 +213,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         body,
       });
       const json = await res.json();
+      console.log('Edge function response:', res.status, json);
       if (!res.ok || json.success === false) {
         throw new Error(json.error || `Request failed (${res.status})`);
       }
