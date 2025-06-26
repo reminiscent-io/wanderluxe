@@ -98,6 +98,10 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const token = session.session.access_token;
 
       /* 3. make request */
+      console.log('Making chat request to:', API_ENDPOINT);
+      console.log('Request body:', body);
+      console.log('Auth token present:', !!token);
+
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -107,30 +111,39 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         body,
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Response error data:', errorData);
         throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('Chat response result:', result);
       
-      if (!result.success) {
+      // Handle the response structure from your working code
+      if (result.success === false) {
         throw new Error(result.error || 'Chat request failed');
       }
+
+      // Create proper message structure for chat logs
+      const aiMessage = {
+        id: crypto.randomUUID(),
+        role: 'ai' as const,
+        message: result.aiMessage?.message || result.aiMessage || 'No response received',
+        timestamp: new Date().toISOString(),
+        trip_id: tripId,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        embedding: result.aiMessage?.extractedData || result.extracted || null
+      };
 
       // Add the AI message to the chat logs
       qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [
         ...old,
-        {
-          id: result.aiMessage.id,
-          role: result.aiMessage.role,
-          message: result.aiMessage.message,
-          timestamp: result.aiMessage.timestamp,
-          trip_id: tripId,
-          user_id: user.id,
-          created_at: result.aiMessage.timestamp,
-          embedding: result.aiMessage.extractedData
-        }
+        aiMessage
       ]);
 
       return result;
