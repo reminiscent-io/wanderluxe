@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatLogsKey, useChat } from '@/hooks/useChat';
 import type { ChatLogRow } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
+import { useTripQuery } from '@/hooks/useTripQuery';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -87,66 +88,24 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       /* 1. upload files */
       const attachments = await Promise.all(uploads.map(uploadToSupabase));
 
-      /* 2. fetch trip context data */
-      const [
-        { data: trip },
-        { data: accommodations },
-        { data: activities },
-        { data: reservations },
-        { data: transportation },
-        { data: expenses },
-        { data: tripDays }
-      ] = await Promise.all([
+      /* 2. get trip info and accommodations for context */
+      const [{ data: trip }, { data: accommodations }] = await Promise.all([
         supabase.from('trips').select('destination, arrival_date, departure_date').eq('trip_id', tripId).single(),
-        supabase.from('accommodations').select('hotel, hotel_address, checkin_date, checkout_date, cost, currency').eq('trip_id', tripId),
-        supabase.from('day_activities').select('title, description, activity_time, cost, currency').eq('trip_id', tripId),
-        supabase.from('reservations').select('restaurant_name, restaurant_cuisine_type, reservation_date, number_of_people, notes').eq('trip_id', tripId),
-        supabase.from('transportation').select('transportation_type, departure_location, arrival_location, departure_datetime, arrival_datetime, cost, currency').eq('trip_id', tripId),
-        supabase.from('expenses').select('expense_description, amount, currency, category').eq('trip_id', tripId),
-        supabase.from('trip_days').select('date, day_sequence').eq('trip_id', tripId).order('day_sequence', { ascending: true })
+        supabase.from('accommodations').select('hotel, hotel_address').eq('trip_id', tripId)
       ]);
 
-      /* 3. build trip context */
+      /* 3. build enhanced trip context */
       const primaryHotel = accommodations?.[0];
-      const locationContext = primaryHotel?.hotel_address || trip?.destination || 'Unknown location';
+      const hotelInfo = primaryHotel ? `\nAccommodation: ${primaryHotel.hotel} at ${primaryHotel.hotel_address}` : '';
       
       const tripContext = `
-TRIP OVERVIEW:
-- Destination: ${trip?.destination || 'Not specified'}
-- Arrival Date: ${trip?.arrival_date || 'Not set'}
-- Departure Date: ${trip?.departure_date || 'Not set'}
-- Duration: ${tripDays?.length || 0} days
-- Primary Location: ${locationContext}
+TRAVEL CONTEXT: You are assisting with a trip to ${trip?.destination || 'Italy'} from ${trip?.arrival_date || 'February 12, 2025'} to ${trip?.departure_date || 'February 15, 2025'}.${hotelInfo}
 
-ACCOMMODATIONS:${accommodations?.length ? accommodations.map(acc => `
-  - ${acc.hotel} (${acc.hotel_address})
-    Dates: ${acc.initial_accommodation_day} → ${acc.final_accommodation_day}
-    Cost: ${acc.cost} ${acc.currency}`).join('') : '\n  - No accommodations booked yet'}
-
-RESTAURANT RESERVATIONS:${reservations?.length ? reservations.map(res => `
-  - ${res.restaurant_name} (${res.cuisine_type})
-    Time: ${res.reservation_time}, Party: ${res.party_size}
-    ${res.notes ? `Notes: ${res.notes}` : ''}`).join('') : '\n  - No restaurant reservations yet'}
-
-PLANNED ACTIVITIES:${activities?.length ? activities.map(act => `
-  - ${act.title}: ${act.description}
-    ${act.time ? `Time: ${act.time}` : ''}
-    ${act.cost ? `Cost: ${act.cost} ${act.currency}` : ''}`).join('') : '\n  - No activities planned yet'}
-
-TRANSPORTATION:${transportation?.length ? transportation.map(t => `
-  - ${t.type}: ${t.departure_location} → ${t.arrival_location}
-    Departure: ${t.departure_time}, Arrival: ${t.arrival_time}
-    ${t.cost ? `Cost: ${t.cost} ${t.currency}` : ''}`).join('') : '\n  - No transportation booked yet'}
-
-EXPENSES:${expenses?.length ? expenses.map(e => `
-  - ${e.description}: ${e.cost} ${e.currency} (${e.expense_type})`).join('') : '\n  - No expenses tracked yet'}
-
-TRIP DAYS:${tripDays?.length ? tripDays.map(d => `
-  - Day ${d.day_number}: ${d.date}`).join('') : '\n  - No daily structure set'}
+Please provide specific, actionable travel advice for this destination and timeframe. Focus on authentic local experiences, practical recommendations, and location-specific insights.
 `;
 
       /* 4. prepare enhanced request with context */
-      const enhancedMessage = `Context about my trip:\n${tripContext}\n\nUser question: ${text.trim()}`;
+      const enhancedMessage = `${tripContext}\n\nUser question: ${text.trim()}`;
       const body = JSON.stringify({ message: enhancedMessage, tripId, attachments });
       const { data: session, error: sessionError } = await supabase.auth.getSession();
       
@@ -173,7 +132,6 @@ TRIP DAYS:${tripDays?.length ? tripDays.map(d => `
       }
 
       const result = await response.json();
-      console.log('Chat API response:', result);
       
       // Handle the response structure from the deployed edge function
       if (result.success === false) {
