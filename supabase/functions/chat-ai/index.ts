@@ -112,9 +112,19 @@ serve(async req => {
 
         } catch (streamErr) {
           console.error('Stream processing error:', streamErr);
-          enc(JSON.stringify({ error: 'Stream processing failed' }), "error");
+          enc(JSON.stringify({ 
+            id: crypto.randomUUID(),
+            role: "ai",
+            message: "I encountered an error processing your request. Please try again.",
+            timestamp: new Date().toISOString(),
+            extractedData: null,
+          }), "eom");
         } finally {
-          controller.close();
+          try {
+            controller.close();
+          } catch (closeErr) {
+            console.warn('Controller close error:', closeErr);
+          }
         }
       },
     });
