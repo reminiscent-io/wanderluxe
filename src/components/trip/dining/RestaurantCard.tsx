@@ -102,22 +102,44 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
         </div>
         
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(reservation)}
-            className="text-earth-500"
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(reservation);
+            }}
+            className="p-2 text-earth-500 hover:bg-earth-100 rounded cursor-pointer transition-colors"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                onEdit(reservation);
+              }
+            }}
+            aria-label="Edit reservation"
           >
             <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            className="text-red-500"
+          </span>
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-2 text-red-500 hover:bg-red-100 rounded cursor-pointer transition-colors"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete();
+              }
+            }}
+            aria-label="Delete reservation"
           >
             <Trash2 className="h-4 w-4" />
-          </Button>
+          </span>
         </div>
       </div>
 
