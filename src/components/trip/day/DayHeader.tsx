@@ -107,16 +107,25 @@ const DayHeader: React.FC<DayHeaderProps> = ({
           {/* Left side: edit button, date & title */}
           <div className="flex items-center gap-2 text-white">
             {/* Edit Button */}
-            <button
-              type="button"
+            <span
               onClick={(e) => {
                 e.stopPropagation(); // Prevents toggle button from triggering
                 onEdit();
               }}
-              className="h-8 w-8 text-white hover:bg-white/20 flex items-center justify-center rounded"
+              className="h-8 w-8 text-white hover:bg-white/20 flex items-center justify-center rounded cursor-pointer transition-colors"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onEdit();
+                }
+              }}
+              aria-label="Edit day"
             >
               <Pencil className="h-4 w-4" />
-            </button>
+            </span>
             <span className="text-lg font-medium">{formattedDate}</span>
           </div>
           {/* Right side: chevron only */}

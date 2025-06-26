@@ -155,6 +155,46 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added trip data invalidation to reservation saves matching activity behavior for immediate UI updates
   - Fixed form validation schema making cost and number_of_people optional instead of required
   - Resolved Google Places restaurant search functionality preventing save operations
+- June 26, 2025. Stabilized AI Chat functionality with enhanced edge functions:
+  - Fixed nested button HTML error in chat code blocks by properly handling inline vs block code rendering
+  - Added chat_logs database table integration with proper TypeScript interfaces
+  - Improved edge function stream processing with better error handling and recovery
+  - Enhanced real-time chat subscriptions with proper cleanup and connection stability
+  - Added comprehensive type safety for chat messages with fallback error handling
+  - Improved Perplexity API stream parsing to handle malformed JSON chunks gracefully
+  - Optimized chat performance with debounced stream buffer updates to eliminate slow typing interface
+  - Added batch processing to edge function streaming to reduce excessive chunk emissions and improve responsiveness
+  - Fixed persistent DOM exceptions by replacing nested Button components with accessible span elements in RestaurantCard
+  - Enhanced event handling with proper stopPropagation to prevent interactive element conflicts
+  - Resolved chat authentication issues causing unhandled rejection errors
+  - Improved edge function error handling and database insertion resilience
+  - Restored working non-streaming JSON response functionality by reverting to user's proven architecture
+  - Fixed response parsing compatibility between frontend and deployed edge function
+  - Eliminated unhandled rejection errors by removing streaming dependency conflicts
+  - Added comprehensive trip context integration to provide AI with destination, dates, and accommodation details
+  - Enhanced chat prompting to deliver location-specific travel recommendations and authentic local insights
+  - Optimized chat input performance by memoizing expensive operations and preventing unnecessary re-renders
+  - Fixed slow typing responsiveness through strategic React optimization patterns
+  - Resolved restaurant reservation subscription startup issues by implementing global subscription tracking to prevent duplicates
+  - Enhanced subscription lifecycle management with proper cleanup and stable React hook dependencies
+  - Eliminated multiple subscription creation through component re-render protection and reference stability
+  - Fixed Perplexity API 400 errors by switching to OpenAI GPT-4o-mini as primary chat service due to persistent API issues
+  - Resolved Deno runtime compatibility issues by simplifying edge function and updating standard library version
+  - Added proper authentication error handling with user-friendly messages for chat failures
+  - Implemented robust fallback mechanism ensuring chat functionality remains reliable
+  - Resolved React Syntax Highlighter TypeScript errors with proper type definitions and style imports
+  - Stabilized chat functionality with working code block syntax highlighting and reliable AI responses
+  - Fixed nested button HTML hydration error in DayHeader component by replacing button with accessible span element
+- June 26, 2025. Fixed Perplexity API token overflow errors in chat system:
+  - Identified token limit issue where conversation history exceeded 218,701 tokens vs 0 allowed limit
+  - Switched chat system from Perplexity API back to OpenAI GPT-4o-mini for better reliability
+  - Implemented proper token management by limiting conversation history to last 5 messages
+  - Added conversation message truncation (200 chars max per message) to prevent overflow
+  - Reduced system prompt length by condensing travel assistant instructions
+  - Truncated trip context to 1500 characters maximum to stay within API limits
+- Fixed duplicate chat responses by removing edge function database insertions and handling persistence in frontend
+- Added proper user message persistence before API calls to ensure messages are saved
+- Removed optimistic UI updates that were conflicting with real-time subscriptions
 
 ## User Preferences
 

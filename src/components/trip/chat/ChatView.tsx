@@ -1,601 +1,562 @@
 import React, {
-  useState,
-  useRef,
-  useEffect,
+  memo,
   useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
-import {
-  Button,
-} from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent } from '@/components/ui/card';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+import { chatLogsKey, useChat } from '@/hooks/useChat';
+import type { ChatLogRow } from '@/hooks/useChat';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 import {
-  Send,
   Bot,
-  User,
-  Loader2,
-  Upload,
-  Paperclip,
-  Plus,
-  CornerDownLeft,
   ClipboardCopy,
+  Loader2,
+  Paperclip,
+  Send,
+  Upload,
+  User,
   X,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
-/*****************************
- * UI constants
- *****************************/
-const TYPING_DELAY_MS = 50; // 50ms per character for smooth readable typing
-const MAX_BUBBLE_WIDTH = '65ch';
+const API_ENDPOINT =
+  'https://arnengxblsfnezrqcsxw.functions.supabase.co/chat-ai';
+const MAX_BUBBLE_WIDTH = '68ch';
 
-/*****************************
- * Types
- *****************************/
-interface ChatMessage {
+/* ------------------------------------------------------------------ */
+/* Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Extract the assistant message text (and any extracted data) from the
+ * heterogeneous Edge‑Function responses we receive.
+ */
+function extractAssistantMessage(res: any): {
+  text: string;
+  extractedData?: unknown;
+} {
+  // New format ➜ { success: true, aiMessage: { message, extractedData } }
+  if (res?.aiMessage?.message) {
+    return {
+      text: res.aiMessage.message,
+      extractedData: res.aiMessage.extractedData,
+    };
+  }
+  // Old format ➜ { aiMessage: string, extracted: unknown }
+  if (typeof res?.aiMessage === 'string') {
+    return { text: res.aiMessage, extractedData: res.extracted };
+  }
+  // Raw OpenAI proxy ➜ { choices: [ { message: { content } } ] }
+  if (Array.isArray(res?.choices)) {
+    return { text: res.choices[0]?.message?.content ?? '', extractedData: null };
+  }
+  // Fallback – stringify whole object so we see *something* useful.
+  return { text: JSON.stringify(res, null, 2), extractedData: null };
+}
+
+// Matches citation tokens like: citeturn3search4
+const CITATION_RE = /\uE208cite\uE209.*?\uE20D/g;
+const cleanCitations = (md: string) => md.replace(CITATION_RE, '');
+
+/* ------------------------------------------------------------------ */
+/* Types                                                              */
+/* ------------------------------------------------------------------ */
+interface ChatMessageDB {
   id: string;
   role: 'user' | 'ai';
   message: string;
   timestamp: string;
-  user_id?: string;
-  attachments?: {
-    type: 'image' | 'pdf';
-    url: string;
-    name: string;
-  }[];
-  extractedData?: {
-    type: 'hotel' | 'flight' | 'reservation' | 'activity';
-    data: any;
-    missingFields?: string[];
-    readyToAdd?: boolean;
-  };
+  extractedData?: unknown;
+  attachments?: { type: 'image' | 'pdf'; url: string; name: string }[];
 }
 
 interface ChatViewProps {
   tripId: string;
 }
 
-/*****************************
- * Component
- *****************************/
+/* ------------------------------------------------------------------ */
+/* Main Component                                                     */
+/* ------------------------------------------------------------------ */
 const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [typingBuffer, setTypingBuffer] = useState<string | null>(null);
-  const [skipTyping, setSkipTyping] = useState(false);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const { user } = useAuth();
   const { toast } = useToast();
+  const qc = useQueryClient();
 
-  /*****************************
-   * Helper: scroll to bottom
-   *****************************/
-  const scrollToBottom = useCallback(() => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { data: rawMessages = [], isLoading } = useChat(tripId);
+
+  // Transform DB rows → UI messages.
+  const messages: ChatMessageDB[] = useMemo(
+    () =>
+      rawMessages
+        .filter(
+          (m: ChatLogRow) => m && m.id && m.role && m.message && m.timestamp,
+        )
+        .map((m: ChatLogRow) => ({
+          id: m.id,
+          role: m.role as 'user' | 'ai',
+          message: m.message,
+          timestamp: m.timestamp,
+          extractedData: m.embedding,
+          attachments: undefined,
+        })),
+    [rawMessages],
+  );
+
+  /* ------------------------------ state ------------------------------ */
+  const [text, setText] = useState('');
+  const [uploads, setUploads] = useState<File[]>([]);
+
+  /* --------------------------- auto‑scroll --------------------------- */
+  const scrollBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+  useEffect(scrollBottom, [messages.length]);
 
-  useEffect(() => {
-    if (!typingBuffer) scrollToBottom();
-  }, [messages, typingBuffer, scrollToBottom]);
+  /* --------------------------- file utils --------------------------- */
+  const okTypes = useMemo(
+    () => ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
+    [],
+  );
+  const validate = useCallback(
+    (file: File) => {
+      if (!okTypes.includes(file.type)) return 'Only JPG, PNG or PDF files are allowed';
+      if (file.size > 10 * 1024 * 1024) return 'Max file size is 10 MB';
+      return null;
+    },
+    [okTypes],
+  );
 
-  /*****************************
-   * Load chat history from localStorage
-   *****************************/
-  useEffect(() => {
-    const loadChatHistory = () => {
-      if (!tripId) return;
-      setIsLoadingHistory(true);
-
-      try {
-        const localKey = `chat_history_${tripId}`;
-        const localData = localStorage.getItem(localKey);
-
-        if (localData) {
-          const parsed = JSON.parse(localData);
-          if (Array.isArray(parsed)) {
-            const validMessages = parsed.filter((msg: any): msg is ChatMessage => {
-              return msg &&
-                typeof msg.id === 'string' &&
-                (msg.role === 'user' || msg.role === 'ai') &&
-                typeof msg.message === 'string' &&
-                typeof msg.timestamp === 'string';
-            });
-            setMessages(validMessages);
-          }
-        }
-      } catch (err) {
-        console.error('Error loading chat history from localStorage', err);
-      } finally {
-        setIsLoadingHistory(false);
-      }
-    };
-
-    loadChatHistory();
-  }, [tripId]);
-
-  /*****************************
-   * Save to localStorage
-   *****************************/
-  const saveToLocalStorage = useCallback((updatedMessages: ChatMessage[]) => {
-    try {
-      const localKey = `chat_history_${tripId}`;
-      localStorage.setItem(localKey, JSON.stringify(updatedMessages));
-    } catch (err) {
-      console.error('Error saving to localStorage', err);
-    }
-  }, [tripId]);
-
-  /*****************************
-   * File upload validation
-   *****************************/
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: 'Invalid file',
-        description: 'Upload JPG, PNG, or PDF.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: 'File too large',
-        description: 'Max 10 MB.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setUploadedFiles([file]);
-    setNewMessage(`📎 ${file.name} – ready to analyze`);
-  };
-
-  /*****************************
-   * Upload to Supabase Storage
-   *****************************/
-  const uploadToSupabase = async (file: File): Promise<string> => {
-    const ext = file.name.split('.').pop();
-    const fileName = `${user?.id}/${tripId}/${Date.now()}.${ext}`;
-    const { data, error } = await supabase.storage
-      .from('chat-attachments')
-      .upload(fileName, file);
-    if (error) throw error;
-    const { data: urlData } = supabase.storage
-      .from('chat-attachments')
-      .getPublicUrl(fileName);
-    return urlData.publicUrl;
-  };
-
-  /*****************************
-   * Send message & stream reply
-   *****************************/
-  const sendMessage = async () => {
-    if ((!newMessage.trim() && uploadedFiles.length === 0) || !user) return;
-    const userMsgText = newMessage.trim() || 'Analyze this receipt';
-    setNewMessage('');
-    setIsLoading(true);
-
-    // Handle attachments
-    const attachments: ChatMessage['attachments'] = [];
-    if (uploadedFiles.length) {
-      try {
-        for (const f of uploadedFiles) {
-          const url = await uploadToSupabase(f);
-          attachments.push({
-            type: f.type.startsWith('image/') ? 'image' : 'pdf',
-            url,
-            name: f.name,
-          });
-        }
-      } catch (err) {
-        console.error('Upload error', err);
-        toast({ title: 'Upload error', description: 'File upload failed.', variant: 'destructive' });
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    // Create user message
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      message: userMsgText,
-      timestamp: new Date().toISOString(),
-      user_id: user.id,
-      attachments: attachments.length ? attachments : undefined,
-    };
-
-    // Add user message immediately
-    const updatedWithUser = [...messages, userMessage];
-    setMessages(updatedWithUser);
-    setUploadedFiles([]);
-
-    try {
-      // Call AI function
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: { message: userMsgText, tripId, attachments },
-      });
-
+  const uploadToSupabase = useCallback(
+    async (file: File) => {
+      const ext = file.name.split('.').pop();
+      const key = `${user!.id}/${tripId}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from('chat-attachments')
+        .upload(key, file);
       if (error) throw error;
-
-      // Create AI response from authentic data
-      const aiMessage: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        role: 'ai',
-        message: data?.aiMessage?.message || '',
-        timestamp: new Date().toISOString(),
-        extractedData: data?.aiMessage?.extractedData,
+      const { data } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(key);
+      return {
+        url: data.publicUrl,
+        type: file.type.startsWith('image/') ? 'image' : 'pdf',
+        name: file.name,
       };
+    },
+    [tripId, user],
+  );
 
-      // Add placeholder for streaming
-      const placeholderId = `placeholder-${Date.now()}`;
-      setMessages(prev => [
-        ...prev,
-        { ...aiMessage, id: placeholderId, message: '' },
-      ]);
+  /* -------------------------- chat mutation -------------------------- */
+  const { mutate: send, isPending: isSending } = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Not authenticated');
 
-      // Start streaming animation
-      const fullText = aiMessage.message;
-      setTypingBuffer(fullText);
-      setSkipTyping(false);
+      /* ---------- 1 / Upload attachments ---------- */
+      const attachments = await Promise.all(uploads.map(uploadToSupabase));
 
-      let index = 0;
-      const streamInterval = setInterval(() => {
-        if (skipTyping) {
-          index = fullText.length;
-        } else {
-          index += 1;
+      /* ---------- 2 / Compose enhanced prompt ---------- */
+      const { data: trip } = await supabase
+        .from('trips')
+        .select('destination, arrival_date, departure_date')
+        .eq('trip_id', tripId)
+        .single();
+      const destination = trip?.destination ?? 'Unknown Destination';
+      const arrival = trip?.arrival_date ?? 'Unknown Date';
+      const departure = trip?.departure_date ?? 'Unknown Date';
+      const userMessage = text.trim();
+      
+      // User message will be persisted by the edge function
+      
+      const prompt = `TRAVEL CONTEXT: You are assisting with a trip to ${destination} from ${arrival} to ${departure}.
+\n\nUser question: ${userMessage}`;
+      const body = JSON.stringify({ message: prompt, tripId, attachments });
+
+      /* ---------- 3 / Supabase Auth token ---------- */
+      const { data: session, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication error - please refresh and try again.');
+      }
+      
+      const token = session.session?.access_token;
+      if (!token) {
+        console.error('No access token found in session:', session);
+        throw new Error('Authentication expired – please sign in again.');
+      }
+      
+      console.log('Using auth token for edge function call');
+
+      /* ---------- 4 / Call Edge Function ---------- */
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body,
+      });
+      const json = await res.json();
+      console.log('Edge function response:', res.status, json);
+      if (!res.ok || json.success === false) {
+        if (res.status === 401) {
+          throw new Error('Authentication failed - please refresh and sign in again.');
         }
+        throw new Error(json.error || `Request failed (${res.status})`);
+      }
 
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === placeholderId ? { ...m, message: fullText.slice(0, index) } : m,
-          ),
-        );
+      /* ---------- 5 / Normalise response ---------- */
+      let { text: aiText, extractedData } = extractAssistantMessage(json);
+      aiText = cleanCitations(aiText) || 'No response received';
 
-        if (index >= fullText.length) {
-          clearInterval(streamInterval);
-          setTypingBuffer(null);
+      /* ---------- 6 / Optimistic UI update ---------- */
+      // Messages are persisted by edge function, real-time subscription updates UI
 
-          // Save final state to localStorage
-          const finalMessages = [...updatedWithUser, aiMessage];
-          saveToLocalStorage(finalMessages);
-
-          // Update with final message
-          setMessages(finalMessages);
-        }
-      }, TYPING_DELAY_MS);
-
-    } catch (err) {
-      console.error('Send error', err);
-      toast({ title: 'Error', description: 'Failed to send message.', variant: 'destructive' });
-      // Remove user message on error
-      setMessages(messages);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /*****************************
-   * Add to itinerary
-   *****************************/
-  const addToItinerary = async (extracted: NonNullable<ChatMessage['extractedData']>) => {
-    try {
-      setIsLoading(true);
-      toast({ title: 'Success', description: 'Added to itinerary!' });
-    } catch (err) {
+      return json;
+    },
+    onSuccess: () => {
+      setText('');
+      setUploads([]);
+    },
+    onError: (err) => {
       console.error(err);
-      toast({ title: 'Error', description: 'Could not add to itinerary.', variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      toast({
+        title: 'Assistant Error',
+        description:
+          err instanceof Error ? err.message : 'Something went wrong – try again.',
+        variant: 'destructive',
+      });
+    },
+  });
 
-  /*****************************
-   * Keyboard shortcut
-   *****************************/
-  const onKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  /*****************************
-   * Copy button
-   *****************************/
-  const CopyBtn: React.FC<{ text: string }> = ({ text }) => {
-    return (
-      <button
-        onClick={() => navigator.clipboard.writeText(text)}
-        className="absolute top-1 right-1 p-1 text-gray-500 hover:text-gray-800"
-        title="Copy to clipboard"
-      >
-        <ClipboardCopy className="w-4 h-4" />
-      </button>
-    );
-  };
-
-  /*****************************
-   * Render
-   *****************************/
-  if (isLoadingHistory) {
+  /* ------------------------------------------------------------------ */
+  /* Render                                                             */
+  /* ------------------------------------------------------------------ */
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-earth-500" />
-        <span className="ml-2 text-earth-600">Loading chat history…</span>
+        <span className="ml-2 text-earth-600">Loading chat…</span>
       </div>
     );
   }
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex flex-col h-full max-h-[600px]">
-        {/* Header */}
-        <header className="mb-4">
-          <h3 className="text-lg font-semibold text-earth-800">Trip Assistant</h3>
-          <p className="text-sm text-earth-600">Ask anything about your trip!</p>
-        </header>
+      {/* Header */}
+      <header className="mb-4">
+        <h3 className="text-lg font-semibold text-earth-800">Trip Assistant</h3>
+        <p className="text-sm text-earth-600">
+          Ask anything about your trip or drop travel documents to analyze.
+        </p>
+      </header>
 
-        {/* Messages */}
-        <Card className="flex-1 mb-4">
-          <CardContent className="p-0">
-            <ScrollArea className="h-96 p-4 pb-[calc(theme(spacing[4])+env(safe-area-inset-bottom))]">
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full py-8 text-center">
-                  <Bot className="w-12 h-12 text-earth-400 mb-4" />
-                  <p className="text-earth-600 mb-2">No messages yet</p>
-                  <p className="text-sm text-earth-500">Start planning your adventure!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages.filter(Boolean).map((msg, idx) => {
-                    // Enhanced safety checks
-                    if (!msg || typeof msg !== 'object' || !msg.role || !msg.id || !msg.message) {
-                      console.warn('Invalid message structure:', msg);
-                      return null;
-                    }
+      {/* Messages */}
+      <Card className="flex-1 mb-4">
+        <CardContent className="p-0">
+          <ScrollArea className="h-96 p-4" aria-live="polite">
+            <div className="space-y-4">
+              {messages.map((m) => (
+                <MemoBubble key={m.id} msg={m} isUser={m.role === 'user'} user={user} />
+              ))}
 
-                    const prev = messages[idx - 1];
-                    const showAvatar = !prev || !prev.role || prev.role !== msg.role;
-                    const isUser = msg.role === 'user';
-
-                    return (
-                      <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'} max-w-full`}>
-                          {showAvatar && (
-                            <Avatar className="w-8 h-8 flex-shrink-0">
-                              {isUser ? (
-                                <>
-                                  <AvatarImage src={user?.user_metadata?.avatar_url} />
-                                  <AvatarFallback>
-                                    <User className="w-4 h-4" />
-                                  </AvatarFallback>
-                                </>
-                              ) : (
-                                <AvatarFallback className="bg-earth-500 text-white">
-                                  <Bot className="w-4 h-4" />
-                                </AvatarFallback>
-                              )}
-                            </Avatar>
-                          )}
-                          <div
-                            className={`rounded-lg p-3 ${isUser ? 'bg-earth-500 text-white' : 'bg-gray-100 text-gray-800'
-                              }`}
-                            style={{ maxWidth: MAX_BUBBLE_WIDTH }}
-                          >
-                            {/* Content */}
-                            {isUser ? (
-                              <>
-                                {/* Attachments */}
-                                {msg.attachments?.length && (
-                                  <div className="mb-3">
-                                    {msg.attachments.map((a, i) => (
-                                      <div key={i} className="flex items-center gap-2 p-2 bg-earth-400/20 rounded-md mb-2">
-                                        <Paperclip className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{a.name}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                              </>
-                            ) : (
-                              <div className="text-sm prose prose-sm max-w-none">
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    a: ({ href, children, ...props }) => (
-                                      <a
-                                        href={href}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-earth-600 hover:text-earth-700 font-medium"
-                                        {...props}
-                                      >
-                                        {children}
-                                      </a>
-                                    ),
-                                    code: ({ children, ...props }) => (
-                                      <code className="relative bg-gray-200 px-1 rounded" {...props}>
-                                        {children}
-                                        <CopyBtn text={String(children)} />
-                                      </code>
-                                    ),
-                                  }}
-                                >
-                                  {msg.message}
-                                </ReactMarkdown>
-                              </div>
-                            )}
-
-                            {/* Timestamp */}
-                            <p
-                              className={`text-xs mt-2 ${isUser ? 'text-earth-200' : 'text-gray-500'}`}
-                              title={new Date(msg.timestamp).toLocaleString()}
-                            >
-                              {new Date(msg.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Extracted data card */}
-                        {msg.extractedData && (
-                          <div className="mt-2 max-w-[80%] ml-10">
-                            <Card className="bg-green-50 border-green-200">
-                              <CardContent className="p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Plus className="w-4 h-4 text-green-600" />
-                                  <span className="font-medium text-green-800">
-                                    {msg.extractedData.type.replace(/^./, s => s.toUpperCase())} detected
-                                  </span>
-                                </div>
-                                <div className="relative text-xs text-green-700 bg-green-100 p-2 rounded">
-                                  <pre className="whitespace-pre-wrap">
-                                    {JSON.stringify(msg.extractedData.data, null, 2)}
-                                  </pre>
-                                  <CopyBtn text={JSON.stringify(msg.extractedData.data, null, 2)} />
-                                </div>
-                                {msg.extractedData.missingFields?.length ? (
-                                  <div className="text-sm text-amber-600 my-2 p-2 bg-amber-50 rounded">
-                                    <strong>Missing:</strong> {msg.extractedData.missingFields.join(', ')}
-                                  </div>
-                                ) : null}
-                                {msg.extractedData.readyToAdd && (
-                                  <Button
-                                    size="sm"
-                                    className="bg-green-600 hover:bg-green-700"
-                                    onClick={() => addToItinerary(msg.extractedData!)}
-                                    disabled={isLoading}
-                                  >
-                                    <Plus className="w-4 h-4 mr-1" /> Add to itinerary
-                                  </Button>
-                                )}
-                              </CardContent>
-                            </Card>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {/* Loader bubble while waiting */}
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className="flex gap-2">
-                        <Avatar className="w-8 h-8 flex-shrink-0">
-                          <AvatarFallback className="bg-earth-500 text-white">
-                            <Bot className="w-4 h-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm text-gray-600">Planning your trip…</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Skip typing button */}
-                  {typingBuffer && (
-                    <button
-                      onClick={() => setSkipTyping(true)}
-                      className="self-start text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+              {/* Typing indicator */}
+              {isSending && (
+                <div className="flex justify-start">
+                  <div className="flex gap-2 flex-row max-w-full">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-earth-500 text-white">
+                        <Bot className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div
+                      className="rounded-lg p-3 bg-earth-100 text-earth-800"
+                      style={{ maxWidth: MAX_BUBBLE_WIDTH }}
                     >
-                      <CornerDownLeft className="w-3 h-3" /> Skip typing
-                    </button>
-                  )}
-
-                  {/* Scroll anchor */}
-                  <div ref={scrollRef} />
+                      <span className="animate-pulse text-earth-600">
+                        Typing<span className="inline-block w-1 h-1 mx-0.5 rounded-full bg-earth-600 animate-bounce"></span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
 
-        {/* Upload preview */}
-        {uploadedFiles.length > 0 && (
-          <div className="mb-3 p-3 bg-earth-50 border border-earth-200 rounded-md">
-            {uploadedFiles.map((f, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Paperclip className="w-4 h-4 text-earth-600" />
-                <span className="text-sm text-earth-700">{f.name}</span>
-                <button
-                  className="ml-auto p-1 text-earth-600 hover:text-earth-800"
-                  onClick={() => setUploadedFiles([])}
-                  title="Remove"
+              <div ref={scrollRef} />
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* Upload preview */}
+      {uploads.length > 0 && (
+        <div className="mb-3 p-3 bg-earth-50 border border-earth-200 rounded-md space-y-2">
+          {uploads.map((f) => (
+            <div key={f.name} className="flex items-center gap-2">
+              <Paperclip className="w-4 h-4" />
+              <span className="text-sm truncate max-w-[16rem]">{f.name}</span>
+              <button
+                onClick={() => setUploads((u) => u.filter((x) => x !== f))}
+                className="ml-auto"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Input bar */}
+      <ChatBar
+        text={text}
+        setText={setText}
+        uploads={uploads}
+        setUploads={setUploads}
+        onSend={send}
+        disabled={isSending}
+        validate={validate}
+      />
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/* Chat Bubble                                                        */
+/* ------------------------------------------------------------------ */
+const Bubble = ({
+  msg,
+  isUser,
+  user,
+}: {
+  msg: ChatMessageDB;
+  isUser: boolean;
+  user: any;
+}) => {
+  const markdown = useMemo(() => cleanCitations(msg.message), [msg.message]);
+
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'} max-w-full`}
+      >
+        {/* Avatar */}
+        <Avatar className="w-8 h-8 shadow-md shadow-black/10">
+          {isUser ? (
+            <>
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback>
+                <User className="w-4 h-4" />
+              </AvatarFallback>
+            </>
+          ) : (
+            <AvatarFallback className="bg-earth-500 text-white">
+              <Bot className="w-4 h-4" />
+            </AvatarFallback>
+          )}
+        </Avatar>
+
+        {/* Bubble */}
+        <div
+          className={`rounded-lg p-3 ${
+            isUser
+              ? 'bg-earth-500 text-white'
+              : 'bg-earth-100 text-earth-800 dark:bg-earth-800 dark:text-cream-100'
+          }`}
+          style={{ maxWidth: MAX_BUBBLE_WIDTH }}
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ href, children }) => (
+                <a
+                  href={href!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-earth-600 hover:underline font-medium"
                 >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Input bar */}
-        <div className="flex gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept="image/*,.pdf"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading}
-            title="Upload receipt or document"
-            className="border-earth-300 text-earth-600 hover:bg-earth-50"
+                  {children}
+                </a>
+              ),
+              code({ node, className, children, ...props }: any) {
+                const match = /language-(\w+)/.exec(className || '');
+                const lang = match ? match[1] : '';
+                const isInline = !match;
+                
+                if (isInline) {
+                  return (
+                    <code className="bg-gray-200 px-1 rounded text-[0.88rem]" {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+                return (
+                  <div className="relative group">
+                    <SyntaxHighlighter
+                      language={lang}
+                      style={prism}
+                      PreTag="div"
+                      wrapLongLines={true}
+                      customStyle={{
+                        borderRadius: '0.5rem',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(String(children));
+                      }}
+                      className="absolute top-2 right-2 p-1 hover:bg-gray-300 rounded cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(String(children));
+                        }
+                      }}
+                    >
+                      <ClipboardCopy className="w-3 h-3 text-gray-500" />
+                    </span>
+                  </div>
+                );
+              },
+            }}
           >
-            <Upload className="w-4 h-4" />
-          </Button>
-          <Input
-            value={newMessage}
-            onChange={e => setNewMessage(e.target.value)}
-            onKeyPress={onKeyPress}
-            placeholder="Ask about your trip or upload a receipt…"
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button
-            onClick={sendMessage}
-            disabled={
-              isLoading || (!newMessage.trim() && uploadedFiles.length === 0)
-            }
-            size="icon"
-            className="bg-earth-500 hover:bg-earth-600"
+            {markdown}
+          </ReactMarkdown>
+          <p
+            className={`uppercase tracking-wide text-[10px] opacity-70 mt-2 ${
+              isUser ? 'text-earth-200' : 'text-earth-600'
+            }`}
+            title={new Date(msg.timestamp).toLocaleString()}
           >
-            <Send className="w-4 h-4" />
-          </Button>
+            {new Date(msg.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </p>
         </div>
       </div>
     </div>
   );
 };
+const MemoBubble = memo(Bubble);
+
+/* ------------------------------------------------------------------ */
+/* Chat Bar                                                           */
+/* ------------------------------------------------------------------ */
+const ChatBar = memo(function ChatBar({
+  text,
+  setText,
+  uploads,
+  setUploads,
+  onSend,
+  disabled,
+  validate,
+}: {
+  text: string;
+  setText: (s: string) => void;
+  uploads: File[];
+  setUploads: React.Dispatch<React.SetStateAction<File[]>>;
+  onSend: () => void;
+  disabled: boolean;
+  validate: (f: File) => string | null;
+}) {
+  const { toast } = useToast();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files) return;
+      const list: File[] = [];
+      Array.from(files).forEach((f) => {
+        const err = validate(f);
+        if (err) {
+          toast({
+            title: 'Invalid file',
+            description: err,
+            variant: 'destructive',
+          });
+        } else {
+          list.push(f);
+        }
+      });
+      setUploads((prev) => [...prev, ...list]);
+    },
+    [validate, setUploads, toast],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        onSend();
+      }
+    },
+    [onSend],
+  );
+
+  return (
+    <div className="flex gap-2">
+      <input
+        type="file"
+        ref={fileRef}
+        hidden
+        multiple
+        accept="image/*,.pdf"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => fileRef.current?.click()}
+        disabled={disabled}
+      >
+        <Upload className="w-4 h-4" />
+      </Button>
+
+      <Input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Type a message…"
+        onKeyDown={handleKeyDown}
+        disabled={disabled}
+        className="flex-1"
+      />
+
+      <Button
+        onClick={onSend}
+        size="icon"
+        disabled={disabled || (!text.trim() && uploads.length === 0)}
+        className="bg-earth-500 hover:bg-earth-600"
+      >
+        <Send className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+});
 
 export default ChatView;

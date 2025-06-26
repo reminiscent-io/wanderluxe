@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+// Global subscription tracking to prevent duplicates
+const activeSubscriptions = new Set<string>();
 
 /**
  * Custom hook for fetching restaurant reservations with real-time updates
@@ -13,15 +16,33 @@ import { toast } from 'sonner';
 export function useReservationsRealtime(dayId: string, tripId: string | undefined) {
   const queryClient = useQueryClient();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const channelRef = useRef<any>(null);
+  
+  const subscriptionKey = `reservations:${dayId}`;
+
+  // Memoize the invalidation callback to prevent unnecessary re-subscriptions
+  const handleReservationChange = useCallback((payload: any) => {
+    console.log('Reservation change detected:', payload);
+    queryClient.invalidateQueries({
+      queryKey: ['reservations', tripId, dayId],
+    });
+  }, [queryClient, tripId, dayId]);
 
   // Set up real-time subscription for reservations
   useEffect(() => {
     if (!dayId || !tripId) return;
 
+    // Check if subscription already exists for this day
+    if (activeSubscriptions.has(subscriptionKey)) {
+      console.log(`Subscription already exists for day ${dayId}, skipping`);
+      return;
+    }
+
     console.log(`Setting up reservation subscription for day ${dayId}`);
+    activeSubscriptions.add(subscriptionKey);
 
     const channel = supabase
-      .channel(`reservations:${dayId}`)
+      .channel(subscriptionKey)
       .on(
         'postgres_changes',
         {
@@ -30,25 +51,32 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
           table: 'reservations',
           filter: `day_id=eq.${dayId}`,
         },
-        (payload) => {
-          console.log('Reservation change detected:', payload);
-          queryClient.invalidateQueries({
-            queryKey: ['reservations', tripId, dayId],
-          });
-        }
+        handleReservationChange
       )
       .subscribe((status) => {
         console.log(`Reservation subscription status for day ${dayId}:`, status);
         setIsSubscribed(status === 'SUBSCRIBED');
+        
+        // Handle channel errors with automatic reconnection
+        if (status === 'CHANNEL_ERROR') {
+          console.warn(`Channel error for day ${dayId}, will retry automatically`);
+          // Supabase will automatically retry, no manual intervention needed
+        }
       });
+
+    channelRef.current = channel;
 
     // Cleanup subscription on unmount
     return () => {
       console.log(`Cleaning up reservation subscription for day ${dayId}`);
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      activeSubscriptions.delete(subscriptionKey);
       setIsSubscribed(false);
     };
-  }, [dayId, tripId, queryClient]);
+  }, [dayId, tripId, subscriptionKey, handleReservationChange]);
 
   // Query for reservations
   const { 
