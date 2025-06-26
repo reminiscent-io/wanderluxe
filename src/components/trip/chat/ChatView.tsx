@@ -15,9 +15,7 @@ import remarkGfm from 'remark-gfm';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 const MAX_BUBBLE_WIDTH = '65ch';
-const API_ENDPOINT = import.meta.env.VITE_SUPABASE_EDGE_URL
-  ? `${import.meta.env.VITE_SUPABASE_EDGE_URL}/chat-ai`
-  : 'https://arnengxblsfnezrqcsxw.functions.supabase.co/chat-ai';
+const API_ENDPOINT = 'https://arnengxblsfnezrqcsxw.functions.supabase.co/chat-ai';
 
 interface ChatMessageDB {
   id: string;
@@ -39,7 +37,19 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
-  const { data: messages = [], isLoading } = useChat(tripId);
+  const { data: rawMessages = [], isLoading } = useChat(tripId);
+  
+  // Transform raw messages to match ChatMessageDB interface
+  const messages: ChatMessageDB[] = rawMessages
+    .filter((msg: any) => msg && msg.id && msg.role && msg.message && msg.timestamp)
+    .map((msg: any) => ({
+      id: msg.id,
+      role: msg.role as 'user' | 'ai',
+      message: msg.message,
+      timestamp: msg.timestamp,
+      extractedData: msg.extracted_data,
+      attachments: msg.attachments
+    }));
 
   const [text, setText] = useState('');
   const [uploads, setUploads] = useState<File[]>([]);
@@ -67,7 +77,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   };
 
   /* ------------------------------ mutation send */
-  const { mutate: send, isLoading: isSending } = useMutation({
+  const { mutate: send, isPending: isSending } = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
 
@@ -232,17 +242,31 @@ const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; us
                 {children}
               </a>
             ),
-            code: ({ children }) => (
-              <code className="relative bg-gray-200 px-1 rounded">
-                {children}
-                <button
-                  onClick={() => navigator.clipboard.writeText(String(children))}
-                  className="absolute top-0.5 right-0.5"
-                >
-                  <ClipboardCopy className="w-3 h-3 text-gray-500" />
-                </button>
-              </code>
-            ),
+            code: ({ children, className }) => {
+              const isInlineCode = !className;
+              if (isInlineCode) {
+                return (
+                  <code className="bg-gray-200 px-1 rounded text-sm">
+                    {children}
+                  </code>
+                );
+              }
+              // Block code with copy button
+              return (
+                <div className="relative">
+                  <code className="block bg-gray-200 p-2 rounded text-sm overflow-x-auto">
+                    {children}
+                  </code>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(String(children))}
+                    className="absolute top-2 right-2 p-1 hover:bg-gray-300 rounded"
+                    type="button"
+                  >
+                    <ClipboardCopy className="w-3 h-3 text-gray-500" />
+                  </button>
+                </div>
+              );
+            },
           }}
         >
           {msg.message}

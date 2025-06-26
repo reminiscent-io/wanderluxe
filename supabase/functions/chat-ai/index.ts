@@ -61,6 +61,10 @@ serve(async req => {
     }
 
     /* ---------- SSE response */
+    if (!perpRes.ok) {
+      throw new Error(`Perplexity API error: ${perpRes.status} ${perpRes.statusText}`);
+    }
+
     const reader = perpRes.body!.getReader();
     const stream = new ReadableStream({
       async start(controller) {
@@ -69,24 +73,49 @@ serve(async req => {
         const decoder = new TextDecoder();
         let full = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const txt = decoder.decode(value);
-          full += txt;
-          enc(txt);
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+                
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content || '';
+                  if (content) {
+                    full += content;
+                    enc(content);
+                  }
+                } catch (parseErr) {
+                  // Skip invalid JSON chunks
+                  console.warn('Failed to parse chunk:', data);
+                }
+              }
+            }
+          }
+
+          await persist(supabase, tripId, user.id, message, full, extractedResults);
+          enc(JSON.stringify({
+            id: crypto.randomUUID(),
+            role: "ai",
+            message: full,
+            timestamp: new Date().toISOString(),
+            extractedData: extractedResults,
+          }), "eom");
+
+        } catch (streamErr) {
+          console.error('Stream processing error:', streamErr);
+          enc(JSON.stringify({ error: 'Stream processing failed' }), "error");
+        } finally {
+          controller.close();
         }
-
-        await persist(supabase, tripId, user.id, message, full, extractedResults);
-        enc(JSON.stringify({
-          id: crypto.randomUUID(),
-          role: "ai",
-          message: full,
-          timestamp: new Date().toISOString(),
-          extractedData: extractedResults,
-        }), "eom");
-
-        controller.close();
       },
     });
 
