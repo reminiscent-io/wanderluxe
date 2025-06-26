@@ -15,7 +15,9 @@ const PERPLEXITY_MODEL = "llama-3.1-sonar-small-128k-online";
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://app.wanderluxe.com",
-  "http://localhost:5173"
+  "http://localhost:5173",
+  "https://wanderluxe.io",
+  "https://www.wanderluxe.io"
 ];
 
 // Precompile regex for detecting luxury hotels (4★+ brands)
