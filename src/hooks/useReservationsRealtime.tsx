@@ -56,6 +56,12 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
       .subscribe((status) => {
         console.log(`Reservation subscription status for day ${dayId}:`, status);
         setIsSubscribed(status === 'SUBSCRIBED');
+        
+        // Handle channel errors with automatic reconnection
+        if (status === 'CHANNEL_ERROR') {
+          console.warn(`Channel error for day ${dayId}, will retry automatically`);
+          // Supabase will automatically retry, no manual intervention needed
+        }
       });
 
     channelRef.current = channel;

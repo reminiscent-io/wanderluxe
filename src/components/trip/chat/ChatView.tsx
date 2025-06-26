@@ -27,12 +27,10 @@ interface ChatMessageDB {
   attachments?: { type: 'image' | 'pdf'; url: string; name: string }[];
 }
 
-
-
 interface ChatViewProps { tripId: string }
 
 /* ------------------------------------------------------------------ */
-/* main component                                                     */
+/* Main component                                                     */
 /* ------------------------------------------------------------------ */
 const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const { user } = useAuth();
@@ -41,9 +39,9 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const qc = useQueryClient();
 
   const { data: rawMessages = [], isLoading, addMessage } = useChat(tripId);
-  
-  // Memoize expensive message transformation to prevent re-computation on each render
-  const messages: ChatMessageDB[] = useMemo(() => 
+
+  // Memoize transformation of raw messages into ChatMessageDB format
+  const messages: ChatMessageDB[] = useMemo(() =>
     rawMessages
       .filter((msg: ChatLogRow) => msg && msg.id && msg.role && msg.message && msg.timestamp)
       .map((msg: ChatLogRow) => ({
@@ -53,25 +51,27 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         timestamp: msg.timestamp,
         extractedData: msg.embedding,
         attachments: undefined
-      })), [rawMessages]);
+      })), 
+    [rawMessages]
+  );
 
   const [text, setText] = useState('');
   const [uploads, setUploads] = useState<File[]>([]);
 
-  /* auto-scroll to bottom */
+  /* Auto-scroll to bottom when messages change */
   const scrollBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
-  
   useEffect(scrollBottom, [messages.length]);
 
-  /* ------------------------------ file helpers - memoized for performance */
+  /* ------------------------------ file helpers ------------------------------ */
   const okTypes = useMemo(() => ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'], []);
-  
   const validate = useCallback((f: File) =>
-    !okTypes.includes(f.type) ? 'Only JPG, PNG or PDF'
-      : f.size > 10 * 1024 * 1024 ? 'Max 10 MB'
-      : null, [okTypes]);
+    !okTypes.includes(f.type) ? 'Only JPG, PNG or PDF files are allowed'
+      : f.size > 10 * 1024 * 1024 ? 'Max file size is 10 MB'
+      : null, 
+    [okTypes]
+  );
 
   const uploadToSupabase = useCallback(async (f: File) => {
     const ext = f.name.split('.').pop();
@@ -82,43 +82,41 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     return { url: data.publicUrl, type: f.type.startsWith('image/') ? 'image' : 'pdf', name: f.name };
   }, [user, tripId]);
 
-  /* ------------------------------ mutation send */
+  /* ------------------------------ mutation: send message ------------------------------ */
   const { mutate: send, isPending: isSending } = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
 
-      /* 1. upload files */
+      // 1. Upload any attached files to storage
       const attachments = await Promise.all(uploads.map(uploadToSupabase));
 
-      /* 2. get trip info and accommodations for context */
+      // 2. Fetch trip info and accommodations for context
       const [{ data: trip }, { data: accommodations }] = await Promise.all([
         supabase.from('trips').select('destination, arrival_date, departure_date').eq('trip_id', tripId).single(),
         supabase.from('accommodations').select('hotel, hotel_address').eq('trip_id', tripId)
       ]);
 
-      /* 3. build enhanced trip context */
+      // 3. Build enhanced trip context string
       const primaryHotel = accommodations?.[0];
       const hotelInfo = primaryHotel ? `\nAccommodation: ${primaryHotel.hotel} at ${primaryHotel.hotel_address}` : '';
-      
       const tripContext = `
-TRAVEL CONTEXT: You are assisting with a trip to ${trip?.destination || 'Italy'} from ${trip?.arrival_date || 'February 12, 2025'} to ${trip?.departure_date || 'February 15, 2025'}.${hotelInfo}
+TRAVEL CONTEXT: You are assisting with a trip to ${trip?.destination || 'Unknown Destination'} from ${trip?.arrival_date || 'Unknown Date'} to ${trip?.departure_date || 'Unknown Date'}.${hotelInfo}
 
 Please provide specific, actionable travel advice for this destination and timeframe. Focus on authentic local experiences, practical recommendations, and location-specific insights.
 `;
 
-      /* 4. prepare enhanced request with context */
+      // 4. Prepare the user prompt with context
       const enhancedMessage = `${tripContext}\n\nUser question: ${text.trim()}`;
       const body = JSON.stringify({ message: enhancedMessage, tripId, attachments });
+
+      // 5. Obtain auth token for Supabase Edge Function call
       const { data: session, error: sessionError } = await supabase.auth.getSession();
-      
       if (sessionError || !session.session?.access_token) {
         throw new Error('Authentication required. Please sign in again.');
       }
-      
       const token = session.session.access_token;
 
-      /* 5. make request */
-      
+      // 6. Make request to chat AI Edge Function
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -127,23 +125,21 @@ Please provide specific, actionable travel advice for this destination and timef
         },
         body,
       });
-
       if (!response.ok) {
+        // Attempt to parse error from response
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
-
       const result = await response.json();
-      
-      // Handle the response structure from the deployed edge function
+
+      // If the Edge Function signals failure, throw error to trigger onError
       if (result.success === false) {
         throw new Error(result.error || 'Chat request failed');
       }
 
-      // Handle both old and new response formats
+      // Handle both old and new response formats from the Edge Function
       let aiMessageText: string;
       let extractedData: unknown = null;
-
       if (result.success && result.aiMessage && typeof result.aiMessage === 'object') {
         // New format: { success: true, aiMessage: { message: "...", extractedData: ... } }
         aiMessageText = result.aiMessage.message || 'No response received';
@@ -156,7 +152,7 @@ Please provide specific, actionable travel advice for this destination and timef
         aiMessageText = 'No response received';
       }
 
-      // Create proper message structure for chat logs
+      // Construct AI message object for the chat log
       const aiMessage = {
         id: crypto.randomUUID(),
         role: 'ai' as const,
@@ -168,7 +164,7 @@ Please provide specific, actionable travel advice for this destination and timef
         embedding: extractedData
       };
 
-      // Add the AI message to the chat logs
+      // Optimistically update the chat log in UI with the new AI message
       qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [
         ...old,
         aiMessage
@@ -177,20 +173,21 @@ Please provide specific, actionable travel advice for this destination and timef
       return result;
     },
     onSuccess() {
+      // Clear input and uploads after a successful send
       setText('');
       setUploads([]);
     },
     onError(error) {
       console.error('Chat mutation error:', error);
       toast({
-        title: 'Chat failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Assistant Error',
+        description: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     },
   });
 
-  /* ------------------------------ render */
+  /* ------------------------------ render UI ------------------------------ */
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -205,10 +202,10 @@ Please provide specific, actionable travel advice for this destination and timef
       {/* header */}
       <header className="mb-4">
         <h3 className="text-lg font-semibold text-earth-800">Trip Assistant</h3>
-        <p className="text-sm text-earth-600">Ask anything or drop receipts to import</p>
+        <p className="text-sm text-earth-600">Ask anything about your trip or drop travel documents to analyze.</p>
       </header>
 
-      {/* messages */}
+      {/* messages list */}
       <Card className="flex-1 mb-4">
         <CardContent className="p-0">
           <ScrollArea className="h-96 p-4">
@@ -217,13 +214,32 @@ Please provide specific, actionable travel advice for this destination and timef
                 <MemoBubble key={m.id} msg={m} isUser={m.role === 'user'} user={user} />
               ))}
 
+              {/* Typing indicator for streaming response */}
+              {isSending && (
+                <div className="flex justify-start">
+                  <div className="flex gap-2 flex-row max-w-full">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-earth-500 text-white">
+                        <Bot className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div 
+                      className="rounded-lg p-3 bg-earth-100 text-earth-800"
+                      style={{ maxWidth: MAX_BUBBLE_WIDTH }}
+                    >
+                      <span className="animate-pulse text-earth-600">Typing<span className="ellipsis">…</span></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div ref={scrollRef} />
             </div>
           </ScrollArea>
         </CardContent>
       </Card>
 
-      {/* upload preview */}
+      {/* upload preview list */}
       {uploads.length > 0 && (
         <div className="mb-3 p-3 bg-earth-50 border border-earth-200 rounded-md space-y-2">
           {uploads.map(f => (
@@ -253,7 +269,7 @@ Please provide specific, actionable travel advice for this destination and timef
 };
 
 /* ------------------------------------------------------------------ */
-/* Bubble (memoised)                                                  */
+/* Chat bubble (memoized)                                             */
 /* ------------------------------------------------------------------ */
 const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; user: any }) => (
   <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -262,15 +278,19 @@ const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; us
         {isUser ? (
           <>
             <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+            <AvatarFallback>
+              <User className="w-4 h-4" />
+            </AvatarFallback>
           </>
         ) : (
-          <AvatarFallback className="bg-earth-500 text-white"><Bot className="w-4 h-4" /></AvatarFallback>
+          <AvatarFallback className="bg-earth-500 text-white">
+            <Bot className="w-4 h-4" />
+          </AvatarFallback>
         )}
       </Avatar>
 
       <div
-        className={`rounded-lg p-3 ${isUser ? 'bg-earth-500 text-white' : 'bg-gray-100 text-gray-800'}`}
+        className={`rounded-lg p-3 ${isUser ? 'bg-earth-500 text-white' : 'bg-earth-100 text-earth-800'}`}
         style={{ maxWidth: MAX_BUBBLE_WIDTH }}
       >
         <ReactMarkdown
@@ -290,7 +310,7 @@ const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; us
                   </code>
                 );
               }
-              // Block code with copy functionality using span instead of button to avoid nesting
+              // Block code with copy-to-clipboard on hover (no nested button element)
               return (
                 <div className="relative group">
                   <code className="block bg-gray-200 p-2 rounded text-sm overflow-x-auto">
@@ -322,7 +342,7 @@ const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; us
           {msg.message}
         </ReactMarkdown>
         <p
-          className={`text-xs mt-2 ${isUser ? 'text-earth-200' : 'text-gray-500'}`}
+          className={`text-xs mt-2 ${isUser ? 'text-earth-200' : 'text-earth-600'}`}
           title={new Date(msg.timestamp).toLocaleString()}
         >
           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -334,7 +354,7 @@ const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; us
 const MemoBubble = memo(Bubble);
 
 /* ------------------------------------------------------------------ */
-/* ChatBar - Memoized for optimal input performance                    */
+/* Chat input bar                                                     */
 /* ------------------------------------------------------------------ */
 const ChatBar = memo(function ChatBar({
   text, setText, uploads, setUploads, onSend, disabled, validate,
@@ -373,7 +393,14 @@ const ChatBar = memo(function ChatBar({
 
   return (
     <div className="flex gap-2">
-      <input type="file" ref={fileRef} hidden multiple accept="image/*,.pdf" onChange={e => handleFiles(e.target.files)} />
+      <input 
+        type="file" 
+        ref={fileRef} 
+        hidden 
+        multiple 
+        accept="image/*,.pdf" 
+        onChange={e => handleFiles(e.target.files)} 
+      />
       <Button variant="outline" size="icon" onClick={() => fileRef.current?.click()} disabled={disabled}>
         <Upload className="w-4 h-4" />
       </Button>
