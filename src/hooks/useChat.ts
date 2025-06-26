@@ -98,11 +98,15 @@ export function useChat(tripId: string) {
                   !(msg.role === 'user' && msg.message === newMessage.message && msg.id.length === 36 && msg.created_at === msg.timestamp)
                 );
                 console.log('Adding real user message, replacing optimistic:', newMessage.message.substring(0, 50) + '...');
-                return [...withoutOptimistic, newMessage];
+                const updatedMessages = [...withoutOptimistic, newMessage];
+                // Sort by timestamp to maintain chronological order
+                return updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
               }
 
               console.log('Adding new message to chat:', newMessage.role, newMessage.message.substring(0, 50) + '...');
-              return [...existing, newMessage];
+              const updatedMessages = [...existing, newMessage];
+              // Sort by timestamp to maintain chronological order
+              return updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
             });
           }
         )
