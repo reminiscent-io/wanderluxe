@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useEffect, memo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatLogsKey, useChat } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,10 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Bot, ClipboardCopy, CornerDownLeft, Loader2,
-  Paperclip, Plus, Send, Upload, User, X,
-} from 'lucide-react';
+import { Bot, ClipboardCopy, Loader2, Paperclip, Send, Upload, User, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
@@ -18,7 +15,9 @@ import remarkGfm from 'remark-gfm';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 const MAX_BUBBLE_WIDTH = '65ch';
-const API_ENDPOINT = `${import.meta.env.VITE_SUPABASE_EDGE_URL}/chat-ai`;
+const API_ENDPOINT = import.meta.env.VITE_SUPABASE_EDGE_URL
+  ? `${import.meta.env.VITE_SUPABASE_EDGE_URL}/chat-ai`
+  : 'https://arnengxblsfnezrqcsxw.functions.supabase.co/chat-ai';
 
 interface ChatMessageDB {
   id: string;
@@ -31,99 +30,112 @@ interface ChatMessageDB {
 
 interface ChatViewProps { tripId: string }
 
+/* ------------------------------------------------------------------ */
+/* main component                                                     */
+/* ------------------------------------------------------------------ */
 const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const qc = useQueryClient();
 
-  const queryClient = useQueryClient();
-  const { data: messages = [], isLoading: isHistoryLoading } = useChat(tripId);
+  const { data: messages = [], isLoading } = useChat(tripId);
 
-  const [newMessage, setNewMessage] = useState('');
+  const [text, setText] = useState('');
   const [uploads, setUploads] = useState<File[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamBuffer, setStreamBuffer] = useState('');
 
-  /* ------------------------------------------------------------------ */
-  /* helpers                                                            */
-  /* ------------------------------------------------------------------ */
-  const scrollToBottom = () =>
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  /* auto-scroll to bottom */
+  const scrollBottom = () => scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  useEffect(scrollBottom, [messages, streamBuffer]);
 
-  useEffect(() => { scrollToBottom(); }, [messages, streamBuffer]);
+  /* ------------------------------ file helpers */
+  const okTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  const validate = (f: File) =>
+    !okTypes.includes(f.type) ? 'Only JPG, PNG or PDF'
+      : f.size > 10 * 1024 * 1024 ? 'Max 10 MB'
+      : null;
 
-  const validateFile = (f: File) => {
-    const okTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (!okTypes.includes(f.type)) return 'Supported: JPG, PNG, PDF';
-    if (f.size > 10 * 1024 * 1024) return 'Max file size is 10 MB';
-    return null;
+  const uploadToSupabase = async (f: File) => {
+    const ext = f.name.split('.').pop();
+    const key = `${user!.id}/${tripId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('chat-attachments').upload(key, f);
+    if (error) throw error;
+    const { data } = supabase.storage.from('chat-attachments').getPublicUrl(key);
+    return { url: data.publicUrl, type: f.type.startsWith('image/') ? 'image' : 'pdf', name: f.name };
   };
 
-  async function uploadToSupabase(f: File): Promise<{ url: string; type: 'image' | 'pdf'; name: string }> {
-    const ext = f.name.split('.').pop();
-    const fileName = `${user!.id}/${tripId}/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('chat-attachments').upload(fileName, f);
-    if (error) throw error;
-    const { data } = supabase.storage.from('chat-attachments').getPublicUrl(fileName);
-    return { url: data.publicUrl, type: f.type.startsWith('image/') ? 'image' : 'pdf', name: f.name };
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* mutation: send message + files                                      */
-  /* ------------------------------------------------------------------ */
-  const { mutate: sendChat, isLoading: isSending } = useMutation({
+  /* ------------------------------ mutation send */
+  const { mutate: send, isLoading: isSending } = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
 
-      // Upload attachments in parallel
+      /* 1. upload files */
       const attachments = await Promise.all(uploads.map(uploadToSupabase));
 
-      const body = JSON.stringify({
-        message: newMessage.trim(),
-        tripId,
-        attachments,
-        stream: true,
-      });
+      /* 2. prepare request */
+      const body = JSON.stringify({ message: text.trim(), tripId, attachments, stream: true });
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
 
+      /* 3. open stream */
       setIsStreaming(true);
       setStreamBuffer('');
 
-      await fetchEventSource(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${await supabase.auth.getSession().then(r => r.data.session?.access_token ?? '')}`,
-          'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
-        },
-        body,
-        onmessage(ev) {
-          if (ev.event === 'chunk') {
-            setStreamBuffer(prev => prev + ev.data);
-          } else if (ev.event === 'eom') {
-            // flush buffer to cache
-            const final: ChatMessageDB = JSON.parse(ev.data);
-            queryClient.setQueryData<ChatMessageDB[]>(chatLogsKey(tripId), old => [...(old ?? []), final]);
-            setStreamBuffer('');
-          }
-        },
-        onclose() { setIsStreaming(false); },
-        onerror(err) {
-          console.error(err);
-          setIsStreaming(false);
-          toast({ title: 'Error', description: 'Failed to send message', variant: 'destructive' });
-        },
-      });
+      try {
+        await fetchEventSource(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream',
+          },
+          body,
+
+          async onopen(res) {
+            const ct = res.headers.get('Content-Type') ?? '';
+            if (ct.startsWith('text/event-stream')) return; // OK
+            // Server responded with JSON -> toast & abort
+            const err = await res.json().catch(() => ({}));
+            toast({
+              title: `Chat error (${res.status})`,
+              description: err.error ?? 'Unexpected response',
+              variant: 'destructive',
+            });
+            throw new DOMException('stream aborted', 'AbortError');
+          },
+
+          onmessage(ev) {
+            if (ev.event === 'chunk') setStreamBuffer(prev => prev + ev.data);
+            if (ev.event === 'eom') {
+              qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [...old, JSON.parse(ev.data)]);
+              setStreamBuffer('');
+            }
+          },
+
+          onclose() { setIsStreaming(false); },
+
+          onerror(err) {
+            if (err?.name !== 'AbortError') {
+              console.error(err);
+              toast({ title: 'Send failed', description: String(err), variant: 'destructive' });
+            }
+            setIsStreaming(false);
+          },
+        });
+      } catch (err) {
+        // swallow only our intentional AbortError
+        if (err?.name !== 'AbortError') throw err;
+      }
     },
     onSuccess() {
-      setNewMessage('');
+      setText('');
       setUploads([]);
     },
   });
 
-  /* ------------------------------------------------------------------ */
-  /* render                                                             */
-  /* ------------------------------------------------------------------ */
-  if (isHistoryLoading) {
+  /* ------------------------------ render */
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-earth-500" />
@@ -134,44 +146,42 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* HEADER */}
+      {/* header */}
       <header className="mb-4">
         <h3 className="text-lg font-semibold text-earth-800">Trip Assistant</h3>
-        <p className="text-sm text-earth-600">Ask anything about your trip — or drop receipts to auto‑import</p>
+        <p className="text-sm text-earth-600">Ask anything or drop receipts to import</p>
       </header>
 
-      {/* MESSAGES */}
+      {/* messages */}
       <Card className="flex-1 mb-4">
         <CardContent className="p-0">
           <ScrollArea className="h-96 p-4">
             <div className="space-y-4">
               {messages.map(m => (
-                <Bubble key={m.id} msg={m} isUser={m.role === 'user'} user={user} />
+                <MemoBubble key={m.id} msg={m} isUser={m.role === 'user'} user={user} />
               ))}
-
-              {/* live stream */}
               {isStreaming && streamBuffer && (
-                <Bubble
-                  msg={{ id: 'stream', message: streamBuffer, role: 'ai', timestamp: new Date().toISOString() }}
+                <MemoBubble
+                  key="stream"
+                  msg={{ id: 'stream', role: 'ai', message: streamBuffer, timestamp: new Date().toISOString() }}
                   isUser={false}
                   user={user}
                 />
               )}
-
               <div ref={scrollRef} />
             </div>
           </ScrollArea>
         </CardContent>
       </Card>
 
-      {/* UPLOAD PREVIEW */}
+      {/* upload preview */}
       {uploads.length > 0 && (
         <div className="mb-3 p-3 bg-earth-50 border border-earth-200 rounded-md space-y-2">
-          {uploads.map((f, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Paperclip className="w-4 h-4 text-earth-600" />
+          {uploads.map(f => (
+            <div key={f.name} className="flex items-center gap-2">
+              <Paperclip className="w-4 h-4" />
               <span className="text-sm">{f.name}</span>
-              <button className="ml-auto" onClick={() => setUploads(u => u.filter(x => x !== f))}>
+              <button onClick={() => setUploads(u => u.filter(x => x !== f))} className="ml-auto">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -179,27 +189,27 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         </div>
       )}
 
-      {/* INPUT BAR */}
+      {/* input bar */}
       <ChatBar
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
+        text={text}
+        setText={setText}
         uploads={uploads}
         setUploads={setUploads}
-        onSend={sendChat}
+        onSend={send}
         disabled={isSending || isStreaming}
+        validate={validate}
       />
     </div>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/* sub‑components                                                     */
+/* Bubble (memoised)                                                  */
 /* ------------------------------------------------------------------ */
-const Bubble: React.FC<{ msg: ChatMessageDB; isUser: boolean; user: any }> = ({ msg, isUser, user }) => (
+const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; user: any }) => (
   <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
     <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'} max-w-full`}>
-      {/* avatar */}
-      <Avatar className="w-8 h-8 flex-shrink-0">
+      <Avatar className="w-8 h-8">
         {isUser ? (
           <>
             <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -210,93 +220,107 @@ const Bubble: React.FC<{ msg: ChatMessageDB; isUser: boolean; user: any }> = ({ 
         )}
       </Avatar>
 
-      {/* message */}
-      <div className={`rounded-lg p-3 ${isUser ? 'bg-earth-500 text-white' : 'bg-gray-100 text-gray-800'}`}
-           style={{ maxWidth: MAX_BUBBLE_WIDTH }}>
+      <div
+        className={`rounded-lg p-3 ${isUser ? 'bg-earth-500 text-white' : 'bg-gray-100 text-gray-800'}`}
+        style={{ maxWidth: MAX_BUBBLE_WIDTH }}
+      >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
             a: ({ href, children }) => (
-              <a href={href!} target="_blank" rel="noopener noreferrer"
-                 className="text-earth-600 hover:text-earth-700 font-medium">{children}</a>
+              <a href={href!} target="_blank" rel="noopener noreferrer" className="text-earth-600 hover:text-earth-700 font-medium">
+                {children}
+              </a>
             ),
             code: ({ children }) => (
               <code className="relative bg-gray-200 px-1 rounded">
                 {children}
-                <button onClick={() => navigator.clipboard.writeText(String(children))}
-                        className="absolute top-0.5 right-0.5">
+                <button
+                  onClick={() => navigator.clipboard.writeText(String(children))}
+                  className="absolute top-0.5 right-0.5"
+                >
                   <ClipboardCopy className="w-3 h-3 text-gray-500" />
                 </button>
               </code>
             ),
-          }}>
+          }}
+        >
           {msg.message}
         </ReactMarkdown>
-        <p className={`text-xs mt-2 ${isUser ? 'text-earth-200' : 'text-gray-500'}`}
-           title={new Date(msg.timestamp).toLocaleString()}>
+        <p
+          className={`text-xs mt-2 ${isUser ? 'text-earth-200' : 'text-gray-500'}`}
+          title={new Date(msg.timestamp).toLocaleString()}
+        >
           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
     </div>
   </div>
 );
+const MemoBubble = memo(Bubble);
 
-const ChatBar: React.FC<{
-  newMessage: string;
-  setNewMessage: (s: string) => void;
+/* ------------------------------------------------------------------ */
+/* ChatBar                                                             */
+/* ------------------------------------------------------------------ */
+function ChatBar({
+  text, setText, uploads, setUploads, onSend, disabled, validate,
+}: {
+  text: string;
+  setText: (s: string) => void;
   uploads: File[];
   setUploads: React.Dispatch<React.SetStateAction<File[]>>;
   onSend: () => void;
   disabled: boolean;
-}> = ({ newMessage, setNewMessage, uploads, setUploads, onSend, disabled }) => {
-  const inputFileRef = useRef<HTMLInputElement>(null);
+  validate: (f: File) => string | null;
+}) {
   const { toast } = useToast();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-    const toAdd: File[] = [];
-    for (const f of Array.from(files)) {
+    const list: File[] = [];
+    Array.from(files).forEach(f => {
       const err = validate(f);
-      if (err) { toast({ title: 'Invalid file', description: err, variant: 'destructive' }); continue; }
-      toAdd.push(f);
-    }
-    setUploads(prev => [...prev, ...toAdd]);
+      if (err) {
+        toast({ title: 'Invalid file', description: err, variant: 'destructive' });
+      } else {
+        list.push(f);
+      }
+    });
+    setUploads(prev => [...prev, ...list]);
   };
-  const validate = (f: File) =>
-    !['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'].includes(f.type)
-      ? 'Only JPG, PNG or PDF'
-      : f.size > 10 * 1024 * 1024
-        ? 'Max 10 MB'
-        : null;
 
   return (
     <div className="flex gap-2">
-      <input
-        type="file"
-        ref={inputFileRef}
-        multiple
-        accept="image/*,.pdf"
-        onChange={e => handleFiles(e.target.files)}
-        className="hidden"
-      />
-      <Button variant="outline" size="icon" onClick={() => inputFileRef.current?.click()}
-              title="Upload files" disabled={disabled}>
+      <input type="file" ref={fileRef} hidden multiple accept="image/*,.pdf" onChange={e => handleFiles(e.target.files)} />
+      <Button variant="outline" size="icon" onClick={() => fileRef.current?.click()} disabled={disabled}>
         <Upload className="w-4 h-4" />
       </Button>
+
       <Input
-        value={newMessage}
-        onChange={e => setNewMessage(e.target.value)}
+        value={text}
+        onChange={e => setText(e.target.value)}
         placeholder="Type a message…"
-        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+        onKeyDown={e => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            onSend();
+          }
+        }}
         disabled={disabled}
         className="flex-1"
       />
-      <Button onClick={onSend} disabled={disabled || (!newMessage.trim() && uploads.length === 0)}
-              size="icon" className="bg-earth-500 hover:bg-earth-600">
+
+      <Button
+        onClick={onSend}
+        size="icon"
+        disabled={disabled || (!text.trim() && uploads.length === 0)}
+        className="bg-earth-500 hover:bg-earth-600"
+      >
         <Send className="w-4 h-4" />
       </Button>
     </div>
   );
-};
+}
 
 export default ChatView;

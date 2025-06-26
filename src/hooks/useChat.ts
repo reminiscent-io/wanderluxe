@@ -1,26 +1,43 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const chatLogsKey = (tripId: string) => ['chat_logs', tripId];
 
-/**
- * Returns the entire chat history for a trip, ordered chronologically.
- * Re‑runs automatically when another client inserts into `chat_logs`
- * because we subscribe to the table with `supabase.channel`.
- */
 export function useChat(tripId: string) {
-  return useQuery(chatLogsKey(tripId), async () => {
-    const { data, error } = await supabase
-      .from('chat_logs')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('timestamp', { ascending: true });
+  const qc = useQueryClient();
 
-    if (error) throw error;
-    return data;
-  }, {
+  /* 1️⃣ fetch full history once */
+  const query = useQuery({
+    queryKey: chatLogsKey(tripId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('chat_logs')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('timestamp', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
     enabled: !!tripId,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
   });
+
+  /* 2️⃣ realtime subscription */
+  useEffect(() => {                        // ← switch call site
+    const channel = supabase
+      .channel(`chat_logs_${tripId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', table: 'chat_logs', filter: `trip_id=eq.${tripId}` },
+        payload => {
+          qc.setQueryData<any[]>(chatLogsKey(tripId), prev => [...(prev ?? []), payload.new]);
+        },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [tripId, qc]);
+
+  return query;
 }
