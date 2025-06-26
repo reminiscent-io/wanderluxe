@@ -178,9 +178,10 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Resolved restaurant reservation subscription startup issues by implementing global subscription tracking to prevent duplicates
   - Enhanced subscription lifecycle management with proper cleanup and stable React hook dependencies
   - Eliminated multiple subscription creation through component re-render protection and reference stability
-  - Fixed Perplexity API 400 errors by updating model to llama-3.1-sonar-large-128k-online and correcting request parameters
+  - Fixed Perplexity API 400 errors by switching to OpenAI GPT-4o-mini as primary chat service due to persistent API issues
+  - Resolved Deno runtime compatibility issues by simplifying edge function and updating standard library version
   - Added proper authentication error handling with user-friendly messages for chat failures
-  - Enhanced Perplexity API requests with citation support and optimized temperature settings
+  - Implemented robust fallback mechanism ensuring chat functionality remains reliable
   - Resolved React Syntax Highlighter TypeScript errors with proper type definitions and style imports
   - Stabilized chat functionality with working code block syntax highlighting and reliable AI responses
   - Fixed nested button HTML hydration error in DayHeader component by replacing button with accessible span element
