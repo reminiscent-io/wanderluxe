@@ -186,6 +186,23 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const departure = trip?.departure_date ?? 'Unknown Date';
       const userMessage = text.trim();
       
+      /* ---------- 2.5 / Add user message immediately (optimistic update) ---------- */
+      const tempUserMessageId = crypto.randomUUID();
+      const nowIso = new Date().toISOString();
+      
+      qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => [
+        ...(prev ?? []),
+        {
+          id: tempUserMessageId,
+          role: 'user',
+          message: userMessage,
+          timestamp: nowIso,
+          trip_id: tripId,
+          user_id: user.id,
+          created_at: nowIso
+        }
+      ]);
+      
       // User message will be persisted by the edge function
       
       const prompt = `TRAVEL CONTEXT: You are assisting with a trip to ${destination} from ${arrival} to ${departure}.
@@ -544,7 +561,7 @@ const ChatBar = memo(function ChatBar({
       <Input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Type a message…"
+        placeholder={disabled ? "Processing your message..." : "Type a message…"}
         onKeyDown={handleKeyDown}
         disabled={disabled}
         className="flex-1"
@@ -556,7 +573,11 @@ const ChatBar = memo(function ChatBar({
         disabled={disabled || (!text.trim() && uploads.length === 0)}
         className="bg-earth-500 hover:bg-earth-600"
       >
-        <Send className="w-4 h-4" />
+        {disabled ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Send className="w-4 h-4" />
+        )}
       </Button>
     </div>
   );
