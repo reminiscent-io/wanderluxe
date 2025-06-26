@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, memo, useCallback } from 'react';
+import React, { useRef, useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatLogsKey, useChat } from '@/hooks/useChat';
 import type { ChatLogRow } from '@/hooks/useChat';
@@ -42,17 +42,18 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
   const { data: rawMessages = [], isLoading, addMessage } = useChat(tripId);
   
-  // Transform raw messages to match ChatMessageDB interface
-  const messages: ChatMessageDB[] = rawMessages
-    .filter((msg: ChatLogRow) => msg && msg.id && msg.role && msg.message && msg.timestamp)
-    .map((msg: ChatLogRow) => ({
-      id: msg.id,
-      role: msg.role as 'user' | 'ai',
-      message: msg.message,
-      timestamp: msg.timestamp,
-      extractedData: msg.embedding,
-      attachments: undefined // Will add attachment support later
-    }));
+  // Memoize expensive message transformation to prevent re-computation on each render
+  const messages: ChatMessageDB[] = useMemo(() => 
+    rawMessages
+      .filter((msg: ChatLogRow) => msg && msg.id && msg.role && msg.message && msg.timestamp)
+      .map((msg: ChatLogRow) => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'ai',
+        message: msg.message,
+        timestamp: msg.timestamp,
+        extractedData: msg.embedding,
+        attachments: undefined
+      })), [rawMessages]);
 
   const [text, setText] = useState('');
   const [uploads, setUploads] = useState<File[]>([]);
@@ -64,21 +65,22 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   
   useEffect(scrollBottom, [messages.length]);
 
-  /* ------------------------------ file helpers */
-  const okTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-  const validate = (f: File) =>
+  /* ------------------------------ file helpers - memoized for performance */
+  const okTypes = useMemo(() => ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'], []);
+  
+  const validate = useCallback((f: File) =>
     !okTypes.includes(f.type) ? 'Only JPG, PNG or PDF'
       : f.size > 10 * 1024 * 1024 ? 'Max 10 MB'
-      : null;
+      : null, [okTypes]);
 
-  const uploadToSupabase = async (f: File) => {
+  const uploadToSupabase = useCallback(async (f: File) => {
     const ext = f.name.split('.').pop();
     const key = `${user!.id}/${tripId}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from('chat-attachments').upload(key, f);
     if (error) throw error;
     const { data } = supabase.storage.from('chat-attachments').getPublicUrl(key);
     return { url: data.publicUrl, type: f.type.startsWith('image/') ? 'image' : 'pdf', name: f.name };
-  };
+  }, [user, tripId]);
 
   /* ------------------------------ mutation send */
   const { mutate: send, isPending: isSending } = useMutation({
@@ -332,9 +334,9 @@ const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; us
 const MemoBubble = memo(Bubble);
 
 /* ------------------------------------------------------------------ */
-/* ChatBar                                                             */
+/* ChatBar - Memoized for optimal input performance                    */
 /* ------------------------------------------------------------------ */
-function ChatBar({
+const ChatBar = memo(function ChatBar({
   text, setText, uploads, setUploads, onSend, disabled, validate,
 }: {
   text: string;
@@ -348,7 +350,7 @@ function ChatBar({
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = (files: FileList | null) => {
+  const handleFiles = useCallback((files: FileList | null) => {
     if (!files) return;
     const list: File[] = [];
     Array.from(files).forEach(f => {
@@ -360,7 +362,14 @@ function ChatBar({
       }
     });
     setUploads(prev => [...prev, ...list]);
-  };
+  }, [validate, setUploads, toast]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
+    }
+  }, [onSend]);
 
   return (
     <div className="flex gap-2">
@@ -373,12 +382,7 @@ function ChatBar({
         value={text}
         onChange={e => setText(e.target.value)}
         placeholder="Type a message…"
-        onKeyDown={e => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            onSend();
-          }
-        }}
+        onKeyDown={handleKeyDown}
         disabled={disabled}
         className="flex-1"
       />
@@ -393,6 +397,6 @@ function ChatBar({
       </Button>
     </div>
   );
-}
+});
 
 export default ChatView;
