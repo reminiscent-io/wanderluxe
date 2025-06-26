@@ -181,6 +181,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed Perplexity API 400 errors by removing problematic streaming configuration and using standard JSON responses
   - Resolved React Syntax Highlighter TypeScript errors with proper type definitions and style imports
   - Stabilized chat functionality with working code block syntax highlighting and reliable AI responses
+  - Fixed nested button HTML hydration error in DayHeader component by replacing button with accessible span element
 
 ## User Preferences
 
