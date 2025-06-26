@@ -26,7 +26,7 @@ export const loadGoogleMapsAPI = async (): Promise<boolean> => {
 
       // Create and inject the script.
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
       script.onload = () => resolve(true);
