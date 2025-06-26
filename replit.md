@@ -209,6 +209,15 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added comprehensive debugging logs to track data matching between items and days
   - Verified data fetching works correctly (3 transportation, 4 dining, 8 activities items)
   - PDF export now fully functional with all sections (accommodation, transportation, activities, dining) appearing correctly
+- June 26, 2025. Enhanced transportation and dining dialogs with Google Places integration:
+  - Fixed Google Maps JavaScript API performance warning by adding missing loading=async parameter
+  - Created RestaurantContactInfo component displaying address, phone, website, and rating information
+  - Enhanced dining reservation dialog to show restaurant details when selected from search results
+  - Implemented LocationSearchInput component for transportation From/To fields with Google Places search
+  - Added smart filtering: flights prioritize airports with codes, other transport searches general locations
+  - Enhanced transportation dialog supports both Google Places results and custom text input
+  - Fixed TypeScript enum constraints by removing unsupported "other" transportation type
+  - All location search components now provide consistent user experience across dining and transportation
 
 ## User Preferences
 
