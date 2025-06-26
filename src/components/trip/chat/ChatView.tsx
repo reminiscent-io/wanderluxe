@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, memo } from 'react';
+import React, { useRef, useState, useEffect, memo, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatLogsKey, useChat } from '@/hooks/useChat';
 import type { ChatLogRow } from '@/hooks/useChat';
@@ -71,9 +71,12 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     }
   }, [streamBuffer]);
 
-  /* auto-scroll to bottom */
-  const scrollBottom = () => scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  useEffect(scrollBottom, [messages, streamBuffer]);
+  /* auto-scroll to bottom - optimized to reduce re-renders */
+  const scrollBottom = useCallback(() => {
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+  
+  useEffect(scrollBottom, [messages.length, displayBuffer]);
 
   /* ------------------------------ file helpers */
   const okTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
@@ -188,10 +191,10 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
               {messages.map(m => (
                 <MemoBubble key={m.id} msg={m} isUser={m.role === 'user'} user={user} />
               ))}
-              {isStreaming && streamBuffer && (
+              {isStreaming && displayBuffer && (
                 <MemoBubble
                   key="stream"
-                  msg={{ id: 'stream', role: 'ai', message: streamBuffer, timestamp: new Date().toISOString() }}
+                  msg={{ id: 'stream', role: 'ai', message: displayBuffer, timestamp: new Date().toISOString() }}
                   isUser={false}
                   user={user}
                 />
