@@ -192,6 +192,9 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added conversation message truncation (200 chars max per message) to prevent overflow
   - Reduced system prompt length by condensing travel assistant instructions
   - Truncated trip context to 1500 characters maximum to stay within API limits
+- Fixed duplicate chat responses by removing edge function database insertions and handling persistence in frontend
+- Added proper user message persistence before API calls to ensure messages are saved
+- Removed optimistic UI updates that were conflicting with real-time subscriptions
 
 ## User Preferences
 

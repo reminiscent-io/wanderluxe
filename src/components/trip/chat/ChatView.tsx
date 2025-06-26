@@ -186,20 +186,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const departure = trip?.departure_date ?? 'Unknown Date';
       const userMessage = text.trim();
       
-      // First, persist user message to database
-      const { error: userLogErr } = await supabase.from("chat_logs").insert({
-        id: crypto.randomUUID(),
-        trip_id: tripId,
-        user_id: user.id,
-        role: "user",
-        message: userMessage,
-        timestamp: new Date().toISOString()
-      });
-      
-      if (userLogErr) {
-        console.error("Failed to persist user message:", userLogErr);
-        throw new Error("Failed to save your message");
-      }
+      // User message will be persisted by the edge function
       
       const prompt = `TRAVEL CONTEXT: You are assisting with a trip to ${destination} from ${arrival} to ${departure}.
 \n\nUser question: ${userMessage}`;
@@ -243,14 +230,20 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       aiText = cleanCitations(aiText) || 'No response received';
 
       /* ---------- 6 / Optimistic UI update ---------- */
-      const aiMessage: ChatMessageDB = {
+      // Persist AI response to database
+      const { error: aiLogErr } = await supabase.from("chat_logs").insert({
         id: crypto.randomUUID(),
-        role: 'ai',
+        trip_id: tripId,
+        user_id: user.id,
+        role: "ai",
         message: aiText,
         timestamp: new Date().toISOString(),
-        extractedData,
-      };
-      qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [...old, aiMessage]);
+        embedding: extractedData
+      });
+      
+      if (aiLogErr) {
+        console.error("Failed to persist AI message:", aiLogErr);
+      }
 
       return json;
     },
