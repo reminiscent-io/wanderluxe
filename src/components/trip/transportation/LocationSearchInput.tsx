@@ -101,6 +101,11 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
           
           console.log('LocationSearchInput - Calling onChange with:', displayValue, place);
           onChange(displayValue, place);
+          
+          // Force the input to update with the selected value
+          if (inputRef.current) {
+            inputRef.current.value = displayValue;
+          }
         } catch (error) {
           console.error('LocationSearchInput - Error in place_changed handler:', error);
           toast.error('Error processing location selection');

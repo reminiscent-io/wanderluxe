@@ -76,6 +76,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <LocationSearchInput
             value={formData.departure_location || ''}
             onChange={(value, details) => {
+              console.log('TransportationFormFields - From location change:', value);
               setFormData({ ...formData, departure_location: value });
               // Store additional place details if needed
               if (details) {
@@ -91,6 +92,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <LocationSearchInput
             value={formData.arrival_location || ''}
             onChange={(value, details) => {
+              console.log('TransportationFormFields - To location change:', value);
               setFormData({ ...formData, arrival_location: value });
               // Store additional place details if needed
               if (details) {
