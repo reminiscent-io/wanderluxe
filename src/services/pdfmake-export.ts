@@ -159,8 +159,22 @@ async function buildDays(
     /* transportation – improved day match ------------------------------- */
     if (opts.sections.transportation) {
       (transports || []).forEach(t => {
-        // match by calendar day regardless of TZ/time part
-        if (!sameDay(t.start_date, day.date)) return;
+        // More flexible date matching - handle different date formats
+        const transportDate = t.start_date?.slice(0, 10);
+        const currentDate = day.date?.slice(0, 10);
+        const matches = transportDate === currentDate;
+        
+        console.log('Transportation match check:', {
+          transportDate: t.start_date,
+          dayDate: day.date,
+          transportDateSliced: transportDate,
+          currentDateSliced: currentDate,
+          matches,
+          type: t.type,
+          provider: t.provider
+        });
+        
+        if (!matches) return;
 
         const title =
           t.type === 'flight'
@@ -205,9 +219,28 @@ async function buildDays(
     /* dining / reservations – now robust -------------------------------- */
     if (opts.sections.dining) {
       (dine || []).forEach(r => {
-        const reservationOnThisDay =
-          (r.day_id && r.day_id === day.day_id) ||
-          (r.reservation_time && sameDay(r.reservation_time, day.date));
+        const dayMatch = r.day_id && r.day_id === day.day_id;
+        
+        // More flexible reservation time matching
+        let timeMatch = false;
+        if (r.reservation_time) {
+          const reservationDate = r.reservation_time.slice(0, 10);
+          const currentDate = day.date?.slice(0, 10);
+          timeMatch = reservationDate === currentDate;
+        }
+        
+        const reservationOnThisDay = dayMatch || timeMatch;
+        
+        console.log('Dining match check:', {
+          restaurantName: r.restaurant_name,
+          dayId: r.day_id,
+          currentDayId: day.day_id,
+          reservationTime: r.reservation_time,
+          dayDate: day.date,
+          dayMatch,
+          timeMatch,
+          reservationOnThisDay
+        });
 
         if (!reservationOnThisDay) return;
 
