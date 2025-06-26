@@ -148,7 +148,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
           onerror(err) {
             if (err?.name !== 'AbortError') {
-              console.error(err);
+              console.error('Chat stream error:', err);
               toast({ title: 'Send failed', description: String(err), variant: 'destructive' });
             }
             setIsStreaming(false);

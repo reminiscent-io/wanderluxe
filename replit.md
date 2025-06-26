@@ -164,6 +164,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Improved Perplexity API stream parsing to handle malformed JSON chunks gracefully
   - Optimized chat performance with debounced stream buffer updates to eliminate slow typing interface
   - Added batch processing to edge function streaming to reduce excessive chunk emissions and improve responsiveness
+  - Fixed persistent DOM exceptions by replacing nested Button components with accessible span elements in RestaurantCard
+  - Enhanced event handling with proper stopPropagation to prevent interactive element conflicts
 
 ## User Preferences
 
