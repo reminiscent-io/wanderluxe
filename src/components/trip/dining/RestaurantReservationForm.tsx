@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import RestaurantSearchInput from './RestaurantSearchInput';
+import RestaurantContactInfo from './form/RestaurantContactInfo';
 import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
@@ -152,6 +153,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               />
             </FormItem>
           )}
+        />
+
+        <RestaurantContactInfo
+          address={form.watch('address')}
+          phone={form.watch('phone_number')}
+          website={form.watch('website')}
+          rating={form.watch('rating')}
         />
 
         {/* Reservation Time */}
