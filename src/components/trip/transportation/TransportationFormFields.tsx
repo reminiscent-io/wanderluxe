@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
-import LocationSearchInput from './LocationSearchInput';
+import LocationInputPair from './LocationInputPair';
 
 type Transportation = Tables<'transportation'>;
 
@@ -31,14 +31,18 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
     formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : ''
   );
 
-  // Memoize the onChange handlers to prevent unnecessary re-renders
-  const handleDepartureLocationChange = useCallback((value: string, details?: any) => {
-    setFormData({ ...formData, departure_location: value });
-  }, [formData, setFormData]);
+  // Use refs to maintain current form data without causing re-renders
+  const formDataRef = useRef(formData);
+  formDataRef.current = formData;
 
-  const handleArrivalLocationChange = useCallback((value: string, details?: any) => {
-    setFormData({ ...formData, arrival_location: value });
-  }, [formData, setFormData]);
+  // Stable onChange handlers that don't change between renders
+  const handleDepartureLocationChange = useCallback((value: string) => {
+    setFormData({ ...formDataRef.current, departure_location: value });
+  }, [setFormData]);
+
+  const handleArrivalLocationChange = useCallback((value: string) => {
+    setFormData({ ...formDataRef.current, arrival_location: value });
+  }, [setFormData]);
 
   useEffect(() => {
     setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
@@ -78,27 +82,14 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         </Select>
       </div>
 
-      {/* From and To inputs grouped horizontally */}
-      <div className="flex space-x-4">
-        <div className="flex-1">
-          <RequiredLabel>From</RequiredLabel>
-          <LocationSearchInput
-            value={formData.departure_location || ''}
-            onChange={handleDepartureLocationChange}
-            placeholder={formData.type === 'flight' ? "Search for departure airport..." : "Search for departure location..."}
-            transportationType={formData.type}
-          />
-        </div>
-        <div className="flex-1">
-          <RequiredLabel>To</RequiredLabel>
-          <LocationSearchInput
-            value={formData.arrival_location || ''}
-            onChange={handleArrivalLocationChange}
-            placeholder={formData.type === 'flight' ? "Search for arrival airport..." : "Search for arrival location..."}
-            transportationType={formData.type}
-          />
-        </div>
-      </div>
+      {/* From and To inputs using isolated component */}
+      <LocationInputPair
+        fromValue={formData.departure_location || ''}
+        toValue={formData.arrival_location || ''}
+        onFromChange={handleDepartureLocationChange}
+        onToChange={handleArrivalLocationChange}
+        transportationType={formData.type || 'flight'}
+      />
 
       {/* Group Departure Date and Time on the same line */}
       <div className="flex space-x-4">
