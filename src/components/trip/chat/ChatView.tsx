@@ -104,7 +104,13 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
       /* 2. prepare request */
       const body = JSON.stringify({ message: text.trim(), tripId, attachments, stream: true });
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const { data: session, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session.session?.access_token) {
+        throw new Error('Authentication required. Please sign in again.');
+      }
+      
+      const token = session.session.access_token;
 
       /* 3. open stream */
       setIsStreaming(true);
@@ -114,17 +120,19 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         await fetchEventSource(API_ENDPOINT, {
           method: 'POST',
           headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
-            Accept: 'text/event-stream',
+            'Accept': 'text/event-stream',
           },
           body,
 
           async onopen(res) {
+            console.log('Chat stream opened with status:', res.status, res.statusText);
             const ct = res.headers.get('Content-Type') ?? '';
             if (ct.startsWith('text/event-stream')) return; // OK
             // Server responded with JSON -> toast & abort
             const err = await res.json().catch(() => ({}));
+            console.error('Chat stream failed to open:', res.status, err);
             toast({
               title: `Chat error (${res.status})`,
               description: err.error ?? 'Unexpected response',
@@ -138,23 +146,32 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
               setStreamBuffer(prev => prev + ev.data);
             }
             if (ev.event === 'eom') {
-              qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [...old, JSON.parse(ev.data)]);
-              setStreamBuffer('');
-              setDisplayBuffer('');
+              try {
+                qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [...old, JSON.parse(ev.data)]);
+                setStreamBuffer('');
+                setDisplayBuffer('');
+              } catch (parseErr) {
+                console.error('Failed to parse EOM data:', ev.data, parseErr);
+              }
             }
           },
 
-          onclose() { setIsStreaming(false); },
+          onclose() { 
+            console.log('Chat stream closed');
+            setIsStreaming(false); 
+          },
 
           onerror(err) {
+            console.error('Chat stream error details:', err);
             if (err?.name !== 'AbortError') {
-              console.error('Chat stream error:', err);
               toast({ title: 'Send failed', description: String(err), variant: 'destructive' });
             }
             setIsStreaming(false);
           },
         });
       } catch (err) {
+        console.error('Chat fetchEventSource error:', err);
+        setIsStreaming(false);
         // swallow only our intentional AbortError
         if (err?.name !== 'AbortError') throw err;
       }
@@ -162,6 +179,15 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     onSuccess() {
       setText('');
       setUploads([]);
+    },
+    onError(error) {
+      console.error('Chat mutation error:', error);
+      setIsStreaming(false);
+      toast({
+        title: 'Chat failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
     },
   });
 
