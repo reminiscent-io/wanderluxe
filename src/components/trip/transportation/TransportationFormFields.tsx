@@ -76,11 +76,10 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <LocationSearchInput
             value={formData.departure_location || ''}
             onChange={(value, details) => {
-              console.log('TransportationFormFields - From location change:', value);
               setFormData({ ...formData, departure_location: value });
-              // Store additional place details if needed
+              // Store additional place details if needed for future enhancements
               if (details) {
-                console.log('From location details:', details);
+                // Could store coordinates, place_id, etc. for enhanced functionality
               }
             }}
             placeholder={formData.type === 'flight' ? "Search for departure airport..." : "Search for departure location..."}
@@ -92,11 +91,10 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <LocationSearchInput
             value={formData.arrival_location || ''}
             onChange={(value, details) => {
-              console.log('TransportationFormFields - To location change:', value);
               setFormData({ ...formData, arrival_location: value });
-              // Store additional place details if needed
+              // Store additional place details if needed for future enhancements
               if (details) {
-                console.log('To location details:', details);
+                // Could store coordinates, place_id, etc. for enhanced functionality
               }
             }}
             placeholder={formData.type === 'flight' ? "Search for arrival airport..." : "Search for arrival location..."}

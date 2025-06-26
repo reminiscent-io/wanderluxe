@@ -218,6 +218,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced transportation dialog supports both Google Places results and custom text input
   - Fixed TypeScript enum constraints by removing unsupported "other" transportation type
   - All location search components now provide consistent user experience across dining and transportation
+- June 26, 2025. Fixed transportation dialog field clearing and interaction issues:
+  - Resolved issue where selecting Google Places results in one field would clear the other field
+  - Added dialog interaction protection to prevent accidental closing during autocomplete selection
+  - Improved state management with proper React state updates to preserve field values
+  - Fixed TypeScript compilation errors in form field components
+  - Enhanced form stability and user experience for transportation entry/editing
+  - Transportation dialog now properly maintains both From and To locations during Google Places selection
 
 ## User Preferences
 

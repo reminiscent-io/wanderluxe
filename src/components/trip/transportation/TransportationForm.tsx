@@ -53,8 +53,6 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
 
-    console.log('TransportationForm - handleSubmit called with formData:', formData);
-
     // Validate required fields
     if (!formData.type) {
       toast.error('Please select a transportation type');
@@ -98,13 +96,10 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
       setFormData({ ...formData, currency: 'USD' });
     }
 
-    console.log('TransportationForm - submitting data:', dataToSubmit);
-    
     try {
       await onSubmit(dataToSubmit);
-      console.log('TransportationForm - submission successful');
     } catch (error) {
-      console.error('TransportationForm - submission failed:', error);
+      console.error('Transportation submission failed:', error);
     }
     
     setIsSubmitting(false);
