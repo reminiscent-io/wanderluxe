@@ -50,8 +50,8 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       role: msg.role as 'user' | 'ai',
       message: msg.message,
       timestamp: msg.timestamp,
-      extractedData: msg.extracted_data,
-      attachments: msg.attachments
+      extractedData: msg.embedding,
+      attachments: undefined // Will add attachment support later
     }));
 
   const [text, setText] = useState('');
