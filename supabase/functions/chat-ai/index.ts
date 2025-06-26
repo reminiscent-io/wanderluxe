@@ -10,7 +10,7 @@ const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY") ?? "";
 
 // Model definitions
 const OPENAI_MODEL = "gpt-4o";  // GPT-4 (Vision-enabled) for document parsing
-const PERPLEXITY_MODEL = "llama-3.1-sonar-large-128k-online";
+const PERPLEXITY_MODEL = "llama-3.1-sonar-small-128k-online";
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
@@ -348,18 +348,27 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
           { role: "user", content: userQuestion }
         ],
         max_tokens: 500,
-        temperature: 0.2,
-        top_p: 0.9,
-        return_citations: true,
-        return_images: false,
-        return_related_questions: false
+        temperature: 0.2
       })
     });
     
     if (!perplexityRes.ok) {
       const errorText = await perplexityRes.text();
       console.error(`Perplexity API error ${perplexityRes.status}:`, errorText);
-      throw new Error(`Perplexity API error: ${perplexityRes.status}`);
+      console.error('Request body was:', JSON.stringify({
+        model: PERPLEXITY_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt.slice(0, 200) + "..." },
+          { role: "user", content: userQuestion }
+        ],
+        max_tokens: 500,
+        temperature: 0.2,
+        top_p: 0.9,
+        return_citations: true,
+        return_images: false,
+        return_related_questions: false
+      }, null, 2));
+      throw new Error(`Perplexity API error: ${perplexityRes.status} - ${errorText}`);
     }
 
     // Parse standard JSON response
