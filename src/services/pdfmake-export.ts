@@ -1,381 +1,330 @@
 /* src/services/pdfmake-export.ts
- * Client-side pdfMake itinerary generator
- * -------------------------------------- */
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+   PDF export with real emoji icons via Noto Emoji embed
+   ---------------------------------------------------- */
 
-// Initialize pdfMake with fonts
-(pdfMake as any).vfs = pdfFonts;
+import pdfMake from 'pdfmake/build/pdfmake';
+import 'pdfmake/build/vfs_fonts'; // default Roboto
 
 import { supabase } from '@/integrations/supabase/client';
-import { parseISO, format as fnsFormat } from 'date-fns';
+import { parseISO, format as fnsFormat, isSameDay } from 'date-fns';
 import type { PdfExportOptions } from '@/components/trip/PdfExportDialog';
 
-/* -------------------------------------------------------------------------- */
-/* Utility helpers                                                            */
-/* -------------------------------------------------------------------------- */
+// 1️⃣ – Path to your emoji font file in assets
+import notoEmojiFont from '@/assets/fonts/NotoEmoji-Regular.ttf';
 
-const formatDate = (d: string, pattern = 'EEEE, MMMM d, yyyy') =>
-  fnsFormat(parseISO(d), pattern);
+const TABLES = {
+  trip:       'trips',
+  days:       'trip_days',
+  stays:      'accommodations',
+  transport:  'transportation',
+  activities: 'day_activities',
+  dining:     'reservations',
+} as const;
 
-const formatTime = (time?: string | null) => {
-  if (!time) return 'All-day';
-  try {
-    if (time.includes('T')) return fnsFormat(parseISO(time), 'h:mm a');
-    const [h, m] = time.split(':').map(Number);
-    const d = new Date();
-    d.setHours(h, m);
-    return fnsFormat(d, 'h:mm a');
-  } catch { return 'All-day'; }
+const PAGE_MARGINS: [number, number, number, number] = [30, 30, 30, 30];
+
+// Mapping event types to emoji
+const EMOJI: Record<string, string> = {
+  transportation: '✈️',
+  flight:         '✈️',
+  accommodation:  '🏨',
+  hotel:          '🏨',
+  activity:       '🎯',
+  activities:     '🎯',
+  dining:         '🍽️',
+  restaurant:     '🍽️',
 };
 
-const minutesFromTime = (t: string) => {
-  if (t === 'All-day') return -1;
+// --- Tiny format helpers ---
+const fmtDate  = (d: string, p='EEEE, MMMM d, yyyy') => fnsFormat(parseISO(d), p);
+const fmtShort = (d: string) => fnsFormat(parseISO(d), 'MMM d');
+function fmtTime(t?: string|null) {
+  if (!t) return '';
+  try {
+    if (t.includes('T')) return fnsFormat(parseISO(t), 'h:mm a');
+    const [h,m] = t.split(':').map(Number);
+    const D = new Date(); D.setHours(h,m);
+    return fnsFormat(D, 'h:mm a');
+  } catch { return ''; }
+}
+function mins(t: string) {
   const m = t.match(/(\d+):(\d+)\s*([ap])m/i);
   if (!m) return 9999;
-  const [, hh, mm, mer] = m;
-  let mins = (parseInt(hh, 10) % 12) * 60 + parseInt(mm, 10);
-  if (mer.toLowerCase() === 'p') mins += 12 * 60;
-  return mins;
-};
+  let mm = (parseInt(m[1])%12)*60 + parseInt(m[2]);
+  if (m[3].toLowerCase()==='p') mm+=12*60;
+  return mm;
+}
 
-const urlToDataURL = async (url: string) => {
-  const blob = await fetch(url).then(r => r.blob());
-  return await new Promise<string>((res, rej) => {
+// --- Cache for images & fonts ---
+const imgCache = new Map<string, Promise<string>>();
+async function toDataURI(url: string) {
+  if (!url) return '';
+  if (!imgCache.has(url)) {
+    imgCache.set(url,
+      fetch(url).then(r=>r.blob()).then(b=>new Promise<string>((res,rej)=>{
+        const fr = new FileReader();
+        fr.onload = ()=>res(fr.result as string);
+        fr.onerror = ()=>rej(fr.error);
+        fr.readAsDataURL(b);
+      }))
+    );
+  }
+  return imgCache.get(url)!;
+}
+
+// --- Embed NotoEmoji into pdfMake VFS & register it ---
+let emojiFontLoaded = false;
+async function loadEmojiFont() {
+  if (emojiFontLoaded) return;
+  // Fetch the font binary and convert to base64
+  const fontBlob = await fetch(notoEmojiFont).then(r=>r.blob());
+  const dataURI = await new Promise<string>((res,rej)=>{
     const fr = new FileReader();
-    fr.onload = () => res(fr.result as string);
-    fr.onerror = () => rej(fr.error);
-    fr.readAsDataURL(blob);
+    fr.onload = ()=>res(fr.result as string);
+    fr.onerror = ()=>rej(fr.error);
+    fr.readAsDataURL(fontBlob);
   });
+  // Extract the base64 segment
+  const base64 = dataURI.split(',')[1];
+  // Name used internally in VFS
+  const fontFilename = 'NotoEmoji-Regular.ttf';
+  // Attach to pdfMake's virtual file system
+  (pdfMake as any).vfs[fontFilename] = base64;
+  // Register under a font family
+  pdfMake.fonts = {
+    ...pdfMake.fonts,
+    Roboto: { // ensure Roboto stays
+      normal: 'Roboto-Regular.ttf',
+      bold:   'Roboto-Medium.ttf',
+      italics:'Roboto-Italic.ttf',
+      bolditalics:'Roboto-MediumItalic.ttf'
+    },
+    NotoEmoji: {
+      normal: fontFilename,
+      bold:   fontFilename,
+      italics:fontFilename,
+      bolditalics:fontFilename
+    }
+  };
+  emojiFontLoaded = true;
+}
+
+// --- Types for itinerary items ---
+type Item = {
+  type: 'accommodation'|'transportation'|'activity'|'dining';
+  title: string; time: string; sortKey: number;
+  details?: string; location?: string; cost?: string; thumb?: string;
 };
+type Day = { date: string; title?: string; items: Item[] };
 
-/* -------------------------------------------------------------------------- */
-/* Types                                                                      */
-/* -------------------------------------------------------------------------- */
+/**
+ * Fetches and builds Day[] with Items from Supabase
+ */
+async function buildDays(tripId: string, opts: PdfExportOptions): Promise<Day[]> {
+  const [
+    { data: days, error: daysErr },
+    { data: stays    },
+    { data: trans    },
+    { data: acts     },
+    { data: dine     },
+  ] = await Promise.all([
+    supabase.from(TABLES.days).select('day_id,date,title').eq('trip_id',tripId).order('date'),
+    supabase.from(TABLES.stays).select('*').eq('trip_id',tripId),
+    supabase.from(TABLES.transport).select('*').eq('trip_id',tripId),
+    supabase.from(TABLES.activities).select('*').eq('trip_id',tripId),
+    supabase.from(TABLES.dining).select('*').eq('trip_id',tripId),
+  ]);
+  if (daysErr) throw daysErr;
 
-type TimelineItem = {
-  type: 'accommodation' | 'transportation' | 'activity' | 'dining';
-  title: string;
-  time: string;
-  details?: string;
-  location?: string;
-  cost?: string;
-  thumb?: string;
-  sortKey: number;
-};
+  return (days||[]).map(day=>{
+    const items:Item[] = [];
 
-type TimelineDay = {
-  date: string;
-  title?: string;
-  timelineItems: TimelineItem[];
-};
-
-/* -------------------------------------------------------------------------- */
-/* Data assembly: buildDays                                                   */
-/* -------------------------------------------------------------------------- */
-
-async function buildDays(
-  tripId: string,
-  opts: PdfExportOptions,
-): Promise<TimelineDay[]> {
-  const { data: days, error: dayErr } = await supabase
-    .from('trip_days')
-    .select('day_id, date, title')
-    .eq('trip_id', tripId)
-    .order('date', { ascending: true });
-
-  if (dayErr) throw dayErr;
-
-  const { data: stays } = await supabase
-    .from('accommodations')
-    .select('*')
-    .eq('trip_id', tripId);
-
-  const { data: transports, error: transportError } = await supabase
-    .from('transportation')
-    .select('*')
-    .eq('trip_id', tripId);
-
-  const { data: acts, error: actsError } = await supabase
-    .from('day_activities')
-    .select('*')
-    .eq('trip_id', tripId);
-
-  const { data: dine, error: dineError } = await supabase
-    .from('reservations')
-    .select('*')
-    .eq('trip_id', tripId);
-
-  // Debug logging
-  console.log('PDF Export Data:', {
-    tripId,
-    transportCount: transports?.length || 0,
-    activitiesCount: acts?.length || 0,
-    diningCount: dine?.length || 0,
-    transportError,
-    actsError,
-    dineError
-  });
-
-  /* helper to compare two ISO-date strings by calendar day */
-  const sameDay = (isoA: string, isoB: string) =>
-    isoA.slice(0, 10) === isoB.slice(0, 10);
-
-  return (days || []).map(day => {
-    const timeline: TimelineItem[] = [];
-
-    /* accommodations (unchanged) ---------------------------------------- */
+    // Accommodation
     if (opts.sections.accommodation) {
-      (stays || []).forEach(s => {
-        if (!s.hotel_checkin_date || !s.hotel_checkout_date) return;
-
-        const isCheckIn = sameDay(day.date, s.hotel_checkin_date);
-        const isCheckOut = sameDay(day.date, s.hotel_checkout_date);
-
-        if (
-          isCheckIn || isCheckOut ||
-          (parseISO(day.date) >= parseISO(s.hotel_checkin_date) &&
-           parseISO(day.date) <= parseISO(s.hotel_checkout_date))
-        ) {
-          const when = isCheckIn ? s.checkin_time : isCheckOut ? s.checkout_time : null;
-          timeline.push({
-            type: 'accommodation',
-            title: isCheckIn
-              ? `Check-in: ${s.hotel}`
-              : isCheckOut
-              ? `Check-out: ${s.hotel}`
-              : `Stay at ${s.hotel}`,
-            time: formatTime(when),
-            details: s.hotel_details || undefined,
-            location: s.hotel_address || undefined,
-            cost: s.cost != null ? `${s.currency} ${s.cost}` : undefined,
-            thumb: opts.showImages && s.image_url ? s.image_url : undefined,
-            sortKey: minutesFromTime(formatTime(when)),
-          });
-        }
+      (stays||[]).forEach(s=>{
+        if (!s.hotel_checkin_date||!s.hotel_checkout_date) return;
+        const inR = isSameDay(day.date, s.hotel_checkin_date) ||
+                    isSameDay(day.date, s.hotel_checkout_date) ||
+                    (parseISO(day.date)>=parseISO(s.hotel_checkin_date)&& parseISO(day.date)<=parseISO(s.hotel_checkout_date));
+        if (!inR) return;
+        const isIn  = isSameDay(day.date, s.hotel_checkin_date);
+        const isOut = isSameDay(day.date, s.hotel_checkout_date);
+        const when  = isIn ? s.checkin_time : isOut ? s.checkout_time : null;
+        items.push({
+          type:'accommodation',
+          title:`Stay: ${s.hotel}`,
+          time: fmtTime(when)||'All-day',
+          details: opts.detailLevel!=='minimal' ? s.hotel_details : undefined,
+          location: opts.detailLevel!=='minimal' ? s.hotel_address : undefined,
+          cost: opts.showCosts && s.cost!=null ? `${s.currency} ${s.cost}` : undefined,
+          thumb: opts.showImages && s.image_url ? s.image_url : undefined,
+          sortKey: mins(fmtTime(when)||'0:00 am'),
+        });
       });
     }
 
-    /* transportation – improved day match ------------------------------- */
+    // Transportation
     if (opts.sections.transportation) {
-      (transports || []).forEach(t => {
-        // More flexible date matching - handle different date formats
-        const transportDate = t.start_date?.slice(0, 10);
-        const currentDate = day.date?.slice(0, 10);
-        const matches = transportDate === currentDate;
-        
-        console.log('Transportation match check:', {
-          transportDate: t.start_date,
-          dayDate: day.date,
-          transportDateSliced: transportDate,
-          currentDateSliced: currentDate,
-          matches,
-          type: t.type,
-          provider: t.provider
-        });
-        
-        if (!matches) return;
-
-        const title =
-          t.type === 'flight'
-            ? `Flight${t.provider ? ': ' + t.provider : ''}`
-            : t.type.charAt(0).toUpperCase() + t.type.slice(1);
-
-        const metaLoc =
-          t.departure_location && t.arrival_location
+      (trans||[]).forEach(t=>{
+        if(!isSameDay(t.start_date, day.date)) return;
+        const label = t.type==='flight'
+          ? `Flight${t.provider?`: ${t.provider}`:''}`
+          : t.type.charAt(0).toUpperCase()+t.type.slice(1);
+        const start = fmtTime(t.start_time), end = fmtTime(t.end_time);
+        const timeR = start&&end ? `${start} – ${end}` : start||end||'All-day';
+        items.push({
+          type:'transportation',
+          title:label,
+          time: timeR,
+          details: opts.detailLevel!=='minimal' ? t.details : undefined,
+          location: opts.detailLevel!=='minimal' && t.departure_location && t.arrival_location
             ? `From: ${t.departure_location} → ${t.arrival_location}`
-            : t.departure_location
-            ? `From: ${t.departure_location}`
-            : undefined;
-
-        timeline.push({
-          type: 'transportation',
-          title,
-          time: formatTime(t.start_time),
-          details: t.details || undefined,
-          location: metaLoc,
-          cost: t.cost != null ? `${t.currency} ${t.cost}` : undefined,
-          sortKey: minutesFromTime(formatTime(t.start_time)),
+            : opts.detailLevel!=='minimal' ? t.departure_location : undefined,
+          cost: opts.showCosts && t.cost!=null ? `${t.currency} ${t.cost}` : undefined,
+          sortKey: mins(start||'0:00 am'),
         });
       });
     }
 
-    /* activities (unchanged) -------------------------------------------- */
+    // Activities
     if (opts.sections.activities) {
-      (acts || [])
-        .filter(a => a.day_id === day.day_id)
-        .forEach(a => {
-          timeline.push({
-            type: 'activity',
-            title: a.title || 'Activity',
-            time: formatTime(a.start_time),
-            details: a.description || undefined,
-            cost: a.cost != null ? `${a.currency} ${a.cost}` : undefined,
-            sortKey: minutesFromTime(formatTime(a.start_time)),
-          });
-        });
-    }
-
-    /* dining / reservations – now robust -------------------------------- */
-    if (opts.sections.dining) {
-      (dine || []).forEach(r => {
-        const dayMatch = r.day_id && r.day_id === day.day_id;
-        
-        // More flexible reservation time matching
-        let timeMatch = false;
-        if (r.reservation_time) {
-          const reservationDate = r.reservation_time.slice(0, 10);
-          const currentDate = day.date?.slice(0, 10);
-          timeMatch = reservationDate === currentDate;
-        }
-        
-        const reservationOnThisDay = dayMatch || timeMatch;
-        
-        console.log('Dining match check:', {
-          restaurantName: r.restaurant_name,
-          dayId: r.day_id,
-          currentDayId: day.day_id,
-          reservationTime: r.reservation_time,
-          dayDate: day.date,
-          dayMatch,
-          timeMatch,
-          reservationOnThisDay
-        });
-
-        if (!reservationOnThisDay) return;
-
-        const metaParts: string[] = [];
-        if (r.number_of_people)
-          metaParts.push(
-            `${r.number_of_people} ${r.number_of_people === 1 ? 'person' : 'people'}`,
-          );
-        if (r.address) metaParts.push(r.address);
-
-        timeline.push({
-          type: 'dining',
-          title: `Dining: ${r.restaurant_name}`,
-          time: formatTime(r.reservation_time),
-          details: r.notes || undefined,
-          location: metaParts.join(' · ') || undefined,
-          cost: r.cost != null ? `${r.currency} ${r.cost}` : undefined,
-          sortKey: minutesFromTime(formatTime(r.reservation_time)),
+      (acts||[]).filter(a=>a.day_id===day.day_id).forEach(a=>{
+        items.push({
+          type:'activity',
+          title: a.title||'Activity',
+          time: fmtTime(a.start_time)||'All-day',
+          details: opts.detailLevel==='full' ? a.description : undefined,
+          cost: opts.showCosts && a.cost!=null ? `${a.currency} ${a.cost}` : undefined,
+          sortKey: mins(fmtTime(a.start_time)||'0:00 am'),
         });
       });
     }
 
-    return {
-      ...day,
-      timelineItems: timeline.sort((a, b) => a.sortKey - b.sortKey),
-    };
+    // Dining
+    if (opts.sections.dining) {
+      (dine||[]).forEach(r=>{
+        const match = (r.day_id===day.day_id) ||
+                      (r.reservation_time && isSameDay(r.reservation_time, day.date));
+        if(!match) return;
+        items.push({
+          type:'dining',
+          title:`Dining: ${r.restaurant_name}`,
+          time: fmtTime(r.reservation_time)||'All-day',
+          details: opts.detailLevel!=='minimal' ? r.notes : undefined,
+          location: opts.detailLevel!=='minimal' && r.address ? r.address : undefined,
+          cost: opts.showCosts && r.cost!=null ? `${r.currency} ${r.cost}` : undefined,
+          sortKey: mins(fmtTime(r.reservation_time)||'0:00 am'),
+        });
+      });
+    }
+
+    return { ...day, items: items.sort((a,b)=>a.sortKey-b.sortKey) };
   });
 }
 
-/* -------------------------------------------------------------------------- */
-/* buildDayTable helper                                                       */
-/* -------------------------------------------------------------------------- */
-
-function buildDayTable(items: TimelineItem[], opts: PdfExportOptions) {
-  if (!items.length)
-    return { text: 'No activities scheduled', style: 'itemMeta', margin: [0, 0, 0, 6] };
-
+/**
+ * Renders a two-column table (time | stacked details with emoji)
+ */
+function renderTable(items:Item[], opts:PdfExportOptions) {
+  if (!items.length) {
+    return { text: 'No activities scheduled', style: 'itemMeta', margin: [0,0,0,6] };
+  }
   const body = items.map(it => {
-    const stack: any[] = [{ text: it.title, style: 'itemTitle' }];
-
-    if (opts.detailLevel !== 'minimal' && it.details)
-      stack.push({ text: it.details });
-
-    if (
-      (opts.detailLevel !== 'minimal' && it.location) ||
-      (opts.showCosts && it.cost)
-    ) {
-      const meta = [];
-      if (opts.detailLevel !== 'minimal' && it.location) meta.push(it.location);
-      if (opts.showCosts && it.cost) meta.push(`Cost: ${it.cost}`);
-      stack.push({ text: meta.join('   •   '), style: 'itemMeta' });
+    const emoji = EMOJI[it.type] || '';
+    // Mixed text array: emoji with NotoEmoji font + space + title in Roboto
+    const titleBlock = {
+      text: [
+        { text: emoji, font: 'NotoEmoji', fontSize: 11 },
+        { text: ' ' },
+        { text: it.title, style: 'itemTitle' }
+      ]
+    };
+    const stack:any[] = [ titleBlock ];
+    if (opts.detailLevel!=='minimal' && it.details) stack.push({ text: it.details, style: 'itemDetail' });
+    if ((opts.detailLevel!=='minimal' && it.location) || (opts.showCosts && it.cost)) {
+      const parts = [];
+      if (opts.detailLevel!=='minimal' && it.location) parts.push(it.location);
+      if (opts.showCosts && it.cost) parts.push(`Cost: ${it.cost}`);
+      stack.push({ text: parts.join('   •   '), style: 'itemMeta' });
     }
-
-    if (it.thumb && opts.showImages)
-      stack.push({ image: it.thumb, width: 64, margin: [0, 4, 0, 0] });
+    if (it.thumb && opts.showImages) stack.push({ image: it.thumb, width: 64, margin: [0,4,0,0] });
 
     return [
       { text: it.time, style: 'timeCell', alignment: 'right' },
-      { stack },
+      { stack }
     ];
   });
 
-  return {
-    table: { widths: [50, '*'], body },
-    layout: 'noBorders' as const,
-  };
+  return { table: { widths: [60, '*'], body }, layout: 'noBorders' as const };
 }
 
-/* -------------------------------------------------------------------------- */
-/* Main exportItineraryPdf                                                    */
-/* -------------------------------------------------------------------------- */
+/**
+ * Main export function called by your button
+ */
+export async function exportItineraryPdf(tripId:string, opts:PdfExportOptions) {
+  // 1. Load emoji font once
+  await loadEmojiFont();
 
-export async function exportItineraryPdf(
-  tripId: string,
-  options: PdfExportOptions,
-) {
-  try {
-    const { data: trip, error: tripErr } = await supabase
-      .from('trips')
-      .select('destination, arrival_date, departure_date, cover_image_url')
-      .eq('trip_id', tripId)
-      .single();
+  // 2. Fetch trip meta
+  const { data: trip, error } = await supabase
+    .from(TABLES.trip)
+    .select('destination,arrival_date,departure_date,cover_image_url')
+    .eq('trip_id', tripId).single();
+  if (error || !trip) throw error ?? new Error('Trip not found');
+  const dateRange = trip.arrival_date && trip.departure_date
+    ? `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}` : '';
 
-    if (tripErr || !trip) throw tripErr ?? new Error('Trip not found');
+  // 3. Build days & items
+  const days = await buildDays(tripId, opts);
 
-  const dateRange =
-    trip.arrival_date && trip.departure_date
-      ? `${formatDate(trip.arrival_date, 'MMM d')} – ${formatDate(trip.departure_date, 'MMM d')}`
-      : '';
-
-  const processedDays = await buildDays(tripId, options);
-
-  const docDefinition: any = {
+  // 4. Compose pdfMake doc
+  const doc:pdfMake.TDocumentDefinitions = {
     pageSize: 'LETTER',
-    pageMargins: [30, 30, 30, 30],        // equal left/right margins ✅
+    pageMargins: PAGE_MARGINS,
     defaultStyle: { fontSize: 10, lineHeight: 1.25 },
-
+    header: () => ({
+      text: `${trip.destination} • ${dateRange}`,
+      alignment: 'center',
+      fontSize: 9,
+      margin: [0,10,0,0],
+      color: '#666'
+    }),
+    footer: (current, total) => ({
+      text: `Page ${current} of ${total} • exported ${fnsFormat(new Date(), 'PP p')}`,
+      alignment: 'center',
+      fontSize: 8,
+      margin: [0,0,0,10],
+      color: '#999'
+    }),
     content: [
-      ...(options.showImages && trip.cover_image_url
-        ? [{
-            image: await urlToDataURL(trip.cover_image_url),
-            width: 540,
-            margin: [0, 0, 0, 12],
-          }]
+      ...(opts.showImages && trip.cover_image_url
+        ? [{ image: await toDataURI(trip.cover_image_url), width: 540, margin: [0,0,0,12] }]
         : []),
       { text: `${trip.destination} Itinerary`, style: 'heroTitle' },
-      { text: dateRange, style: 'heroSub', margin: [0, 0, 0, 16] },
-
-      /* No forced page break between days */
-      ...processedDays.map(day => {
-        const heading = day.title?.trim()
-          ? `${day.title} – ${formatDate(day.date)}`
-          : formatDate(day.date);
-
-        return [
-          { text: heading, style: 'dayHeader', margin: [0, 8, 0, 6] },
-          buildDayTable(day.timelineItems, options),
-        ];
-      }).flat(),
+      { text: dateRange, style: 'heroSub', margin: [0,0,0,16] },
+      ...days.flatMap(day => [
+        {
+          text: day.title?.trim()
+            ? `${day.title} – ${fmtDate(day.date)}`
+            : fmtDate(day.date),
+          style: 'dayHeader',
+          margin: [0,8,0,6]
+        },
+        renderTable(day.items, opts)
+      ])
     ],
-
     styles: {
       heroTitle: { fontSize: 18, bold: true },
-      heroSub: { fontSize: 12, color: '#6b6b6b' },
+      heroSub:   { fontSize: 12, color: '#6b6b6b' },
       dayHeader: { fontSize: 14, bold: true, color: '#333' },
-      timeCell: { fontSize: 9, color: '#6b6b6b' },
+      timeCell:  { fontSize: 9, color: '#6b6b6b' },
       itemTitle: { bold: true },
-      itemMeta: { italics: true, color: '#6b6b6b' },
-    },
+      itemDetail:{ fontSize: 10 },
+      itemMeta:  { italics: true, color: '#6b6b6b' },
+    }
   };
 
-    const fileName = `${trip.destination.replace(/\s+/g, '_')}-itinerary.pdf`.toLowerCase();
-    pdfMake.createPdf(docDefinition).download(fileName);
-  } catch (error) {
-    console.error('Export failed:', error);
-    throw error;
-  }
+  // 5. Download
+  const safe = trip.destination.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  pdfMake.createPdf(doc).download(`${safe}-itinerary.pdf`);
 }

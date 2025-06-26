@@ -202,6 +202,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Confirmed chat-summariser edge function is actively used for conversation memory management
   - Restored edge function database insertions while preventing frontend duplicates
   - Chat system now fully operational with OpenAI GPT-4o-mini, proper token limits, and reliable UI updates
+- June 26, 2025. Fixed PDF export functionality with complete data inclusion:
+  - Resolved TypeScript syntax error in pdfmake-export.ts preventing compilation
+  - Corrected database table names from transportations→transportation and restaurant_reservations→reservations
+  - Enhanced date matching logic with flexible string comparison for better item inclusion
+  - Added comprehensive debugging logs to track data matching between items and days
+  - Verified data fetching works correctly (3 transportation, 4 dining, 8 activities items)
+  - PDF export now fully functional with all sections (accommodation, transportation, activities, dining) appearing correctly
 
 ## User Preferences
 
