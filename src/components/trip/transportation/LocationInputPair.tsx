@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { Tables } from '@/integrations/supabase/types';
 import LocationSearchInput from './LocationSearchInput';
 
@@ -28,25 +28,20 @@ const LocationInputPair: React.FC<LocationInputPairProps> = ({
   onToChange,
   transportationType
 }) => {
-  // Use local state to isolate from parent re-renders
-  const [localFromValue, setLocalFromValue] = useState(fromValue);
-  const [localToValue, setLocalToValue] = useState(toValue);
+  // Use refs to maintain stable values
+  const fromValueRef = useRef(fromValue);
+  const toValueRef = useRef(toValue);
   
-  // Track which field is being updated
-  const [updatingField, setUpdatingField] = useState<'from' | 'to' | null>(null);
+  // Update refs when props change
+  fromValueRef.current = fromValue;
+  toValueRef.current = toValue;
 
   const handleFromChange = useCallback((value: string, details?: any) => {
-    setUpdatingField('from');
-    setLocalFromValue(value);
     onFromChange(value);
-    setTimeout(() => setUpdatingField(null), 200);
   }, [onFromChange]);
 
   const handleToChange = useCallback((value: string, details?: any) => {
-    setUpdatingField('to');
-    setLocalToValue(value);
     onToChange(value);
-    setTimeout(() => setUpdatingField(null), 200);
   }, [onToChange]);
 
   return (
@@ -55,7 +50,7 @@ const LocationInputPair: React.FC<LocationInputPairProps> = ({
         <RequiredLabel>From</RequiredLabel>
         <LocationSearchInput
           key={`from-${transportationType}`}
-          value={updatingField === 'from' ? localFromValue : fromValue}
+          value={fromValue}
           onChange={handleFromChange}
           placeholder={transportationType === 'flight' ? "Search for departure airport..." : "Search for departure location..."}
           transportationType={transportationType}
@@ -65,7 +60,7 @@ const LocationInputPair: React.FC<LocationInputPairProps> = ({
         <RequiredLabel>To</RequiredLabel>
         <LocationSearchInput
           key={`to-${transportationType}`}
-          value={updatingField === 'to' ? localToValue : toValue}
+          value={toValue}
           onChange={handleToChange}
           placeholder={transportationType === 'flight' ? "Search for arrival airport..." : "Search for arrival location..."}
           transportationType={transportationType}
