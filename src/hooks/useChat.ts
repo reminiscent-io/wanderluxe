@@ -72,19 +72,42 @@ export function useChat(tripId: string) {
           },
           (payload: any) => {
             console.log('New chat message received:', payload);
-            qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => [
-              ...(prev ?? []), 
-              {
-                id: payload.new.id,
-                role: payload.new.role,
-                message: payload.new.message,
-                timestamp: payload.new.timestamp,
-                embedding: payload.new.embedding,
-                trip_id: payload.new.trip_id,
-                user_id: payload.new.user_id,
-                created_at: payload.new.created_at
+            const newMessage = {
+              id: payload.new.id,
+              role: payload.new.role,
+              message: payload.new.message,
+              timestamp: payload.new.timestamp,
+              embedding: payload.new.embedding,
+              trip_id: payload.new.trip_id,
+              user_id: payload.new.user_id,
+              created_at: payload.new.created_at
+            };
+            
+            qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => {
+              const existing = prev ?? [];
+              
+              // Check if message already exists to prevent duplicates
+              if (existing.some(msg => msg.id === newMessage.id)) {
+                console.log('Message already exists, skipping duplicate');
+                return existing;
               }
-            ]);
+
+              // For user messages, replace any temporary optimistic message with same content
+              if (newMessage.role === 'user') {
+                const withoutOptimistic = existing.filter(msg => 
+                  !(msg.role === 'user' && msg.message === newMessage.message && msg.id.length === 36 && msg.created_at === msg.timestamp)
+                );
+                console.log('Adding real user message, replacing optimistic:', newMessage.message.substring(0, 50) + '...');
+                const updatedMessages = [...withoutOptimistic, newMessage];
+                // Sort by timestamp to maintain chronological order
+                return updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+              }
+
+              console.log('Adding new message to chat:', newMessage.role, newMessage.message.substring(0, 50) + '...');
+              const updatedMessages = [...existing, newMessage];
+              // Sort by timestamp to maintain chronological order
+              return updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+            });
           }
         )
         .subscribe();
