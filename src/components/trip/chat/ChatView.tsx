@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, memo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatLogsKey, useChat } from '@/hooks/useChat';
+import type { ChatLogRow } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ interface ChatMessageDB {
   attachments?: { type: 'image' | 'pdf'; url: string; name: string }[];
 }
 
+
+
 interface ChatViewProps { tripId: string }
 
 /* ------------------------------------------------------------------ */
@@ -37,12 +40,12 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
-  const { data: rawMessages = [], isLoading } = useChat(tripId);
+  const { data: rawMessages = [], isLoading, addMessage } = useChat(tripId);
   
   // Transform raw messages to match ChatMessageDB interface
   const messages: ChatMessageDB[] = rawMessages
-    .filter((msg: any) => msg && msg.id && msg.role && msg.message && msg.timestamp)
-    .map((msg: any) => ({
+    .filter((msg: ChatLogRow) => msg && msg.id && msg.role && msg.message && msg.timestamp)
+    .map((msg: ChatLogRow) => ({
       id: msg.id,
       role: msg.role as 'user' | 'ai',
       message: msg.message,

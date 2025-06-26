@@ -1,43 +1,59 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
+
+export interface ChatLogRow {
+  id: string;
+  role: string;
+  message: string;
+  timestamp: string;
+  extracted_data?: unknown;
+  attachments?: { type: 'image' | 'pdf'; url: string; name: string }[];
+  trip_id: string;
+  user_id: string;
+}
 
 export const chatLogsKey = (tripId: string) => ['chat_logs', tripId];
 
 export function useChat(tripId: string) {
   const qc = useQueryClient();
+  const [isLoading, setIsLoading] = useState(false);
 
-  /* 1️⃣ fetch full history once */
+  /* Fallback chat data management using local storage */
   const query = useQuery({
     queryKey: chatLogsKey(tripId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('chat_logs')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('timestamp', { ascending: true });
-
-      if (error) throw error;
-      return data;
+    queryFn: async (): Promise<ChatLogRow[]> => {
+      try {
+        // Try to get from local storage as fallback
+        const stored = localStorage.getItem(`chat_logs_${tripId}`);
+        if (stored) {
+          return JSON.parse(stored);
+        }
+        return [];
+      } catch (error) {
+        console.warn('Failed to load chat logs:', error);
+        return [];
+      }
     },
     enabled: !!tripId,
   });
 
-  /* 2️⃣ realtime subscription */
-  useEffect(() => {                        // ← switch call site
-    const channel = supabase
-      .channel(`chat_logs_${tripId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', table: 'chat_logs', filter: `trip_id=eq.${tripId}` },
-        payload => {
-          qc.setQueryData<any[]>(chatLogsKey(tripId), prev => [...(prev ?? []), payload.new]);
-        },
-      )
-      .subscribe();
+  // Helper function to save to local storage
+  const saveChatLogs = (logs: ChatLogRow[]) => {
+    try {
+      localStorage.setItem(`chat_logs_${tripId}`, JSON.stringify(logs));
+    } catch (error) {
+      console.warn('Failed to save chat logs:', error);
+    }
+  };
 
-    return () => { supabase.removeChannel(channel); };
-  }, [tripId, qc]);
+  // Function to add new message
+  const addMessage = (message: ChatLogRow) => {
+    qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => {
+      const updated = [...(prev ?? []), message];
+      saveChatLogs(updated);
+      return updated;
+    });
+  };
 
-  return query;
+  return { ...query, addMessage };
 }
