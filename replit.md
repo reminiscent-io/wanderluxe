@@ -162,6 +162,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced real-time chat subscriptions with proper cleanup and connection stability
   - Added comprehensive type safety for chat messages with fallback error handling
   - Improved Perplexity API stream parsing to handle malformed JSON chunks gracefully
+  - Optimized chat performance with debounced stream buffer updates to eliminate slow typing interface
+  - Added batch processing to edge function streaming to reduce excessive chunk emissions and improve responsiveness
 
 ## User Preferences
 

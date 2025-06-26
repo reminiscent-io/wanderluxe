@@ -72,6 +72,10 @@ serve(async req => {
           controller.enqueue(`event:${evt}\ndata:${str}\n\n`);
         const decoder = new TextDecoder();
         let full = "";
+        let buffer = "";
+        let lastEmit = Date.now();
+        const BATCH_SIZE = 5; // Emit every 5 characters
+        const MAX_DELAY = 100; // Max 100ms between emissions
 
         try {
           while (true) {
@@ -91,7 +95,15 @@ serve(async req => {
                   const content = parsed.choices?.[0]?.delta?.content || '';
                   if (content) {
                     full += content;
-                    enc(content);
+                    buffer += content;
+                    
+                    // Emit in batches for better performance
+                    const now = Date.now();
+                    if (buffer.length >= BATCH_SIZE || (now - lastEmit) > MAX_DELAY) {
+                      enc(buffer);
+                      buffer = "";
+                      lastEmit = now;
+                    }
                   }
                 } catch (parseErr) {
                   // Skip invalid JSON chunks
@@ -99,6 +111,11 @@ serve(async req => {
                 }
               }
             }
+          }
+
+          // Emit any remaining buffer content
+          if (buffer.length > 0) {
+            enc(buffer);
           }
 
           await persist(supabase, tripId, user.id, message, full, extractedResults);
