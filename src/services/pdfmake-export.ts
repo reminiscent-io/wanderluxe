@@ -9,8 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { parseISO, format as fnsFormat, isSameDay } from 'date-fns';
 import type { PdfExportOptions } from '@/components/trip/PdfExportDialog';
 
-// 1️⃣ – Path to your emoji font file in assets
-import notoEmojiFont from '@/assets/fonts/NotoEmoji-Regular.ttf';
+// 1️⃣ – Use web-based emoji fonts as fallback instead of local file
 
 const TABLES = {
   trip:       'trips',
@@ -72,25 +71,12 @@ async function toDataURI(url: string) {
   return imgCache.get(url)!;
 }
 
-// --- Embed NotoEmoji into pdfMake VFS & register it ---
+// --- Simple emoji font handling without external dependencies ---
 let emojiFontLoaded = false;
 async function loadEmojiFont() {
   if (emojiFontLoaded) return;
-  // Fetch the font binary and convert to base64
-  const fontBlob = await fetch(notoEmojiFont).then(r=>r.blob());
-  const dataURI = await new Promise<string>((res,rej)=>{
-    const fr = new FileReader();
-    fr.onload = ()=>res(fr.result as string);
-    fr.onerror = ()=>rej(fr.error);
-    fr.readAsDataURL(fontBlob);
-  });
-  // Extract the base64 segment
-  const base64 = dataURI.split(',')[1];
-  // Name used internally in VFS
-  const fontFilename = 'NotoEmoji-Regular.ttf';
-  // Attach to pdfMake's virtual file system
-  (pdfMake as any).vfs[fontFilename] = base64;
-  // Register under a font family
+  
+  // Use built-in fonts only, emojis will render with system fonts
   pdfMake.fonts = {
     ...pdfMake.fonts,
     Roboto: { // ensure Roboto stays
@@ -98,12 +84,6 @@ async function loadEmojiFont() {
       bold:   'Roboto-Medium.ttf',
       italics:'Roboto-Italic.ttf',
       bolditalics:'Roboto-MediumItalic.ttf'
-    },
-    NotoEmoji: {
-      normal: fontFilename,
-      bold:   fontFilename,
-      italics:fontFilename,
-      bolditalics:fontFilename
     }
   };
   emojiFontLoaded = true;
@@ -231,13 +211,10 @@ function renderTable(items:Item[], opts:PdfExportOptions) {
   }
   const body = items.map(it => {
     const emoji = EMOJI[it.type] || '';
-    // Mixed text array: emoji with NotoEmoji font + space + title in Roboto
+    // Use simple text with emoji (system fonts will handle emoji rendering)
     const titleBlock = {
-      text: [
-        { text: emoji, font: 'NotoEmoji', fontSize: 11 },
-        { text: ' ' },
-        { text: it.title, style: 'itemTitle' }
-      ]
+      text: `${emoji} ${it.title}`,
+      style: 'itemTitle'
     };
     const stack:any[] = [ titleBlock ];
     if (opts.detailLevel!=='minimal' && it.details) stack.push({ text: it.details, style: 'itemDetail' });
