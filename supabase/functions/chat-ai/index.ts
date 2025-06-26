@@ -348,9 +348,11 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
           { role: "user", content: userQuestion }
         ],
         max_tokens: 500,
-        temperature: 0.7,
-        top_p: 0.9
-        // Removed stream: true to use standard JSON response
+        temperature: 0.2,
+        top_p: 0.9,
+        return_citations: true,
+        return_images: false,
+        return_related_questions: false
       })
     });
     
