@@ -25,7 +25,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   buttonClassName
 }) => {
   const defaultData: Partial<Transportation> = {
-    type: '',
+    type: 'flight',
     departure_location: '',
     arrival_location: '',
     start_date: tripArrivalDate || '',
