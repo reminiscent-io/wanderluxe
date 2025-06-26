@@ -230,7 +230,10 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       aiText = cleanCitations(aiText) || 'No response received';
 
       /* ---------- 6 / Optimistic UI update ---------- */
-      // Messages are persisted by edge function, real-time subscription updates UI
+      // Force refresh chat data to ensure UI updates
+      queryClient.invalidateQueries({
+        queryKey: chatLogsKey(tripId)
+      });
 
       return json;
     },
