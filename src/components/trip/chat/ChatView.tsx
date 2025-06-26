@@ -2,10 +2,11 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatLogsKey, useChat } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Avatar, AvatarFallback, AvatarImage,
-  Button, Card, CardContent, Input, ScrollArea,
-} from '@/components/ui';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Bot, ClipboardCopy, CornerDownLeft, Loader2,
   Paperclip, Plus, Send, Upload, User, X,
