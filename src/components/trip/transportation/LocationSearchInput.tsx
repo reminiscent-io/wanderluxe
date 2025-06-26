@@ -117,14 +117,26 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
     }
   };
 
+  // Update input value when prop changes
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.value !== value) {
+      inputRef.current.value = value;
+    }
+  }, [value]);
+
   return (
     <div className="space-y-2">
       <div className="relative">
         <Input
           ref={inputRef}
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          defaultValue={value}
+          onChange={(e) => {
+            // Only trigger onChange for manual typing, not Google Places selection
+            if (!autoCompleteRef.current || document.activeElement === inputRef.current) {
+              onChange(e.target.value);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
