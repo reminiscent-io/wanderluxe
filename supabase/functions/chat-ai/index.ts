@@ -1,17 +1,14 @@
 // chat-ai/index.ts – Supabase Edge Function (refactored June 2025, updated for Persona & Streaming)
-import { serve } from "https://deno.land/std@0.210.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=deno&no-check";
-
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Environment & constants
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY") ?? "";
-
 // Model definitions
-const OPENAI_MODEL = "gpt-4o";  // GPT-4 (Vision-enabled) for document parsing
-const PERPLEXITY_MODEL = "llama-3.1-sonar-small-128k-online";
-
+const OPENAI_MODEL = "gpt-4o"; // GPT-4 (Vision-enabled) for document parsing
+const PERPLEXITY_MODEL = "llama-3.1-sonar-large-128k-online";
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://app.wanderluxe.com",
@@ -19,7 +16,6 @@ const ALLOWED_ORIGINS = [
   "https://wanderluxe.io",
   "https://www.wanderluxe.io"
 ];
-
 // Precompile regex for detecting luxury hotels (4★+ brands)
 const LUXURY_HOTEL_REGEX = new RegExp([
   "Ritz",
@@ -33,9 +29,8 @@ const LUXURY_HOTEL_REGEX = new RegExp([
   "Rosewood",
   "Peninsula"
 ].join("|"), "i");
-
 // CORS helper
-function corsHeaders(req: Request) {
+function corsHeaders(req) {
   const origin = req.headers.get("Origin") ?? "*";
   const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : "*";
   return {
@@ -44,28 +39,31 @@ function corsHeaders(req: Request) {
     "Access-Control-Allow-Methods": "POST, OPTIONS"
   };
 }
-
 // Utility to wrap JSON data in a Response
-function jsonResponse(data: unknown, init: ResponseInit = {}) {
-  const headers = { ...init.headers, "Content-Type": "application/json" };
-  return new Response(JSON.stringify(data), { ...init, headers });
+function jsonResponse(data, init = {}) {
+  const headers = {
+    ...init.headers,
+    "Content-Type": "application/json"
+  };
+  return new Response(JSON.stringify(data), {
+    ...init,
+    headers
+  });
 }
-
 // Map errors to appropriate HTTP status codes
-function toStatusCode(err: Error) {
+function toStatusCode(err) {
   if (/unauthorized/i.test(err.message)) return 401;
   if (/access denied/i.test(err.message)) return 403;
   if (/not found/i.test(err.message)) return 404;
   if (/required|invalid json/i.test(err.message)) return 400;
   return 500;
 }
-
 // Parse JSON request body and validate required fields
-async function parseAndValidateBody(req: Request) {
-  let body: any;
+async function parseAndValidateBody(req) {
+  let body;
   try {
     body = await req.json();
-  } catch {
+  } catch  {
     throw new Error("Invalid JSON in request body");
   }
   if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -78,14 +76,17 @@ async function parseAndValidateBody(req: Request) {
   if (!tripId || typeof tripId !== "string") {
     throw new Error("`tripId` is required and must be a string");
   }
-  if (attachments && !(Array.isArray(attachments) && attachments.every(a => a && typeof a.url === "string"))) {
+  if (attachments && !(Array.isArray(attachments) && attachments.every((a)=>a && typeof a.url === "string"))) {
     throw new Error("`attachments` must be an array of objects with a `url`");
   }
-  return { message, tripId, attachments: attachments ?? [] };
+  return {
+    message,
+    tripId,
+    attachments: attachments ?? []
+  };
 }
-
 // Determine budget tier from cost and nights (or luxury brand override)
-function classifyBudget(total: number, nights: number, hotelName = "") {
+function classifyBudget(total, nights, hotelName = "") {
   if (LUXURY_HOTEL_REGEX.test(hotelName)) return "luxury";
   const nightly = total / Math.max(nights, 1);
   if (nightly > 400) return "luxury";
@@ -93,27 +94,28 @@ function classifyBudget(total: number, nights: number, hotelName = "") {
   if (nightly < 100) return "budget-conscious";
   return "mid-range";
 }
-
 // Main Edge Function handler
-serve(async (req: Request) => {
+serve(async (req)=>{
   // CORS pre-flight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders(req) });
+    return new Response("ok", {
+      headers: corsHeaders(req)
+    });
   }
-
   try {
     // Create Supabase client for this request, with user's JWT for RLS
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } }
+      global: {
+        headers: {
+          Authorization: req.headers.get("Authorization") ?? ""
+        }
+      }
     });
-
     // Authenticate user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) throw new Error("Unauthorized");
-
     // Parse and validate request body
     const { message, tripId, attachments } = await parseAndValidateBody(req);
-
     // **Security: Filter abusive or off-topic inputs**
     // Extract actual user question (strip any prepended context like "User question:")
     let userQuestion = message;
@@ -127,7 +129,10 @@ serve(async (req: Request) => {
       return jsonResponse({
         success: false,
         error: "I'm sorry, I can only continue if we keep our conversation respectful."
-      }, { status: 400, headers: corsHeaders(req) });
+      }, {
+        status: 400,
+        headers: corsHeaders(req)
+      });
     }
     if (offTopicPattern.test(userQuestion)) {
       // Politely redirect off-topic queries to focus on travel
@@ -138,50 +143,35 @@ serve(async (req: Request) => {
           message: "I'm your travel assistant and can only help with travel-related questions about your trip. Is there anything about your travel plans I can assist you with?",
           timestamp: new Date().toISOString()
         }
-      }, { status: 200, headers: corsHeaders(req) });
+      }, {
+        status: 200,
+        headers: corsHeaders(req)
+      });
     }
-
     // Fetch trip details and verify access (ownership or shared)
-    const { data: trip, error: tripErr } = await supabase
-      .from("trips")
-      .select("trip_id, destination, arrival_date, departure_date, user_id, cover_image_url")
-      .eq("trip_id", tripId)
-      .single();
+    const { data: trip, error: tripErr } = await supabase.from("trips").select("trip_id, destination, arrival_date, departure_date, user_id, cover_image_url").eq("trip_id", tripId).single();
     if (tripErr || !trip) throw new Error("Trip not found or access denied");
     const ownsTrip = trip.user_id === user.id;
     if (!ownsTrip) {
-      const { data: share } = await supabase
-        .from("trip_shares")
-        .select("id")
-        .eq("trip_id", tripId)
-        .eq("shared_by_user_id", user.id)
-        .single();
+      const { data: share } = await supabase.from("trip_shares").select("id").eq("trip_id", tripId).eq("shared_by_user_id", user.id).single();
       if (!share) throw new Error("Access denied to this trip");
     }
-
     // Parallel fetch of related trip data for context
-    const [
-      { data: chatHistory },
-      { data: accommodations },
-      { data: activities },
-      { data: reservations },
-      { data: transportation },
-      { data: expenses },
-      { data: visionBoard },
-      { data: tripDays },
-      { data: memorySummary }
-    ] = await Promise.all([
-      supabase.from("chat_logs").select("role, message").eq("trip_id", tripId).order("timestamp", { ascending: false }).limit(10),
+    const [{ data: chatHistory }, { data: accommodations }, { data: activities }, { data: reservations }, { data: transportation }, { data: expenses }, { data: visionBoard }, { data: tripDays }, { data: memorySummary }] = await Promise.all([
+      supabase.from("chat_logs").select("role, message").eq("trip_id", tripId).order("timestamp", {
+        ascending: false
+      }).limit(10),
       supabase.from("accommodations").select("hotel, hotel_address, initial_accommodation_day, final_accommodation_day, cost, currency").eq("trip_id", tripId),
       supabase.from("day_activities").select("title, description, time, cost, currency").eq("trip_id", tripId),
       supabase.from("reservations").select("restaurant_name, cuisine_type, reservation_time, party_size, notes").eq("trip_id", tripId),
       supabase.from("transportation").select("type, departure_location, arrival_location, departure_time, arrival_time, cost, currency").eq("trip_id", tripId),
       supabase.from("expenses").select("description, cost, currency, expense_type").eq("trip_id", tripId),
       supabase.from("vision_board_items").select("title, description, category, image_url").eq("trip_id", tripId),
-      supabase.from("trip_days").select("date, day_number").eq("trip_id", tripId).order("day_number", { ascending: true }),
+      supabase.from("trip_days").select("date, day_number").eq("trip_id", tripId).order("day_number", {
+        ascending: true
+      }),
       supabase.from("chat_memory").select("summary").eq("trip_id", tripId).single()
     ]);
-
     // Determine primary location context and budget level
     const primaryHotel = accommodations?.[0];
     let locationContext = trip.destination;
@@ -195,7 +185,6 @@ serve(async (req: Request) => {
         budgetLevel = "luxury";
       }
     }
-
     // Assemble trip overview context for the LLM prompt
     const tripContext = `
 TRIP OVERVIEW:
@@ -213,33 +202,32 @@ PRIMARY ACCOMMODATION:${primaryHotel ? `
 - Cost: ${primaryHotel.cost} ${primaryHotel.currency}
 - Budget Category: ${budgetLevel}` : "\n- None specified"}
 
-OTHER ACCOMMODATIONS:${(accommodations && accommodations.length > 1) ? accommodations.slice(1).map(acc => `
+OTHER ACCOMMODATIONS:${accommodations && accommodations.length > 1 ? accommodations.slice(1).map((acc)=>`
   - ${acc.hotel} (${acc.hotel_address})
     Dates: ${acc.initial_accommodation_day} → ${acc.final_accommodation_day}
     Cost: ${acc.cost} ${acc.currency}`).join("") : "\n  - None"}
 
-EXISTING RESTAURANT RESERVATIONS:${(reservations && reservations.length) ? reservations.map(res => `
+EXISTING RESTAURANT RESERVATIONS:${reservations && reservations.length ? reservations.map((res)=>`
   - ${res.restaurant_name} (${res.cuisine_type})
     Time: ${res.reservation_time}, Party: ${res.party_size}${res.notes ? `, Notes: ${res.notes}` : ""}`).join("") : "\n  - None yet"}
 
-PLANNED ACTIVITIES:${(activities && activities.length) ? activities.map(act => `
+PLANNED ACTIVITIES:${activities && activities.length ? activities.map((act)=>`
   - ${act.title}: ${act.description}
     ${act.time ? `Time: ${act.time}` : ""}${act.cost ? `, Cost: ${act.cost} ${act.currency}` : ""}`).join("") : "\n  - None yet"}
 
-TRANSPORTATION:${(transportation && transportation.length) ? transportation.map(t => `
+TRANSPORTATION:${transportation && transportation.length ? transportation.map((t)=>`
   - ${t.type}: ${t.departure_location} → ${t.arrival_location}
     Departure: ${t.departure_time}, Arrival: ${t.arrival_time}${t.cost ? `, Cost: ${t.cost} ${t.currency}` : ""}`).join("") : "\n  - None booked yet"}
 
-BUDGET / EXPENSES:${(expenses && expenses.length) ? expenses.map(e => `
+BUDGET / EXPENSES:${expenses && expenses.length ? expenses.map((e)=>`
   - ${e.description}: ${e.cost} ${e.currency} (${e.expense_type})`).join("") : "\n  - None tracked yet"}
 
-USER INTERESTS / VISION BOARD:${(visionBoard && visionBoard.length) ? visionBoard.map(v => `
+USER INTERESTS / VISION BOARD:${visionBoard && visionBoard.length ? visionBoard.map((v)=>`
   - ${v.title} (${v.category}): ${v.description}`).join("") : "\n  - None specified"}
 
-TRIP DAYS:${(tripDays && tripDays.length) ? tripDays.map(d => `
+TRIP DAYS:${tripDays && tripDays.length ? tripDays.map((d)=>`
   - Day ${d.day_number}: ${d.date}`).join("") : "\n  - Not defined"}
 `;
-
     // Prepare conversation history or summary for context
     const summaryText = memorySummary?.summary?.trim();
     let conversationHistory = "";
@@ -247,11 +235,10 @@ TRIP DAYS:${(tripDays && tripDays.length) ? tripDays.map(d => `
       conversationHistory = `**Conversation Summary**: ${summaryText}`;
     } else if (chatHistory && chatHistory.length > 0) {
       // Use raw messages if no summary available (most recent first, reversing to chronological order)
-      conversationHistory = chatHistory.reverse().map(m => `${m.role}: ${m.message}`).join("\n");
+      conversationHistory = chatHistory.reverse().map((m)=>`${m.role}: ${m.message}`).join("\n");
     }
-
     // Optional: Process first attached image/PDF via OpenAI Vision (document parsing)
-    let extractedData: any = null;
+    let extractedData = null;
     if (attachments && attachments.length > 0) {
       try {
         // Only process the first attachment for now
@@ -263,27 +250,38 @@ TRIP DAYS:${(tripDays && tripDays.length) ? tripDays.map(d => `
         // Call OpenAI GPT-4 (Vision) to analyze the document image
         const visionRes = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
-          headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             model: OPENAI_MODEL,
             messages: [
-              { role: "system", content: 
-                  "You are an expert travel document analyzer. Extract structured trip information from the provided image." +
-                  "\n\nCLASSIFY the document as one of: hotel, flight, reservation, activity." +
-                  "\n\nExtract relevant fields based on type (use JSON keys as specified):" +
-                  "\nHOTEL: hotel_name, address, check_in_date, check_out_date, total_cost, currency, confirmation_number" +
-                  "\nFLIGHT: airline, departure_city, arrival_city, departure_time, arrival_time, flight_number, total_cost, currency" +
-                  "\nRESERVATION: restaurant_name, date, time, party_size, cuisine_type, notes" +
-                  "\nACTIVITY: activity_name, date, time, description, cost, currency" +
-                  "\n\nRespond ONLY with a JSON object:\n{\n  \"type\": \"hotel|flight|reservation|activity\",\n  \"data\": { ... },\n  \"missingFields\": [...],\n  \"readyToAdd\": boolean\n}\n"
+              {
+                role: "system",
+                content: "You are an expert travel document analyzer. Extract structured trip information from the provided image." + "\n\nCLASSIFY the document as one of: hotel, flight, reservation, activity." + "\n\nExtract relevant fields based on type (use JSON keys as specified):" + "\nHOTEL: hotel_name, address, check_in_date, check_out_date, total_cost, currency, confirmation_number" + "\nFLIGHT: airline, departure_city, arrival_city, departure_time, arrival_time, flight_number, total_cost, currency" + "\nRESERVATION: restaurant_name, date, time, party_size, cuisine_type, notes" + "\nACTIVITY: activity_name, date, time, description, cost, currency" + "\n\nRespond ONLY with a JSON object:\n{\n  \"type\": \"hotel|flight|reservation|activity\",\n  \"data\": { ... },\n  \"missingFields\": [...],\n  \"readyToAdd\": boolean\n}\n"
               },
-              { role: "user", content: [
-                  { type: "text", text: "Please analyze this travel document and extract the data:" },
-                  { type: "image_url", image_url: { url: accessibleUrl, detail: "high" } }
-                ] }
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: "Please analyze this travel document and extract the data:"
+                  },
+                  {
+                    type: "image_url",
+                    image_url: {
+                      url: accessibleUrl,
+                      detail: "high"
+                    }
+                  }
+                ]
+              }
             ],
             max_tokens: 1000,
-            response_format: { type: "json_object" }
+            response_format: {
+              type: "json_object"
+            }
           })
         });
         if (!visionRes.ok) throw new Error(`OpenAI Vision API error: ${visionRes.status}`);
@@ -291,13 +289,11 @@ TRIP DAYS:${(tripDays && tripDays.length) ? tripDays.map(d => `
         extractedData = JSON.parse(visionJson.choices[0].message.content);
       } catch (visionErr) {
         console.error("Vision analysis failed:", visionErr);
-        // Continue without extracted data if vision parsing fails
+      // Continue without extracted data if vision parsing fails
       }
     }
-
     // Construct the system prompt with persona, scope, and context
-    const systemPrompt = 
-`You are a sophisticated travel assistant for WanderLuxe, a luxury travel planning platform, speaking with the polished, warm tone of a high-end concierge. You adapt your demeanor to the trip context and group (for example, you're playful and upbeat for a group of friends, or gentle and accommodating for a family with kids) while remaining helpful even for budget-friendly trips. You ONLY assist with travel-related topics and provide highly personalized recommendations.
+    const systemPrompt = `You are a sophisticated travel assistant for WanderLuxe, a luxury travel planning platform, speaking with the polished, warm tone of a high-end concierge. You adapt your demeanor to the trip context and group (for example, you're playful and upbeat for a group of friends, or gentle and accommodating for a family with kids) while remaining helpful even for budget-friendly trips. You ONLY assist with travel-related topics and provide highly personalized recommendations.
 
 SCOPE – You can help with:
 - Trip planning, itineraries, and scheduling
@@ -333,7 +329,6 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
 - Offer proactive suggestions for any gaps in their plans (e.g. no activities or reservations yet).
 - Avoid repeating advice for things already booked or decided.
 - Be enthusiastic and actionable in your responses!`;
-
     // Call Perplexity API for conversational completion (Llama 3.1 model)
     const perplexityRes = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
@@ -344,22 +339,14 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
       body: JSON.stringify({
         model: PERPLEXITY_MODEL,
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userQuestion }
-        ],
-        max_tokens: 500,
-        temperature: 0.2
-      })
-    });
-    
-    if (!perplexityRes.ok) {
-      const errorText = await perplexityRes.text();
-      console.error(`Perplexity API error ${perplexityRes.status}:`, errorText);
-      console.error('Request body was:', JSON.stringify({
-        model: PERPLEXITY_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt.slice(0, 200) + "..." },
-          { role: "user", content: userQuestion }
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: userQuestion
+          }
         ],
         max_tokens: 500,
         temperature: 0.2,
@@ -367,15 +354,16 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
         return_citations: true,
         return_images: false,
         return_related_questions: false
-      }, null, 2));
-      throw new Error(`Perplexity API error: ${perplexityRes.status} - ${errorText}`);
+      })
+    });
+    if (!perplexityRes.ok) {
+      const errorText = await perplexityRes.text();
+      console.error(`Perplexity API error ${perplexityRes.status}:`, errorText);
+      throw new Error(`Perplexity API error: ${perplexityRes.status}`);
     }
-
     // Parse standard JSON response
     const perplexJson = await perplexityRes.json();
-    const aiBaseMessage = perplexJson.choices?.[0]?.message?.content 
-      ?? "I'm sorry, I couldn't generate a response. Please try asking in a different way.";
-
+    const aiBaseMessage = perplexJson.choices?.[0]?.message?.content ?? "I'm sorry, I couldn't generate a response. Please try asking in a different way.";
     // Augment the AI response if we have extracted data from a document
     let finalAiMessage = aiBaseMessage;
     if (extractedData && typeof extractedData === "object") {
@@ -386,7 +374,6 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
         finalAiMessage = `I analyzed your ${type} document and got most of the details, but I still need a few more pieces of information:\n\n**Missing information:** ${missingFields.join(", ")}\n\nPlease provide those details so I can add the ${type} to your trip.\n\n${aiBaseMessage}`;
       }
     }
-
     // Persist the conversation (user question and AI answer) to the database
     const nowIso = new Date().toISOString();
     const [{ error: userLogErr }, { error: aiLogErr }] = await Promise.all([
@@ -405,14 +392,13 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
         role: "ai",
         message: finalAiMessage,
         timestamp: nowIso,
-        embedding: extractedData  // store parsed document data if any
+        embedding: extractedData // store parsed document data if any
       })
     ]);
     if (userLogErr || aiLogErr) {
       console.error("Failed to persist chat logs:", userLogErr || "", aiLogErr || "");
-      // Not throwing an error here to avoid failing the whole request if logging fails
+    // Not throwing an error here to avoid failing the whole request if logging fails
     }
-
     // Return the AI response to the client
     return jsonResponse({
       success: true,
@@ -426,13 +412,12 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
       status: 200,
       headers: corsHeaders(req)
     });
-
   } catch (err) {
-    const status = toStatusCode(err as Error);
+    const status = toStatusCode(err);
     console.error("chat-ai error:", err);
     return jsonResponse({
       success: false,
-      error: (err as Error).message,
+      error: err.message,
       timestamp: new Date().toISOString()
     }, {
       status,
