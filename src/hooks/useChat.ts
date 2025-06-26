@@ -72,19 +72,27 @@ export function useChat(tripId: string) {
           },
           (payload: any) => {
             console.log('New chat message received:', payload);
-            qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => [
-              ...(prev ?? []), 
-              {
-                id: payload.new.id,
-                role: payload.new.role,
-                message: payload.new.message,
-                timestamp: payload.new.timestamp,
-                embedding: payload.new.embedding,
-                trip_id: payload.new.trip_id,
-                user_id: payload.new.user_id,
-                created_at: payload.new.created_at
+            const newMessage = {
+              id: payload.new.id,
+              role: payload.new.role,
+              message: payload.new.message,
+              timestamp: payload.new.timestamp,
+              embedding: payload.new.embedding,
+              trip_id: payload.new.trip_id,
+              user_id: payload.new.user_id,
+              created_at: payload.new.created_at
+            };
+            
+            qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => {
+              const existing = prev ?? [];
+              // Check if message already exists to prevent duplicates
+              if (existing.some(msg => msg.id === newMessage.id)) {
+                console.log('Message already exists, skipping duplicate');
+                return existing;
               }
-            ]);
+              console.log('Adding new message to chat:', newMessage.role, newMessage.message.substring(0, 50) + '...');
+              return [...existing, newMessage];
+            });
           }
         )
         .subscribe();
