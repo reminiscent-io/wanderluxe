@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,6 +30,15 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
   const [costInput, setCostInput] = useState<string>(
     formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : ''
   );
+
+  // Memoize the onChange handlers to prevent unnecessary re-renders
+  const handleDepartureLocationChange = useCallback((value: string, details?: any) => {
+    setFormData({ ...formData, departure_location: value });
+  }, [formData, setFormData]);
+
+  const handleArrivalLocationChange = useCallback((value: string, details?: any) => {
+    setFormData({ ...formData, arrival_location: value });
+  }, [formData, setFormData]);
 
   useEffect(() => {
     setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
@@ -75,13 +84,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <RequiredLabel>From</RequiredLabel>
           <LocationSearchInput
             value={formData.departure_location || ''}
-            onChange={(value, details) => {
-              setFormData({ ...formData, departure_location: value });
-              // Store additional place details if needed for future enhancements
-              if (details) {
-                // Could store coordinates, place_id, etc. for enhanced functionality
-              }
-            }}
+            onChange={handleDepartureLocationChange}
             placeholder={formData.type === 'flight' ? "Search for departure airport..." : "Search for departure location..."}
             transportationType={formData.type}
           />
@@ -90,13 +93,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <RequiredLabel>To</RequiredLabel>
           <LocationSearchInput
             value={formData.arrival_location || ''}
-            onChange={(value, details) => {
-              setFormData({ ...formData, arrival_location: value });
-              // Store additional place details if needed for future enhancements
-              if (details) {
-                // Could store coordinates, place_id, etc. for enhanced functionality
-              }
-            }}
+            onChange={handleArrivalLocationChange}
             placeholder={formData.type === 'flight' ? "Search for arrival airport..." : "Search for arrival location..."}
             transportationType={formData.type}
           />
