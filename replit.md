@@ -195,6 +195,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
 - Fixed duplicate chat responses by removing edge function database insertions and handling persistence in frontend
 - Added proper user message persistence before API calls to ensure messages are saved
 - Removed optimistic UI updates that were conflicting with real-time subscriptions
+- June 26, 2025. Completed chat system fixes and restored full functionality:
+  - Fixed chat responses not displaying in UI despite successful edge function processing
+  - Added proper query invalidation to force chat data refresh after API responses
+  - Enhanced real-time subscription with duplicate message prevention and error handling
+  - Confirmed chat-summariser edge function is actively used for conversation memory management
+  - Restored edge function database insertions while preventing frontend duplicates
+  - Chat system now fully operational with OpenAI GPT-4o-mini, proper token limits, and reliable UI updates
 
 ## User Preferences
 

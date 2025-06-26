@@ -231,7 +231,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
       /* ---------- 6 / Optimistic UI update ---------- */
       // Force refresh chat data to ensure UI updates
-      queryClient.invalidateQueries({
+      qc.invalidateQueries({
         queryKey: chatLogsKey(tripId)
       });
 
