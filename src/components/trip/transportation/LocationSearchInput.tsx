@@ -66,38 +66,45 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
       if (transportationType === 'flight') {
         options.types = ['airport'];
       } else {
-        // For other transportation, allow establishments, addresses, and transit stations
-        options.types = ['establishment', 'geocode', 'transit_station'];
+        // For other transportation, use geocode which includes addresses and general places
+        // Note: 'establishment' cannot be mixed with other types per Google Places API
+        options.types = ['geocode'];
       }
 
       autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
       
       autoCompleteRef.current.addListener('place_changed', () => {
         if (!autoCompleteRef.current) return;
-        const place = autoCompleteRef.current.getPlace();
         
-        console.log('LocationSearchInput - place_changed event:', place);
-        
-        if (!place?.name && !place?.formatted_address) {
-          console.log('LocationSearchInput - No valid place found');
-          return;
-        }
-
-        // For airports, try to extract airport code or use name
-        let displayValue = place.name || place.formatted_address || '';
-        
-        if (transportationType === 'flight' && place.name) {
-          // Check if the name contains an airport code in parentheses
-          const airportCodeMatch = place.name.match(/\(([A-Z]{3})\)/);
-          if (airportCodeMatch) {
-            displayValue = `${place.name}`;
-          } else {
-            displayValue = place.name;
+        try {
+          const place = autoCompleteRef.current.getPlace();
+          
+          console.log('LocationSearchInput - place_changed event:', place);
+          
+          if (!place?.name && !place?.formatted_address) {
+            console.log('LocationSearchInput - No valid place found');
+            return;
           }
+
+          // For airports, try to extract airport code or use name
+          let displayValue = place.name || place.formatted_address || '';
+          
+          if (transportationType === 'flight' && place.name) {
+            // Check if the name contains an airport code in parentheses
+            const airportCodeMatch = place.name.match(/\(([A-Z]{3})\)/);
+            if (airportCodeMatch) {
+              displayValue = `${place.name}`;
+            } else {
+              displayValue = place.name;
+            }
+          }
+          
+          console.log('LocationSearchInput - Calling onChange with:', displayValue, place);
+          onChange(displayValue, place);
+        } catch (error) {
+          console.error('LocationSearchInput - Error in place_changed handler:', error);
+          toast.error('Error processing location selection');
         }
-        
-        console.log('LocationSearchInput - Calling onChange with:', displayValue, place);
-        onChange(displayValue, place);
       });
     } catch (error) {
       console.error('Error initializing autocomplete:', error);
