@@ -10,7 +10,7 @@ const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY") ?? "";
 
 // Model definitions
 const OPENAI_MODEL = "gpt-4o";  // GPT-4 (Vision-enabled) for document parsing
-const PERPLEXITY_MODEL = "llama-3.1-sonar-small-128k-online";
+const PERPLEXITY_MODEL = "llama-3.1-sonar-large-128k-online";
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [

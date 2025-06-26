@@ -215,6 +215,9 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const json = await res.json();
       console.log('Edge function response:', res.status, json);
       if (!res.ok || json.success === false) {
+        if (res.status === 401) {
+          throw new Error('Authentication failed - please refresh and sign in again.');
+        }
         throw new Error(json.error || `Request failed (${res.status})`);
       }
 
