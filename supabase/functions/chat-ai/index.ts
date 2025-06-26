@@ -345,42 +345,25 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
         model: PERPLEXITY_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userQuestion }  // using extracted user question for clarity
+          { role: "user", content: userQuestion }
         ],
         max_tokens: 500,
         temperature: 0.7,
-        top_p: 0.9,
-        stream: true  // Enable streaming if supported
+        top_p: 0.9
+        // Removed stream: true to use standard JSON response
       })
     });
-    if (!perplexityRes.ok) throw new Error(`Perplexity API error: ${perplexityRes.status}`);
-
-    // Parse completion result (handle streaming SSE or standard JSON)
-    let aiBaseMessage = "";
-    const contentType = perplexityRes.headers.get("content-type") || "";
-    if (contentType.includes("text/event-stream")) {
-      // The response is streaming. Collect all SSE events.
-      const sseText = await perplexityRes.text();
-      const events = sseText.split("\n\n").filter(line => line.startsWith("data: "));
-      if (events.length > 0) {
-        const lastEventData = events[events.length - 1].slice("data: ".length);
-        try {
-          const lastJson = JSON.parse(lastEventData);
-          aiBaseMessage = lastJson.choices?.[0]?.message?.content ?? "";
-        } catch {
-          // If unable to parse JSON, treat last event data as raw text
-          aiBaseMessage = lastEventData;
-        }
-      }
-      if (!aiBaseMessage) {
-        aiBaseMessage = "I'm sorry, I couldn't generate a response. Could you please rephrase or ask another question?";
-      }
-    } else {
-      // Non-streaming response (fallback)
-      const perplexJson = await perplexityRes.json();
-      aiBaseMessage = perplexJson.choices?.[0]?.message?.content 
-        ?? "I'm sorry, I couldn't generate a response. Please try asking in a different way.";
+    
+    if (!perplexityRes.ok) {
+      const errorText = await perplexityRes.text();
+      console.error(`Perplexity API error ${perplexityRes.status}:`, errorText);
+      throw new Error(`Perplexity API error: ${perplexityRes.status}`);
     }
+
+    // Parse standard JSON response
+    const perplexJson = await perplexityRes.json();
+    const aiBaseMessage = perplexJson.choices?.[0]?.message?.content 
+      ?? "I'm sorry, I couldn't generate a response. Please try asking in a different way.";
 
     // Augment the AI response if we have extracted data from a document
     let finalAiMessage = aiBaseMessage;
