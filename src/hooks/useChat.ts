@@ -85,11 +85,22 @@ export function useChat(tripId: string) {
             
             qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => {
               const existing = prev ?? [];
+              
               // Check if message already exists to prevent duplicates
               if (existing.some(msg => msg.id === newMessage.id)) {
                 console.log('Message already exists, skipping duplicate');
                 return existing;
               }
+
+              // For user messages, replace any temporary optimistic message with same content
+              if (newMessage.role === 'user') {
+                const withoutOptimistic = existing.filter(msg => 
+                  !(msg.role === 'user' && msg.message === newMessage.message && msg.id.length === 36 && msg.created_at === msg.timestamp)
+                );
+                console.log('Adding real user message, replacing optimistic:', newMessage.message.substring(0, 50) + '...');
+                return [...withoutOptimistic, newMessage];
+              }
+
               console.log('Adding new message to chat:', newMessage.role, newMessage.message.substring(0, 50) + '...');
               return [...existing, newMessage];
             });
