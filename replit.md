@@ -149,6 +149,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed NOT NULL constraint violations by ensuring order_index field is included in all reservation insertions
   - Added comprehensive error logging throughout reservation submission chain to track data flow
   - Made all submission handlers async to properly handle database operations
+- June 23, 2025. Fixed reservation real-time updates and Google Places integration:
+  - Fixed query key mismatch between reservation hooks causing real-time updates to fail
+  - Re-enabled Supabase real-time subscriptions for reservations that were disabled for debugging
+  - Added trip data invalidation to reservation saves matching activity behavior for immediate UI updates
+  - Fixed form validation schema making cost and number_of_people optional instead of required
+  - Resolved Google Places restaurant search functionality preventing save operations
 
 ## User Preferences
 

@@ -29,12 +29,12 @@ const formSchema = z.object({
   address: z.string().optional(),
   phone_number: z.string().optional(),
   website: z.string().optional(),
-  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive()).optional(),
+  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional()),
   notes: z.string().optional(),
-  cost: z.preprocess(toNullableNumber, z.number()).optional(),
+  cost: z.preprocess(toNullableNumber, z.number().optional()),
   currency: z.string().optional().nullable(),
   place_id: z.string().optional(),
-  rating: z.preprocess(toNullableNumber, z.number()).optional(),
+  rating: z.preprocess(toNullableNumber, z.number().optional()),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -287,12 +287,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           )}
         </Button>
         
-        {/* Debug info */}
-        <div className="text-xs text-gray-500 mt-2">
-          <div>Form valid: {form.formState.isValid ? 'Yes' : 'No'}</div>
-          <div>Errors: {JSON.stringify(form.formState.errors)}</div>
-          <div>Values: {JSON.stringify(form.getValues())}</div>
-        </div>
+
       </form>
     </Form>
   );
