@@ -13,7 +13,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 const MAX_BUBBLE_WIDTH = '65ch';
 const API_ENDPOINT = 'https://arnengxblsfnezrqcsxw.functions.supabase.co/chat-ai';
@@ -56,27 +55,13 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
   const [text, setText] = useState('');
   const [uploads, setUploads] = useState<File[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamBuffer, setStreamBuffer] = useState('');
-  
-  // Debounce stream buffer updates to improve typing performance
-  const [displayBuffer, setDisplayBuffer] = useState('');
-  
-  useEffect(() => {
-    if (streamBuffer) {
-      const timer = setTimeout(() => setDisplayBuffer(streamBuffer), 50);
-      return () => clearTimeout(timer);
-    } else {
-      setDisplayBuffer('');
-    }
-  }, [streamBuffer]);
 
-  /* auto-scroll to bottom - optimized to reduce re-renders */
+  /* auto-scroll to bottom */
   const scrollBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
   
-  useEffect(scrollBottom, [messages.length, displayBuffer]);
+  useEffect(scrollBottom, [messages.length]);
 
   /* ------------------------------ file helpers */
   const okTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
@@ -103,7 +88,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const attachments = await Promise.all(uploads.map(uploadToSupabase));
 
       /* 2. prepare request */
-      const body = JSON.stringify({ message: text.trim(), tripId, attachments, stream: true });
+      const body = JSON.stringify({ message: text.trim(), tripId, attachments });
       const { data: session, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session.session?.access_token) {
@@ -112,69 +97,43 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       
       const token = session.session.access_token;
 
-      /* 3. open stream */
-      setIsStreaming(true);
-      setStreamBuffer('');
+      /* 3. make request */
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body,
+      });
 
-      try {
-        await fetchEventSource(API_ENDPOINT, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'text/event-stream',
-          },
-          body,
-
-          async onopen(res) {
-            console.log('Chat stream opened with status:', res.status, res.statusText);
-            const ct = res.headers.get('Content-Type') ?? '';
-            if (ct.startsWith('text/event-stream')) return; // OK
-            // Server responded with JSON -> toast & abort
-            const err = await res.json().catch(() => ({}));
-            console.error('Chat stream failed to open:', res.status, err);
-            toast({
-              title: `Chat error (${res.status})`,
-              description: err.error ?? 'Unexpected response',
-              variant: 'destructive',
-            });
-            throw new DOMException('stream aborted', 'AbortError');
-          },
-
-          onmessage(ev) {
-            if (ev.event === 'chunk') {
-              setStreamBuffer(prev => prev + ev.data);
-            }
-            if (ev.event === 'eom') {
-              try {
-                qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [...old, JSON.parse(ev.data)]);
-                setStreamBuffer('');
-                setDisplayBuffer('');
-              } catch (parseErr) {
-                console.error('Failed to parse EOM data:', ev.data, parseErr);
-              }
-            }
-          },
-
-          onclose() { 
-            console.log('Chat stream closed');
-            setIsStreaming(false); 
-          },
-
-          onerror(err) {
-            console.error('Chat stream error details:', err);
-            if (err?.name !== 'AbortError') {
-              toast({ title: 'Send failed', description: String(err), variant: 'destructive' });
-            }
-            setIsStreaming(false);
-          },
-        });
-      } catch (err) {
-        console.error('Chat fetchEventSource error:', err);
-        setIsStreaming(false);
-        // swallow only our intentional AbortError
-        if (err?.name !== 'AbortError') throw err;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Chat request failed');
+      }
+
+      // Add the AI message to the chat logs
+      qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [
+        ...old,
+        {
+          id: result.aiMessage.id,
+          role: result.aiMessage.role,
+          message: result.aiMessage.message,
+          timestamp: result.aiMessage.timestamp,
+          trip_id: tripId,
+          user_id: user.id,
+          created_at: result.aiMessage.timestamp,
+          embedding: result.aiMessage.extractedData
+        }
+      ]);
+
+      return result;
     },
     onSuccess() {
       setText('');
@@ -182,7 +141,6 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     },
     onError(error) {
       console.error('Chat mutation error:', error);
-      setIsStreaming(false);
       toast({
         title: 'Chat failed',
         description: error instanceof Error ? error.message : 'Unknown error',
@@ -217,14 +175,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
               {messages.map(m => (
                 <MemoBubble key={m.id} msg={m} isUser={m.role === 'user'} user={user} />
               ))}
-              {isStreaming && displayBuffer && (
-                <MemoBubble
-                  key="stream"
-                  msg={{ id: 'stream', role: 'ai', message: displayBuffer, timestamp: new Date().toISOString() }}
-                  isUser={false}
-                  user={user}
-                />
-              )}
+
               <div ref={scrollRef} />
             </div>
           </ScrollArea>
@@ -253,7 +204,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         uploads={uploads}
         setUploads={setUploads}
         onSend={send}
-        disabled={isSending || isStreaming}
+        disabled={isSending}
         validate={validate}
       />
     </div>
