@@ -185,6 +185,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Resolved React Syntax Highlighter TypeScript errors with proper type definitions and style imports
   - Stabilized chat functionality with working code block syntax highlighting and reliable AI responses
   - Fixed nested button HTML hydration error in DayHeader component by replacing button with accessible span element
+- June 26, 2025. Fixed Perplexity API token overflow errors in chat system:
+  - Identified token limit issue where conversation history exceeded 218,701 tokens vs 0 allowed limit
+  - Switched chat system from Perplexity API back to OpenAI GPT-4o-mini for better reliability
+  - Implemented proper token management by limiting conversation history to last 5 messages
+  - Added conversation message truncation (200 chars max per message) to prevent overflow
+  - Reduced system prompt length by condensing travel assistant instructions
+  - Truncated trip context to 1500 characters maximum to stay within API limits
 
 ## User Preferences
 
