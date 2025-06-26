@@ -2,7 +2,10 @@
  * Client-side pdfMake itinerary generator
  * -------------------------------------- */
 import pdfMake from 'pdfmake/build/pdfmake';
-import 'pdfmake/build/vfs_fonts';           // registers default Roboto font
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+
+// Initialize pdfMake with fonts
+(pdfMake as any).vfs = pdfFonts;
 
 import { supabase } from '@/integrations/supabase/client';
 import { parseISO, format as fnsFormat } from 'date-fns';
@@ -88,20 +91,31 @@ async function buildDays(
     .select('*')
     .eq('trip_id', tripId);
 
-  const { data: transports } = await supabase
-    .from('transportations')
+  const { data: transports, error: transportError } = await supabase
+    .from('transportation')
     .select('*')
     .eq('trip_id', tripId);
 
-  const { data: acts } = await supabase
+  const { data: acts, error: actsError } = await supabase
     .from('day_activities')
     .select('*')
     .eq('trip_id', tripId);
 
-  const { data: dine } = await supabase
-    .from('restaurant_reservations')
+  const { data: dine, error: dineError } = await supabase
+    .from('reservations')
     .select('*')
     .eq('trip_id', tripId);
+
+  // Debug logging
+  console.log('PDF Export Data:', {
+    tripId,
+    transportCount: transports?.length || 0,
+    activitiesCount: acts?.length || 0,
+    diningCount: dine?.length || 0,
+    transportError,
+    actsError,
+    dineError
+  });
 
   /* helper to compare two ISO-date strings by calendar day */
   const sameDay = (isoA: string, isoB: string) =>
@@ -270,13 +284,14 @@ export async function exportItineraryPdf(
   tripId: string,
   options: PdfExportOptions,
 ) {
-  const { data: trip, error: tripErr } = await supabase
-    .from('trips')
-    .select('destination, arrival_date, departure_date, cover_image_url')
-    .eq('trip_id', tripId)
-    .single();
+  try {
+    const { data: trip, error: tripErr } = await supabase
+      .from('trips')
+      .select('destination, arrival_date, departure_date, cover_image_url')
+      .eq('trip_id', tripId)
+      .single();
 
-  if (tripErr || !trip) throw tripErr ?? new Error('Trip not found');
+    if (tripErr || !trip) throw tripErr ?? new Error('Trip not found');
 
   const dateRange =
     trip.arrival_date && trip.departure_date
@@ -285,7 +300,7 @@ export async function exportItineraryPdf(
 
   const processedDays = await buildDays(tripId, options);
 
-  const docDefinition: pdfMake.TDocumentDefinitions = {
+  const docDefinition: any = {
     pageSize: 'LETTER',
     pageMargins: [30, 30, 30, 30],        // equal left/right margins ✅
     defaultStyle: { fontSize: 10, lineHeight: 1.25 },
@@ -324,6 +339,10 @@ export async function exportItineraryPdf(
     },
   };
 
-  const fileName = `${trip.destination.replace(/\s+/g, '_')}-itinerary.pdf`.toLowerCase();
-  pdfMake.createPdf(docDefinition).download(fileName);
+    const fileName = `${trip.destination.replace(/\s+/g, '_')}-itinerary.pdf`.toLowerCase();
+    pdfMake.createPdf(docDefinition).download(fileName);
+  } catch (error) {
+    console.error('Export failed:', error);
+    throw error;
+  }
 }
