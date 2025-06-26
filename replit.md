@@ -178,6 +178,9 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Resolved restaurant reservation subscription startup issues by implementing global subscription tracking to prevent duplicates
   - Enhanced subscription lifecycle management with proper cleanup and stable React hook dependencies
   - Eliminated multiple subscription creation through component re-render protection and reference stability
+  - Fixed Perplexity API 400 errors by removing problematic streaming configuration and using standard JSON responses
+  - Resolved React Syntax Highlighter TypeScript errors with proper type definitions and style imports
+  - Stabilized chat functionality with working code block syntax highlighting and reliable AI responses
 
 ## User Preferences
 

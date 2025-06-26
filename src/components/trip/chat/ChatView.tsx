@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -384,11 +385,14 @@ const Bubble = ({
                   {children}
                 </a>
               ),
-              code({ node, inline, className, children, ...props }) {
-                const lang = /language-(\w+)/.exec(className || '')?.[1] ?? '';
-                if (inline) {
+              code({ node, className, children, ...props }: any) {
+                const match = /language-(\w+)/.exec(className || '');
+                const lang = match ? match[1] : '';
+                const isInline = !match;
+                
+                if (isInline) {
                   return (
-                    <code className="bg-gray-200 px-1 rounded text-[0.88rem]">
+                    <code className="bg-gray-200 px-1 rounded text-[0.88rem]" {...props}>
                       {children}
                     </code>
                   );
@@ -397,10 +401,13 @@ const Bubble = ({
                   <div className="relative group">
                     <SyntaxHighlighter
                       language={lang}
+                      style={prism}
                       PreTag="div"
-                      wrapLongLines
-                      className="rounded-lg text-sm"
-                      {...props}
+                      wrapLongLines={true}
+                      customStyle={{
+                        borderRadius: '0.5rem',
+                        fontSize: '0.875rem'
+                      }}
                     >
                       {String(children).replace(/\n$/, '')}
                     </SyntaxHighlighter>
