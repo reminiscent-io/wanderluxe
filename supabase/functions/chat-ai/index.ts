@@ -228,14 +228,15 @@ USER INTERESTS / VISION BOARD:${visionBoard && visionBoard.length ? visionBoard.
 TRIP DAYS:${tripDays && tripDays.length ? tripDays.map((d)=>`
   - Day ${d.day_number}: ${d.date}`).join("") : "\n  - Not defined"}
 `;
-    // Prepare conversation history or summary for context
+    // Prepare conversation history with token management
     const summaryText = memorySummary?.summary?.trim();
     let conversationHistory = "";
     if (summaryText) {
       conversationHistory = `**Conversation Summary**: ${summaryText}`;
     } else if (chatHistory && chatHistory.length > 0) {
-      // Use raw messages if no summary available (most recent first, reversing to chronological order)
-      conversationHistory = chatHistory.reverse().map((m)=>`${m.role}: ${m.message}`).join("\n");
+      // Limit conversation history to last 5 messages to prevent token overflow
+      const recentHistory = chatHistory.slice(-5).reverse();
+      conversationHistory = recentHistory.map((m)=>`${m.role}: ${m.message.substring(0, 200)}${m.message.length > 200 ? '...' : ''}`).join("\n");
     }
     // Optional: Process first attached image/PDF via OpenAI Vision (document parsing)
     let extractedData = null;
@@ -292,52 +293,32 @@ TRIP DAYS:${tripDays && tripDays.length ? tripDays.map((d)=>`
       // Continue without extracted data if vision parsing fails
       }
     }
-    // Construct the system prompt with persona, scope, and context
-    const systemPrompt = `You are a sophisticated travel assistant for WanderLuxe, a luxury travel planning platform, speaking with the polished, warm tone of a high-end concierge. You adapt your demeanor to the trip context and group (for example, you're playful and upbeat for a group of friends, or gentle and accommodating for a family with kids) while remaining helpful even for budget-friendly trips. You ONLY assist with travel-related topics and provide highly personalized recommendations.
+    // Construct a concise system prompt to avoid token limits
+    const basePrompt = `You are a sophisticated travel assistant for WanderLuxe, a luxury travel planning platform. You speak with the polished, warm tone of a high-end concierge and ONLY assist with travel-related topics.
 
-SCOPE – You can help with:
-- Trip planning, itineraries, and scheduling
-- Activities, attractions, and experiences
-- Restaurants, dining, and food recommendations
-- Transportation (flights, trains, cars, local transit)
-- Accommodations and hotels
-- Weather and climate information
-- Packing and clothing recommendations for destinations
-- Local customs, culture, and etiquette
-- Currency, tipping, and travel costs
-- Safety tips and travel advisories
-- Visa requirements and travel documents
-- Language basics and communication tips
-- Shopping and local markets
-- Entertainment and nightlife
-- Day trips and excursions
-- Travel insurance and health considerations
-- Time zones and jet lag management
-- Photography spots and travel memories
-- Travel apps and tools
-- Luggage and travel gear recommendations
-- Questions about current trip bookings, reservations, or plans
+IMPORTANT: If asked about non-travel topics, respond: "I'm your travel assistant and can only help with travel-related questions about your trip. Is there anything about your travel plans I can assist you with?"
 
-IMPORTANT: If a user asks about topics unrelated to travel (e.g. work, politics, personal finance), politely respond with: "I'm your travel assistant and can only help with travel-related questions about your trip. Is there anything about your travel plans I can assist you with?"
+CURRENT TRIP CONTEXT:
+${tripContext.substring(0, 1500)}${tripContext.length > 1500 ? '...' : ''}
 
-${tripContext}
+${conversationHistory ? `Recent conversation:\n${conversationHistory}\n\n` : ""}INSTRUCTIONS:
+- Use the trip's accommodation as the primary reference point for recommendations
+- Tailor advice to the trip's budget level (${budgetLevel})
+- Ask clarifying questions when details are vague
+- Offer proactive suggestions for gaps in their plans
+- Avoid repeating advice for things already booked
+- Be enthusiastic and actionable!`;
 
-${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : ""}INSTRUCTIONS:
-- Use the trip's hotel or accommodation location as the primary geographic reference point for recommendations.
-- Tailor advice to the trip's budget level (${budgetLevel}) and style.
-- Ask clarifying questions when details are vague.
-- Offer proactive suggestions for any gaps in their plans (e.g. no activities or reservations yet).
-- Avoid repeating advice for things already booked or decided.
-- Be enthusiastic and actionable in your responses!`;
-    // Call Perplexity API for conversational completion (Llama 3.1 model)
-    const perplexityRes = await fetch("https://api.perplexity.ai/chat/completions", {
+    const systemPrompt = basePrompt;
+    // Call OpenAI API for conversational completion (GPT-4o-mini model)
+    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: PERPLEXITY_MODEL,
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -350,20 +331,17 @@ ${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : "
         ],
         max_tokens: 500,
         temperature: 0.2,
-        top_p: 0.9,
-        return_citations: true,
-        return_images: false,
-        return_related_questions: false
+        top_p: 0.9
       })
     });
-    if (!perplexityRes.ok) {
-      const errorText = await perplexityRes.text();
-      console.error(`Perplexity API error ${perplexityRes.status}:`, errorText);
-      throw new Error(`Perplexity API error: ${perplexityRes.status}`);
+    if (!openaiRes.ok) {
+      const errorText = await openaiRes.text();
+      console.error(`OpenAI API error ${openaiRes.status}:`, errorText);
+      throw new Error(`OpenAI API error: ${openaiRes.status}`);
     }
     // Parse standard JSON response
-    const perplexJson = await perplexityRes.json();
-    const aiBaseMessage = perplexJson.choices?.[0]?.message?.content ?? "I'm sorry, I couldn't generate a response. Please try asking in a different way.";
+    const openaiJson = await openaiRes.json();
+    const aiBaseMessage = openaiJson.choices?.[0]?.message?.content ?? "I'm sorry, I couldn't generate a response. Please try asking in a different way.";
     // Augment the AI response if we have extracted data from a document
     let finalAiMessage = aiBaseMessage;
     if (extractedData && typeof extractedData === "object") {
