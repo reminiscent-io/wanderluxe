@@ -155,6 +155,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added trip data invalidation to reservation saves matching activity behavior for immediate UI updates
   - Fixed form validation schema making cost and number_of_people optional instead of required
   - Resolved Google Places restaurant search functionality preventing save operations
+- June 26, 2025. Stabilized AI Chat functionality with enhanced edge functions:
+  - Fixed nested button HTML error in chat code blocks by properly handling inline vs block code rendering
+  - Added chat_logs database table integration with proper TypeScript interfaces
+  - Improved edge function stream processing with better error handling and recovery
+  - Enhanced real-time chat subscriptions with proper cleanup and connection stability
+  - Added comprehensive type safety for chat messages with fallback error handling
+  - Improved Perplexity API stream parsing to handle malformed JSON chunks gracefully
 
 ## User Preferences
 

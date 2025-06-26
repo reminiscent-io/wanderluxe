@@ -58,6 +58,18 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const [uploads, setUploads] = useState<File[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamBuffer, setStreamBuffer] = useState('');
+  
+  // Debounce stream buffer updates to improve typing performance
+  const [displayBuffer, setDisplayBuffer] = useState('');
+  
+  useEffect(() => {
+    if (streamBuffer) {
+      const timer = setTimeout(() => setDisplayBuffer(streamBuffer), 50);
+      return () => clearTimeout(timer);
+    } else {
+      setDisplayBuffer('');
+    }
+  }, [streamBuffer]);
 
   /* auto-scroll to bottom */
   const scrollBottom = () => scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,10 +131,13 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
           },
 
           onmessage(ev) {
-            if (ev.event === 'chunk') setStreamBuffer(prev => prev + ev.data);
+            if (ev.event === 'chunk') {
+              setStreamBuffer(prev => prev + ev.data);
+            }
             if (ev.event === 'eom') {
               qc.setQueryData(chatLogsKey(tripId), (old: any[] = []) => [...old, JSON.parse(ev.data)]);
               setStreamBuffer('');
+              setDisplayBuffer('');
             }
           },
 
@@ -254,19 +269,30 @@ const Bubble = ({ msg, isUser, user }: { msg: ChatMessageDB; isUser: boolean; us
                   </code>
                 );
               }
-              // Block code with copy button
+              // Block code with copy functionality using span instead of button to avoid nesting
               return (
-                <div className="relative">
+                <div className="relative group">
                   <code className="block bg-gray-200 p-2 rounded text-sm overflow-x-auto">
                     {children}
                   </code>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(String(children))}
-                    className="absolute top-2 right-2 p-1 hover:bg-gray-300 rounded"
-                    type="button"
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(String(children));
+                    }}
+                    className="absolute top-2 right-2 p-1 hover:bg-gray-300 rounded cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(String(children));
+                      }
+                    }}
                   >
                     <ClipboardCopy className="w-3 h-3 text-gray-500" />
-                  </button>
+                  </span>
                 </div>
               );
             },
