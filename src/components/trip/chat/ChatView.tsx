@@ -230,20 +230,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       aiText = cleanCitations(aiText) || 'No response received';
 
       /* ---------- 6 / Optimistic UI update ---------- */
-      // Persist AI response to database
-      const { error: aiLogErr } = await supabase.from("chat_logs").insert({
-        id: crypto.randomUUID(),
-        trip_id: tripId,
-        user_id: user.id,
-        role: "ai",
-        message: aiText,
-        timestamp: new Date().toISOString(),
-        embedding: extractedData
-      });
-      
-      if (aiLogErr) {
-        console.error("Failed to persist AI message:", aiLogErr);
-      }
+      // Messages are persisted by edge function, real-time subscription updates UI
 
       return json;
     },
