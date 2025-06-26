@@ -77,12 +77,11 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
         if (!autoCompleteRef.current) return;
         
         try {
+          setIsPlacesSelecting(true);
           const place = autoCompleteRef.current.getPlace();
           
-          console.log('LocationSearchInput - place_changed event:', place);
-          
           if (!place?.name && !place?.formatted_address) {
-            console.log('LocationSearchInput - No valid place found');
+            setIsPlacesSelecting(false);
             return;
           }
 
@@ -99,16 +98,21 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
             }
           }
           
-          console.log('LocationSearchInput - Calling onChange with:', displayValue, place);
-          onChange(displayValue, place);
-          
           // Force the input to update with the selected value
           if (inputRef.current) {
             inputRef.current.value = displayValue;
           }
+          
+          // Use setTimeout to ensure Google Places completes its work before triggering onChange
+          setTimeout(() => {
+            onChange(displayValue, place);
+            setIsPlacesSelecting(false);
+          }, 100);
+          
         } catch (error) {
           console.error('LocationSearchInput - Error in place_changed handler:', error);
           toast.error('Error processing location selection');
+          setIsPlacesSelecting(false);
         }
       });
     } catch (error) {
@@ -117,12 +121,15 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
     }
   };
 
-  // Update input value when prop changes
+  // Track if we're in the middle of a Google Places selection
+  const [isPlacesSelecting, setIsPlacesSelecting] = useState(false);
+
+  // Update input value when prop changes, but not during Places selection
   useEffect(() => {
-    if (inputRef.current && inputRef.current.value !== value) {
+    if (inputRef.current && inputRef.current.value !== value && !isPlacesSelecting) {
       inputRef.current.value = value;
     }
-  }, [value]);
+  }, [value, isPlacesSelecting]);
 
   return (
     <div className="space-y-2">
@@ -132,8 +139,8 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
           type="text"
           defaultValue={value}
           onChange={(e) => {
-            // Only trigger onChange for manual typing, not Google Places selection
-            if (!autoCompleteRef.current || document.activeElement === inputRef.current) {
+            // Only trigger onChange for manual typing, not during Google Places selection
+            if (!isPlacesSelecting) {
               onChange(e.target.value);
             }
           }}
