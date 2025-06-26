@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import LocationInputPair from './LocationInputPair';
 
 type Transportation = Tables<'transportation'>;
 
@@ -30,6 +31,19 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
     formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : ''
   );
 
+  // Use refs to maintain current form data without causing re-renders
+  const formDataRef = useRef(formData);
+  formDataRef.current = formData;
+
+  // Stable onChange handlers that don't change between renders
+  const handleDepartureLocationChange = useCallback((value: string) => {
+    setFormData({ ...formDataRef.current, departure_location: value });
+  }, [setFormData]);
+
+  const handleArrivalLocationChange = useCallback((value: string) => {
+    setFormData({ ...formDataRef.current, arrival_location: value });
+  }, [setFormData]);
+
   useEffect(() => {
     setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
   }, [formData.cost]);
@@ -52,7 +66,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         <RequiredLabel>Transportation Type</RequiredLabel>
         <Select
           value={formData.type || ''}
-          onValueChange={(value) => setFormData({ ...formData, type: value })}
+          onValueChange={(value) => setFormData({ ...formData, type: value as any })}
         >
           <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select type" />
@@ -64,32 +78,18 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             <SelectItem value="shuttle" className="cursor-pointer hover:bg-earth-100">Shuttle</SelectItem>
             <SelectItem value="ferry" className="cursor-pointer hover:bg-earth-100">Ferry</SelectItem>
             <SelectItem value="rental_car" className="cursor-pointer hover:bg-earth-100">Rental Car</SelectItem>
-            <SelectItem value="other" className="cursor-pointer hover:bg-earth-100">Other</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* From and To inputs grouped horizontally */}
-      <div className="flex space-x-4">
-        <div className="flex-1">
-          <RequiredLabel>From</RequiredLabel>
-          <Input
-            name="departure_location"
-            value={formData.departure_location || ''}
-            onChange={handleInputChange}
-            placeholder="Departure location"
-          />
-        </div>
-        <div className="flex-1">
-          <RequiredLabel>To</RequiredLabel>
-          <Input
-            name="arrival_location"
-            value={formData.arrival_location || ''}
-            onChange={handleInputChange}
-            placeholder="Arrival location"
-          />
-        </div>
-      </div>
+      {/* From and To inputs using isolated component */}
+      <LocationInputPair
+        fromValue={formData.departure_location || ''}
+        toValue={formData.arrival_location || ''}
+        onFromChange={handleDepartureLocationChange}
+        onToChange={handleArrivalLocationChange}
+        transportationType={formData.type || 'flight'}
+      />
 
       {/* Group Departure Date and Time on the same line */}
       <div className="flex space-x-4">

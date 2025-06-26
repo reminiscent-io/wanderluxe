@@ -202,6 +202,29 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Confirmed chat-summariser edge function is actively used for conversation memory management
   - Restored edge function database insertions while preventing frontend duplicates
   - Chat system now fully operational with OpenAI GPT-4o-mini, proper token limits, and reliable UI updates
+- June 26, 2025. Fixed PDF export functionality with complete data inclusion:
+  - Resolved TypeScript syntax error in pdfmake-export.ts preventing compilation
+  - Corrected database table names from transportations→transportation and restaurant_reservations→reservations
+  - Enhanced date matching logic with flexible string comparison for better item inclusion
+  - Added comprehensive debugging logs to track data matching between items and days
+  - Verified data fetching works correctly (3 transportation, 4 dining, 8 activities items)
+  - PDF export now fully functional with all sections (accommodation, transportation, activities, dining) appearing correctly
+- June 26, 2025. Enhanced transportation and dining dialogs with Google Places integration:
+  - Fixed Google Maps JavaScript API performance warning by adding missing loading=async parameter
+  - Created RestaurantContactInfo component displaying address, phone, website, and rating information
+  - Enhanced dining reservation dialog to show restaurant details when selected from search results
+  - Implemented LocationSearchInput component for transportation From/To fields with Google Places search
+  - Added smart filtering: flights prioritize airports with codes, other transport searches general locations
+  - Enhanced transportation dialog supports both Google Places results and custom text input
+  - Fixed TypeScript enum constraints by removing unsupported "other" transportation type
+  - All location search components now provide consistent user experience across dining and transportation
+- June 26, 2025. Fixed transportation dialog field clearing and interaction issues:
+  - Resolved issue where selecting Google Places results in one field would clear the other field
+  - Added dialog interaction protection to prevent accidental closing during autocomplete selection
+  - Improved state management with proper React state updates to preserve field values
+  - Fixed TypeScript compilation errors in form field components
+  - Enhanced form stability and user experience for transportation entry/editing
+  - Transportation dialog now properly maintains both From and To locations during Google Places selection
 
 ## User Preferences
 

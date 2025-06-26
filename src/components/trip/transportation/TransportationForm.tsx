@@ -25,7 +25,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   buttonClassName
 }) => {
   const defaultData: Partial<Transportation> = {
-    type: '',
+    type: 'flight',
     departure_location: '',
     arrival_location: '',
     start_date: tripArrivalDate || '',
@@ -96,7 +96,12 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
       setFormData({ ...formData, currency: 'USD' });
     }
 
-    await onSubmit(dataToSubmit);
+    try {
+      await onSubmit(dataToSubmit);
+    } catch (error) {
+      console.error('Transportation submission failed:', error);
+    }
+    
     setIsSubmitting(false);
   };
 
