@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tables } from '@/integrations/supabase/types';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import LocationSearchInput from './LocationSearchInput';
 
 type Transportation = Tables<'transportation'>;
 
@@ -52,7 +53,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
         <RequiredLabel>Transportation Type</RequiredLabel>
         <Select
           value={formData.type || ''}
-          onValueChange={(value) => setFormData({ ...formData, type: value })}
+          onValueChange={(value) => setFormData({ ...formData, type: value as any })}
         >
           <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select type" />
@@ -64,7 +65,6 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             <SelectItem value="shuttle" className="cursor-pointer hover:bg-earth-100">Shuttle</SelectItem>
             <SelectItem value="ferry" className="cursor-pointer hover:bg-earth-100">Ferry</SelectItem>
             <SelectItem value="rental_car" className="cursor-pointer hover:bg-earth-100">Rental Car</SelectItem>
-            <SelectItem value="other" className="cursor-pointer hover:bg-earth-100">Other</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -73,20 +73,32 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
       <div className="flex space-x-4">
         <div className="flex-1">
           <RequiredLabel>From</RequiredLabel>
-          <Input
-            name="departure_location"
+          <LocationSearchInput
             value={formData.departure_location || ''}
-            onChange={handleInputChange}
-            placeholder="Departure location"
+            onChange={(value, details) => {
+              setFormData({ ...formData, departure_location: value });
+              // Store additional place details if needed
+              if (details) {
+                console.log('From location details:', details);
+              }
+            }}
+            placeholder={formData.type === 'flight' ? "Search for departure airport..." : "Search for departure location..."}
+            transportationType={formData.type}
           />
         </div>
         <div className="flex-1">
           <RequiredLabel>To</RequiredLabel>
-          <Input
-            name="arrival_location"
+          <LocationSearchInput
             value={formData.arrival_location || ''}
-            onChange={handleInputChange}
-            placeholder="Arrival location"
+            onChange={(value, details) => {
+              setFormData({ ...formData, arrival_location: value });
+              // Store additional place details if needed
+              if (details) {
+                console.log('To location details:', details);
+              }
+            }}
+            placeholder={formData.type === 'flight' ? "Search for arrival airport..." : "Search for arrival location..."}
+            transportationType={formData.type}
           />
         </div>
       </div>
