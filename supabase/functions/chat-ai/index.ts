@@ -39,6 +39,7 @@ serve(async req => {
     const extractedResults: unknown[] = [];
 
     /* ------------- Perplexity streaming call */
+    console.log('Making Perplexity API call with stream:', wantsStream);
     const perpRes = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${PERPLEXITY_KEY}`, "Content-Type": "application/json" },
@@ -51,6 +52,8 @@ serve(async req => {
         stream: wantsStream,
       }),
     });
+    
+    console.log('Perplexity API response status:', perpRes.status, perpRes.statusText);
 
     /* ---------- fallback: non-SSE JSON response */
     if (!wantsStream) {
@@ -168,11 +171,21 @@ async function persist(
   aiMsg: string,
   extracted: unknown,
 ) {
-  const now = new Date().toISOString();
-  await supabase.from("chat_logs").insert([
-    { id: crypto.randomUUID(), trip_id: tripId, user_id: userId, role: "user", message: userMsg, timestamp: now },
-    { id: crypto.randomUUID(), trip_id: tripId, user_id: userId, role: "ai",   message: aiMsg,  timestamp: now, extracted_data: extracted },
-  ]);
+  try {
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("chat_logs").insert([
+      { id: crypto.randomUUID(), trip_id: tripId, user_id: userId, role: "user", message: userMsg, timestamp: now },
+      { id: crypto.randomUUID(), trip_id: tripId, user_id: userId, role: "ai",   message: aiMsg,  timestamp: now, embedding: extracted },
+    ]);
+    
+    if (error) {
+      console.error('Database insert error:', error);
+      throw error;
+    }
+  } catch (err) {
+    console.error('Failed to persist chat logs:', err);
+    // Don't throw - we don't want to break the chat flow for logging failures
+  }
 }
 
 function respondJSON(body: unknown, status = 200) {
