@@ -168,6 +168,9 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced event handling with proper stopPropagation to prevent interactive element conflicts
   - Resolved chat authentication issues causing unhandled rejection errors
   - Improved edge function error handling and database insertion resilience
+  - Restored working non-streaming JSON response functionality by reverting to user's proven architecture
+  - Fixed response parsing compatibility between frontend and deployed edge function
+  - Eliminated unhandled rejection errors by removing streaming dependency conflicts
 
 ## User Preferences
 
