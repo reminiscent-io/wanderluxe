@@ -15,18 +15,11 @@ export function useReservations(dayId: string, tripId: string | undefined) {
   const queryClient = useQueryClient();
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Set up real-time subscription - temporarily disabled for debugging
+  // Real-time subscription is now handled by useReservationsRealtime hook
+  // This hook focuses only on data fetching
   useEffect(() => {
-    if (!dayId || !tripId) return;
-
-    console.log(`Reservation subscription temporarily disabled for day ${dayId}`);
-    setIsSubscribed(false);
-
-    // Clean up subscription on unmount
-    return () => {
-      console.log('Subscription cleanup - no active reservations subscriptions');
-    };
-  }, [dayId, tripId]);
+    setIsSubscribed(false); // This hook doesn't manage subscriptions
+  }, []);
 
   // Query for reservations
   const { data, isLoading, error } = useQuery({
