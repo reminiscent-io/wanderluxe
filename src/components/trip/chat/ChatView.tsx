@@ -184,8 +184,25 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const destination = trip?.destination ?? 'Unknown Destination';
       const arrival = trip?.arrival_date ?? 'Unknown Date';
       const departure = trip?.departure_date ?? 'Unknown Date';
+      const userMessage = text.trim();
+      
+      // First, persist user message to database
+      const { error: userLogErr } = await supabase.from("chat_logs").insert({
+        id: crypto.randomUUID(),
+        trip_id: tripId,
+        user_id: user.id,
+        role: "user",
+        message: userMessage,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (userLogErr) {
+        console.error("Failed to persist user message:", userLogErr);
+        throw new Error("Failed to save your message");
+      }
+      
       const prompt = `TRAVEL CONTEXT: You are assisting with a trip to ${destination} from ${arrival} to ${departure}.
-\n\nUser question: ${text.trim()}`;
+\n\nUser question: ${userMessage}`;
       const body = JSON.stringify({ message: prompt, tripId, attachments });
 
       /* ---------- 3 / Supabase Auth token ---------- */

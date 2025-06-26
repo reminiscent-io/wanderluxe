@@ -352,31 +352,7 @@ ${conversationHistory ? `Recent conversation:\n${conversationHistory}\n\n` : ""}
         finalAiMessage = `I analyzed your ${type} document and got most of the details, but I still need a few more pieces of information:\n\n**Missing information:** ${missingFields.join(", ")}\n\nPlease provide those details so I can add the ${type} to your trip.\n\n${aiBaseMessage}`;
       }
     }
-    // Persist the conversation (user question and AI answer) to the database
-    const nowIso = new Date().toISOString();
-    const [{ error: userLogErr }, { error: aiLogErr }] = await Promise.all([
-      supabase.from("chat_logs").insert({
-        id: crypto.randomUUID(),
-        trip_id: tripId,
-        user_id: user.id,
-        role: "user",
-        message: userQuestion,
-        timestamp: nowIso
-      }),
-      supabase.from("chat_logs").insert({
-        id: crypto.randomUUID(),
-        trip_id: tripId,
-        user_id: user.id,
-        role: "ai",
-        message: finalAiMessage,
-        timestamp: nowIso,
-        embedding: extractedData // store parsed document data if any
-      })
-    ]);
-    if (userLogErr || aiLogErr) {
-      console.error("Failed to persist chat logs:", userLogErr || "", aiLogErr || "");
-    // Not throwing an error here to avoid failing the whole request if logging fails
-    }
+    // Note: Message persistence is handled by the frontend to avoid duplicates
     // Return the AI response to the client
     return jsonResponse({
       success: true,
