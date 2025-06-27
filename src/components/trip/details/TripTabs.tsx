@@ -154,22 +154,32 @@ const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData, activeTab = 't
         <div className="p-6">
           <h2 className="text-2xl font-bold text-earth-700 mb-6">Transportation</h2>
           <div className="space-y-4">
-            {displayData?.transportation && displayData.transportation.length > 0 ? (
-              displayData.transportation.map((transport, index) => (
+            {transportations && transportations.length > 0 ? (
+              transportations.map((transport, index) => (
                 <div key={index} className="bg-white rounded-lg shadow-sm p-6">
                   <h3 className="text-lg font-semibold text-earth-600 mb-2">
                     {transport.type.charAt(0).toUpperCase() + transport.type.slice(1)}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-sand-600">
                     <div>
-                      <span className="font-medium">From:</span> {transport.from_location}
+                      <span className="font-medium">From:</span> {transport.departure_location || 'Not specified'}
                     </div>
                     <div>
-                      <span className="font-medium">To:</span> {transport.to_location}
+                      <span className="font-medium">To:</span> {transport.arrival_location || 'Not specified'}
                     </div>
                     <div>
-                      <span className="font-medium">Cost:</span> {transport.cost} {transport.currency}
+                      <span className="font-medium">Cost:</span> {transport.cost ? `${transport.cost} ${transport.currency}` : 'Not specified'}
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-sand-600 mt-3">
+                    <div>
+                      <span className="font-medium">Date:</span> {new Date(transport.start_date).toLocaleDateString()}
+                    </div>
+                    {transport.provider && (
+                      <div>
+                        <span className="font-medium">Provider:</span> {transport.provider}
+                      </div>
+                    )}
                   </div>
                   {transport.details && (
                     <p className="mt-3 text-sand-600">{transport.details}</p>

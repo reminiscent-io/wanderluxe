@@ -29,6 +29,7 @@ interface SidebarProps {
   tripId?: string;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  onSubItemClick?: (subItemId: string) => void;
 }
 
 export const tripNavItems = [
@@ -48,7 +49,7 @@ export const tripNavItems = [
   { id: "booking", label: "Booking", icon: Package },
 ];
 
-export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick }: SidebarProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState<boolean>(
@@ -78,6 +79,9 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   };
 
   const handleSubItemClick = (subItemId: string) => {
+    if (onSubItemClick) {
+      onSubItemClick(subItemId);
+    }
     if (onTabChange) {
       onTabChange(subItemId);
     }
