@@ -121,6 +121,22 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   const { trip } = useTripQuery(tripId);
   const queryClient = useQueryClient();
 
+  // Fetch transportation data
+  const { data: transportation = [] } = useQuery({
+    queryKey: ['transportation', tripId],
+    queryFn: async () => {
+      if (!tripId) return [];
+      const { data, error } = await supabase
+        .from('transportation')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('start_date', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!tripId
+  });
+
   // Fetch activities data
   const { data: activities = [] } = useQuery({
     queryKey: ['activities', tripId],
@@ -273,9 +289,17 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                               size="sm" 
                               variant="ghost" 
                               className="h-6 w-6 p-0"
-                              onClick={() => {
-                                // Handle delete - could add confirmation dialog
-                                console.log('Delete accommodation:', accommodation.stay_id);
+                              onClick={async () => {
+                                try {
+                                  const { error } = await supabase
+                                    .from('accommodations')
+                                    .delete()
+                                    .eq('stay_id', accommodation.stay_id);
+                                  if (error) throw error;
+                                  handleAccommodationSuccess();
+                                } catch (error) {
+                                  console.error('Error deleting accommodation:', error);
+                                }
                               }}
                             >
                               <Trash2 size={12} />
@@ -336,6 +360,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                                 setActivityEdit({
                                   title: activity.title || '',
                                   description: activity.description || '',
+                                  date: activity.activity_date || trip?.arrival_date,
                                   start_time: activity.start_time || '',
                                   end_time: activity.end_time || '',
                                   cost: activity.cost?.toString() || '',
@@ -350,8 +375,17 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                               size="sm" 
                               variant="ghost" 
                               className="h-6 w-6 p-0"
-                              onClick={() => {
-                                console.log('Delete activity:', activity.id);
+                              onClick={async () => {
+                                try {
+                                  const { error } = await supabase
+                                    .from('day_activities')
+                                    .delete()
+                                    .eq('id', activity.id);
+                                  if (error) throw error;
+                                  queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+                                } catch (error) {
+                                  console.error('Error deleting activity:', error);
+                                }
                               }}
                             >
                               <Trash2 size={12} />
@@ -359,8 +393,25 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                           </div>
                         </div>
                         <p className="text-xs text-sand-600">
-                          {activity.start_time && `${activity.start_time}`}
-                          {activity.end_time && ` - ${activity.end_time}`}
+                          {activity.start_time || activity.end_time ? (
+                            <>
+                              {activity.start_time && (() => {
+                                const [hours, minutes] = activity.start_time.split(':');
+                                const hour24 = parseInt(hours);
+                                const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                                const ampm = hour24 >= 12 ? 'PM' : 'AM';
+                                return `${hour12}:${minutes} ${ampm}`;
+                              })()}
+                              {activity.start_time && activity.end_time && ' - '}
+                              {activity.end_time && (() => {
+                                const [hours, minutes] = activity.end_time.split(':');
+                                const hour24 = parseInt(hours);
+                                const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                                const ampm = hour24 >= 12 ? 'PM' : 'AM';
+                                return `${hour12}:${minutes} ${ampm}`;
+                              })()}
+                            </>
+                          ) : 'No time set'}
                         </p>
                         {activity.cost && (
                           <p className="text-xs text-sand-600">
@@ -454,7 +505,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => {
-                    setSelectedTransportation(null); // Clear for adding new
+                    setSelectedTransportation(null);
                     setIsTransportationDialogOpen(true);
                   }}
                 >
@@ -462,46 +513,66 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                   Add Transportation
                 </Button>
                 <div className="space-y-2">
-                  <div className="p-3 bg-sand-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-sm">Flight to Rome</h4>
-                      <div className="flex gap-1">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="h-6 w-6 p-0"
-                          onClick={() => {
-                            // Set dummy transportation data for editing
-                            setSelectedTransportation({
-                              id: '550e8400-e29b-41d4-a716-446655440000',
-                              type: 'flight',
-                              departure_location: 'New York JFK',
-                              arrival_location: 'Rome FCO',
-                              start_date: '2025-02-12',
-                              start_time: '08:00',
-                              end_date: '2025-02-12',
-                              end_time: '20:00',
-                              cost: 850
-                            });
-                            setIsTransportationDialogOpen(true);
-                          }}
-                        >
-                          <Edit size={12} />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="h-6 w-6 p-0"
-                          onClick={() => {
-                            console.log('Delete transportation');
-                          }}
-                        >
-                          <Trash2 size={12} />
-                        </Button>
+                  {transportation.length === 0 ? (
+                    <p className="text-sm text-sand-600 text-center py-4">No transportation added yet</p>
+                  ) : (
+                    transportation.map((transport) => (
+                      <div key={transport.id} className="p-3 bg-sand-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-sm">
+                            {transport.type.charAt(0).toUpperCase() + transport.type.slice(1)}
+                            {transport.provider && ` - ${transport.provider}`}
+                          </h4>
+                          <div className="flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                setSelectedTransportation(transport);
+                                setIsTransportationDialogOpen(true);
+                              }}
+                            >
+                              <Edit size={12} />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={async () => {
+                                try {
+                                  const { error } = await supabase
+                                    .from('transportation')
+                                    .delete()
+                                    .eq('id', transport.id);
+                                  if (error) throw error;
+                                  queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+                                } catch (error) {
+                                  console.error('Error deleting transportation:', error);
+                                }
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        </div>
+                        {transport.departure_location && transport.arrival_location && (
+                          <p className="text-xs text-sand-600 mb-1">
+                            {transport.departure_location} → {transport.arrival_location}
+                          </p>
+                        )}
+                        <p className="text-xs text-sand-600">
+                          {new Date(transport.start_date).toLocaleDateString()}
+                          {transport.start_time && ` at ${transport.start_time}`}
+                        </p>
+                        {transport.cost && (
+                          <p className="text-xs text-sand-600">
+                            {transport.currency || 'USD'} {transport.cost}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                    <p className="text-xs text-sand-600">Departure: Feb 12, 8:00 AM</p>
-                  </div>
+                    ))
+                  )}
                 </div>
               </div>
             )
