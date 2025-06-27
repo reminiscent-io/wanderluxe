@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar from "@/components/layout/Sidebar";
+import SecondarySidebar from "@/components/layout/SecondarySidebar";
 import { useTripQuery } from '@/hooks/useTripQuery';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
@@ -15,6 +16,8 @@ import TransportationSection from '@/components/trip/TransportationSection';
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
   const [activeTab, setActiveTab] = useState('timeline');
+  const [secondarySidebarOpen, setSecondarySidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   // Use the custom hook for trip data fetching
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
@@ -43,7 +46,22 @@ const TripDetails = () => {
     setActiveTab(tab);
   };
 
-  const sidebar = <Sidebar tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
+  const handleSubItemClick = (subItemId: string) => {
+    setActiveSection(subItemId);
+    setSecondarySidebarOpen(true);
+  };
+
+  const handleCloseSecondarySidebar = () => {
+    setSecondarySidebarOpen(false);
+    setActiveSection(null);
+  };
+
+  const sidebar = <Sidebar 
+    tripId={tripId} 
+    activeTab={activeTab} 
+    onTabChange={handleTabChange}
+    onSubItemClick={handleSubItemClick}
+  />;
 
   return (
     <div className="flex min-h-screen">
