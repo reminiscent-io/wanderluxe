@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   CalendarDays,
   Building,
   Car,
@@ -73,7 +74,7 @@ const SecondaryPanel = ({ isOpen, title, children, onClose }: SecondaryPanelProp
           onClick={onClose}
           className="h-8 w-8 p-0"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={16} className="rotate-180" />
         </Button>
       </div>
       <ScrollArea className="h-[calc(100vh-73px)]">
@@ -95,6 +96,21 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     title: string;
     content: React.ReactNode;
   }>({ isOpen: false, title: '', content: null });
+  
+  // Dialog states for functional buttons
+  const [dialogStates, setDialogStates] = useState({
+    accommodationDialog: false,
+    transportationDialog: false,
+    editDatesDialog: false,
+  });
+
+  const openDialog = (dialogType: keyof typeof dialogStates) => {
+    setDialogStates(prev => ({ ...prev, [dialogType]: true }));
+  };
+
+  const closeDialog = (dialogType: keyof typeof dialogStates) => {
+    setDialogStates(prev => ({ ...prev, [dialogType]: false }));
+  };
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -122,7 +138,11 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             title: 'Accommodations',
             content: (
               <div className="space-y-4">
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => openDialog('accommodationDialog')}
+                >
                   <Plus size={16} className="mr-2" />
                   Add Accommodation
                 </Button>
@@ -131,10 +151,23 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium text-sm">The Ritz-Carlton</h4>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-6 w-6 p-0"
+                          onClick={() => openDialog('accommodationDialog')}
+                        >
                           <Edit size={12} />
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-6 w-6 p-0"
+                          onClick={() => {
+                            // Handle delete - could add confirmation dialog
+                            console.log('Delete accommodation');
+                          }}
+                        >
                           <Trash2 size={12} />
                         </Button>
                       </div>
@@ -151,7 +184,11 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             title: 'Transportation',
             content: (
               <div className="space-y-4">
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => openDialog('transportationDialog')}
+                >
                   <Plus size={16} className="mr-2" />
                   Add Transportation
                 </Button>
@@ -160,10 +197,22 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium text-sm">Flight to Rome</h4>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-6 w-6 p-0"
+                          onClick={() => openDialog('transportationDialog')}
+                        >
                           <Edit size={12} />
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-6 w-6 p-0"
+                          onClick={() => {
+                            console.log('Delete transportation');
+                          }}
+                        >
                           <Trash2 size={12} />
                         </Button>
                       </div>
@@ -193,7 +242,11 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                     <p className="text-sm text-sand-700">4 days, 3 nights</p>
                   </div>
                 </div>
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => openDialog('editDatesDialog')}
+                >
                   <Edit size={16} className="mr-2" />
                   Edit Dates
                 </Button>
