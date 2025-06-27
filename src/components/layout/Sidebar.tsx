@@ -549,20 +549,20 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     switch (secondaryPanel) {
       case 'accommodations':
         return (
-          <div className="fixed left-0 md:left-[280px] top-16 h-[calc(100vh-4rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] overflow-y-auto">
-            <div className="p-4">
+          <div className="fixed left-0 md:left-[280px] top-16 h-[calc(100vh-4rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
+            <div className="p-4 border-b border-sand-200 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Accommodations</h3>
                 <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
                   <ChevronLeft size={16} />
                 </Button>
               </div>
-              <div className="mb-4">
-                <Button size="sm" onClick={handleAccommodationAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
-                  <Plus size={14} className="mr-1" />
-                  Add Accommodation
-                </Button>
-              </div>
+              <Button size="sm" onClick={handleAccommodationAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                <Plus size={14} className="mr-1" />
+                Add Accommodation
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-3">
                 {accommodations.length === 0 ? (
                   <p className="text-sand-600 text-sm">No accommodations added yet.</p>
@@ -665,20 +665,20 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'transportation':
         return (
-          <div className="fixed left-0 md:left-[280px] top-16 h-[calc(100vh-4rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] overflow-y-auto">
-            <div className="p-4">
+          <div className="fixed left-0 md:left-[280px] top-16 h-[calc(100vh-4rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
+            <div className="p-4 border-b border-sand-200 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Transportation</h3>
                 <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
                   <ChevronLeft size={16} />
                 </Button>
               </div>
-              <div className="mb-4">
-                <Button size="sm" onClick={handleTransportationAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
-                  <Plus size={14} className="mr-1" />
-                  Add Transportation
-                </Button>
-              </div>
+              <Button size="sm" onClick={handleTransportationAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                <Plus size={14} className="mr-1" />
+                Add Transportation
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-3">
                 {transportation.length === 0 ? (
                   <p className="text-sand-600 text-sm">No transportation added yet.</p>
@@ -774,8 +774,20 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'dates':
         return (
-          <div className="fixed left-0 md:left-[280px] top-16 h-[calc(100vh-4rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] overflow-y-auto">
-            <div className="p-4">
+          <div className="fixed left-0 md:left-[280px] top-16 h-[calc(100vh-4rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
+            <div className="p-4 border-b border-sand-200 flex-shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-earth-600">Trip Dates</h3>
+                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                  <ChevronLeft size={16} />
+                </Button>
+              </div>
+              <Button size="sm" onClick={handleEditDates} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                <Edit size={14} className="mr-1" />
+                Edit Dates
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Trip Dates</h3>
                 <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
