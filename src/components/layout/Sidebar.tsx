@@ -23,7 +23,9 @@ import {
   Car,
   Plus,
   Edit,
-  Trash2
+  Trash2,
+  MapPin,
+  UtensilsCrossed
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavLink, useParams, useNavigate } from "react-router-dom";
@@ -67,6 +69,8 @@ export const tripNavItems = [
       { id: "trip-dates", label: "Trip Dates", icon: CalendarDays },
       { id: "accommodations", label: "Accommodations", icon: Building },
       { id: "transportation", label: "Transportation", icon: Car },
+      { id: "activities", label: "Activities", icon: MapPin },
+      { id: "reservations", label: "Reservations", icon: UtensilsCrossed },
     ]
   },
   { id: "chat", label: "AI Assistant", icon: MessageCircle },
@@ -156,6 +160,18 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     // Invalidate trip query to refresh accommodations data
     queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
     setSecondaryPanel(prev => ({ ...prev, isOpen: false }));
+  };
+
+  // Success callback for activity changes
+  const handleActivitySuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+  };
+
+  // Success callback for reservation changes
+  const handleReservationSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
   };
   
   // Dialog states for functional buttons
@@ -254,6 +270,146 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                         {accommodation.cost && (
                           <p className="text-xs text-sand-600">
                             {accommodation.currency || 'USD'} {accommodation.cost}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )
+          };
+        case 'activities':
+          const sortedActivities = activities.sort((a, b) => {
+            // Sort by start_time descending (activities use start_time, not date/time)
+            return (b.start_time || '').localeCompare(a.start_time || '');
+          });
+          
+          return {
+            title: 'Activities',
+            content: (
+              <div className="space-y-4">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedActivity(null);
+                    setIsAddActivityDialogOpen(true);
+                  }}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add Activity
+                </Button>
+                <div className="space-y-2">
+                  {sortedActivities.length === 0 ? (
+                    <p className="text-sm text-sand-600 text-center py-4">No activities added yet</p>
+                  ) : (
+                    sortedActivities.map((activity) => (
+                      <div key={activity.id} className="p-3 bg-sand-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-sm">{activity.title}</h4>
+                          <div className="flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                setSelectedActivity(activity);
+                                setIsEditActivityDialogOpen(true);
+                              }}
+                            >
+                              <Edit size={12} />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                console.log('Delete activity:', activity.id);
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-sand-600">
+                          {activity.start_time && `${activity.start_time}`}
+                          {activity.end_time && ` - ${activity.end_time}`}
+                        </p>
+                        {activity.cost && (
+                          <p className="text-xs text-sand-600">
+                            {activity.currency || 'USD'} {activity.cost}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )
+          };
+        case 'reservations':
+          const sortedReservations = reservations.sort((a, b) => {
+            // Sort by reservation_time descending
+            return new Date(b.reservation_time).getTime() - new Date(a.reservation_time).getTime();
+          });
+          
+          return {
+            title: 'Reservations',
+            content: (
+              <div className="space-y-4">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedReservation(null);
+                    setIsReservationDialogOpen(true);
+                  }}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add Reservation
+                </Button>
+                <div className="space-y-2">
+                  {sortedReservations.length === 0 ? (
+                    <p className="text-sm text-sand-600 text-center py-4">No reservations added yet</p>
+                  ) : (
+                    sortedReservations.map((reservation) => (
+                      <div key={reservation.id} className="p-3 bg-sand-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
+                          <div className="flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                setSelectedReservation(reservation);
+                                setIsReservationDialogOpen(true);
+                              }}
+                            >
+                              <Edit size={12} />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                console.log('Delete reservation:', reservation.id);
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-sand-600">
+                          {new Date(reservation.reservation_time).toLocaleDateString()} at {new Date(reservation.reservation_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p className="text-xs text-sand-600">
+                          {reservation.number_of_people} people
+                        </p>
+                        {reservation.cost && (
+                          <p className="text-xs text-sand-600">
+                            {reservation.currency || 'USD'} {reservation.cost}
                           </p>
                         )}
                       </div>
