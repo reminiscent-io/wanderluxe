@@ -12,6 +12,7 @@ import RestaurantContactInfo from './form/RestaurantContactInfo';
 import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import { format } from "date-fns";
 
 // Converts blank / NaN values coming from <input type="number"> into undefined so they
 // pass Zod's optional() validation.
@@ -78,17 +79,36 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
   const tripDates = generateTripDates();
 
+  // Smart date preselection logic
+  const getPreselectedDate = () => {
+    // If editing existing reservation, use its date
+    if (defaultValues?.reservation_date) {
+      return defaultValues.reservation_date;
+    }
+    
+    // If adding from a specific day card, use that day's date
+    if (defaultValues?.day_id && tripDates.length > 0) {
+      // Find the day in trip dates that matches the day_id context
+      // For now, default to first available date since we need day-to-date mapping
+      return tripDates[0];
+    }
+    
+    // Default to first available trip date
+    return tripDates.length > 0 ? tripDates[0] : '';
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       restaurant_name: '',
-      reservation_date: '',
+      reservation_date: getPreselectedDate(),
       reservation_time: '',
       number_of_people: undefined,
       notes: '',
       cost: undefined,
       currency: undefined,
       ...defaultValues,
+      reservation_date: getPreselectedDate(), // Ensure this overrides any defaultValues date logic
     },
   });
 

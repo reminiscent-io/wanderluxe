@@ -36,6 +36,8 @@ interface DiningListProps {
   dayId: string;
   tripId: string;
   className?: string;
+  tripArrivalDate?: string;
+  tripDepartureDate?: string;
 }
 
 /**
