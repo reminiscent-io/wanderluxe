@@ -373,6 +373,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       toast({ title: 'Success', description: 'Activity deleted' });
     } catch (error) {
