@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "postgresql-16", "bun"]
+modules = ["bun", "nodejs-20", "postgresql-16", "web"]
 run = "npm run dev"
 
 [nix]
