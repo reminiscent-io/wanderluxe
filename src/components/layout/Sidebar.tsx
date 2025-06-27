@@ -40,6 +40,8 @@ import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDia
 import { useTripQuery } from "@/hooks/useTripQuery";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityFormData } from "@/types/trip";
+import { Currency } from '@/utils/currencyConstants';
 import {
   Dialog,
   DialogContent,
@@ -129,8 +131,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         .from('day_activities')
         .select('*')
         .eq('trip_id', tripId)
-        .order('date', { ascending: false })
-        .order('time', { ascending: false });
+        .order('start_time', { ascending: false });
       
       if (error) throw error;
       return data || [];
@@ -187,6 +188,24 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
+  
+  // Activity form state
+  const [newActivity, setNewActivity] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
+  const [activityEdit, setActivityEdit] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD'
+  });
   
   // Trip date editing state
   const [newArrival, setNewArrival] = useState('');
@@ -315,6 +334,14 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                               className="h-6 w-6 p-0"
                               onClick={() => {
                                 setSelectedActivity(activity);
+                                setActivityEdit({
+                                  title: activity.title || '',
+                                  description: activity.description || '',
+                                  start_time: activity.start_time || '',
+                                  end_time: activity.end_time || '',
+                                  cost: activity.cost?.toString() || '',
+                                  currency: activity.currency || 'USD'
+                                });
                                 setIsEditActivityDialogOpen(true);
                               }}
                             >
@@ -800,6 +827,94 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 console.log('Saving trip dates:', newArrival, newDeparture);
                 setIsEditDatesDialogOpen(false);
               }}
+            />
+
+            {/* Activity dialogs */}
+            <AddActivityDialog
+              isOpen={isAddActivityDialogOpen}
+              onOpenChange={(open) => {
+                setIsAddActivityDialogOpen(open);
+                if (!open) {
+                  setNewActivity({
+                    title: '',
+                    description: '',
+                    start_time: '',
+                    end_time: '',
+                    cost: '',
+                    currency: 'USD'
+                  });
+                }
+              }}
+              activity={newActivity}
+              onActivityChange={setNewActivity}
+              onSubmit={() => {
+                // Handle activity submission logic here
+                handleActivitySuccess();
+                setIsAddActivityDialogOpen(false);
+              }}
+              eventId={tripId || ''}
+            />
+
+            <EditActivityDialog
+              activityId={selectedActivity?.id || null}
+              onOpenChange={(open) => {
+                setIsEditActivityDialogOpen(open);
+                if (!open) setSelectedActivity(null);
+              }}
+              activity={activityEdit}
+              onActivityChange={setActivityEdit}
+              onSubmit={(updatedActivity) => {
+                // Handle activity update logic here
+                handleActivitySuccess();
+                setIsEditActivityDialogOpen(false);
+                setSelectedActivity(null);
+              }}
+              onDelete={(id) => {
+                // Handle activity delete logic here
+                console.log('Delete activity:', id);
+                handleActivitySuccess();
+                setIsEditActivityDialogOpen(false);
+                setSelectedActivity(null);
+              }}
+              eventId={tripId || ''}
+            />
+
+            {/* Reservation dialog */}
+            <RestaurantReservationDialog
+              isOpen={isReservationDialogOpen}
+              onOpenChange={(open) => {
+                setIsReservationDialogOpen(open);
+                if (!open) setSelectedReservation(null);
+              }}
+              onSubmit={async (data) => {
+                // Handle reservation submission
+                try {
+                  if (selectedReservation) {
+                    // Update existing reservation
+                    const { error } = await supabase
+                      .from('reservations')
+                      .update(data)
+                      .eq('id', selectedReservation.id);
+                    if (error) throw error;
+                  } else {
+                    // Create new reservation
+                    const { error } = await supabase
+                      .from('reservations')
+                      .insert([{ ...data, trip_id: tripId }]);
+                    if (error) throw error;
+                  }
+                  handleReservationSuccess();
+                  setIsReservationDialogOpen(false);
+                  setSelectedReservation(null);
+                } catch (error) {
+                  console.error('Error saving reservation:', error);
+                  throw error;
+                }
+              }}
+              isSubmitting={false}
+              editingReservation={selectedReservation}
+              title={selectedReservation ? "Edit Reservation" : "Add Reservation"}
+              tripId={tripId}
             />
           </>
         )}
