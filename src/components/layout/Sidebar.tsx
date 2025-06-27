@@ -549,7 +549,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     switch (secondaryPanel) {
       case 'accommodations':
         return (
-          <div className="fixed left-0 md:left-[280px] top-20 h-[calc(100vh-5rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
+          <div className="fixed left-0 md:left-[280px] top-18 h-[calc(100vh-4.5rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
             <div className="p-4 border-b border-sand-200 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Accommodations</h3>
@@ -665,7 +665,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'transportation':
         return (
-          <div className="fixed left-0 md:left-[280px] top-20 h-[calc(100vh-5rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
+          <div className="fixed left-0 md:left-[280px] top-18 h-[calc(100vh-4.5rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
             <div className="p-4 border-b border-sand-200 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Transportation</h3>
@@ -774,7 +774,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'dates':
         return (
-          <div className="fixed left-0 md:left-[280px] top-20 h-[calc(100vh-5rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
+          <div className="fixed left-0 md:left-[280px] top-18 h-[calc(100vh-4.5rem)] w-full md:w-[320px] bg-white border-r border-sand-200 z-[200] flex flex-col">
             <div className="p-4 border-b border-sand-200 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Trip Dates</h3>
