@@ -103,7 +103,14 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const qc = useQueryClient();
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { data: rawMessages = [], isLoading } = useChat(tripId);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { 
+    data: rawMessages = [], 
+    isLoading, 
+    hasNextPage, 
+    fetchNextPage, 
+    isFetchingNextPage 
+  } = useChat(tripId);
 
   // Transform DB rows → UI messages.
   const messages: ChatMessageDB[] = useMemo(
@@ -127,11 +134,21 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
   const [text, setText] = useState('');
   const [uploads, setUploads] = useState<File[]>([]);
 
-  /* --------------------------- auto‑scroll --------------------------- */
+  /* --------------------------- auto‑scroll & infinite scroll --------------------------- */
   const scrollBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
-  useEffect(scrollBottom, [messages.length]);
+  useEffect(scrollBottom, [messages?.length]);
+
+  // Handle infinite scroll - load more messages when scrolling to top
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop } = event.currentTarget;
+    
+    // If scrolled near the top and there are more pages to load
+    if (scrollTop < 100 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   /* --------------------------- file utils --------------------------- */
   const okTypes = useMemo(
@@ -294,8 +311,23 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       {/* Messages */}
       <Card className="flex-1 mb-4">
         <CardContent className="p-0">
-          <ScrollArea className="h-96 p-4" aria-live="polite">
+          <ScrollArea 
+            className="h-96 p-4" 
+            aria-live="polite"
+            onScrollCapture={handleScroll}
+            ref={scrollAreaRef}
+          >
             <div className="space-y-4">
+              {/* Loading indicator for more messages */}
+              {isFetchingNextPage && (
+                <div className="flex justify-center py-2">
+                  <div className="flex items-center gap-2 text-earth-600">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Loading more messages...</span>
+                  </div>
+                </div>
+              )}
+
               {messages.map((m) => (
                 <MemoBubble key={m.id} msg={m} isUser={m.role === 'user'} user={user} />
               ))}
