@@ -397,7 +397,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed database column mismatch that was causing "column trip_days.id does not exist" errors
   - Activity date changes now work properly with correct day_id to date relationship mapping
   - All activity CRUD operations now function correctly with proper database schema alignment
-- June 27, 2025. Fixed reservation date change functionality with same database schema corrections:
+- June 27, 2025. Fixed reservation date change functionality with complete database schema corrections:
   - Updated RestaurantReservationForm to use timezone-safe date generation preventing off-by-one errors
   - Enhanced DiningList handleSave function to lookup correct day_id when reservation_date is provided
   - Added proper date-to-day_id mapping logic using trip_days.day_id column (not id)
@@ -407,6 +407,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added proper z-index (z-[999]) to SelectContent ensuring dropdown appears above dialog content
   - Fixed reservation date change saving by implementing day_id lookup directly in RestaurantReservationForm
   - Moved date-to-day_id mapping logic from DiningList to form submission to handle all reservation editing paths
+  - Resolved PGRST204 database update error by adding missing trip_id condition to reservation UPDATE query for RLS compliance
   - Reservation date changes now work correctly with proper database relationships and accurate date display
   - Both activities and reservations now handle date changes consistently with correct schema alignment
 
