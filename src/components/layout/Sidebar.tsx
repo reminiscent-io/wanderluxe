@@ -84,11 +84,13 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   const [accommodationOpen, setAccommodationOpen] = useState(false);
   const [transportationOpen, setTransportationOpen] = useState(false);
   const [tripDatesOpen, setTripDatesOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
   
   // Selected items for editing
   const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
   const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
 
   // Load sidebar state from localStorage
@@ -277,7 +279,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleAccommodationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
                     <Plus size={14} className="mr-1" />
-                    Add
+                    Add Accommodation
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
                     <ChevronLeft size={16} />
@@ -336,7 +338,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleTransportationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
                     <Plus size={14} className="mr-1" />
-                    Add
+                    Add Transportation
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
                     <ChevronLeft size={16} />
@@ -371,7 +373,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                         </div>
                       </div>
                       <p className="text-xs text-sand-600">
-                        {transport.departure_location} → {transport.arrival_location}
+                        From: {transport.departure_location} → To: {transport.arrival_location}
                       </p>
                       <p className="text-xs text-sand-600">
                         {transport.start_time} - {transport.end_time}
@@ -433,9 +435,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Activities</h3>
-                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
-                  <ChevronLeft size={16} />
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleActivityAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
+                    <Plus size={14} className="mr-1" />
+                    Add Activity
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                    <ChevronLeft size={16} />
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3">
                 {activities.length === 0 ? (
@@ -445,6 +453,24 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                     <div key={activity.id} className="p-3 bg-sand-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-sm">{activity.title}</h4>
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleActivityEdit(activity)}
+                          >
+                            <Edit size={12} />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-6 w-6 p-0 text-red-500"
+                            onClick={() => handleActivityDelete(activity.id)}
+                          >
+                            <Trash2 size={12} />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-xs text-sand-600">
                         {activity.start_time} - {activity.end_time}
