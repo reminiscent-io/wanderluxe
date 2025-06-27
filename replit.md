@@ -412,6 +412,14 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Maintained reservation_date in form UI for date selection while using proper day_id foreign key for database relationships
   - Reservation date changes now work correctly with proper database schema compliance and accurate date display
   - Both activities and reservations now handle date changes consistently with correct schema alignment
+- June 27, 2025. Completed sidebar reservation save functionality implementation:
+  - Fixed empty onSubmit handler in sidebar that was only invalidating queries without saving data
+  - Implemented complete database operations for both creating new reservations and updating existing ones
+  - Added proper error handling with user-friendly toast notifications for success and error states
+  - Included trip_id condition in UPDATE queries to satisfy Row Level Security policies
+  - Resolved all TypeScript compilation errors related to toast imports and duplicate supabase imports
+  - Both timeline (DayCard) and sidebar reservation editing now work consistently with identical save functionality
+  - Reservation system provides seamless date changes and data persistence from both user interfaces
 
 ## User Preferences
 
