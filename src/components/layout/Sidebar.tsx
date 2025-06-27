@@ -63,7 +63,7 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
 }
 
-export const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
+const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -282,7 +282,7 @@ export const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                         </div>
                       </div>
                       <p className="text-xs text-sand-600">
-                        {accommodation.check_in_date} - {accommodation.check_out_date}
+                        {accommodation.checkin_time} - {accommodation.checkout_time}
                       </p>
                       {accommodation.cost && (
                         <p className="text-xs text-sand-600">
@@ -776,3 +776,5 @@ export const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     </>
   );
 };
+
+export default Sidebar;
