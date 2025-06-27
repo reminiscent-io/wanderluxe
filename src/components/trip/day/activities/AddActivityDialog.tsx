@@ -9,27 +9,17 @@ import {
 import ActivityForm from '../../ActivityForm';
 import RequiredLabel from '@/components/ui/RequiredLabel';
 
+import { ActivityFormData } from '@/types/trip';
+
 interface AddActivityDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  activity: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  };
-  onActivityChange: (activity: {
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    currency: string;
-  }) => void;
+  activity: ActivityFormData;
+  onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: () => void;
   eventId: string;
+  tripDates?: { arrival_date: string; departure_date: string };
+  preselectedDate?: string;
 }
 
 const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
@@ -39,6 +29,8 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
   onActivityChange,
   onSubmit,
   eventId,
+  tripDates,
+  preselectedDate,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -53,6 +45,8 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
           onCancel={() => onOpenChange(false)}
           submitLabel="Add Activity"
           eventId={eventId}
+          tripDates={tripDates}
+          preselectedDate={preselectedDate}
         />
       </DialogContent>
     </Dialog>
