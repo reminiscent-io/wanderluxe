@@ -6,7 +6,6 @@ import DayCard from '../day/DayCard';
 interface TimelineContentProps {
   days?: TripDay[];
   dayIndexMap: Map<string, number>;
-  hotelStays: HotelStay[];
   onDayDelete: (id: string) => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
@@ -15,7 +14,6 @@ interface TimelineContentProps {
 const TimelineContent: React.FC<TimelineContentProps> = ({
   days = [],
   dayIndexMap,
-  hotelStays,
   onDayDelete,
   tripArrivalDate,
   tripDepartureDate

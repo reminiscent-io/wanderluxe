@@ -3,9 +3,6 @@ import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
-import AccommodationsSection from './AccommodationsSection';
-import TransportationSection from './TransportationSection';
-import TripDates from './timeline/TripDates';
 import ExportPdfButton from './ExportPdfButton';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
@@ -154,42 +151,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     }
   };
 
-  const processedHotelStays =
-    events?.filter((event) => event.hotel && event.stay_id).map((event) => ({
-      stay_id: event.stay_id,
-      trip_id: tripId,
-      hotel: event.hotel || '',
-      hotel_details: event.hotel_details,
-      hotel_url: event.hotel_url,
-      hotel_checkin_date: event.hotel_checkin_date || '',
-      hotel_checkout_date: event.hotel_checkout_date || '',
-      checkin_time: event.checkin_time || '',
-      checkout_time: event.checkout_time || '',
-      cost: event.cost ? Number(event.cost) : null,
-      currency: event.currency || 'USD',
-      hotel_address: event.hotel_address,
-      hotel_phone: event.hotel_phone,
-      hotel_place_id: event.hotel_place_id,
-      hotel_website: event.hotel_website,
-    })) || [];
 
-  const processedTransportations =
-    transportationData?.filter((transport) => transport.type && transport.id).map((transport) => ({
-      id: transport.id,
-      trip_id: tripId,
-      type: transport.type,
-      provider: transport.provider,
-      details: transport.details,
-      confirmation_number: transport.confirmation_number,
-      start_date: transport.start_date,
-      start_time: transport.start_time,
-      end_date: transport.end_date,
-      end_time: transport.end_time,
-      departure_location: transport.departure_location,
-      arrival_location: transport.arrival_location,
-      cost: transport.cost ? Number(transport.cost) : null,
-      currency: transport.currency || 'USD',
-    })) || [];
 
 
 
@@ -199,35 +161,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
       )}
 
-      <div className="flex flex-col md:flex-row gap-6 mb-6">
-        <div className="w-full md:w-1/3">
-          {localTripDates.arrival_date && localTripDates.departure_date ? (
-            <TripDates
-              tripId={tripId}
-              arrivalDate={localTripDates.arrival_date}
-              departureDate={localTripDates.departure_date}
-              onDatesChange={handleRefresh}
-            />
-          ) : (
-            <p>Loading dates...</p>
-          )}
-        </div>
-        <div className="w-full md:w-2/3">
-          <AccommodationsSection
-            tripId={tripId}
-            onAccommodationChange={handleRefresh}
-            hotelStays={processedHotelStays}
-          />
-        </div>
-        <div className="w-full md:w-1/2">
-          <TransportationSection
-            tripId={tripId}
-            onTransportationChange={handleRefresh}
-            transportations={processedTransportations}
-          />
-        </div>
-      </div>
-      
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Trip Timeline</h2>
         <ExportPdfButton 
@@ -238,7 +172,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       <TimelineContent
         days={days}
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
-        hotelStays={processedHotelStays}
         onDayDelete={handleDayDelete}
         tripArrivalDate={localTripDates.arrival_date || undefined}
         tripDepartureDate={localTripDates.departure_date || undefined}
