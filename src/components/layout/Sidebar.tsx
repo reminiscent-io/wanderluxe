@@ -947,27 +947,13 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                             return a.reservation_time.localeCompare(b.reservation_time);
                           })
                           .map((reservation) => (
-                            <div key={reservation.id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
+                            <button 
+                              key={reservation.id} 
+                              className="w-full p-3 bg-sand-50 rounded-lg ml-2 hover:bg-sand-100 transition-colors text-left"
+                              onClick={() => handleReservationEdit(reservation)}
+                            >
+                              <div className="mb-2">
                                 <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleReservationEdit(reservation)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleReservationDelete(reservation.id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
-                                </div>
                               </div>
                               <p className="text-xs text-sand-600">
                                 {(() => {
@@ -997,7 +983,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                   {reservation.currency || 'USD'} {reservation.cost.toLocaleString()}
                                 </p>
                               )}
-                            </div>
+                            </button>
                           ))}
                       </div>
                     ));
