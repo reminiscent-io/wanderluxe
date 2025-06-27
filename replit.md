@@ -274,6 +274,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - All sidebar buttons now provide immediate access to full-featured editing dialogs
   - Preserved existing form validation, Google Places integration, and database operations
   - Fixed dialog z-index layering issue where dialogs appeared behind sidebar (increased from z-50 to z-250)
+- June 27, 2025. Enhanced sidebar to use real trip data instead of mock data:
+  - Integrated useTripQuery hook to fetch actual accommodations from database
+  - Fixed accommodation edit functionality to load real hotel data when clicking edit buttons
+  - Updated trip dates section to display actual arrival/departure dates and calculated duration
+  - Added proper query invalidation to refresh sidebar data after accommodation changes
+  - Replaced all dummy data with authentic database records for accommodations and trip information
+  - Sidebar now displays real hotel names, costs, currencies, and check-in/check-out dates from database
 
 ## User Preferences
 

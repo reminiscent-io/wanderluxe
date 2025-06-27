@@ -32,8 +32,12 @@ import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
+import AddActivityDialog from "../trip/day/activities/AddActivityDialog";
+import EditActivityDialog from "../trip/day/activities/EditActivityDialog";
+import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import { useTripQuery } from "@/hooks/useTripQuery";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -111,6 +115,41 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   // Fetch trip data including accommodations
   const { trip } = useTripQuery(tripId);
   const queryClient = useQueryClient();
+
+  // Fetch activities data
+  const { data: activities = [] } = useQuery({
+    queryKey: ['activities', tripId],
+    queryFn: async () => {
+      if (!tripId) return [];
+      const { data, error } = await supabase
+        .from('day_activities')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('date', { ascending: false })
+        .order('time', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!tripId,
+  });
+
+  // Fetch reservations data
+  const { data: reservations = [] } = useQuery({
+    queryKey: ['reservations', tripId],
+    queryFn: async () => {
+      if (!tripId) return [];
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('reservation_time', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!tripId,
+  });
   
   // Success callback for accommodation changes
   const handleAccommodationSuccess = () => {
@@ -123,10 +162,15 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
   const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
   const [isEditDatesDialogOpen, setIsEditDatesDialogOpen] = useState(false);
+  const [isAddActivityDialogOpen, setIsAddActivityDialogOpen] = useState(false);
+  const [isEditActivityDialogOpen, setIsEditActivityDialogOpen] = useState(false);
+  const [isReservationDialogOpen, setIsReservationDialogOpen] = useState(false);
   
   // Selected items for editing
   const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
   const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
+  const [selectedReservation, setSelectedReservation] = useState<any>(null);
   
   // Trip date editing state
   const [newArrival, setNewArrival] = useState('');
