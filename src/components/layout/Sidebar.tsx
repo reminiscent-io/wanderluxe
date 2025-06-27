@@ -252,20 +252,22 @@ export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick
 
   return (
     <>
-      {/* Mobile trigger */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild className="md:hidden">
-          <Button variant="ghost" size="icon" aria-label="Open sidebar">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent
-          side="left"
-          className="p-0 w-[280px]"
-        >
-          {content}
-        </SheetContent>
-      </Sheet>
+      {/* Mobile trigger - only show on mobile */}
+      <div className="md:hidden">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Open sidebar">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="p-0 w-[280px]"
+          >
+            {content}
+          </SheetContent>
+        </Sheet>
+      </div>
 
       {/* Desktop sidebar toggle button - hidden when viewing a trip */}
       {!tripId && (

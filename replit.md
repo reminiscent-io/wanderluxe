@@ -254,6 +254,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Connected secondary sidebar to real trip data for authentic accommodation and transportation details
   - Main content area automatically adjusts from 280px to 600px left padding when secondary sidebar opens
   - Fixed z-index positioning so sidebars appear at same level as day cards and page content (no overlay behavior)
+  - Fixed mobile Sheet component causing dark overlay on desktop by wrapping in mobile-only container
 
 ## User Preferences
 
