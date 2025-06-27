@@ -473,7 +473,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                           .map((transport) => (
                             <div key={transport.id} className="p-3 bg-sand-50 rounded-lg ml-2">
                               <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-medium text-sm">{transport.type}</h4>
+                                <h4 className="font-medium text-sm">{transport.departure_location} - {transport.arrival_location}</h4>
                                 <div className="flex gap-1">
                                   <Button 
                                     size="sm" 
@@ -493,11 +493,47 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                   </Button>
                                 </div>
                               </div>
+                              <p className="text-xs text-sand-600">{transport.type}</p>
                               <p className="text-xs text-sand-600">
-                                {transport.departure_location} → {transport.arrival_location}
-                              </p>
-                              <p className="text-xs text-sand-600">
-                                {transport.start_time} - {transport.end_time}
+                                {(() => {
+                                  // Format time as 9:00pm - 10:00pm
+                                  const formatTime = (time: string) => {
+                                    if (!time) return '';
+                                    try {
+                                      const date = new Date(`2000-01-01T${time}`);
+                                      return date.toLocaleTimeString('en-US', { 
+                                        hour: 'numeric', 
+                                        minute: '2-digit',
+                                        hour12: true 
+                                      }).toLowerCase();
+                                    } catch {
+                                      return time;
+                                    }
+                                  };
+
+                                  const startTime = formatTime(transport.start_time || '');
+                                  const endTime = formatTime(transport.end_time || '');
+                                  
+                                  // Check if end date is different from start date
+                                  const isDifferentDate = transport.end_date && transport.start_date && 
+                                    transport.end_date !== transport.start_date;
+                                  
+                                  let timeDisplay = '';
+                                  if (startTime && endTime) {
+                                    timeDisplay = `${startTime} - ${endTime}`;
+                                    
+                                    if (isDifferentDate) {
+                                      // Format end date as 12/30
+                                      const endDate = new Date(transport.end_date);
+                                      const formattedEndDate = `${endDate.getMonth() + 1}/${endDate.getDate()}`;
+                                      timeDisplay += ` (${formattedEndDate})`;
+                                    }
+                                  } else if (startTime) {
+                                    timeDisplay = startTime;
+                                  }
+                                  
+                                  return timeDisplay;
+                                })()}
                               </p>
                               {transport.cost && (
                                 <p className="text-xs text-sand-600">
