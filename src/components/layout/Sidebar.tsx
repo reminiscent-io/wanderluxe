@@ -319,7 +319,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                   transportation.map((transport) => (
                     <div key={transport.id} className="p-3 bg-sand-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{transport.type} - {transport.company}</h4>
+                        <h4 className="font-medium text-sm">{transport.type}</h4>
                         <div className="flex gap-1">
                           <Button 
                             size="sm" 
@@ -354,10 +354,10 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                         </div>
                       </div>
                       <p className="text-xs text-sand-600">
-                        {transport.from_location} → {transport.to_location}
+                        {transport.departure_location} → {transport.arrival_location}
                       </p>
                       <p className="text-xs text-sand-600">
-                        {transport.departure_time} - {transport.arrival_time}
+                        {transport.start_time} - {transport.end_time}
                       </p>
                       {transport.cost && (
                         <p className="text-xs text-sand-600">
@@ -481,8 +481,8 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                       <p className="text-xs text-sand-600">
                         {new Date(reservation.reservation_time).toLocaleDateString()} - {reservation.number_of_people} people
                       </p>
-                      {reservation.special_requests && (
-                        <p className="text-xs text-sand-600">{reservation.special_requests}</p>
+                      {reservation.notes && (
+                        <p className="text-xs text-sand-600">{reservation.notes}</p>
                       )}
                     </div>
                   ))
@@ -737,21 +737,38 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       <AccommodationDialog
         open={accommodationOpen}
         onOpenChange={setAccommodationOpen}
-        selectedAccommodation={selectedAccommodation}
+        initialData={selectedAccommodation}
         tripId={tripId}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+        }}
       />
 
       <TransportationDialog
         open={transportationOpen}
         onOpenChange={setTransportationOpen}
-        selectedTransportation={selectedTransportation}
+        initialData={selectedTransportation}
         tripId={tripId}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+        }}
       />
 
       <TripDateEditDialog
-        open={tripDatesOpen}
+        isOpen={tripDatesOpen}
         onOpenChange={setTripDatesOpen}
-        trip={trip}
+        arrivalDate={trip?.arrival_date || ''}
+        departureDate={trip?.departure_date || ''}
+        onArrivalChange={(date) => {
+          // Handle arrival date change
+        }}
+        onDepartureChange={(date) => {
+          // Handle departure date change
+        }}
+        onSave={() => {
+          setTripDatesOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+        }}
       />
 
       <ActivityDialogs
