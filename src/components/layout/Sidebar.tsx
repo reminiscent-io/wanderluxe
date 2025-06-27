@@ -34,8 +34,7 @@ import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
-import AddActivityDialog from "../trip/day/activities/AddActivityDialog";
-import EditActivityDialog from "../trip/day/activities/EditActivityDialog";
+import ActivityDialogs from "../trip/day/activities/ActivityDialogs";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import { useTripQuery } from "@/hooks/useTripQuery";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -190,21 +189,21 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
   
   // Activity form state
-  const [newActivity, setNewActivity] = useState({
+  const [newActivity, setNewActivity] = useState<ActivityFormData>({
     title: '',
     description: '',
     start_time: '',
     end_time: '',
     cost: '',
-    currency: 'USD'
+    currency: 'USD' as Currency
   });
-  const [activityEdit, setActivityEdit] = useState({
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
     title: '',
     description: '',
     start_time: '',
     end_time: '',
     cost: '',
-    currency: 'USD'
+    currency: 'USD' as Currency
   });
   
   // Trip date editing state
@@ -340,7 +339,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                                   start_time: activity.start_time || '',
                                   end_time: activity.end_time || '',
                                   cost: activity.cost?.toString() || '',
-                                  currency: activity.currency || 'USD'
+                                  currency: (activity.currency || 'USD') as Currency
                                 });
                                 setIsEditActivityDialogOpen(true);
                               }}
@@ -830,51 +829,79 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             />
 
             {/* Activity dialogs */}
-            <AddActivityDialog
-              isOpen={isAddActivityDialogOpen}
-              onOpenChange={(open) => {
-                setIsAddActivityDialogOpen(open);
-                if (!open) {
-                  setNewActivity({
-                    title: '',
-                    description: '',
-                    start_time: '',
-                    end_time: '',
-                    cost: '',
-                    currency: 'USD'
-                  });
+            <ActivityDialogs
+              isAddingActivity={isAddActivityDialogOpen}
+              setIsAddingActivity={setIsAddActivityDialogOpen}
+              editingActivity={selectedActivity?.id || null}
+              setEditingActivity={(id) => {
+                if (!id) {
+                  setSelectedActivity(null);
+                  setIsEditActivityDialogOpen(false);
+                } else {
+                  const activity = activities.find(a => a.id === id);
+                  if (activity) {
+                    setSelectedActivity(activity);
+                    setActivityEdit({
+                      title: activity.title || '',
+                      description: activity.description || '',
+                      start_time: activity.start_time || '',
+                      end_time: activity.end_time || '',
+                      cost: activity.cost?.toString() || '',
+                      currency: (activity.currency || 'USD') as Currency
+                    });
+                    setIsEditActivityDialogOpen(true);
+                  }
                 }
               }}
-              activity={newActivity}
-              onActivityChange={setNewActivity}
-              onSubmit={() => {
+              newActivity={newActivity}
+              setNewActivity={setNewActivity}
+              activityEdit={activityEdit}
+              setActivityEdit={setActivityEdit}
+              onAddActivity={async (activity) => {
                 // Handle activity submission logic here
-                handleActivitySuccess();
-                setIsAddActivityDialogOpen(false);
+                try {
+                  const { error } = await supabase
+                    .from('day_activities')
+                    .insert([{ ...activity, trip_id: tripId }]);
+                  if (error) throw error;
+                  handleActivitySuccess();
+                  setIsAddActivityDialogOpen(false);
+                } catch (error) {
+                  console.error('Error adding activity:', error);
+                  throw error;
+                }
               }}
-              eventId={tripId || ''}
-            />
-
-            <EditActivityDialog
-              activityId={selectedActivity?.id || null}
-              onOpenChange={(open) => {
-                setIsEditActivityDialogOpen(open);
-                if (!open) setSelectedActivity(null);
-              }}
-              activity={activityEdit}
-              onActivityChange={setActivityEdit}
-              onSubmit={(updatedActivity) => {
+              onEditActivity={async (id, updatedActivity) => {
                 // Handle activity update logic here
-                handleActivitySuccess();
-                setIsEditActivityDialogOpen(false);
-                setSelectedActivity(null);
+                try {
+                  const { error } = await supabase
+                    .from('day_activities')
+                    .update(updatedActivity)
+                    .eq('id', id);
+                  if (error) throw error;
+                  handleActivitySuccess();
+                  setIsEditActivityDialogOpen(false);
+                  setSelectedActivity(null);
+                } catch (error) {
+                  console.error('Error updating activity:', error);
+                  throw error;
+                }
               }}
-              onDelete={(id) => {
+              onDeleteActivity={async (id) => {
                 // Handle activity delete logic here
-                console.log('Delete activity:', id);
-                handleActivitySuccess();
-                setIsEditActivityDialogOpen(false);
-                setSelectedActivity(null);
+                try {
+                  const { error } = await supabase
+                    .from('day_activities')
+                    .delete()
+                    .eq('id', id);
+                  if (error) throw error;
+                  handleActivitySuccess();
+                  setIsEditActivityDialogOpen(false);
+                  setSelectedActivity(null);
+                } catch (error) {
+                  console.error('Error deleting activity:', error);
+                  throw error;
+                }
               }}
               eventId={tripId || ''}
             />
