@@ -52,14 +52,25 @@ export const tripNavItems = [
 export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick }: SidebarProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  // Always show sidebar when viewing a trip, allow collapsing only on other pages
   const [open, setOpen] = useState<boolean>(
-    () => JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
+    () => tripId ? true : JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
   );
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   useEffect(() => {
-    localStorage.setItem("sidebar:isOpen", String(open));
-  }, [open]);
+    // Don't persist sidebar state when viewing a trip (always open)
+    if (!tripId) {
+      localStorage.setItem("sidebar:isOpen", String(open));
+    }
+  }, [open, tripId]);
+
+  // Force sidebar open when viewing a trip
+  useEffect(() => {
+    if (tripId && !open) {
+      setOpen(true);
+    }
+  }, [tripId, open]);
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -256,19 +267,21 @@ export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick
         </SheetContent>
       </Sheet>
 
-      {/* Desktop sidebar toggle button - always visible */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "hidden md:flex fixed top-4 z-[202] h-8 w-8 bg-white shadow-md ring-1 ring-sand-200/40 hover:bg-sand-50 transition-all",
-          open ? "left-[260px]" : "left-4"
-        )}
-        aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-      >
-        <Menu className="h-4 w-4" />
-      </Button>
+      {/* Desktop sidebar toggle button - hidden when viewing a trip */}
+      {!tripId && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(!open)}
+          className={cn(
+            "hidden md:flex fixed top-4 z-[202] h-8 w-8 bg-white shadow-md ring-1 ring-sand-200/40 hover:bg-sand-50 transition-all",
+            open ? "left-[260px]" : "left-4"
+          )}
+          aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+      )}
 
       {/* Desktop sidebar */}
       <aside
