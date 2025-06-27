@@ -639,7 +639,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-sand-200 pt-16">
+      <div className="p-4 border-b border-sand-200 pt-4">
         <NavigationLogo />
       </div>
 
