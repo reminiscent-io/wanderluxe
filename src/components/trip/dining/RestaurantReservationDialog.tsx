@@ -53,7 +53,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-lg">
         <div aria-describedby="restaurant-reservation-description">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
