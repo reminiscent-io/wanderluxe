@@ -11,6 +11,7 @@ import TripDetailsError from '@/components/trip/details/TripDetailsError';
 import TripTabs from '@/components/trip/details/TripTabs';
 import AccommodationsSection from '@/components/trip/AccommodationsSection';
 import TransportationSection from '@/components/trip/TransportationSection';
+import { cn } from '@/lib/utils';
 
 
 const TripDetails = () => {
@@ -66,7 +67,14 @@ const TripDetails = () => {
   return (
     <div className="flex min-h-screen">
       {sidebar}
-      <main className="flex-1 pl-0 md:pl-[280px]">
+      <SecondarySidebar 
+        isOpen={secondarySidebarOpen}
+        onClose={handleCloseSecondarySidebar}
+        activeSection={activeSection}
+        tripId={tripId}
+        displayData={displayData}
+      />
+      <main className={`flex-1 pl-0 md:pl-[280px] transition-all duration-300 ${secondarySidebarOpen ? "pr-[320px]" : "pr-0"}`}>
         <div className="min-h-screen flex flex-col">
           <Navigation mobileMenuTrigger={sidebar} />
 
