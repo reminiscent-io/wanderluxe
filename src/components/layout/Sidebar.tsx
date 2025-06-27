@@ -35,7 +35,6 @@ import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
 
-import ActivitiesList from "../trip/day/activities/ActivitiesList";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import { useTripQuery } from "@/hooks/useTripQuery";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -49,11 +48,22 @@ import {
 } from "@/components/ui/dialog";
 
 export const tripNavItems = [
-  { id: 'timeline', label: 'Timeline', icon: Calendar, href: 'timeline' },
-  { id: 'ai-assistant', label: 'AI Assistant', icon: MessageCircle, href: 'ai-assistant' },
-  { id: 'vision-board', label: 'Vision Board', icon: Lightbulb, href: 'vision-board' },
-  { id: 'budget', label: 'Budget', icon: BarChart2, href: 'budget' },
-  { id: 'packing-list', label: 'Packing List', icon: Package, href: 'packing-list' },
+  {
+    title: "Timeline",
+    icon: Calendar,
+    href: "timeline",
+    children: [
+      { title: "Trip Dates", icon: CalendarDays, key: "dates" },
+      { title: "Accommodations", icon: Building, key: "accommodations" },
+      { title: "Transportation", icon: Car, key: "transportation" },
+      { title: "Activities", icon: MapPin, key: "activities" },
+      { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
+    ]
+  },
+  { title: "AI Assistant", icon: MessageCircle, href: "ai-assistant" },
+  { title: "Vision Board", icon: Lightbulb, href: "vision-board" },
+  { title: "Budget", icon: BarChart2, href: "budget" },
+  { title: "Booking", icon: Package, href: "booking" },
 ];
 
 interface SidebarProps {
@@ -94,10 +104,10 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
   }, [isOpen]);
 
-  // Fetch trip data
-  const { trip } = useTripQuery(tripId);
+  // Trip data
+  const { trip, tripLoading } = useTripQuery(tripId);
 
-  // Fetch accommodations data
+  // Accommodations query
   const { data: accommodations = [] } = useQuery({
     queryKey: ['accommodations', tripId],
     queryFn: async () => {
@@ -106,14 +116,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         .from('accommodations')
         .select('*')
         .eq('trip_id', tripId)
-        .order('stay_id');
+        .order('created_at', { ascending: false });
+      
       if (error) throw error;
       return data || [];
     },
     enabled: !!tripId
   });
 
-  // Fetch transportation data
+  // Transportation query
   const { data: transportation = [] } = useQuery({
     queryKey: ['transportation', tripId],
     queryFn: async () => {
@@ -122,33 +133,32 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         .from('transportation')
         .select('*')
         .eq('trip_id', tripId)
-        .order('departure_time');
+        .order('start_date', { ascending: true });
+      
       if (error) throw error;
       return data || [];
     },
     enabled: !!tripId
   });
 
-  // Fetch activities data
+  // Activities query
   const { data: activities = [] } = useQuery({
     queryKey: ['activities', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       const { data, error } = await supabase
         .from('day_activities')
-        .select(`
-          *,
-          trip_days!inner(date)
-        `)
+        .select('*')
         .eq('trip_id', tripId)
-        .order('start_time');
+        .order('start_time', { ascending: false });
+      
       if (error) throw error;
       return data || [];
     },
     enabled: !!tripId
   });
 
-  // Fetch reservations data
+  // Reservations query
   const { data: reservations = [] } = useQuery({
     queryKey: ['reservations', tripId],
     queryFn: async () => {
@@ -158,15 +168,12 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         .select('*')
         .eq('trip_id', tripId)
         .order('reservation_time', { ascending: false });
+      
       if (error) throw error;
       return data || [];
     },
     enabled: !!tripId
   });
-
-  const handleBackToTrips = () => {
-    navigate('/my-trips');
-  };
 
   const toggleExpanded = (item: string) => {
     setExpandedItems(prev => 
@@ -176,59 +183,110 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     );
   };
 
-  const timelineSubItems = [
-    { 
-      id: 'dates', 
-      label: 'Trip Dates', 
-      icon: CalendarDays,
-      onClick: () => setSecondaryPanel('dates')
-    },
-    { 
-      id: 'accommodations', 
-      label: 'Accommodations', 
-      icon: Building,
-      onClick: () => setSecondaryPanel('accommodations')
-    },
-    { 
-      id: 'transportation', 
-      label: 'Transportation', 
-      icon: Car,
-      onClick: () => setSecondaryPanel('transportation')
-    },
-    { 
-      id: 'activities', 
-      label: 'Activities', 
-      icon: MapPin,
-      onClick: () => setSecondaryPanel('activities')
-    },
-    { 
-      id: 'reservations', 
-      label: 'Reservations', 
-      icon: UtensilsCrossed,
-      onClick: () => setSecondaryPanel('reservations')
-    }
-  ];
+  const handleBackToTrips = () => {
+    navigate('/my-trips');
+  };
 
-  const getSecondaryPanelContent = () => {
+  const handleSubitemClick = (key: string) => {
+    setSecondaryPanel(secondaryPanel === key ? null : key);
+  };
+
+  const handleAccommodationAdd = () => {
+    setSelectedAccommodation(null);
+    setAccommodationOpen(true);
+  };
+
+  const handleAccommodationEdit = (accommodation: any) => {
+    setSelectedAccommodation(accommodation);
+    setAccommodationOpen(true);
+  };
+
+  const handleAccommodationDelete = async (stayId: string) => {
+    try {
+      await supabase
+        .from('accommodations')
+        .delete()
+        .eq('stay_id', stayId);
+      
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    } catch (error) {
+      console.error('Error deleting accommodation:', error);
+    }
+  };
+
+  const handleTransportationAdd = () => {
+    setSelectedTransportation(null);
+    setTransportationOpen(true);
+  };
+
+  const handleTransportationEdit = (transport: any) => {
+    setSelectedTransportation(transport);
+    setTransportationOpen(true);
+  };
+
+  const handleTransportationDelete = async (id: string) => {
+    try {
+      await supabase
+        .from('transportation')
+        .delete()
+        .eq('id', id);
+      
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    } catch (error) {
+      console.error('Error deleting transportation:', error);
+    }
+  };
+
+  const handleReservationAdd = () => {
+    setSelectedReservation(null);
+    setReservationOpen(true);
+  };
+
+  const handleReservationEdit = (reservation: any) => {
+    setSelectedReservation(reservation);
+    setReservationOpen(true);
+  };
+
+  const handleReservationDelete = async (id: string) => {
+    try {
+      await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', id);
+      
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+    }
+  };
+
+  const handleEditDates = () => {
+    setTripDatesOpen(true);
+  };
+
+  const renderSecondaryPanel = () => {
+    if (!secondaryPanel) return null;
+
     switch (secondaryPanel) {
       case 'accommodations':
-        return {
-          title: 'Accommodations',
-          content: (
-            <div className="space-y-4">
-              <Button 
-                onClick={() => {
-                  setSelectedAccommodation(null);
-                  setAccommodationOpen(true);
-                }}
-                className="w-full"
-              >
-                <Plus size={16} className="mr-2" />
-                Add Accommodation
-              </Button>
-              <div className="space-y-2">
+        return (
+          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-earth-600">Accommodations</h3>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAccommodationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
+                    <Plus size={14} className="mr-1" />
+                    Add
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                    <ChevronLeft size={16} />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-3">
                 {accommodations.length === 0 ? (
-                  <p className="text-sm text-sand-600 text-center py-4">No accommodations added yet</p>
+                  <p className="text-sand-600 text-sm">No accommodations added yet.</p>
                 ) : (
                   accommodations.map((accommodation) => (
                     <div key={accommodation.stay_id} className="p-3 bg-sand-50 rounded-lg">
@@ -239,29 +297,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                             size="sm" 
                             variant="ghost" 
                             className="h-6 w-6 p-0"
-                            onClick={() => {
-                              setSelectedAccommodation(accommodation);
-                              setAccommodationOpen(true);
-                            }}
+                            onClick={() => handleAccommodationEdit(accommodation)}
                           >
                             <Edit size={12} />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-6 w-6 p-0"
-                            onClick={async () => {
-                              try {
-                                const { error } = await supabase
-                                  .from('accommodations')
-                                  .delete()
-                                  .eq('stay_id', accommodation.stay_id);
-                                if (error) throw error;
-                                queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
-                              } catch (error) {
-                                console.error('Error deleting accommodation:', error);
-                              }
-                            }}
+                            className="h-6 w-6 p-0 text-red-500"
+                            onClick={() => handleAccommodationDelete(accommodation.stay_id)}
                           >
                             <Trash2 size={12} />
                           </Button>
@@ -280,27 +324,28 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 )}
               </div>
             </div>
-          )
-        };
+          </div>
+        );
 
       case 'transportation':
-        return {
-          title: 'Transportation',
-          content: (
-            <div className="space-y-4">
-              <Button 
-                onClick={() => {
-                  setSelectedTransportation(null);
-                  setTransportationOpen(true);
-                }}
-                className="w-full"
-              >
-                <Plus size={16} className="mr-2" />
-                Add Transportation
-              </Button>
-              <div className="space-y-2">
+        return (
+          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-earth-600">Transportation</h3>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleTransportationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
+                    <Plus size={14} className="mr-1" />
+                    Add
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                    <ChevronLeft size={16} />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-3">
                 {transportation.length === 0 ? (
-                  <p className="text-sm text-sand-600 text-center py-4">No transportation added yet</p>
+                  <p className="text-sand-600 text-sm">No transportation added yet.</p>
                 ) : (
                   transportation.map((transport) => (
                     <div key={transport.id} className="p-3 bg-sand-50 rounded-lg">
@@ -311,29 +356,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                             size="sm" 
                             variant="ghost" 
                             className="h-6 w-6 p-0"
-                            onClick={() => {
-                              setSelectedTransportation(transport);
-                              setTransportationOpen(true);
-                            }}
+                            onClick={() => handleTransportationEdit(transport)}
                           >
                             <Edit size={12} />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-6 w-6 p-0"
-                            onClick={async () => {
-                              try {
-                                const { error } = await supabase
-                                  .from('transportation')
-                                  .delete()
-                                  .eq('id', transport.id);
-                                if (error) throw error;
-                                queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
-                              } catch (error) {
-                                console.error('Error deleting transportation:', error);
-                              }
-                            }}
+                            className="h-6 w-6 p-0 text-red-500"
+                            onClick={() => handleTransportationDelete(transport.id)}
                           >
                             <Trash2 size={12} />
                           </Button>
@@ -355,79 +386,106 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 )}
               </div>
             </div>
-          )
-        };
+          </div>
+        );
+
+      case 'dates':
+        return (
+          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-earth-600">Trip Dates</h3>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleEditDates} className="bg-earth-500 hover:bg-earth-600 text-white">
+                    <Edit size={14} className="mr-1" />
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                    <ChevronLeft size={16} />
+                  </Button>
+                </div>
+              </div>
+              {trip && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <p className="text-sm font-medium text-earth-600">Arrival Date</p>
+                    <p className="text-sm text-sand-700">{trip.arrival_date}</p>
+                  </div>
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <p className="text-sm font-medium text-earth-600">Departure Date</p>
+                    <p className="text-sm text-sand-700">{trip.departure_date}</p>
+                  </div>
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <p className="text-sm font-medium text-earth-600">Duration</p>
+                    <p className="text-sm text-sand-700">
+                      {Math.ceil((new Date(trip.departure_date).getTime() - new Date(trip.arrival_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
 
       case 'activities':
-        const formatTime = (timeStr?: string) => {
-          if (!timeStr) return '';
-          const [hours, minutes] = timeStr.split(':');
-          const hour24 = parseInt(hours);
-          const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-          const ampm = hour24 >= 12 ? 'PM' : 'AM';
-          return `${hour12}:${minutes} ${ampm}`;
-        };
-
-        return {
-          title: 'Activities',
-          content: (
-            <ActivitiesList 
-              activities={activities}
-              onAddActivity={() => {
-                setSelectedActivity(null);
-                setActivityEdit({
-                  title: '',
-                  description: '',
-                  date: trip?.arrival_date || '',
-                  start_time: '',
-                  end_time: '',
-                  cost: '',
-                  currency: 'USD' as Currency
-                });
-                setActivityOpen(true);
-              }}
-              onEditActivity={(activity) => {
-                setSelectedActivity(activity);
-                setActivityEdit({
-                  title: activity.title || '',
-                  description: activity.description || '',
-                  date: trip?.arrival_date || '',
-                  start_time: activity.start_time || '',
-                  end_time: activity.end_time || '',
-                  cost: activity.cost?.toString() || '',
-                  currency: (activity.currency || 'USD') as Currency
-                });
-                setActivityOpen(true);
-              }}
-              formatTime={formatTime}
-            />
-          )
-        };
+        return (
+          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-earth-600">Activities</h3>
+                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                  <ChevronLeft size={16} />
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {activities.length === 0 ? (
+                  <p className="text-sand-600 text-sm">No activities added yet.</p>
+                ) : (
+                  activities.map((activity) => (
+                    <div key={activity.id} className="p-3 bg-sand-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-sm">{activity.title}</h4>
+                      </div>
+                      <p className="text-xs text-sand-600">
+                        {activity.start_time} - {activity.end_time}
+                      </p>
+                      {activity.description && (
+                        <p className="text-xs text-sand-600">{activity.description}</p>
+                      )}
+                      {activity.cost && (
+                        <p className="text-xs text-sand-600">
+                          {activity.currency || 'USD'} {activity.cost}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        );
 
       case 'reservations':
-        const sortedReservations = reservations.sort((a, b) => {
-          return new Date(b.reservation_time).getTime() - new Date(a.reservation_time).getTime();
-        });
-
-        return {
-          title: 'Reservations',
-          content: (
-            <div className="space-y-4">
-              <Button 
-                onClick={() => {
-                  setSelectedReservation(null);
-                  setReservationOpen(true);
-                }}
-                className="w-full"
-              >
-                <Plus size={16} className="mr-2" />
-                Add Reservation
-              </Button>
-              <div className="space-y-2">
-                {sortedReservations.length === 0 ? (
-                  <p className="text-sm text-sand-600 text-center py-4">No reservations added yet</p>
+        return (
+          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-earth-600">Reservations</h3>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleReservationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
+                    <Plus size={14} className="mr-1" />
+                    Add
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                    <ChevronLeft size={16} />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {reservations.length === 0 ? (
+                  <p className="text-sand-600 text-sm">No reservations added yet.</p>
                 ) : (
-                  sortedReservations.map((reservation) => (
+                  reservations.map((reservation) => (
                     <div key={reservation.id} className="p-3 bg-sand-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
@@ -436,29 +494,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                             size="sm" 
                             variant="ghost" 
                             className="h-6 w-6 p-0"
-                            onClick={() => {
-                              setSelectedReservation(reservation);
-                              setReservationOpen(true);
-                            }}
+                            onClick={() => handleReservationEdit(reservation)}
                           >
                             <Edit size={12} />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-6 w-6 p-0"
-                            onClick={async () => {
-                              try {
-                                const { error } = await supabase
-                                  .from('reservations')
-                                  .delete()
-                                  .eq('id', reservation.id);
-                                if (error) throw error;
-                                queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
-                              } catch (error) {
-                                console.error('Error deleting reservation:', error);
-                              }
-                            }}
+                            className="h-6 w-6 p-0 text-red-500"
+                            onClick={() => handleReservationDelete(reservation.id)}
                           >
                             <Trash2 size={12} />
                           </Button>
@@ -475,193 +519,109 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 )}
               </div>
             </div>
-          )
-        };
-
-      case 'dates':
-        const arrivalDate = trip?.arrival_date ? new Date(trip.arrival_date) : null;
-        const departureDate = trip?.departure_date ? new Date(trip.departure_date) : null;
-        
-        const calculateDuration = () => {
-          if (!arrivalDate || !departureDate) return null;
-          const diffTime = Math.abs(departureDate.getTime() - arrivalDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          const nights = diffDays - 1;
-          return { days: diffDays, nights };
-        };
-
-        const duration = calculateDuration();
-
-        return {
-          title: 'Trip Dates',
-          content: (
-            <div className="space-y-4">
-              <Button 
-                onClick={() => setTripDatesOpen(true)}
-                className="w-full"
-              >
-                <Edit size={16} className="mr-2" />
-                Edit Dates
-              </Button>
-              <div className="space-y-3">
-                <div className="p-3 bg-sand-50 rounded-lg">
-                  <h4 className="font-medium text-sm mb-1">Arrival</h4>
-                  <p className="text-sm text-sand-600">
-                    {arrivalDate?.toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    }) || 'Not set'}
-                  </p>
-                </div>
-                <div className="p-3 bg-sand-50 rounded-lg">
-                  <h4 className="font-medium text-sm mb-1">Departure</h4>
-                  <p className="text-sm text-sand-600">
-                    {departureDate?.toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    }) || 'Not set'}
-                  </p>
-                </div>
-                {duration && (
-                  <div className="p-3 bg-sand-50 rounded-lg">
-                    <h4 className="font-medium text-sm mb-1">Duration</h4>
-                    <p className="text-sm text-sand-600">
-                      {duration.days} days, {duration.nights} nights
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        };
+          </div>
+        );
 
       default:
         return null;
     }
   };
 
-  const renderSidebarContent = () => (
+  const sidebarContent = (
     <div className="flex flex-col h-full">
-      {/* Logo or Back Button */}
       <div className="p-4 border-b border-sand-200">
-        {tripId ? (
-          <div className="space-y-4">
-            <NavigationLogo />
-            <Button
-              variant="ghost"
-              onClick={handleBackToTrips}
-              className="w-full justify-start text-sand-600 hover:text-sand-800"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Trips
-            </Button>
-          </div>
-        ) : (
-          <NavigationLogo />
-        )}
+        <NavigationLogo />
       </div>
 
-      {/* Navigation */}
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-2 py-4">
-          {tripId ? (
-            // Trip-specific navigation
-            <>
-              {tripNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                const isTimeline = item.id === 'timeline';
-                const isExpanded = expandedItems.includes(item.id);
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-sand-600 hover:text-earth-600 hover:bg-sand-50"
+            onClick={handleBackToTrips}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Trips
+          </Button>
 
-                return (
-                  <div key={item.id}>
-                    <div className="flex items-center">
-                      <Button
-                        variant={isActive ? "secondary" : "ghost"}
-                        className={cn(
-                          "w-full justify-start",
-                          isActive && "bg-sand-100 text-sand-900"
-                        )}
-                        onClick={() => {
-                          if (isTimeline) {
-                            toggleExpanded(item.id);
-                          } else {
-                            onTabChange(item.id);
-                            onTabChange(item.href);
-                          }
-                        }}
-                      >
-                        <Icon className="mr-3 h-4 w-4" />
-                        {item.label}
-                        {isTimeline && (
-                          <ChevronDown
-                            className={cn(
-                              "ml-auto h-4 w-4 transition-transform",
-                              isExpanded && "rotate-180"
-                            )}
-                          />
-                        )}
-                      </Button>
-                    </div>
+          <Separator className="my-4" />
 
-                    {/* Timeline Subitems */}
-                    {isTimeline && (
-                      <Collapsible open={isExpanded}>
-                        <CollapsibleContent className="ml-4 mt-2 space-y-1">
-                          {timelineSubItems.map((subItem) => {
-                            const SubIcon = subItem.icon;
-                            return (
-                              <Button
-                                key={subItem.id}
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-sand-600 hover:text-sand-800"
-                                onClick={subItem.onClick}
-                              >
-                                <SubIcon className="mr-3 h-3 w-3" />
-                                {subItem.label}
-                              </Button>
-                            );
-                          })}
-                        </CollapsibleContent>
-                      </Collapsible>
+          {tripNavItems.map((item) => (
+            <div key={item.title}>
+              <Collapsible 
+                open={expandedItems.includes(item.title.toLowerCase())}
+                onOpenChange={() => toggleExpanded(item.title.toLowerCase())}
+              >
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-between text-left",
+                      activeTab === item.href 
+                        ? "bg-earth-100 text-earth-700 font-medium" 
+                        : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
                     )}
-                  </div>
-                );
-              })}
-            </>
-          ) : (
-            // General navigation for non-trip pages
-            <NavLink to="/my-trips">
-              <Button variant="ghost" className="w-full justify-start">
-                <Calendar className="mr-3 h-4 w-4" />
-                My Trips
-              </Button>
-            </NavLink>
-          )}
+                    onClick={() => {
+                      onTabChange(item.href);
+                      onTabChange(item.href);
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.title}
+                    </div>
+                    {item.children && (
+                      expandedItems.includes(item.title.toLowerCase()) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+
+                {item.children && (
+                  <CollapsibleContent className="ml-6 mt-1 space-y-1">
+                    {item.children.map((child) => (
+                      <Button
+                        key={child.key}
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "w-full justify-start text-xs",
+                          secondaryPanel === child.key
+                            ? "bg-earth-50 text-earth-600 font-medium"
+                            : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
+                        )}
+                        onClick={() => handleSubitemClick(child.key)}
+                      >
+                        <child.icon className="mr-2 h-3 w-3" />
+                        {child.title}
+                      </Button>
+                    ))}
+                  </CollapsibleContent>
+                )}
+              </Collapsible>
+            </div>
+          ))}
         </div>
       </ScrollArea>
 
-      {/* User Section */}
       <div className="p-4 border-t border-sand-200">
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback>
-              <User className="h-4 w-4" />
+            <AvatarFallback className="bg-earth-100 text-earth-600">
+              {user?.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sand-900 truncate">
-              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+            <p className="text-sm font-medium text-sand-700 truncate">
+              {user?.user_metadata?.full_name || user?.email}
             </p>
           </div>
           <NavLink to="/settings">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <Settings className="h-4 w-4" />
             </Button>
           </NavLink>
@@ -670,51 +630,26 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     </div>
   );
 
-  const content = getSecondaryPanelContent();
-
   return (
     <>
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
-        {/* Main Sidebar */}
-        <div className="w-280 bg-white border-r border-sand-200 flex flex-col h-screen">
-          {renderSidebarContent()}
+        <div className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-sand-200 z-30">
+          {sidebarContent}
         </div>
-
-        {/* Secondary Panel */}
-        {content && (
-          <div className="w-320 bg-sand-50 border-r border-sand-200 flex flex-col h-screen">
-            <div className="p-4 border-b border-sand-200 flex items-center justify-between">
-              <h2 className="font-semibold text-sand-900">{content.title}</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSecondaryPanel(null)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </div>
-            <ScrollArea className="flex-1 p-4">
-              {content.content}
-            </ScrollArea>
-          </div>
-        )}
+        {renderSecondaryPanel()}
       </div>
 
       {/* Mobile Sidebar */}
       <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="fixed top-4 left-4 z-50 bg-white shadow-lg hover:bg-sand-50"
-            >
+            <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50 bg-white shadow-md">
               <Menu className="h-4 w-4" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-80">
-            {renderSidebarContent()}
+          <SheetContent side="left" className="p-0 w-[280px]">
+            {sidebarContent}
           </SheetContent>
         </Sheet>
       </div>
@@ -724,7 +659,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         open={accommodationOpen}
         onOpenChange={setAccommodationOpen}
         initialData={selectedAccommodation}
-        tripId={tripId}
+        tripId={tripId || ''}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
         }}
@@ -734,7 +669,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         open={transportationOpen}
         onOpenChange={setTransportationOpen}
         initialData={selectedTransportation}
-        tripId={tripId}
+        tripId={tripId || ''}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
         }}
@@ -757,13 +692,11 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         }}
       />
 
-
-
       <RestaurantReservationDialog
         isOpen={reservationOpen}
         onOpenChange={setReservationOpen}
         editingReservation={selectedReservation}
-        tripId={tripId}
+        tripId={tripId || ''}
         title={selectedReservation ? 'Edit Reservation' : 'Add Reservation'}
         isSubmitting={false}
         onSubmit={async (data) => {
