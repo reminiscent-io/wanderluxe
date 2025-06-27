@@ -29,43 +29,29 @@ import {
   UtensilsCrossed
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import NavigationLogo from "../NavigationLogo";
-import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
-import TransportationDialog from "../trip/transportation/TransportationDialog";
-import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
-import ActivityDialogs from "../trip/day/activities/ActivityDialogs";
-import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
+import { useNavigate } from "react-router-dom";
+import { LogoFromSupabase } from "@/components/LogoFromSupabase";
 import { useTripQuery } from "@/hooks/useTripQuery";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useTimelineEvents } from "@/hooks/use-timeline-events";
+import { useTransportationEvents } from "@/hooks/use-transportation-events";
+import { AccommodationDialog } from "@/components/trip/accommodation/AccommodationDialog";
+import { TransportationDialog } from "@/components/trip/transportation/TransportationDialog";
+import { TripDateEditDialog } from "@/components/trip/TripDateEditDialog";
+import { ActivityDialogs } from "@/components/trip/day/activities/ActivityDialogs";
+import { RestaurantReservationDialog } from "@/components/trip/dining/RestaurantReservationDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Currency } from '@/utils/currencyConstants';
-import { ActivityFormData } from '@/types/trip';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { useReservationsRealtime } from "@/hooks/useReservationsRealtime";
+import { format, parseISO } from "date-fns";
+import type { ActivityFormData, Currency } from "@/types/trip";
 
 export const tripNavItems = [
-  {
-    title: "Timeline",
-    icon: Calendar,
-    href: "timeline",
-    children: [
-      { title: "Trip Dates", icon: CalendarDays, key: "dates" },
-      { title: "Accommodations", icon: Building, key: "accommodations" },
-      { title: "Transportation", icon: Car, key: "transportation" },
-      { title: "Activities", icon: MapPin, key: "activities" },
-      { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
-    ]
-  },
-  { title: "AI Assistant", icon: MessageCircle, href: "ai-assistant" },
-  { title: "Vision Board", icon: Lightbulb, href: "vision-board" },
-  { title: "Budget", icon: BarChart2, href: "budget" },
-  { title: "Booking", icon: Package, href: "booking" },
+  { id: 'timeline', label: 'Timeline', icon: Calendar },
+  { id: 'ai-assistant', label: 'AI Assistant', icon: MessageCircle },
+  { id: 'vision-board', label: 'Vision Board', icon: Lightbulb },
+  { id: 'budget', label: 'Budget', icon: BarChart2 },
+  { id: 'booking', label: 'Booking', icon: Package },
 ];
 
 interface SidebarProps {
@@ -118,93 +104,26 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   // Load sidebar state from localStorage
   useEffect(() => {
-    const savedState = localStorage.getItem('sidebarOpen');
-    if (savedState !== null) {
-      setIsOpen(JSON.parse(savedState));
+    const sidebarOpen = localStorage.getItem('sidebar-open');
+    if (sidebarOpen !== null) {
+      setIsOpen(JSON.parse(sidebarOpen));
     }
   }, []);
 
   // Save sidebar state to localStorage
   useEffect(() => {
-    localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
+    localStorage.setItem('sidebar-open', JSON.stringify(isOpen));
   }, [isOpen]);
 
-  // Trip data
-  const { trip, tripLoading } = useTripQuery(tripId);
+  const { data: trip } = useTripQuery(tripId);
+  const { data: activities = [] } = useTimelineEvents(tripId || '');
+  const { data: transportation = [] } = useTransportationEvents(tripId || '');
 
-  // Accommodations query
-  const { data: accommodations = [] } = useQuery({
-    queryKey: ['accommodations', tripId],
-    queryFn: async () => {
-      if (!tripId) return [];
-      const { data, error } = await supabase
-        .from('accommodations')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!tripId
-  });
+  // Fetch accommodations from trip data
+  const accommodations = trip?.accommodations || [];
 
-  // Transportation query
-  const { data: transportation = [] } = useQuery({
-    queryKey: ['transportation', tripId],
-    queryFn: async () => {
-      if (!tripId) return [];
-      const { data, error } = await supabase
-        .from('transportation')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('start_date', { ascending: true });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!tripId
-  });
-
-  // Activities query with day dates
-  const { data: activities = [] } = useQuery({
-    queryKey: ['activities', tripId],
-    queryFn: async () => {
-      if (!tripId) return [];
-      const { data, error } = await supabase
-        .from('day_activities')
-        .select(`
-          *,
-          trip_days!inner(date)
-        `)
-        .eq('trip_id', tripId)
-        .order('start_time', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!tripId
-  });
-
-  // Reservations query with day dates
-  const { data: reservations = [] } = useQuery({
-    queryKey: ['reservations', tripId],
-    queryFn: async () => {
-      if (!tripId) return [];
-      const { data, error } = await supabase
-        .from('reservations')
-        .select(`
-          *,
-          trip_days!inner(date)
-        `)
-        .eq('trip_id', tripId)
-        .order('reservation_time', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!tripId
-  });
+  // Fetch reservations with real-time updates for this trip
+  const allReservations = tripId ? useReservationsRealtime('', tripId).data || [] : [];
 
   const toggleExpanded = (item: string) => {
     setExpandedItems(prev => 
@@ -218,10 +137,11 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     navigate('/my-trips');
   };
 
-  const handleSubitemClick = (key: string) => {
-    setSecondaryPanel(secondaryPanel === key ? null : key);
+  const handleSubitemClick = (subitem: string) => {
+    setSecondaryPanel(subitem);
   };
 
+  // Accommodation handlers
   const handleAccommodationAdd = () => {
     setSelectedAccommodation(null);
     setAccommodationOpen(true);
@@ -232,19 +152,24 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     setAccommodationOpen(true);
   };
 
-  const handleAccommodationDelete = async (stayId: string) => {
+  const handleAccommodationDelete = async (accommodationId: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('accommodations')
         .delete()
-        .eq('stay_id', stayId);
+        .eq('stay_id', accommodationId);
+
+      if (error) throw error;
       
+      toast.success('Accommodation deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
     } catch (error) {
       console.error('Error deleting accommodation:', error);
+      toast.error('Failed to delete accommodation');
     }
   };
 
+  // Transportation handlers
   const handleTransportationAdd = () => {
     setSelectedTransportation(null);
     setTransportationOpen(true);
@@ -255,47 +180,33 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     setTransportationOpen(true);
   };
 
-  const handleTransportationDelete = async (id: string) => {
+  const handleTransportationDelete = async (transportId: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('transportation')
         .delete()
-        .eq('id', id);
+        .eq('id', transportId);
+
+      if (error) throw error;
       
-      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      toast.success('Transportation deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
     } catch (error) {
       console.error('Error deleting transportation:', error);
+      toast.error('Failed to delete transportation');
     }
   };
 
-  const handleReservationAdd = () => {
-    setSelectedReservation(null);
-    setReservationOpen(true);
-  };
-
-  const handleReservationEdit = (reservation: any) => {
-    setSelectedReservation(reservation);
-    setReservationOpen(true);
-  };
-
-  const handleReservationDelete = async (id: string) => {
-    try {
-      await supabase
-        .from('reservations')
-        .delete()
-        .eq('id', id);
-      
-      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-    } catch (error) {
-      console.error('Error deleting reservation:', error);
-    }
-  };
-
+  // Activity handlers
   const handleActivityAdd = () => {
+    if (!tripId || !trip) return;
+    
+    // Set date to first trip date if available
+    const firstDate = trip.arrival_date || '';
     setNewActivity({
       title: '',
       description: '',
-      date: '',
+      date: firstDate,
       start_time: '',
       end_time: '',
       cost: '',
@@ -304,81 +215,90 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     setActivityOpen(true);
   };
 
-  const handleActivityEdit = (activity: any) => {
-    setSelectedActivity(activity.id);
-    // Extract date from trip_days relationship
-    const activityDate = activity.trip_days?.date || '';
-    setActivityEdit({
-      title: activity.title || '',
-      description: activity.description || '',
-      date: activityDate,
-      start_time: activity.start_time || '',
-      end_time: activity.end_time || '',
-      cost: activity.cost?.toString() || '',
-      currency: (activity.currency as Currency) || 'USD'
-    });
-  };
+  const handleActivityEdit = async (activity: any) => {
+    if (!tripId) return;
 
-  const handleActivityDelete = async (id: string) => {
     try {
-      await supabase
-        .from('day_activities')
-        .delete()
-        .eq('id', id);
+      // Fetch the current date for this activity from trip_days table
+      const { data: dayData, error: dayError } = await supabase
+        .from('trip_days')
+        .select('date')
+        .eq('day_id', activity.day_id)
+        .single();
+
+      if (dayError) {
+        console.error('Error fetching day data:', dayError);
+        toast.error('Failed to load activity date');
+        return;
+      }
+
+      const activityDate = dayData?.date || '';
       
-      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      setActivityEdit({
+        title: activity.title || '',
+        description: activity.description || '',
+        date: activityDate,
+        start_time: activity.start_time || '',
+        end_time: activity.end_time || '',
+        cost: activity.cost?.toString() || '',
+        currency: activity.currency || 'USD' as Currency
+      });
+      
+      setSelectedActivity(activity);
+      setActivityOpen(true);
     } catch (error) {
-      console.error('Error deleting activity:', error);
+      console.error('Error preparing activity edit:', error);
+      toast.error('Failed to load activity data');
     }
   };
 
-  // Helper function to get day_id from date
-  const getDayIdFromDate = async (selectedDate: string): Promise<string | null> => {
-    if (!tripId || !selectedDate) return null;
-    
+  const handleActivityDelete = async (activityId: string) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
+        .from('day_activities')
+        .delete()
+        .eq('activity_id', activityId);
+
+      if (error) throw error;
+      
+      toast.success('Activity deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error('Failed to delete activity');
+    }
+  };
+
+  // Handle activity form submission for adding
+  const handleAddActivity = async (activity: ActivityFormData) => {
+    if (!tripId || !trip) return;
+
+    try {
+      // Find the day_id for the selected date
+      const { data: dayData, error: dayError } = await supabase
         .from('trip_days')
         .select('day_id')
         .eq('trip_id', tripId)
-        .eq('date', selectedDate)
+        .eq('date', activity.date)
         .single();
-      
-      if (error) {
-        console.error('Error finding day_id for date:', error);
-        return null;
-      }
-      
-      return data?.day_id || null;
-    } catch (error) {
-      console.error('Error in getDayIdFromDate:', error);
-      return null;
-    }
-  };
 
-  // Activity dialog handlers for ActivityDialogs component
-  const handleAddActivity = async (activity: ActivityFormData) => {
-    try {
-      const dayId = await getDayIdFromDate(activity.date);
-      if (!dayId) {
-        toast.error('Could not find the selected day');
+      if (dayError) {
+        console.error('Error finding day for date:', dayError);
+        toast.error('Failed to find trip day for selected date');
         return;
       }
 
       const { error } = await supabase
         .from('day_activities')
-        .insert([{
-          trip_id: tripId,
-          day_id: dayId,
+        .insert({
+          day_id: dayData.day_id,
           title: activity.title,
-          description: activity.description || null,
-          start_time: activity.start_time || null,
-          end_time: activity.end_time || null,
-          cost: activity.cost ? parseFloat(activity.cost) : null,
-          currency: activity.currency || 'USD',
-          order_index: 0,
-          created_at: new Date().toISOString()
-        }]);
+          description: activity.description,
+          start_time: activity.start_time,
+          end_time: activity.end_time,
+          cost: parseFloat(activity.cost) || 0,
+          currency: activity.currency
+        });
 
       if (error) throw error;
       
@@ -392,12 +312,29 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     }
   };
 
+  // Handle activity form submission for editing
   const handleEditActivity = async (id: string, updatedActivity: ActivityFormData) => {
+    if (!tripId || !trip) return;
+
     try {
-      const dayId = await getDayIdFromDate(updatedActivity.date);
-      if (!dayId) {
-        toast.error('Could not find the selected day');
-        return;
+      // If date changed, find the new day_id
+      let dayId = selectedActivity?.day_id;
+      
+      if (updatedActivity.date !== activityEdit.date) {
+        const { data: dayData, error: dayError } = await supabase
+          .from('trip_days')
+          .select('day_id')
+          .eq('trip_id', tripId)
+          .eq('date', updatedActivity.date)
+          .single();
+
+        if (dayError) {
+          console.error('Error finding day for new date:', dayError);
+          toast.error('Failed to find trip day for selected date');
+          return;
+        }
+        
+        dayId = dayData.day_id;
       }
 
       const { error } = await supabase
@@ -405,13 +342,13 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         .update({
           day_id: dayId,
           title: updatedActivity.title,
-          description: updatedActivity.description || null,
-          start_time: updatedActivity.start_time || null,
-          end_time: updatedActivity.end_time || null,
-          cost: updatedActivity.cost ? parseFloat(updatedActivity.cost) : null,
-          currency: updatedActivity.currency || 'USD'
+          description: updatedActivity.description,
+          start_time: updatedActivity.start_time,
+          end_time: updatedActivity.end_time,
+          cost: parseFloat(updatedActivity.cost) || 0,
+          currency: updatedActivity.currency
         })
-        .eq('id', id);
+        .eq('activity_id', id);
 
       if (error) throw error;
       
@@ -425,8 +362,53 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     }
   };
 
+  // Reservation handlers
+  const handleReservationAdd = () => {
+    setSelectedReservation(null);
+    setReservationOpen(true);
+  };
+
+  const handleReservationEdit = (reservation: any) => {
+    setSelectedReservation(reservation);
+    setReservationOpen(true);
+  };
+
+  const handleReservationDelete = async (reservationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', reservationId);
+
+      if (error) throw error;
+      
+      toast.success('Reservation deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+      toast.error('Failed to delete reservation');
+    }
+  };
+
   const handleEditDates = () => {
     setTripDatesOpen(true);
+  };
+
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    try {
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? 'pm' : 'am';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${minutes}${ampm}`;
+    } catch {
+      return time;
+    }
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return `${currency} ${amount.toLocaleString()}`;
   };
 
   const renderSecondaryPanel = () => {
@@ -451,120 +433,61 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
               </div>
               <div className="space-y-3">
                 {accommodations.length === 0 ? (
-                  <p className="text-sand-600 text-sm">No accommodations added yet.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No accommodations yet</p>
                 ) : (
-                  (() => {
-                    // Group accommodations by check-in date
-                    const grouped = accommodations.reduce((acc, accommodation) => {
-                      const date = accommodation.hotel_checkin_date || 'No Date';
-                      if (!acc[date]) {
-                        acc[date] = [];
-                      }
-                      acc[date].push(accommodation);
-                      return acc;
-                    }, {} as Record<string, typeof accommodations>);
-
-                    // Sort dates chronologically
-                    const sortedDates = Object.keys(grouped).sort((a, b) => {
-                      if (a === 'No Date') return 1;
-                      if (b === 'No Date') return -1;
-                      return new Date(a).getTime() - new Date(b).getTime();
-                    });
-
-                    return sortedDates.map((date) => (
-                      <div key={date} className="space-y-2">
-                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
-                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </h5>
-                        {grouped[date]
-                          .sort((a, b) => {
-                            if (!a.checkin_time) return 1;
-                            if (!b.checkin_time) return -1;
-                            return a.checkin_time.localeCompare(b.checkin_time);
-                          })
-                          .map((accommodation) => (
-                            <div key={accommodation.stay_id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-medium text-sm">{accommodation.hotel}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleAccommodationEdit(accommodation)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleAccommodationDelete(accommodation.stay_id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
+                  // Group accommodations by check-in date
+                  Object.entries(
+                    accommodations.reduce((groups: any, accommodation: any) => {
+                      const date = accommodation.hotel_checkin_date;
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(accommodation);
+                      return groups;
+                    }, {})
+                  )
+                  .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+                  .map(([date, accomms]: [string, any]) => (
+                    <div key={date} className="space-y-2">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {format(parseISO(date), 'EEE, MMM dd')}
+                      </div>
+                      {(accomms as any[]).map((accommodation) => (
+                        <div key={accommodation.stay_id} className="bg-sand-50 rounded-lg p-3 border">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-earth-800 truncate">
+                                {accommodation.hotel}
+                              </h4>
+                              <div className="text-xs text-gray-600 mt-1 space-y-1">
+                                <div>Check-in: {format(parseISO(accommodation.hotel_checkin_date), 'MM/dd')} {formatTime(accommodation.checkin_time)}</div>
+                                <div>Check-out: {format(parseISO(accommodation.hotel_checkout_date), 'MM/dd')} {formatTime(accommodation.checkout_time)}</div>
+                                <div className="font-medium text-earth-600">
+                                  {formatCurrency(accommodation.cost, accommodation.currency)}
                                 </div>
                               </div>
-                              <div className="text-xs text-sand-600 space-y-1">
-                                {(() => {
-                                  // Format time as 9:00am
-                                  const formatTime = (time: string) => {
-                                    if (!time) return '';
-                                    try {
-                                      const date = new Date(`2000-01-01T${time}`);
-                                      return date.toLocaleTimeString('en-US', { 
-                                        hour: 'numeric', 
-                                        minute: '2-digit',
-                                        hour12: true 
-                                      }).toLowerCase();
-                                    } catch {
-                                      return time;
-                                    }
-                                  };
-
-                                  // Format date as MM/DD
-                                  const formatDate = (dateStr: string) => {
-                                    if (!dateStr) return '';
-                                    try {
-                                      const date = new Date(dateStr);
-                                      return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
-                                    } catch {
-                                      return dateStr;
-                                    }
-                                  };
-
-                                  const checkinDate = formatDate(accommodation.hotel_checkin_date || '');
-                                  const checkoutDate = formatDate(accommodation.hotel_checkout_date || '');
-                                  const checkinTime = formatTime(accommodation.checkin_time || '');
-                                  const checkoutTime = formatTime(accommodation.checkout_time || '');
-
-                                  const result = [];
-                                  if (checkinDate || checkinTime) {
-                                    result.push(`Check-in: ${checkinDate}${checkinTime ? ` ${checkinTime}` : ''}`);
-                                  }
-                                  if (checkoutDate || checkoutTime) {
-                                    result.push(`Check-out: ${checkoutDate}${checkoutTime ? ` ${checkoutTime}` : ''}`);
-                                  }
-                                  
-                                  return result.map((line, index) => (
-                                    <div key={index}>{line}</div>
-                                  ));
-                                })()}
-                              </div>
-                              {accommodation.cost && (
-                                <p className="text-xs text-sand-600">
-                                  {accommodation.currency || 'USD'} {accommodation.cost.toLocaleString()}
-                                </p>
-                              )}
                             </div>
-                          ))}
-                      </div>
-                    ));
-                  })()
+                            <div className="flex gap-1 ml-2">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleAccommodationEdit(accommodation)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit size={12} />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleAccommodationDelete(accommodation.stay_id)}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 size={12} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))
                 )}
               </div>
             </div>
@@ -589,121 +512,75 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
               </div>
               <div className="space-y-3">
                 {transportation.length === 0 ? (
-                  <p className="text-sand-600 text-sm">No transportation added yet.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No transportation yet</p>
                 ) : (
-                  (() => {
-                    // Group transportation by start_date
-                    const grouped = transportation.reduce((acc, transport) => {
-                      const date = transport.start_date || 'No Date';
-                      if (!acc[date]) acc[date] = [];
-                      acc[date].push(transport);
-                      return acc;
-                    }, {} as Record<string, typeof transportation>);
-
-                    // Sort dates chronologically
-                    const sortedDates = Object.keys(grouped).sort((a, b) => {
-                      if (a === 'No Date') return 1;
-                      if (b === 'No Date') return -1;
-                      return new Date(a).getTime() - new Date(b).getTime();
-                    });
-
-                    return sortedDates.map(date => (
-                      <div key={date} className="space-y-2">
-                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
-                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </h5>
-                        {grouped[date]
-                          .sort((a, b) => {
-                            if (!a.start_time) return 1;
-                            if (!b.start_time) return -1;
-                            return a.start_time.localeCompare(b.start_time);
-                          })
-                          .map((transport) => (
-                            <div key={transport.id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-medium text-sm">{transport.departure_location} - {transport.arrival_location}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleTransportationEdit(transport)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleTransportationDelete(transport.id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
+                  // Group transportation by start date
+                  Object.entries(
+                    transportation.reduce((groups: any, transport: any) => {
+                      const date = transport.start_date;
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(transport);
+                      return groups;
+                    }, {})
+                  )
+                  .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+                  .map(([date, transports]: [string, any]) => (
+                    <div key={date} className="space-y-2">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {format(parseISO(date), 'EEE, MMM dd')}
+                      </div>
+                      {(transports as any[])
+                        .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+                        .map((transport) => (
+                        <div key={transport.id} className="bg-sand-50 rounded-lg p-3 border">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-earth-800 truncate">
+                                {transport.departure_location} - {transport.arrival_location}
+                              </h4>
+                              <div className="text-xs text-gray-600 mt-1 space-y-1">
+                                <div className="capitalize">{transport.type}</div>
+                                <div>
+                                  {formatTime(transport.start_time)} - {formatTime(transport.end_time)}
+                                  {transport.end_date !== transport.start_date && (
+                                    <span className="ml-1">({format(parseISO(transport.end_date), 'M/dd')})</span>
+                                  )}
+                                </div>
+                                <div className="font-medium text-earth-600">
+                                  {formatCurrency(transport.cost, transport.currency)}
                                 </div>
                               </div>
-                              
-                              <p className="text-xs text-sand-600">
-                                {(() => {
-                                  // Format time as 9:00pm - 10:00pm
-                                  const formatTime = (time: string) => {
-                                    if (!time) return '';
-                                    try {
-                                      const date = new Date(`2000-01-01T${time}`);
-                                      return date.toLocaleTimeString('en-US', { 
-                                        hour: 'numeric', 
-                                        minute: '2-digit',
-                                        hour12: true 
-                                      }).toLowerCase();
-                                    } catch {
-                                      return time;
-                                    }
-                                  };
-
-                                  const startTime = formatTime(transport.start_time || '');
-                                  const endTime = formatTime(transport.end_time || '');
-                                  
-                                  // Check if end date is different from start date
-                                  const isDifferentDate = transport.end_date && transport.start_date && 
-                                    transport.end_date !== transport.start_date;
-                                  
-                                  let timeDisplay = '';
-                                  if (startTime && endTime) {
-                                    timeDisplay = `${startTime} - ${endTime}`;
-                                    
-                                    if (isDifferentDate) {
-                                      // Format end date as 12/30
-                                      const endDate = new Date(transport.end_date);
-                                      const formattedEndDate = `${endDate.getMonth() + 1}/${endDate.getDate()}`;
-                                      timeDisplay += ` (${formattedEndDate})`;
-                                    }
-                                  } else if (startTime) {
-                                    timeDisplay = startTime;
-                                  }
-                                  
-                                  return timeDisplay;
-                                })()}
-                              </p>
-                              {transport.cost && (
-                                <p className="text-xs text-sand-600">
-                                  {transport.currency || 'USD'} {transport.cost.toLocaleString()}
-                                </p>
-                              )}
                             </div>
-                          ))}
-                      </div>
-                    ));
-                  })()
+                            <div className="flex gap-1 ml-2">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleTransportationEdit(transport)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit size={12} />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleTransportationDelete(transport.id)}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 size={12} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))
                 )}
               </div>
             </div>
           </div>
         );
 
-      case 'dates':
+      case 'trip-dates':
         return (
           <div className="fixed left-[280px] top-16 h-[calc(100vh-4rem)] w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
             <div className="p-4">
@@ -721,19 +598,26 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
               </div>
               {trip && (
                 <div className="space-y-3">
-                  <div className="p-3 bg-sand-50 rounded-lg">
-                    <p className="text-sm font-medium text-earth-600">Arrival Date</p>
-                    <p className="text-sm text-sand-700">{trip.arrival_date}</p>
+                  <div className="bg-sand-50 rounded-lg p-3 border">
+                    <div className="text-sm font-medium text-earth-800">Arrival</div>
+                    <div className="text-sm text-gray-600">
+                      {trip.arrival_date ? format(parseISO(trip.arrival_date), 'EEEE, MMMM dd, yyyy') : 'Not set'}
+                    </div>
                   </div>
-                  <div className="p-3 bg-sand-50 rounded-lg">
-                    <p className="text-sm font-medium text-earth-600">Departure Date</p>
-                    <p className="text-sm text-sand-700">{trip.departure_date}</p>
+                  <div className="bg-sand-50 rounded-lg p-3 border">
+                    <div className="text-sm font-medium text-earth-800">Departure</div>
+                    <div className="text-sm text-gray-600">
+                      {trip.departure_date ? format(parseISO(trip.departure_date), 'EEEE, MMMM dd, yyyy') : 'Not set'}
+                    </div>
                   </div>
-                  <div className="p-3 bg-sand-50 rounded-lg">
-                    <p className="text-sm font-medium text-earth-600">Duration</p>
-                    <p className="text-sm text-sand-700">
-                      {Math.ceil((new Date(trip.departure_date).getTime() - new Date(trip.arrival_date).getTime()) / (1000 * 60 * 60 * 24))} nights
-                    </p>
+                  <div className="bg-sand-50 rounded-lg p-3 border">
+                    <div className="text-sm font-medium text-earth-800">Duration</div>
+                    <div className="text-sm text-gray-600">
+                      {trip.arrival_date && trip.departure_date ? 
+                        `${Math.ceil((new Date(trip.departure_date).getTime() - new Date(trip.arrival_date).getTime()) / (1000 * 60 * 60 * 24))} days` : 
+                        'Not calculated'
+                      }
+                    </div>
                   </div>
                 </div>
               )}
@@ -759,103 +643,64 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
               </div>
               <div className="space-y-3">
                 {activities.length === 0 ? (
-                  <p className="text-sand-600 text-sm">No activities added yet.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No activities yet</p>
                 ) : (
-                  (() => {
-                    // Group activities by date and sort chronologically
-                    const grouped = activities.reduce((acc, activity) => {
-                      const date = (activity as any).trip_days?.date || 'No Date';
-                      if (!acc[date]) acc[date] = [];
-                      acc[date].push(activity);
-                      return acc;
-                    }, {} as Record<string, any[]>);
-
-                    // Sort dates and activities within each date
-                    const sortedDates = Object.keys(grouped).sort((a, b) => {
-                      if (a === 'No Date') return 1;
-                      if (b === 'No Date') return -1;
-                      return new Date(a).getTime() - new Date(b).getTime();
-                    });
-
-                    return sortedDates.map(date => (
-                      <div key={date} className="space-y-2">
-                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
-                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </h5>
-                        {grouped[date]
-                          .sort((a, b) => {
-                            if (!a.start_time) return 1;
-                            if (!b.start_time) return -1;
-                            return a.start_time.localeCompare(b.start_time);
-                          })
-                          .map((activity) => (
-                            <div key={activity.id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-medium text-sm">{activity.title}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleActivityEdit(activity)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleActivityDelete(activity.id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
-                                </div>
-                              </div>
-                              <p className="text-xs text-sand-600">
-                                {(() => {
-                                  // Format time as 9:00am - 10:00pm
-                                  const formatTime = (time: string) => {
-                                    if (!time) return '';
-                                    try {
-                                      const date = new Date(`2000-01-01T${time}`);
-                                      return date.toLocaleTimeString('en-US', { 
-                                        hour: 'numeric', 
-                                        minute: '2-digit',
-                                        hour12: true 
-                                      }).toLowerCase();
-                                    } catch {
-                                      return time;
-                                    }
-                                  };
-
-                                  const startTime = formatTime(activity.start_time || '');
-                                  const endTime = formatTime(activity.end_time || '');
-                                  
-                                  if (startTime && endTime) {
-                                    return `${startTime} - ${endTime}`;
-                                  } else if (startTime) {
-                                    return startTime;
-                                  }
-                                  return '';
-                                })()}
-                              </p>
-                              {activity.description && (
-                                <p className="text-xs text-sand-600">{activity.description}</p>
-                              )}
-                              {activity.cost && (
-                                <p className="text-xs text-sand-600">
-                                  {activity.currency || 'USD'} {activity.cost.toLocaleString()}
-                                </p>
-                              )}
-                            </div>
-                          ))}
+                  // Group activities by date
+                  Object.entries(
+                    activities.reduce((groups: any, activity: any) => {
+                      const date = activity.date;
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(activity);
+                      return groups;
+                    }, {})
+                  )
+                  .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+                  .map(([date, dayActivities]: [string, any]) => (
+                    <div key={date} className="space-y-2">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {format(parseISO(date), 'EEE, MMM dd')}
                       </div>
-                    ));
-                  })()
+                      {(dayActivities as any[])
+                        .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+                        .map((activity) => (
+                        <div key={activity.activity_id} className="bg-sand-50 rounded-lg p-3 border">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-earth-800 truncate">
+                                {activity.title}
+                              </h4>
+                              <div className="text-xs text-gray-600 mt-1 space-y-1">
+                                <div>{formatTime(activity.start_time)} - {formatTime(activity.end_time)}</div>
+                                {activity.cost > 0 && (
+                                  <div className="font-medium text-earth-600">
+                                    {formatCurrency(activity.cost, activity.currency)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-1 ml-2">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleActivityEdit(activity)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit size={12} />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleActivityDelete(activity.activity_id)}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 size={12} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))
                 )}
               </div>
             </div>
@@ -879,96 +724,70 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 </Button>
               </div>
               <div className="space-y-3">
-                {reservations.length === 0 ? (
-                  <p className="text-sand-600 text-sm">No reservations added yet.</p>
+                {allReservations.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No reservations yet</p>
                 ) : (
-                  (() => {
-                    // Group reservations by date from trip_days relationship
-                    const grouped = reservations.reduce((acc, reservation) => {
-                      const date = reservation.trip_days?.date || 'No Date';
-                      if (!acc[date]) acc[date] = [];
-                      acc[date].push(reservation);
-                      return acc;
-                    }, {} as Record<string, typeof reservations>);
-
-                    // Sort dates chronologically
-                    const sortedDates = Object.keys(grouped).sort((a, b) => {
-                      if (a === 'No Date') return 1;
-                      if (b === 'No Date') return -1;
-                      return new Date(a).getTime() - new Date(b).getTime();
-                    });
-
-                    return sortedDates.map(date => (
-                      <div key={date} className="space-y-2">
-                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
-                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </h5>
-                        {grouped[date]
-                          .sort((a, b) => {
-                            if (!a.reservation_time) return 1;
-                            if (!b.reservation_time) return -1;
-                            return a.reservation_time.localeCompare(b.reservation_time);
-                          })
-                          .map((reservation) => (
-                            <div key={reservation.id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleReservationEdit(reservation)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleReservationDelete(reservation.id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
-                                </div>
-                              </div>
-                              <p className="text-xs text-sand-600">
-                                {(() => {
-                                  // Format time as 9:00am - 10:00pm
-                                  const formatTime = (time: string) => {
-                                    if (!time) return '';
-                                    try {
-                                      const date = new Date(`2000-01-01T${time}`);
-                                      return date.toLocaleTimeString('en-US', { 
-                                        hour: 'numeric', 
-                                        minute: '2-digit',
-                                        hour12: true 
-                                      }).toLowerCase();
-                                    } catch {
-                                      return time;
-                                    }
-                                  };
-
-                                  return formatTime(reservation.reservation_time || '');
-                                })()}
-                              </p>
-                              <p className="text-xs text-sand-600">
-                                {reservation.number_of_people && `${reservation.number_of_people} people`}
-                              </p>
-                              {reservation.cost && (
-                                <p className="text-xs text-sand-600">
-                                  {reservation.currency || 'USD'} {reservation.cost.toLocaleString()}
-                                </p>
-                              )}
-                            </div>
-                          ))}
+                  // Group reservations by date
+                  Object.entries(
+                    allReservations.reduce((groups: any, reservation: any) => {
+                      const date = reservation.date || 'No Date';
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(reservation);
+                      return groups;
+                    }, {})
+                  )
+                  .sort(([a], [b]) => {
+                    if (a === 'No Date') return 1;
+                    if (b === 'No Date') return -1;
+                    return new Date(a).getTime() - new Date(b).getTime();
+                  })
+                  .map(([date, dateReservations]: [string, any]) => (
+                    <div key={date} className="space-y-2">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {date === 'No Date' ? 'No Date' : format(parseISO(date), 'EEE, MMM dd')}
                       </div>
-                    ));
-                  })()
+                      {(dateReservations as any[])
+                        .sort((a, b) => (a.reservation_time || '').localeCompare(b.reservation_time || ''))
+                        .map((reservation) => (
+                        <div key={reservation.id} className="bg-sand-50 rounded-lg p-3 border">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-earth-800 truncate">
+                                {reservation.restaurant_name}
+                              </h4>
+                              <div className="text-xs text-gray-600 mt-1 space-y-1">
+                                <div>{formatTime(reservation.reservation_time)}</div>
+                                <div>{reservation.number_of_people} people</div>
+                                {reservation.cost > 0 && (
+                                  <div className="font-medium text-earth-600">
+                                    {formatCurrency(reservation.cost, reservation.currency)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-1 ml-2">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleReservationEdit(reservation)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit size={12} />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleReservationDelete(reservation.id)}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 size={12} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))
                 )}
               </div>
             </div>
@@ -982,102 +801,155 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-sand-200 pt-6">
-        <NavigationLogo />
+      {/* Logo Section - Only show in trip context */}
+      {tripId && (
+        <div className="p-4 pt-16 border-b border-sand-200">
+          <LogoFromSupabase 
+            logoName="Sand Simple.png" 
+            className="h-8 w-auto"
+            fallbackText="WanderLuxe"
+            fallbackClassName="text-xl font-bold text-earth-600"
+          />
+        </div>
+      )}
+      
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-4 space-y-2">
+            {/* Back to Trips */}
+            {tripId && (
+              <Button
+                variant="ghost"
+                onClick={handleBackToTrips}
+                className="w-full justify-start mb-4 text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                Back to Trips
+              </Button>
+            )}
+
+            {/* Trip Navigation */}
+            {tripId ? (
+              <>
+                {tripNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  
+                  return (
+                    <div key={item.id}>
+                      <Button
+                        variant={isActive ? "secondary" : "ghost"}
+                        onClick={() => {
+                          if (item.id === 'timeline') {
+                            // Handle timeline expansion
+                            toggleExpanded('timeline');
+                          } else {
+                            onTabChange(item.id);
+                          }
+                        }}
+                        className={cn(
+                          "w-full justify-start",
+                          isActive ? "bg-sand-200 text-earth-700" : "text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+                        )}
+                      >
+                        <Icon size={16} className="mr-3" />
+                        {item.label}
+                        {item.id === 'timeline' && (
+                          <ChevronDown 
+                            size={16} 
+                            className={cn(
+                              "ml-auto transition-transform",
+                              expandedItems.includes('timeline') ? "rotate-180" : ""
+                            )}
+                          />
+                        )}
+                      </Button>
+                      
+                      {/* Timeline Subitems */}
+                      {item.id === 'timeline' && (
+                        <Collapsible open={expandedItems.includes('timeline')}>
+                          <CollapsibleContent className="ml-4 mt-2 space-y-1">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSubitemClick('trip-dates')}
+                              className="w-full justify-start text-sm text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+                            >
+                              <CalendarDays size={14} className="mr-2" />
+                              Trip Dates
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSubitemClick('accommodations')}
+                              className="w-full justify-start text-sm text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+                            >
+                              <Building size={14} className="mr-2" />
+                              Accommodations
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSubitemClick('transportation')}
+                              className="w-full justify-start text-sm text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+                            >
+                              <Car size={14} className="mr-2" />
+                              Transportation
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSubitemClick('activities')}
+                              className="w-full justify-start text-sm text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+                            >
+                              <MapPin size={14} className="mr-2" />
+                              Activities
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSubitemClick('reservations')}
+                              className="w-full justify-start text-sm text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+                            >
+                              <UtensilsCrossed size={14} className="mr-2" />
+                              Reservations
+                            </Button>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              /* Main Navigation for non-trip pages */
+              <div className="space-y-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/my-trips')}
+                  className="w-full justify-start text-earth-600 hover:text-earth-700 hover:bg-sand-100"
+                >
+                  <Calendar size={16} className="mr-3" />
+                  My Trips
+                </Button>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
       </div>
 
-      <ScrollArea className="flex-1 px-4">
-        <div className="space-y-2 py-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-sand-600 hover:text-earth-600 hover:bg-sand-50"
-            onClick={handleBackToTrips}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Trips
-          </Button>
-
-          <Separator className="my-4" />
-
-          {tripNavItems.map((item) => (
-            <div key={item.title}>
-              <Collapsible 
-                open={expandedItems.includes(item.title.toLowerCase())}
-                onOpenChange={() => toggleExpanded(item.title.toLowerCase())}
-              >
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-between text-left",
-                      activeTab === item.href 
-                        ? "bg-earth-100 text-earth-700 font-medium" 
-                        : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
-                    )}
-                    onClick={() => {
-                      onTabChange(item.href);
-                      onTabChange(item.href);
-                    }}
-                  >
-                    <div className="flex items-center">
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {item.title}
-                    </div>
-                    {item.children && (
-                      expandedItems.includes(item.title.toLowerCase()) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-
-                {item.children && (
-                  <CollapsibleContent className="ml-6 mt-1 space-y-1">
-                    {item.children.map((child) => (
-                      <Button
-                        key={child.key}
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "w-full justify-start text-xs",
-                          secondaryPanel === child.key
-                            ? "bg-earth-50 text-earth-600 font-medium"
-                            : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
-                        )}
-                        onClick={() => handleSubitemClick(child.key)}
-                      >
-                        <child.icon className="mr-2 h-3 w-3" />
-                        {child.title}
-                      </Button>
-                    ))}
-                  </CollapsibleContent>
-                )}
-              </Collapsible>
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
-
-      <div className="p-4 border-t border-sand-200">
+      {/* User Profile Section */}
+      <div className="border-t border-sand-200 p-4">
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback className="bg-earth-100 text-earth-600">
+            <AvatarFallback className="bg-earth-500 text-white text-sm">
               {user?.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sand-700 truncate">
+            <p className="text-sm font-medium text-earth-700 truncate">
               {user?.user_metadata?.full_name || user?.email}
             </p>
           </div>
-          <NavLink to="/settings">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </NavLink>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>
+            <Settings size={16} />
+          </Button>
         </div>
       </div>
     </div>
@@ -1085,98 +957,82 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   return (
     <>
+      {renderSecondaryPanel()}
+      
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex">
-        <div className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-sand-200 z-30">
-          {sidebarContent}
-        </div>
-        {renderSecondaryPanel()}
+      <div className="hidden md:flex fixed left-0 top-16 h-[calc(100vh-4rem)] w-[280px] bg-white border-r border-sand-200 z-30">
+        {sidebarContent}
       </div>
 
-      {/* Mobile Sidebar */}
-      <div className="md:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50 bg-white shadow-md">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-[280px]">
-            {sidebarContent}
-          </SheetContent>
-        </Sheet>
-      </div>
+      {/* Mobile Sheet */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="md:hidden">
+            <Menu size={16} />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[280px] p-0">
+          {sidebarContent}
+        </SheetContent>
+      </Sheet>
 
       {/* Dialogs */}
       <AccommodationDialog
         open={accommodationOpen}
         onOpenChange={setAccommodationOpen}
-        initialData={selectedAccommodation}
-        tripId={tripId || ''}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-          queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
-          setSelectedAccommodation(null);
-        }}
+        tripId={tripId}
+        accommodation={selectedAccommodation}
+        tripArrivalDate={trip?.arrival_date}
+        tripDepartureDate={trip?.departure_date}
       />
 
       <TransportationDialog
         open={transportationOpen}
         onOpenChange={setTransportationOpen}
-        initialData={selectedTransportation}
-        tripId={tripId || ''}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-        }}
+        tripId={tripId}
+        transportation={selectedTransportation}
+        tripArrivalDate={trip?.arrival_date}
+        tripDepartureDate={trip?.departure_date}
       />
 
       <TripDateEditDialog
-        isOpen={tripDatesOpen}
+        open={tripDatesOpen}
         onOpenChange={setTripDatesOpen}
-        arrivalDate={trip?.arrival_date || ''}
-        departureDate={trip?.departure_date || ''}
-        onArrivalChange={(date) => {
-          // Handle arrival date change
-        }}
-        onDepartureChange={(date) => {
-          // Handle departure date change
-        }}
-        onSave={() => {
-          setTripDatesOpen(false);
-          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-        }}
-      />
-
-      <RestaurantReservationDialog
-        isOpen={reservationOpen}
-        onOpenChange={setReservationOpen}
-        editingReservation={selectedReservation}
-        tripId={tripId || ''}
-        title={selectedReservation ? 'Edit Reservation' : 'Add Reservation'}
-        isSubmitting={false}
-        tripArrivalDate={trip?.arrival_date}
-        tripDepartureDate={trip?.departure_date}
-        onSubmit={async (data) => {
-          // Handle reservation submission
-          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-          setReservationOpen(false);
-        }}
+        tripId={tripId}
+        currentArrivalDate={trip?.arrival_date || ''}
+        currentDepartureDate={trip?.departure_date || ''}
       />
 
       <ActivityDialogs
-        isAddingActivity={activityOpen}
-        setIsAddingActivity={setActivityOpen}
-        editingActivity={selectedActivity}
-        setEditingActivity={setSelectedActivity}
+        isAddOpen={activityOpen && !selectedActivity}
+        isEditOpen={activityOpen && !!selectedActivity}
+        onAddOpenChange={(open) => {
+          setActivityOpen(open);
+          if (!open) setSelectedActivity(null);
+        }}
+        onEditOpenChange={(open) => {
+          setActivityOpen(open);
+          if (!open) setSelectedActivity(null);
+        }}
         newActivity={newActivity}
         setNewActivity={setNewActivity}
         activityEdit={activityEdit}
         setActivityEdit={setActivityEdit}
         onAddActivity={handleAddActivity}
         onEditActivity={handleEditActivity}
-        onDeleteActivity={handleActivityDelete}
-        eventId={tripId || ''}
-        tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
+        editingActivityId={selectedActivity?.activity_id}
+        tripArrivalDate={trip?.arrival_date}
+        tripDepartureDate={trip?.departure_date}
+      />
+
+      <RestaurantReservationDialog
+        open={reservationOpen}
+        onOpenChange={setReservationOpen}
+        tripId={tripId}
+        dayId={null}
+        reservation={selectedReservation}
+        tripArrivalDate={trip?.arrival_date}
+        tripDepartureDate={trip?.departure_date}
       />
     </>
   );
