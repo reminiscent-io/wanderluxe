@@ -308,7 +308,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     setActivityEdit({
       title: activity.title || '',
       description: activity.description || '',
-      date: activity.date || '',
+      date: activity.trip_days?.date || '',
       start_time: activity.start_time || '',
       end_time: activity.end_time || '',
       cost: activity.cost?.toString() || '',
@@ -332,23 +332,98 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   // Activity dialog handlers for ActivityDialogs component
   const handleAddActivity = async (activity: ActivityFormData) => {
     try {
-      // You'll need to implement the actual add logic here
-      // This should match what's in the main timeline component
+      if (!activity.title.trim()) {
+        throw new Error('Activity title is required');
+      }
+
+      // Find the day_id based on the selected date
+      const { data: tripDay, error: tripDayError } = await supabase
+        .from('trip_days')
+        .select('id')
+        .eq('trip_id', tripId)
+        .eq('date', activity.date)
+        .single();
+
+      if (tripDayError || !tripDay) {
+        throw new Error('Could not find trip day for selected date');
+      }
+
+      const costAsNumber = activity.cost && activity.cost.trim() !== '' 
+        ? parseFloat(activity.cost) 
+        : null;
+
+      const newActivity = {
+        day_id: tripDay.id,
+        trip_id: tripId,
+        title: activity.title.trim(),
+        description: activity.description?.trim() || null,
+        start_time: activity.start_time || null,
+        end_time: activity.end_time || null,
+        cost: costAsNumber,
+        currency: activity.currency || 'USD',
+        order_index: 0, // Will be adjusted by the database
+      };
+
+      const { error } = await supabase
+        .from('day_activities')
+        .insert(newActivity);
+
+      if (error) throw error;
+
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setActivityOpen(false);
     } catch (error) {
       console.error('Error adding activity:', error);
+      throw error;
     }
   };
 
   const handleEditActivity = async (id: string, updatedActivity: ActivityFormData) => {
     try {
-      // You'll need to implement the actual edit logic here
-      // This should match what's in the main timeline component
+      if (!updatedActivity.title.trim()) {
+        throw new Error('Activity title is required');
+      }
+
+      // Find the day_id based on the selected date
+      const { data: tripDay, error: tripDayError } = await supabase
+        .from('trip_days')
+        .select('id')
+        .eq('trip_id', tripId)
+        .eq('date', updatedActivity.date)
+        .single();
+
+      if (tripDayError || !tripDay) {
+        throw new Error('Could not find trip day for selected date');
+      }
+
+      const costAsNumber = updatedActivity.cost && updatedActivity.cost.trim() !== '' 
+        ? parseFloat(updatedActivity.cost) 
+        : null;
+
+      const updates = {
+        day_id: tripDay.id,
+        title: updatedActivity.title.trim(),
+        description: updatedActivity.description?.trim() || null,
+        start_time: updatedActivity.start_time || null,
+        end_time: updatedActivity.end_time || null,
+        cost: costAsNumber,
+        currency: updatedActivity.currency || 'USD',
+      };
+
+      const { error } = await supabase
+        .from('day_activities')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setSelectedActivity(null);
     } catch (error) {
       console.error('Error editing activity:', error);
+      throw error;
     }
   };
 

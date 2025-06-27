@@ -375,6 +375,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Sidebar now offers comprehensive trip management with no missing functionality
   - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
   - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
+- June 27, 2025. Fixed activity dialog day_id and date relationship handling:
+  - Updated handleActivityEdit to correctly fetch date from trip_days table via day_id relationship (activity.trip_days?.date)
+  - Enhanced handleAddActivity to find correct day_id based on selected date before inserting new activities
+  - Updated handleEditActivity to lookup proper day_id when changing activity dates
+  - Maintained proper database architecture without adding redundant date fields to day_activities table
+  - Activity forms now properly link dates to day_id through trip_days table relationships
+  - All activity CRUD operations correctly handle date-to-day_id mapping for consistent data integrity
 
 ## User Preferences
 
