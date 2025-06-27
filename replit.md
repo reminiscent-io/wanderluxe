@@ -300,6 +300,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Streamlined location display format to "From → To" for cleaner presentation
   - Applied proper visual hierarchy with indented transportation items under date headers
   - Transportation sidebar now provides organized chronological view matching other sidebar sections
+- June 27, 2025. Enhanced transportation display formatting with improved time and location presentation:
+  - Updated header to show "From - To" location format instead of transport mode for better clarity
+  - Moved transport type (flight, train, etc.) to secondary line below header
+  - Implemented 12-hour time formatting with lowercase am/pm (e.g., "9:00am - 11:30pm")
+  - Added cross-date support showing end date as "(12/30)" when different from start date
+  - Enhanced time parsing with robust fallback handling for invalid time formats
+  - Transportation entries now prioritize destination information with clear time presentation
 - June 27, 2025. Enhanced sidebar to use real trip data instead of mock data:
   - Integrated useTripQuery hook to fetch actual accommodations from database
   - Fixed accommodation edit functionality to load real hotel data when clicking edit buttons
