@@ -137,6 +137,23 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     }
   };
 
+  const handleDayDelete = async (dayId: string) => {
+    try {
+      const { error } = await supabase
+        .from('trip_days')
+        .delete()
+        .eq('day_id', dayId);
+      
+      if (error) throw error;
+      
+      toast.success('Day deleted successfully');
+      refreshDays();
+    } catch (error) {
+      console.error('Error deleting day:', error);
+      toast.error('Failed to delete day');
+    }
+  };
+
   const processedHotelStays =
     events?.filter((event) => event.hotel && event.stay_id).map((event) => ({
       stay_id: event.stay_id,
@@ -222,8 +239,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         days={days}
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
         hotelStays={processedHotelStays}
-        transportations={processedTransportations}
-        onTimelineAction={trackTimelineAction} // added prop for timeline action tracking
+        onDayDelete={handleDayDelete}
+        tripArrivalDate={localTripDates.arrival_date || undefined}
+        tripDepartureDate={localTripDates.departure_date || undefined}
       />
     </div>
   );
