@@ -13,6 +13,7 @@ import { Loader } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 // Converts blank / NaN values coming from <input type="number"> into undefined so they
 // pass Zod's optional() validation.
@@ -138,10 +139,37 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       return;
     }
 
+    // Lookup correct day_id based on selected reservation_date
+    let finalDayId = (defaultValues as any)?.day_id;
+    
+    if (data.reservation_date && effectiveTripId) {
+      console.log('RestaurantReservationForm - Looking up day_id for date:', data.reservation_date);
+      
+      const { data: tripDay, error: tripDayError } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', effectiveTripId)
+        .eq('date', data.reservation_date)
+        .single();
+
+      if (tripDayError || !tripDay) {
+        console.error('RestaurantReservationForm - Failed to find day_id for date:', data.reservation_date, tripDayError);
+        toast({
+          variant: 'destructive',
+          title: 'Invalid date',
+          description: 'Could not find the selected date in this trip.',
+        });
+        return;
+      }
+      
+      console.log('RestaurantReservationForm - Found day_id:', tripDay.day_id, 'for date:', data.reservation_date);
+      finalDayId = tripDay.day_id;
+    }
+
     const processedData = {
       ...data,
       trip_id: effectiveTripId,
-      day_id: (defaultValues as any)?.day_id,
+      day_id: finalDayId,
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
     

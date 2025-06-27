@@ -72,12 +72,16 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
         // If reservation_date is provided, find the correct day_id
         let targetDayId = dayId;
         if (raw.reservation_date) {
+          console.log('DiningList - Looking up day_id for date:', raw.reservation_date, 'in trip:', tripId);
+          
           const { data: tripDay, error: tripDayError } = await supabase
             .from('trip_days')
             .select('day_id')
             .eq('trip_id', tripId)
             .eq('date', raw.reservation_date)
             .single();
+
+          console.log('DiningList - Day lookup result:', { tripDay, tripDayError });
 
           if (tripDayError || !tripDay) {
             console.error('Failed to find trip day for date:', raw.reservation_date, tripDayError);
@@ -86,6 +90,7 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
             return;
           }
           
+          console.log('DiningList - Changing day_id from', dayId, 'to', tripDay.day_id);
           targetDayId = tripDay.day_id;
         }
 
