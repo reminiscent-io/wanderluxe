@@ -427,6 +427,11 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced query invalidation with specific cache keys for immediate UI updates
   - All sidebar delete operations now provide consistent success/error toast notifications
   - Delete functionality works identically across sidebar and timeline day card interfaces
+- June 27, 2025. Fixed z-index layering issues in transportation dialog dropdowns:
+  - Resolved Transportation Type and Currency dropdown menus appearing behind dialog overlay
+  - Updated SelectContent z-index from z-50 to z-[300] for proper layering above sidebar dialogs
+  - Transportation form dropdowns now function correctly when adding/editing from sidebar
+  - Consistent dropdown behavior across all transportation dialog interactions
 
 ## User Preferences
 
