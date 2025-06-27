@@ -697,9 +697,9 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                     timeDisplay = `${startTime} - ${endTime}`;
                                     
                                     if (isDifferentDate) {
-                                      // Format end date as 12/30
-                                      const endDate = new Date(transport.end_date);
-                                      const formattedEndDate = `${endDate.getMonth() + 1}/${endDate.getDate()}`;
+                                      // Format end date as 12/30 without timezone issues
+                                      const [year, month, day] = transport.end_date.split('-');
+                                      const formattedEndDate = `${parseInt(month)}/${parseInt(day)}`;
                                       timeDisplay += ` (${formattedEndDate})`;
                                     }
                                   } else if (startTime) {
@@ -906,20 +906,12 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                     }, {} as Record<string, typeof reservations>);
 
                     // Sort dates chronologically
-                    const sortedDates = Object.keys(grouped).sort((a, b) => {
-                      if (a === 'No Date') return 1;
-                      if (b === 'No Date') return -1;
-                      return new Date(a).getTime() - new Date(b).getTime();
-                    });
+                    const sortedDates = Object.keys(grouped).sort(compareDatesSafe);
 
                     return sortedDates.map(date => (
                       <div key={date} className="space-y-2">
                         <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
-                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
+                          {formatDateSafe(date)}
                         </h5>
                         {grouped[date]
                           .sort((a, b) => {
