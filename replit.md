@@ -327,6 +327,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - All sections now provide complete CRUD operations with uniform edit/delete buttons on items
   - Maintained formatting consistency across all secondary panels with earth-tone styling
   - Sidebar now offers comprehensive trip management with no missing functionality
+  - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
 
 ## User Preferences
 
