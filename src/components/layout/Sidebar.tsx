@@ -286,7 +286,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 transition-transform z-[201]",
+          "hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 transition-transform z-[10]",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >

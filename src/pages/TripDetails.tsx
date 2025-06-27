@@ -74,7 +74,7 @@ const TripDetails = () => {
         tripId={tripId}
         displayData={displayData}
       />
-      <main className={`flex-1 pl-0 md:pl-[280px] transition-all duration-300 ${secondarySidebarOpen ? "pr-[320px]" : "pr-0"}`}>
+      <main className={`flex-1 pl-0 md:pl-[280px] transition-all duration-300 ${secondarySidebarOpen ? "md:pl-[600px]" : "md:pl-[280px]"}`}>
         <div className="min-h-screen flex flex-col">
           <Navigation mobileMenuTrigger={sidebar} />
 
