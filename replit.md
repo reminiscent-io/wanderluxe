@@ -328,7 +328,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Maintained formatting consistency across all secondary panels with earth-tone styling
   - Sidebar now offers comprehensive trip management with no missing functionality
   - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
-  - Fixed reservation dialog width overflow by increasing maximum width from max-w-lg to max-w-2xl for proper form field display
+  - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
 
 ## User Preferences
 

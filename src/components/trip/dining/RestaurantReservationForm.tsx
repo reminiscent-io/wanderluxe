@@ -127,7 +127,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // ──────────────────────────────────────────────────────────────────────────────
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitForm} className="space-y-4">
+      <form onSubmit={handleSubmitForm} className="space-y-4 max-w-full overflow-hidden">
         {/* Restaurant Name */}
         <FormField
           control={form.control}
