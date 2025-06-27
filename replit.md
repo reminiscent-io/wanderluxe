@@ -391,6 +391,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Date sorting and grouping across sidebar sections now use consistent, timezone-safe comparison methods
   - Fixed ActivityForm date select dropdown to use timezone-safe date parsing for trip date options
   - Updated date generation logic to parse arrival/departure dates without timezone shifts ensuring correct date selection
+- June 27, 2025. Fixed activity date change database schema issue:
+  - Identified that trip_days table uses day_id as primary key, not id column
+  - Updated handleEditActivity and handleAddActivity functions to query and reference day_id correctly
+  - Fixed database column mismatch that was causing "column trip_days.id does not exist" errors
+  - Activity date changes now work properly with correct day_id to date relationship mapping
+  - All activity CRUD operations now function correctly with proper database schema alignment
 
 ## User Preferences
 
