@@ -360,15 +360,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Accommodations</h3>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleAccommodationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
-                    <Plus size={14} className="mr-1" />
-                    Add Accommodation
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
-                    <ChevronLeft size={16} />
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                  <ChevronLeft size={16} />
+                </Button>
+              </div>
+              <div className="mb-4">
+                <Button size="sm" onClick={handleAccommodationAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                  <Plus size={14} className="mr-1" />
+                  Add Accommodation
+                </Button>
               </div>
               <div className="space-y-3">
                 {accommodations.length === 0 ? (
@@ -419,15 +419,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Transportation</h3>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleTransportationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
-                    <Plus size={14} className="mr-1" />
-                    Add Transportation
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
-                    <ChevronLeft size={16} />
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                  <ChevronLeft size={16} />
+                </Button>
+              </div>
+              <div className="mb-4">
+                <Button size="sm" onClick={handleTransportationAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                  <Plus size={14} className="mr-1" />
+                  Add Transportation
+                </Button>
               </div>
               <div className="space-y-3">
                 {transportation.length === 0 ? (
@@ -481,15 +481,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Trip Dates</h3>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleEditDates} className="bg-earth-500 hover:bg-earth-600 text-white">
-                    <Edit size={14} className="mr-1" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
-                    <ChevronLeft size={16} />
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                  <ChevronLeft size={16} />
+                </Button>
+              </div>
+              <div className="mb-4">
+                <Button size="sm" onClick={handleEditDates} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                  <Edit size={14} className="mr-1" />
+                  Edit Dates
+                </Button>
               </div>
               {trip && (
                 <div className="space-y-3">
@@ -519,15 +519,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Activities</h3>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleActivityAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
-                    <Plus size={14} className="mr-1" />
-                    Add Activity
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
-                    <ChevronLeft size={16} />
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                  <ChevronLeft size={16} />
+                </Button>
+              </div>
+              <div className="mb-4">
+                <Button size="sm" onClick={handleActivityAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                  <Plus size={14} className="mr-1" />
+                  Add Activity
+                </Button>
               </div>
               <div className="space-y-3">
                 {activities.length === 0 ? (
@@ -581,15 +581,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Reservations</h3>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleReservationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
-                    <Plus size={14} className="mr-1" />
-                    Add Reservation
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
-                    <ChevronLeft size={16} />
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
+                  <ChevronLeft size={16} />
+                </Button>
+              </div>
+              <div className="mb-4">
+                <Button size="sm" onClick={handleReservationAdd} className="bg-earth-500 hover:bg-earth-600 text-white w-full">
+                  <Plus size={14} className="mr-1" />
+                  Add Reservation
+                </Button>
               </div>
               <div className="space-y-3">
                 {reservations.length === 0 ? (
@@ -744,7 +744,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     <>
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
-        <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-[280px] bg-white border-r border-sand-200 z-30">
+        <div className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-sand-200 z-30">
           {sidebarContent}
         </div>
         {renderSecondaryPanel()}
