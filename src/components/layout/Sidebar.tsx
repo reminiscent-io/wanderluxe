@@ -31,6 +31,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
+import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
 import {
   Dialog,
   DialogContent,
@@ -113,6 +114,10 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   // Selected items for editing
   const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
   const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
+  
+  // Trip date editing state
+  const [newArrival, setNewArrival] = useState('');
+  const [newDeparture, setNewDeparture] = useState('');
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -143,7 +148,10 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setIsAccommodationDialogOpen(true)}
+                  onClick={() => {
+                    setSelectedAccommodation(null); // Clear for adding new
+                    setIsAccommodationDialogOpen(true);
+                  }}
                 >
                   <Plus size={16} className="mr-2" />
                   Add Accommodation
@@ -201,7 +209,10 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setIsTransportationDialogOpen(true)}
+                  onClick={() => {
+                    setSelectedTransportation(null); // Clear for adding new
+                    setIsTransportationDialogOpen(true);
+                  }}
                 >
                   <Plus size={16} className="mr-2" />
                   Add Transportation
@@ -273,7 +284,12 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => setIsEditDatesDialogOpen(true)}
+                  onClick={() => {
+                    // Initialize date values from current trip dates
+                    setNewArrival('2025-02-12');
+                    setNewDeparture('2025-02-15');
+                    setIsEditDatesDialogOpen(true);
+                  }}
                 >
                   <Edit size={16} className="mr-2" />
                   Edit Dates
@@ -506,42 +522,45 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             <AccommodationDialog
               tripId={tripId}
               open={isAccommodationDialogOpen}
-              onOpenChange={setIsAccommodationDialogOpen}
+              onOpenChange={(open) => {
+                setIsAccommodationDialogOpen(open);
+                if (!open) setSelectedAccommodation(null);
+              }}
+              initialData={selectedAccommodation}
               onSuccess={() => {
                 setIsAccommodationDialogOpen(false);
-                // Could add refresh logic here if needed
+                setSelectedAccommodation(null);
               }}
             />
             
             <TransportationDialog
               tripId={tripId}
               open={isTransportationDialogOpen}
-              onOpenChange={setIsTransportationDialogOpen}
+              onOpenChange={(open) => {
+                setIsTransportationDialogOpen(open);
+                if (!open) setSelectedTransportation(null);
+              }}
+              initialData={selectedTransportation}
               onSuccess={() => {
                 setIsTransportationDialogOpen(false);
-                // Could add refresh logic here if needed
+                setSelectedTransportation(null);
               }}
             />
 
-            {/* Basic Edit Dates Dialog - Placeholder */}
-            <Dialog open={isEditDatesDialogOpen} onOpenChange={setIsEditDatesDialogOpen}>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Edit Trip Dates</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <p className="text-sm text-sand-600">
-                    Date editing functionality will be implemented here. This connects to the existing trip date management system.
-                  </p>
-                  <Button 
-                    onClick={() => setIsEditDatesDialogOpen(false)}
-                    className="w-full"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {/* Trip Date Edit Dialog */}
+            <TripDateEditDialog
+              isOpen={isEditDatesDialogOpen}
+              onOpenChange={setIsEditDatesDialogOpen}
+              arrivalDate={newArrival}
+              departureDate={newDeparture}
+              onArrivalChange={setNewArrival}
+              onDepartureChange={setNewDeparture}
+              onSave={() => {
+                // Placeholder save function - would normally save to database
+                console.log('Saving trip dates:', newArrival, newDeparture);
+                setIsEditDatesDialogOpen(false);
+              }}
+            />
           </>
         )}
       </>
