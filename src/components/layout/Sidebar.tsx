@@ -711,7 +711,6 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                               <div className="mb-2">
                                 <h4 className="font-medium text-sm">{transport.departure_location} - {transport.arrival_location}</h4>
                               </div>
-                              <p className="text-xs text-sand-600">{transport.type}</p>
                               <p className="text-xs text-sand-600">
                                 {(() => {
                                   // Format time as 9:00pm - 10:00pm

@@ -513,6 +513,11 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added setSelectedTransportation(null) state reset to clear selection after operations
   - Transportation operations now properly sync between sidebar and timeline with immediate UI updates
   - All transportation CRUD operations (add, edit, delete) now use correct query keys for data synchronization
+- June 27, 2025. Fixed reservation dialog interaction issues preventing restaurant selection:
+  - Added onPointerDownOutside event handler to prevent dialog closing when clicking Google Places dropdown results
+  - Enhanced dialog event handling to protect against accidental closures during restaurant search
+  - Reservation dialog now properly allows clicking on restaurant search results for selection
+  - Fixed z-index and event bubbling issues that were causing dropdown interactions to close the dialog
 
 ## User Preferences
 
