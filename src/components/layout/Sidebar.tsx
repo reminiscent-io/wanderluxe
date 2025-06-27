@@ -51,14 +51,8 @@ export const tripNavItems = [
 export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState<boolean>(
-    () => JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
-  );
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-
-  useEffect(() => {
-    localStorage.setItem("sidebar:isOpen", String(open));
-  }, [open]);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -235,6 +229,42 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     </ScrollArea>
   );
 
+  // For trips view, show permanent sidebar on desktop and mobile sheet
+  if (tripId) {
+    return (
+      <>
+        {/* Mobile trigger for trips */}
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon" aria-label="Open sidebar">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="p-0 w-[280px]"
+          >
+            {content}
+          </SheetContent>
+        </Sheet>
+
+        {/* Desktop permanent sidebar for trips */}
+        <aside className="hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 z-[201]">
+          {content}
+        </aside>
+      </>
+    );
+  }
+
+  // For non-trip views, keep the original collapsible behavior
+  const [open, setOpen] = useState<boolean>(
+    () => JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
+  );
+
+  useEffect(() => {
+    localStorage.setItem("sidebar:isOpen", String(open));
+  }, [open]);
+
   return (
     <>
       {/* Mobile trigger */}
@@ -252,7 +282,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         </SheetContent>
       </Sheet>
 
-      {/* Desktop sidebar toggle button - always visible */}
+      {/* Desktop sidebar toggle button - when not in trips */}
       <Button
         variant="ghost"
         size="icon"
@@ -266,7 +296,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         <Menu className="h-4 w-4" />
       </Button>
 
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar - when not in trips */}
       <aside
         className={cn(
           "hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 transition-transform z-[201]",
