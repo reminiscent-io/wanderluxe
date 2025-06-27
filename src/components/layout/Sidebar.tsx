@@ -33,6 +33,7 @@ import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
 import { useTripQuery } from "@/hooks/useTripQuery";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -107,6 +108,17 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     content: React.ReactNode;
   }>({ isOpen: false, title: '', content: null });
   
+  // Fetch trip data including accommodations
+  const { trip } = useTripQuery(tripId);
+  const queryClient = useQueryClient();
+  
+  // Success callback for accommodation changes
+  const handleAccommodationSuccess = () => {
+    // Invalidate trip query to refresh accommodations data
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    setSecondaryPanel(prev => ({ ...prev, isOpen: false }));
+  };
+  
   // Dialog states for functional buttons
   const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
   const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
@@ -142,6 +154,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     const getSecondaryContent = (id: string) => {
       switch (id) {
         case 'accommodations':
+          const accommodations = trip?.accommodations || [];
           return {
             title: 'Accommodations',
             content: (
@@ -158,46 +171,50 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                   Add Accommodation
                 </Button>
                 <div className="space-y-2">
-                  <div className="p-3 bg-sand-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-sm">The Ritz-Carlton</h4>
-                      <div className="flex gap-1">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="h-6 w-6 p-0"
-                          onClick={() => {
-                            // Set dummy accommodation data for editing
-                            setSelectedAccommodation({
-                              stay_id: 'ritz-carlton-rome',
-                              hotel_name: 'The Ritz-Carlton',
-                              hotel_checkin_date: '2025-02-12',
-                              hotel_checkout_date: '2025-02-15',
-                              cost: 6003,
-                              checkin_time: '14:00',
-                              checkout_time: '11:00'
-                            });
-                            setIsAccommodationDialogOpen(true);
-                          }}
-                        >
-                          <Edit size={12} />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="h-6 w-6 p-0"
-                          onClick={() => {
-                            // Handle delete - could add confirmation dialog
-                            console.log('Delete accommodation');
-                          }}
-                        >
-                          <Trash2 size={12} />
-                        </Button>
+                  {accommodations.length === 0 ? (
+                    <p className="text-sm text-sand-600 text-center py-4">No accommodations added yet</p>
+                  ) : (
+                    accommodations.map((accommodation) => (
+                      <div key={accommodation.stay_id} className="p-3 bg-sand-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-sm">{accommodation.hotel}</h4>
+                          <div className="flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                // Set real accommodation data for editing
+                                setSelectedAccommodation(accommodation);
+                                setIsAccommodationDialogOpen(true);
+                              }}
+                            >
+                              <Edit size={12} />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                // Handle delete - could add confirmation dialog
+                                console.log('Delete accommodation:', accommodation.stay_id);
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-sand-600">
+                          {accommodation.hotel_checkin_date} - {accommodation.hotel_checkout_date}
+                        </p>
+                        {accommodation.cost && (
+                          <p className="text-xs text-sand-600">
+                            {accommodation.currency || 'USD'} {accommodation.cost}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                    <p className="text-xs text-sand-600">Feb 12-15, 2025</p>
-                    <p className="text-xs text-sand-600">€6,003</p>
-                  </div>
+                    ))
+                  )}
                 </div>
               </div>
             )
@@ -264,6 +281,20 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             )
           };
         case 'trip-dates':
+          const arrivalDate = trip?.arrival_date;
+          const departureDate = trip?.departure_date;
+          const calculateDuration = () => {
+            if (arrivalDate && departureDate) {
+              const start = new Date(arrivalDate);
+              const end = new Date(departureDate);
+              const diffTime = Math.abs(end.getTime() - start.getTime());
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              const nights = diffDays - 1;
+              return `${diffDays} days, ${nights} nights`;
+            }
+            return 'No dates set';
+          };
+          
           return {
             title: 'Trip Dates',
             content: (
@@ -271,15 +302,23 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <div className="space-y-2">
                   <div className="p-3 bg-sand-50 rounded-lg">
                     <h4 className="font-medium text-sm mb-2">Arrival</h4>
-                    <p className="text-sm text-sand-700">February 12, 2025</p>
+                    <p className="text-sm text-sand-700">
+                      {arrivalDate ? new Date(arrivalDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', month: 'long', day: 'numeric' 
+                      }) : 'Not set'}
+                    </p>
                   </div>
                   <div className="p-3 bg-sand-50 rounded-lg">
                     <h4 className="font-medium text-sm mb-2">Departure</h4>
-                    <p className="text-sm text-sand-700">February 15, 2025</p>
+                    <p className="text-sm text-sand-700">
+                      {departureDate ? new Date(departureDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', month: 'long', day: 'numeric' 
+                      }) : 'Not set'}
+                    </p>
                   </div>
                   <div className="p-3 bg-sand-50 rounded-lg">
                     <h4 className="font-medium text-sm mb-2">Duration</h4>
-                    <p className="text-sm text-sand-700">4 days, 3 nights</p>
+                    <p className="text-sm text-sand-700">{calculateDuration()}</p>
                   </div>
                 </div>
                 <Button 
@@ -287,8 +326,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                   variant="outline"
                   onClick={() => {
                     // Initialize date values from current trip dates
-                    setNewArrival('2025-02-12');
-                    setNewDeparture('2025-02-15');
+                    setNewArrival(arrivalDate || '');
+                    setNewDeparture(departureDate || '');
                     setIsEditDatesDialogOpen(true);
                   }}
                 >
@@ -529,7 +568,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               }}
               initialData={selectedAccommodation}
               onSuccess={() => {
-                setIsAccommodationDialogOpen(false);
+                handleAccommodationSuccess();
                 setSelectedAccommodation(null);
               }}
             />
