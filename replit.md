@@ -507,6 +507,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed handleActivityDelete function which was missing proper query key invalidation
   - Timeline now updates immediately when activities are added, edited, or deleted from sidebar
   - Ensured complete data synchronization between sidebar and timeline for all activity operations
+- June 27, 2025. Fixed transportation save and update synchronization between sidebar and timeline:
+  - Added ['transportation', tripId] query invalidation to handleTransportationDelete function in sidebar
+  - Enhanced TransportationDialog onSuccess callback with proper query invalidation for save/update operations
+  - Added setSelectedTransportation(null) state reset to clear selection after operations
+  - Transportation operations now properly sync between sidebar and timeline with immediate UI updates
+  - All transportation CRUD operations (add, edit, delete) now use correct query keys for data synchronization
 
 ## User Preferences
 
