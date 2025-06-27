@@ -48,7 +48,7 @@ interface DiningListProps {
  */
 const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
   (
-    { reservations, formatTime, dayId, tripId, className = '' },
+    { reservations, formatTime, dayId, tripId, className = '', tripArrivalDate, tripDepartureDate },
     ref
   ): JSX.Element => {
     const qc = useQueryClient();
@@ -208,6 +208,8 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
           }
           title={editingId ? 'Edit Reservation' : 'Add Reservation'}
           tripId={tripId}
+          tripArrivalDate={tripArrivalDate}
+          tripDepartureDate={tripDepartureDate}
         />
 
         {/* delete confirm */}

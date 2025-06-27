@@ -101,14 +101,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       restaurant_name: '',
-      reservation_date: getPreselectedDate(),
       reservation_time: '',
       number_of_people: undefined,
       notes: '',
       cost: undefined,
       currency: undefined,
       ...defaultValues,
-      reservation_date: getPreselectedDate(), // Ensure this overrides any defaultValues date logic
+      reservation_date: getPreselectedDate(), // Smart date preselection
     },
   });
 
