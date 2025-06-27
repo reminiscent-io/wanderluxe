@@ -266,11 +266,14 @@ The application uses a normalized PostgreSQL schema with the following core enti
 - June 27, 2025. Completed functional sidebar integration with existing dialog components:
   - Connected all Add/Edit buttons to existing AccommodationDialog and TransportationDialog components
   - Integrated proper state management for dialog opening/closing with sidebar interactions
-  - Added placeholder Edit Dates dialog with proper modal structure for future implementation
+  - Replaced placeholder Edit Dates dialog with proper TripDateEditDialog component
   - Enhanced sidebar with full CRUD functionality for accommodations and transportation
+  - Fixed edit buttons to properly pass selected item data to dialogs for editing existing items
+  - Fixed add buttons to clear selected data for creating new items
   - Maintained consistent user experience between sidebar quick actions and main timeline interface
   - All sidebar buttons now provide immediate access to full-featured editing dialogs
   - Preserved existing form validation, Google Places integration, and database operations
+  - Fixed dialog z-index layering issue where dialogs appeared behind sidebar (increased from z-50 to z-250)
 
 ## User Preferences
 
