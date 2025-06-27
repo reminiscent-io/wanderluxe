@@ -258,7 +258,7 @@ export default function SecondarySidebar({
   return (
     <aside
       className={cn(
-        "fixed top-0 right-0 h-screen w-[320px] bg-sand-50 shadow-lg ring-1 ring-sand-200/40 transition-transform z-[200]",
+        "fixed top-0 left-[280px] h-screen w-[320px] bg-sand-50 shadow-lg ring-1 ring-sand-200/40 transition-transform z-[10]",
         "translate-x-0"
       )}
     >
