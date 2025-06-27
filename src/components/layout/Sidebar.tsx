@@ -1199,6 +1199,29 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to save reservation' });
           }
         }}
+        onDelete={selectedReservation ? async () => {
+          try {
+            const { error } = await supabase
+              .from('reservations')
+              .delete()
+              .eq('id', selectedReservation.id)
+              .eq('trip_id', tripId);
+            
+            if (error) {
+              console.error('Delete error:', error);
+              throw error;
+            }
+            
+            toast({ title: 'Success', description: 'Reservation deleted' });
+            queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+            queryClient.invalidateQueries({ queryKey: ['reservations'] });
+            setReservationOpen(false);
+            setSelectedReservation(null);
+          } catch (error) {
+            console.error('Failed to delete reservation:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete reservation' });
+          }
+        } : undefined}
       />
 
       <ActivityDialogs

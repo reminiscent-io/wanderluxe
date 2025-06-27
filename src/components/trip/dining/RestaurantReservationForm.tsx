@@ -46,7 +46,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
   onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>;
-  defaultValues?: Partial<FormValues> & { trip_id?: string; day_id?: string; order_index?: number };
+  defaultValues?: Partial<FormValues> & { id?: string; trip_id?: string; day_id?: string; order_index?: number };
   isSubmitting?: boolean;
   onDelete?: () => Promise<void>;
   tripId: string;
