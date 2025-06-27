@@ -243,6 +243,10 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Created placeholder pages for new navigation destinations (Accommodations, Budget, Timeline, PackingList, Settings)
   - Updated Navigation component to include mobile hamburger menu trigger for trip pages
   - Sidebar appears fixed at left on desktop, hidden by default on mobile with swipe/tap access
+  - Fixed sidebar disappearing issue by adding always-visible floating toggle button
+  - Added expandable Timeline subsections with Trip Dates, Accommodations, and Transportation
+  - Implemented hierarchical navigation with collapsible sections and chevron indicators
+  - Enhanced TripTabs component to display detailed views for each subsection with real trip data
 
 ## User Preferences
 
