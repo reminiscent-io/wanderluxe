@@ -42,6 +42,8 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Currency } from '@/utils/currencyConstants';
 import { ActivityFormData } from '@/types/trip';
+import { generateDatesArray } from '@/services/accommodation/dateUtils';
+import { createTripDays } from '@/services/tripDaysService';
 
 // Utility function to format dates without timezone issues
 const formatDateSafe = (dateString: string) => {
@@ -108,6 +110,11 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   const [tripDatesOpen, setTripDatesOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
+  
+  // Trip date editing states
+  const [newArrival, setNewArrival] = useState('');
+  const [newDeparture, setNewDeparture] = useState('');
+  const [isSubmittingDates, setIsSubmittingDates] = useState(false);
   
   // Selected items for editing
   const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
@@ -473,7 +480,60 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   };
 
   const handleEditDates = () => {
+    // Initialize date state when opening dialog
+    if (trip?.arrival_date) setNewArrival(trip.arrival_date);
+    if (trip?.departure_date) setNewDeparture(trip.departure_date);
     setTripDatesOpen(true);
+  };
+
+  // Date editing utility functions (adapted from TripDates.tsx)
+  const addNewTripDays = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
+    const oldDates = generateDatesArray(oldArr, oldDep);
+    const newDates = generateDatesArray(newArr, newDep);
+    const toAdd = newDates.filter(d => !oldDates.includes(d));
+    if (!toAdd.length) return;
+    try {
+      await createTripDays(tripId || '', toAdd);
+    } catch (err) {
+      console.error(err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add new trip days' });
+    }
+  };
+
+  const saveDateChanges = async (arr: string, dep: string) => {
+    const { error } = await supabase
+      .from('trips')
+      .update({ arrival_date: arr, departure_date: dep })
+      .eq('trip_id', tripId);
+    if (error) throw error;
+
+    if (trip?.arrival_date && trip?.departure_date) {
+      await addNewTripDays(trip.arrival_date, trip.departure_date, arr, dep);
+    } else {
+      const allDates = generateDatesArray(arr, dep);
+      await createTripDays(tripId || '', allDates);
+    }
+
+    toast({ title: 'Success', description: 'Trip dates updated' });
+    setTripDatesOpen(false);
+    setIsSubmittingDates(false);
+  };
+
+  const handleSaveDates = async () => {
+    if (!newArrival || !newDeparture) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Both arrival and departure dates are required' });
+      return;
+    }
+    setIsSubmittingDates(true);
+
+    try {
+      await saveDateChanges(newArrival, newDeparture);
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    } catch (error) {
+      console.error('Error updating trip dates:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update trip dates' });
+      setIsSubmittingDates(false);
+    }
   };
 
   const renderSecondaryPanel = () => {
@@ -1148,18 +1208,11 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       <TripDateEditDialog
         isOpen={tripDatesOpen}
         onOpenChange={setTripDatesOpen}
-        arrivalDate={trip?.arrival_date || ''}
-        departureDate={trip?.departure_date || ''}
-        onArrivalChange={(date) => {
-          // Handle arrival date change
-        }}
-        onDepartureChange={(date) => {
-          // Handle departure date change
-        }}
-        onSave={() => {
-          setTripDatesOpen(false);
-          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-        }}
+        arrivalDate={newArrival}
+        departureDate={newDeparture}
+        onArrivalChange={setNewArrival}
+        onDepartureChange={setNewDeparture}
+        onSave={handleSaveDates}
       />
 
       <RestaurantReservationDialog
