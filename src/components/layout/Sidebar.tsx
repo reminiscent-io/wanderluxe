@@ -846,6 +846,8 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         tripId={tripId || ''}
         title={selectedReservation ? 'Edit Reservation' : 'Add Reservation'}
         isSubmitting={false}
+        tripArrivalDate={trip?.arrival_date}
+        tripDepartureDate={trip?.departure_date}
         onSubmit={async (data) => {
           // Handle reservation submission
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
