@@ -34,12 +34,13 @@ import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
-
+import ActivityDialogs from "../trip/day/activities/ActivityDialogs";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import { useTripQuery } from "@/hooks/useTripQuery";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Currency } from '@/utils/currencyConstants';
+import { ActivityFormData } from '@/types/trip';
 import {
   Dialog,
   DialogContent,
@@ -92,6 +93,27 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
+
+  // Activity form state for ActivityDialogs
+  const [newActivity, setNewActivity] = useState<ActivityFormData>({
+    title: '',
+    description: '',
+    date: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD' as Currency
+  });
+  
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
+    title: '',
+    description: '',
+    date: '',
+    start_time: '',
+    end_time: '',
+    cost: '',
+    currency: 'USD' as Currency
+  });
 
   // Load sidebar state from localStorage
   useEffect(() => {
@@ -259,6 +281,45 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
     } catch (error) {
       console.error('Error deleting reservation:', error);
+    }
+  };
+
+  const handleActivityAdd = () => {
+    setNewActivity({
+      title: '',
+      description: '',
+      date: '',
+      start_time: '',
+      end_time: '',
+      cost: '',
+      currency: 'USD' as Currency
+    });
+    setActivityOpen(true);
+  };
+
+  const handleActivityEdit = (activity: any) => {
+    setSelectedActivity(activity.id);
+    setActivityEdit({
+      title: activity.title || '',
+      description: activity.description || '',
+      date: activity.date || '',
+      start_time: activity.start_time || '',
+      end_time: activity.end_time || '',
+      cost: activity.cost?.toString() || '',
+      currency: (activity.currency as Currency) || 'USD'
+    });
+  };
+
+  const handleActivityDelete = async (id: string) => {
+    try {
+      await supabase
+        .from('day_activities')
+        .delete()
+        .eq('id', id);
+      
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    } catch (error) {
+      console.error('Error deleting activity:', error);
     }
   };
 
