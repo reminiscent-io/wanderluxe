@@ -290,6 +290,15 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed all TypeScript interface issues with ActivityFormData and Currency types
   - Secondary sidebar now provides complete management for all four subcomponents: Accommodations, Transportation, Activities, and Reservations
   - All sidebar buttons now provide immediate access to full-featured editing dialogs with real trip data
+- June 27, 2025. Enhanced activity date selection with comprehensive trip date validation:
+  - Added date field to ActivityFormData interface for proper date handling throughout activity management
+  - Enhanced ActivityForm with intelligent date selection dropdown showing all valid trip dates (arrival to departure)
+  - Implemented smart date preselection: current activity date when editing, specific date when adding from day cards
+  - Added trip date range validation ensuring activities can only be scheduled within actual trip duration
+  - Updated all activity dialog components (AddActivityDialog, EditActivityDialog, ActivityDialogs) to pass trip dates
+  - Fixed Currency type handling and resolved all TypeScript interface compatibility issues
+  - Enhanced sidebar to pass real trip arrival/departure dates to activity dialogs for proper validation
+  - Activity system now provides complete date-aware scheduling with user-friendly date selection interface
 
 ## User Preferences
 
