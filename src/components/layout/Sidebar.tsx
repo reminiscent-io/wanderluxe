@@ -41,6 +41,26 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Currency } from '@/utils/currencyConstants';
 import { ActivityFormData } from '@/types/trip';
+
+// Utility function to format dates without timezone issues
+const formatDateSafe = (dateString: string) => {
+  if (!dateString || dateString === 'No Date') return 'No Date';
+  const [year, month, day] = dateString.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'short', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+};
+
+// Utility function to compare dates safely
+const compareDatesSafe = (a: string, b: string) => {
+  if (a === 'No Date') return 1;
+  if (b === 'No Date') return -1;
+  return a.localeCompare(b); // Simple string comparison for YYYY-MM-DD format
+};
+
 import {
   Dialog,
   DialogContent,
@@ -773,20 +793,12 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                     }, {} as Record<string, any[]>);
 
                     // Sort dates and activities within each date
-                    const sortedDates = Object.keys(grouped).sort((a, b) => {
-                      if (a === 'No Date') return 1;
-                      if (b === 'No Date') return -1;
-                      return new Date(a).getTime() - new Date(b).getTime();
-                    });
+                    const sortedDates = Object.keys(grouped).sort(compareDatesSafe);
 
                     return sortedDates.map(date => (
                       <div key={date} className="space-y-2">
                         <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
-                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
+                          {formatDateSafe(date)}
                         </h5>
                         {grouped[date]
                           .sort((a, b) => {
