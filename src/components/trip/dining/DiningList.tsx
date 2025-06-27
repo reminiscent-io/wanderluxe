@@ -69,9 +69,29 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
       async (raw: any) => {
         setIsSubmitting(true);
 
+        // If reservation_date is provided, find the correct day_id
+        let targetDayId = dayId;
+        if (raw.reservation_date) {
+          const { data: tripDay, error: tripDayError } = await supabase
+            .from('trip_days')
+            .select('day_id')
+            .eq('trip_id', tripId)
+            .eq('date', raw.reservation_date)
+            .single();
+
+          if (tripDayError || !tripDay) {
+            console.error('Failed to find trip day for date:', raw.reservation_date, tripDayError);
+            setIsSubmitting(false);
+            toast.error('Failed to find trip day for selected date');
+            return;
+          }
+          
+          targetDayId = tripDay.day_id;
+        }
+
         const payload = {
           ...raw,
-          day_id: dayId,
+          day_id: targetDayId,
           trip_id: tripId,
           order_index:
             raw.order_index !== undefined

@@ -62,16 +62,25 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 }) => {
   const { toast } = useToast();
 
-  // Generate trip dates for dropdown
+  // Generate trip dates for dropdown with timezone-safe handling
   const generateTripDates = () => {
     if (!tripArrivalDate || !tripDepartureDate) return [];
     
     const dates = [];
-    const start = new Date(tripArrivalDate);
-    const end = new Date(tripDepartureDate);
+    
+    // Parse dates safely without timezone issues
+    const [startYear, startMonth, startDay] = tripArrivalDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = tripDepartureDate.split('-').map(Number);
+    
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
     
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(new Date(d).toISOString().split('T')[0]);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      dates.push(dateString);
     }
     
     return dates;
