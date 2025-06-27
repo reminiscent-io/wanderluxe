@@ -423,6 +423,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setActivityOpen(false);
     } catch (error) {
@@ -471,6 +472,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setSelectedActivity(null);
     } catch (error) {
