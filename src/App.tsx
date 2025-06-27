@@ -14,7 +14,12 @@ import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Profile from "./pages/Profile"; // Import the Profile component
+import Profile from "./pages/Profile";
+import Accommodations from "./pages/Accommodations";
+import Budget from "./pages/Budget";
+import Timeline from "./pages/Timeline";
+import PackingList from "./pages/PackingList";
+import Settings from "./pages/Settings";
 
 // Move queryClient inside the component to ensure proper React context
 const App = () => {
@@ -64,7 +69,47 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/profile" element={<Profile />} /> {/* Added Profile route */}
+                <Route path="/profile" element={<Profile />} />
+                <Route
+                  path="/accommodations"
+                  element={
+                    <ProtectedRoute>
+                      <Accommodations />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/budget"
+                  element={
+                    <ProtectedRoute>
+                      <Budget />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/timeline"
+                  element={
+                    <ProtectedRoute>
+                      <Timeline />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/packing"
+                  element={
+                    <ProtectedRoute>
+                      <PackingList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

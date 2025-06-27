@@ -2,15 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
-import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
+import { Trash2 } from 'lucide-react';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (activity: ActivityFormData) => void;
   onCancel: () => void;
+  onDelete?: () => Promise<void>;
   submitLabel: string;
   eventId: string;
+  tripDates?: { arrival_date: string; departure_date: string };
+  preselectedDate?: string;
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -18,8 +22,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   onActivityChange,
   onSubmit,
   onCancel,
+  onDelete,
   submitLabel,
   eventId,
+  tripDates,
+  preselectedDate,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,6 +34,44 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   // New local state for time values
   const [startTime, setStartTime] = useState(activity.start_time || "");
   const [endTime, setEndTime] = useState(activity.end_time || "");
+
+  // Generate trip date options with timezone-safe handling
+  const tripDateOptions = React.useMemo(() => {
+    if (!tripDates) return [];
+    
+    const dates = [];
+    
+    // Parse dates safely without timezone issues
+    const [startYear, startMonth, startDay] = tripDates.arrival_date.split('-').map(Number);
+    const [endYear, endMonth, endDay] = tripDates.departure_date.split('-').map(Number);
+    
+    const startDate = new Date(startYear, startMonth - 1, startDay);
+    const endDate = new Date(endYear, endMonth - 1, endDay);
+    
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      
+      // Safe date formatting without timezone shifts
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+      const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      dates.push({
+        value: dateString,
+        label: `${dayName}, ${monthDay}`
+      });
+    }
+    return dates;
+  }, [tripDates]);
+
+  // Handle date preselection on component mount
+  React.useEffect(() => {
+    if (preselectedDate && !activity.date) {
+      onActivityChange({ ...activity, date: preselectedDate });
+    }
+  }, [preselectedDate, activity.date]);
 
   // Update local state when activity prop changes
   useEffect(() => {
@@ -53,6 +98,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     if (!activity.title.trim()) {
       newErrors.title = 'Title is required';
+    }
+
+    if (tripDateOptions.length > 0 && !activity.date) {
+      newErrors.date = 'Date is required';
     }
 
     if (activity.start_time && activity.end_time) {
@@ -126,6 +175,30 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         />
       </div>
 
+      {/* Date Selection */}
+      {tripDateOptions.length > 0 && (
+        <div>
+          <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+            Date <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="date"
+            value={activity.date || ''}
+            onChange={(e) => onActivityChange({ ...activity, date: e.target.value })}
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.date ? 'border-red-500' : 'border-gray-300'}`}
+            required
+          >
+            <option value="">Select a date</option>
+            {tripDateOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+        </div>
+      )}
+
       {/* Time Fields */}
       <div className="grid grid-cols-2 gap-4">
         {/* Start Time */}
@@ -184,7 +257,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <select
             id="currency"
             value={activity.currency}
-            onChange={(e) => onActivityChange({ ...activity, currency: e.target.value })}
+            onChange={(e) => onActivityChange({ ...activity, currency: e.target.value as Currency })}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           >
             {CURRENCIES.map((currency) => (
@@ -197,22 +270,37 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* Buttons */}
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border-2 border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50"
-          disabled={isSubmitting || !activity.title.trim()}
-        >
-          {isSubmitting ? 'Saving...' : submitLabel}
-        </button>
+      <div className="flex justify-between items-center pt-4">
+        <div>
+          {submitLabel === 'Save Changes' && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isSubmitting}
+              className="flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent border-0 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border-2 border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50"
+            disabled={isSubmitting || !activity.title.trim()}
+          >
+            {isSubmitting ? 'Saving...' : submitLabel}
+          </button>
+        </div>
       </div>
     </form>
   );

@@ -3,14 +3,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import RestaurantContactInfo from './form/RestaurantContactInfo';
-import { Loader } from 'lucide-react';
+import { Loader, Trash2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 // Converts blank / NaN values coming from <input type="number"> into undefined so they
 // pass Zod's optional() validation.
@@ -26,6 +29,7 @@ const toNullableNumber = (val: unknown) => {
 // ────────────────────────────────────────────────────────────────────────────────
 const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
+  reservation_date: z.string().min(1, "Reservation date is required"),
   reservation_time: z.string().min(1, "Reservation time is required"),
   address: z.string().optional(),
   phone_number: z.string().optional(),
@@ -42,18 +46,68 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantReservationFormProps {
   onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>;
-  defaultValues?: Partial<FormValues> & { trip_id?: string; day_id?: string; order_index?: number };
+  defaultValues?: Partial<FormValues> & { id?: string; trip_id?: string; day_id?: string; order_index?: number };
   isSubmitting?: boolean;
+  onDelete?: () => Promise<void>;
   tripId: string;
+  tripArrivalDate?: string;
+  tripDepartureDate?: string;
 }
 
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   onSubmit,
   defaultValues,
   isSubmitting = false,
+  onDelete,
   tripId,
+  tripArrivalDate,
+  tripDepartureDate,
 }) => {
   const { toast } = useToast();
+
+  // Generate trip dates for dropdown with timezone-safe handling
+  const generateTripDates = () => {
+    if (!tripArrivalDate || !tripDepartureDate) return [];
+    
+    const dates = [];
+    
+    // Parse dates safely without timezone issues
+    const [startYear, startMonth, startDay] = tripArrivalDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = tripDepartureDate.split('-').map(Number);
+    
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      dates.push(dateString);
+    }
+    
+    return dates;
+  };
+
+  const tripDates = generateTripDates();
+
+  // Smart date preselection logic
+  const getPreselectedDate = () => {
+    // If editing existing reservation, use its date
+    if (defaultValues?.reservation_date) {
+      return defaultValues.reservation_date;
+    }
+    
+    // If adding from a specific day card, use that day's date
+    if (defaultValues?.day_id && tripDates.length > 0) {
+      // Find the day in trip dates that matches the day_id context
+      // For now, default to first available date since we need day-to-date mapping
+      return tripDates[0];
+    }
+    
+    // Default to first available trip date
+    return tripDates.length > 0 ? tripDates[0] : '';
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,6 +119,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       cost: undefined,
       currency: undefined,
       ...defaultValues,
+      reservation_date: getPreselectedDate(), // Smart date preselection
     },
   });
 
@@ -86,10 +141,40 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       return;
     }
 
+    // Lookup correct day_id based on selected reservation_date
+    let finalDayId = (defaultValues as any)?.day_id;
+    
+    if (data.reservation_date && effectiveTripId) {
+      console.log('RestaurantReservationForm - Looking up day_id for date:', data.reservation_date);
+      
+      const { data: tripDay, error: tripDayError } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', effectiveTripId)
+        .eq('date', data.reservation_date)
+        .single();
+
+      if (tripDayError || !tripDay) {
+        console.error('RestaurantReservationForm - Failed to find day_id for date:', data.reservation_date, tripDayError);
+        toast({
+          variant: 'destructive',
+          title: 'Invalid date',
+          description: 'Could not find the selected date in this trip.',
+        });
+        return;
+      }
+      
+      console.log('RestaurantReservationForm - Found day_id:', tripDay.day_id, 'for date:', data.reservation_date);
+      finalDayId = tripDay.day_id;
+    }
+
+    // Remove reservation_date since it doesn't exist in the database - we use day_id instead
+    const { reservation_date, ...dataWithoutDate } = data;
+    
     const processedData = {
-      ...data,
+      ...dataWithoutDate,
       trip_id: effectiveTripId,
-      day_id: (defaultValues as any)?.day_id,
+      day_id: finalDayId,
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
     
@@ -127,7 +212,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // ──────────────────────────────────────────────────────────────────────────────
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitForm} className="space-y-4">
+      <form onSubmit={handleSubmitForm} className="space-y-4 max-w-full overflow-hidden">
         {/* Restaurant Name */}
         <FormField
           control={form.control}
@@ -162,27 +247,61 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           rating={form.watch('rating')}
         />
 
-        {/* Reservation Time */}
-        <FormField
-          control={form.control}
-          name="reservation_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Reservation Time <span className="text-red-500">*</span>
-              </FormLabel>
-              <FormControl>
-                <input
-                  type="time"
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                  step="300" // 5-minute increments
-                  className="w-full p-2 border rounded-md"
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        {/* Reservation Date & Time */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="reservation_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Reservation Date <span className="text-red-500">*</span>
+                </FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a date" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="z-[999]">
+                    {tripDates.map((date) => {
+                      // Parse date safely without timezone issues
+                      const [year, month, day] = date.split('-').map(Number);
+                      const safeDate = new Date(year, month - 1, day);
+                      return (
+                        <SelectItem key={date} value={date}>
+                          {format(safeDate, 'EEEE, MMMM d, yyyy')}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="reservation_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Reservation Time <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    step="300" // 5-minute increments
+                    className="bg-white"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Number of People */}
         <FormField
@@ -274,26 +393,45 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
-          onClick={(e) => {
-            console.log('Save button clicked');
-            console.log('Form state:', form.formState);
-            console.log('Form values:', form.getValues());
-            console.log('Form errors:', form.formState.errors);
-          }}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Reservation'
-          )}
-        </Button>
+        {/* Buttons */}
+        <div className="flex justify-between items-center pt-4">
+          <div>
+            {defaultValues?.id && onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onDelete}
+                disabled={isSubmitting}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+            )}
+          </div>
+          <div>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
+              onClick={(e) => {
+                console.log('Save button clicked');
+                console.log('Form state:', form.formState);
+                console.log('Form values:', form.getValues());
+                console.log('Form errors:', form.formState.errors);
+              }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Reservation'
+              )}
+            </Button>
+          </div>
+        </div>
         
 
       </form>

@@ -108,6 +108,26 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
     onOpenChange(false);
   };
 
+  const handleDelete = async () => {
+    try {
+      if (initialData?.id) {
+        const { error } = await supabase
+          .from('transportation')
+          .delete()
+          .eq('id', initialData.id);
+        
+        if (error) throw error;
+        
+        toast.success('Transportation deleted successfully');
+        onSuccess?.();
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error('Error deleting transportation:', error);
+      toast.error('Failed to delete transportation');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
@@ -123,6 +143,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           initialData={initialData || undefined}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
+          onDelete={initialData ? handleDelete : undefined}
           tripArrivalDate={tripDates.arrival_date}
           tripDepartureDate={tripDates.departure_date}
           buttonClassName="bg-earth-400 hover:bg-earth-600 text-white font-semibold"

@@ -36,6 +36,8 @@ interface DiningListProps {
   dayId: string;
   tripId: string;
   className?: string;
+  tripArrivalDate?: string;
+  tripDepartureDate?: string;
 }
 
 /**
@@ -46,7 +48,7 @@ interface DiningListProps {
  */
 const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
   (
-    { reservations, formatTime, dayId, tripId, className = '' },
+    { reservations, formatTime, dayId, tripId, className = '', tripArrivalDate, tripDepartureDate },
     ref
   ): JSX.Element => {
     const qc = useQueryClient();
@@ -67,9 +69,12 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
       async (raw: any) => {
         setIsSubmitting(true);
 
+        // Use the day_id from the form data (already looked up in RestaurantReservationForm)
+        let targetDayId = raw.day_id || dayId;
+
         const payload = {
           ...raw,
-          day_id: dayId,
+          day_id: targetDayId,
           trip_id: tripId,
           order_index:
             raw.order_index !== undefined
@@ -85,6 +90,7 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
               .from('reservations')
               .update(payload)
               .eq('id', editingId)
+              .eq('trip_id', tripId)
               .select()
               .throwOnError();
 
@@ -206,6 +212,8 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
           }
           title={editingId ? 'Edit Reservation' : 'Add Reservation'}
           tripId={tripId}
+          tripArrivalDate={tripArrivalDate}
+          tripDepartureDate={tripDepartureDate}
         />
 
         {/* delete confirm */}

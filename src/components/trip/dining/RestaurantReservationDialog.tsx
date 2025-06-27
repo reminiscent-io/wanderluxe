@@ -9,7 +9,10 @@ interface RestaurantReservationDialogProps {
   isSubmitting: boolean;
   editingReservation?: any;
   title: string;
+  onDelete?: () => Promise<void>;
   tripId: string; // must be provided
+  tripArrivalDate?: string;
+  tripDepartureDate?: string;
 }
 
 const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = ({
@@ -19,7 +22,10 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   isSubmitting,
   editingReservation,
   title,
+  onDelete,
   tripId,
+  tripArrivalDate,
+  tripDepartureDate,
 }) => {
   console.log('RestaurantReservationDialog - onSubmit function:', typeof onSubmit);
 
@@ -49,7 +55,16 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent 
+        className="max-w-lg"
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking on Google Places dropdown results
+          const target = e.target as Element;
+          if (target.closest('.pac-container') || target.closest('[data-radix-popper-content-wrapper]')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <div aria-describedby="restaurant-reservation-description">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
@@ -62,7 +77,10 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             onSubmit={handleFormSubmit}
             isSubmitting={isSubmitting}
             defaultValues={editingReservation}
+            onDelete={onDelete}
             tripId={tripId}
+            tripArrivalDate={tripArrivalDate}
+            tripDepartureDate={tripDepartureDate}
           />
         </div>
       </DialogContent>

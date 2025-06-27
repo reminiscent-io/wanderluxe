@@ -4,10 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 import ActivityForm from '../../ActivityForm';
 import { ActivityFormData } from '@/types/trip';
 
@@ -17,8 +14,9 @@ interface EditActivityDialogProps {
   activity: ActivityFormData;
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (updatedActivity: ActivityFormData) => void;
-  onDelete: (id: string) => void; // Added onDelete prop
+  onDelete: (id: string) => void;
   eventId: string;
+  tripDates?: { arrival_date: string; departure_date: string };
 }
 
 const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
@@ -27,8 +25,9 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
   activity,
   onActivityChange,
   onSubmit,
-  onDelete, // Added onDelete prop
+  onDelete,
   eventId,
+  tripDates,
 }) => {
   useEffect(() => {
     if (activityId) {
@@ -36,7 +35,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
     }
   }, [activityId, activity]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (activityId && onDelete) {
       onDelete(activityId);
       onOpenChange(false);
@@ -54,20 +53,11 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
           onActivityChange={onActivityChange}
           onSubmit={onSubmit}
           onCancel={() => onOpenChange(false)}
+          onDelete={handleDelete}
           submitLabel="Save Changes"
           eventId={eventId}
+          tripDates={tripDates}
         />
-        <DialogFooter className="mt-4">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-            className="w-full"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Activity
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

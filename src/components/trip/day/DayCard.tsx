@@ -56,6 +56,8 @@ interface DayCardProps {
   defaultImageUrl?: string;
   hotelStays?: HotelStay[];
   originalImageUrl?: string | null;
+  tripArrivalDate?: string;
+  tripDepartureDate?: string;
 }
 
 const getNormalizedDay = (date: string) => date.split('T')[0];
@@ -71,6 +73,8 @@ const DayCard: React.FC<DayCardProps> = ({
   defaultImageUrl,
   hotelStays = [],
   originalImageUrl,
+  tripArrivalDate,
+  tripDepartureDate,
 }) => {
   /* ---------- UI state ---------- */
   const [isExpanded, setIsExpanded] = useState(true);
@@ -423,6 +427,8 @@ const DayCard: React.FC<DayCardProps> = ({
                     dayId={id}
                     tripId={tripId}
                     className="text-xs"
+                    tripArrivalDate={tripArrivalDate}
+                    tripDepartureDate={tripDepartureDate}
                   />
                 </div>
               </div>

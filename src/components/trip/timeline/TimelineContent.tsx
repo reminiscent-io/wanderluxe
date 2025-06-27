@@ -8,13 +8,17 @@ interface TimelineContentProps {
   dayIndexMap: Map<string, number>;
   hotelStays: HotelStay[];
   onDayDelete: (id: string) => void;
+  tripArrivalDate?: string;
+  tripDepartureDate?: string;
 }
 
 const TimelineContent: React.FC<TimelineContentProps> = ({
   days = [],
   dayIndexMap,
   hotelStays,
-  onDayDelete
+  onDayDelete,
+  tripArrivalDate,
+  tripDepartureDate
 }) => {
   if (!days.length) {
     return (
@@ -45,6 +49,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             imageUrl={day.image_url}
             index={dayIndex}
             onDelete={onDayDelete}
+            tripArrivalDate={tripArrivalDate}
+            tripDepartureDate={tripDepartureDate}
             hotelStays={hotelStays.filter(stay => {
               if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
               

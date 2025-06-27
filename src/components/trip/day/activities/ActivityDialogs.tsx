@@ -16,6 +16,8 @@ interface ActivityDialogsProps {
   onEditActivity: (id: string, updatedActivity: ActivityFormData) => void;
   onDeleteActivity: (id: string) => void;
   eventId: string;
+  tripDates?: { arrival_date: string; departure_date: string };
+  preselectedDate?: string;
 }
 
 const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
@@ -31,6 +33,8 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
   onEditActivity,
   onDeleteActivity,
   eventId,
+  tripDates,
+  preselectedDate,
 }) => {
   // Helper function to handle the dialog closing
   const handleEditActivityDialogClose = () => {
@@ -44,8 +48,10 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         onOpenChange={setIsAddingActivity}
         activity={newActivity}
         onActivityChange={setNewActivity}
-        onSubmit={onAddActivity}
+        onSubmit={() => onAddActivity(newActivity)}
         eventId={eventId}
+        tripDates={tripDates}
+        preselectedDate={preselectedDate}
       />
 
       <EditActivityDialog
@@ -58,6 +64,7 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         }
         onDelete={onDeleteActivity}
         eventId={eventId}
+        tripDates={tripDates}
       />
     </>
   );

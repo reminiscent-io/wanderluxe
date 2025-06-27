@@ -1,0 +1,200 @@
+**Copy-and-paste prompt for Replit AI (or Cursor) to implement the new sidebar**
+
+---
+
+### 📝 **Task name**
+
+Implement a fixed, collapsible left-hand sidebar for the WanderLuxe travel-planning app
+
+---
+
+### 📚 **Project context (do **not** change):**
+
+* **Stack:** React 18 + TypeScript, Vite on port 8080 with **Bun** as the package manager
+* **UI lib:** **shadcn/ui** (Radix primitives) + Tailwind CSS (`sand-50…600`, `earth-50…600` palette)
+* **Paths:** `@/` → `src/`
+* **Folders:**
+
+  * `src/components/ui/` – reusable UI
+  * `src/components/layout/` – global layout & shells
+  * `src/components/trip/` – feature modules
+  * `src/hooks/`, `src/services/` (keep unchanged)
+* **Auth:** Supabase Auth (Google OAuth only) – session available via `useUser()` hook
+* **Forms:** React-Hook-Form + Zod
+* **Design reference:** Notion-style clean, layered sidebar
+
+---
+
+### 🎯 **Goal**
+
+Create a **responsive left sidebar** that:
+
+1. **Desktop (`≥md`)** – fixed at `left: 0`, full viewport height, **width = 280 px**, white background (`bg-white`) with subtle elevation (`shadow-lg`, `ring-1 ring-sand-200/40`).
+2. **Mobile (`<md`)** – hidden by default; opens as a Radix **Sheet/Drawer** from the left when the hamburger icon is tapped or when the user swipes in.
+3. Remains on top of other content (`z-[201]`) and does **not** scroll with the page.
+4. Hosts navigation groups (icons + labels):
+
+   * “Itinerary” (default route)
+   * “Accommodations”
+   * “Budget”
+   * “Timeline”
+   * “Packing List”
+   * “Profile” (show user avatar + name from Supabase Auth)
+   * “Settings”
+5. Persists the last-opened/collapsed state in `localStorage` (`sidebar:isOpen`).
+6. Keyboard-accessible and screen-reader friendly (FocusTrap when open on mobile, proper **aria-label**s).
+7. Uses Tailwind + Radix **`Sheet`** + shadcn **`Button`, `ScrollArea`, `Separator`, `Avatar`**.
+8. Written in **TSX** with strict typing, following existing ESLint rules.
+
+---
+
+### 🗂 **Implementation steps**
+
+**1. Create component**
+`src/components/ui/Sidebar.tsx`
+
+```tsx
+import { useState, useEffect } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import clsx from "clsx";
+import { NavLink } from "react-router-dom";
+import { useUser } from "@/hooks/useUser";
+
+export const navItems = [
+  { to: "/", label: "Itinerary", icon: "Map" },
+  { to: "/accommodations", label: "Accommodations", icon: "Hotel" },
+  { to: "/budget", label: "Budget", icon: "Wallet" },
+  { to: "/timeline", label: "Timeline", icon: "Calendar" },
+  { to: "/packing", label: "Packing List", icon: "PackagePlus" },
+];
+
+export default function Sidebar() {
+  const { user } = useUser();
+  const [open, setOpen] = useState<boolean>(
+    () => JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
+  );
+
+  useEffect(() => localStorage.setItem("sidebar:isOpen", String(open)), [open]);
+
+  const content = (
+    <ScrollArea className="h-full p-4">
+      <nav className="flex flex-col gap-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              clsx(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-sand-100 text-earth-600"
+                  : "text-sand-600 hover:bg-sand-50"
+              )
+            }
+          >
+            {/* Dynamically import lucide icons */}
+            {React.createElement(require("lucide-react")[item.icon], {
+              size: 18,
+              className: "shrink-0",
+            })}
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+        <Separator className="my-2" />
+        {/* Profile shortcut */}
+        <NavLink
+          to="/profile"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sand-600 hover:bg-sand-50"
+        >
+          <Avatar size="sm" src={user?.user_metadata?.avatar_url} />
+          <span>{user?.user_metadata?.name ?? "Profile"}</span>
+        </NavLink>
+        <NavLink
+          to="/settings"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sand-600 hover:bg-sand-50"
+        >
+          <Settings size={18} className="shrink-0" />
+          <span>Settings</span>
+        </NavLink>
+      </nav>
+    </ScrollArea>
+  );
+
+  return (
+    <>
+      {/* Mobile trigger */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild className="md:hidden">
+          <Button variant="ghost" size="icon" aria-label="Open sidebar">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="p-0"
+          overlayClassName="bg-black/30"
+        >
+          {content}
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={clsx(
+          "hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 transition-transform",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {content}
+      </aside>
+    </>
+  );
+}
+```
+
+**2. Expose state globally (optional)**
+If other components must know whether the sidebar is open, wrap `Sidebar` in a context provider (`SidebarProvider`) stored in `src/context/SidebarContext.tsx`.
+
+**3. Update layout**
+`src/components/layout/AppLayout.tsx`
+
+```tsx
+import Sidebar from "@/components/ui/Sidebar";
+
+export default function AppLayout({ children }: React.PropsWithChildren) {
+  return (
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-1 pl-0 md:pl-[280px]">{children}</main>
+    </div>
+  );
+}
+```
+
+**4. Tailwind config**
+Ensure `sand` & `earth` palettes are in `tailwind.config.ts` (`extend.colors`). No change if already present.
+
+**5. Icons**
+Run `bun add lucide-react clsx`.
+
+**6. Testing**
+
+* Desktop: resize window ≥ 768 px, sidebar is always visible.
+* Mobile: resize < 768 px, sidebar hidden; click hamburger to open; swipe right to open via touch.
+* In both modes, check persistence after page reload.
+
+---
+
+### ✅ **Done criteria**
+
+* Sidebar behaves as specified for both viewports.
+* Navigation routes work and highlight correctly.
+* No ESLint/TypeScript errors; Vite hot-reloads on port 8080.
+* Lighthouse accessibility score ≥ 95.
+
+---
+
+**End of prompt** – paste above into Replit AI and run “Apply” to generate/update files automatically.
