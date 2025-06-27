@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import RestaurantContactInfo from './form/RestaurantContactInfo';
-import { Loader } from 'lucide-react';
+import { Loader, Trash2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 import { format } from "date-fns";
@@ -48,6 +48,7 @@ interface RestaurantReservationFormProps {
   onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>;
   defaultValues?: Partial<FormValues> & { trip_id?: string; day_id?: string; order_index?: number };
   isSubmitting?: boolean;
+  onDelete?: () => Promise<void>;
   tripId: string;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
@@ -57,6 +58,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   onSubmit,
   defaultValues,
   isSubmitting = false,
+  onDelete,
   tripId,
   tripArrivalDate,
   tripDepartureDate,
@@ -390,26 +392,45 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
-          onClick={(e) => {
-            console.log('Save button clicked');
-            console.log('Form state:', form.formState);
-            console.log('Form values:', form.getValues());
-            console.log('Form errors:', form.formState.errors);
-          }}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Reservation'
-          )}
-        </Button>
+        {/* Buttons */}
+        <div className="flex justify-between items-center pt-4">
+          <div>
+            {defaultValues?.id && onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onDelete}
+                disabled={isSubmitting}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+            )}
+          </div>
+          <div>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
+              onClick={(e) => {
+                console.log('Save button clicked');
+                console.log('Form state:', form.formState);
+                console.log('Form values:', form.getValues());
+                console.log('Form errors:', form.formState.errors);
+              }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Reservation'
+              )}
+            </Button>
+          </div>
+        </div>
         
 
       </form>
