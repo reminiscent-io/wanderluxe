@@ -477,6 +477,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Delete button positioned on left side of form buttons with red styling and hover effects
   - Includes proper error handling, success notifications, and automatic data refresh after deletion
   - Enhanced accommodation management workflow with complete CRUD operations in dialog interface
+- June 27, 2025. Added delete functionality to transportation dialog with trash icon:
+  - Added Trash2 icon import and onDelete prop to TransportationForm interface
+  - Implemented proper delete functionality in TransportationDialog using direct Supabase database operations
+  - Added red trash icon delete button that appears only when editing existing transportation items
+  - Delete button positioned on left side with justify-between layout, red styling and hover effects
+  - Includes proper error handling, success notifications, and automatic data refresh after deletion
+  - Enhanced transportation management workflow with complete CRUD operations in dialog interface
 
 ## User Preferences
 
