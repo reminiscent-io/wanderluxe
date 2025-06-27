@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar from "@/components/layout/Sidebar";
-import SecondarySidebar from "@/components/layout/SecondarySidebar";
 import { useTripQuery } from '@/hooks/useTripQuery';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
@@ -11,14 +10,11 @@ import TripDetailsError from '@/components/trip/details/TripDetailsError';
 import TripTabs from '@/components/trip/details/TripTabs';
 import AccommodationsSection from '@/components/trip/AccommodationsSection';
 import TransportationSection from '@/components/trip/TransportationSection';
-import { cn } from '@/lib/utils';
 
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
   const [activeTab, setActiveTab] = useState('timeline');
-  const [secondarySidebarOpen, setSecondarySidebarOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   // Use the custom hook for trip data fetching
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
@@ -47,34 +43,12 @@ const TripDetails = () => {
     setActiveTab(tab);
   };
 
-  const handleSubItemClick = (subItemId: string) => {
-    setActiveSection(subItemId);
-    setSecondarySidebarOpen(true);
-  };
-
-  const handleCloseSecondarySidebar = () => {
-    setSecondarySidebarOpen(false);
-    setActiveSection(null);
-  };
-
-  const sidebar = <Sidebar 
-    tripId={tripId} 
-    activeTab={activeTab} 
-    onTabChange={handleTabChange}
-    onSubItemClick={handleSubItemClick}
-  />;
+  const sidebar = <Sidebar tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
   return (
     <div className="flex min-h-screen">
       {sidebar}
-      <SecondarySidebar 
-        isOpen={secondarySidebarOpen}
-        onClose={handleCloseSecondarySidebar}
-        activeSection={activeSection}
-        tripId={tripId}
-        displayData={displayData}
-      />
-      <main className={`flex-1 pl-0 md:pl-[280px] transition-all duration-300 ${secondarySidebarOpen ? "md:pl-[600px]" : "md:pl-[280px]"}`}>
+      <main className="flex-1 pl-0 md:pl-[280px]">
         <div className="min-h-screen flex flex-col">
           <Navigation mobileMenuTrigger={sidebar} />
 

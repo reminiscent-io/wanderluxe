@@ -29,7 +29,6 @@ interface SidebarProps {
   tripId?: string;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
-  onSubItemClick?: (subItemId: string) => void;
 }
 
 export const tripNavItems = [
@@ -49,28 +48,17 @@ export const tripNavItems = [
   { id: "booking", label: "Booking", icon: Package },
 ];
 
-export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick }: SidebarProps) {
+export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  // Always show sidebar when viewing a trip, allow collapsing only on other pages
   const [open, setOpen] = useState<boolean>(
-    () => tripId ? true : JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
+    () => JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
   );
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   useEffect(() => {
-    // Don't persist sidebar state when viewing a trip (always open)
-    if (!tripId) {
-      localStorage.setItem("sidebar:isOpen", String(open));
-    }
-  }, [open, tripId]);
-
-  // Force sidebar open when viewing a trip
-  useEffect(() => {
-    if (tripId && !open) {
-      setOpen(true);
-    }
-  }, [tripId, open]);
+    localStorage.setItem("sidebar:isOpen", String(open));
+  }, [open]);
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -90,9 +78,6 @@ export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick
   };
 
   const handleSubItemClick = (subItemId: string) => {
-    if (onSubItemClick) {
-      onSubItemClick(subItemId);
-    }
     if (onTabChange) {
       onTabChange(subItemId);
     }
@@ -252,43 +237,39 @@ export default function Sidebar({ tripId, activeTab, onTabChange, onSubItemClick
 
   return (
     <>
-      {/* Mobile trigger - only show on mobile */}
-      <div className="md:hidden">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Open sidebar">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="left"
-            className="p-0 w-[280px]"
-          >
-            {content}
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      {/* Desktop sidebar toggle button - hidden when viewing a trip */}
-      {!tripId && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setOpen(!open)}
-          className={cn(
-            "hidden md:flex fixed top-4 z-[202] h-8 w-8 bg-white shadow-md ring-1 ring-sand-200/40 hover:bg-sand-50 transition-all",
-            open ? "left-[260px]" : "left-4"
-          )}
-          aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+      {/* Mobile trigger */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild className="md:hidden">
+          <Button variant="ghost" size="icon" aria-label="Open sidebar">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="p-0 w-[280px]"
         >
-          <Menu className="h-4 w-4" />
-        </Button>
-      )}
+          {content}
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop sidebar toggle button - always visible */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "hidden md:flex fixed top-4 z-[202] h-8 w-8 bg-white shadow-md ring-1 ring-sand-200/40 hover:bg-sand-50 transition-all",
+          open ? "left-[260px]" : "left-4"
+        )}
+        aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+      >
+        <Menu className="h-4 w-4" />
+      </Button>
 
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 transition-transform z-[10]",
+          "hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 transition-transform z-[201]",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >

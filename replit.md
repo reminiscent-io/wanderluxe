@@ -247,14 +247,6 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added expandable Timeline subsections with Trip Dates, Accommodations, and Transportation
   - Implemented hierarchical navigation with collapsible sections and chevron indicators
   - Enhanced TripTabs component to display detailed views for each subsection with real trip data
-  - Created secondary sidebar that extends directly from left sidebar at 280px position
-  - Modified left sidebar to always be visible when viewing trips (removed collapsible behavior)
-  - Integrated dedicated action panels for each section with add/edit buttons and detailed information
-  - Added smooth animations and responsive layout adjustments for dual-sidebar interface
-  - Connected secondary sidebar to real trip data for authentic accommodation and transportation details
-  - Main content area automatically adjusts from 280px to 600px left padding when secondary sidebar opens
-  - Fixed z-index positioning so sidebars appear at same level as day cards and page content (no overlay behavior)
-  - Fixed mobile Sheet component causing dark overlay on desktop by wrapping in mobile-only container
 
 ## User Preferences
 
