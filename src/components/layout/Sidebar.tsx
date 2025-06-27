@@ -212,8 +212,9 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
       content: content.content
     });
 
+    // Keep the main tab on 'timeline' instead of switching to the subitem
     if (onTabChange) {
-      onTabChange(subItemId);
+      onTabChange('timeline');
     }
   };
 
