@@ -109,6 +109,10 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
   const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
   const [isEditDatesDialogOpen, setIsEditDatesDialogOpen] = useState(false);
+  
+  // Selected items for editing
+  const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
+  const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -153,7 +157,19 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                           size="sm" 
                           variant="ghost" 
                           className="h-6 w-6 p-0"
-                          onClick={() => setIsAccommodationDialogOpen(true)}
+                          onClick={() => {
+                            // Set dummy accommodation data for editing
+                            setSelectedAccommodation({
+                              stay_id: 'ritz-carlton-rome',
+                              hotel_name: 'The Ritz-Carlton',
+                              hotel_checkin_date: '2025-02-12',
+                              hotel_checkout_date: '2025-02-15',
+                              cost: 6003,
+                              checkin_time: '14:00',
+                              checkout_time: '11:00'
+                            });
+                            setIsAccommodationDialogOpen(true);
+                          }}
                         >
                           <Edit size={12} />
                         </Button>
@@ -199,7 +215,21 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                           size="sm" 
                           variant="ghost" 
                           className="h-6 w-6 p-0"
-                          onClick={() => setIsTransportationDialogOpen(true)}
+                          onClick={() => {
+                            // Set dummy transportation data for editing
+                            setSelectedTransportation({
+                              id: 'flight-to-rome',
+                              type: 'flight',
+                              departure_location: 'New York JFK',
+                              arrival_location: 'Rome FCO',
+                              start_date: '2025-02-12',
+                              start_time: '08:00',
+                              end_date: '2025-02-12',
+                              end_time: '20:00',
+                              cost: 850
+                            });
+                            setIsTransportationDialogOpen(true);
+                          }}
                         >
                           <Edit size={12} />
                         </Button>
@@ -492,6 +522,26 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 // Could add refresh logic here if needed
               }}
             />
+
+            {/* Basic Edit Dates Dialog - Placeholder */}
+            <Dialog open={isEditDatesDialogOpen} onOpenChange={setIsEditDatesDialogOpen}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Edit Trip Dates</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <p className="text-sm text-sand-600">
+                    Date editing functionality will be implemented here. This connects to the existing trip date management system.
+                  </p>
+                  <Button 
+                    onClick={() => setIsEditDatesDialogOpen(false)}
+                    className="w-full"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </>
