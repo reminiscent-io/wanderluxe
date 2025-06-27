@@ -17,8 +17,9 @@ interface EditActivityDialogProps {
   activity: ActivityFormData;
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (updatedActivity: ActivityFormData) => void;
-  onDelete: (id: string) => void; // Added onDelete prop
+  onDelete: (id: string) => void;
   eventId: string;
+  tripDates?: { arrival_date: string; departure_date: string };
 }
 
 const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
@@ -27,8 +28,9 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
   activity,
   onActivityChange,
   onSubmit,
-  onDelete, // Added onDelete prop
+  onDelete,
   eventId,
+  tripDates,
 }) => {
   useEffect(() => {
     if (activityId) {
@@ -56,6 +58,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
           onCancel={() => onOpenChange(false)}
           submitLabel="Save Changes"
           eventId={eventId}
+          tripDates={tripDates}
         />
         <DialogFooter className="mt-4">
           <Button
