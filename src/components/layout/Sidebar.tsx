@@ -408,6 +408,15 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         <aside className="hidden md:block fixed left-0 top-0 h-screen w-[280px] bg-white shadow-lg ring-1 ring-sand-200/40 z-[201]">
           {content}
         </aside>
+
+        {/* Secondary Panel */}
+        <SecondaryPanel
+          isOpen={secondaryPanel.isOpen}
+          title={secondaryPanel.title}
+          onClose={closeSecondaryPanel}
+        >
+          {secondaryPanel.content}
+        </SecondaryPanel>
       </>
     );
   }
