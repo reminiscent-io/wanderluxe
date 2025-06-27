@@ -432,6 +432,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Updated SelectContent z-index from z-50 to z-[300] for proper layering above sidebar dialogs
   - Transportation form dropdowns now function correctly when adding/editing from sidebar
   - Consistent dropdown behavior across all transportation dialog interactions
+- June 27, 2025. Fixed mobile sidebar secondary panel overlay behavior:
+  - Updated all secondary panels to properly overlay main sidebar on mobile devices instead of appearing off-screen
+  - Changed positioning from fixed left-[280px] to left-0 md:left-[280px] for mobile overlay functionality
+  - Updated width from w-[320px] to w-full md:w-[320px] for full mobile screen coverage
+  - Fixed Accommodations, Transportation, Trip Dates, Activities, and Reservations panels
+  - Secondary panels now function correctly when tapping subcomponents on mobile sidebar
+  - Desktop behavior preserved with panels appearing to right of main sidebar at 320px width
 
 ## User Preferences
 
