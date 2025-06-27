@@ -185,14 +185,17 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     enabled: !!tripId
   });
 
-  // Reservations query
+  // Reservations query with day dates
   const { data: reservations = [] } = useQuery({
     queryKey: ['reservations', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       const { data, error } = await supabase
         .from('reservations')
-        .select('*')
+        .select(`
+          *,
+          trip_days!inner(date)
+        `)
         .eq('trip_id', tripId)
         .order('reservation_time', { ascending: false });
       
@@ -633,9 +636,9 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                   <p className="text-sand-600 text-sm">No reservations added yet.</p>
                 ) : (
                   (() => {
-                    // Group reservations by date
+                    // Group reservations by date from trip_days relationship
                     const grouped = reservations.reduce((acc, reservation) => {
-                      const date = reservation.reservation_date || 'No Date';
+                      const date = reservation.trip_days?.date || 'No Date';
                       if (!acc[date]) acc[date] = [];
                       acc[date].push(reservation);
                       return acc;
