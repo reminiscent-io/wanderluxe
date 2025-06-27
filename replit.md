@@ -518,6 +518,11 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced dialog event handling to protect against accidental closures during restaurant search
   - Reservation dialog now properly allows clicking on restaurant search results for selection
   - Fixed z-index and event bubbling issues that were causing dropdown interactions to close the dialog
+- June 27, 2025. Fixed mobile sidebar secondary panel visibility:
+  - Updated z-index from z-40 to z-[60] for all secondary sidebar panels (Accommodations, Transportation, Trip Dates, Activities, Reservations)
+  - Secondary panels now properly appear above mobile sheet drawer on mobile devices
+  - Fixed mobile view where secondary sidebar extensions were not visible due to z-index layering issues
+  - Enhanced responsive sidebar experience with proper layering hierarchy for mobile interactions
 
 ## User Preferences
 
