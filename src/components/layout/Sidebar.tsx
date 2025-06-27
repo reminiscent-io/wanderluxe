@@ -29,6 +29,14 @@ import { cn } from "@/lib/utils";
 import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import NavigationLogo from "../NavigationLogo";
+import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
+import TransportationDialog from "../trip/transportation/TransportationDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface SidebarProps {
   tripId?: string;
@@ -98,19 +106,9 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   }>({ isOpen: false, title: '', content: null });
   
   // Dialog states for functional buttons
-  const [dialogStates, setDialogStates] = useState({
-    accommodationDialog: false,
-    transportationDialog: false,
-    editDatesDialog: false,
-  });
-
-  const openDialog = (dialogType: keyof typeof dialogStates) => {
-    setDialogStates(prev => ({ ...prev, [dialogType]: true }));
-  };
-
-  const closeDialog = (dialogType: keyof typeof dialogStates) => {
-    setDialogStates(prev => ({ ...prev, [dialogType]: false }));
-  };
+  const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
+  const [isTransportationDialogOpen, setIsTransportationDialogOpen] = useState(false);
+  const [isEditDatesDialogOpen, setIsEditDatesDialogOpen] = useState(false);
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -141,7 +139,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => openDialog('accommodationDialog')}
+                  onClick={() => setIsAccommodationDialogOpen(true)}
                 >
                   <Plus size={16} className="mr-2" />
                   Add Accommodation
@@ -155,7 +153,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                           size="sm" 
                           variant="ghost" 
                           className="h-6 w-6 p-0"
-                          onClick={() => openDialog('accommodationDialog')}
+                          onClick={() => setIsAccommodationDialogOpen(true)}
                         >
                           <Edit size={12} />
                         </Button>
@@ -187,7 +185,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => openDialog('transportationDialog')}
+                  onClick={() => setIsTransportationDialogOpen(true)}
                 >
                   <Plus size={16} className="mr-2" />
                   Add Transportation
@@ -201,7 +199,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                           size="sm" 
                           variant="ghost" 
                           className="h-6 w-6 p-0"
-                          onClick={() => openDialog('transportationDialog')}
+                          onClick={() => setIsTransportationDialogOpen(true)}
                         >
                           <Edit size={12} />
                         </Button>
@@ -245,7 +243,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => openDialog('editDatesDialog')}
+                  onClick={() => setIsEditDatesDialogOpen(true)}
                 >
                   <Edit size={16} className="mr-2" />
                   Edit Dates
@@ -471,6 +469,31 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         >
           {secondaryPanel.content}
         </SecondaryPanel>
+
+        {/* Functional Dialogs */}
+        {tripId && (
+          <>
+            <AccommodationDialog
+              tripId={tripId}
+              open={isAccommodationDialogOpen}
+              onOpenChange={setIsAccommodationDialogOpen}
+              onSuccess={() => {
+                setIsAccommodationDialogOpen(false);
+                // Could add refresh logic here if needed
+              }}
+            />
+            
+            <TransportationDialog
+              tripId={tripId}
+              open={isTransportationDialogOpen}
+              onOpenChange={setIsTransportationDialogOpen}
+              onSuccess={() => {
+                setIsTransportationDialogOpen(false);
+                // Could add refresh logic here if needed
+              }}
+            />
+          </>
+        )}
       </>
     );
   }
