@@ -285,6 +285,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added trip arrival/departure date props throughout component hierarchy for proper date validation
   - Fixed TimelineView missing handleDayDelete function to resolve component errors
   - Reservation form now provides complete date-aware scheduling with proper trip date constraints
+- June 27, 2025. Enhanced sidebar reservations display with date-based grouping:
+  - Implemented date-based grouping for reservations using reservation_date field instead of parsing time
+  - Added chronological date sorting with proper "No Date" handling for incomplete records
+  - Enhanced time-based sorting within each date group for logical reservation ordering
+  - Added consistent date section headers matching activities display pattern (e.g., "Wed, Feb 12")
+  - Fixed reservation time display to show time-only format since reservation_time is timezone-agnostic
+  - Reservations sidebar now provides organized date hierarchy with proper visual separation and indentation
 - June 27, 2025. Enhanced sidebar to use real trip data instead of mock data:
   - Integrated useTripQuery hook to fetch actual accommodations from database
   - Fixed accommodation edit functionality to load real hotel data when clicking edit buttons
