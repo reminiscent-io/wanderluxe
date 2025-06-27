@@ -401,6 +401,8 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const handleEditActivity = async (id: string, updatedActivity: ActivityFormData) => {
     try {
+      console.log('Editing activity with ID:', id, 'Updated data:', updatedActivity);
+      
       if (!updatedActivity.title.trim()) {
         throw new Error('Activity title is required');
       }
@@ -408,12 +410,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       // Find the day_id based on the selected date
       const { data: tripDay, error: tripDayError } = await supabase
         .from('trip_days')
-        .select('id')
+        .select('day_id')
         .eq('trip_id', tripId)
         .eq('date', updatedActivity.date)
         .single();
 
+      console.log('Trip day lookup result:', { tripDay, tripDayError, searchDate: updatedActivity.date });
+
       if (tripDayError || !tripDay) {
+        console.error('Trip day lookup failed:', tripDayError, 'Date:', updatedActivity.date);
         throw new Error('Could not find trip day for selected date');
       }
 
@@ -422,7 +427,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         : null;
 
       const updates = {
-        day_id: tripDay.id,
+        day_id: tripDay.day_id,
         title: updatedActivity.title.trim(),
         description: updatedActivity.description?.trim() || null,
         start_time: updatedActivity.start_time || null,
@@ -431,12 +436,20 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         currency: updatedActivity.currency || 'USD',
       };
 
-      const { error } = await supabase
+      console.log('Updating activity with data:', updates);
+      
+      const { data: updateResult, error } = await supabase
         .from('day_activities')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (error) throw error;
+      console.log('Update result:', { updateResult, error });
+      
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
