@@ -860,9 +860,33 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               onAddActivity={async (activity) => {
                 // Handle activity submission logic here
                 try {
+                  // Get first day of trip for default day_id
+                  const { data: tripDays } = await supabase
+                    .from('trip_days')
+                    .select('day_id')
+                    .eq('trip_id', tripId)
+                    .order('date')
+                    .limit(1);
+                  
+                  if (!tripDays || tripDays.length === 0) throw new Error('No trip days available');
+                  const firstDay = tripDays[0];
+                  
+                  const activityData = {
+                    title: activity.title,
+                    description: activity.description || null,
+                    start_time: activity.start_time || null,
+                    end_time: activity.end_time || null,
+                    cost: activity.cost ? parseFloat(activity.cost) : null,
+                    currency: activity.currency,
+                    day_id: firstDay.day_id,
+                    trip_id: tripId,
+                    order_index: 0,
+                    is_paid: false
+                  };
+                  
                   const { error } = await supabase
                     .from('day_activities')
-                    .insert([{ ...activity, trip_id: tripId }]);
+                    .insert([activityData]);
                   if (error) throw error;
                   handleActivitySuccess();
                   setIsAddActivityDialogOpen(false);
@@ -874,9 +898,18 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               onEditActivity={async (id, updatedActivity) => {
                 // Handle activity update logic here
                 try {
+                  const activityUpdateData = {
+                    title: updatedActivity.title,
+                    description: updatedActivity.description || null,
+                    start_time: updatedActivity.start_time || null,
+                    end_time: updatedActivity.end_time || null,
+                    cost: updatedActivity.cost ? parseFloat(updatedActivity.cost) : null,
+                    currency: updatedActivity.currency
+                  };
+                  
                   const { error } = await supabase
                     .from('day_activities')
-                    .update(updatedActivity)
+                    .update(activityUpdateData)
                     .eq('id', id);
                   if (error) throw error;
                   handleActivitySuccess();
