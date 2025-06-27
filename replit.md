@@ -405,6 +405,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Replaced problematic new Date(date) calls with manual string parsing in dropdown SelectItem components
   - Fixed reservation dropdown interaction by removing blocking onPointerDownOutside event handler from dialog
   - Added proper z-index (z-[999]) to SelectContent ensuring dropdown appears above dialog content
+  - Fixed reservation date change saving by implementing day_id lookup directly in RestaurantReservationForm
+  - Moved date-to-day_id mapping logic from DiningList to form submission to handle all reservation editing paths
   - Reservation date changes now work correctly with proper database relationships and accurate date display
   - Both activities and reservations now handle date changes consistently with correct schema alignment
 
