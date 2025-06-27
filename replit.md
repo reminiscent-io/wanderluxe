@@ -314,6 +314,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added proper query invalidation to refresh sidebar data after accommodation changes
   - Replaced all dummy data with authentic database records for accommodations and trip information
   - Sidebar now displays real hotel names, costs, currencies, and check-in/check-out dates from database
+- June 27, 2025. Completed consistent time formatting and date grouping across all sidebar sections:
+  - Applied 12-hour time formatting with lowercase am/pm (e.g., "9:00am - 10:00pm") to activities and reservations
+  - Enhanced accommodations with date-based grouping using hotel_checkin_date field
+  - Added chronological sorting and consistent date section headers for accommodations
+  - All four sidebar sections now use identical formatting patterns: date grouping, time formatting, and visual hierarchy
+  - Sidebar provides comprehensive date-organized view with uniform 12-hour time display throughout
+  - Updated accommodation details to show "Check-in: MM/DD time" and "Check-out: MM/DD time" format for clear scheduling information
 - June 27, 2025. Completed Activities and Reservations subcomponents with full CRUD functionality:
   - Added Activities and Reservations as new Timeline subcomponents with MapPin and UtensilsCrossed icons
   - Integrated real-time data fetching for both activities (day_activities table) and reservations (reservations table)

@@ -380,39 +380,118 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 {accommodations.length === 0 ? (
                   <p className="text-sand-600 text-sm">No accommodations added yet.</p>
                 ) : (
-                  accommodations.map((accommodation) => (
-                    <div key={accommodation.stay_id} className="p-3 bg-sand-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{accommodation.hotel}</h4>
-                        <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0"
-                            onClick={() => handleAccommodationEdit(accommodation)}
-                          >
-                            <Edit size={12} />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0 text-red-500"
-                            onClick={() => handleAccommodationDelete(accommodation.stay_id)}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
-                        </div>
+                  (() => {
+                    // Group accommodations by check-in date
+                    const grouped = accommodations.reduce((acc, accommodation) => {
+                      const date = accommodation.hotel_checkin_date || 'No Date';
+                      if (!acc[date]) {
+                        acc[date] = [];
+                      }
+                      acc[date].push(accommodation);
+                      return acc;
+                    }, {} as Record<string, typeof accommodations>);
+
+                    // Sort dates chronologically
+                    const sortedDates = Object.keys(grouped).sort((a, b) => {
+                      if (a === 'No Date') return 1;
+                      if (b === 'No Date') return -1;
+                      return new Date(a).getTime() - new Date(b).getTime();
+                    });
+
+                    return sortedDates.map((date) => (
+                      <div key={date} className="space-y-2">
+                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
+                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </h5>
+                        {grouped[date]
+                          .sort((a, b) => {
+                            if (!a.checkin_time) return 1;
+                            if (!b.checkin_time) return -1;
+                            return a.checkin_time.localeCompare(b.checkin_time);
+                          })
+                          .map((accommodation) => (
+                            <div key={accommodation.stay_id} className="p-3 bg-sand-50 rounded-lg ml-2">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium text-sm">{accommodation.hotel}</h4>
+                                <div className="flex gap-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => handleAccommodationEdit(accommodation)}
+                                  >
+                                    <Edit size={12} />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0 text-red-500"
+                                    onClick={() => handleAccommodationDelete(accommodation.stay_id)}
+                                  >
+                                    <Trash2 size={12} />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="text-xs text-sand-600 space-y-1">
+                                {(() => {
+                                  // Format time as 9:00am
+                                  const formatTime = (time: string) => {
+                                    if (!time) return '';
+                                    try {
+                                      const date = new Date(`2000-01-01T${time}`);
+                                      return date.toLocaleTimeString('en-US', { 
+                                        hour: 'numeric', 
+                                        minute: '2-digit',
+                                        hour12: true 
+                                      }).toLowerCase();
+                                    } catch {
+                                      return time;
+                                    }
+                                  };
+
+                                  // Format date as MM/DD
+                                  const formatDate = (dateStr: string) => {
+                                    if (!dateStr) return '';
+                                    try {
+                                      const date = new Date(dateStr);
+                                      return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+                                    } catch {
+                                      return dateStr;
+                                    }
+                                  };
+
+                                  const checkinDate = formatDate(accommodation.hotel_checkin_date || '');
+                                  const checkoutDate = formatDate(accommodation.hotel_checkout_date || '');
+                                  const checkinTime = formatTime(accommodation.checkin_time || '');
+                                  const checkoutTime = formatTime(accommodation.checkout_time || '');
+
+                                  const result = [];
+                                  if (checkinDate || checkinTime) {
+                                    result.push(`Check-in: ${checkinDate}${checkinTime ? ` ${checkinTime}` : ''}`);
+                                  }
+                                  if (checkoutDate || checkoutTime) {
+                                    result.push(`Check-out: ${checkoutDate}${checkoutTime ? ` ${checkoutTime}` : ''}`);
+                                  }
+                                  
+                                  return result.map((line, index) => (
+                                    <div key={index}>{line}</div>
+                                  ));
+                                })()}
+                              </div>
+                              {accommodation.cost && (
+                                <p className="text-xs text-sand-600">
+                                  {accommodation.currency || 'USD'} {accommodation.cost}
+                                </p>
+                              )}
+                            </div>
+                          ))}
                       </div>
-                      <p className="text-xs text-sand-600">
-                        {accommodation.checkin_time} - {accommodation.checkout_time}
-                      </p>
-                      {accommodation.cost && (
-                        <p className="text-xs text-sand-600">
-                          {accommodation.currency || 'USD'} {accommodation.cost}
-                        </p>
-                      )}
-                    </div>
-                  ))
+                    ));
+                  })()
                 )}
               </div>
             </div>
