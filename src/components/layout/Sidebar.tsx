@@ -227,6 +227,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   };
 
   const handleAccommodationEdit = (accommodation: any) => {
+    console.log('Sidebar - Setting selected accommodation for edit:', accommodation);
     setSelectedAccommodation(accommodation);
     setAccommodationOpen(true);
   };
@@ -884,7 +885,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                 })()}
                               </p>
                               <p className="text-xs text-sand-600">
-                                {reservation.number_of_people} people
+                                {reservation.number_of_people && `${reservation.number_of_people} people`}
                               </p>
                               {reservation.cost && (
                                 <p className="text-xs text-sand-600">
@@ -1041,7 +1042,9 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         initialData={selectedAccommodation}
         tripId={tripId || ''}
         onSuccess={() => {
+          console.log('Sidebar - Accommodation save success, invalidating queries');
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+          setSelectedAccommodation(null);
         }}
       />
 
