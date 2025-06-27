@@ -484,6 +484,14 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Delete button positioned on left side with justify-between layout, red styling and hover effects
   - Includes proper error handling, success notifications, and automatic data refresh after deletion
   - Enhanced transportation management workflow with complete CRUD operations in dialog interface
+- June 27, 2025. Added delete functionality to activities dialog with trash icon:
+  - Added Trash2 icon import and onDelete prop to ActivityForm interface
+  - Updated ActivityForm button layout to match accommodation and transportation formatting with justify-between layout
+  - Added red trash icon delete button that appears only when editing existing activities (submitLabel === 'Save Changes')
+  - Integrated delete functionality into ActivityForm instead of separate DialogFooter section
+  - Removed redundant DialogFooter and Button imports from EditActivityDialog component
+  - Delete button positioned on left side with red styling and hover effects matching other dialogs
+  - Enhanced activity management workflow with consistent CRUD operations across all dialog interfaces
 
 ## User Preferences
 
