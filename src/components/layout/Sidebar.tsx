@@ -34,13 +34,12 @@ import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
-import ActivityDialogs from "../trip/day/activities/ActivityDialogs";
+
 import ActivitiesList from "../trip/day/activities/ActivitiesList";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import { useTripQuery } from "@/hooks/useTripQuery";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivityFormData } from "@/types/trip";
 import { Currency } from '@/utils/currencyConstants';
 import {
   Dialog,
@@ -75,25 +74,12 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   const [accommodationOpen, setAccommodationOpen] = useState(false);
   const [transportationOpen, setTransportationOpen] = useState(false);
   const [tripDatesOpen, setTripDatesOpen] = useState(false);
-  const [activityOpen, setActivityOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
   
   // Selected items for editing
   const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
   const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
-  const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
-  
-  // Activity form data
-  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
-    title: '',
-    description: '',
-    date: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD' as Currency
-  });
 
   // Load sidebar state from localStorage
   useEffect(() => {
@@ -771,24 +757,20 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         }}
       />
 
-      <ActivityDialogs
-        isOpen={activityOpen}
-        onOpenChange={setActivityOpen}
-        selectedActivity={selectedActivity}
-        activityEdit={activityEdit}
-        setActivityEdit={setActivityEdit}
-        tripId={tripId}
-        tripDates={{
-          arrival: trip?.arrival_date || '',
-          departure: trip?.departure_date || ''
-        }}
-      />
+
 
       <RestaurantReservationDialog
-        open={reservationOpen}
+        isOpen={reservationOpen}
         onOpenChange={setReservationOpen}
-        selectedReservation={selectedReservation}
+        editingReservation={selectedReservation}
         tripId={tripId}
+        title={selectedReservation ? 'Edit Reservation' : 'Add Reservation'}
+        isSubmitting={false}
+        onSubmit={async (data) => {
+          // Handle reservation submission
+          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+          setReservationOpen(false);
+        }}
       />
     </>
   );
