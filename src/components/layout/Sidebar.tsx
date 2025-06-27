@@ -137,17 +137,19 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     enabled: !!tripId
   });
 
-  // Fetch activities data
+  // Fetch activities data with trip day dates
   const { data: activities = [] } = useQuery({
     queryKey: ['activities', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       const { data, error } = await supabase
         .from('day_activities')
-        .select('*')
+        .select(`
+          *,
+          trip_days!inner(date)
+        `)
         .eq('trip_id', tripId)
-        .order('start_time', { ascending: false });
-      
+        .order('start_time');
       if (error) throw error;
       return data || [];
     },
@@ -322,10 +324,32 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             )
           };
         case 'activities':
-          const sortedActivities = activities.sort((a, b) => {
-            // Sort by start_time descending (activities use start_time, not date/time)
-            return (b.start_time || '').localeCompare(a.start_time || '');
-          });
+          // Group activities by date using trip_days data
+          const groupedActivities = activities.reduce((groups, activity) => {
+            const activityDate = activity.trip_days?.date || trip?.arrival_date || new Date().toISOString().split('T')[0];
+            if (!groups[activityDate]) {
+              groups[activityDate] = [];
+            }
+            groups[activityDate].push(activity);
+            return groups;
+          }, {} as Record<string, typeof activities>);
+
+          // Sort dates and activities within each date
+          const sortedDateGroups = Object.entries(groupedActivities)
+            .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+            .map(([date, dateActivities]) => ({
+              date,
+              activities: dateActivities.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+            }));
+
+          const formatTime = (timeStr: string) => {
+            if (!timeStr) return '';
+            const [hours, minutes] = timeStr.split(':');
+            const hour24 = parseInt(hours);
+            const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+            const ampm = hour24 >= 12 ? 'PM' : 'AM';
+            return `${hour12}:${minutes} ${ampm}`;
+          };
           
           return {
             title: 'Activities',
@@ -360,7 +384,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                                 setActivityEdit({
                                   title: activity.title || '',
                                   description: activity.description || '',
-                                  date: activity.activity_date || trip?.arrival_date,
+                                  date: trip?.arrival_date,
                                   start_time: activity.start_time || '',
                                   end_time: activity.end_time || '',
                                   cost: activity.cost?.toString() || '',
@@ -470,8 +494,17 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                               size="sm" 
                               variant="ghost" 
                               className="h-6 w-6 p-0"
-                              onClick={() => {
-                                console.log('Delete reservation:', reservation.id);
+                              onClick={async () => {
+                                try {
+                                  const { error } = await supabase
+                                    .from('reservations')
+                                    .delete()
+                                    .eq('id', reservation.id);
+                                  if (error) throw error;
+                                  queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+                                } catch (error) {
+                                  console.error('Error deleting reservation:', error);
+                                }
                               }}
                             >
                               <Trash2 size={12} />
