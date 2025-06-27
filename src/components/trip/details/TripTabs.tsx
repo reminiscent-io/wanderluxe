@@ -12,11 +12,13 @@ import { Trip } from '@/types/trip';
 interface TripTabsProps {
   tripId: string | undefined;
   displayData: Trip;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData }) => {
+const TripTabs: React.FC<TripTabsProps> = ({ tripId, displayData, activeTab = 'timeline', onTabChange }) => {
   return (
-    <Tabs defaultValue="timeline" className="w-full flex flex-col mt-0">
+    <Tabs value={activeTab} onValueChange={onTabChange} className="w-full flex flex-col mt-0">
       <div className="w-full overflow-x-auto no-scrollbar flex justify-center">
         <TabsList className="flex w-fit mb-8 rounded-xl p-1 bg-transparent gap-1 md:gap-2 px-2 md:px-4">
         <TabsTrigger 
