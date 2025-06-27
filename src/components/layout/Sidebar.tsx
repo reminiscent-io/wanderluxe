@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { toast } from "sonner";
 import { 
   Menu, 
   Calendar, 
@@ -305,10 +306,12 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const handleActivityEdit = (activity: any) => {
     setSelectedActivity(activity.id);
+    // Extract date from trip_days relationship
+    const activityDate = activity.trip_days?.date || '';
     setActivityEdit({
       title: activity.title || '',
       description: activity.description || '',
-      date: activity.date || '',
+      date: activityDate,
       start_time: activity.start_time || '',
       end_time: activity.end_time || '',
       cost: activity.cost?.toString() || '',
@@ -329,26 +332,96 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     }
   };
 
+  // Helper function to get day_id from date
+  const getDayIdFromDate = async (selectedDate: string): Promise<string | null> => {
+    if (!tripId || !selectedDate) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', tripId)
+        .eq('date', selectedDate)
+        .single();
+      
+      if (error) {
+        console.error('Error finding day_id for date:', error);
+        return null;
+      }
+      
+      return data?.day_id || null;
+    } catch (error) {
+      console.error('Error in getDayIdFromDate:', error);
+      return null;
+    }
+  };
+
   // Activity dialog handlers for ActivityDialogs component
   const handleAddActivity = async (activity: ActivityFormData) => {
     try {
-      // You'll need to implement the actual add logic here
-      // This should match what's in the main timeline component
+      const dayId = await getDayIdFromDate(activity.date);
+      if (!dayId) {
+        toast.error('Could not find the selected day');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('day_activities')
+        .insert([{
+          trip_id: tripId,
+          day_id: dayId,
+          title: activity.title,
+          description: activity.description || null,
+          start_time: activity.start_time || null,
+          end_time: activity.end_time || null,
+          cost: activity.cost ? parseFloat(activity.cost) : null,
+          currency: activity.currency || 'USD',
+          order_index: 0,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+      
+      toast.success('Activity added successfully');
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setActivityOpen(false);
     } catch (error) {
       console.error('Error adding activity:', error);
+      toast.error('Failed to add activity');
     }
   };
 
   const handleEditActivity = async (id: string, updatedActivity: ActivityFormData) => {
     try {
-      // You'll need to implement the actual edit logic here
-      // This should match what's in the main timeline component
+      const dayId = await getDayIdFromDate(updatedActivity.date);
+      if (!dayId) {
+        toast.error('Could not find the selected day');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('day_activities')
+        .update({
+          day_id: dayId,
+          title: updatedActivity.title,
+          description: updatedActivity.description || null,
+          start_time: updatedActivity.start_time || null,
+          end_time: updatedActivity.end_time || null,
+          cost: updatedActivity.cost ? parseFloat(updatedActivity.cost) : null,
+          currency: updatedActivity.currency || 'USD'
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Activity updated successfully');
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setSelectedActivity(null);
     } catch (error) {
       console.error('Error editing activity:', error);
+      toast.error('Failed to update activity');
     }
   };
 
@@ -572,7 +645,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                   </Button>
                                 </div>
                               </div>
-                              <p className="text-xs text-sand-600">{transport.type}</p>
+                              
                               <p className="text-xs text-sand-600">
                                 {(() => {
                                   // Format time as 9:00pm - 10:00pm
