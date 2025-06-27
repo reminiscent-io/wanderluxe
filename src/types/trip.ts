@@ -4,6 +4,7 @@ import { Currency } from '@/utils/currencyConstants';
 export interface ActivityFormData {
   title: string;
   description?: string;
+  date?: string;
   start_time?: string;
   end_time?: string;
   cost?: string;

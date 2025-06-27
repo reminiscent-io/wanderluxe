@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
-import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
+import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
@@ -11,6 +11,8 @@ interface ActivityFormProps {
   onCancel: () => void;
   submitLabel: string;
   eventId: string;
+  tripDates?: { arrival_date: string; departure_date: string };
+  preselectedDate?: string;
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -20,6 +22,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   onCancel,
   submitLabel,
   eventId,
+  tripDates,
+  preselectedDate,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,6 +31,33 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   // New local state for time values
   const [startTime, setStartTime] = useState(activity.start_time || "");
   const [endTime, setEndTime] = useState(activity.end_time || "");
+
+  // Generate trip date options
+  const tripDateOptions = React.useMemo(() => {
+    if (!tripDates) return [];
+    
+    const dates = [];
+    const startDate = new Date(tripDates.arrival_date);
+    const endDate = new Date(tripDates.departure_date);
+    
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateString = d.toISOString().split('T')[0];
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+      const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      dates.push({
+        value: dateString,
+        label: `${dayName}, ${monthDay}`
+      });
+    }
+    return dates;
+  }, [tripDates]);
+
+  // Handle date preselection on component mount
+  React.useEffect(() => {
+    if (preselectedDate && !activity.date) {
+      onActivityChange({ ...activity, date: preselectedDate });
+    }
+  }, [preselectedDate, activity.date]);
 
   // Update local state when activity prop changes
   useEffect(() => {
@@ -53,6 +84,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     if (!activity.title.trim()) {
       newErrors.title = 'Title is required';
+    }
+
+    if (tripDateOptions.length > 0 && !activity.date) {
+      newErrors.date = 'Date is required';
     }
 
     if (activity.start_time && activity.end_time) {
@@ -126,6 +161,30 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         />
       </div>
 
+      {/* Date Selection */}
+      {tripDateOptions.length > 0 && (
+        <div>
+          <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+            Date <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="date"
+            value={activity.date || ''}
+            onChange={(e) => onActivityChange({ ...activity, date: e.target.value })}
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.date ? 'border-red-500' : 'border-gray-300'}`}
+            required
+          >
+            <option value="">Select a date</option>
+            {tripDateOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+        </div>
+      )}
+
       {/* Time Fields */}
       <div className="grid grid-cols-2 gap-4">
         {/* Start Time */}
@@ -184,7 +243,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <select
             id="currency"
             value={activity.currency}
-            onChange={(e) => onActivityChange({ ...activity, currency: e.target.value })}
+            onChange={(e) => onActivityChange({ ...activity, currency: e.target.value as any })}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           >
             {CURRENCIES.map((currency) => (
