@@ -7,9 +7,12 @@ import { useTripQuery } from '@/hooks/useTripQuery';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
 import TripDetailsError from '@/components/trip/details/TripDetailsError';
-import TripTabs from '@/components/trip/details/TripTabs';
-import AccommodationsSection from '@/components/trip/AccommodationsSection';
-import TransportationSection from '@/components/trip/TransportationSection';
+import TimelineView from "../components/trip/TimelineView";
+import BudgetView from "../components/trip/BudgetView";
+import BookingView from "../components/trip/BookingView";
+import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
+import ChatView from "../components/trip/chat/ChatView";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 
 const TripDetails = () => {
@@ -65,7 +68,38 @@ const TripDetails = () => {
 
           <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
             <div className="max-w-none mx-auto px-4 py-8">
-              <TripTabs tripId={tripId} displayData={displayData} activeTab={activeTab} onTabChange={handleTabChange} />
+              {/* Render content based on active tab */}
+              {activeTab === 'timeline' && (
+                <ErrorBoundary>
+                  <TimelineView 
+                    tripId={tripId}
+                    tripDates={{
+                      arrival_date: displayData?.arrival_date && displayData.arrival_date.trim() !== '' 
+                        ? displayData.arrival_date 
+                        : null,
+                      departure_date: displayData?.departure_date && displayData.departure_date.trim() !== '' 
+                        ? displayData.departure_date 
+                        : null
+                    }}
+                  />
+                </ErrorBoundary>
+              )}
+              
+              {activeTab === 'chat' && (
+                <ChatView tripId={tripId || ''} />
+              )}
+              
+              {activeTab === 'vision-board' && (
+                <VisionBoardView tripId={tripId} />
+              )}
+              
+              {activeTab === 'budget' && (
+                <BudgetView tripId={tripId} />
+              )}
+              
+              {activeTab === 'booking' && (
+                <BookingView tripId={tripId} />
+              )}
             </div>
           </div>
         </div>
