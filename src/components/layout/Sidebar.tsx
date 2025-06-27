@@ -254,14 +254,19 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const handleAccommodationDelete = async (stayId: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('accommodations')
         .delete()
-        .eq('stay_id', stayId);
+        .eq('stay_id', stayId)
+        .eq('trip_id', tripId);
+      
+      if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      toast({ title: 'Success', description: 'Accommodation deleted' });
     } catch (error) {
       console.error('Error deleting accommodation:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete accommodation' });
     }
   };
 
@@ -277,14 +282,19 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const handleTransportationDelete = async (id: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('transportation')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('trip_id', tripId);
+      
+      if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      toast({ title: 'Success', description: 'Transportation deleted' });
     } catch (error) {
       console.error('Error deleting transportation:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete transportation' });
     }
   };
 
@@ -300,14 +310,20 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const handleReservationDelete = async (id: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('reservations')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('trip_id', tripId);
+      
+      if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      toast({ title: 'Success', description: 'Reservation deleted' });
     } catch (error) {
       console.error('Error deleting reservation:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete reservation' });
     }
   };
 
@@ -339,14 +355,19 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const handleActivityDelete = async (id: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('day_activities')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('trip_id', tripId);
+      
+      if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      toast({ title: 'Success', description: 'Activity deleted' });
     } catch (error) {
       console.error('Error deleting activity:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete activity' });
     }
   };
 
