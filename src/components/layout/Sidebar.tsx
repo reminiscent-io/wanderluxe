@@ -31,20 +31,20 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { LogoFromSupabase } from "@/components/LogoFromSupabase";
+import LogoFromSupabase from "@/components/LogoFromSupabase";
 import { useTripQuery } from "@/hooks/useTripQuery";
 import { useTimelineEvents } from "@/hooks/use-timeline-events";
 import { useTransportationEvents } from "@/hooks/use-transportation-events";
-import { AccommodationDialog } from "@/components/trip/accommodation/AccommodationDialog";
-import { TransportationDialog } from "@/components/trip/transportation/TransportationDialog";
-import { TripDateEditDialog } from "@/components/trip/TripDateEditDialog";
-import { ActivityDialogs } from "@/components/trip/day/activities/ActivityDialogs";
-import { RestaurantReservationDialog } from "@/components/trip/dining/RestaurantReservationDialog";
+import AccommodationDialog from "@/components/trip/accommodation/AccommodationDialog";
+import TransportationDialog from "@/components/trip/transportation/TransportationDialog";
+import TripDateEditDialog from "@/components/trip/timeline/TripDateEditDialog";
+import ActivityDialogs from "@/components/trip/day/activities/ActivityDialogs";
+import RestaurantReservationDialog from "@/components/trip/dining/RestaurantReservationDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useReservationsRealtime } from "@/hooks/useReservationsRealtime";
 import { format, parseISO } from "date-fns";
-import type { ActivityFormData, Currency } from "@/types/trip";
+import type { ActivityFormData } from "@/types/trip";
 
 export const tripNavItems = [
   { id: 'timeline', label: 'Timeline', icon: Calendar },
@@ -89,7 +89,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     start_time: '',
     end_time: '',
     cost: '',
-    currency: 'USD' as Currency
+    currency: 'USD'
   });
   
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
@@ -99,7 +99,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     start_time: '',
     end_time: '',
     cost: '',
-    currency: 'USD' as Currency
+    currency: 'USD'
   });
 
   // Load sidebar state from localStorage
@@ -115,15 +115,15 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     localStorage.setItem('sidebar-open', JSON.stringify(isOpen));
   }, [isOpen]);
 
-  const { data: trip } = useTripQuery(tripId);
-  const { data: activities = [] } = useTimelineEvents(tripId || '');
-  const { data: transportation = [] } = useTransportationEvents(tripId || '');
+  const { trip } = useTripQuery(tripId);
+  const { events: activities = [] } = useTimelineEvents(tripId || '');
+  const { transportations: transportation = [] } = useTransportationEvents(tripId || '');
 
   // Fetch accommodations from trip data
   const accommodations = trip?.accommodations || [];
 
   // Fetch reservations with real-time updates for this trip
-  const allReservations = tripId ? useReservationsRealtime('', tripId).data || [] : [];
+  const allReservations = tripId ? useReservationsRealtime('', tripId).reservations || [] : [];
 
   const toggleExpanded = (item: string) => {
     setExpandedItems(prev => 
@@ -210,7 +210,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       start_time: '',
       end_time: '',
       cost: '',
-      currency: 'USD' as Currency
+      currency: 'USD'
     });
     setActivityOpen(true);
   };
@@ -996,11 +996,13 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       />
 
       <TripDateEditDialog
-        open={tripDatesOpen}
+        isOpen={tripDatesOpen}
         onOpenChange={setTripDatesOpen}
-        tripId={tripId}
-        currentArrivalDate={trip?.arrival_date || ''}
-        currentDepartureDate={trip?.departure_date || ''}
+        arrivalDate={trip?.arrival_date || ''}
+        departureDate={trip?.departure_date || ''}
+        onArrivalChange={() => {}}
+        onDepartureChange={() => {}}
+        onSave={() => setTripDatesOpen(false)}
       />
 
       <ActivityDialogs
