@@ -247,6 +247,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added expandable Timeline subsections with Trip Dates, Accommodations, and Transportation
   - Implemented hierarchical navigation with collapsible sections and chevron indicators
   - Enhanced TripTabs component to display detailed views for each subsection with real trip data
+- June 27, 2025. Modified sidebar to be permanently visible on trip pages:
+  - Removed main sidebar collapsible behavior for trip views - sidebar now always visible on desktop
+  - Maintained collapsible functionality only for subcomponents (Timeline sections like Accommodations, Transportation)
+  - Preserved mobile sheet drawer functionality for smaller screens
+  - Kept original collapsible behavior for non-trip pages (like My Trips)
+  - Fixed TypeScript errors and improved state management for mobile interactions
+  - Sidebar now provides persistent navigation context throughout trip planning workflow
 
 ## User Preferences
 
