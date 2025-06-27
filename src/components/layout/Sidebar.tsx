@@ -367,10 +367,19 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                   Add Activity
                 </Button>
                 <div className="space-y-2">
-                  {sortedActivities.length === 0 ? (
+                  {sortedDateGroups.length === 0 ? (
                     <p className="text-sm text-sand-600 text-center py-4">No activities added yet</p>
                   ) : (
-                    sortedActivities.map((activity) => (
+                    sortedDateGroups.map(({ date, activities: dateActivities }) => (
+                      <div key={date} className="mb-4">
+                        <div className="text-xs font-medium text-sand-700 mb-2 px-1">
+                          {new Date(date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </div>
+                        {dateActivities.map((activity) => (
                       <div key={activity.id} className="p-3 bg-sand-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium text-sm">{activity.title}</h4>
