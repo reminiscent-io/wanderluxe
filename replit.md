@@ -448,6 +448,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Connected TripDateEditDialog with working handlers instead of empty placeholder functions
   - Sidebar date editing now provides full functionality matching main TripDates component
   - Added proper error handling and user feedback through toast notifications
+- June 27, 2025. Removed redundant components from timeline view:
+  - Eliminated duplicate TripDates, AccommodationsSection, and TransportationSection from timeline
+  - Updated TimelineView component to focus solely on day-by-day itinerary management
+  - Removed unused imports and processing functions for hotel stays and transportation data
+  - Simplified TimelineContent component by removing hotelStays prop dependencies
+  - Timeline view now displays clean day cards with export functionality while sidebar handles all trip management
+  - Prevents UI duplication and ensures sidebar serves as single source for trip component management
 
 ## User Preferences
 

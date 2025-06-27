@@ -49,15 +49,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             onDelete={onDayDelete}
             tripArrivalDate={tripArrivalDate}
             tripDepartureDate={tripDepartureDate}
-            hotelStays={hotelStays.filter(stay => {
-              if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-              
-              const dayDate = new Date(day.date.split('T')[0]);
-              const checkinDate = new Date(stay.hotel_checkin_date.split('T')[0]);
-              const checkoutDate = new Date(stay.hotel_checkout_date.split('T')[0]);
-              
-              return dayDate >= checkinDate && dayDate <= checkoutDate;
-            })}
+            hotelStays={[]}
           />
         );
       })}
