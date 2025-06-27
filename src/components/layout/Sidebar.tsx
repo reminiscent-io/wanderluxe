@@ -32,6 +32,7 @@ import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
+import { useTripQuery } from "@/hooks/useTripQuery";
 import {
   Dialog,
   DialogContent,
@@ -229,7 +230,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                           onClick={() => {
                             // Set dummy transportation data for editing
                             setSelectedTransportation({
-                              id: 'flight-to-rome',
+                              id: '550e8400-e29b-41d4-a716-446655440000',
                               type: 'flight',
                               departure_location: 'New York JFK',
                               arrival_location: 'Rome FCO',
