@@ -71,7 +71,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
           <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
-          <SelectContent className="z-50 bg-sand-50">
+          <SelectContent className="z-[300] bg-sand-50">
             <SelectItem value="flight" className="cursor-pointer hover:bg-earth-100">Flight</SelectItem>
             <SelectItem value="train" className="cursor-pointer hover:bg-earth-100">Train</SelectItem>
             <SelectItem value="car_service" className="cursor-pointer hover:bg-earth-100">Car Service</SelectItem>
@@ -187,7 +187,7 @@ const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
             <SelectTrigger className="bg-white">
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
-            <SelectContent className="z-50 bg-sand-50">
+            <SelectContent className="z-[300] bg-sand-50">
               {CURRENCIES.map((currency) => (
                 <SelectItem
                   key={currency}

@@ -82,7 +82,7 @@ export const tripNavItems = [
       { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
     ]
   },
-  { title: "AI Assistant", icon: MessageCircle, href: "ai-assistant" },
+  { title: "AI Assistant", icon: MessageCircle, href: "chat" },
   { title: "Vision Board", icon: Lightbulb, href: "vision-board" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
