@@ -323,6 +323,29 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     }
   };
 
+  // Activity dialog handlers for ActivityDialogs component
+  const handleAddActivity = async (activity: ActivityFormData) => {
+    try {
+      // You'll need to implement the actual add logic here
+      // This should match what's in the main timeline component
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      setActivityOpen(false);
+    } catch (error) {
+      console.error('Error adding activity:', error);
+    }
+  };
+
+  const handleEditActivity = async (id: string, updatedActivity: ActivityFormData) => {
+    try {
+      // You'll need to implement the actual edit logic here
+      // This should match what's in the main timeline component
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      setSelectedActivity(null);
+    } catch (error) {
+      console.error('Error editing activity:', error);
+    }
+  };
+
   const handleEditDates = () => {
     setTripDatesOpen(true);
   };
@@ -561,7 +584,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleReservationAdd} className="bg-earth-500 hover:bg-earth-600 text-white">
                     <Plus size={14} className="mr-1" />
-                    Add
+                    Add Reservation
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setSecondaryPanel(null)}>
                     <ChevronLeft size={16} />
@@ -791,6 +814,22 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
           setReservationOpen(false);
         }}
+      />
+
+      <ActivityDialogs
+        isAddingActivity={activityOpen}
+        setIsAddingActivity={setActivityOpen}
+        editingActivity={selectedActivity}
+        setEditingActivity={setSelectedActivity}
+        newActivity={newActivity}
+        setNewActivity={setNewActivity}
+        activityEdit={activityEdit}
+        setActivityEdit={setActivityEdit}
+        onAddActivity={handleAddActivity}
+        onEditActivity={handleEditActivity}
+        onDeleteActivity={handleActivityDelete}
+        eventId={tripId || ''}
+        tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
       />
     </>
   );
