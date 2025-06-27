@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { toast } from "@/components/ui/use-toast";
 import { 
   Menu, 
   Calendar, 
@@ -1147,9 +1148,35 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         tripArrivalDate={trip?.arrival_date}
         tripDepartureDate={trip?.departure_date}
         onSubmit={async (data) => {
-          // Handle reservation submission
-          queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-          setReservationOpen(false);
+          try {
+            if (selectedReservation) {
+              // Update existing reservation
+              const { error } = await supabase
+                .from('reservations')
+                .update(data)
+                .eq('id', selectedReservation.id)
+                .eq('trip_id', tripId);
+              
+              if (error) throw error;
+              toast({ title: 'Success', description: 'Reservation updated' });
+            } else {
+              // Create new reservation
+              const { error } = await supabase
+                .from('reservations')
+                .insert([data]);
+              
+              if (error) throw error;
+              toast({ title: 'Success', description: 'Reservation added' });
+            }
+            
+            queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+            queryClient.invalidateQueries({ queryKey: ['reservations'] });
+            setReservationOpen(false);
+            setSelectedReservation(null);
+          } catch (error) {
+            console.error('Failed to save reservation:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save reservation' });
+          }
         }}
       />
 
