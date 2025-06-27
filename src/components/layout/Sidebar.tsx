@@ -356,7 +356,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     switch (secondaryPanel) {
       case 'accommodations':
         return (
-          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+          <div className="fixed left-[280px] top-16 h-[calc(100vh-4rem)] w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Accommodations</h3>
@@ -415,7 +415,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'transportation':
         return (
-          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+          <div className="fixed left-[280px] top-16 h-[calc(100vh-4rem)] w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Transportation</h3>
@@ -477,7 +477,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'dates':
         return (
-          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+          <div className="fixed left-[280px] top-16 h-[calc(100vh-4rem)] w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Trip Dates</h3>
@@ -515,7 +515,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'activities':
         return (
-          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+          <div className="fixed left-[280px] top-16 h-[calc(100vh-4rem)] w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Activities</h3>
@@ -577,7 +577,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
       case 'reservations':
         return (
-          <div className="fixed left-[280px] top-0 h-full w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
+          <div className="fixed left-[280px] top-16 h-[calc(100vh-4rem)] w-[320px] bg-white border-r border-sand-200 z-40 overflow-y-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-earth-600">Reservations</h3>
@@ -744,7 +744,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     <>
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
-        <div className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-sand-200 z-30">
+        <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-[280px] bg-white border-r border-sand-200 z-30">
           {sidebarContent}
         </div>
         {renderSecondaryPanel()}
