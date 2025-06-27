@@ -316,6 +316,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Completed permanent sidebar implementation with real trip data integration and full dialog functionality
   - Sidebar now provides seamless navigation with secondary panels for detailed trip component management
   - All TypeScript errors resolved and application running smoothly with enhanced user experience
+  - Enhanced activities list with date-based grouping and chronological sorting (earliest date/time first)
+  - Added visual hierarchy with date section headers and proper indentation for improved trip planning workflow
 - June 27, 2025. Restored complete CRUD functionality to all sidebar sections after user feedback:
   - Added missing Edit button to Trip Dates section with proper TripDateEditDialog integration
   - Restored "Add Accommodation" button functionality with consistent button styling
