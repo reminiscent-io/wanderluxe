@@ -19,16 +19,27 @@ import {
   ChevronRight,
   CalendarDays,
   Building,
-  Car
+  Car,
+  Plus,
+  Edit,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import NavigationLogo from "../NavigationLogo";
 
 interface SidebarProps {
   tripId?: string;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+}
+
+interface SecondaryPanelProps {
+  isOpen: boolean;
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
 }
 
 export const tripNavItems = [
@@ -48,11 +59,42 @@ export const tripNavItems = [
   { id: "booking", label: "Booking", icon: Package },
 ];
 
+// Secondary Panel Component
+const SecondaryPanel = ({ isOpen, title, children, onClose }: SecondaryPanelProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <aside className="fixed left-[280px] top-0 h-screen w-[320px] bg-white shadow-lg ring-1 ring-sand-200/40 z-[200] overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-sand-200">
+        <h3 className="text-lg font-medium text-earth-800">{title}</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="h-8 w-8 p-0"
+        >
+          <ChevronRight size={16} />
+        </Button>
+      </div>
+      <ScrollArea className="h-[calc(100vh-73px)]">
+        <div className="p-4">
+          {children}
+        </div>
+      </ScrollArea>
+    </aside>
+  );
+};
+
 export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [secondaryPanel, setSecondaryPanel] = useState<{
+    isOpen: boolean;
+    title: string;
+    content: React.ReactNode;
+  }>({ isOpen: false, title: '', content: null });
 
   const handleTabClick = (tabId: string) => {
     // Handle expanding/collapsing items with subitems
@@ -72,6 +114,104 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   };
 
   const handleSubItemClick = (subItemId: string) => {
+    // Show secondary panel with relevant content for the subitem
+    const getSecondaryContent = (id: string) => {
+      switch (id) {
+        case 'accommodations':
+          return {
+            title: 'Accommodations',
+            content: (
+              <div className="space-y-4">
+                <Button className="w-full justify-start" variant="outline">
+                  <Plus size={16} className="mr-2" />
+                  Add Accommodation
+                </Button>
+                <div className="space-y-2">
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-sm">The Ritz-Carlton</h4>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                          <Edit size={12} />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-sand-600">Feb 12-15, 2025</p>
+                    <p className="text-xs text-sand-600">€6,003</p>
+                  </div>
+                </div>
+              </div>
+            )
+          };
+        case 'transportation':
+          return {
+            title: 'Transportation',
+            content: (
+              <div className="space-y-4">
+                <Button className="w-full justify-start" variant="outline">
+                  <Plus size={16} className="mr-2" />
+                  Add Transportation
+                </Button>
+                <div className="space-y-2">
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-sm">Flight to Rome</h4>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                          <Edit size={12} />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-sand-600">Departure: Feb 12, 8:00 AM</p>
+                  </div>
+                </div>
+              </div>
+            )
+          };
+        case 'trip-dates':
+          return {
+            title: 'Trip Dates',
+            content: (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Arrival</h4>
+                    <p className="text-sm text-sand-700">February 12, 2025</p>
+                  </div>
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Departure</h4>
+                    <p className="text-sm text-sand-700">February 15, 2025</p>
+                  </div>
+                  <div className="p-3 bg-sand-50 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Duration</h4>
+                    <p className="text-sm text-sand-700">4 days, 3 nights</p>
+                  </div>
+                </div>
+                <Button className="w-full justify-start" variant="outline">
+                  <Edit size={16} className="mr-2" />
+                  Edit Dates
+                </Button>
+              </div>
+            )
+          };
+        default:
+          return { title: 'Details', content: <div>No content available</div> };
+      }
+    };
+
+    const content = getSecondaryContent(subItemId);
+    setSecondaryPanel({
+      isOpen: true,
+      title: content.title,
+      content: content.content
+    });
+
     if (onTabChange) {
       onTabChange(subItemId);
     }
@@ -82,22 +222,33 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
   };
 
   const content = (
-    <ScrollArea className="h-full p-4">
-      <nav className="flex flex-col gap-1">
-        {/* Back to trips button when in trip context */}
+    <ScrollArea className="h-full">
+      <div className="p-4">
+        {/* Logo at the top when in trip context */}
         {tripId && (
           <>
-            <Button
-              variant="ghost"
-              onClick={handleBackToTrips}
-              className="flex items-center gap-3 justify-start px-3 py-2 text-sm font-medium text-sand-600 hover:bg-sand-50 w-full"
-            >
-              <ArrowLeft size={18} className="shrink-0" />
-              <span>Back to Trips</span>
-            </Button>
-            <Separator className="my-2" />
+            <div className="flex items-center justify-center mb-6">
+              <NavigationLogo />
+            </div>
+            <Separator className="mb-4" />
           </>
         )}
+        
+        <nav className="flex flex-col gap-1">
+          {/* Back to trips button when in trip context */}
+          {tripId && (
+            <>
+              <Button
+                variant="ghost"
+                onClick={handleBackToTrips}
+                className="flex items-center gap-3 justify-start px-3 py-2 text-sm font-medium text-sand-600 hover:bg-sand-50 w-full"
+              >
+                <ArrowLeft size={18} className="shrink-0" />
+                <span>Back to Trips</span>
+              </Button>
+              <Separator className="my-2" />
+            </>
+          )}
 
         {/* Trip navigation items when in trip context */}
         {tripId ? (
@@ -226,8 +377,13 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           <span>Settings</span>
         </NavLink>
       </nav>
+      </div>
     </ScrollArea>
   );
+
+  const closeSecondaryPanel = () => {
+    setSecondaryPanel({ isOpen: false, title: '', content: null });
+  };
 
   // For trips view, show permanent sidebar on desktop and mobile sheet
   if (tripId) {
