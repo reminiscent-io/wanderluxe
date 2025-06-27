@@ -632,37 +632,76 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 {reservations.length === 0 ? (
                   <p className="text-sand-600 text-sm">No reservations added yet.</p>
                 ) : (
-                  reservations.map((reservation) => (
-                    <div key={reservation.id} className="p-3 bg-sand-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
-                        <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0"
-                            onClick={() => handleReservationEdit(reservation)}
-                          >
-                            <Edit size={12} />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0 text-red-500"
-                            onClick={() => handleReservationDelete(reservation.id)}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
-                        </div>
+                  (() => {
+                    // Group reservations by date
+                    const grouped = reservations.reduce((acc, reservation) => {
+                      const date = reservation.reservation_date || 'No Date';
+                      if (!acc[date]) acc[date] = [];
+                      acc[date].push(reservation);
+                      return acc;
+                    }, {} as Record<string, typeof reservations>);
+
+                    // Sort dates chronologically
+                    const sortedDates = Object.keys(grouped).sort((a, b) => {
+                      if (a === 'No Date') return 1;
+                      if (b === 'No Date') return -1;
+                      return new Date(a).getTime() - new Date(b).getTime();
+                    });
+
+                    return sortedDates.map(date => (
+                      <div key={date} className="space-y-2">
+                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
+                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </h5>
+                        {grouped[date]
+                          .sort((a, b) => {
+                            if (!a.reservation_time) return 1;
+                            if (!b.reservation_time) return -1;
+                            return a.reservation_time.localeCompare(b.reservation_time);
+                          })
+                          .map((reservation) => (
+                            <div key={reservation.id} className="p-3 bg-sand-50 rounded-lg ml-2">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium text-sm">{reservation.restaurant_name}</h4>
+                                <div className="flex gap-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => handleReservationEdit(reservation)}
+                                  >
+                                    <Edit size={12} />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0 text-red-500"
+                                    onClick={() => handleReservationDelete(reservation.id)}
+                                  >
+                                    <Trash2 size={12} />
+                                  </Button>
+                                </div>
+                              </div>
+                              <p className="text-xs text-sand-600">
+                                {reservation.reservation_time}
+                              </p>
+                              <p className="text-xs text-sand-600">
+                                {reservation.number_of_people} people
+                              </p>
+                              {reservation.cost && (
+                                <p className="text-xs text-sand-600">
+                                  {reservation.currency || 'USD'} {reservation.cost}
+                                </p>
+                              )}
+                            </div>
+                          ))}
                       </div>
-                      <p className="text-xs text-sand-600">
-                        {new Date(reservation.reservation_time).toLocaleDateString()} - {reservation.number_of_people} people
-                      </p>
-                      {reservation.notes && (
-                        <p className="text-xs text-sand-600">{reservation.notes}</p>
-                      )}
-                    </div>
-                  ))
+                    ));
+                  })()
                 )}
               </div>
             </div>

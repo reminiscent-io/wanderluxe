@@ -437,6 +437,7 @@ export type Database = {
           phone_number: string | null
           place_id: string | null
           rating: number | null
+          reservation_date: string | null
           reservation_time: string | null
           restaurant_name: string
           trip_id: string
