@@ -254,6 +254,14 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Kept original collapsible behavior for non-trip pages (like My Trips)
   - Fixed TypeScript errors and improved state management for mobile interactions
   - Sidebar now provides persistent navigation context throughout trip planning workflow
+- June 27, 2025. Enhanced sidebar layout and added secondary sidebar functionality:
+  - Added WanderLuxe logo to top of sidebar when in trip context for better branding
+  - Modified navigation bar to avoid overlap with sidebar logo and center content properly
+  - Implemented secondary sidebar that extends from main sidebar when clicking subcomponents
+  - Added relevant content panels for Accommodations, Transportation, and Trip Dates subcomponents
+  - Secondary sidebar displays at 320px width with Add buttons and existing item management
+  - Includes close functionality and proper z-index layering for seamless user experience
+  - Content area now centers properly in remaining space between sidebar(s) and screen edge
 
 ## User Preferences
 

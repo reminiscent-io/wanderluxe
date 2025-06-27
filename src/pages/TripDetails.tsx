@@ -48,7 +48,7 @@ const TripDetails = () => {
   return (
     <div className="flex min-h-screen">
       {sidebar}
-      <main className="flex-1 pl-0 md:pl-[280px]">
+      <main className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">
           <Navigation mobileMenuTrigger={sidebar} />
 
@@ -64,7 +64,7 @@ const TripDetails = () => {
           </div>
 
           <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
-            <div className="container mx-auto px-4 py-8">
+            <div className="max-w-none mx-auto px-4 py-8">
               <TripTabs tripId={tripId} displayData={displayData} activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
           </div>
