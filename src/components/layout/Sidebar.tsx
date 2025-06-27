@@ -484,7 +484,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                               </div>
                               {accommodation.cost && (
                                 <p className="text-xs text-sand-600">
-                                  {accommodation.currency || 'USD'} {accommodation.cost}
+                                  {accommodation.currency || 'USD'} {accommodation.cost.toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -616,7 +616,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                               </p>
                               {transport.cost && (
                                 <p className="text-xs text-sand-600">
-                                  {transport.currency || 'USD'} {transport.cost}
+                                  {transport.currency || 'USD'} {transport.cost.toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -659,7 +659,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                   <div className="p-3 bg-sand-50 rounded-lg">
                     <p className="text-sm font-medium text-earth-600">Duration</p>
                     <p className="text-sm text-sand-700">
-                      {Math.ceil((new Date(trip.departure_date).getTime() - new Date(trip.arrival_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                      {Math.ceil((new Date(trip.departure_date).getTime() - new Date(trip.arrival_date).getTime()) / (1000 * 60 * 60 * 24))} nights
                     </p>
                   </div>
                 </div>
@@ -775,7 +775,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                               )}
                               {activity.cost && (
                                 <p className="text-xs text-sand-600">
-                                  {activity.currency || 'USD'} {activity.cost}
+                                  {activity.currency || 'USD'} {activity.cost.toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -888,7 +888,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                               </p>
                               {reservation.cost && (
                                 <p className="text-xs text-sand-600">
-                                  {reservation.currency || 'USD'} {reservation.cost}
+                                  {reservation.currency || 'USD'} {reservation.cost.toLocaleString()}
                                 </p>
                               )}
                             </div>

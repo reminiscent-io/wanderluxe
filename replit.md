@@ -321,6 +321,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - All four sidebar sections now use identical formatting patterns: date grouping, time formatting, and visual hierarchy
   - Sidebar provides comprehensive date-organized view with uniform 12-hour time display throughout
   - Updated accommodation details to show "Check-in: MM/DD time" and "Check-out: MM/DD time" format for clear scheduling information
+  - Enhanced all cost displays across sidebar sections to use "EUR 6,000" format with proper comma separators for improved readability
 - June 27, 2025. Completed Activities and Reservations subcomponents with full CRUD functionality:
   - Added Activities and Reservations as new Timeline subcomponents with MapPin and UtensilsCrossed icons
   - Integrated real-time data fetching for both activities (day_activities table) and reservations (reservations table)
