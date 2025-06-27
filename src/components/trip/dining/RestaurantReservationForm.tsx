@@ -3,9 +3,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RestaurantSearchInput from './RestaurantSearchInput';
 import RestaurantContactInfo from './form/RestaurantContactInfo';
 import { Loader } from 'lucide-react';
@@ -26,6 +27,7 @@ const toNullableNumber = (val: unknown) => {
 // ────────────────────────────────────────────────────────────────────────────────
 const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
+  reservation_date: z.string().min(1, "Reservation date is required"),
   reservation_time: z.string().min(1, "Reservation time is required"),
   address: z.string().optional(),
   phone_number: z.string().optional(),
@@ -45,6 +47,8 @@ interface RestaurantReservationFormProps {
   defaultValues?: Partial<FormValues> & { trip_id?: string; day_id?: string; order_index?: number };
   isSubmitting?: boolean;
   tripId: string;
+  tripArrivalDate?: string;
+  tripDepartureDate?: string;
 }
 
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
@@ -52,13 +56,33 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   defaultValues,
   isSubmitting = false,
   tripId,
+  tripArrivalDate,
+  tripDepartureDate,
 }) => {
   const { toast } = useToast();
+
+  // Generate trip dates for dropdown
+  const generateTripDates = () => {
+    if (!tripArrivalDate || !tripDepartureDate) return [];
+    
+    const dates = [];
+    const start = new Date(tripArrivalDate);
+    const end = new Date(tripDepartureDate);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d).toISOString().split('T')[0]);
+    }
+    
+    return dates;
+  };
+
+  const tripDates = generateTripDates();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       restaurant_name: '',
+      reservation_date: '',
       reservation_time: '',
       number_of_people: undefined,
       notes: '',
@@ -160,6 +184,34 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           phone={form.watch('phone_number')}
           website={form.watch('website')}
           rating={form.watch('rating')}
+        />
+
+        {/* Reservation Date */}
+        <FormField
+          control={form.control}
+          name="reservation_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Reservation Date <span className="text-red-500">*</span>
+              </FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a date" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {tripDates.map((date) => (
+                    <SelectItem key={date} value={date}>
+                      {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         {/* Reservation Time */}
