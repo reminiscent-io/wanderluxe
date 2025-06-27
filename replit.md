@@ -276,6 +276,15 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed dialog z-index layering issue where dialogs appeared behind sidebar (increased from z-50 to z-250)
   - Fixed sidebar logo alignment with main page header by adding proper top padding (pt-16) to match header height
   - Repositioned Add/Edit buttons below section titles in secondary panels for improved UX and visual consistency
+- June 27, 2025. Implemented comprehensive date selection for restaurant reservations:
+  - Added reservation_date field to reservation form schema with required validation
+  - Created date dropdown showing all trip dates between arrival and departure (inclusive)
+  - Implemented intelligent date preselection: existing reservation date when editing, first available date when adding new
+  - Enhanced RestaurantReservationForm with trip date range validation and user-friendly date format display
+  - Updated complete component chain: RestaurantReservationDialog → DiningList → DayCard → TimelineContent → TimelineView
+  - Added trip arrival/departure date props throughout component hierarchy for proper date validation
+  - Fixed TimelineView missing handleDayDelete function to resolve component errors
+  - Reservation form now provides complete date-aware scheduling with proper trip date constraints
 - June 27, 2025. Enhanced sidebar to use real trip data instead of mock data:
   - Integrated useTripQuery hook to fetch actual accommodations from database
   - Fixed accommodation edit functionality to load real hotel data when clicking edit buttons
