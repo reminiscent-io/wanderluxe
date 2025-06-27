@@ -389,6 +389,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed transportation end date formatting to avoid timezone-related day shifts using string manipulation
   - All date displays now show correct dates without off-by-one errors regardless of user timezone
   - Date sorting and grouping across sidebar sections now use consistent, timezone-safe comparison methods
+  - Fixed ActivityForm date select dropdown to use timezone-safe date parsing for trip date options
+  - Updated date generation logic to parse arrival/departure dates without timezone shifts ensuring correct date selection
 
 ## User Preferences
 

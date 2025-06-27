@@ -32,18 +32,29 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [startTime, setStartTime] = useState(activity.start_time || "");
   const [endTime, setEndTime] = useState(activity.end_time || "");
 
-  // Generate trip date options
+  // Generate trip date options with timezone-safe handling
   const tripDateOptions = React.useMemo(() => {
     if (!tripDates) return [];
     
     const dates = [];
-    const startDate = new Date(tripDates.arrival_date);
-    const endDate = new Date(tripDates.departure_date);
+    
+    // Parse dates safely without timezone issues
+    const [startYear, startMonth, startDay] = tripDates.arrival_date.split('-').map(Number);
+    const [endYear, endMonth, endDay] = tripDates.departure_date.split('-').map(Number);
+    
+    const startDate = new Date(startYear, startMonth - 1, startDay);
+    const endDate = new Date(endYear, endMonth - 1, endDay);
     
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dateString = d.toISOString().split('T')[0];
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      
+      // Safe date formatting without timezone shifts
       const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
       const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
       dates.push({
         value: dateString,
         label: `${dayName}, ${monthDay}`
