@@ -401,7 +401,9 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Updated RestaurantReservationForm to use timezone-safe date generation preventing off-by-one errors
   - Enhanced DiningList handleSave function to lookup correct day_id when reservation_date is provided
   - Added proper date-to-day_id mapping logic using trip_days.day_id column (not id)
-  - Reservation date changes now work correctly with proper database relationships
+  - Fixed reservation date dropdown display formatting to use timezone-safe date parsing preventing off-by-one errors
+  - Replaced problematic new Date(date) calls with manual string parsing in dropdown SelectItem components
+  - Reservation date changes now work correctly with proper database relationships and accurate date display
   - Both activities and reservations now handle date changes consistently with correct schema alignment
 
 ## User Preferences

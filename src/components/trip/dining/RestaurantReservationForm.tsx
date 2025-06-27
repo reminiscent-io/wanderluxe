@@ -230,11 +230,16 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {tripDates.map((date) => (
-                    <SelectItem key={date} value={date}>
-                      {format(new Date(date), 'EEEE, MMMM d, yyyy')}
-                    </SelectItem>
-                  ))}
+                  {tripDates.map((date) => {
+                    // Parse date safely without timezone issues
+                    const [year, month, day] = date.split('-').map(Number);
+                    const safeDate = new Date(year, month - 1, day);
+                    return (
+                      <SelectItem key={date} value={date}>
+                        {format(safeDate, 'EEEE, MMMM d, yyyy')}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               <FormMessage />
