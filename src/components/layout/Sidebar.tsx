@@ -299,7 +299,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
       if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['transportation'] });
+      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
       toast({ title: 'Success', description: 'Transportation deleted' });
     } catch (error) {
       console.error('Error deleting transportation:', error);
@@ -1149,6 +1149,8 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         tripId={tripId || ''}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+          queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+          setSelectedTransportation(null);
         }}
       />
 
