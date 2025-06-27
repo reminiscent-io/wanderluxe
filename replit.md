@@ -262,6 +262,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Secondary sidebar displays at 320px width with Add buttons and existing item management
   - Includes close functionality and proper z-index layering for seamless user experience
   - Content area now centers properly in remaining space between sidebar(s) and screen edge
+  - Subcomponent clicks keep main content on Timeline view instead of switching tabs
 
 ## User Preferences
 
