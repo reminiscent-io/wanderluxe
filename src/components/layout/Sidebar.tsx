@@ -857,6 +857,10 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               setNewActivity={setNewActivity}
               activityEdit={activityEdit}
               setActivityEdit={setActivityEdit}
+              tripDates={trip ? { 
+                arrival_date: trip.arrival_date, 
+                departure_date: trip.departure_date 
+              } : undefined}
               onAddActivity={async (activity) => {
                 // Handle activity submission logic here
                 try {
