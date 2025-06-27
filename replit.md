@@ -470,6 +470,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Streamlined user interface by reducing visual clutter and making editing more intuitive
   - All sidebar items now use consistent button interaction pattern with w-full, text-left alignment
   - Maintained all existing functionality while improving user experience through simplified interaction model
+- June 27, 2025. Added delete functionality to accommodation dialog with trash icon:
+  - Added red trash icon delete button to AccommodationForm that appears only when editing existing accommodations
+  - Implemented proper delete functionality in AccommodationDialog using direct Supabase database operations
+  - Added onDelete prop to AccommodationForm interface and connected it through AccommodationDialog
+  - Delete button positioned on left side of form buttons with red styling and hover effects
+  - Includes proper error handling, success notifications, and automatic data refresh after deletion
+  - Enhanced accommodation management workflow with complete CRUD operations in dialog interface
 
 ## User Preferences
 
