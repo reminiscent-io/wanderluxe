@@ -247,60 +247,61 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           rating={form.watch('rating')}
         />
 
-        {/* Reservation Date */}
-        <FormField
-          control={form.control}
-          name="reservation_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Reservation Date <span className="text-red-500">*</span>
-              </FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a date" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="z-[999]">
-                  {tripDates.map((date) => {
-                    // Parse date safely without timezone issues
-                    const [year, month, day] = date.split('-').map(Number);
-                    const safeDate = new Date(year, month - 1, day);
-                    return (
-                      <SelectItem key={date} value={date}>
-                        {format(safeDate, 'EEEE, MMMM d, yyyy')}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Reservation Date & Time */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="reservation_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Reservation Date <span className="text-red-500">*</span>
+                </FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a date" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="z-[999]">
+                    {tripDates.map((date) => {
+                      // Parse date safely without timezone issues
+                      const [year, month, day] = date.split('-').map(Number);
+                      const safeDate = new Date(year, month - 1, day);
+                      return (
+                        <SelectItem key={date} value={date}>
+                          {format(safeDate, 'EEEE, MMMM d, yyyy')}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Reservation Time */}
-        <FormField
-          control={form.control}
-          name="reservation_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Reservation Time <span className="text-red-500">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="time"
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                  step="300" // 5-minute increments
-                  className="bg-white"
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="reservation_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Reservation Time <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    step="300" // 5-minute increments
+                    className="bg-white"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Number of People */}
         <FormField
