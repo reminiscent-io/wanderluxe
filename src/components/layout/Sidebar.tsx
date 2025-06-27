@@ -172,6 +172,20 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         </SheetContent>
       </Sheet>
 
+      {/* Desktop sidebar toggle button - always visible */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "hidden md:flex fixed top-4 z-[202] h-8 w-8 bg-white shadow-md ring-1 ring-sand-200/40 hover:bg-sand-50 transition-all",
+          open ? "left-[260px]" : "left-4"
+        )}
+        aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+      >
+        <Menu className="h-4 w-4" />
+      </Button>
+
       {/* Desktop sidebar */}
       <aside
         className={cn(
@@ -180,16 +194,6 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         )}
       >
         {content}
-        {/* Collapse toggle button for desktop */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setOpen(!open)}
-          className="absolute top-4 right-4 h-8 w-8"
-          aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-        >
-          <Menu className="h-4 w-4" />
-        </Button>
       </aside>
     </>
   );
