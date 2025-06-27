@@ -4,6 +4,7 @@ import { Tables } from '@/integrations/supabase/types';
 import TransportationFormFields from './TransportationFormFields';
 import { toast } from 'sonner';
 import { CURRENCIES } from '@/utils/currencyConstants';
+import { Trash2 } from 'lucide-react';
 
 type Transportation = Tables<'transportation'>;
 
@@ -11,6 +12,7 @@ interface TransportationFormProps {
   initialData?: Partial<Transportation>;
   onSubmit: (data: Partial<Transportation>) => void;
   onCancel: () => void;
+  onDelete?: () => Promise<void>;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
   buttonClassName?: string;
@@ -20,6 +22,7 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
   initialData,
   onSubmit,
   onCancel,
+  onDelete,
   tripArrivalDate,
   tripDepartureDate,
   buttonClassName
@@ -113,22 +116,38 @@ const TransportationForm: React.FC<TransportationFormProps> = ({
         formatCost={formatCost}
       />
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-earth-400 hover:bg-earth-600 text-white font-semibold"
-        >
-          {initialData ? 'Update Transportation' : 'Add Transportation'}
-        </Button>
+      <div className="flex justify-between items-center pt-4">
+        <div>
+          {initialData && onDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onDelete}
+              disabled={isSubmitting}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
+          )}
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-earth-400 hover:bg-earth-600 text-white font-semibold"
+          >
+            {initialData ? 'Update Transportation' : 'Add Transportation'}
+          </Button>
+        </div>
       </div>
     </form>
   );
