@@ -9,6 +9,7 @@ interface RestaurantReservationDialogProps {
   isSubmitting: boolean;
   editingReservation?: any;
   title: string;
+  onDelete?: () => Promise<void>;
   tripId: string; // must be provided
   tripArrivalDate?: string;
   tripDepartureDate?: string;
@@ -21,6 +22,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   isSubmitting,
   editingReservation,
   title,
+  onDelete,
   tripId,
   tripArrivalDate,
   tripDepartureDate,
