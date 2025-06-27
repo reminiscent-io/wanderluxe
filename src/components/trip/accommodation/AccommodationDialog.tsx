@@ -109,9 +109,16 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   const handleDelete = async () => {
     try {
       if (initialData?.stay_id) {
-        await accommodationHandlers.handleDelete(initialData.stay_id);
+        const { error } = await supabase
+          .from('accommodations')
+          .delete()
+          .eq('stay_id', initialData.stay_id);
+        
+        if (error) throw error;
+        
+        toast.success('Accommodation deleted successfully');
+        onSuccess();
         onOpenChange(false);
-        window.location.reload();
       }
     } catch (error) {
       console.error('Error deleting accommodation:', error);

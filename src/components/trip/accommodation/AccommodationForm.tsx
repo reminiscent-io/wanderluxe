@@ -9,7 +9,7 @@ import HotelContactInfo from './form/HotelContactInfo';
 import { AccommodationFormData } from '@/services/accommodation/accommodationService';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';
 
 const formSchema = z.object({
@@ -43,6 +43,7 @@ const formSchema = z.object({
 interface AccommodationFormProps {
   onSubmit: (data: AccommodationFormData) => Promise<void>;
   onCancel: () => void;
+  onDelete?: () => Promise<void>;
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
@@ -58,6 +59,7 @@ const CURRENCY_OPTIONS = CURRENCIES.map(currency => ({
 const AccommodationForm: React.FC<AccommodationFormProps> = ({
   onSubmit,
   onCancel,
+  onDelete,
   initialData,
   tripArrivalDate,
   tripDepartureDate
@@ -298,29 +300,45 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-4">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-earth-500 hover:bg-earth-600 text-white"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save Accommodation'
-            )}
-          </Button>
+        <div className="flex justify-between pt-4">
+          {/* Delete button - only show when editing existing accommodation */}
+          {initialData && onDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onDelete}
+              disabled={isSubmitting}
+              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          )}
+          
+          <div className="flex gap-2 ml-auto">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-earth-500 hover:bg-earth-600 text-white"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Accommodation'
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>
