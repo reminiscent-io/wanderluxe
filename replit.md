@@ -501,6 +501,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced sidebar reservation dialog with complete delete functionality using Supabase database operations
   - Added proper query invalidation and toast notifications for successful deletions and error handling
   - All four main components (accommodations, transportation, activities, reservations) now have uniform delete functionality with consistent styling and behavior
+- June 27, 2025. Fixed sidebar-timeline activity synchronization issue:
+  - Resolved query invalidation mismatch where sidebar activity operations weren't updating timeline display
+  - Added ['trip-days', tripId] query invalidation to all sidebar activity CRUD operations (add, edit, delete)
+  - Fixed handleActivityDelete function which was missing proper query key invalidation
+  - Timeline now updates immediately when activities are added, edited, or deleted from sidebar
+  - Ensured complete data synchronization between sidebar and timeline for all activity operations
 
 ## User Preferences
 
