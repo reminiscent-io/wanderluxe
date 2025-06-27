@@ -35,6 +35,7 @@ import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
 import ActivityDialogs from "../trip/day/activities/ActivityDialogs";
+import ActivitiesList from "../trip/day/activities/ActivitiesList";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import { useTripQuery } from "@/hooks/useTripQuery";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -108,7 +109,7 @@ export const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
   }, [isOpen]);
 
   // Fetch trip data
-  const { data: trip } = useTripQuery(tripId);
+  const { trip } = useTripQuery(tripId);
 
   // Fetch accommodations data
   const { data: accommodations = [] } = useQuery({
@@ -372,24 +373,7 @@ export const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         };
 
       case 'activities':
-        // Group activities by date
-        const groupedActivities = activities.reduce((groups, activity) => {
-          const activityDate = activity.trip_days?.date || trip?.arrival_date || new Date().toISOString().split('T')[0];
-          if (!groups[activityDate]) {
-            groups[activityDate] = [];
-          }
-          groups[activityDate].push(activity);
-          return groups;
-        }, {} as Record<string, typeof activities>);
-
-        const sortedDateGroups = Object.entries(groupedActivities)
-          .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-          .map(([date, dateActivities]) => ({
-            date,
-            activities: dateActivities.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
-          }));
-
-        const formatTime = (timeStr: string) => {
+        const formatTime = (timeStr?: string) => {
           if (!timeStr) return '';
           const [hours, minutes] = timeStr.split(':');
           const hour24 = parseInt(hours);
@@ -401,106 +385,36 @@ export const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         return {
           title: 'Activities',
           content: (
-            <div className="space-y-4">
-              <Button 
-                onClick={() => {
-                  setSelectedActivity(null);
-                  setActivityEdit({
-                    title: '',
-                    description: '',
-                    date: trip?.arrival_date || '',
-                    start_time: '',
-                    end_time: '',
-                    cost: '',
-                    currency: 'USD' as Currency
-                  });
-                  setActivityOpen(true);
-                }}
-                className="w-full"
-              >
-                <Plus size={16} className="mr-2" />
-                Add Activity
-              </Button>
-              <div className="space-y-2">
-                {sortedDateGroups.length === 0 ? (
-                  <p className="text-sm text-sand-600 text-center py-4">No activities added yet</p>
-                ) : (
-                  sortedDateGroups.map(({ date, activities: dateActivities }) => (
-                    <div key={date} className="mb-4">
-                      <div className="text-xs font-medium text-sand-700 mb-2 px-1">
-                        {new Date(date).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        })}
-                      </div>
-                      {dateActivities.map((activity) => (
-                        <div key={activity.id} className="p-3 bg-sand-50 rounded-lg mb-2">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-sm">{activity.title}</h4>
-                            <div className="flex gap-1">
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-6 w-6 p-0"
-                                onClick={() => {
-                                  setSelectedActivity(activity);
-                                  setActivityEdit({
-                                    title: activity.title || '',
-                                    description: activity.description || '',
-                                    date: trip?.arrival_date || '',
-                                    start_time: activity.start_time || '',
-                                    end_time: activity.end_time || '',
-                                    cost: activity.cost?.toString() || '',
-                                    currency: (activity.currency || 'USD') as Currency
-                                  });
-                                  setActivityOpen(true);
-                                }}
-                              >
-                                <Edit size={12} />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-6 w-6 p-0"
-                                onClick={async () => {
-                                  try {
-                                    const { error } = await supabase
-                                      .from('day_activities')
-                                      .delete()
-                                      .eq('id', activity.id);
-                                    if (error) throw error;
-                                    queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-                                  } catch (error) {
-                                    console.error('Error deleting activity:', error);
-                                  }
-                                }}
-                              >
-                                <Trash2 size={12} />
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-xs text-sand-600">
-                            {activity.start_time || activity.end_time ? (
-                              <>
-                                {activity.start_time && formatTime(activity.start_time)}
-                                {activity.start_time && activity.end_time && ' - '}
-                                {activity.end_time && formatTime(activity.end_time)}
-                              </>
-                            ) : 'No time set'}
-                          </p>
-                          {activity.cost && (
-                            <p className="text-xs text-sand-600">
-                              {activity.currency || 'USD'} {activity.cost}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+            <ActivitiesList 
+              activities={activities}
+              onAddActivity={() => {
+                setSelectedActivity(null);
+                setActivityEdit({
+                  title: '',
+                  description: '',
+                  date: trip?.arrival_date || '',
+                  start_time: '',
+                  end_time: '',
+                  cost: '',
+                  currency: 'USD' as Currency
+                });
+                setActivityOpen(true);
+              }}
+              onEditActivity={(activity) => {
+                setSelectedActivity(activity);
+                setActivityEdit({
+                  title: activity.title || '',
+                  description: activity.description || '',
+                  date: trip?.arrival_date || '',
+                  start_time: activity.start_time || '',
+                  end_time: activity.end_time || '',
+                  cost: activity.cost?.toString() || '',
+                  currency: (activity.currency || 'USD') as Currency
+                });
+                setActivityOpen(true);
+              }}
+              formatTime={formatTime}
+            />
           )
         };
 

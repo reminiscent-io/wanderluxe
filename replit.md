@@ -299,6 +299,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed Currency type handling and resolved all TypeScript interface compatibility issues
   - Enhanced sidebar to pass real trip arrival/departure dates to activity dialogs for proper validation
   - Activity system now provides complete date-aware scheduling with user-friendly date selection interface
+- June 27, 2025. Completed sidebar activities refactoring with component reuse:
+  - Identified existing ActivitiesList component already used in DayCard components
+  - Refactored sidebar activities section to reuse existing ActivitiesList instead of creating duplicate component
+  - Removed duplicate ActivityList component to maintain DRY principles and code consistency
+  - Enhanced ActivitiesList integration with proper formatTime function and edit handlers
+  - Improved code organization by leveraging existing, tested components throughout the application
+  - All activities functionality now consistently uses the same component across timeline and sidebar views
 
 ## User Preferences
 
