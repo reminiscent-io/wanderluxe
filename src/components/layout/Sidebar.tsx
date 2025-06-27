@@ -6,28 +6,36 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Menu, 
-  Map, 
-  Hotel, 
-  Wallet, 
   Calendar, 
-  PackagePlus, 
+  MessageCircle, 
+  Lightbulb, 
+  BarChart2, 
+  Package, 
   Settings, 
-  User
+  User,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NavLink } from "react-router-dom";
+import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const navItems = [
-  { to: "/", label: "Itinerary", icon: Map },
-  { to: "/accommodations", label: "Accommodations", icon: Hotel },
-  { to: "/budget", label: "Budget", icon: Wallet },
-  { to: "/timeline", label: "Timeline", icon: Calendar },
-  { to: "/packing", label: "Packing List", icon: PackagePlus },
+interface SidebarProps {
+  tripId?: string;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+}
+
+export const tripNavItems = [
+  { id: "timeline", label: "Timeline", icon: Calendar },
+  { id: "chat", label: "AI Assistant", icon: MessageCircle },
+  { id: "vision-board", label: "Vision Board", icon: Lightbulb },
+  { id: "budget", label: "Budget", icon: BarChart2 },
+  { id: "booking", label: "Booking", icon: Package },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState<boolean>(
     () => JSON.parse(localStorage.getItem("sidebar:isOpen") ?? "true")
   );
@@ -36,15 +44,59 @@ export default function Sidebar() {
     localStorage.setItem("sidebar:isOpen", String(open));
   }, [open]);
 
+  const handleTabClick = (tabId: string) => {
+    if (onTabChange) {
+      onTabChange(tabId);
+    }
+  };
+
+  const handleBackToTrips = () => {
+    navigate('/my-trips');
+  };
+
   const content = (
     <ScrollArea className="h-full p-4">
       <nav className="flex flex-col gap-1">
-        {navItems.map((item) => {
-          const IconComponent = item.icon;
-          return (
+        {/* Back to trips button when in trip context */}
+        {tripId && (
+          <>
+            <Button
+              variant="ghost"
+              onClick={handleBackToTrips}
+              className="flex items-center gap-3 justify-start px-3 py-2 text-sm font-medium text-sand-600 hover:bg-sand-50 w-full"
+            >
+              <ArrowLeft size={18} className="shrink-0" />
+              <span>Back to Trips</span>
+            </Button>
+            <Separator className="my-2" />
+          </>
+        )}
+
+        {/* Trip navigation items when in trip context */}
+        {tripId ? (
+          tripNavItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleTabClick(item.id)}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full text-left",
+                  activeTab === item.id
+                    ? "bg-sand-100 text-earth-600"
+                    : "text-sand-600 hover:bg-sand-50"
+                )}
+              >
+                <IconComponent size={18} className="shrink-0" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })
+        ) : (
+          /* Global navigation items when not in trip context */
+          <>
             <NavLink
-              key={item.to}
-              to={item.to}
+              to="/my-trips"
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -54,12 +106,14 @@ export default function Sidebar() {
                 )
               }
             >
-              <IconComponent size={18} className="shrink-0" />
-              <span>{item.label}</span>
+              <Package size={18} className="shrink-0" />
+              <span>My Trips</span>
             </NavLink>
-          );
-        })}
+          </>
+        )}
+        
         <Separator className="my-2" />
+        
         {/* Profile shortcut */}
         <NavLink
           to="/profile"
