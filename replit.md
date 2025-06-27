@@ -518,12 +518,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced dialog event handling to protect against accidental closures during restaurant search
   - Reservation dialog now properly allows clicking on restaurant search results for selection
   - Fixed z-index and event bubbling issues that were causing dropdown interactions to close the dialog
-- June 27, 2025. Fixed mobile sidebar secondary panel visibility:
-  - Updated z-index from z-40 to z-[200] for all secondary sidebar panels (Accommodations, Transportation, Trip Dates, Activities, Reservations)
-  - Added renderSecondaryPanel() to mobile sidebar rendering to ensure secondary panels appear on mobile devices
-  - Fixed mobile view where secondary sidebar extensions were completely missing from mobile implementation
-  - Secondary panels now properly appear above mobile sheet drawer with correct z-index layering
-  - Enhanced responsive sidebar experience with full functionality across desktop and mobile devices
+- June 27, 2025. Implemented clean mobile sidebar interaction with automatic closing:
+  - Fixed mobile sidebar secondary panel visibility by automatically closing sidebar after subcomponent selection
+  - Added mobile-responsive behavior to handleSubitemClick function that closes sidebar on mobile devices (screen width < 768px)
+  - Secondary panels now appear in main content area on mobile after sidebar closes, eliminating z-index conflicts
+  - Simplified mobile user experience: tap subcomponent → sidebar closes → secondary panel displays in full screen
+  - Enhanced responsive sidebar experience with intuitive mobile interaction pattern
 
 ## User Preferences
 

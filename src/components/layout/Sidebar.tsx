@@ -247,6 +247,10 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
 
   const handleSubitemClick = (key: string) => {
     setSecondaryPanel(secondaryPanel === key ? null : key);
+    // Close mobile sidebar after selecting a subcomponent
+    if (window.innerWidth < 768) {
+      setIsOpen(false);
+    }
   };
 
   const handleAccommodationAdd = () => {
