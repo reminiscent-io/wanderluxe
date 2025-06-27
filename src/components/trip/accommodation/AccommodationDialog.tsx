@@ -98,11 +98,10 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         if (error) throw error;
         toast.success('Accommodation added successfully');
       }
-      console.log('AccommodationDialog - Calling onSuccess callback');
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('AccommodationDialog - Error saving accommodation:', error);
+      console.error('Error saving accommodation:', error);
       toast.error('Failed to save accommodation');
     }
   };
