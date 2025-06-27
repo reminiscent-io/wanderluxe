@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
+import AppLayout from "@/components/layout/AppLayout";
 import { useTripQuery } from '@/hooks/useTripQuery';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
@@ -38,26 +39,28 @@ const TripDetails = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
+    <AppLayout>
+      <div className="min-h-screen flex flex-col">
+        <Navigation />
 
-      <div className="w-full">
-        <HeroSection 
-          tripId={tripId}
-          title={displayData.destination}
-          imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"} //Default Trip Hero Image
-          arrivalDate={displayData.arrival_date}
-          departureDate={displayData.departure_date}
-          isLoading={tripLoading && !previousTrip}
-        />
-      </div>
+        <div className="w-full">
+          <HeroSection 
+            tripId={tripId}
+            title={displayData.destination}
+            imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"} //Default Trip Hero Image
+            arrivalDate={displayData.arrival_date}
+            departureDate={displayData.departure_date}
+            isLoading={tripLoading && !previousTrip}
+          />
+        </div>
 
-      <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
-        <div className="container mx-auto px-4 py-8">
-          <TripTabs tripId={tripId} displayData={displayData} />
+        <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
+          <div className="container mx-auto px-4 py-8">
+            <TripTabs tripId={tripId} displayData={displayData} />
+          </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
