@@ -664,7 +664,32 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                 </div>
                               </div>
                               <p className="text-xs text-sand-600">
-                                {activity.start_time} - {activity.end_time}
+                                {(() => {
+                                  // Format time as 9:00am - 10:00pm
+                                  const formatTime = (time: string) => {
+                                    if (!time) return '';
+                                    try {
+                                      const date = new Date(`2000-01-01T${time}`);
+                                      return date.toLocaleTimeString('en-US', { 
+                                        hour: 'numeric', 
+                                        minute: '2-digit',
+                                        hour12: true 
+                                      }).toLowerCase();
+                                    } catch {
+                                      return time;
+                                    }
+                                  };
+
+                                  const startTime = formatTime(activity.start_time || '');
+                                  const endTime = formatTime(activity.end_time || '');
+                                  
+                                  if (startTime && endTime) {
+                                    return `${startTime} - ${endTime}`;
+                                  } else if (startTime) {
+                                    return startTime;
+                                  }
+                                  return '';
+                                })()}
                               </p>
                               {activity.description && (
                                 <p className="text-xs text-sand-600">{activity.description}</p>
@@ -760,7 +785,24 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                 </div>
                               </div>
                               <p className="text-xs text-sand-600">
-                                {reservation.reservation_time}
+                                {(() => {
+                                  // Format time as 9:00am - 10:00pm
+                                  const formatTime = (time: string) => {
+                                    if (!time) return '';
+                                    try {
+                                      const date = new Date(`2000-01-01T${time}`);
+                                      return date.toLocaleTimeString('en-US', { 
+                                        hour: 'numeric', 
+                                        minute: '2-digit',
+                                        hour12: true 
+                                      }).toLowerCase();
+                                    } catch {
+                                      return time;
+                                    }
+                                  };
+
+                                  return formatTime(reservation.reservation_time || '');
+                                })()}
                               </p>
                               <p className="text-xs text-sand-600">
                                 {reservation.number_of_people} people
