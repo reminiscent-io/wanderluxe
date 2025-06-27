@@ -151,6 +151,27 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     }
   };
 
+  // Process hotel stays for display in day cards
+  const processedHotelStays =
+    events?.filter((event) => event.hotel && event.stay_id).map((event) => ({
+      stay_id: event.stay_id,
+      trip_id: tripId,
+      hotel: event.hotel || '',
+      hotel_details: event.hotel_details,
+      hotel_url: event.hotel_url,
+      hotel_checkin_date: event.hotel_checkin_date || '',
+      hotel_checkout_date: event.hotel_checkout_date || '',
+      checkin_time: event.checkin_time || '',
+      checkout_time: event.checkout_time || '',
+      cost: event.cost ? Number(event.cost) : null,
+      currency: event.currency || 'USD',
+      hotel_address: event.hotel_address,
+      hotel_phone: event.hotel_phone,
+      hotel_place_id: event.hotel_place_id,
+      hotel_website: event.hotel_website,
+      created_at: event.created_at || new Date().toISOString(),
+    })) || [];
+
 
 
 
@@ -172,6 +193,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       <TimelineContent
         days={days}
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
+        hotelStays={processedHotelStays}
         onDayDelete={handleDayDelete}
         tripArrivalDate={localTripDates.arrival_date || undefined}
         tripDepartureDate={localTripDates.departure_date || undefined}
