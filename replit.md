@@ -403,6 +403,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added proper date-to-day_id mapping logic using trip_days.day_id column (not id)
   - Fixed reservation date dropdown display formatting to use timezone-safe date parsing preventing off-by-one errors
   - Replaced problematic new Date(date) calls with manual string parsing in dropdown SelectItem components
+  - Fixed reservation dropdown interaction by removing blocking onPointerDownOutside event handler from dialog
+  - Added proper z-index (z-[999]) to SelectContent ensuring dropdown appears above dialog content
   - Reservation date changes now work correctly with proper database relationships and accurate date display
   - Both activities and reservations now handle date changes consistently with correct schema alignment
 

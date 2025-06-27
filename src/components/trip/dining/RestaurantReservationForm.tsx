@@ -229,7 +229,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     <SelectValue placeholder="Select a date" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="z-[999]">
                   {tripDates.map((date) => {
                     // Parse date safely without timezone issues
                     const [year, month, day] = date.split('-').map(Number);
