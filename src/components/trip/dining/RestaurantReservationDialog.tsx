@@ -68,6 +68,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             onSubmit={handleFormSubmit}
             isSubmitting={isSubmitting}
             defaultValues={editingReservation}
+            onDelete={onDelete}
             tripId={tripId}
             tripArrivalDate={tripArrivalDate}
             tripDepartureDate={tripDepartureDate}

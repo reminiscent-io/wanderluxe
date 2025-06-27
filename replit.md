@@ -492,6 +492,15 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Removed redundant DialogFooter and Button imports from EditActivityDialog component
   - Delete button positioned on left side with red styling and hover effects matching other dialogs
   - Enhanced activity management workflow with consistent CRUD operations across all dialog interfaces
+- June 27, 2025. Completed delete functionality for reservations with trash icon:
+  - Added Trash2 icon import and onDelete prop to RestaurantReservationForm interface
+  - Enhanced RestaurantReservationFormProps interface to include id field in defaultValues for proper delete button detection
+  - Updated button layout with justify-between formatting to position delete button on left side
+  - Added red trash icon delete button that appears only when editing existing reservations (defaultValues?.id exists)
+  - Integrated onDelete prop through RestaurantReservationDialog component with proper error handling
+  - Enhanced sidebar reservation dialog with complete delete functionality using Supabase database operations
+  - Added proper query invalidation and toast notifications for successful deletions and error handling
+  - All four main components (accommodations, transportation, activities, reservations) now have uniform delete functionality with consistent styling and behavior
 
 ## User Preferences
 
