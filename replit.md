@@ -408,7 +408,9 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed reservation date change saving by implementing day_id lookup directly in RestaurantReservationForm
   - Moved date-to-day_id mapping logic from DiningList to form submission to handle all reservation editing paths
   - Resolved PGRST204 database update error by adding missing trip_id condition to reservation UPDATE query for RLS compliance
-  - Reservation date changes now work correctly with proper database relationships and accurate date display
+  - Fixed PostgreSQL column error by removing reservation_date field from database operations (doesn't exist in reservations table)
+  - Maintained reservation_date in form UI for date selection while using proper day_id foreign key for database relationships
+  - Reservation date changes now work correctly with proper database schema compliance and accurate date display
   - Both activities and reservations now handle date changes consistently with correct schema alignment
 
 ## User Preferences

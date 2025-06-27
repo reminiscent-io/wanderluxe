@@ -166,8 +166,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       finalDayId = tripDay.day_id;
     }
 
+    // Remove reservation_date since it doesn't exist in the database - we use day_id instead
+    const { reservation_date, ...dataWithoutDate } = data;
+    
     const processedData = {
-      ...data,
+      ...dataWithoutDate,
       trip_id: effectiveTripId,
       day_id: finalDayId,
       order_index: (defaultValues as any)?.order_index ?? 0,
