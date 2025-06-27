@@ -293,6 +293,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added consistent date section headers matching activities display pattern (e.g., "Wed, Feb 12")
   - Fixed reservation time display to show time-only format since reservation_time is timezone-agnostic
   - Reservations sidebar now provides organized date hierarchy with proper database relationships and visual separation
+- June 27, 2025. Implemented date-based grouping for transportation in sidebar:
+  - Added transportation grouping by start_date field with chronological sorting
+  - Enhanced time-based sorting within each date group using start_time for logical ordering
+  - Added consistent date section headers matching activities and reservations pattern
+  - Streamlined location display format to "From → To" for cleaner presentation
+  - Applied proper visual hierarchy with indented transportation items under date headers
+  - Transportation sidebar now provides organized chronological view matching other sidebar sections
 - June 27, 2025. Enhanced sidebar to use real trip data instead of mock data:
   - Integrated useTripQuery hook to fetch actual accommodations from database
   - Fixed accommodation edit functionality to load real hotel data when clicking edit buttons

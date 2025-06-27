@@ -439,42 +439,76 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 {transportation.length === 0 ? (
                   <p className="text-sand-600 text-sm">No transportation added yet.</p>
                 ) : (
-                  transportation.map((transport) => (
-                    <div key={transport.id} className="p-3 bg-sand-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{transport.type}</h4>
-                        <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0"
-                            onClick={() => handleTransportationEdit(transport)}
-                          >
-                            <Edit size={12} />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0 text-red-500"
-                            onClick={() => handleTransportationDelete(transport.id)}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
-                        </div>
+                  (() => {
+                    // Group transportation by start_date
+                    const grouped = transportation.reduce((acc, transport) => {
+                      const date = transport.start_date || 'No Date';
+                      if (!acc[date]) acc[date] = [];
+                      acc[date].push(transport);
+                      return acc;
+                    }, {} as Record<string, typeof transportation>);
+
+                    // Sort dates chronologically
+                    const sortedDates = Object.keys(grouped).sort((a, b) => {
+                      if (a === 'No Date') return 1;
+                      if (b === 'No Date') return -1;
+                      return new Date(a).getTime() - new Date(b).getTime();
+                    });
+
+                    return sortedDates.map(date => (
+                      <div key={date} className="space-y-2">
+                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
+                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </h5>
+                        {grouped[date]
+                          .sort((a, b) => {
+                            if (!a.start_time) return 1;
+                            if (!b.start_time) return -1;
+                            return a.start_time.localeCompare(b.start_time);
+                          })
+                          .map((transport) => (
+                            <div key={transport.id} className="p-3 bg-sand-50 rounded-lg ml-2">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium text-sm">{transport.type}</h4>
+                                <div className="flex gap-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => handleTransportationEdit(transport)}
+                                  >
+                                    <Edit size={12} />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0 text-red-500"
+                                    onClick={() => handleTransportationDelete(transport.id)}
+                                  >
+                                    <Trash2 size={12} />
+                                  </Button>
+                                </div>
+                              </div>
+                              <p className="text-xs text-sand-600">
+                                {transport.departure_location} → {transport.arrival_location}
+                              </p>
+                              <p className="text-xs text-sand-600">
+                                {transport.start_time} - {transport.end_time}
+                              </p>
+                              {transport.cost && (
+                                <p className="text-xs text-sand-600">
+                                  {transport.currency || 'USD'} {transport.cost}
+                                </p>
+                              )}
+                            </div>
+                          ))}
                       </div>
-                      <p className="text-xs text-sand-600">
-                        From: {transport.departure_location} → To: {transport.arrival_location}
-                      </p>
-                      <p className="text-xs text-sand-600">
-                        {transport.start_time} - {transport.end_time}
-                      </p>
-                      {transport.cost && (
-                        <p className="text-xs text-sand-600">
-                          {transport.currency || 'USD'} {transport.cost}
-                        </p>
-                      )}
-                    </div>
-                  ))
+                    ));
+                  })()
                 )}
               </div>
             </div>
