@@ -165,14 +165,17 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
     enabled: !!tripId
   });
 
-  // Activities query
+  // Activities query with day dates
   const { data: activities = [] } = useQuery({
     queryKey: ['activities', tripId],
     queryFn: async () => {
       if (!tripId) return [];
       const { data, error } = await supabase
         .from('day_activities')
-        .select('*')
+        .select(`
+          *,
+          trip_days!inner(date)
+        `)
         .eq('trip_id', tripId)
         .order('start_time', { ascending: false });
       
@@ -533,42 +536,76 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                 {activities.length === 0 ? (
                   <p className="text-sand-600 text-sm">No activities added yet.</p>
                 ) : (
-                  activities.map((activity) => (
-                    <div key={activity.id} className="p-3 bg-sand-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{activity.title}</h4>
-                        <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0"
-                            onClick={() => handleActivityEdit(activity)}
-                          >
-                            <Edit size={12} />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 w-6 p-0 text-red-500"
-                            onClick={() => handleActivityDelete(activity.id)}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
-                        </div>
+                  (() => {
+                    // Group activities by date and sort chronologically
+                    const grouped = activities.reduce((acc, activity) => {
+                      const date = (activity as any).trip_days?.date || 'No Date';
+                      if (!acc[date]) acc[date] = [];
+                      acc[date].push(activity);
+                      return acc;
+                    }, {} as Record<string, any[]>);
+
+                    // Sort dates and activities within each date
+                    const sortedDates = Object.keys(grouped).sort((a, b) => {
+                      if (a === 'No Date') return 1;
+                      if (b === 'No Date') return -1;
+                      return new Date(a).getTime() - new Date(b).getTime();
+                    });
+
+                    return sortedDates.map(date => (
+                      <div key={date} className="space-y-2">
+                        <h5 className="font-medium text-xs text-earth-700 border-b border-sand-200 pb-1">
+                          {date === 'No Date' ? 'No Date' : new Date(date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </h5>
+                        {grouped[date]
+                          .sort((a, b) => {
+                            if (!a.start_time) return 1;
+                            if (!b.start_time) return -1;
+                            return a.start_time.localeCompare(b.start_time);
+                          })
+                          .map((activity) => (
+                            <div key={activity.id} className="p-3 bg-sand-50 rounded-lg ml-2">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium text-sm">{activity.title}</h4>
+                                <div className="flex gap-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => handleActivityEdit(activity)}
+                                  >
+                                    <Edit size={12} />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0 text-red-500"
+                                    onClick={() => handleActivityDelete(activity.id)}
+                                  >
+                                    <Trash2 size={12} />
+                                  </Button>
+                                </div>
+                              </div>
+                              <p className="text-xs text-sand-600">
+                                {activity.start_time} - {activity.end_time}
+                              </p>
+                              {activity.description && (
+                                <p className="text-xs text-sand-600">{activity.description}</p>
+                              )}
+                              {activity.cost && (
+                                <p className="text-xs text-sand-600">
+                                  {activity.currency || 'USD'} {activity.cost}
+                                </p>
+                              )}
+                            </div>
+                          ))}
                       </div>
-                      <p className="text-xs text-sand-600">
-                        {activity.start_time} - {activity.end_time}
-                      </p>
-                      {activity.description && (
-                        <p className="text-xs text-sand-600">{activity.description}</p>
-                      )}
-                      {activity.cost && (
-                        <p className="text-xs text-sand-600">
-                          {activity.currency || 'USD'} {activity.cost}
-                        </p>
-                      )}
-                    </div>
-                  ))
+                    ));
+                  })()
                 )}
               </div>
             </div>
