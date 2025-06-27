@@ -586,27 +586,13 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                             return a.checkin_time.localeCompare(b.checkin_time);
                           })
                           .map((accommodation) => (
-                            <div key={accommodation.stay_id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
+                            <button 
+                              key={accommodation.stay_id} 
+                              className="w-full p-3 bg-sand-50 rounded-lg ml-2 hover:bg-sand-100 transition-colors text-left"
+                              onClick={() => handleAccommodationEdit(accommodation)}
+                            >
+                              <div className="mb-2">
                                 <h4 className="font-medium text-sm">{accommodation.hotel}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleAccommodationEdit(accommodation)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleAccommodationDelete(accommodation.stay_id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
-                                </div>
                               </div>
                               <div className="text-xs text-sand-600 space-y-1">
                                 {(() => {
@@ -659,7 +645,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                   {accommodation.currency || 'USD'} {accommodation.cost.toLocaleString()}
                                 </p>
                               )}
-                            </div>
+                            </button>
                           ))}
                       </div>
                     ));
@@ -714,27 +700,13 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                             return a.start_time.localeCompare(b.start_time);
                           })
                           .map((transport) => (
-                            <div key={transport.id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
+                            <button 
+                              key={transport.id} 
+                              className="w-full p-3 bg-sand-50 rounded-lg ml-2 hover:bg-sand-100 transition-colors text-left"
+                              onClick={() => handleTransportationEdit(transport)}
+                            >
+                              <div className="mb-2">
                                 <h4 className="font-medium text-sm">{transport.departure_location} - {transport.arrival_location}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleTransportationEdit(transport)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleTransportationDelete(transport.id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
-                                </div>
                               </div>
                               <p className="text-xs text-sand-600">{transport.type}</p>
                               <p className="text-xs text-sand-600">
@@ -783,7 +755,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                   {transport.currency || 'USD'} {transport.cost.toLocaleString()}
                                 </p>
                               )}
-                            </div>
+                            </button>
                           ))}
                       </div>
                     ));
@@ -876,27 +848,13 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                             return a.start_time.localeCompare(b.start_time);
                           })
                           .map((activity) => (
-                            <div key={activity.id} className="p-3 bg-sand-50 rounded-lg ml-2">
-                              <div className="flex items-center justify-between mb-2">
+                            <button 
+                              key={activity.id} 
+                              className="w-full p-3 bg-sand-50 rounded-lg ml-2 hover:bg-sand-100 transition-colors text-left"
+                              onClick={() => handleActivityEdit(activity)}
+                            >
+                              <div className="mb-2">
                                 <h4 className="font-medium text-sm">{activity.title}</h4>
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => handleActivityEdit(activity)}
-                                  >
-                                    <Edit size={12} />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-6 w-6 p-0 text-red-500"
-                                    onClick={() => handleActivityDelete(activity.id)}
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
-                                </div>
                               </div>
                               <p className="text-xs text-sand-600">
                                 {(() => {
@@ -934,7 +892,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                   {activity.currency || 'USD'} {activity.cost.toLocaleString()}
                                 </p>
                               )}
-                            </div>
+                            </button>
                           ))}
                       </div>
                     ));
