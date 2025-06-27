@@ -884,7 +884,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
                                 })()}
                               </p>
                               <p className="text-xs text-sand-600">
-                                {reservation.number_of_people} people
+                                {reservation.number_of_people && `${reservation.number_of_people} people`}
                               </p>
                               {reservation.cost && (
                                 <p className="text-xs text-sand-600">
