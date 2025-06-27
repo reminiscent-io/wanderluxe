@@ -382,6 +382,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Maintained proper database architecture without adding redundant date fields to day_activities table
   - Activity forms now properly link dates to day_id through trip_days table relationships
   - All activity CRUD operations correctly handle date-to-day_id mapping for consistent data integrity
+- June 27, 2025. Fixed timezone-related off-by-one date errors across all sidebar sections:
+  - Added timezone-safe utility functions formatDateSafe() and compareDatesSafe() to prevent date parsing issues
+  - Updated all sidebar sections (Activities, Reservations, Transportation, Accommodations) to use safe date formatting
+  - Replaced problematic new Date().toLocaleDateString() calls that caused timezone shifts with manual string parsing
+  - Fixed transportation end date formatting to avoid timezone-related day shifts using string manipulation
+  - All date displays now show correct dates without off-by-one errors regardless of user timezone
+  - Date sorting and grouping across sidebar sections now use consistent, timezone-safe comparison methods
 
 ## User Preferences
 
