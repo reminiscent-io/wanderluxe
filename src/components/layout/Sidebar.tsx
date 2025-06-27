@@ -25,15 +25,15 @@ import {
   User,
   ArrowLeft
 } from 'lucide-react';
-import { LogoFromSupabase } from '@/components/LogoFromSupabase';
+import LogoFromSupabase from '@/components/LogoFromSupabase';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTripQuery } from '@/hooks/useTripQuery';
 import { useAuth } from '@/contexts/AuthContext';
-import { AccommodationDialog } from '@/components/trip/day/accommodations/AccommodationDialog';
-import { TransportationDialog } from '@/components/trip/day/transportation/TransportationDialog';
-import { TripDateEditDialog } from '@/components/trip/TripDateEditDialog';
-import { ActivityDialogs } from '@/components/trip/day/activities/ActivityDialogs';
-import { RestaurantReservationDialog } from '@/components/trip/day/reservations/RestaurantReservationDialog';
+import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
+import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
+import TripDateEditDialog from '@/components/trip/timeline/TripDateEditDialog';
+import ActivityDialogs from '@/components/trip/day/activities/ActivityDialogs';
+import RestaurantReservationDialog from '@/components/trip/dining/RestaurantReservationDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, differenceInDays } from 'date-fns';
