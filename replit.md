@@ -420,6 +420,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Resolved all TypeScript compilation errors related to toast imports and duplicate supabase imports
   - Both timeline (DayCard) and sidebar reservation editing now work consistently with identical save functionality
   - Reservation system provides seamless date changes and data persistence from both user interfaces
+- June 27, 2025. Enhanced sidebar delete functionality for consistent user experience:
+  - Improved delete handlers for Transportation, Activities, Accommodations, and Reservations
+  - Added proper error handling with database error checking and user feedback notifications
+  - Included trip_id conditions in all DELETE queries for Row Level Security compliance
+  - Enhanced query invalidation with specific cache keys for immediate UI updates
+  - All sidebar delete operations now provide consistent success/error toast notifications
+  - Delete functionality works identically across sidebar and timeline day card interfaces
 
 ## User Preferences
 
