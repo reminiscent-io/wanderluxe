@@ -281,6 +281,15 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added proper query invalidation to refresh sidebar data after accommodation changes
   - Replaced all dummy data with authentic database records for accommodations and trip information
   - Sidebar now displays real hotel names, costs, currencies, and check-in/check-out dates from database
+- June 27, 2025. Completed Activities and Reservations subcomponents with full CRUD functionality:
+  - Added Activities and Reservations as new Timeline subcomponents with MapPin and UtensilsCrossed icons
+  - Integrated real-time data fetching for both activities (day_activities table) and reservations (reservations table)
+  - Implemented proper sorting by start_time for activities and reservation_time for reservations (descending order)
+  - Connected ActivityDialogs component for full add/edit/delete functionality with proper TypeScript interfaces
+  - Added comprehensive database operations using Supabase for creating, updating, and deleting activities and reservations
+  - Fixed all TypeScript interface issues with ActivityFormData and Currency types
+  - Secondary sidebar now provides complete management for all four subcomponents: Accommodations, Transportation, Activities, and Reservations
+  - All sidebar buttons now provide immediate access to full-featured editing dialogs with real trip data
 
 ## User Preferences
 
