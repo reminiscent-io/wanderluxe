@@ -241,7 +241,7 @@ const Sidebar = ({ tripId, activeTab, onTabChange }: SidebarProps) => {
         start_time: activity.start_time || '',
         end_time: activity.end_time || '',
         cost: activity.cost?.toString() || '',
-        currency: activity.currency || 'USD' as Currency
+        currency: activity.currency || 'USD'
       });
       
       setSelectedActivity(activity);
