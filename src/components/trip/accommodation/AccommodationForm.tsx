@@ -242,7 +242,12 @@ export default function AccommodationForm({
         />
 
         {/* calendar */}
-        <DateTimeRangeField name="stay_range" label="Stay Dates" required />
+        <DateTimeRangeField 
+          name="stay_range" 
+          label="Stay Dates" 
+          required 
+          autoFocus={!initialData} 
+        />
 
         {/* times */}
         <div className="grid grid-cols-2 gap-4">
