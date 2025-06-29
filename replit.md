@@ -543,6 +543,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Cleaned up attached_assets folder containing debugging artifacts and screenshots
   - Created comprehensive new README.md with complete project documentation, setup instructions, and feature descriptions
   - README now serves as complete project handbook for developers and contributors
+- June 29, 2025. Enhanced DateTimeRangeField component with improved formatting and autofocus:
+  - Fixed date display format from verbose "February 11th, 2025" to clean "Feb 11, 2025" format
+  - Added autofocus prop that automatically focuses date picker when adding new accommodations
+  - Enhanced user experience with automatic popover closing when both dates are selected
+  - Added intermediate state display showing "Feb 11, 2025 → Select end date" for partial selections
+  - Improved TypeScript typing with proper DateRange type handling for better code reliability
+  - Accommodation forms now provide smoother date selection workflow with automatic focus management
 
 ## User Preferences
 
