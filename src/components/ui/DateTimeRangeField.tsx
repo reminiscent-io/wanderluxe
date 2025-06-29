@@ -61,7 +61,16 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <Popover 
+              open={isOpen} 
+              onOpenChange={(open) => {
+                // Don't allow closing if we only have a start date selected
+                if (!open && range?.from && !range?.to) {
+                  return; // Prevent closing
+                }
+                setIsOpen(open);
+              }}
+            >
               <PopoverTrigger asChild>
                 <Button
                   ref={triggerRef}
@@ -70,7 +79,6 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
                     "w-full justify-start text-left font-normal",
                     !range?.from && "text-sand-500",
                   )}
-                  onClick={() => setIsOpen(true)}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {display}
@@ -94,9 +102,10 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
                     selected={range}
                     onSelect={(newRange: DateRange | undefined) => {
                       field.onChange(newRange);
-                      // Close the popover when both dates are selected
+                      // Only close the popover when both dates are selected
+                      // Keep it open if only the start date is selected
                       if (newRange?.from && newRange?.to) {
-                        setIsOpen(false);
+                        setTimeout(() => setIsOpen(false), 100);
                       }
                     }}
                     defaultMonth={getDefaultMonth()}
