@@ -81,8 +81,8 @@ export default function DateTimeRangeField({ name, label, required, autoFocus }:
                   <Calendar
                     mode="range"
                     numberOfMonths={1}
-                    selected={range || undefined}
-                    onSelect={(newRange) => {
+                    selected={range}
+                    onSelect={(newRange: DateRange | undefined) => {
                       field.onChange(newRange);
                       // Close the popover when both dates are selected
                       if (newRange?.from && newRange?.to) {
