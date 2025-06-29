@@ -25,6 +25,7 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
   const { control } = useFormContext();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isSelectingRange, setIsSelectingRange] = useState(false);
 
   // Auto-focus the trigger button when autoFocus is enabled
   useEffect(() => {
@@ -64,11 +65,14 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
             <Popover 
               open={isOpen} 
               onOpenChange={(open) => {
-                // Don't allow closing if we only have a start date selected
-                if (!open && range?.from && !range?.to) {
+                // Don't allow closing if we're in the middle of selecting a range
+                if (!open && isSelectingRange) {
                   return; // Prevent closing
                 }
                 setIsOpen(open);
+                if (!open) {
+                  setIsSelectingRange(false);
+                }
               }}
             >
               <PopoverTrigger asChild>
@@ -102,10 +106,17 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
                     selected={range}
                     onSelect={(newRange: DateRange | undefined) => {
                       field.onChange(newRange);
-                      // Only close the popover when both dates are selected
-                      // Keep it open if only the start date is selected
-                      if (newRange?.from && newRange?.to) {
-                        setTimeout(() => setIsOpen(false), 100);
+                      
+                      if (newRange?.from && !newRange?.to) {
+                        // First date selected, start range selection mode
+                        setIsSelectingRange(true);
+                      } else if (newRange?.from && newRange?.to) {
+                        // Both dates selected, finish selection
+                        setIsSelectingRange(false);
+                        setTimeout(() => setIsOpen(false), 150);
+                      } else if (!newRange?.from) {
+                        // Range cleared, reset selection mode
+                        setIsSelectingRange(false);
                       }
                     }}
                     defaultMonth={getDefaultMonth()}
