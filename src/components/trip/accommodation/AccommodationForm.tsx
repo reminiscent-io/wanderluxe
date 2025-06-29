@@ -246,7 +246,9 @@ export default function AccommodationForm({
           name="stay_range" 
           label="Stay Dates" 
           required 
-          autoFocus={!initialData} 
+          autoFocus={!initialData}
+          tripArrivalDate={tripArrivalDate}
+          tripDepartureDate={tripDepartureDate}
         />
 
         {/* times */}

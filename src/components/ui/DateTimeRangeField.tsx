@@ -17,9 +17,11 @@ interface Props {
   label: string;
   required?: boolean;
   autoFocus?: boolean;
+  tripArrivalDate?: string | null;
+  tripDepartureDate?: string | null;
 }
 
-export default function DateTimeRangeField({ name, label, required, autoFocus }: Props) {
+export default function DateTimeRangeField({ name, label, required, autoFocus, tripArrivalDate, tripDepartureDate }: Props) {
   const { control } = useFormContext();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -30,6 +32,14 @@ export default function DateTimeRangeField({ name, label, required, autoFocus }:
       triggerRef.current.focus();
     }
   }, [autoFocus]);
+
+  // Calculate default month to show based on trip dates
+  const getDefaultMonth = () => {
+    if (tripArrivalDate) {
+      return new Date(tripArrivalDate);
+    }
+    return new Date(); // Fallback to current date
+  };
 
   return (
     <Controller
@@ -89,6 +99,7 @@ export default function DateTimeRangeField({ name, label, required, autoFocus }:
                         setIsOpen(false);
                       }
                     }}
+                    defaultMonth={getDefaultMonth()}
                     autoFocus={true}
                     className="p-3"
                   />
