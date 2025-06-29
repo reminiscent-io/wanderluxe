@@ -536,6 +536,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed Activities and Reservations panels to use proper flexbox structure with fixed headers
   - All secondary panels now align perfectly with bottom of blurred navigation bar
   - Consistent scrolling behavior and visual hierarchy across all trip component management interfaces
+- June 29, 2025. Cleaned up codebase and refreshed documentation:
+  - Removed unused duplicate JavaScript server files (kept TypeScript versions)
+  - Deleted temporary documentation files (migration instructions, fix notes)
+  - Removed unused App.css file (project uses Tailwind CSS)
+  - Cleaned up attached_assets folder containing debugging artifacts and screenshots
+  - Created comprehensive new README.md with complete project documentation, setup instructions, and feature descriptions
+  - README now serves as complete project handbook for developers and contributors
 
 ## User Preferences
 
