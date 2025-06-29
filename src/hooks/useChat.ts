@@ -2,12 +2,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+/* ------------------------------------------------------------------ */
+/* Types & constants                                                  */
+/* ------------------------------------------------------------------ */
 export interface ChatLogRow {
   id: string;
-  role: string;
+  role: 'user' | 'ai';
   message: string;
   timestamp: string;
-  embedding?: unknown; // Added based on your database schema
+  embedding?: unknown;
   trip_id: string;
   user_id: string;
   created_at: string;
@@ -15,122 +18,112 @@ export interface ChatLogRow {
 
 export const chatLogsKey = (tripId: string) => ['chat_logs', tripId];
 
+/* ------------------------------------------------------------------ */
+/* Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Transform raw DB record → typed row */
+const adaptRow = (row: any): ChatLogRow => ({
+  id: row.id,
+  role: row.role,
+  message: row.message,
+  timestamp: row.timestamp,
+  embedding: row.embedding,
+  trip_id: row.trip_id,
+  user_id: row.user_id,
+  created_at: row.created_at,
+});
+
+/** Fetch full chat log for a trip */
+const fetchChatLogs = async (tripId: string): Promise<ChatLogRow[]> => {
+  const { data, error } = await supabase
+    .from('chat_logs')
+    .select('*')
+    .eq('trip_id', tripId)
+    .order('timestamp', { ascending: true });
+
+  if (error) {
+    console.error('[useChat] Failed to load chat logs →', error);
+    return [];
+  }
+  return (data ?? []).map(adaptRow);
+};
+
+/** Sort messages chronologically (ascending) */
+const byTimestamp = (a: ChatLogRow, b: ChatLogRow) =>
+  new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+
+/** Handle an incoming realtime payload */
+const handleRealtimeInsert = (
+  payload: any,
+  tripId: string,
+  qc: ReturnType<typeof useQueryClient>,
+) => {
+  const newMsg = adaptRow(payload.new);
+
+  qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), (prev) => {
+    const existing = prev ?? [];
+
+    // avoid duplicates
+    if (existing.some((m) => m.id === newMsg.id)) return existing;
+
+    // replace optimistic user message (same content, temp id)
+    const deduped =
+      newMsg.role === 'user'
+        ? existing.filter(
+            (m) =>
+              !(
+                m.role === 'user' &&
+                m.message === newMsg.message &&
+                m.id.length === 36 && // crypto.randomUUID length
+                m.id === m.created_at // optimistic uses same value
+              ),
+          )
+        : existing;
+
+    return [...deduped, newMsg].sort(byTimestamp);
+  });
+};
+
+/* ------------------------------------------------------------------ */
+/* Hook                                                               */
+/* ------------------------------------------------------------------ */
 export function useChat(tripId: string) {
   const qc = useQueryClient();
 
-  /* Fetch chat history from Supabase */
+  /* 1 · fetch chat history --------------------------------------------------- */
   const query = useQuery({
     queryKey: chatLogsKey(tripId),
-    queryFn: async (): Promise<ChatLogRow[]> => {
-      try {
-        // Use raw query to bypass type issues
-        const { data, error } = await (supabase as any)
-          .from('chat_logs')
-          .select('*')
-          .eq('trip_id', tripId)
-          .order('timestamp', { ascending: true });
-        
-        if (error) {
-          console.error('Failed to load chat logs:', error);
-          return [];
-        }
-        
-        return (data || []).map((row: any) => ({
-          id: row.id,
-          role: row.role,
-          message: row.message,
-          timestamp: row.timestamp,
-          embedding: row.embedding,
-          trip_id: row.trip_id,
-          user_id: row.user_id,
-          created_at: row.created_at
-        })) as ChatLogRow[];
-      } catch (err) {
-        console.error('Chat query error:', err);
-        return [];
-      }
-    },
+    queryFn: () => fetchChatLogs(tripId),
     enabled: !!tripId,
   });
 
-  /* Real-time subscription for new chat messages */
+  /* 2 · realtime subscription ------------------------------------------------ */
   useEffect(() => {
     if (!tripId) return;
 
-    let channel: any;
-    
-    try {
-      channel = supabase
-        .channel(`chat_logs_${tripId}`)
-        .on(
-          'postgres_changes' as any,
-          { 
-            event: 'INSERT', 
-            schema: 'public',
-            table: 'chat_logs', 
-            filter: `trip_id=eq.${tripId}` 
-          },
-          (payload: any) => {
-            console.log('New chat message received:', payload);
-            const newMessage = {
-              id: payload.new.id,
-              role: payload.new.role,
-              message: payload.new.message,
-              timestamp: payload.new.timestamp,
-              embedding: payload.new.embedding,
-              trip_id: payload.new.trip_id,
-              user_id: payload.new.user_id,
-              created_at: payload.new.created_at
-            };
-            
-            qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => {
-              const existing = prev ?? [];
-              
-              // Check if message already exists to prevent duplicates
-              if (existing.some(msg => msg.id === newMessage.id)) {
-                console.log('Message already exists, skipping duplicate');
-                return existing;
-              }
+    const channel = supabase
+      .channel(`chat_logs_${tripId}`)
+      .on(
+        'postgres_changes' as any,
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_logs',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        (payload) => handleRealtimeInsert(payload, tripId, qc),
+      )
+      .subscribe();
 
-              // For user messages, replace any temporary optimistic message with same content
-              if (newMessage.role === 'user') {
-                const withoutOptimistic = existing.filter(msg => 
-                  !(msg.role === 'user' && msg.message === newMessage.message && msg.id.length === 36 && msg.created_at === msg.timestamp)
-                );
-                console.log('Adding real user message, replacing optimistic:', newMessage.message.substring(0, 50) + '...');
-                const updatedMessages = [...withoutOptimistic, newMessage];
-                // Sort by timestamp to maintain chronological order
-                return updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-              }
-
-              console.log('Adding new message to chat:', newMessage.role, newMessage.message.substring(0, 50) + '...');
-              const updatedMessages = [...existing, newMessage];
-              // Sort by timestamp to maintain chronological order
-              return updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-            });
-          }
-        )
-        .subscribe();
-    } catch (err) {
-      console.error('Failed to set up chat subscription:', err);
-    }
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+    return () => supabase.removeChannel(channel);
   }, [tripId, qc]);
 
-  // Function to add new message
-  const addMessage = (message: Omit<ChatLogRow, 'id' | 'created_at'>) => {
-    qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => [
+  /* 3 · helper to optimistically add a message ------------------------------ */
+  const addMessage = (msg: Omit<ChatLogRow, 'id' | 'created_at'>) => {
+    qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), (prev) => [
       ...(prev ?? []),
-      {
-        ...message,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString()
-      }
+      { ...msg, id: crypto.randomUUID(), created_at: new Date().toISOString() },
     ]);
   };
 
