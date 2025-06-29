@@ -1,159 +1,214 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
+import { format } from "date-fns";
+
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import HotelSearchInput from './HotelSearchInput';
-import HotelContactInfo from './form/HotelContactInfo';
-import { AccommodationFormData } from '@/services/accommodation/accommodationService';
-import { toast } from 'sonner';
-import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
-import { Loader2, Trash2 } from 'lucide-react';
-import { CURRENCIES, CURRENCY_NAMES } from '@/utils/currencyConstants';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-const formSchema = z.object({
-  hotel: z.string().min(1, "Hotel name is required"),
-  hotel_details: z.string().optional(),
-  hotel_url: z.string().url().optional().or(z.literal('')),
-  hotel_checkin_date: z.string().min(1, "Check-in date is required"),
-  hotel_checkout_date: z.string().min(1, "Check-out date is required"),
-  checkin_time: z.string().optional(),
-  checkout_time: z.string().optional(),
-  cost: z.number().nullable(),
-  currency: z.string().min(1, "Currency is required"),
-  hotel_address: z.string().optional(),
-  hotel_phone: z.string().optional(),
-  hotel_place_id: z.string().optional(),
-  hotel_website: z.string().optional(),
-  expense_type: z.literal('accommodation'),
-  is_paid: z.boolean(),
-  expense_date: z.string().optional(),
-  order_index: z.number()
-}).refine(data => {
-  if (data.hotel_checkin_date && data.hotel_checkout_date) {
-    return new Date(data.hotel_checkout_date) > new Date(data.hotel_checkin_date);
-  }
-  return true;
-}, {
-  message: "Check-out date must be after check-in date",
-  path: ["hotel_checkout_date"]
-});
+import DateTimeRangeField from "@/components/ui/DateTimeRangeField";
+import HotelSearchInput from "./HotelSearchInput";
+import HotelContactInfo from "./form/HotelContactInfo";
 
-interface AccommodationFormProps {
-  onSubmit: (data: AccommodationFormData) => Promise<void>;
+import { AccommodationFormData } from "@/services/accommodation/accommodationService";
+import { loadGoogleMapsAPI } from "@/utils/googleMapsLoader";
+import { toast } from "sonner";
+import { Loader2, Trash2 } from "lucide-react";
+import { CURRENCIES, CURRENCY_NAMES } from "@/utils/currencyConstants";
+
+/* ---------------- validation schema ---------------- */
+const schema = z
+  .object({
+    hotel: z.string().min(1, "Hotel name is required"),
+    hotel_details: z.string().optional(),
+    hotel_url: z.string().url().optional().or(z.literal("")),
+    hotel_checkin_date: z.string().min(1, "Check-in date is required"),
+    hotel_checkout_date: z.string().min(1, "Check-out date is required"),
+    checkin_time: z.string().optional(),
+    checkout_time: z.string().optional(),
+    cost: z.number().nullable(),
+    currency: z.string().min(1, "Currency is required"),
+    hotel_address: z.string().optional(),
+    hotel_phone: z.string().optional(),
+    hotel_place_id: z.string().optional(),
+    hotel_website: z.string().optional(),
+    expense_type: z.literal("accommodation"),
+    is_paid: z.boolean(),
+    expense_date: z.string().optional(),
+    order_index: z.number(),
+    stay_range: z
+      .object({ from: z.date().optional(), to: z.date().optional() })
+      .optional(),
+  })
+  .refine(
+    (d) =>
+      new Date(d.hotel_checkout_date).getTime() >
+      new Date(d.hotel_checkin_date).getTime(),
+    {
+      message: "Check-out must follow check-in",
+      path: ["hotel_checkout_date"],
+    },
+  );
+
+/* ---------------- props ---------------- */
+interface Props {
+  onSubmit: (d: AccommodationFormData) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
-  checkin_time?: string | null;
-  checkout_time?: string | null;
 }
 
-const CURRENCY_OPTIONS = CURRENCIES.map(currency => ({
-  label: `${currency} - ${CURRENCY_NAMES[currency]}`,
-  value: currency
+/* ---------------- helpers ---------------- */
+const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({
+  label: `${c} - ${CURRENCY_NAMES[c]}`,
+  value: c,
 }));
 
-const AccommodationForm: React.FC<AccommodationFormProps> = ({
+/* ======================================================================== */
+export default function AccommodationForm({
   onSubmit,
   onCancel,
   onDelete,
   initialData,
   tripArrivalDate,
-  tripDepartureDate
-}) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  tripDepartureDate,
+}: Props) {
+  /* ----- form init ----- */
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: {
-      hotel: initialData?.hotel || '',
-      hotel_details: initialData?.hotel_details || '',
-      hotel_url: initialData?.hotel_url || '',
-      hotel_checkin_date: initialData?.hotel_checkin_date || tripArrivalDate || '',
-      hotel_checkout_date: initialData?.hotel_checkout_date || tripDepartureDate || '',
-      checkin_time: initialData?.checkin_time || '15:00',  // 3:00pm
-      checkout_time: initialData?.checkout_time || '11:00', // 11:00am
-      cost: initialData?.cost || null,
-      currency: initialData?.currency || 'USD',
-      hotel_address: initialData?.hotel_address || '',
-      hotel_phone: initialData?.hotel_phone || '',
-      hotel_place_id: initialData?.hotel_place_id || '',
-      hotel_website: initialData?.hotel_website || '',
-      expense_type: 'accommodation',
-      is_paid: initialData?.is_paid || false,
-      expense_date: initialData?.expense_date || '',
-      order_index: initialData?.order_index || 0
-    }
+      hotel: initialData?.hotel ?? "",
+      hotel_details: initialData?.hotel_details ?? "",
+      hotel_url: initialData?.hotel_url ?? "",
+      hotel_checkin_date:
+        initialData?.hotel_checkin_date ?? tripArrivalDate ?? "",
+      hotel_checkout_date:
+        initialData?.hotel_checkout_date ?? tripDepartureDate ?? "",
+      checkin_time: initialData?.checkin_time ?? "15:00",
+      checkout_time: initialData?.checkout_time ?? "11:00",
+      cost: initialData?.cost ?? null,
+      currency: initialData?.currency ?? "USD",
+      hotel_address: initialData?.hotel_address ?? "",
+      hotel_phone: initialData?.hotel_phone ?? "",
+      hotel_place_id: initialData?.hotel_place_id ?? "",
+      hotel_website: initialData?.hotel_website ?? "",
+      expense_type: "accommodation",
+      is_paid: initialData?.is_paid ?? false,
+      expense_date: initialData?.expense_date ?? "",
+      order_index: initialData?.order_index ?? 0,
+      stay_range:
+        initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
+          ? {
+              from: new Date(initialData.hotel_checkin_date),
+              to: new Date(initialData.hotel_checkout_date),
+            }
+          : undefined,
+    },
   });
 
-  // NEW: Reset form values when trip dates change (if no initialData is provided)
+  /* watch the range picker */
+  const stayRange = useWatch({
+    control: form.control,
+    name: "stay_range",
+  }) as { from?: Date; to?: Date } | undefined;
+
+  /* sync range → hidden string fields */
+  useEffect(() => {
+    if (stayRange?.from) {
+      form.setValue(
+        "hotel_checkin_date",
+        format(stayRange.from, "yyyy-MM-dd"),
+        { shouldValidate: false },
+      );
+    }
+    if (stayRange?.to) {
+      form.setValue(
+        "hotel_checkout_date",
+        format(stayRange.to, "yyyy-MM-dd"),
+        { shouldValidate: false },
+      );
+    }
+  }, [stayRange, form]);
+
+  /* reset when parent trip dates change */
   useEffect(() => {
     if (!initialData && (tripArrivalDate || tripDepartureDate)) {
       form.reset({
-        hotel: '',
-        hotel_details: '',
-        hotel_url: '',
-        hotel_checkin_date: tripArrivalDate || '',
-        hotel_checkout_date: tripDepartureDate || '',
-        checkin_time: '15:00',
-        checkout_time: '11:00',
-        cost: null,
-        currency: 'USD',
-        hotel_address: '',
-        hotel_phone: '',
-        hotel_place_id: '',
-        hotel_website: '',
-        expense_type: 'accommodation',
-        is_paid: false,
-        expense_date: '',
-        order_index: 0
+        ...form.getValues(),
+        hotel_checkin_date: tripArrivalDate ?? "",
+        hotel_checkout_date: tripDepartureDate ?? "",
+        stay_range:
+          tripArrivalDate && tripDepartureDate
+            ? {
+                from: new Date(tripArrivalDate),
+                to: new Date(tripDepartureDate),
+              }
+            : undefined,
       });
     }
   }, [tripArrivalDate, tripDepartureDate, initialData, form]);
 
+  /* safely load Google Maps */
   useEffect(() => {
-    loadGoogleMapsAPI();
+    loadGoogleMapsAPI().catch(console.error);
   }, []);
 
-  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+  /* ----- submit ----- */
+  const [saving, setSaving] = useState(false);
+  const handleSubmit = async (data: z.infer<typeof schema>) => {
     try {
-      if (typeof onSubmit !== 'function') {
-        throw new Error('onSubmit prop must be a function');
-      }
-      setIsSubmitting(true);
+      setSaving(true);
       await onSubmit(data);
-    } catch (error) {
-      console.error('Error submitting accommodation:', error);
-      toast.error('Failed to save accommodation');
-      throw error; // Re-throw to be handled by parent
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to save accommodation");
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
+  /* ----- JSX ----- */
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-6">
-        {/* Hotel Name Field */}
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-4 p-6"
+      >
+        {/* Hotel search */}
         <FormField
           control={form.control}
           name="hotel"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Hotel Name <span className="text-red-500">*</span></FormLabel>
+              <FormLabel>
+                Hotel Name <span className="text-red-500">*</span>
+              </FormLabel>
               <HotelSearchInput
                 value={field.value}
-                onChange={(hotelName, placeDetails) => {
-                  field.onChange(hotelName);
-                  if (placeDetails) {
-                    form.setValue('hotel_address', placeDetails.formatted_address || '');
-                    form.setValue('hotel_phone', placeDetails.formatted_phone_number || '');
-                    form.setValue('hotel_place_id', placeDetails.place_id || '');
-                    form.setValue('hotel_website', placeDetails.website || '');
-                    form.setValue('hotel_url', placeDetails.website || '');
+                onChange={(val, details) => {
+                  field.onChange(val);
+                  if (details) {
+                    form.setValue(
+                      "hotel_address",
+                      details.formatted_address ?? "",
+                    );
+                    form.setValue(
+                      "hotel_phone",
+                      details.formatted_phone_number ?? "",
+                    );
+                    form.setValue("hotel_place_id", details.place_id ?? "");
+                    form.setValue("hotel_website", details.website ?? "");
+                    form.setValue("hotel_url", details.website ?? "");
                   }
                 }}
               />
@@ -162,11 +217,13 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
           )}
         />
 
+        {/* contact preview */}
         <HotelContactInfo
-          address={form.watch('hotel_address')}
-          phone={form.watch('hotel_phone')}
+          address={form.watch("hotel_address")}
+          phone={form.watch("hotel_phone")}
         />
 
+        {/* details */}
         <FormField
           control={form.control}
           name="hotel_details"
@@ -176,32 +233,19 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
               <FormControl>
                 <textarea
                   {...field}
-                  className="w-full p-2 border rounded-md"
                   rows={1}
+                  className="w-full rounded-md border p-2"
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
+        {/* calendar */}
+        <DateTimeRangeField name="stay_range" label="Stay Dates" required />
+
+        {/* times */}
         <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="hotel_checkin_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Check-in Date <span className="text-red-500">*</span></FormLabel>
-                <FormControl>
-                  <input
-                    type="date"
-                    {...field}
-                    className="w-full p-2 border rounded-md"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="checkin_time"
@@ -212,30 +256,9 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
                   <input
                     type="time"
                     {...field}
-                    className="w-full p-2 border rounded-md"
+                    className="w-full rounded-md border p-2"
                   />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="hotel_checkout_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Check-out Date <span className="text-red-500">*</span></FormLabel>
-                <FormControl>
-                  <input
-                    type="date"
-                    {...field}
-                    className="w-full p-2 border rounded-md"
-                  />
-                </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -249,15 +272,15 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
                   <input
                     type="time"
                     {...field}
-                    className="w-full p-2 border rounded-md"
+                    className="w-full rounded-md border p-2"
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
+        {/* cost & currency */}
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -270,13 +293,12 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
                     type="number"
                     {...field}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                    className="w-full p-2 border rounded-md"
+                    className="w-full rounded-md border p-2"
                   />
                 </FormControl>
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="currency"
@@ -284,13 +306,10 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
               <FormItem>
                 <FormLabel>Currency</FormLabel>
                 <FormControl>
-                  <select
-                    {...field}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    {CURRENCY_OPTIONS.map(currency => (
-                      <option key={currency.value} value={currency.value}>
-                        {currency.label}
+                  <select {...field} className="w-full rounded-md border p-2">
+                    {CURRENCY_OPTIONS.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
                       </option>
                     ))}
                   </select>
@@ -300,42 +319,41 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
           />
         </div>
 
+        {/* actions */}
         <div className="flex justify-between pt-4">
-          {/* Delete button - only show when editing existing accommodation */}
           {initialData && onDelete && (
             <Button
               type="button"
               variant="ghost"
               onClick={onDelete}
-              disabled={isSubmitting}
-              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+              disabled={saving}
+              className="text-red-500 hover:bg-red-50 hover:text-red-700"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
           )}
-          
-          <div className="flex gap-2 ml-auto">
+          <div className="ml-auto flex gap-2">
             <Button
               type="button"
               variant="ghost"
               onClick={onCancel}
-              disabled={isSubmitting}
+              disabled={saving}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="bg-earth-500 hover:bg-earth-600 text-white"
+              className="bg-earth-500 text-white hover:bg-earth-600"
+              disabled={saving}
             >
-              {isSubmitting ? (
+              {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Saving…
                 </>
               ) : (
-                'Save Accommodation'
+                "Save Accommodation"
               )}
             </Button>
           </div>
@@ -343,6 +361,4 @@ const AccommodationForm: React.FC<AccommodationFormProps> = ({
       </form>
     </Form>
   );
-};
-
-export default AccommodationForm;
+}
