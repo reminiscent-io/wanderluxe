@@ -70,12 +70,17 @@ export default function DateTimeRangeField({
       control={control}
       render={({ field }) => {
         const value = (field.value || {}) as DateTimeRange;
-        const display =
-          value.from && value.to
-            ? `${fmtDate(value.from)} – ${fmtDate(value.to)} at ${prettyTime(
-                value.fromTime
-              )} → ${prettyTime(value.toTime)}`
-            : "Select date range";
+        const display = hideTimeInputs
+          ? (value.from && value.to
+              ? `${fmtDate(value.from)} – ${fmtDate(value.to)}`
+              : value.from
+              ? `${fmtDate(value.from)} → Select end date`
+              : "Select date range")
+          : (value.from && value.to
+              ? `${fmtDate(value.from)} – ${fmtDate(value.to)} at ${prettyTime(
+                  value.fromTime
+                )} → ${prettyTime(value.toTime)}`
+              : "Select date range");
 
         const update = (patch: Partial<DateTimeRange>) =>
           field.onChange({ ...value, ...patch });
