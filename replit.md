@@ -587,6 +587,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Updated TripDateEditDialog to pass dates directly to save handler avoiding timing issues
   - Modified handleSaveDates to accept override parameters for immediate date processing
   - Sidebar date editing now fully functional with proper day card generation and removal
+- June 30, 2025. Fixed sidebar restaurant reservation dialog delete button:
+  - Added missing onDelete prop to RestaurantReservationDialog in sidebar implementation
+  - Delete button now appears when editing existing reservations with red trash icon styling
+  - Integrated handleReservationDelete function with proper dialog state management
+  - Delete functionality matches accommodations dialog format and behavior
+  - Dialog closes automatically after successful deletion with proper query invalidation
 
 ## User Preferences
 
