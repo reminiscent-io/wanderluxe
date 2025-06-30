@@ -114,9 +114,14 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
             }
           }
 
-          /* fallback: ensure list refetches */
+          /* invalidate day-specific reservations */
           await qc.invalidateQueries({
             queryKey: reservationsKey(tripId, dayId),
+          });
+          
+          /* invalidate sidebar reservations query */
+          await qc.invalidateQueries({
+            queryKey: ['reservations', tripId],
           });
           
           /* also invalidate trip data like activities do */
@@ -222,6 +227,9 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
               toast.success('Reservation deleted');
               await qc.invalidateQueries({
                 queryKey: reservationsKey(tripId, dayId),
+              });
+              await qc.invalidateQueries({
+                queryKey: ['reservations', tripId],
               });
               await qc.invalidateQueries({ queryKey: ['trip'] });
               setIsDialogOpen(false);
