@@ -278,6 +278,11 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         isSubmitting={false}
         tripArrivalDate={trip?.arrival_date}
         tripDepartureDate={trip?.departure_date}
+        onDelete={selectedReservation ? async () => {
+          await handleReservationDelete(selectedReservation.id);
+          setReservationOpen(false);
+          setSelectedReservation(null);
+        } : undefined}
         onSubmit={async data => {
           try {
             if (selectedReservation) {
