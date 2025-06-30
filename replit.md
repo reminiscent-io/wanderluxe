@@ -605,6 +605,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Both interfaces now use identical RestaurantReservationDialog with same behavior
   - Consistent delete button styling and query invalidation across all reservation interfaces
   - Eliminated functionality differences between sidebar and timeline reservation management
+- June 30, 2025. Fixed reservation data synchronization between day cards and sidebar:
+  - Resolved query invalidation mismatch where day card edits weren't updating sidebar reservations
+  - Added sidebar query key ['reservations', tripId] invalidation to day card save/delete operations
+  - Day cards and sidebar now use different query keys but properly invalidate both when data changes
+  - Reservation edits from either interface immediately sync to the other interface
+  - Complete data consistency across all reservation management touchpoints
 
 ## User Preferences
 
