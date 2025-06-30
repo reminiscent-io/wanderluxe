@@ -24,6 +24,23 @@
   .pac-item-selected {
     @apply bg-gray-200;
   }
+  
+  /* Override react-day-picker default blue styles with sand theme */
+  .rdp-day_selected {
+    @apply bg-sand-500 text-sand-50 !important;
+  }
+  .rdp-day_range_start {
+    @apply bg-sand-500 text-sand-50 !important;
+  }
+  .rdp-day_range_end {
+    @apply bg-sand-500 text-sand-50 !important;
+  }
+  .rdp-day_range_middle {
+    @apply bg-sand-200 text-sand-700 !important;
+  }
+  .rdp-day:hover:not(.rdp-day_selected):not(.rdp-day_range_start):not(.rdp-day_range_end):not(.rdp-day_range_middle) {
+    @apply bg-sand-100 !important;
+  }
 }
 
 @layer base {
