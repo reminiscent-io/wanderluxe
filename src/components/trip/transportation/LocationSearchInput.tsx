@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
+import { searchPlaces, getPlaceDetails, type AutocompleteResult, type PlaceResult } from '@/utils/googleMapsLoader';
+import { ChevronDown } from 'lucide-react';
 
 interface LocationSearchInputProps {
   value: string;
-  onChange: (value: string, details?: google.maps.places.PlaceResult) => void;
+  onChange: (value: string, details?: PlaceResult) => void;
   placeholder?: string;
   autoFocus?: boolean;
   transportationType?: string | undefined;
@@ -18,118 +18,114 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   autoFocus,
   transportationType
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const loadAPI = async () => {
-      const loaded = await loadGoogleMapsAPI();
-      if (loaded) {
-        setIsLoading(false);
-        initializeAutocomplete();
-      } else {
-        setIsLoading(false);
-        toast.error('Failed to initialize location search');
-      }
-    };
-    loadAPI();
-  }, []);
-
-  // Reinitialize autocomplete when transportation type changes
-  useEffect(() => {
-    if (!isLoading && window.google) {
-      initializeAutocomplete();
+  const searchLocations = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
-  }, [transportationType, isLoading]);
 
-  const initializeAutocomplete = () => {
-    if (!inputRef.current || !window.google) return;
-    
+    setIsLoading(true);
     try {
-      if (autoCompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autoCompleteRef.current);
-      }
-
-      // Configure autocomplete options based on transportation type
-      const options: google.maps.places.AutocompleteOptions = {
-        fields: [
-          'name', 
-          'place_id', 
-          'formatted_address', 
-          'geometry',
-          'types'
-        ]
-      };
-
-      // For flights, prioritize airports
-      if (transportationType === 'flight') {
-        options.types = ['airport'];
-      } else {
-        // For other transportation, use geocode which includes addresses and general places
-        // Note: 'establishment' cannot be mixed with other types per Google Places API
-        options.types = ['geocode'];
-      }
-
-      autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
-      
-      autoCompleteRef.current.addListener('place_changed', () => {
-        if (!autoCompleteRef.current) return;
-        
-        try {
-          setIsPlacesSelecting(true);
-          const place = autoCompleteRef.current.getPlace();
-          
-          if (!place?.name && !place?.formatted_address) {
-            setIsPlacesSelecting(false);
-            return;
-          }
-
-          // For airports, try to extract airport code or use name
-          let displayValue = place.name || place.formatted_address || '';
-          
-          if (transportationType === 'flight' && place.name) {
-            // Check if the name contains an airport code in parentheses
-            const airportCodeMatch = place.name.match(/\(([A-Z]{3})\)/);
-            if (airportCodeMatch) {
-              displayValue = `${place.name}`;
-            } else {
-              displayValue = place.name;
-            }
-          }
-          
-          // Force the input to update with the selected value
-          if (inputRef.current) {
-            inputRef.current.value = displayValue;
-          }
-          
-          // Use setTimeout to ensure Google Places completes its work before triggering onChange
-          setTimeout(() => {
-            onChange(displayValue, place);
-            setIsPlacesSelecting(false);
-          }, 100);
-          
-        } catch (error) {
-          console.error('LocationSearchInput - Error in place_changed handler:', error);
-          toast.error('Error processing location selection');
-          setIsPlacesSelecting(false);
-        }
-      });
+      // Determine search type based on transportation type
+      const searchType = transportationType === 'flight' ? 'airport' : 'geocode';
+      const results = await searchPlaces(query, searchType);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+      setSelectedIndex(-1);
     } catch (error) {
-      console.error('Error initializing autocomplete:', error);
-      toast.error('Failed to initialize location search');
+      console.error('Error searching locations:', error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [transportationType]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+    searchLocations(newValue);
+  };
+
+  const handleSuggestionSelect = async (suggestion: AutocompleteResult) => {
+    setIsLoading(true);
+    try {
+      const details = await getPlaceDetails(suggestion.place_id);
+      if (details) {
+        // For airports, try to extract airport code or use name
+        let displayValue = details.name || details.formatted_address || '';
+        
+        if (transportationType === 'flight' && details.name) {
+          // Check if the name contains an airport code in parentheses
+          const airportCodeMatch = details.name.match(/\(([A-Z]{3})\)/);
+          if (airportCodeMatch) {
+            displayValue = details.name;
+          } else {
+            displayValue = details.name;
+          }
+        }
+
+        onChange(displayValue, details);
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+      }
+    } catch (error) {
+      console.error('Error getting place details:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Track if we're in the middle of a Google Places selection
-  const [isPlacesSelecting, setIsPlacesSelecting] = useState(false);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions) return;
 
-  // Update input value when prop changes, but not during Places selection
-  useEffect(() => {
-    if (inputRef.current && inputRef.current.value !== value && !isPlacesSelecting) {
-      inputRef.current.value = value;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+          handleSuggestionSelect(suggestions[selectedIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+        break;
     }
-  }, [value, isPlacesSelecting]);
+  };
+
+  const handleBlur = (e: React.FocusEvent) => {
+    // Delay hiding suggestions to allow clicking
+    setTimeout(() => {
+      if (!dropdownRef.current?.contains(document.activeElement)) {
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+      }
+    }, 150);
+  };
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   return (
     <div className="space-y-2">
@@ -137,24 +133,49 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
         <Input
           ref={inputRef}
           type="text"
-          defaultValue={value}
-          onChange={(e) => {
-            // Only trigger onChange for manual typing, not during Google Places selection
-            if (!isPlacesSelecting) {
-              onChange(e.target.value);
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-            }
-          }}
-          placeholder={isLoading ? "Loading..." : placeholder}
-          className="bg-white"
-          disabled={isLoading}
-          autoFocus={autoFocus}
+          value={value}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onFocus={() => value.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
+          placeholder={placeholder}
+          className="bg-white pr-8"
           autoComplete="off"
         />
+        {isLoading && (
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-sand-600 border-t-transparent"></div>
+          </div>
+        )}
+        {!isLoading && showSuggestions && (
+          <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-sand-500" />
+        )}
+        
+        {showSuggestions && suggestions.length > 0 && (
+          <div 
+            ref={dropdownRef}
+            className="absolute z-[999] w-full mt-1 bg-white border border-sand-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+          >
+            {suggestions.map((suggestion, index) => (
+              <button
+                key={suggestion.place_id}
+                type="button"
+                className={`w-full px-3 py-2 text-left hover:bg-sand-50 border-b border-sand-100 last:border-b-0 ${
+                  index === selectedIndex ? 'bg-sand-100' : ''
+                }`}
+                onClick={() => handleSuggestionSelect(suggestion)}
+                onMouseEnter={() => setSelectedIndex(index)}
+              >
+                <div className="font-medium text-sm">
+                  {suggestion.structured_formatting.main_text}
+                </div>
+                <div className="text-xs text-sand-600">
+                  {suggestion.structured_formatting.secondary_text}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

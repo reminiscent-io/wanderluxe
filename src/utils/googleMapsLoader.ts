@@ -43,16 +43,14 @@ export const searchPlaces = async (
   types: string = 'establishment'
 ): Promise<AutocompleteResult[]> => {
   try {
-    const { data, error } = await supabase.functions.invoke('google-places-proxy', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: new URLSearchParams({
-        input,
-        types,
-        language: 'en'
-      })
+    const params = new URLSearchParams({
+      input,
+      types,
+      language: 'en'
+    });
+    
+    const { data, error } = await supabase.functions.invoke(`google-places-proxy?${params}`, {
+      method: 'GET'
     });
 
     if (error) {
@@ -70,7 +68,7 @@ export const searchPlaces = async (
     }
   } catch (error) {
     console.error('Error in searchPlaces:', error);
-    toast('Failed to search locations', { variant: 'error' });
+    toast.error('Failed to search locations');
     return [];
   }
 };
@@ -89,7 +87,7 @@ export const getPlaceDetails = async (placeId: string): Promise<PlaceResult | nu
 
     if (error) {
       console.error('Error getting place details:', error);
-      toast('Failed to get location details', { variant: 'error' });
+      toast.error('Failed to get location details');
       return null;
     }
 
@@ -102,7 +100,7 @@ export const getPlaceDetails = async (placeId: string): Promise<PlaceResult | nu
     }
   } catch (error) {
     console.error('Error in getPlaceDetails:', error);
-    toast('Failed to get location details', { variant: 'error' });
+    toast.error('Failed to get location details');
     return null;
   }
 };
