@@ -563,6 +563,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added sand-themed border (border-sand-700) and text colors (text-sand-100)
   - Enhanced hover states with lighter sand colors for better user interaction
   - Improved placeholder text contrast with sand-400 color when no date selected
+  - Added CSS overrides in index.css to force react-day-picker calendar to use sand colors instead of default blue
+  - Fixed calendar date selection styling with proper sand-500 backgrounds and sand-50 text for selected dates
   - Maintains earth-tone color palette consistency throughout the application
 
 ## User Preferences
