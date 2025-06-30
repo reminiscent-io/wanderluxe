@@ -558,6 +558,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Replaced RestaurantSearchInput and LocationSearchInput with custom dropdown implementations
   - Eliminated API key exposure risk while maintaining full Google Places functionality
   - Added proper error handling and user feedback for all location search operations
+- June 30, 2025. Updated DateTimeRangeField styling to use dark sand theme:
+  - Changed button background from default white to dark sand (bg-sand-800)
+  - Added sand-themed border (border-sand-700) and text colors (text-sand-100)
+  - Enhanced hover states with lighter sand colors for better user interaction
+  - Improved placeholder text contrast with sand-400 color when no date selected
+  - Maintains earth-tone color palette consistency throughout the application
 
 ## User Preferences
 
