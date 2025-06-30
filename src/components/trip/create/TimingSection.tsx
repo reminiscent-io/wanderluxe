@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Label } from "@/components/ui/label";
-import DateRangeField, { DateRange } from "@/components/ui/DateRangeField";
+import DateTimeRangeField, { DateTimeRange } from "@/components/ui/DateTimeRangeField";
 import { useForm, FormProvider } from "react-hook-form";
 import { format } from "date-fns";
 
@@ -20,10 +20,12 @@ const TimingSection: React.FC<TimingSectionProps> = ({
 }) => {
   const form = useForm({
     defaultValues: {
-      dateRange: {
+      travelDates: {
         from: startDate ? new Date(startDate) : null,
         to: endDate ? new Date(endDate) : null,
-      } as DateRange
+        fromTime: undefined,
+        toTime: undefined,
+      } as DateTimeRange
     }
   });
 
@@ -32,25 +34,37 @@ const TimingSection: React.FC<TimingSectionProps> = ({
     const newRange = {
       from: startDate ? new Date(startDate) : null,
       to: endDate ? new Date(endDate) : null,
+      fromTime: undefined,
+      toTime: undefined,
     };
-    form.setValue('dateRange', newRange);
+    form.setValue('travelDates', newRange);
   }, [startDate, endDate, form]);
 
-  const handleDateRangeChange = (range: DateRange) => {
-    if (range.from) {
-      const fromStr = format(range.from, 'yyyy-MM-dd');
+  const handleDateChange = () => {
+    const currentValues = form.getValues('travelDates');
+    
+    if (currentValues.from) {
+      const fromStr = format(currentValues.from, 'yyyy-MM-dd');
       onStartDateChange(fromStr);
     } else {
       onStartDateChange('');
     }
     
-    if (range.to) {
-      const toStr = format(range.to, 'yyyy-MM-dd');
+    if (currentValues.to) {
+      const toStr = format(currentValues.to, 'yyyy-MM-dd');
       onEndDateChange(toStr);
     } else {
       onEndDateChange('');
     }
   };
+
+  // Watch for form changes and update parent
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      handleDateChange();
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   return (
     <FormProvider {...form}>
@@ -59,11 +73,10 @@ const TimingSection: React.FC<TimingSectionProps> = ({
           When are you planning to travel? 
         </Label>
 
-        <DateRangeField
-          name="dateRange"
+        <DateTimeRangeField
+          name="travelDates"
           label="Travel Dates"
           required
-          onChange={handleDateRangeChange}
         />
       </div>
     </FormProvider>

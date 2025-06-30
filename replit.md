@@ -566,6 +566,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added CSS overrides in index.css to force react-day-picker calendar to use sand colors instead of default blue
   - Fixed calendar date selection styling with proper sand-500 backgrounds and sand-50 text for selected dates
   - Maintains earth-tone color palette consistency throughout the application
+- June 30, 2025. Integrated DateTimeRangeField into create trip form:
+  - Replaced basic HTML date inputs in TimingSection with existing DateTimeRangeField component
+  - Implemented React Hook Form pattern matching edit trip dates functionality
+  - Set time fields to undefined since only dates are needed for trip creation
+  - Unified date selection interface across both create and edit trip workflows
+  - Inherits all sand theme styling and calendar customizations from DateTimeRangeField
 
 ## User Preferences
 
