@@ -22,7 +22,6 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
 
   // Memoize the invalidation callback to prevent unnecessary re-subscriptions
   const handleReservationChange = useCallback((payload: any) => {
-    console.log('Reservation change detected:', payload);
     queryClient.invalidateQueries({
       queryKey: ['reservations', tripId, dayId],
     });
@@ -34,11 +33,9 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
 
     // Check if subscription already exists for this day
     if (activeSubscriptions.has(subscriptionKey)) {
-      console.log(`Subscription already exists for day ${dayId}, skipping`);
       return;
     }
 
-    console.log(`Setting up reservation subscription for day ${dayId}`);
     activeSubscriptions.add(subscriptionKey);
 
     const channel = supabase
@@ -54,13 +51,11 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
         handleReservationChange
       )
       .subscribe((status) => {
-        console.log(`Reservation subscription status for day ${dayId}:`, status);
         setIsSubscribed(status === 'SUBSCRIBED');
         
         // Handle channel errors with automatic reconnection
         if (status === 'CHANNEL_ERROR') {
-          console.warn(`Channel error for day ${dayId}, will retry automatically`);
-          // Supabase will automatically retry, no manual intervention needed
+          console.warn(`Reservation channel error for day ${dayId}, retrying automatically`);
         }
       });
 
@@ -68,7 +63,6 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
 
     // Cleanup subscription on unmount
     return () => {
-      console.log(`Cleaning up reservation subscription for day ${dayId}`);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

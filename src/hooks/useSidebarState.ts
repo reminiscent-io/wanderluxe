@@ -416,47 +416,132 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setTripDatesOpen(true);
   };
 
+  // Check for days that need to be removed when date range is shortened
+  const checkDaysToRemove = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
+    const oldDates = generateDatesArray(oldArr, oldDep);
+    const newDates = generateDatesArray(newArr, newDep);
+    const toRemove = oldDates.filter(d => !newDates.includes(d));
+    if (!toRemove.length) return null;
+
+    try {
+      const { data: daysData, error: daysErr } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', tripId)
+        .in('date', toRemove);
+      if (daysErr) throw daysErr;
+
+      if (!daysData?.length) return null;
+
+      const dayIds = daysData.map(d => d.day_id);
+      const { data: activitiesData, error: activitiesErr } = await supabase
+        .from('day_activities')
+        .select('id')
+        .in('day_id', dayIds);
+      if (activitiesErr) throw activitiesErr;
+
+      return {
+        dayCount: daysData.length,
+        activityCount: activitiesData?.length || 0,
+        dates: toRemove
+      };
+    } catch (err) {
+      console.error('Error checking days to remove:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to check affected days' });
+      return null;
+    }
+  };
+
+  // Remove trip days and associated activities
+  const removeTripDays = async (dates: string[]) => {
+    const { data: daysData, error: daysErr } = await supabase
+      .from('trip_days')
+      .select('day_id')
+      .eq('trip_id', tripId)
+      .in('date', dates);
+    if (daysErr) throw daysErr;
+
+    if (daysData?.length) {
+      const ids = daysData.map(d => d.day_id);
+      await supabase.from('day_activities').delete().in('day_id', ids);
+      await supabase.from('trip_days').delete().in('day_id', ids);
+    }
+  };
+
   // Utility to add new trip_days if trip dates have been extended
   const addNewTripDays = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
+    console.log('addNewTripDays called with:', { oldArr, oldDep, newArr, newDep });
     const oldDates = generateDatesArray(oldArr, oldDep);
     const newDates = generateDatesArray(newArr, newDep);
     const toAdd = newDates.filter(d => !oldDates.includes(d));
-    if (!toAdd.length) return;
+    console.log('Date comparison - old:', oldDates, 'new:', newDates, 'toAdd:', toAdd);
+    if (!toAdd.length) {
+      console.log('No new dates to add');
+      return;
+    }
     try {
+      console.log('Creating trip days for dates:', toAdd);
       await createTripDays(tripId || '', toAdd);
+      console.log('Successfully created trip days');
     } catch (err) {
       console.error('Failed to add new trip days:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to add new trip days' });
     }
   };
 
-  // Save trip date changes (update trip record and possibly add new trip_days)
+  // Save trip date changes (update trip record and handle day additions/removals)
   const saveDateChanges = async (arr: string, dep: string) => {
+    console.log('saveDateChanges called with:', { arr, dep, tripId });
+    console.log('Current trip data:', trip);
+    
     const { error } = await supabase
       .from('trips')
       .update({ arrival_date: arr, departure_date: dep })
       .eq('trip_id', tripId);
     if (error) throw error;
+    
     if (trip?.arrival_date && trip?.departure_date) {
+      console.log('Taking addNewTripDays path - existing trip has dates');
       await addNewTripDays(trip.arrival_date, trip.departure_date, arr, dep);
     } else {
+      console.log('Taking createTripDays path - no existing dates');
       const allDates = generateDatesArray(arr, dep);
       await createTripDays(tripId || '', allDates);
     }
+    
     toast({ title: 'Success', description: 'Trip dates updated' });
     setTripDatesOpen(false);
     setIsSubmittingDates(false);
   };
 
-  const handleSaveDates = async () => {
-    if (!newArrival || !newDeparture) {
+  const handleSaveDates = async (overrideArrival?: string, overrideDeparture?: string) => {
+    const finalArrival = overrideArrival || newArrival;
+    const finalDeparture = overrideDeparture || newDeparture;
+    console.log('handleSaveDates called with finalArrival:', finalArrival, 'finalDeparture:', finalDeparture);
+    if (!finalArrival || !finalDeparture) {
       toast({ variant: 'destructive', title: 'Error', description: 'Both arrival and departure dates are required' });
       return;
     }
     setIsSubmittingDates(true);
+    
+    // Update state for consistency
+    if (overrideArrival) setNewArrival(overrideArrival);
+    if (overrideDeparture) setNewDeparture(overrideDeparture);
+
     try {
-      await saveDateChanges(newArrival, newDeparture);
+      // Check if we need to remove any days first
+      if (trip?.arrival_date && trip?.departure_date) {
+        const daysToRemove = await checkDaysToRemove(trip.arrival_date, trip.departure_date, finalArrival, finalDeparture);
+        if (daysToRemove && daysToRemove.dayCount > 0) {
+          // For now, automatically remove the days - could add confirmation dialog later
+          await removeTripDays(daysToRemove.dates);
+        }
+      }
+
+      console.log('About to call saveDateChanges with:', finalArrival, finalDeparture);
+      await saveDateChanges(finalArrival, finalDeparture);
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
     } catch (err) {
       console.error('Error updating trip dates:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update trip dates' });

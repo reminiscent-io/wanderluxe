@@ -114,9 +114,14 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
             }
           }
 
-          /* fallback: ensure list refetches */
+          /* invalidate day-specific reservations */
           await qc.invalidateQueries({
             queryKey: reservationsKey(tripId, dayId),
+          });
+          
+          /* invalidate sidebar reservations query */
+          await qc.invalidateQueries({
+            queryKey: ['reservations', tripId],
           });
           
           /* also invalidate trip data like activities do */
@@ -190,11 +195,10 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
                 key={r.id}
                 reservation={r}
                 formatTime={formatTime}
-                onEdit={() => {
+                onClick={() => {
                   setEditingId(r.id);
                   setIsDialogOpen(true);
                 }}
-                onDelete={() => setDeletingId(r.id)}
               />
             ))}
         </div>
@@ -211,6 +215,30 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
               : { day_id: dayId, trip_id: tripId, order_index: reservations.length }
           }
           title={editingId ? 'Edit Reservation' : 'Add Reservation'}
+          onDelete={editingId ? async () => {
+            try {
+              await supabase
+                .from('reservations')
+                .delete()
+                .eq('id', editingId)
+                .eq('trip_id', tripId)
+                .throwOnError();
+
+              toast.success('Reservation deleted');
+              await qc.invalidateQueries({
+                queryKey: reservationsKey(tripId, dayId),
+              });
+              await qc.invalidateQueries({
+                queryKey: ['reservations', tripId],
+              });
+              await qc.invalidateQueries({ queryKey: ['trip'] });
+              setIsDialogOpen(false);
+              setEditingId(null);
+            } catch (err) {
+              console.error(err);
+              toast.error('Failed to delete reservation');
+            }
+          } : undefined}
           tripId={tripId}
           tripArrivalDate={tripArrivalDate}
           tripDepartureDate={tripDepartureDate}

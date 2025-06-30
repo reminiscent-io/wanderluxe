@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
+import { formatTransportationType } from '@/utils/transportationUtils';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -332,12 +333,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         >
                           <div>
                             <h4 className="font-medium text-gray-700 text-sm">
-                              {transport.type
-                                ?.split('_')
-                                .map(
-                                  (w) => w.charAt(0).toUpperCase() + w.slice(1)
-                                )
-                                .join(' ')}
+                              {formatTransportationType(transport.type)}
                               {transport.departure_location &&
                                 transport.arrival_location &&
                                 ` | ${transport.departure_location} → ${transport.arrival_location}`}

@@ -1,15 +1,22 @@
 // src/components/trip/timeline/TripDatesPanel.tsx
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import Header from "@/components/trip/_shared/Header";
+import { parse, differenceInCalendarDays, format } from "date-fns";
 
 interface TripDatesPanelProps {
   trip: { arrival_date: string; departure_date: string } | null;
   onEdit: () => void;
-  /* NEW props injected by SecondaryPanel */
   isMobile: boolean;
   onClose: () => void;
   onBack: () => void;
+}
+
+/** Parse an ISO “YYYY-MM-DD” string to a local‐midnight Date */
+function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
 export default function TripDatesPanel({
@@ -19,24 +26,15 @@ export default function TripDatesPanel({
   onClose,
   onBack,
 }: TripDatesPanelProps) {
-  const nights =
-    trip?.arrival_date && trip?.departure_date
-      ? Math.ceil(
-          (new Date(trip.departure_date).getTime() -
-            new Date(trip.arrival_date).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      : null;
+  if (!trip) return null;
+
+  const arrivalDate = parseLocalDate(trip.arrival_date);
+  const departureDate = parseLocalDate(trip.departure_date);
+  const nights = differenceInCalendarDays(departureDate, arrivalDate);
 
   return (
     <div className="p-4">
-      {/* Shared header with ← / ✕ logic */}
-      <Header
-        title="Trip Dates"
-        isMobile={isMobile}
-        onBack={onBack}
-        onClose={onClose}
-      />
+      <Header title="Trip Dates" isMobile={isMobile} onBack={onBack} onClose={onClose} />
 
       <Button
         size="sm"
@@ -47,24 +45,26 @@ export default function TripDatesPanel({
         Edit Dates
       </Button>
 
-      {trip && (
-        <div className="space-y-3">
-          <div className="rounded-lg bg-sand-50 p-3">
-            <p className="text-sm font-medium text-earth-600">Arrival Date</p>
-            <p className="text-sm text-sand-700">{trip.arrival_date}</p>
-          </div>
-          <div className="rounded-lg bg-sand-50 p-3">
-            <p className="text-sm font-medium text-earth-600">Departure Date</p>
-            <p className="text-sm text-sand-700">{trip.departure_date}</p>
-          </div>
-          <div className="rounded-lg bg-sand-50 p-3">
-            <p className="text-sm font-medium text-earth-600">Duration</p>
-            <p className="text-sm text-sand-700">
-              {nights !== null ? `${nights} night${nights === 1 ? "" : "s"}` : "-"}
-            </p>
-          </div>
+      <div className="space-y-3">
+        <div className="rounded-lg bg-sand-50 p-3">
+          <p className="text-sm font-medium text-earth-600">Arrival Date</p>
+          <p className="text-sm text-sand-700">
+            {format(arrivalDate, "EEE, MMM d")}
+          </p>
         </div>
-      )}
+        <div className="rounded-lg bg-sand-50 p-3">
+          <p className="text-sm font-medium text-earth-600">Departure Date</p>
+          <p className="text-sm text-sand-700">
+            {format(departureDate, "EEE, MMM d")}
+          </p>
+        </div>
+        <div className="rounded-lg bg-sand-50 p-3">
+          <p className="text-sm font-medium text-earth-600">Duration</p>
+          <p className="text-sm text-sand-700">
+            {nights > 0 ? `${nights} night${nights === 1 ? "" : "s"}` : "—"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

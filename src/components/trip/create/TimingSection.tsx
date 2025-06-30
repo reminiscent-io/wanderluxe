@@ -1,7 +1,9 @@
 
-import React from 'react';
-import { Input } from "@/components/ui/input";
+import React, { useEffect, useCallback } from 'react';
 import { Label } from "@/components/ui/label";
+import DateTimeRangeField, { DateTimeRange } from "@/components/ui/DateTimeRangeField";
+import { useForm, FormProvider } from "react-hook-form";
+import { format } from "date-fns";
 
 interface TimingSectionProps {
   startDate: string;
@@ -16,49 +18,58 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   endDate,
   onEndDateChange,
 }) => {
-  const isEndDateValid = !startDate || !endDate || new Date(endDate) >= new Date(startDate);
+  const form = useForm({
+    defaultValues: {
+      travelDates: {
+        from: startDate ? new Date(startDate) : null,
+        to: endDate ? new Date(endDate) : null,
+        fromTime: undefined,
+        toTime: undefined,
+      } as DateTimeRange
+    }
+  });
+
+  const handleDateChange = useCallback((values: DateTimeRange) => {
+    if (values.from) {
+      const fromStr = format(values.from, 'yyyy-MM-dd');
+      onStartDateChange(fromStr);
+    } else {
+      onStartDateChange('');
+    }
+    
+    if (values.to) {
+      const toStr = format(values.to, 'yyyy-MM-dd');
+      onEndDateChange(toStr);
+    } else {
+      onEndDateChange('');
+    }
+  }, [onStartDateChange, onEndDateChange]);
+
+  // Watch for form changes and update parent
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (values.travelDates) {
+        handleDateChange(values.travelDates as DateTimeRange);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, handleDateChange]);
+
   return (
-    <div className="space-y-4">
-      <Label className="text-sm font-medium text-gray-700">
-        When are you planning to travel? 
-      </Label>
-
+    <FormProvider {...form}>
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label
-            htmlFor="startDate"
-            className="text-sm font-medium text-gray-700"
-          >
-            Start Date <span className="text-red-500"> *</span>
-          </Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value)}
-          />
-        </div>
+        <Label className="text-sm font-medium text-gray-700">
+          When are you planning to travel? 
+        </Label>
 
-        <div className="space-y-2">
-          <Label
-            htmlFor="endDate"
-            className="text-sm font-medium text-gray-700"
-          >
-            End Date <span className="text-red-500"> *</span>
-          </Label>
-          <Input
-            id="endDate"
-            type="date"
-            value={endDate}
-            onChange={(e) => onEndDateChange(e.target.value)}
-            className={!isEndDateValid ? "border-red-500" : ""}
-          />
-          {!isEndDateValid && (
-            <p className="text-red-500 text-sm mt-1">End date cannot be before start date</p>
-          )}
-        </div>
+        <DateTimeRangeField
+          name="travelDates"
+          label="Travel Dates"
+          required
+          hideTimeInputs={true}
+        />
       </div>
-    </div>
+    </FormProvider>
   );
 };
 

@@ -1,9 +1,9 @@
-
-import React, { useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useEffect, useState } from 'react';
+import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import type { DateRange } from "react-day-picker";
 
 interface TripDateEditDialogProps {
   isOpen: boolean;
@@ -12,10 +12,16 @@ interface TripDateEditDialogProps {
   departureDate: string;
   onArrivalChange: (date: string) => void;
   onDepartureChange: (date: string) => void;
-  onSave: () => void;
+  onSave: (arrivalDate?: string, departureDate?: string) => void;
 }
 
-const TripDateEditDialog = ({
+// parse "YYYY-MM-DD" as local date (no TZ offset)
+function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export default function TripDateEditDialog({
   isOpen,
   onOpenChange,
   arrivalDate,
@@ -23,46 +29,54 @@ const TripDateEditDialog = ({
   onArrivalChange,
   onDepartureChange,
   onSave,
-}: TripDateEditDialogProps) => {
+}: TripDateEditDialogProps) {
+  const [range, setRange] = useState<DateRange | undefined>();
+
+  // seed when opening
   useEffect(() => {
-    if (isOpen) {
-      onArrivalChange(arrivalDate);
-      onDepartureChange(departureDate);
+    if (isOpen && arrivalDate && departureDate) {
+      const newRange = {
+        from: parseLocalDate(arrivalDate),
+        to: parseLocalDate(departureDate),
+      };
+      setRange(newRange);
     }
   }, [isOpen, arrivalDate, departureDate]);
 
+  // commit on Save
+  const handleSave = () => {
+    if (range?.from && range?.to) {
+      const newArrival = format(range.from, 'yyyy-MM-dd');
+      const newDeparture = format(range.to, 'yyyy-MM-dd');
+      console.log('TripDateEditDialog saving dates:', { newArrival, newDeparture });
+      onArrivalChange(newArrival);
+      onDepartureChange(newDeparture);
+      // Pass dates directly to onSave to avoid state timing issues
+      onSave(newArrival, newDeparture);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px] z-[300]">
         <DialogHeader>
           <DialogTitle>Edit Trip Dates</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="arrival">Arrival Date</Label>
-            <Input
-              id="arrival"
-              type="date"
-              value={arrivalDate}
-              onChange={(e) => onArrivalChange(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="departure">Departure Date</Label>
-            <Input
-              id="departure"
-              type="date"
-              value={departureDate}
-              onChange={(e) => onDepartureChange(e.target.value)}
-            />
-          </div>
-          <Button onClick={onSave} className="w-full">
+
+        <Calendar
+          mode="range"
+          selected={range}
+          onSelect={setRange}
+          defaultMonth={range?.from}
+          numberOfMonths={1}
+        />
+
+        <div className="pt-4">
+          <Button onClick={handleSave} className="w-full">
             Save Changes
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default TripDateEditDialog;
+}

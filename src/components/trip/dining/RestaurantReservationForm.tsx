@@ -31,14 +31,14 @@ const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
   reservation_date: z.string().min(1, "Reservation date is required"),
   reservation_time: z.string().min(1, "Reservation time is required"),
-  address: z.string().optional(),
-  phone_number: z.string().optional(),
-  website: z.string().optional(),
+  address: z.string().optional().nullable(),
+  phone_number: z.string().optional().nullable(),
+  website: z.string().optional().nullable(),
   number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional()),
   notes: z.string().optional(),
   cost: z.preprocess(toNullableNumber, z.number().optional()),
   currency: z.string().optional().nullable(),
-  place_id: z.string().optional(),
+  place_id: z.string().optional().nullable(),
   rating: z.preprocess(toNullableNumber, z.number().optional()),
 });
 
@@ -127,12 +127,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // Submit handler
   // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitForm = form.handleSubmit(async (data) => {
-    console.log('RestaurantReservationForm - handleSubmitForm called with:', data);
-    console.log('RestaurantReservationForm - form validation errors:', form.formState.errors);
+
     
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
-      console.log('RestaurantReservationForm - Missing trip ID');
+
       toast({
         variant: 'destructive',
         title: 'Missing trip',
@@ -145,7 +144,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     let finalDayId = (defaultValues as any)?.day_id;
     
     if (data.reservation_date && effectiveTripId) {
-      console.log('RestaurantReservationForm - Looking up day_id for date:', data.reservation_date);
+
       
       const { data: tripDay, error: tripDayError } = await supabase
         .from('trip_days')
@@ -155,7 +154,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         .single();
 
       if (tripDayError || !tripDay) {
-        console.error('RestaurantReservationForm - Failed to find day_id for date:', data.reservation_date, tripDayError);
+        console.error('Failed to find day_id for date:', data.reservation_date, tripDayError);
         toast({
           variant: 'destructive',
           title: 'Invalid date',
@@ -164,7 +163,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         return;
       }
       
-      console.log('RestaurantReservationForm - Found day_id:', tripDay.day_id, 'for date:', data.reservation_date);
+
       finalDayId = tripDay.day_id;
     }
 
@@ -178,14 +177,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
     
-    console.log('RestaurantReservationForm - processedData:', processedData);
-    console.log('RestaurantReservationForm - About to call onSubmit prop');
+
 
     try {
       await onSubmit(processedData);
-      console.log('RestaurantReservationForm - onSubmit completed successfully');
+
     } catch (err) {
-      console.error('RestaurantReservationForm - onSubmit error:', err);
+      console.error('Failed to save reservation:', err);
       toast({
         variant: 'destructive',
         title: 'Save failed',
@@ -212,7 +210,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // ──────────────────────────────────────────────────────────────────────────────
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitForm} className="space-y-4 max-w-full overflow-hidden">
+      <form onSubmit={handleSubmitForm} className="space-y-3 w-full max-w-none">
         {/* Restaurant Name */}
         <FormField
           control={form.control}
@@ -248,7 +246,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         />
 
         {/* Reservation Date & Time */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="reservation_date"
@@ -340,7 +338,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         />
 
         {/* Cost & Currency */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="cost"
@@ -374,20 +372,23 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Currency</FormLabel>
-                <FormControl>
-                  <select
-                    {...field}
-                    value={field.value || ''}
-                    className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
-                  >
-                    <option value="">Select currency</option>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="z-[999] max-h-48 overflow-y-auto">
                     {CURRENCIES.map((currency) => (
-                      <option key={currency} value={currency}>
-                        {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
-                      </option>
+                      <SelectItem key={currency} value={currency}>
+                        <span className="font-medium">{currency}</span>
+                        <span className="ml-1 text-sand-600 text-sm">
+                          {CURRENCY_SYMBOLS[currency]}
+                        </span>
+                      </SelectItem>
                     ))}
-                  </select>
-                </FormControl>
+                  </SelectContent>
+                </Select>
               </FormItem>
             )}
           />
@@ -415,10 +416,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               disabled={isSubmitting}
               className="bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
               onClick={(e) => {
-                console.log('Save button clicked');
-                console.log('Form state:', form.formState);
-                console.log('Form values:', form.getValues());
-                console.log('Form errors:', form.formState.errors);
+
               }}
             >
               {isSubmitting ? (

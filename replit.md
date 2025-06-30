@@ -536,6 +536,88 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed Activities and Reservations panels to use proper flexbox structure with fixed headers
   - All secondary panels now align perfectly with bottom of blurred navigation bar
   - Consistent scrolling behavior and visual hierarchy across all trip component management interfaces
+- June 29, 2025. Cleaned up codebase and refreshed documentation:
+  - Removed unused duplicate JavaScript server files (kept TypeScript versions)
+  - Deleted temporary documentation files (migration instructions, fix notes)
+  - Removed unused App.css file (project uses Tailwind CSS)
+  - Cleaned up attached_assets folder containing debugging artifacts and screenshots
+  - Created comprehensive new README.md with complete project documentation, setup instructions, and feature descriptions
+  - README now serves as complete project handbook for developers and contributors
+- June 29, 2025. Enhanced DateTimeRangeField component with improved formatting and autofocus:
+  - Fixed date display format from verbose "February 11th, 2025" to clean "Feb 11, 2025" format
+  - Added autofocus prop that automatically focuses date picker when adding new accommodations
+  - Enhanced user experience with automatic popover closing when both dates are selected
+  - Added intermediate state display showing "Feb 11, 2025 → Select end date" for partial selections
+  - Improved TypeScript typing with proper DateRange type handling for better code reliability
+  - Accommodation forms now provide smoother date selection workflow with automatic focus management
+- June 30, 2025. Fixed critical Google Places API key security vulnerability:
+  - Replaced insecure get-google-places-key function that exposed raw API key to all authenticated users
+  - Created secure google-places-proxy edge function that handles Google Places requests server-side
+  - Added proper JWT authentication verification and rate limiting (100 requests/hour per user)
+  - Updated frontend components to use secure proxy instead of direct Google Maps JavaScript API
+  - Replaced RestaurantSearchInput and LocationSearchInput with custom dropdown implementations
+  - Eliminated API key exposure risk while maintaining full Google Places functionality
+  - Added proper error handling and user feedback for all location search operations
+- June 30, 2025. Updated DateTimeRangeField styling to use dark sand theme:
+  - Changed button background from default white to dark sand (bg-sand-800)
+  - Added sand-themed border (border-sand-700) and dark text (text-sand-900) for optimal readability
+  - Simplified styling by removing hover effects for consistent display
+  - Updated placeholder text to sand-500 color when no date selected for better visibility
+  - Added CSS overrides in index.css to force react-day-picker calendar to use sand colors instead of default blue
+  - Fixed calendar date selection styling with proper sand-500 backgrounds and sand-50 text for selected dates
+  - Maintains earth-tone color palette consistency throughout the application
+- June 30, 2025. Integrated DateTimeRangeField into create trip form:
+  - Replaced basic HTML date inputs in TimingSection with existing DateTimeRangeField component
+  - Added hideTimeInputs prop to DateTimeRangeField to conditionally hide time input section
+  - Updated display text logic to hide time portion ("at --:-- → --:--") when hideTimeInputs is true
+  - Fixed infinite loop issue in TimingSection using useCallback for form watching
+  - Create trip form now displays clean date-only picker with sand theme styling
+  - Unified date selection interface across both create and edit trip workflows
+  - Inherits all sand theme styling and calendar customizations from DateTimeRangeField
+- June 30, 2025. Fixed sidebar trip date editing functionality:
+  - Added comprehensive trip day management logic missing from sidebar implementation
+  - Implemented checkDaysToRemove and removeTripDays functions for proper day deletion
+  - Enhanced handleSaveDates to automatically handle both trip extensions and shortenings
+  - Fixed issue where sidebar date editing wasn't properly creating or deleting trip days
+  - Added proper query invalidation for trip-days to ensure immediate UI updates
+  - Added missing TripDateEditDialog component to Sidebar JSX for complete functionality
+  - Fixed TypeScript errors in TripDateEditDialog with proper DateRange type handling
+  - Enhanced dialog z-index and calendar component integration for proper display
+  - Fixed critical state synchronization issue where calendar selections weren't being saved
+  - Updated TripDateEditDialog to pass dates directly to save handler avoiding timing issues
+  - Modified handleSaveDates to accept override parameters for immediate date processing
+  - Sidebar date editing now fully functional with proper day card generation and removal
+- June 30, 2025. Fixed sidebar restaurant reservation dialog delete button:
+  - Added missing onDelete prop to RestaurantReservationDialog in sidebar implementation
+  - Delete button now appears when editing existing reservations with red trash icon styling
+  - Integrated handleReservationDelete function with proper dialog state management
+  - Delete functionality matches accommodations dialog format and behavior
+  - Dialog closes automatically after successful deletion with proper query invalidation
+- June 30, 2025. Modernized restaurant card interaction model to match accommodations:
+  - Removed separate edit and delete buttons from RestaurantCard component
+  - Made entire card clickable to open edit dialog with proper cursor and hover states
+  - Updated DiningList component to use onClick prop instead of onEdit/onDelete
+  - Delete functionality now exclusively available within dialog form with red trash icon
+  - Achieved consistent user interaction pattern across all trip component cards
+- June 30, 2025. Unified restaurant reservation dialogs across day cards and sidebar:
+  - Fixed form validation schema to handle nullable database fields properly
+  - Added delete functionality to day card dialogs matching sidebar implementation
+  - Both interfaces now use identical RestaurantReservationDialog with same behavior
+  - Consistent delete button styling and query invalidation across all reservation interfaces
+  - Eliminated functionality differences between sidebar and timeline reservation management
+- June 30, 2025. Fixed reservation data synchronization between day cards and sidebar:
+  - Resolved query invalidation mismatch where day card edits weren't updating sidebar reservations
+  - Added sidebar query key ['reservations', tripId] invalidation to day card save/delete operations
+  - Day cards and sidebar now use different query keys but properly invalidate both when data changes
+  - Reservation edits from either interface immediately sync to the other interface
+  - Complete data consistency across all reservation management touchpoints
+- June 30, 2025. Cleaned up console logging in restaurant reservation components:
+  - Removed verbose debug logs from RestaurantReservationForm and RestaurantReservationDialog
+  - Eliminated real-time subscription setup/cleanup console spam
+  - Removed reservation change detection logging for cleaner development experience
+  - Cleaned up trip data fetching and form validation logging throughout the application
+  - Preserved essential error messages while eliminating unnecessary debug output
+  - Application now operates silently with clean console output during normal operations
 
 ## User Preferences
 

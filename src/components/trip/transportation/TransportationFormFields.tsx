@@ -1,219 +1,199 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// src/components/trip/transportation/TransportationFormFields.tsx
+import React, { useEffect, useState } from "react";
+import { UseFormReturn, Controller, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Tables } from '@/integrations/supabase/types';
-import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
-import LocationInputPair from './LocationInputPair';
+import DateTimeRangeField, { DateTimeRange } from "@/components/ui/DateTimeRangeField";
+import LocationInputPair from "./LocationInputPair";
+import {
+  CURRENCIES,
+  CURRENCY_NAMES,
+  CURRENCY_SYMBOLS,
+} from "@/utils/currencyConstants";
+import { 
+  formatTransportationType, 
+  getTransportationIcon 
+} from "@/utils/transportationUtils";
 
-type Transportation = Tables<'transportation'>;
-
-interface TransportationFormFieldsProps {
-  formData: Partial<Transportation>;
-  setFormData: (data: Partial<Transportation>) => void;
-  formatCost: (value: number | undefined | null) => string;
+interface Props {
+  form: UseFormReturn<any>;
+  tripArrivalDate?: string | null;
 }
 
-const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
-  <Label>
-    {children} <span style={{ color: 'red' }}>*</span>
-  </Label>
-);
+const Required = () => <span className="text-red-500">*</span>;
 
-const TransportationFormFields: React.FC<TransportationFormFieldsProps> = ({
-  formData,
-  setFormData,
-  formatCost
-}) => {
-  // Local state for cost input to handle formatting on blur/focus
-  const [costInput, setCostInput] = useState<string>(
-    formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : ''
-  );
+export default function TransportationFormFields({ form, tripArrivalDate }: Props) {
+  const { control, setValue } = form;
 
-  // Use refs to maintain current form data without causing re-renders
-  const formDataRef = useRef(formData);
-  formDataRef.current = formData;
+  // watch departure & arrival so UI updates properly
+  const departure = useWatch({
+    control,
+    name: "departure_location",
+  }) as string;
+  const arrival = useWatch({
+    control,
+    name: "arrival_location",
+  }) as string;
 
-  // Stable onChange handlers that don't change between renders
-  const handleDepartureLocationChange = useCallback((value: string) => {
-    setFormData({ ...formDataRef.current, departure_location: value });
-  }, [setFormData]);
-
-  const handleArrivalLocationChange = useCallback((value: string) => {
-    setFormData({ ...formDataRef.current, arrival_location: value });
-  }, [setFormData]);
-
+  // watch cost for formatted display
+  const cost = useWatch({ control, name: "cost" }) as number | null;
+  const [costDisplay, setCostDisplay] = useState(cost?.toString() ?? "");
   useEffect(() => {
-    setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
-  }, [formData.cost]);
-
-  const formatNumber = (value: number | null) => {
-    if (value === null || isNaN(value)) return '';
-    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+    setCostDisplay(cost?.toString() ?? "");
+  }, [cost]);
 
   return (
     <div className="space-y-4">
-      <div>
-        <RequiredLabel>Transportation Type</RequiredLabel>
-        <Select
-          value={formData.type || ''}
-          onValueChange={(value) => setFormData({ ...formData, type: value as any })}
-        >
-          <SelectTrigger className="bg-white">
-            <SelectValue placeholder="Select type" />
-          </SelectTrigger>
-          <SelectContent className="z-[300] bg-sand-50">
-            <SelectItem value="flight" className="cursor-pointer hover:bg-earth-100">Flight</SelectItem>
-            <SelectItem value="train" className="cursor-pointer hover:bg-earth-100">Train</SelectItem>
-            <SelectItem value="car_service" className="cursor-pointer hover:bg-earth-100">Car Service</SelectItem>
-            <SelectItem value="shuttle" className="cursor-pointer hover:bg-earth-100">Shuttle</SelectItem>
-            <SelectItem value="ferry" className="cursor-pointer hover:bg-earth-100">Ferry</SelectItem>
-            <SelectItem value="rental_car" className="cursor-pointer hover:bg-earth-100">Rental Car</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* From and To inputs using isolated component */}
-      <LocationInputPair
-        fromValue={formData.departure_location || ''}
-        toValue={formData.arrival_location || ''}
-        onFromChange={handleDepartureLocationChange}
-        onToChange={handleArrivalLocationChange}
-        transportationType={formData.type || 'flight'}
+      {/* Transportation Type */}
+      <Controller
+        control={control}
+        name="type"
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label>
+              Transportation Type <Required />
+            </Label>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select type">
+                  {field.value && (
+                    <div className="flex items-center gap-2">
+                      <span>{getTransportationIcon(field.value)}</span>
+                      <span>{formatTransportationType(field.value)}</span>
+                    </div>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="z-[300] bg-sand-50">
+                {[
+                  "flight",
+                  "train",
+                  "car_service",
+                  "shuttle",
+                  "ferry",
+                  "rental_car",
+                ].map((t) => (
+                  <SelectItem key={t} value={t}>
+                    <div className="flex items-center gap-2">
+                      <span>{getTransportationIcon(t)}</span>
+                      <span>{formatTransportationType(t)}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       />
 
-      {/* Group Departure Date and Time on the same line */}
-      <div className="flex space-x-4">
-        <div className="flex-1">
-          <RequiredLabel>Departure Date</RequiredLabel>
-          <Input
-            type="date"
-            name="start_date"
-            value={formData.start_date || ''}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div className="flex-1">
-          <Label>Departure Time</Label>
-          <Input
-            type="time"
-            name="start_time"
-            value={formData.start_time || ''}
-            onChange={handleInputChange}
-          />
-        </div>
-      </div>
+      {/* Departure / Arrival Locations */}
+      <LocationInputPair
+        fromValue={departure}
+        toValue={arrival}
+        onFromChange={(v) => setValue("departure_location", v)}
+        onToChange={(v) => setValue("arrival_location", v)}
+        transportationType={form.getValues("type") as string}
+      />
 
-      {/* Group Arrival Date and Time on the same line */}
-      <div className="flex space-x-4">
-        <div className="flex-1">
-          <Label>Arrival Date</Label>
-          <Input
-            type="date"
-            name="end_date"
-            value={formData.end_date || ''}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div className="flex-1">
-          <Label>Arrival Time</Label>
-          <Input
-            type="time"
-            name="end_time"
-            value={formData.end_time || ''}
-            onChange={handleInputChange}
-          />
-        </div>
-      </div>
+      {/* Unified Date + Time Picker */}
+      <DateTimeRangeField
+        name="travel_range"
+        label="Travel Dates"
+        required
+        defaultMonth={tripArrivalDate ? new Date(tripArrivalDate) : undefined}
+        control={control}
+      />
 
-      <div>
-        <Label>Provider</Label>
-        <Input
-          name="provider"
-          value={formData.provider || ''}
-          onChange={handleInputChange}
-          placeholder="Airline, train company, etc."
-        />
-      </div>
+      {/* Provider */}
+      <Controller
+        control={control}
+        name="provider"
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label>Provider</Label>
+            <Input {...field} placeholder="Airline, train company…" />
+          </div>
+        )}
+      />
 
-      <div>
-        <Label>Confirmation Number</Label>
-        <Input
-          name="confirmation_number"
-          value={formData.confirmation_number || ''}
-          onChange={handleInputChange}
-          placeholder="Booking reference"
-        />
-      </div>
+      {/* Confirmation Number */}
+      <Controller
+        control={control}
+        name="confirmation_number"
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label>Confirmation Number</Label>
+            <Input {...field} placeholder="Booking reference" />
+          </div>
+        )}
+      />
 
-      {/* Group Cost and Currency on the same line */}
-      <div className="flex space-x-4">
-        <div className="flex-1">
-          <Label>Cost</Label>
-          <Input
+      {/* Cost & Currency */}
+      <div className="space-y-2">
+        <Label>Cost & Currency</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Controller
+            control={control}
             name="cost"
-            value={costInput}
-            onFocus={() => {
-              setCostInput(formData.cost !== undefined && formData.cost !== null ? formData.cost.toString() : '');
-            }}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^\d.-]/g, '');
-              setCostInput(value);
-              const cost = value ? parseFloat(value) : null;
-              setFormData({ ...formData, cost });
-            }}
-            onBlur={() => {
-              const formatted = formatNumber(formData.cost);
-              setCostInput(formatted);
-            }}
-            placeholder="0"
+            render={({ field }) => (
+              <div>
+                <Input
+                  value={costDisplay}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^\d.-]/g, "");
+                    setCostDisplay(raw);
+                    field.onChange(raw ? parseFloat(raw) : null);
+                  }}
+                  placeholder="0"
+                />
+              </div>
+            )}
           />
-        </div>
-        <div className="flex-1">
-          <RequiredLabel>Currency</RequiredLabel>
-          <Select
-            value={formData.currency || 'USD'}
-            onValueChange={(value) => setFormData({ ...formData, currency: value })}
-          >
-            <SelectTrigger className="bg-white">
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent className="z-[300] bg-sand-50">
-              {CURRENCIES.map((currency) => (
-                <SelectItem
-                  key={currency}
-                  value={currency}
-                  className="cursor-pointer hover:bg-earth-100"
-                >
-                  {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            control={control}
+            name="currency"
+            render={({ field }) => (
+              <div>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[300] bg-sand-50 max-h-48 overflow-y-auto">
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        <span className="font-medium">{c}</span>
+                        <span className="ml-1 text-sand-600 text-sm">
+                          {CURRENCY_SYMBOLS[c]}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          />
         </div>
       </div>
 
-      <div>
-        <Label>Details</Label>
-        <Textarea
-          name="details"
-          value={formData.details || ''}
-          onChange={handleInputChange}
-          placeholder="Additional details"
-          rows={1}
-        />
-      </div>
+      {/* Additional Details */}
+      <Controller
+        control={control}
+        name="details"
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label>Details</Label>
+            <Textarea {...field} rows={1} placeholder="Additional details" />
+          </div>
+        )}
+      />
     </div>
   );
-};
-
-export default TransportationFormFields;
+}
