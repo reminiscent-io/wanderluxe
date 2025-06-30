@@ -550,6 +550,14 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added intermediate state display showing "Feb 11, 2025 → Select end date" for partial selections
   - Improved TypeScript typing with proper DateRange type handling for better code reliability
   - Accommodation forms now provide smoother date selection workflow with automatic focus management
+- June 30, 2025. Fixed critical Google Places API key security vulnerability:
+  - Replaced insecure get-google-places-key function that exposed raw API key to all authenticated users
+  - Created secure google-places-proxy edge function that handles Google Places requests server-side
+  - Added proper JWT authentication verification and rate limiting (100 requests/hour per user)
+  - Updated frontend components to use secure proxy instead of direct Google Maps JavaScript API
+  - Replaced RestaurantSearchInput and LocationSearchInput with custom dropdown implementations
+  - Eliminated API key exposure risk while maintaining full Google Places functionality
+  - Added proper error handling and user feedback for all location search operations
 
 ## User Preferences
 
