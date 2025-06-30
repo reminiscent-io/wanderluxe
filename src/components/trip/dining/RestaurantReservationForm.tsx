@@ -127,12 +127,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // Submit handler
   // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitForm = form.handleSubmit(async (data) => {
-    console.log('RestaurantReservationForm - handleSubmitForm called with:', data);
-    console.log('RestaurantReservationForm - form validation errors:', form.formState.errors);
+
     
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
-      console.log('RestaurantReservationForm - Missing trip ID');
+
       toast({
         variant: 'destructive',
         title: 'Missing trip',
@@ -145,7 +144,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     let finalDayId = (defaultValues as any)?.day_id;
     
     if (data.reservation_date && effectiveTripId) {
-      console.log('RestaurantReservationForm - Looking up day_id for date:', data.reservation_date);
+
       
       const { data: tripDay, error: tripDayError } = await supabase
         .from('trip_days')
@@ -155,7 +154,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         .single();
 
       if (tripDayError || !tripDay) {
-        console.error('RestaurantReservationForm - Failed to find day_id for date:', data.reservation_date, tripDayError);
+        console.error('Failed to find day_id for date:', data.reservation_date, tripDayError);
         toast({
           variant: 'destructive',
           title: 'Invalid date',
@@ -164,7 +163,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         return;
       }
       
-      console.log('RestaurantReservationForm - Found day_id:', tripDay.day_id, 'for date:', data.reservation_date);
+
       finalDayId = tripDay.day_id;
     }
 
@@ -178,14 +177,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
     
-    console.log('RestaurantReservationForm - processedData:', processedData);
-    console.log('RestaurantReservationForm - About to call onSubmit prop');
+
 
     try {
       await onSubmit(processedData);
-      console.log('RestaurantReservationForm - onSubmit completed successfully');
+
     } catch (err) {
-      console.error('RestaurantReservationForm - onSubmit error:', err);
+      console.error('Failed to save reservation:', err);
       toast({
         variant: 'destructive',
         title: 'Save failed',
