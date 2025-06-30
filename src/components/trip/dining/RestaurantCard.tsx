@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Utensils, MapPin, Phone, Link as LinkIcon, Star, Clock, Users, Edit, Trash2 } from "lucide-react";
+import { Utensils, MapPin, Phone, Link as LinkIcon, Star, Clock, Users } from "lucide-react";
 
 interface RestaurantCardProps {
   reservation: {
@@ -18,8 +18,7 @@ interface RestaurantCardProps {
     notes?: string;
   };
   formatTime: (time?: string) => string;
-  onEdit: (reservation: any) => void;
-  onDelete: () => void;
+  onClick: (reservation: any) => void;
 }
 
 // Reusable component for links with icons
@@ -55,11 +54,22 @@ const InfoItem: React.FC<{
 const RestaurantCard: React.FC<RestaurantCardProps> = ({
   reservation,
   formatTime,
-  onEdit,
-  onDelete
+  onClick
 }) => {
   return (
-    <div className="p-3 bg-sand-50 rounded-lg space-y-2 hover:bg-sand-100 transition-colors">
+    <div 
+      className="p-3 bg-sand-50 rounded-lg space-y-2 hover:bg-sand-100 transition-colors cursor-pointer"
+      onClick={() => onClick(reservation)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(reservation);
+        }
+      }}
+      aria-label={`Edit reservation for ${reservation.restaurant_name}`}
+    >
       {/* Header section */}
       <div className="flex items-start justify-between">
         <div className="space-y-2">
@@ -99,47 +109,6 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
               />
             )}
           </div>
-        </div>
-        
-        <div className="flex gap-2">
-          <span
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(reservation);
-            }}
-            className="p-2 text-earth-500 hover:bg-earth-100 rounded cursor-pointer transition-colors"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                onEdit(reservation);
-              }
-            }}
-            aria-label="Edit reservation"
-          >
-            <Edit className="h-4 w-4" />
-          </span>
-          <span
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="p-2 text-red-500 hover:bg-red-100 rounded cursor-pointer transition-colors"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete();
-              }
-            }}
-            aria-label="Delete reservation"
-          >
-            <Trash2 className="h-4 w-4" />
-          </span>
         </div>
       </div>
 

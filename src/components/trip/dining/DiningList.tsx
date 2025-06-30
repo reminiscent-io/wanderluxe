@@ -190,11 +190,10 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
                 key={r.id}
                 reservation={r}
                 formatTime={formatTime}
-                onEdit={() => {
+                onClick={() => {
                   setEditingId(r.id);
                   setIsDialogOpen(true);
                 }}
-                onDelete={() => setDeletingId(r.id)}
               />
             ))}
         </div>

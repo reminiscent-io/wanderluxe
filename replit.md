@@ -593,6 +593,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Integrated handleReservationDelete function with proper dialog state management
   - Delete functionality matches accommodations dialog format and behavior
   - Dialog closes automatically after successful deletion with proper query invalidation
+- June 30, 2025. Modernized restaurant card interaction model to match accommodations:
+  - Removed separate edit and delete buttons from RestaurantCard component
+  - Made entire card clickable to open edit dialog with proper cursor and hover states
+  - Updated DiningList component to use onClick prop instead of onEdit/onDelete
+  - Delete functionality now exclusively available within dialog form with red trash icon
+  - Achieved consistent user interaction pattern across all trip component cards
 
 ## User Preferences
 
