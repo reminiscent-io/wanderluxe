@@ -75,6 +75,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     activityEdit, setActivityEdit,
     newArrival, setNewArrival,
     newDeparture, setNewDeparture,
+    showDeleteConfirmation, setShowDeleteConfirmation,
+    pendingDateChange, setPendingDateChange,
     trip, tripLoading,
     accommodations, transportation, activities, reservations,
     handleBackToTrips,
@@ -84,7 +86,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     handleReservationAdd, handleReservationEdit, handleReservationDelete,
     handleActivityAdd, handleActivityEdit, handleActivityDelete,
     handleEditDates, handleSaveDates,
-    handleAddActivity, handleEditActivity
+    handleAddActivity, handleEditActivity,
+    confirmDateChange, cancelDateChange
   } = sidebar;
   const handleBackFromSecondary = () => {
     setSecondaryPanel(null);          // close the panel
@@ -333,6 +336,27 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onDepartureChange={setNewDeparture}
         onSave={handleSaveDates}
       />
+
+      <AlertDialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Trip Days?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Changing these dates will permanently delete some trip days and all associated activities, 
+              accommodations, transportation, and restaurant reservations for those days. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDateChange}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDateChange}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Days
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
