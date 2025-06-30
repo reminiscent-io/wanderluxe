@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import NavigationLogo from "../NavigationLogo";
@@ -75,8 +74,6 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     activityEdit, setActivityEdit,
     newArrival, setNewArrival,
     newDeparture, setNewDeparture,
-    showDeleteConfirmation, setShowDeleteConfirmation,
-    pendingDateChange, setPendingDateChange,
     trip, tripLoading,
     accommodations, transportation, activities, reservations,
     handleBackToTrips,
@@ -86,8 +83,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     handleReservationAdd, handleReservationEdit, handleReservationDelete,
     handleActivityAdd, handleActivityEdit, handleActivityDelete,
     handleEditDates, handleSaveDates,
-    handleAddActivity, handleEditActivity,
-    confirmDateChange, cancelDateChange
+    handleAddActivity, handleEditActivity
   } = sidebar;
   const handleBackFromSecondary = () => {
     setSecondaryPanel(null);          // close the panel
@@ -336,27 +332,6 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onDepartureChange={setNewDeparture}
         onSave={handleSaveDates}
       />
-
-      <AlertDialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Trip Days?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Changing these dates will permanently delete some trip days and all associated activities, 
-              accommodations, transportation, and restaurant reservations for those days. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDateChange}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDateChange}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Delete Days
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
