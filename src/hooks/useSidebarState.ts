@@ -46,6 +46,11 @@ export interface SidebarState {
   setNewArrival: (date: string) => void;
   newDeparture: string;
   setNewDeparture: (date: string) => void;
+  // Confirmation dialog state
+  showDeleteConfirmation: boolean;
+  setShowDeleteConfirmation: (show: boolean) => void;
+  pendingDateChange: { arrival: string; departure: string } | null;
+  setPendingDateChange: (change: { arrival: string; departure: string } | null) => void;
   // Data from queries
   trip: any;
   tripLoading: boolean;
@@ -72,6 +77,8 @@ export interface SidebarState {
   handleSaveDates: () => Promise<void>;
   handleAddActivity: (activity: ActivityFormData) => Promise<void>;
   handleEditActivity: (id: string, data: ActivityFormData) => Promise<void>;
+  confirmDateChange: () => Promise<void>;
+  cancelDateChange: () => void;
 }
 
 /**
@@ -97,6 +104,8 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const [newArrival, setNewArrival] = useState('');
   const [newDeparture, setNewDeparture] = useState('');
   const [isSubmittingDates, setIsSubmittingDates] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [pendingDateChange, setPendingDateChange] = useState<{ arrival: string; departure: string } | null>(null);
 
   // Selected items for editing
   const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
@@ -522,31 +531,81 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       toast({ variant: 'destructive', title: 'Error', description: 'Both arrival and departure dates are required' });
       return;
     }
-    setIsSubmittingDates(true);
-    
+
     // Update state for consistency
     if (overrideArrival) setNewArrival(overrideArrival);
     if (overrideDeparture) setNewDeparture(overrideDeparture);
 
-    try {
-      // Check if we need to remove any days first
-      if (trip?.arrival_date && trip?.departure_date) {
-        const daysToRemove = await checkDaysToRemove(trip.arrival_date, trip.departure_date, finalArrival, finalDeparture);
-        if (daysToRemove && daysToRemove.dayCount > 0) {
-          // For now, automatically remove the days - could add confirmation dialog later
-          await removeTripDays(daysToRemove.dates);
-        }
+    // Check if we need to remove any days first
+    if (trip?.arrival_date && trip?.departure_date) {
+      const daysToRemove = await checkDaysToRemove(trip.arrival_date, trip.departure_date, finalArrival, finalDeparture);
+      if (daysToRemove && daysToRemove.dayCount > 0) {
+        // Show confirmation dialog before deleting days
+        setPendingDateChange({ arrival: finalArrival, departure: finalDeparture });
+        setShowDeleteConfirmation(true);
+        return;
       }
+    }
 
+    // No days to remove, proceed with save
+    await executeDateSave(finalArrival, finalDeparture);
+  };
+
+  const executeDateSave = async (finalArrival: string, finalDeparture: string) => {
+    setIsSubmittingDates(true);
+    try {
       console.log('About to call saveDateChanges with:', finalArrival, finalDeparture);
       await saveDateChanges(finalArrival, finalDeparture);
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      setTripDatesOpen(false);
+      setIsSubmittingDates(false);
+      toast({ title: 'Trip dates updated successfully' });
     } catch (err) {
       console.error('Error updating trip dates:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update trip dates' });
       setIsSubmittingDates(false);
     }
+  };
+
+  const confirmDateChange = async () => {
+    if (!pendingDateChange) return;
+    
+    setIsSubmittingDates(true);
+    try {
+      // Remove days that are no longer in range
+      if (trip?.arrival_date && trip?.departure_date) {
+        const daysToRemove = await checkDaysToRemove(
+          trip.arrival_date, 
+          trip.departure_date, 
+          pendingDateChange.arrival, 
+          pendingDateChange.departure
+        );
+        if (daysToRemove && daysToRemove.dayCount > 0) {
+          await removeTripDays(daysToRemove.dates);
+        }
+      }
+
+      await saveDateChanges(pendingDateChange.arrival, pendingDateChange.departure);
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+      
+      setShowDeleteConfirmation(false);
+      setPendingDateChange(null);
+      setTripDatesOpen(false);
+      setIsSubmittingDates(false);
+      toast({ title: 'Trip dates updated successfully' });
+    } catch (err) {
+      console.error('Error updating trip dates:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update trip dates' });
+      setIsSubmittingDates(false);
+    }
+  };
+
+  const cancelDateChange = () => {
+    setShowDeleteConfirmation(false);
+    setPendingDateChange(null);
+    setIsSubmittingDates(false);
   };
 
   return {
@@ -582,6 +641,10 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setNewArrival,
     newDeparture,
     setNewDeparture,
+    showDeleteConfirmation,
+    setShowDeleteConfirmation,
+    pendingDateChange,
+    setPendingDateChange,
     trip,
     tripLoading,
     accommodations,
@@ -606,5 +669,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     handleSaveDates,
     handleAddActivity,
     handleEditActivity,
+    confirmDateChange,
+    cancelDateChange,
   };
 }
