@@ -34,25 +34,21 @@ export default function TripDateEditDialog({
 
   // seed when opening
   useEffect(() => {
-    console.log('TripDateEditDialog - isOpen:', isOpen, 'arrivalDate:', arrivalDate, 'departureDate:', departureDate);
-    if (isOpen) {
-      setRange({
-        from: arrivalDate ? parseLocalDate(arrivalDate) : undefined,
-        to:   departureDate ? parseLocalDate(departureDate) : undefined,
-      });
-      console.log('TripDateEditDialog - set range:', {
-        from: arrivalDate ? parseLocalDate(arrivalDate) : undefined,
-        to:   departureDate ? parseLocalDate(departureDate) : undefined,
-      });
+    if (isOpen && arrivalDate && departureDate) {
+      const newRange = {
+        from: parseLocalDate(arrivalDate),
+        to: parseLocalDate(departureDate),
+      };
+      setRange(newRange);
     }
   }, [isOpen, arrivalDate, departureDate]);
 
   // commit on Save
   const handleSave = () => {
-    if (range.from) {
+    if (range?.from) {
       onArrivalChange(format(range.from, 'yyyy-MM-dd'));
     }
-    if (range.to) {
+    if (range?.to) {
       onDepartureChange(format(range.to, 'yyyy-MM-dd'));
     }
     onSave();
@@ -67,9 +63,9 @@ export default function TripDateEditDialog({
 
         <Calendar
           mode="range"
-          selected={range.from && range.to ? range : undefined}
+          selected={range}
           onSelect={setRange}
-          defaultMonth={range.from}
+          defaultMonth={range?.from}
           numberOfMonths={1}
         />
 
