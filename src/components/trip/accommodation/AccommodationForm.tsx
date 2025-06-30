@@ -2,36 +2,37 @@ import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-import DateTimeRangeField from "@/components/ui/DateTimeRangeField";
 import HotelSearchInput from "./HotelSearchInput";
 import HotelContactInfo from "./form/HotelContactInfo";
-
+import DateTimeRangeField, {
+  DateTimeRange,
+} from "@/components/ui/DateTimeRangeField";
 import { AccommodationFormData } from "@/services/accommodation/accommodationService";
 import { loadGoogleMapsAPI } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { CURRENCIES, CURRENCY_NAMES } from "@/utils/currencyConstants";
 
-/* ---------------- validation schema ---------------- */
+/* -------------------------------------------------------------------------- */
+/* Schema                                                                     */
+/* -------------------------------------------------------------------------- */
 const schema = z
   .object({
     hotel: z.string().min(1, "Hotel name is required"),
     hotel_details: z.string().optional(),
     hotel_url: z.string().url().optional().or(z.literal("")),
-    hotel_checkin_date: z.string().min(1, "Check-in date is required"),
-    hotel_checkout_date: z.string().min(1, "Check-out date is required"),
+    hotel_checkin_date: z.string(),
+    hotel_checkout_date: z.string(),
     checkin_time: z.string().optional(),
     checkout_time: z.string().optional(),
     cost: z.number().nullable(),
@@ -44,21 +45,16 @@ const schema = z
     is_paid: z.boolean(),
     expense_date: z.string().optional(),
     order_index: z.number(),
-    stay_range: z
-      .object({ from: z.date().optional(), to: z.date().optional() })
-      .optional(),
+    stay_range: z.any().optional(), // handled by component
   })
   .refine(
-    (d) =>
-      new Date(d.hotel_checkout_date).getTime() >
-      new Date(d.hotel_checkin_date).getTime(),
-    {
-      message: "Check-out must follow check-in",
-      path: ["hotel_checkout_date"],
-    },
+    (d) => new Date(d.hotel_checkout_date) > new Date(d.hotel_checkin_date),
+    { path: ["hotel_checkout_date"], message: "Check-out must be after check-in" }
   );
 
-/* ---------------- props ---------------- */
+/* -------------------------------------------------------------------------- */
+/* Props                                                                      */
+/* -------------------------------------------------------------------------- */
 interface Props {
   onSubmit: (d: AccommodationFormData) => Promise<void>;
   onCancel: () => void;
@@ -68,13 +64,17 @@ interface Props {
   tripDepartureDate?: string | null;
 }
 
-/* ---------------- helpers ---------------- */
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
 const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({
   label: `${c} - ${CURRENCY_NAMES[c]}`,
   value: c,
 }));
 
-/* ======================================================================== */
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
 export default function AccommodationForm({
   onSubmit,
   onCancel,
@@ -83,7 +83,7 @@ export default function AccommodationForm({
   tripArrivalDate,
   tripDepartureDate,
 }: Props) {
-  /* ----- form init ----- */
+  /* ----------------------------- RHF init ----------------------------- */
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -109,82 +109,75 @@ export default function AccommodationForm({
       stay_range:
         initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
           ? {
-              from: new Date(initialData.hotel_checkin_date),
-              to: new Date(initialData.hotel_checkout_date),
+              from: parse(initialData.hotel_checkin_date, "yyyy-MM-dd", new Date()),
+              to: parse(initialData.hotel_checkout_date, "yyyy-MM-dd", new Date()),
+              fromTime: initialData.checkin_time ?? "15:00",
+              toTime: initialData.checkout_time ?? "11:00",
             }
           : undefined,
     },
   });
 
-  /* watch the range picker */
+  /* --------------------- Sync picker → legacy fields ------------------ */
   const stayRange = useWatch({
     control: form.control,
     name: "stay_range",
-  }) as { from?: Date; to?: Date } | undefined;
+  }) as DateTimeRange;
 
-  /* sync range → hidden string fields */
   useEffect(() => {
     if (stayRange?.from) {
       form.setValue(
         "hotel_checkin_date",
         format(stayRange.from, "yyyy-MM-dd"),
-        { shouldValidate: false },
+        { shouldValidate: false }
+      );
+      form.setValue(
+        "checkin_time",
+        stayRange.fromTime ?? "15:00",
+        { shouldValidate: false }
       );
     }
     if (stayRange?.to) {
       form.setValue(
         "hotel_checkout_date",
         format(stayRange.to, "yyyy-MM-dd"),
-        { shouldValidate: false },
+        { shouldValidate: false }
+      );
+      form.setValue(
+        "checkout_time",
+        stayRange.toTime ?? "11:00",
+        { shouldValidate: false }
       );
     }
   }, [stayRange, form]);
 
-  /* reset when parent trip dates change */
-  useEffect(() => {
-    if (!initialData && (tripArrivalDate || tripDepartureDate)) {
-      form.reset({
-        ...form.getValues(),
-        hotel_checkin_date: tripArrivalDate ?? "",
-        hotel_checkout_date: tripDepartureDate ?? "",
-        stay_range:
-          tripArrivalDate && tripDepartureDate
-            ? {
-                from: new Date(tripArrivalDate),
-                to: new Date(tripDepartureDate),
-              }
-            : undefined,
-      });
-    }
-  }, [tripArrivalDate, tripDepartureDate, initialData, form]);
-
-  /* safely load Google Maps */
+  /* ------------------------------- FX ---------------------------------- */
   useEffect(() => {
     loadGoogleMapsAPI().catch(console.error);
   }, []);
 
-  /* ----- submit ----- */
+  /* ------------------------------ Submit ------------------------------- */
   const [saving, setSaving] = useState(false);
   const handleSubmit = async (data: z.infer<typeof schema>) => {
     try {
       setSaving(true);
       await onSubmit(data);
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to save accommodation");
     } finally {
       setSaving(false);
     }
   };
 
-  /* ----- JSX ----- */
+  /* ------------------------------- JSX --------------------------------- */
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-4 p-6"
       >
-        {/* Hotel search */}
+        {/* Hotel Name */}
         <FormField
           control={form.control}
           name="hotel"
@@ -195,20 +188,17 @@ export default function AccommodationForm({
               </FormLabel>
               <HotelSearchInput
                 value={field.value}
-                onChange={(val, details) => {
+                onChange={(val, d) => {
                   field.onChange(val);
-                  if (details) {
-                    form.setValue(
-                      "hotel_address",
-                      details.formatted_address ?? "",
-                    );
+                  if (d) {
+                    form.setValue("hotel_address", d.formatted_address ?? "");
                     form.setValue(
                       "hotel_phone",
-                      details.formatted_phone_number ?? "",
+                      d.formatted_phone_number ?? ""
                     );
-                    form.setValue("hotel_place_id", details.place_id ?? "");
-                    form.setValue("hotel_website", details.website ?? "");
-                    form.setValue("hotel_url", details.website ?? "");
+                    form.setValue("hotel_place_id", d.place_id ?? "");
+                    form.setValue("hotel_website", d.website ?? "");
+                    form.setValue("hotel_url", d.website ?? "");
                   }
                 }}
               />
@@ -217,77 +207,41 @@ export default function AccommodationForm({
           )}
         />
 
-        {/* contact preview */}
+        {/* Contact Preview */}
         <HotelContactInfo
           address={form.watch("hotel_address")}
           phone={form.watch("hotel_phone")}
         />
 
-        {/* details */}
+        {/* Details */}
         <FormField
           control={form.control}
           name="hotel_details"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Additional Details</FormLabel>
-              <FormControl>
-                <textarea
-                  {...field}
-                  rows={1}
-                  className="w-full rounded-md border p-2"
-                />
-              </FormControl>
+              <textarea
+                {...field}
+                rows={1}
+                className="w-full rounded-md border p-2"
+              />
             </FormItem>
           )}
         />
 
-        {/* calendar */}
-        <DateTimeRangeField 
-          name="stay_range" 
-          label="Stay Dates" 
-          required 
-          autoFocus={!initialData}
-          tripArrivalDate={tripArrivalDate}
-          tripDepartureDate={tripDepartureDate}
+        {/* Unified Date + Time Picker */}
+        <DateTimeRangeField
+          name="stay_range"
+          label="Stay Dates"
+          required
+          defaultMonth={
+            tripArrivalDate
+              ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
+              : undefined
+          }
         />
 
-        {/* times */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="checkin_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Check-in Time</FormLabel>
-                <FormControl>
-                  <input
-                    type="time"
-                    {...field}
-                    className="w-full rounded-md border p-2"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="checkout_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Check-out Time</FormLabel>
-                <FormControl>
-                  <input
-                    type="time"
-                    {...field}
-                    className="w-full rounded-md border p-2"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* cost & currency */}
+        {/* Cost & Currency */}
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -295,14 +249,12 @@ export default function AccommodationForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cost</FormLabel>
-                <FormControl>
-                  <input
-                    type="number"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                    className="w-full rounded-md border p-2"
-                  />
-                </FormControl>
+                <input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  className="w-full rounded-md border p-2"
+                />
               </FormItem>
             )}
           />
@@ -312,34 +264,36 @@ export default function AccommodationForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Currency</FormLabel>
-                <FormControl>
-                  <select {...field} className="w-full rounded-md border p-2">
-                    {CURRENCY_OPTIONS.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </FormControl>
+                <select
+                  {...field}
+                  className="w-full rounded-md border p-2"
+                >
+                  {CURRENCY_OPTIONS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
               </FormItem>
             )}
           />
         </div>
 
-        {/* actions */}
+        {/* Action Buttons */}
         <div className="flex justify-between pt-4">
           {initialData && onDelete && (
             <Button
               type="button"
               variant="ghost"
-              onClick={onDelete}
               disabled={saving}
+              onClick={onDelete}
               className="text-red-500 hover:bg-red-50 hover:text-red-700"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
           )}
+
           <div className="ml-auto flex gap-2">
             <Button
               type="button"
@@ -351,8 +305,8 @@ export default function AccommodationForm({
             </Button>
             <Button
               type="submit"
-              className="bg-earth-500 text-white hover:bg-earth-600"
               disabled={saving}
+              className="bg-earth-500 text-white hover:bg-earth-600"
             >
               {saving ? (
                 <>
