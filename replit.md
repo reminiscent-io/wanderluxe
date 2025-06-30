@@ -561,7 +561,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
 - June 30, 2025. Updated DateTimeRangeField styling to use dark sand theme:
   - Changed button background from default white to dark sand (bg-sand-800)
   - Added sand-themed border (border-sand-700) and text colors (text-sand-100)
-  - Enhanced hover states with lighter sand colors for better user interaction
+  - Enhanced hover states with lighter sand background and dark sand text (hover:text-sand-900) for better contrast
   - Improved placeholder text contrast with sand-400 color when no date selected
   - Added CSS overrides in index.css to force react-day-picker calendar to use sand colors instead of default blue
   - Fixed calendar date selection styling with proper sand-500 backgrounds and sand-50 text for selected dates
