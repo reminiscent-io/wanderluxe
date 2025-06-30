@@ -57,7 +57,7 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
         control={control}
         name="type"
         render={({ field }) => (
-          <>
+          <div className="space-y-2">
             <Label>
               Transportation Type <Required />
             </Label>
@@ -90,7 +90,7 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
                 ))}
               </SelectContent>
             </Select>
-          </>
+          </div>
         )}
       />
 
@@ -117,10 +117,10 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
         control={control}
         name="provider"
         render={({ field }) => (
-          <>
+          <div className="space-y-2">
             <Label>Provider</Label>
             <Input {...field} placeholder="Airline, train company…" />
-          </>
+          </div>
         )}
       />
 
@@ -129,56 +129,58 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
         control={control}
         name="confirmation_number"
         render={({ field }) => (
-          <>
+          <div className="space-y-2">
             <Label>Confirmation Number</Label>
             <Input {...field} placeholder="Booking reference" />
-          </>
+          </div>
         )}
       />
 
       {/* Cost & Currency */}
-      <div className="flex space-x-4">
-        <Controller
-          control={control}
-          name="cost"
-          render={({ field }) => (
-            <div className="flex-1">
-              <Label>Cost</Label>
-              <Input
-                value={costDisplay}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/[^\d.-]/g, "");
-                  setCostDisplay(raw);
-                  field.onChange(raw ? parseFloat(raw) : null);
-                }}
-                placeholder="0"
-              />
-            </div>
-          )}
-        />
-        <Controller
-          control={control}
-          name="currency"
-          render={({ field }) => (
-            <div className="flex-1">
-              <Label>
-                Currency <Required />
-              </Label>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent className="z-[300] bg-sand-50">
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c} {CURRENCY_SYMBOLS[c]} - {CURRENCY_NAMES[c]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        />
+      <div className="space-y-2">
+        <Label>Cost & Currency</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Controller
+            control={control}
+            name="cost"
+            render={({ field }) => (
+              <div>
+                <Input
+                  value={costDisplay}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^\d.-]/g, "");
+                    setCostDisplay(raw);
+                    field.onChange(raw ? parseFloat(raw) : null);
+                  }}
+                  placeholder="0"
+                />
+              </div>
+            )}
+          />
+          <Controller
+            control={control}
+            name="currency"
+            render={({ field }) => (
+              <div>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[300] bg-sand-50 max-h-48 overflow-y-auto">
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        <span className="font-medium">{c}</span>
+                        <span className="ml-1 text-sand-600 text-sm">
+                          {CURRENCY_SYMBOLS[c]}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          />
+        </div>
       </div>
 
       {/* Additional Details */}
@@ -186,10 +188,10 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
         control={control}
         name="details"
         render={({ field }) => (
-          <>
+          <div className="space-y-2">
             <Label>Details</Label>
             <Textarea {...field} rows={1} placeholder="Additional details" />
-          </>
+          </div>
         )}
       />
     </div>
