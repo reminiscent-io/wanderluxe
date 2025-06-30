@@ -212,16 +212,12 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : null}
             onAccommodationAdd={handleAccommodationAdd}
             onAccommodationEdit={handleAccommodationEdit}
-            onAccommodationDelete={handleAccommodationDelete}
             onTransportationAdd={handleTransportationAdd}
             onTransportationEdit={handleTransportationEdit}
-            onTransportationDelete={handleTransportationDelete}
             onActivityAdd={handleActivityAdd}
             onActivityEdit={handleActivityEdit}
-            onActivityDelete={handleActivityDelete}
             onReservationAdd={handleReservationAdd}
             onReservationEdit={handleReservationEdit}
-            onReservationDelete={handleReservationDelete}
             onEditDates={handleEditDates}
           />
 
@@ -325,6 +321,16 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onDeleteActivity={handleActivityDelete}
         eventId={tripId || ""}
         tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
+      />
+      
+      <TripDateEditDialog
+        isOpen={tripDatesOpen}
+        onOpenChange={setTripDatesOpen}
+        arrivalDate={newArrival}
+        departureDate={newDeparture}
+        onArrivalChange={setNewArrival}
+        onDepartureChange={setNewDeparture}
+        onSave={handleSaveDates}
       />
     </>
   );
