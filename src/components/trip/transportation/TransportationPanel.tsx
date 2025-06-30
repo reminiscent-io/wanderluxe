@@ -1,17 +1,33 @@
 // src/components/trip/transportation/TransportationPanel.tsx
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { formatDateSafe, compareDatesSafe, formatTime } from "@/utils/sidebarUtils";
+import {
+  formatDateSafe,
+  compareDatesSafe,
+  formatTime,
+} from "@/utils/sidebarUtils";
+import { format, parse } from "date-fns";
 import Header from "../_shared/Header";
 
 interface Props {
-  transportation: any[];
+  transportation: Array<{
+    id: string | number;
+    start_date?: string | null;
+    end_date?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
+    departure_location: string;
+    arrival_location: string;
+    cost?: number | null;
+    currency?: string | null;
+  }>;
   onAdd: () => void;
   onEdit: (t: any) => void;
   isMobile: boolean;
   onClose: () => void;
   onBack: () => void;
 }
+
 export default function TransportationPanel({
   transportation,
   onAdd,
@@ -20,11 +36,15 @@ export default function TransportationPanel({
   onClose,
   onBack,
 }: Props) {
-  const grouped = transportation.reduce((acc: Record<string, any[]>, t) => {
-    const d = t.start_date || "No Date";
-    (acc[d] ||= []).push(t);
-    return acc;
-  }, {});
+  // Group by start_date
+  const grouped = transportation.reduce<Record<string, typeof transportation>>(
+    (acc, t) => {
+      const key = t.start_date ?? "No Date";
+      (acc[key] ||= []).push(t);
+      return acc;
+    },
+    {}
+  );
   const dates = Object.keys(grouped).sort(compareDatesSafe);
 
   return (
@@ -45,26 +65,46 @@ export default function TransportationPanel({
             {formatDateSafe(d)}
           </h5>
           {grouped[d]
-            .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""))
-            .map((t) => (
-              <button
-                key={t.id}
-                onClick={() => onEdit(t)}
-                className="ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors hover:bg-sand-100"
-              >
-                <h4 className="mb-1 text-sm font-medium">
-                  {t.departure_location} – {t.arrival_location}
-                </h4>
-                <p className="text-xs text-sand-600">
-                  {formatTime(t.start_time)} – {formatTime(t.end_time)}
-                </p>
-                {t.cost && (
-                  <p className="text-xs text-sand-600">
-                    {(t.currency || "USD")} {t.cost.toLocaleString()}
-                  </p>
-                )}
-              </button>
-            ))}
+            .sort((a, b) =>
+              (a.start_time ?? "").localeCompare(b.start_time ?? "")
+            )
+            .map((t) => {
+              const sd = t.start_date || "";
+              const ed = t.end_date || sd;
+              const sameDay = sd === ed;
+
+              let timeDisplay: string;
+              if (sameDay) {
+                timeDisplay = `${formatTime(t.start_time)} – ${formatTime(
+                  t.end_time
+                )}`;
+              } else {
+                // parse end_date as local date, then format weekday/month/day
+                const endDateObj = parse(ed, "yyyy-MM-dd", new Date());
+                const dayLabel = format(endDateObj, "EEE, MMM d");
+                timeDisplay = `${formatTime(t.start_time)} → ${dayLabel} ${formatTime(
+                  t.end_time
+                )}`;
+              }
+
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => onEdit(t)}
+                  className="ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors hover:bg-sand-100"
+                >
+                  <h4 className="mb-1 text-sm font-medium">
+                    {t.departure_location} – {t.arrival_location}
+                  </h4>
+                  <p className="text-xs text-sand-600">{timeDisplay}</p>
+                  {t.cost != null && (
+                    <p className="text-xs text-sand-600">
+                      {(t.currency || "USD")} {t.cost.toLocaleString()}
+                    </p>
+                  )}
+                </button>
+              );
+            })}
         </div>
       ))}
     </div>

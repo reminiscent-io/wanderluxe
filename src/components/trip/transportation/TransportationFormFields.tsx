@@ -18,6 +18,10 @@ import {
   CURRENCY_NAMES,
   CURRENCY_SYMBOLS,
 } from "@/utils/currencyConstants";
+import { 
+  formatTransportationType, 
+  getTransportationIcon 
+} from "@/utils/transportationUtils";
 
 interface Props {
   form: UseFormReturn<any>;
@@ -59,7 +63,14 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
             </Label>
             <Select value={field.value} onValueChange={field.onChange}>
               <SelectTrigger className="bg-white">
-                <SelectValue placeholder="Select type" />
+                <SelectValue placeholder="Select type">
+                  {field.value && (
+                    <div className="flex items-center gap-2">
+                      <span>{getTransportationIcon(field.value)}</span>
+                      <span>{formatTransportationType(field.value)}</span>
+                    </div>
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="z-[300] bg-sand-50">
                 {[
@@ -71,7 +82,10 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
                   "rental_car",
                 ].map((t) => (
                   <SelectItem key={t} value={t}>
-                    {t.replace("_", " ")}
+                    <div className="flex items-center gap-2">
+                      <span>{getTransportationIcon(t)}</span>
+                      <span>{formatTransportationType(t)}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
