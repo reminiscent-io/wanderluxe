@@ -1,9 +1,8 @@
-
-import React, { useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useEffect, useState } from 'react';
+import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 
 interface TripDateEditDialogProps {
   isOpen: boolean;
@@ -15,7 +14,13 @@ interface TripDateEditDialogProps {
   onSave: () => void;
 }
 
-const TripDateEditDialog = ({
+// parse "YYYY-MM-DD" as local date (no TZ offset)
+function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export default function TripDateEditDialog({
   isOpen,
   onOpenChange,
   arrivalDate,
@@ -23,46 +28,51 @@ const TripDateEditDialog = ({
   onArrivalChange,
   onDepartureChange,
   onSave,
-}: TripDateEditDialogProps) => {
+}: TripDateEditDialogProps) {
+  const [range, setRange] = useState<{ from?: Date; to?: Date }>({});
+
+  // seed when opening
   useEffect(() => {
     if (isOpen) {
-      onArrivalChange(arrivalDate);
-      onDepartureChange(departureDate);
+      setRange({
+        from: arrivalDate ? parseLocalDate(arrivalDate) : undefined,
+        to:   departureDate ? parseLocalDate(departureDate) : undefined,
+      });
     }
   }, [isOpen, arrivalDate, departureDate]);
 
+  // commit on Save
+  const handleSave = () => {
+    if (range.from) {
+      onArrivalChange(format(range.from, 'yyyy-MM-dd'));
+    }
+    if (range.to) {
+      onDepartureChange(format(range.to, 'yyyy-MM-dd'));
+    }
+    onSave();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Trip Dates</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="arrival">Arrival Date</Label>
-            <Input
-              id="arrival"
-              type="date"
-              value={arrivalDate}
-              onChange={(e) => onArrivalChange(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="departure">Departure Date</Label>
-            <Input
-              id="departure"
-              type="date"
-              value={departureDate}
-              onChange={(e) => onDepartureChange(e.target.value)}
-            />
-          </div>
-          <Button onClick={onSave} className="w-full">
+
+        <Calendar
+          mode="range"
+          selected={range}
+          onSelect={setRange}
+          defaultMonth={range.from}
+          numberOfMonths={1}
+        />
+
+        <div className="pt-4">
+          <Button onClick={handleSave} className="w-full">
             Save Changes
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default TripDateEditDialog;
+}

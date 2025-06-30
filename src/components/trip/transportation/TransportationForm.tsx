@@ -1,9 +1,8 @@
-// src/components/trip/transportation/TransportationForm.tsx
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -11,7 +10,7 @@ import TransportationFormFields from "./TransportationFormFields";
 import { DateTimeRange } from "@/components/ui/DateTimeRangeField";
 import { CURRENCIES } from "@/utils/currencyConstants";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 
 type Transportation = Tables<"transportation">;
@@ -35,7 +34,7 @@ export default function TransportationForm({
   tripDepartureDate,
   buttonClassName,
 }: Props) {
-  /* ---------------------------------- schema --------------------------------- */
+  /* ------------------------------------------------------------------------ */
   const schema = z.object({
     type: z.string().min(1),
     departure_location: z.string().min(1),
@@ -48,7 +47,7 @@ export default function TransportationForm({
     currency: z.string().min(1),
   });
 
-  /* ---------------------------------- RHF init -------------------------------- */
+  /* ------------------------------------------------------------------------ */
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -58,8 +57,8 @@ export default function TransportationForm({
       travel_range:
         initialData?.start_date && initialData?.end_date
           ? {
-              from: new Date(initialData.start_date),
-              to: new Date(initialData.end_date),
+              from: parse(initialData.start_date, "yyyy-MM-dd", new Date()),
+              to: parse(initialData.end_date, "yyyy-MM-dd", new Date()),
               fromTime: initialData.start_time ?? "",
               toTime: initialData.end_time ?? "",
             }
@@ -81,12 +80,14 @@ export default function TransportationForm({
         travel_range:
           tripArrivalDate || tripDepartureDate
             ? {
-                from: tripArrivalDate
-                  ? new Date(tripArrivalDate)
-                  : current.travel_range?.from,
-                to: tripDepartureDate
-                  ? new Date(tripDepartureDate)
-                  : current.travel_range?.to,
+                from:
+                  tripArrivalDate
+                    ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
+                    : current.travel_range?.from,
+                to:
+                  tripDepartureDate
+                    ? parse(tripDepartureDate, "yyyy-MM-dd", new Date())
+                    : current.travel_range?.to,
                 fromTime: current.travel_range?.fromTime,
                 toTime: current.travel_range?.toTime,
               }
@@ -175,7 +176,16 @@ export default function TransportationForm({
                 buttonClassName ?? ""
               }`}
             >
-              {initialData ? "Update Transportation" : "Add Transportation"}
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving…
+                </>
+              ) : initialData ? (
+                "Update Transportation"
+              ) : (
+                "Add Transportation"
+              )}
             </Button>
           </div>
         </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -109,8 +109,8 @@ export default function AccommodationForm({
       stay_range:
         initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
           ? {
-              from: new Date(initialData.hotel_checkin_date),
-              to: new Date(initialData.hotel_checkout_date),
+              from: parse(initialData.hotel_checkin_date, "yyyy-MM-dd", new Date()),
+              to: parse(initialData.hotel_checkout_date, "yyyy-MM-dd", new Date()),
               fromTime: initialData.checkin_time ?? "15:00",
               toTime: initialData.checkout_time ?? "11:00",
             }
@@ -118,7 +118,7 @@ export default function AccommodationForm({
     },
   });
 
-  /* --------------------- Sync picker -> legacy fields ------------------ */
+  /* --------------------- Sync picker → legacy fields ------------------ */
   const stayRange = useWatch({
     control: form.control,
     name: "stay_range",
@@ -177,7 +177,7 @@ export default function AccommodationForm({
         onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-4 p-6"
       >
-        {/* ------------------- Hotel Name ------------------- */}
+        {/* Hotel Name */}
         <FormField
           control={form.control}
           name="hotel"
@@ -207,13 +207,13 @@ export default function AccommodationForm({
           )}
         />
 
-        {/* ------------------- Contact Preview ------------------- */}
+        {/* Contact Preview */}
         <HotelContactInfo
           address={form.watch("hotel_address")}
           phone={form.watch("hotel_phone")}
         />
 
-        {/* ------------------- Details ------------------- */}
+        {/* Details */}
         <FormField
           control={form.control}
           name="hotel_details"
@@ -229,15 +229,19 @@ export default function AccommodationForm({
           )}
         />
 
-        {/* ------------------- Unified Date + Time Picker ------------------- */}
+        {/* Unified Date + Time Picker */}
         <DateTimeRangeField
           name="stay_range"
           label="Stay Dates"
           required
-          defaultMonth={tripArrivalDate ? new Date(tripArrivalDate) : undefined}
+          defaultMonth={
+            tripArrivalDate
+              ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
+              : undefined
+          }
         />
 
-        {/* ------------------- Cost & Currency ------------------- */}
+        {/* Cost & Currency */}
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -275,7 +279,7 @@ export default function AccommodationForm({
           />
         </div>
 
-        {/* ------------------- Action Buttons ------------------- */}
+        {/* Action Buttons */}
         <div className="flex justify-between pt-4">
           {initialData && onDelete && (
             <Button

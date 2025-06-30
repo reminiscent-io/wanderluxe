@@ -26,7 +26,7 @@ interface Props {
   label: string;
   required?: boolean;
   defaultMonth?: Date;
-  /** Pass `control` if this component is rendered outside a FormProvider */
+  /** Pass `control` if not inside a FormProvider */
   control?: RHFControl<any>;
 }
 
@@ -36,6 +36,14 @@ const prettyTime = (t?: string) => {
   const [h, m] = t.split(":").map(Number);
   const d = new Date(1970, 0, 1, h, m);
   return format(d, "h:mm aa").toLowerCase();
+};
+
+/** Strip out any timezone offset so we format only the date portion */
+const fmtDate = (d?: Date | null) => {
+  if (!d) return "";
+  // shift by local offset to treat as UTC midnight
+  const utcMidnight = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  return format(utcMidnight, "MMM d, yyyy");
 };
 
 export default function DateTimeRangeField({
@@ -49,7 +57,7 @@ export default function DateTimeRangeField({
   const control = ctx?.control ?? externalControl;
   if (!control) {
     throw new Error(
-      "DateTimeRangeField: No RHF control found. Wrap in <Form> or pass control prop."
+      "DateTimeRangeField: no RHF control found. Wrap in <Form> or pass control prop."
     );
   }
 
@@ -59,9 +67,6 @@ export default function DateTimeRangeField({
       control={control}
       render={({ field }) => {
         const value = (field.value || {}) as DateTimeRange;
-
-        const fmtDate = (d?: Date | null) =>
-          d ? format(d, "MMM d, yyyy") : "";
         const display =
           value.from && value.to
             ? `${fmtDate(value.from)} – ${fmtDate(value.to)} at ${prettyTime(
