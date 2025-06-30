@@ -574,6 +574,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Create trip form now displays clean date-only picker with sand theme styling
   - Unified date selection interface across both create and edit trip workflows
   - Inherits all sand theme styling and calendar customizations from DateTimeRangeField
+- June 30, 2025. Fixed sidebar trip date editing functionality:
+  - Added comprehensive trip day management logic missing from sidebar implementation
+  - Implemented checkDaysToRemove and removeTripDays functions for proper day deletion
+  - Enhanced handleSaveDates to automatically handle both trip extensions and shortenings
+  - Fixed issue where sidebar date editing wasn't properly creating or deleting trip days
+  - Added proper query invalidation for trip-days to ensure immediate UI updates
+  - Sidebar date editing now matches the robust functionality of main TripDates component
 
 ## User Preferences
 
