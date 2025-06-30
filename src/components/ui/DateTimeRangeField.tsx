@@ -1,60 +1,76 @@
-// src/components/ui/DateTimeRangeField.tsx
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { Controller, useFormContext } from "react-hook-form";
-import { useEffect, useRef, useState } from "react";
-import { DateRange } from "react-day-picker";
+import {
+  Controller,
+  useFormContext,
+  Control as RHFControl,
+} from "react-hook-form";
 
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-
 import * as PopoverPrimitive from "@radix-ui/react-popover";
+
+export type DateTimeRange = {
+  from?: Date | null;
+  to?: Date | null;
+  fromTime?: string;
+  toTime?: string;
+};
 
 interface Props {
   name: string;
   label: string;
   required?: boolean;
-  autoFocus?: boolean;
-  tripArrivalDate?: string | null;
-  tripDepartureDate?: string | null;
+  defaultMonth?: Date;
+  /** Pass `control` if this component is rendered outside a FormProvider */
+  control?: RHFControl<any>;
 }
 
-export default function DateTimeRangeField({ name, label, required, autoFocus, tripArrivalDate, tripDepartureDate }: Props) {
-  const { control } = useFormContext();
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSelectingRange, setIsSelectingRange] = useState(false);
+/* helper: "15:00" → "3:00 pm" */
+const prettyTime = (t?: string) => {
+  if (!t) return "--:--";
+  const [h, m] = t.split(":").map(Number);
+  const d = new Date(1970, 0, 1, h, m);
+  return format(d, "h:mm aa").toLowerCase();
+};
 
-  // Auto-focus the trigger button when autoFocus is enabled
-  useEffect(() => {
-    if (autoFocus && triggerRef.current) {
-      triggerRef.current.focus();
-    }
-  }, [autoFocus]);
-
-  // Calculate default month to show based on trip dates
-  const getDefaultMonth = () => {
-    if (tripArrivalDate) {
-      return new Date(tripArrivalDate);
-    }
-    return new Date(); // Fallback to current date
-  };
+export default function DateTimeRangeField({
+  name,
+  label,
+  required,
+  defaultMonth,
+  control: externalControl,
+}: Props) {
+  const ctx = useFormContext();
+  const control = ctx?.control ?? externalControl;
+  if (!control) {
+    throw new Error(
+      "DateTimeRangeField: No RHF control found. Wrap in <Form> or pass control prop."
+    );
+  }
 
   return (
     <Controller
-      control={control}
       name={name as any}
+      control={control}
       render={({ field }) => {
-        const range = field.value as DateRange | undefined;
-        
-        // Use shorter, cleaner date format
-        const display = range?.from && range?.to
-          ? `${format(range.from, "MMM d, yyyy")} → ${format(range.to, "MMM d, yyyy")}`
-          : range?.from
-          ? `${format(range.from, "MMM d, yyyy")} → Select end date`
-          : "Select dates";
+        const value = (field.value || {}) as DateTimeRange;
+
+        const fmtDate = (d?: Date | null) =>
+          d ? format(d, "MMM d, yyyy") : "";
+        const display =
+          value.from && value.to
+            ? `${fmtDate(value.from)} – ${fmtDate(value.to)} at ${prettyTime(
+                value.fromTime
+              )} → ${prettyTime(value.toTime)}`
+            : "Select date range";
+
+        const update = (patch: Partial<DateTimeRange>) =>
+          field.onChange({ ...value, ...patch });
 
         return (
           <div className="space-y-1">
@@ -62,26 +78,13 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover 
-              open={isOpen} 
-              onOpenChange={(open) => {
-                // Don't allow closing if we're in the middle of selecting a range
-                if (!open && isSelectingRange) {
-                  return; // Prevent closing
-                }
-                setIsOpen(open);
-                if (!open) {
-                  setIsSelectingRange(false);
-                }
-              }}
-            >
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  ref={triggerRef}
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !range?.from && "text-sand-500",
+                    !value.from && "text-sand-500"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -94,35 +97,40 @@ export default function DateTimeRangeField({ name, label, required, autoFocus, t
                   side="bottom"
                   align="start"
                   sideOffset={6}
-                  className="z-[600] p-0 bg-white rounded-md shadow-md border"
-                  onOpenAutoFocus={(e) => {
-                    // Prevent the popover from stealing focus from the calendar
-                    e.preventDefault();
-                  }}
+                  className="z-[600] w-[340px] rounded-md border bg-white p-0 shadow-md"
                 >
                   <Calendar
                     mode="range"
                     numberOfMonths={1}
-                    selected={range}
-                    onSelect={(newRange: DateRange | undefined) => {
-                      field.onChange(newRange);
-                      
-                      if (newRange?.from && !newRange?.to) {
-                        // First date selected, start range selection mode
-                        setIsSelectingRange(true);
-                      } else if (newRange?.from && newRange?.to) {
-                        // Both dates selected, finish selection
-                        setIsSelectingRange(false);
-                        setTimeout(() => setIsOpen(false), 150);
-                      } else if (!newRange?.from) {
-                        // Range cleared, reset selection mode
-                        setIsSelectingRange(false);
-                      }
+                    selected={{
+                      from: value.from ?? undefined,
+                      to: value.to ?? undefined,
                     }}
-                    defaultMonth={getDefaultMonth()}
-                    autoFocus={true}
-                    className="p-3"
+                    onSelect={(r) => update({ from: r?.from, to: r?.to })}
+                    defaultMonth={defaultMonth}
+                    initialFocus
                   />
+
+                  <div className="flex items-center gap-4 border-t px-3 py-2">
+                    <div className="flex flex-col space-y-1">
+                      <Label className="text-xs">Start&nbsp;Time</Label>
+                      <Input
+                        type="time"
+                        value={value.fromTime ?? ""}
+                        onChange={(e) => update({ fromTime: e.target.value })}
+                        className="w-28"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <Label className="text-xs">End&nbsp;Time</Label>
+                      <Input
+                        type="time"
+                        value={value.toTime ?? ""}
+                        onChange={(e) => update({ toTime: e.target.value })}
+                        className="w-28"
+                      />
+                    </div>
+                  </div>
                 </PopoverPrimitive.Content>
               </PopoverPrimitive.Portal>
             </Popover>

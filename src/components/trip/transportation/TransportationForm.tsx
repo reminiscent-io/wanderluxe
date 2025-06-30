@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
+// src/components/trip/transportation/TransportationForm.tsx
+import React, { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
+import * as z from "zod";
+import { format } from "date-fns";
+
 import { Button } from "@/components/ui/button";
-import { Tables } from '@/integrations/supabase/types';
-import TransportationFormFields from './TransportationFormFields';
-import { toast } from 'sonner';
-import { CURRENCIES } from '@/utils/currencyConstants';
-import { Trash2 } from 'lucide-react';
+import { Form } from "@/components/ui/form";
+import TransportationFormFields from "./TransportationFormFields";
+import { DateTimeRange } from "@/components/ui/DateTimeRangeField";
+import { CURRENCIES } from "@/utils/currencyConstants";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
 
-type Transportation = Tables<'transportation'>;
+type Transportation = Tables<"transportation">;
 
-interface TransportationFormProps {
+interface Props {
   initialData?: Partial<Transportation>;
-  onSubmit: (data: Partial<Transportation>) => void;
+  onSubmit: (data: Partial<Transportation>) => Promise<void> | void;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
   tripArrivalDate?: string | null;
@@ -18,139 +26,160 @@ interface TransportationFormProps {
   buttonClassName?: string;
 }
 
-const TransportationForm: React.FC<TransportationFormProps> = ({
+export default function TransportationForm({
   initialData,
   onSubmit,
   onCancel,
   onDelete,
   tripArrivalDate,
   tripDepartureDate,
-  buttonClassName
-}) => {
-  const defaultData: Partial<Transportation> = {
-    type: 'flight',
-    departure_location: '',
-    arrival_location: '',
-    start_date: tripArrivalDate || '',
-    start_time: '',
-    end_date: '',
-    end_time: '',
-    provider: '',
-    details: '',
-    confirmation_number: '',
-    cost: null,
-    currency: CURRENCIES[0] 
-  };
+  buttonClassName,
+}: Props) {
+  /* ---------------------------------- schema --------------------------------- */
+  const schema = z.object({
+    type: z.string().min(1),
+    departure_location: z.string().min(1),
+    arrival_location: z.string().min(1),
+    travel_range: z.any().optional(),
+    provider: z.string().optional(),
+    details: z.string().optional(),
+    confirmation_number: z.string().optional(),
+    cost: z.number().nullable(),
+    currency: z.string().min(1),
+  });
 
-  const [formData, setFormData] = useState<Partial<Transportation>>(
-    initialData || defaultData
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  /* ---------------------------------- RHF init -------------------------------- */
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      type: initialData?.type ?? "flight",
+      departure_location: initialData?.departure_location ?? "",
+      arrival_location: initialData?.arrival_location ?? "",
+      travel_range:
+        initialData?.start_date && initialData?.end_date
+          ? {
+              from: new Date(initialData.start_date),
+              to: new Date(initialData.end_date),
+              fromTime: initialData.start_time ?? "",
+              toTime: initialData.end_time ?? "",
+            }
+          : undefined,
+      provider: initialData?.provider ?? "",
+      details: initialData?.details ?? "",
+      confirmation_number: initialData?.confirmation_number ?? "",
+      cost: initialData?.cost ?? null,
+      currency: initialData?.currency ?? CURRENCIES[0],
+    },
+  });
 
-  const formatCost = (value: number | undefined | null): string => {
-    if (value === undefined || value === null) return '';
-    return value.toString();
-  };
+  /* ------------------- reset on trip-date change ------------------- */
+  useEffect(() => {
+    if (!initialData && (tripArrivalDate || tripDepartureDate)) {
+      const current = form.getValues();
+      form.reset({
+        ...current,
+        travel_range:
+          tripArrivalDate || tripDepartureDate
+            ? {
+                from: tripArrivalDate
+                  ? new Date(tripArrivalDate)
+                  : current.travel_range?.from,
+                to: tripDepartureDate
+                  ? new Date(tripDepartureDate)
+                  : current.travel_range?.to,
+                fromTime: current.travel_range?.fromTime,
+                toTime: current.travel_range?.toTime,
+              }
+            : undefined,
+      });
+    }
+  }, [tripArrivalDate, tripDepartureDate, initialData, form]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  /* ------------------ watch the range ------------------ */
+  const travelRange = useWatch({
+    control: form.control,
+    name: "travel_range",
+  }) as DateTimeRange;
 
-    // Validate required fields
-    if (!formData.type) {
-      toast.error('Please select a transportation type');
-      setIsSubmitting(false);
+  /* ------------------- submit handler ------------------- */
+  const [saving, setSaving] = useState(false);
+  const handleSubmit = async (data: z.infer<typeof schema>) => {
+    if (!travelRange?.from || !travelRange?.to) {
+      toast.error("Please select departure and arrival dates");
       return;
     }
 
-    if (!formData.departure_location) {
-      toast.error('Please enter a departure location');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!formData.arrival_location) {
-      toast.error('Please enter an arrival location');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!formData.start_date) {
-      toast.error('Please select a date');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Ensure end_date is either a valid date or null, not an empty string
-    const dataToSubmit = {
-      ...formData,
-      end_date: formData.end_date || null,
-      start_time: formData.start_time || null,
-      end_time: formData.end_time || null
+    const payload: Partial<Transportation> = {
+      ...initialData,
+      type: data.type,
+      departure_location: data.departure_location,
+      arrival_location: data.arrival_location,
+      provider: data.provider,
+      details: data.details,
+      confirmation_number: data.confirmation_number,
+      cost: data.cost,
+      currency: data.currency,
+      start_date: format(travelRange.from, "yyyy-MM-dd"),
+      end_date: format(travelRange.to, "yyyy-MM-dd"),
+      start_time: travelRange.fromTime || null,
+      end_time: travelRange.toTime || null,
     };
 
-    if (!formData.start_date) {
-      toast.error('Please select a departure date');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!formData.currency) {
-      setFormData({ ...formData, currency: 'USD' });
-    }
-
     try {
-      await onSubmit(dataToSubmit);
-    } catch (error) {
-      console.error('Transportation submission failed:', error);
+      setSaving(true);
+      await onSubmit(payload);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save transportation");
+    } finally {
+      setSaving(false);
     }
-    
-    setIsSubmitting(false);
   };
 
+  /* ----------------------------------- JSX ----------------------------------- */
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <TransportationFormFields
-        formData={formData}
-        setFormData={setFormData}
-        formatCost={formatCost}
-      />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <TransportationFormFields
+          form={form}
+          tripArrivalDate={tripArrivalDate}
+        />
 
-      <div className="flex justify-between items-center pt-4">
-        <div>
+        <div className="flex items-center justify-between pt-4">
           {initialData && onDelete && (
             <Button
               type="button"
               variant="ghost"
               onClick={onDelete}
-              disabled={isSubmitting}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              disabled={saving}
+              className="text-red-600 hover:bg-red-50 hover:text-red-700"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
           )}
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-earth-400 hover:bg-earth-600 text-white font-semibold"
-          >
-            {initialData ? 'Update Transportation' : 'Add Transportation'}
-          </Button>
-        </div>
-      </div>
-    </form>
-  );
-};
 
-export default TransportationForm;
+          <div className="flex space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={saving}
+              className={`bg-earth-400 text-white font-semibold hover:bg-earth-600 ${
+                buttonClassName ?? ""
+              }`}
+            >
+              {initialData ? "Update Transportation" : "Add Transportation"}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </Form>
+  );
+}

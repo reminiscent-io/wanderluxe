@@ -1,3 +1,4 @@
+// src/components/trip/transportation/TransportationDialog.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -17,7 +18,8 @@ interface TransportationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: TransportationType | null;
-  onSuccess?: () => void;
+  /** Now expects the saved record */
+  onSuccess: (updated: TransportationType) => void;
   buttonClassName?: string;
 }
 
@@ -29,38 +31,30 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   onSuccess,
   buttonClassName = "bg-earth-500 hover:bg-earth-600 text-white font-semibold",
 }) => {
-  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
-    arrival_date: null,
-    departure_date: null,
-  });
+  const [tripDates, setTripDates] = useState<{
+    arrival_date: string | null;
+    departure_date: string | null;
+  }>({ arrival_date: null, departure_date: null });
 
   useEffect(() => {
-    const fetchTripDates = async () => {
+    async function fetchTripDates() {
       const { data, error } = await supabase
         .from('trips')
         .select('arrival_date, departure_date')
         .eq('trip_id', tripId)
         .single();
-      if (!error && data) {
-        if (data.arrival_date && data.departure_date) {
-          console.log('TransportationDialog: Setting trip dates', data);
-          setTripDates({
-            arrival_date: data.arrival_date,
-            departure_date: data.departure_date,
-          });
-        } else {
-          console.log('TransportationDialog: Skipping update - missing dates', data);
-        }
+      if (!error && data && data.arrival_date && data.departure_date) {
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date,
+        });
       }
-    };
-    if (open) {
-      fetchTripDates();
     }
+    if (open) fetchTripDates();
   }, [tripId, open]);
 
   const handleSubmit = async (data: Partial<TransportationType>) => {
     try {
-      // Consolidate common transportation fields
       const basePayload = {
         type: data.type,
         provider: data.provider,
@@ -77,29 +71,31 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
       };
 
       if (initialData?.id) {
-        // Update existing transportation event
-        const { error } = await supabase
+        // Update existing
+        const { data: updatedRecord, error } = await supabase
           .from('transportation')
-          .update({ ...basePayload })
-          .eq('id', initialData.id);
-        if (error) throw error;
+          .update(basePayload)
+          .eq('id', initialData.id)
+          .select('*')
+          .single();
+        if (error || !updatedRecord) throw error;
         toast.success('Transportation updated successfully');
+        onSuccess(updatedRecord);
       } else {
-        // Create new transportation event with additional fields
-        const { error } = await supabase
+        // Insert new
+        const { data: inserted, error } = await supabase
           .from('transportation')
-          .insert([{
-            trip_id: tripId,
-            ...basePayload,
-            created_at: new Date().toISOString(),
-          }]);
-        if (error) throw error;
+          .insert([{ trip_id: tripId, ...basePayload, created_at: new Date().toISOString() }])
+          .select('*')
+          .single();
+        if (error || !inserted) throw error;
         toast.success('Transportation added successfully');
+        onSuccess(inserted);
       }
-      onSuccess?.();
+
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error saving transportation:', error);
+    } catch (err) {
+      console.error('Error saving transportation:', err);
       toast.error('Failed to save transportation');
     }
   };
@@ -110,27 +106,24 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
 
   const handleDelete = async () => {
     try {
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from('transportation')
-          .delete()
-          .eq('id', initialData.id);
-        
-        if (error) throw error;
-        
-        toast.success('Transportation deleted successfully');
-        onSuccess?.();
-        onOpenChange(false);
-      }
-    } catch (error) {
-      console.error('Error deleting transportation:', error);
+      if (!initialData?.id) return;
+      const { error } = await supabase
+        .from('transportation')
+        .delete()
+        .eq('id', initialData.id);
+      if (error) throw error;
+      toast.success('Transportation deleted successfully');
+      // return empty record? you could call onSuccess with a flag or refetch
+      onOpenChange(false);
+    } catch (err) {
+      console.error('Error deleting transportation:', err);
       toast.error('Failed to delete transportation');
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-[600px] max-h-[calc(100vh-100px)] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
@@ -146,7 +139,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           onDelete={initialData ? handleDelete : undefined}
           tripArrivalDate={tripDates.arrival_date}
           tripDepartureDate={tripDates.departure_date}
-          buttonClassName="bg-earth-400 hover:bg-earth-600 text-white font-semibold"
+          buttonClassName={buttonClassName}
         />
       </DialogContent>
     </Dialog>

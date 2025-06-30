@@ -191,75 +191,79 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     </div>
   );
 
-  return (
-    <>
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex">
-        <div className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-sand-200 z-30">
-          {sidebarContent}
-        </div>
-      </div>
+      return (
+        <>
+          {/* Desktop */}
+          <div className="hidden md:flex">
+            <div className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-sand-200 z-30">
+              {sidebarContent}
+            </div>
+          </div>
 
-      {/* Secondary Panel (router for accommodations, transportation, etc.) */}
-      <SecondaryPanel
-        activeKey={secondaryPanel}
-        onClose={() => setSecondaryPanel(null)}
-        onBack={handleBackFromSecondary}
-        accommodations={accommodations}
-        transportation={transportation}
-        activities={activities}
-        reservations={reservations}
-        trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : null}
-        onAccommodationAdd={handleAccommodationAdd}
-        onAccommodationEdit={handleAccommodationEdit}
-        onAccommodationDelete={handleAccommodationDelete}
-        onTransportationAdd={handleTransportationAdd}
-        onTransportationEdit={handleTransportationEdit}
-        onTransportationDelete={handleTransportationDelete}
-        onActivityAdd={handleActivityAdd}
-        onActivityEdit={handleActivityEdit}
-        onActivityDelete={handleActivityDelete}
-        onReservationAdd={handleReservationAdd}
-        onReservationEdit={handleReservationEdit}
-        onReservationDelete={handleReservationDelete}
-        onEditDates={handleEditDates}
-      />
+          {/* SecondaryPanel */}
+          <SecondaryPanel
+            activeKey={secondaryPanel}
+            onClose={() => setSecondaryPanel(null)}
+            onBack={handleBackFromSecondary}
+            accommodations={accommodations}
+            transportation={transportation}
+            activities={activities}
+            reservations={reservations}
+            trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : null}
+            onAccommodationAdd={handleAccommodationAdd}
+            onAccommodationEdit={handleAccommodationEdit}
+            onAccommodationDelete={handleAccommodationDelete}
+            onTransportationAdd={handleTransportationAdd}
+            onTransportationEdit={handleTransportationEdit}
+            onTransportationDelete={handleTransportationDelete}
+            onActivityAdd={handleActivityAdd}
+            onActivityEdit={handleActivityEdit}
+            onActivityDelete={handleActivityDelete}
+            onReservationAdd={handleReservationAdd}
+            onReservationEdit={handleReservationEdit}
+            onReservationDelete={handleReservationDelete}
+            onEditDates={handleEditDates}
+          />
 
-      {/* Mobile Sidebar (collapsible sheet) */}
-      <div className="md:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50 bg-white shadow-md">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-[280px]">
-            {sidebarContent}
-          </SheetContent>
-        </Sheet>
-      </div>
+          {/* Mobile */}
+          <div className="md:hidden">
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50 bg-white shadow-md">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-[280px]">
+                {sidebarContent}
+              </SheetContent>
+            </Sheet>
+          </div>
 
-      {/* Dialog Components for Adding/Editing */}
-      <AccommodationDialog
-        open={accommodationOpen}
-        onOpenChange={setAccommodationOpen}
-        initialData={selectedAccommodation}
-        tripId={tripId || ""}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
-          queryClient.invalidateQueries({ queryKey: ["accommodations", tripId] });
-          setSelectedAccommodation(null);
-        }}
-      />
-      <TransportationDialog
-        open={transportationOpen}
-        onOpenChange={setTransportationOpen}
-        initialData={selectedTransportation}
-        tripId={tripId || ""}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
-        }}
-      />
+          {/* Dialogs */}
+          <AccommodationDialog
+            open={accommodationOpen}
+            onOpenChange={setAccommodationOpen}
+            initialData={selectedAccommodation}
+            tripId={tripId || ""}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+              queryClient.invalidateQueries({ queryKey: ["accommodations", tripId] });
+              setSelectedAccommodation(null);
+            }}
+          />
+
+          <TransportationDialog
+            open={transportationOpen}
+            onOpenChange={setTransportationOpen}
+            initialData={selectedTransportation}
+            tripId={tripId || ""}
+            onSuccess={(updated) => {
+              // immediately patch local state
+              handleTransportationEdit(updated);
+              queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+            }}
+          />
+          
       <TripDateEditDialog
         isOpen={tripDatesOpen}
         onOpenChange={setTripDatesOpen}
