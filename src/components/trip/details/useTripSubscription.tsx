@@ -11,13 +11,11 @@ export const useTripSubscription = (tripId: string | undefined) => {
   useEffect(() => {
     if (!tripId) return;
 
-    console.log('Trip subscription temporarily disabled for debugging');
-    
     // Temporarily disable real-time subscriptions to fix the multiple subscription error
     // This will be re-enabled once the subscription lifecycle is properly managed
     
     return () => {
-      console.log('Subscription cleanup - no active subscriptions');
+      // Cleanup - no active subscriptions
     };
   }, [tripId, queryClient]);
 };

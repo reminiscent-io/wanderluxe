@@ -416,10 +416,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               disabled={isSubmitting}
               className="bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
               onClick={(e) => {
-                console.log('Save button clicked');
-                console.log('Form state:', form.formState);
-                console.log('Form values:', form.getValues());
-                console.log('Form errors:', form.formState.errors);
+
               }}
             >
               {isSubmitting ? (
