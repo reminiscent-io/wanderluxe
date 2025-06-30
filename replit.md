@@ -580,6 +580,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced handleSaveDates to automatically handle both trip extensions and shortenings
   - Fixed issue where sidebar date editing wasn't properly creating or deleting trip days
   - Added proper query invalidation for trip-days to ensure immediate UI updates
+  - Added missing TripDateEditDialog component to Sidebar JSX for complete functionality
   - Sidebar date editing now matches the robust functionality of main TripDates component
 
 ## User Preferences
