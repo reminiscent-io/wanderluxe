@@ -569,6 +569,7 @@ The application uses a normalized PostgreSQL schema with the following core enti
 - June 30, 2025. Integrated DateTimeRangeField into create trip form:
   - Replaced basic HTML date inputs in TimingSection with existing DateTimeRangeField component
   - Added hideTimeInputs prop to DateTimeRangeField to conditionally hide time input section
+  - Updated display text logic to hide time portion ("at --:-- → --:--") when hideTimeInputs is true
   - Fixed infinite loop issue in TimingSection using useCallback for form watching
   - Create trip form now displays clean date-only picker with sand theme styling
   - Unified date selection interface across both create and edit trip workflows
