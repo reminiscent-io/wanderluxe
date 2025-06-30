@@ -28,6 +28,8 @@ interface Props {
   defaultMonth?: Date;
   /** Pass `control` if not inside a FormProvider */
   control?: RHFControl<any>;
+  /** Hide the time input section */
+  hideTimeInputs?: boolean;
 }
 
 /* helper: "15:00" → "3:00 pm" */
@@ -52,6 +54,7 @@ export default function DateTimeRangeField({
   required,
   defaultMonth,
   control: externalControl,
+  hideTimeInputs = false,
 }: Props) {
   const ctx = useFormContext();
   const control = ctx?.control ?? externalControl;
@@ -116,26 +119,28 @@ export default function DateTimeRangeField({
                     initialFocus
                   />
 
-                  <div className="flex items-center gap-4 border-t px-3 py-2">
-                    <div className="flex flex-col space-y-1">
-                      <Label className="text-xs">Start&nbsp;Time</Label>
-                      <Input
-                        type="time"
-                        value={value.fromTime ?? ""}
-                        onChange={(e) => update({ fromTime: e.target.value })}
-                        className="w-28"
-                      />
+                  {!hideTimeInputs && (
+                    <div className="flex items-center gap-4 border-t px-3 py-2">
+                      <div className="flex flex-col space-y-1">
+                        <Label className="text-xs">Start&nbsp;Time</Label>
+                        <Input
+                          type="time"
+                          value={value.fromTime ?? ""}
+                          onChange={(e) => update({ fromTime: e.target.value })}
+                          className="w-28"
+                        />
+                      </div>
+                      <div className="flex flex-col space-y-1">
+                        <Label className="text-xs">End&nbsp;Time</Label>
+                        <Input
+                          type="time"
+                          value={value.toTime ?? ""}
+                          onChange={(e) => update({ toTime: e.target.value })}
+                          className="w-28"
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-col space-y-1">
-                      <Label className="text-xs">End&nbsp;Time</Label>
-                      <Input
-                        type="time"
-                        value={value.toTime ?? ""}
-                        onChange={(e) => update({ toTime: e.target.value })}
-                        className="w-28"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </PopoverPrimitive.Content>
               </PopoverPrimitive.Portal>
             </Popover>

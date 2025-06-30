@@ -568,8 +568,9 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Maintains earth-tone color palette consistency throughout the application
 - June 30, 2025. Integrated DateTimeRangeField into create trip form:
   - Replaced basic HTML date inputs in TimingSection with existing DateTimeRangeField component
-  - Implemented React Hook Form pattern matching edit trip dates functionality
-  - Set time fields to undefined since only dates are needed for trip creation
+  - Added hideTimeInputs prop to DateTimeRangeField to conditionally hide time input section
+  - Fixed infinite loop issue in TimingSection using useCallback for form watching
+  - Create trip form now displays clean date-only picker with sand theme styling
   - Unified date selection interface across both create and edit trip workflows
   - Inherits all sand theme styling and calendar customizations from DateTimeRangeField
 
