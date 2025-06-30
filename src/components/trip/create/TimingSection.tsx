@@ -1,7 +1,9 @@
 
-import React from 'react';
-import { Input } from "@/components/ui/input";
+import React, { useEffect } from 'react';
 import { Label } from "@/components/ui/label";
+import DateRangeField, { DateRange } from "@/components/ui/DateRangeField";
+import { useForm, FormProvider } from "react-hook-form";
+import { format } from "date-fns";
 
 interface TimingSectionProps {
   startDate: string;
@@ -16,49 +18,55 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   endDate,
   onEndDateChange,
 }) => {
-  const isEndDateValid = !startDate || !endDate || new Date(endDate) >= new Date(startDate);
+  const form = useForm({
+    defaultValues: {
+      dateRange: {
+        from: startDate ? new Date(startDate) : null,
+        to: endDate ? new Date(endDate) : null,
+      } as DateRange
+    }
+  });
+
+  // Update form values when props change
+  useEffect(() => {
+    const newRange = {
+      from: startDate ? new Date(startDate) : null,
+      to: endDate ? new Date(endDate) : null,
+    };
+    form.setValue('dateRange', newRange);
+  }, [startDate, endDate, form]);
+
+  const handleDateRangeChange = (range: DateRange) => {
+    if (range.from) {
+      const fromStr = format(range.from, 'yyyy-MM-dd');
+      onStartDateChange(fromStr);
+    } else {
+      onStartDateChange('');
+    }
+    
+    if (range.to) {
+      const toStr = format(range.to, 'yyyy-MM-dd');
+      onEndDateChange(toStr);
+    } else {
+      onEndDateChange('');
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <Label className="text-sm font-medium text-gray-700">
-        When are you planning to travel? 
-      </Label>
-
+    <FormProvider {...form}>
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label
-            htmlFor="startDate"
-            className="text-sm font-medium text-gray-700"
-          >
-            Start Date <span className="text-red-500"> *</span>
-          </Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value)}
-          />
-        </div>
+        <Label className="text-sm font-medium text-gray-700">
+          When are you planning to travel? 
+        </Label>
 
-        <div className="space-y-2">
-          <Label
-            htmlFor="endDate"
-            className="text-sm font-medium text-gray-700"
-          >
-            End Date <span className="text-red-500"> *</span>
-          </Label>
-          <Input
-            id="endDate"
-            type="date"
-            value={endDate}
-            onChange={(e) => onEndDateChange(e.target.value)}
-            className={!isEndDateValid ? "border-red-500" : ""}
-          />
-          {!isEndDateValid && (
-            <p className="text-red-500 text-sm mt-1">End date cannot be before start date</p>
-          )}
-        </div>
+        <DateRangeField
+          name="dateRange"
+          label="Travel Dates"
+          required
+          onChange={handleDateRangeChange}
+        />
       </div>
-    </div>
+    </FormProvider>
   );
 };
 
