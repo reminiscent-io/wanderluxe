@@ -75,25 +75,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Edit Vision Board Item
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              {isDeleting ? (
-                "Deleting..."
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </>
-              )}
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Edit Vision Board Item</DialogTitle>
         </DialogHeader>
         <VisionBoardItemForm
           initialData={item}
@@ -102,6 +84,8 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
           isSubmitting={isSubmitting}
           isFetchingMetadata={isFetchingMetadata}
           submitLabel="Update Item"
+          onDelete={handleDelete}
+          isDeleting={isDeleting}
         />
       </DialogContent>
     </Dialog>
