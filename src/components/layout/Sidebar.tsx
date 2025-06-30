@@ -181,7 +181,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               {user?.user_metadata?.full_name || user?.email}
             </p>
           </div>
-          <NavLink to="/settings">
+          <NavLink to="/profile">
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <Settings className="h-4 w-4" />
             </Button>
