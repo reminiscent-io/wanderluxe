@@ -599,6 +599,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Updated DiningList component to use onClick prop instead of onEdit/onDelete
   - Delete functionality now exclusively available within dialog form with red trash icon
   - Achieved consistent user interaction pattern across all trip component cards
+- June 30, 2025. Unified restaurant reservation dialogs across day cards and sidebar:
+  - Fixed form validation schema to handle nullable database fields properly
+  - Added delete functionality to day card dialogs matching sidebar implementation
+  - Both interfaces now use identical RestaurantReservationDialog with same behavior
+  - Consistent delete button styling and query invalidation across all reservation interfaces
+  - Eliminated functionality differences between sidebar and timeline reservation management
 
 ## User Preferences
 
