@@ -586,6 +586,8 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed critical state synchronization issue where calendar selections weren't being saved
   - Updated TripDateEditDialog to pass dates directly to save handler avoiding timing issues
   - Modified handleSaveDates to accept override parameters for immediate date processing
+  - Added confirmation dialog when date edits will permanently delete trip days and associated activities
+  - Enhanced user safety with clear warning about data loss before proceeding with date shortening
   - Sidebar date editing now fully functional with proper day card generation and removal
 
 ## User Preferences
