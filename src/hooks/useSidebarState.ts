@@ -416,6 +416,58 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setTripDatesOpen(true);
   };
 
+  // Check for days that need to be removed when date range is shortened
+  const checkDaysToRemove = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
+    const oldDates = generateDatesArray(oldArr, oldDep);
+    const newDates = generateDatesArray(newArr, newDep);
+    const toRemove = oldDates.filter(d => !newDates.includes(d));
+    if (!toRemove.length) return null;
+
+    try {
+      const { data: daysData, error: daysErr } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', tripId)
+        .in('date', toRemove);
+      if (daysErr) throw daysErr;
+
+      if (!daysData?.length) return null;
+
+      const dayIds = daysData.map(d => d.day_id);
+      const { data: activitiesData, error: activitiesErr } = await supabase
+        .from('day_activities')
+        .select('id')
+        .in('day_id', dayIds);
+      if (activitiesErr) throw activitiesErr;
+
+      return {
+        dayCount: daysData.length,
+        activityCount: activitiesData?.length || 0,
+        dates: toRemove
+      };
+    } catch (err) {
+      console.error('Error checking days to remove:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to check affected days' });
+      return null;
+    }
+  };
+
+  // Remove trip days and associated activities
+  const removeTripDays = async (dates: string[]) => {
+    const { data: daysData, error: daysErr } = await supabase
+      .from('trip_days')
+      .select('day_id')
+      .eq('trip_id', tripId)
+      .in('date', dates);
+    if (daysErr) throw daysErr;
+
+    if (daysData?.length) {
+      const ids = daysData.map(d => d.day_id);
+      await supabase.from('day_activities').delete().in('day_id', ids);
+      await supabase.from('trip_days').delete().in('day_id', ids);
+    }
+  };
+
   // Utility to add new trip_days if trip dates have been extended
   const addNewTripDays = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
     const oldDates = generateDatesArray(oldArr, oldDep);
@@ -430,19 +482,21 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     }
   };
 
-  // Save trip date changes (update trip record and possibly add new trip_days)
+  // Save trip date changes (update trip record and handle day additions/removals)
   const saveDateChanges = async (arr: string, dep: string) => {
     const { error } = await supabase
       .from('trips')
       .update({ arrival_date: arr, departure_date: dep })
       .eq('trip_id', tripId);
     if (error) throw error;
+    
     if (trip?.arrival_date && trip?.departure_date) {
       await addNewTripDays(trip.arrival_date, trip.departure_date, arr, dep);
     } else {
       const allDates = generateDatesArray(arr, dep);
       await createTripDays(tripId || '', allDates);
     }
+    
     toast({ title: 'Success', description: 'Trip dates updated' });
     setTripDatesOpen(false);
     setIsSubmittingDates(false);
@@ -454,9 +508,20 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       return;
     }
     setIsSubmittingDates(true);
+
     try {
+      // Check if we need to remove any days first
+      if (trip?.arrival_date && trip?.departure_date) {
+        const daysToRemove = await checkDaysToRemove(trip.arrival_date, trip.departure_date, newArrival, newDeparture);
+        if (daysToRemove && daysToRemove.dayCount > 0) {
+          // For now, automatically remove the days - could add confirmation dialog later
+          await removeTripDays(daysToRemove.dates);
+        }
+      }
+
       await saveDateChanges(newArrival, newDeparture);
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
     } catch (err) {
       console.error('Error updating trip dates:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update trip dates' });
