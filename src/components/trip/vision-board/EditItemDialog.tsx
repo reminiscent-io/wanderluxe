@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import VisionBoardItemForm from './VisionBoardItemForm';
 
 interface EditItemDialogProps {
@@ -26,6 +28,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
   onClose
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingMetadata] = useState(false);
 
   const handleSubmit = async (formData: any) => {
@@ -47,6 +50,27 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this item?")) return;
+    
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('vision_board_items')
+        .delete()
+        .eq('id', item.id);
+
+      if (error) throw error;
+      toast.success("Item deleted successfully");
+      onClose();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error("Failed to delete item");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -60,6 +84,8 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
           isSubmitting={isSubmitting}
           isFetchingMetadata={isFetchingMetadata}
           submitLabel="Update Item"
+          onDelete={handleDelete}
+          isDeleting={isDeleting}
         />
       </DialogContent>
     </Dialog>

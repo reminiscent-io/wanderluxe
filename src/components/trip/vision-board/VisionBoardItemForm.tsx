@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,22 +6,25 @@ import { Textarea } from "@/components/ui/textarea";
 import ImageUpload from "@/components/ImageUpload";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 export const CATEGORIES = ['Accommodations', 'Activities', 'Transportation', 'Restaurants'];
 
 interface VisionBoardItemFormProps {
-  initialData: {
+  initialData?: {
     category: string;
     title: string;
     description?: string;
     image_url?: string;
     source_url?: string;
   };
-  onSubmit: (formData: any) => Promise<void>;
+  onSubmit: (data: any) => void;
   onClose: () => void;
   isSubmitting: boolean;
   isFetchingMetadata: boolean;
   submitLabel: string;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
 const VisionBoardItemForm: React.FC<VisionBoardItemFormProps> = ({
@@ -31,13 +33,15 @@ const VisionBoardItemForm: React.FC<VisionBoardItemFormProps> = ({
   onClose,
   isSubmitting,
   isFetchingMetadata,
-  submitLabel
+  submitLabel,
+  onDelete,
+  isDeleting = false,
 }) => {
-  const [category, setCategory] = useState(initialData.category);
-  const [title, setTitle] = useState(initialData.title);
-  const [description, setDescription] = useState(initialData.description || "");
-  const [sourceUrl, setSourceUrl] = useState(initialData.source_url || "");
-  const [imageUrl, setImageUrl] = useState(initialData.image_url || "");
+  const [category, setCategory] = useState(initialData?.category || '');
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || "");
+  const [sourceUrl, setSourceUrl] = useState(initialData?.source_url || "");
+  const [imageUrl, setImageUrl] = useState(initialData?.image_url || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +65,7 @@ const VisionBoardItemForm: React.FC<VisionBoardItemFormProps> = ({
           <SelectTrigger className="bg-white">
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
-          <SelectContent className="bg-white">
+          <SelectContent className="bg-white z-[350]">
             {CATEGORIES.map(cat => (
               <SelectItem key={cat} value={cat}>
                 {cat}
@@ -115,17 +119,43 @@ const VisionBoardItemForm: React.FC<VisionBoardItemFormProps> = ({
         />
       </div>
 
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={isSubmitting} 
-          className="bg-earth-500 hover:bg-earth-400 text-sand-50"
-        >
-          {isSubmitting ? "Saving..." : submitLabel}
-        </Button>
+      <div className="flex justify-between pt-4">
+        {onDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onDelete}
+            disabled={isDeleting || isSubmitting}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            {isDeleting ? (
+              "Deleting..."
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </>
+            )}
+          </Button>
+        )}
+
+        <div className="ml-auto flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting || isFetchingMetadata}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || isFetchingMetadata}
+            className="bg-earth-500 hover:bg-earth-400 text-sand-50"
+          >
+            {isSubmitting ? "Saving..." : submitLabel}
+          </Button>
+        </div>
       </div>
     </form>
   );
