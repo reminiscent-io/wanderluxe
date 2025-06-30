@@ -31,14 +31,14 @@ const formSchema = z.object({
   restaurant_name: z.string().min(1, "Restaurant name is required"),
   reservation_date: z.string().min(1, "Reservation date is required"),
   reservation_time: z.string().min(1, "Reservation time is required"),
-  address: z.string().optional(),
-  phone_number: z.string().optional(),
-  website: z.string().optional(),
+  address: z.string().optional().nullable(),
+  phone_number: z.string().optional().nullable(),
+  website: z.string().optional().nullable(),
   number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional()),
   notes: z.string().optional(),
   cost: z.preprocess(toNullableNumber, z.number().optional()),
   currency: z.string().optional().nullable(),
-  place_id: z.string().optional(),
+  place_id: z.string().optional().nullable(),
   rating: z.preprocess(toNullableNumber, z.number().optional()),
 });
 
