@@ -411,8 +411,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Open the Trip Dates edit dialog with current dates pre-filled
   const handleEditDates = () => {
+    console.log('handleEditDates called - trip data:', trip);
+    console.log('Setting dates - arrival:', trip?.arrival_date, 'departure:', trip?.departure_date);
     if (trip?.arrival_date) setNewArrival(trip.arrival_date);
     if (trip?.departure_date) setNewDeparture(trip.departure_date);
+    console.log('Opening tripDatesOpen dialog');
     setTripDatesOpen(true);
   };
 
