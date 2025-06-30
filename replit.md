@@ -611,6 +611,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Day cards and sidebar now use different query keys but properly invalidate both when data changes
   - Reservation edits from either interface immediately sync to the other interface
   - Complete data consistency across all reservation management touchpoints
+- June 30, 2025. Cleaned up console logging in restaurant reservation components:
+  - Removed verbose debug logs from RestaurantReservationForm and RestaurantReservationDialog
+  - Eliminated real-time subscription setup/cleanup console spam
+  - Removed reservation change detection logging for cleaner development experience
+  - Preserved essential error messages while eliminating unnecessary debug output
+  - Application now operates silently with clean console output during normal operations
 
 ## User Preferences
 
