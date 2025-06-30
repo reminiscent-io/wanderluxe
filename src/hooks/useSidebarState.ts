@@ -514,24 +514,32 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setIsSubmittingDates(false);
   };
 
-  const handleSaveDates = async () => {
-    if (!newArrival || !newDeparture) {
+  const handleSaveDates = async (overrideArrival?: string, overrideDeparture?: string) => {
+    const finalArrival = overrideArrival || newArrival;
+    const finalDeparture = overrideDeparture || newDeparture;
+    console.log('handleSaveDates called with finalArrival:', finalArrival, 'finalDeparture:', finalDeparture);
+    if (!finalArrival || !finalDeparture) {
       toast({ variant: 'destructive', title: 'Error', description: 'Both arrival and departure dates are required' });
       return;
     }
     setIsSubmittingDates(true);
+    
+    // Update state for consistency
+    if (overrideArrival) setNewArrival(overrideArrival);
+    if (overrideDeparture) setNewDeparture(overrideDeparture);
 
     try {
       // Check if we need to remove any days first
       if (trip?.arrival_date && trip?.departure_date) {
-        const daysToRemove = await checkDaysToRemove(trip.arrival_date, trip.departure_date, newArrival, newDeparture);
+        const daysToRemove = await checkDaysToRemove(trip.arrival_date, trip.departure_date, finalArrival, finalDeparture);
         if (daysToRemove && daysToRemove.dayCount > 0) {
           // For now, automatically remove the days - could add confirmation dialog later
           await removeTripDays(daysToRemove.dates);
         }
       }
 
-      await saveDateChanges(newArrival, newDeparture);
+      console.log('About to call saveDateChanges with:', finalArrival, finalDeparture);
+      await saveDateChanges(finalArrival, finalDeparture);
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
     } catch (err) {

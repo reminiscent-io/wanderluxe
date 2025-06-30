@@ -12,7 +12,7 @@ interface TripDateEditDialogProps {
   departureDate: string;
   onArrivalChange: (date: string) => void;
   onDepartureChange: (date: string) => void;
-  onSave: () => void;
+  onSave: (arrivalDate?: string, departureDate?: string) => void;
 }
 
 // parse "YYYY-MM-DD" as local date (no TZ offset)
@@ -45,13 +45,15 @@ export default function TripDateEditDialog({
 
   // commit on Save
   const handleSave = () => {
-    if (range?.from) {
-      onArrivalChange(format(range.from, 'yyyy-MM-dd'));
+    if (range?.from && range?.to) {
+      const newArrival = format(range.from, 'yyyy-MM-dd');
+      const newDeparture = format(range.to, 'yyyy-MM-dd');
+      console.log('TripDateEditDialog saving dates:', { newArrival, newDeparture });
+      onArrivalChange(newArrival);
+      onDepartureChange(newDeparture);
+      // Pass dates directly to onSave to avoid state timing issues
+      onSave(newArrival, newDeparture);
     }
-    if (range?.to) {
-      onDepartureChange(format(range.to, 'yyyy-MM-dd'));
-    }
-    onSave();
   };
 
   return (
