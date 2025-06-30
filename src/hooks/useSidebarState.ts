@@ -470,12 +470,19 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Utility to add new trip_days if trip dates have been extended
   const addNewTripDays = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
+    console.log('addNewTripDays called with:', { oldArr, oldDep, newArr, newDep });
     const oldDates = generateDatesArray(oldArr, oldDep);
     const newDates = generateDatesArray(newArr, newDep);
     const toAdd = newDates.filter(d => !oldDates.includes(d));
-    if (!toAdd.length) return;
+    console.log('Date comparison - old:', oldDates, 'new:', newDates, 'toAdd:', toAdd);
+    if (!toAdd.length) {
+      console.log('No new dates to add');
+      return;
+    }
     try {
+      console.log('Creating trip days for dates:', toAdd);
       await createTripDays(tripId || '', toAdd);
+      console.log('Successfully created trip days');
     } catch (err) {
       console.error('Failed to add new trip days:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to add new trip days' });
@@ -484,6 +491,9 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Save trip date changes (update trip record and handle day additions/removals)
   const saveDateChanges = async (arr: string, dep: string) => {
+    console.log('saveDateChanges called with:', { arr, dep, tripId });
+    console.log('Current trip data:', trip);
+    
     const { error } = await supabase
       .from('trips')
       .update({ arrival_date: arr, departure_date: dep })
@@ -491,8 +501,10 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     if (error) throw error;
     
     if (trip?.arrival_date && trip?.departure_date) {
+      console.log('Taking addNewTripDays path - existing trip has dates');
       await addNewTripDays(trip.arrival_date, trip.departure_date, arr, dep);
     } else {
+      console.log('Taking createTripDays path - no existing dates');
       const allDates = generateDatesArray(arr, dep);
       await createTripDays(tripId || '', allDates);
     }
