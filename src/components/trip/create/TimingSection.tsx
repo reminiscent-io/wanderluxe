@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Label } from "@/components/ui/label";
 import DateTimeRangeField, { DateTimeRange } from "@/components/ui/DateTimeRangeField";
 import { useForm, FormProvider } from "react-hook-form";
@@ -29,42 +29,31 @@ const TimingSection: React.FC<TimingSectionProps> = ({
     }
   });
 
-  // Update form values when props change
-  useEffect(() => {
-    const newRange = {
-      from: startDate ? new Date(startDate) : null,
-      to: endDate ? new Date(endDate) : null,
-      fromTime: undefined,
-      toTime: undefined,
-    };
-    form.setValue('travelDates', newRange);
-  }, [startDate, endDate, form]);
-
-  const handleDateChange = () => {
-    const currentValues = form.getValues('travelDates');
-    
-    if (currentValues.from) {
-      const fromStr = format(currentValues.from, 'yyyy-MM-dd');
+  const handleDateChange = useCallback((values: DateTimeRange) => {
+    if (values.from) {
+      const fromStr = format(values.from, 'yyyy-MM-dd');
       onStartDateChange(fromStr);
     } else {
       onStartDateChange('');
     }
     
-    if (currentValues.to) {
-      const toStr = format(currentValues.to, 'yyyy-MM-dd');
+    if (values.to) {
+      const toStr = format(values.to, 'yyyy-MM-dd');
       onEndDateChange(toStr);
     } else {
       onEndDateChange('');
     }
-  };
+  }, [onStartDateChange, onEndDateChange]);
 
   // Watch for form changes and update parent
   useEffect(() => {
-    const subscription = form.watch(() => {
-      handleDateChange();
+    const subscription = form.watch((values) => {
+      if (values.travelDates) {
+        handleDateChange(values.travelDates as DateTimeRange);
+      }
     });
     return () => subscription.unsubscribe();
-  }, [form]);
+  }, [form, handleDateChange]);
 
   return (
     <FormProvider {...form}>
@@ -77,6 +66,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
           name="travelDates"
           label="Travel Dates"
           required
+          hideTimeInputs={true}
         />
       </div>
     </FormProvider>
