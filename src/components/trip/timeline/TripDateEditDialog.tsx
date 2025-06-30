@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import type { DateRange } from "react-day-picker";
 
 interface TripDateEditDialogProps {
   isOpen: boolean;
@@ -29,12 +30,17 @@ export default function TripDateEditDialog({
   onDepartureChange,
   onSave,
 }: TripDateEditDialogProps) {
-  const [range, setRange] = useState<{ from?: Date; to?: Date }>({});
+  const [range, setRange] = useState<DateRange | undefined>();
 
   // seed when opening
   useEffect(() => {
+    console.log('TripDateEditDialog - isOpen:', isOpen, 'arrivalDate:', arrivalDate, 'departureDate:', departureDate);
     if (isOpen) {
       setRange({
+        from: arrivalDate ? parseLocalDate(arrivalDate) : undefined,
+        to:   departureDate ? parseLocalDate(departureDate) : undefined,
+      });
+      console.log('TripDateEditDialog - set range:', {
         from: arrivalDate ? parseLocalDate(arrivalDate) : undefined,
         to:   departureDate ? parseLocalDate(departureDate) : undefined,
       });
@@ -54,14 +60,14 @@ export default function TripDateEditDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] z-[300]">
         <DialogHeader>
           <DialogTitle>Edit Trip Dates</DialogTitle>
         </DialogHeader>
 
         <Calendar
           mode="range"
-          selected={range}
+          selected={range.from && range.to ? range : undefined}
           onSelect={setRange}
           defaultMonth={range.from}
           numberOfMonths={1}
