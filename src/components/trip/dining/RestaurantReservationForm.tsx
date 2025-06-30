@@ -212,7 +212,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // ──────────────────────────────────────────────────────────────────────────────
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitForm} className="space-y-4 max-w-full overflow-hidden">
+      <form onSubmit={handleSubmitForm} className="space-y-3 w-full max-w-none">
         {/* Restaurant Name */}
         <FormField
           control={form.control}
@@ -248,7 +248,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         />
 
         {/* Reservation Date & Time */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="reservation_date"
@@ -340,7 +340,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         />
 
         {/* Cost & Currency */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="cost"
@@ -374,20 +374,23 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Currency</FormLabel>
-                <FormControl>
-                  <select
-                    {...field}
-                    value={field.value || ''}
-                    className="bg-white mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
-                  >
-                    <option value="">Select currency</option>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="z-[999] max-h-48 overflow-y-auto">
                     {CURRENCIES.map((currency) => (
-                      <option key={currency} value={currency}>
-                        {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
-                      </option>
+                      <SelectItem key={currency} value={currency}>
+                        <span className="font-medium">{currency}</span>
+                        <span className="ml-1 text-sand-600 text-sm">
+                          {CURRENCY_SYMBOLS[currency]}
+                        </span>
+                      </SelectItem>
                     ))}
-                  </select>
-                </FormControl>
+                  </SelectContent>
+                </Select>
               </FormItem>
             )}
           />
