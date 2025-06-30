@@ -41,13 +41,7 @@ const formatCost = (cost: number) => {
   }).format(cost);
 };
 
-const getTransportationType = (type: string | null) => {
-  if (!type) return 'Unknown';
-  return type
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
+import { formatTransportationType, getTransportationColor } from '@/utils/transportationUtils';
 
 // Helper function to format time range
 const formatTimeRange = (startTime?: string, endTime?: string) => {
@@ -124,8 +118,11 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
         {/* Header with transportation type and actions */}
         <div className="flex justify-between items-start gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Badge variant="secondary" className="capitalize flex-shrink-0 text-xs">
-              {getTransportationType(transportation.type)}
+            <Badge 
+              variant="secondary" 
+              className={`flex-shrink-0 text-xs ${getTransportationColor(transportation.type)}`}
+            >
+              {formatTransportationType(transportation.type)}
             </Badge>
           </div>
           <div className="flex space-x-1 flex-shrink-0">
