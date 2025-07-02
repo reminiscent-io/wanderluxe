@@ -114,6 +114,13 @@ export default function AccommodationForm({
               fromTime: initialData.checkin_time ?? "15:00",
               toTime: initialData.checkout_time ?? "11:00",
             }
+          : tripArrivalDate && tripDepartureDate
+          ? {
+              from: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
+              to: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
+              fromTime: "15:00",
+              toTime: "11:00",
+            }
           : undefined,
     },
   });
