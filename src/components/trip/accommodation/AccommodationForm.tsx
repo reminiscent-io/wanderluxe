@@ -125,6 +125,22 @@ export default function AccommodationForm({
     },
   });
 
+  /* -------------------- Reset form when trip dates arrive ------------- */
+  useEffect(() => {
+    // Only set dates for new accommodations when trip dates become available
+    if (!initialData && tripArrivalDate && tripDepartureDate && !form.getValues("stay_range")) {
+      const newStayRange = {
+        from: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
+        to: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
+        fromTime: "15:00",
+        toTime: "11:00",
+      };
+      form.setValue("stay_range", newStayRange);
+      form.setValue("hotel_checkin_date", tripArrivalDate);
+      form.setValue("hotel_checkout_date", tripDepartureDate);
+    }
+  }, [tripArrivalDate, tripDepartureDate, initialData, form]);
+
   /* --------------------- Sync picker → legacy fields ------------------ */
   const stayRange = useWatch({
     control: form.control,
