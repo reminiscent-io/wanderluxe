@@ -58,7 +58,8 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
 
   const handleSubmit = async (data: any) => {
     try {
-      const formData = {
+      // Consolidate the common accommodation fields
+      const basePayload = {
         hotel: data.hotel,
         hotel_details: data.hotel_details,
         hotel_url: data.hotel_url,
@@ -74,16 +75,27 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         hotel_website: data.hotel_website,
       };
 
-      // Use the proper service functions from accommodationService
-      const { addAccommodation, updateAccommodation } = await import('@/services/accommodation/accommodationService');
-      
       if (initialData?.stay_id) {
         // Update existing accommodation
-        await updateAccommodation(initialData.stay_id, formData);
+        const { error } = await supabase
+          .from('accommodations')
+          .update({ ...basePayload })
+          .eq('stay_id', initialData.stay_id);
+        if (error) throw error;
         toast.success('Accommodation updated successfully');
       } else {
-        // Create new accommodation
-        await addAccommodation(tripId, formData);
+        // Create new accommodation with extra fields
+        const { error } = await supabase
+          .from('accommodations')
+          .insert([{
+            trip_id: tripId,
+            title: data.hotel || 'Unnamed Accommodation', // Ensure title is set
+            ...basePayload,
+            order_index: 0,
+            expense_type: 'accommodation',
+            created_at: new Date().toISOString(),
+          }]);
+        if (error) throw error;
         toast.success('Accommodation added successfully');
       }
       onSuccess();
@@ -97,8 +109,12 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   const handleDelete = async () => {
     try {
       if (initialData?.stay_id) {
-        const { deleteAccommodation } = await import('@/services/accommodation/accommodationService');
-        await deleteAccommodation(initialData.stay_id);
+        const { error } = await supabase
+          .from('accommodations')
+          .delete()
+          .eq('stay_id', initialData.stay_id);
+        
+        if (error) throw error;
         
         toast.success('Accommodation deleted successfully');
         onSuccess();
