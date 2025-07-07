@@ -1,5 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import RestaurantReservationForm from './RestaurantReservationForm';
 
 interface RestaurantReservationDialogProps {
@@ -48,23 +49,27 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
           }
         }}
       >
-        <div aria-describedby="restaurant-reservation-description">
-          <DialogHeader>
+        <div aria-describedby="restaurant-reservation-description" className="flex flex-col max-h-[90vh]">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>Enter the details for your restaurant reservation.</DialogDescription>
           </DialogHeader>
           <p id="restaurant-reservation-description" className="sr-only">
             Please fill out the restaurant reservation form.
           </p>
-          <RestaurantReservationForm
-            onSubmit={handleFormSubmit}
-            isSubmitting={isSubmitting}
-            defaultValues={editingReservation}
-            onDelete={onDelete}
-            tripId={tripId}
-            tripArrivalDate={tripArrivalDate}
-            tripDepartureDate={tripDepartureDate}
-          />
+          <ScrollArea className="flex-1 max-h-[60vh]">
+            <div className="px-1 pb-2">
+              <RestaurantReservationForm
+                onSubmit={handleFormSubmit}
+                isSubmitting={isSubmitting}
+                defaultValues={editingReservation}
+                onDelete={onDelete}
+                tripId={tripId}
+                tripArrivalDate={tripArrivalDate}
+                tripDepartureDate={tripDepartureDate}
+              />
+            </div>
+          </ScrollArea>
         </div>
       </DialogContent>
     </Dialog>
