@@ -97,7 +97,7 @@ export default function TransportationPanel({
                 >
                   <h4 className="mb-1 text-sm font-medium flex items-center gap-2">
                     <span className="text-base">{getTransportationIcon(t.type)}</span>
-                    <span>{t.departure_location} – {t.arrival_location}</span>
+                    <span>{t.departure_location} → {t.arrival_location}</span>
                   </h4>
                   <p className="text-xs text-sand-600">{timeDisplay}</p>
                   {t.cost != null && (
