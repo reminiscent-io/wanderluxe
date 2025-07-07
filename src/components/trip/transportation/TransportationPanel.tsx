@@ -8,10 +8,12 @@ import {
 } from "@/utils/sidebarUtils";
 import { format, parse } from "date-fns";
 import Header from "../_shared/Header";
+import { getTransportationIcon } from "@/utils/transportationUtils";
 
 interface Props {
   transportation: Array<{
     id: string | number;
+    type?: string | null;
     start_date?: string | null;
     end_date?: string | null;
     start_time?: string | null;
@@ -93,8 +95,9 @@ export default function TransportationPanel({
                   onClick={() => onEdit(t)}
                   className="ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors hover:bg-sand-100"
                 >
-                  <h4 className="mb-1 text-sm font-medium">
-                    {t.departure_location} – {t.arrival_location}
+                  <h4 className="mb-1 text-sm font-medium flex items-center gap-2">
+                    <span className="text-base">{getTransportationIcon(t.type)}</span>
+                    <span>{t.departure_location} – {t.arrival_location}</span>
                   </h4>
                   <p className="text-xs text-sand-600">{timeDisplay}</p>
                   {t.cost != null && (
