@@ -13,6 +13,7 @@ import { Share2, PlusCircle, X, Mail, AlertCircle, Eye, Edit } from 'lucide-reac
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { shareTrip, getTripShares, removeTripShare, updateTripSharePermission } from '@/services/tripSharingService';
 import { supabase } from '@/integrations/supabase/client';
@@ -221,7 +222,8 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 overflow-y-auto flex-1 px-1">
+        <ScrollArea className="flex-1 max-h-[60vh]">
+          <div className="space-y-4 px-1 pb-2">
           <div className="space-y-2">
             <p className="text-sm font-medium">Email addresses</p>
             
@@ -350,6 +352,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
             </div>
           </div>
         </div>
+        </ScrollArea>
 
         <DialogFooter className="flex sm:justify-between flex-shrink-0 border-t pt-4 mt-4">
           <Button
