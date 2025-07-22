@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { useToast } from "@/components/ui/use-toast"
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingViewProps {
   tripId: string | undefined;
 }
 
 const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
-  const { toast } = useToast()
-  const supabase = useSupabaseClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (tripId) {
@@ -19,7 +20,6 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
   const trackBookingPageView = async (tripId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         // Track in Google Analytics
         window.gtag('event', 'booking_page_view', {
@@ -44,7 +44,6 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
   const handleBookingClick = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (user && tripId) {
         // Track in Google Analytics
         window.gtag('event', 'booking_interest', {
@@ -77,9 +76,9 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-earth-500">Booking</h2>
-      <Card className="p-6">
+      <Card className="p-6 cursor-pointer hover:bg-sand-50 transition-colors" onClick={handleBookingClick}>
         <p className="text-gray-500">Booking features coming soon...</p>
-        <button onClick={handleBookingClick}>Notify me!</button>
+        <p className="text-sm text-gray-400 mt-2">Click here to get notified when booking is available</p>
       </Card>
     </div>
   );
