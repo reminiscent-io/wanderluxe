@@ -416,8 +416,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added smooth fade-in and zoom animation for better visual feedback
   - Calendar positioning is now consistent across all forms regardless of dialog size or scroll position
   - Fixed positioning works for accommodation dialogs, create trip forms, and all other date inputs
-  - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
-  - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
+- July 22, 2025. Fixed accommodation form TypeScript errors and data structure issues:
+  - Resolved cost property type mismatch between database (number) and form interface (string)
+  - Fixed schema validation to match AccommodationFormData interface requirements
+  - Enhanced data transformation in form submission and dialog initialization
+  - Removed extra schema fields that don't exist in AccommodationFormData interface
+  - Accommodation form now works properly with proper type safety and data handling
 - June 27, 2025. Fixed activity dialog day_id and date relationship handling:
   - Updated handleActivityEdit to correctly fetch date from trip_days table via day_id relationship (activity.trip_days?.date)
   - Enhanced handleAddActivity to find correct day_id based on selected date before inserting new activities

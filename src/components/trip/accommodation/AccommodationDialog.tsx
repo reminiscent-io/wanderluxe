@@ -140,7 +140,10 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
             </DialogTitle>
           </DialogHeader>
           <AccommodationForm
-            initialData={initialData}
+            initialData={initialData ? {
+              ...initialData,
+              cost: typeof initialData.cost === 'number' ? initialData.cost.toString() : initialData.cost
+            } : undefined}
             onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
             tripArrivalDate={tripDates.arrival_date}
