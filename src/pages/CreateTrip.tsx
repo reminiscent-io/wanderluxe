@@ -43,8 +43,8 @@ const CreateTrip = () => {
   
  
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12 overflow-visible">
-      <div className="w-full max-w-xl bg-white rounded-lg shadow-lg p-8 overflow-visible relative">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-xl bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-2xl font-semibold text-center mb-8">Create New Trip</h1>
         <CreateTripForm
           destination={destination}
