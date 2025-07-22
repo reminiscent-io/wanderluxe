@@ -257,6 +257,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               // immediately patch local state
               handleTransportationEdit(updated);
               queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+              queryClient.invalidateQueries({ queryKey: ["transportation", tripId] });
+              setSelectedTransportation(null);
             }}
           />
           

@@ -130,7 +130,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onPointerDownOutside={(e) => e.preventDefault()}
-        className="sm:max-w-[600px]"
+        className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
       >
         <DialogHeader>
           <DialogTitle>
