@@ -35,12 +35,16 @@ const schema = z
     hotel_checkout_date: z.string(),
     checkin_time: z.string().optional(),
     checkout_time: z.string().optional(),
-    cost: z.string().optional(),
+    cost: z.number().nullable(),
     currency: z.string().min(1, "Currency is required"),
     hotel_address: z.string().optional(),
     hotel_phone: z.string().optional(),
     hotel_place_id: z.string().optional(),
     hotel_website: z.string().optional(),
+    expense_type: z.literal("accommodation"),
+    is_paid: z.boolean(),
+    expense_date: z.string().optional(),
+    order_index: z.number(),
     stay_range: z.any().optional(), // handled by component
   })
   .refine(
@@ -92,12 +96,16 @@ export default function AccommodationForm({
         initialData?.hotel_checkout_date ?? tripDepartureDate ?? "",
       checkin_time: initialData?.checkin_time ?? "15:00",
       checkout_time: initialData?.checkout_time ?? "11:00",
-      cost: initialData?.cost ?? "",
+      cost: initialData?.cost ?? null,
       currency: initialData?.currency ?? "USD",
       hotel_address: initialData?.hotel_address ?? "",
       hotel_phone: initialData?.hotel_phone ?? "",
       hotel_place_id: initialData?.hotel_place_id ?? "",
       hotel_website: initialData?.hotel_website ?? "",
+      expense_type: "accommodation",
+      is_paid: initialData?.is_paid ?? false,
+      expense_date: initialData?.expense_date ?? "",
+      order_index: initialData?.order_index ?? 0,
       stay_range:
         initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
           ? {
@@ -176,23 +184,7 @@ export default function AccommodationForm({
   const handleSubmit = async (data: z.infer<typeof schema>) => {
     try {
       setSaving(true);
-      // Transform schema data to AccommodationFormData
-      const accommodationData: AccommodationFormData = {
-        hotel: data.hotel,
-        hotel_details: data.hotel_details,
-        hotel_address: data.hotel_address,
-        hotel_phone: data.hotel_phone,
-        hotel_website: data.hotel_website,
-        hotel_url: data.hotel_url,
-        hotel_checkin_date: data.hotel_checkin_date,
-        hotel_checkout_date: data.hotel_checkout_date,
-        checkin_time: data.checkin_time,
-        checkout_time: data.checkout_time,
-        cost: data.cost,
-        currency: data.currency,
-        hotel_place_id: data.hotel_place_id,
-      };
-      await onSubmit(accommodationData);
+      await onSubmit(data);
     } catch (err) {
       console.error(err);
       toast.error("Failed to save accommodation");
@@ -206,7 +198,7 @@ export default function AccommodationForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-4 relative"
+        className="space-y-4 p-6 relative"
       >
         {/* Hotel Name */}
         <FormField

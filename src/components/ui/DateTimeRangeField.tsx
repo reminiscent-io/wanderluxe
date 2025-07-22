@@ -91,7 +91,7 @@ export default function DateTimeRangeField({
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover modal={true}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -105,18 +105,18 @@ export default function DateTimeRangeField({
                 </Button>
               </PopoverTrigger>
 
-              <PopoverPrimitive.Portal container={typeof document !== 'undefined' ? document.body : undefined}>
+              <PopoverPrimitive.Portal>
                 <PopoverPrimitive.Content
                   side="bottom"
                   align="center"
-                  sideOffset={0}
-                  avoidCollisions={false}
-                  className="fixed inset-0 flex items-center justify-center z-[1000] p-4"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  sideOffset={8}
+                  avoidCollisions={true}
+                  collisionPadding={40}
+                  collisionBoundary={typeof document !== 'undefined' ? document.querySelector('[data-radix-dialog-content]') || document.body : undefined}
+                  className="z-[700] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-lg"
                 >
-                  <div className="w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl animate-in fade-in-0 zoom-in-95">
-                    <Calendar
-                      mode="range"
+                  <Calendar
+                    mode="range"
                     numberOfMonths={1}
                     selected={{
                       from: value.from ?? undefined,
@@ -124,32 +124,31 @@ export default function DateTimeRangeField({
                     }}
                     onSelect={(r) => update({ from: r?.from, to: r?.to })}
                     defaultMonth={defaultMonth}
-                      initialFocus
-                    />
+                    initialFocus
+                  />
 
-                    {!hideTimeInputs && (
-                      <div className="flex items-center gap-4 border-t px-3 py-2">
-                        <div className="flex flex-col space-y-1">
-                          <Label className="text-xs">Start&nbsp;Time</Label>
-                          <Input
-                            type="time"
-                            value={value.fromTime ?? ""}
-                            onChange={(e) => update({ fromTime: e.target.value })}
-                            className="w-28"
-                          />
-                        </div>
-                        <div className="flex flex-col space-y-1">
-                          <Label className="text-xs">End&nbsp;Time</Label>
-                          <Input
-                            type="time"
-                            value={value.toTime ?? ""}
-                            onChange={(e) => update({ toTime: e.target.value })}
-                            className="w-28"
-                          />
-                        </div>
+                  {!hideTimeInputs && (
+                    <div className="flex items-center gap-4 border-t px-3 py-2">
+                      <div className="flex flex-col space-y-1">
+                        <Label className="text-xs">Start&nbsp;Time</Label>
+                        <Input
+                          type="time"
+                          value={value.fromTime ?? ""}
+                          onChange={(e) => update({ fromTime: e.target.value })}
+                          className="w-28"
+                        />
                       </div>
-                    )}
-                  </div>
+                      <div className="flex flex-col space-y-1">
+                        <Label className="text-xs">End&nbsp;Time</Label>
+                        <Input
+                          type="time"
+                          value={value.toTime ?? ""}
+                          onChange={(e) => update({ toTime: e.target.value })}
+                          className="w-28"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </PopoverPrimitive.Content>
               </PopoverPrimitive.Portal>
             </Popover>
