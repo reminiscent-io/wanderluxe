@@ -91,7 +91,7 @@ export default function DateTimeRangeField({
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover>
+            <Popover modal={true}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -108,13 +108,10 @@ export default function DateTimeRangeField({
               <PopoverPrimitive.Portal container={typeof document !== 'undefined' ? document.body : undefined}>
                 <PopoverPrimitive.Content
                   side="bottom"
-                  align="start"
-                  sideOffset={8}
-                  avoidCollisions={true}
-                  collisionPadding={16}
-                  sticky="always"
-                  collisionBoundary={typeof document !== 'undefined' ? document.documentElement : undefined}
-                  className="z-[1000] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl data-[side=top]:animate-slide-down data-[side=bottom]:animate-slide-up"
+                  align="center"
+                  sideOffset={0}
+                  avoidCollisions={false}
+                  className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl animate-in fade-in-0 zoom-in-95"
                   onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                   <Calendar

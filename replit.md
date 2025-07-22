@@ -409,6 +409,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Improved DateTimeRangeField positioning to use document boundary instead of dialog constraints
   - Fixed accommodation form padding and structure for better scroll behavior within dialogs
   - Calendar positioning now works correctly in both accommodation dialogs and create trip forms
+- July 22, 2025. Implemented centered calendar positioning for all date picker forms:
+  - Changed calendar positioning from relative-to-input to fixed center-screen positioning
+  - Calendar now appears in the center of dialogs with modal overlay for better focus
+  - Eliminated all collision detection and viewport constraint issues
+  - Added smooth fade-in and zoom animation for better visual feedback
+  - Calendar positioning is now consistent across all forms regardless of dialog size or scroll position
+  - Fixed positioning works for accommodation dialogs, create trip forms, and all other date inputs
   - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
   - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
 - June 27, 2025. Fixed activity dialog day_id and date relationship handling:
