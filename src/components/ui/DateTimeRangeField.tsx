@@ -111,11 +111,12 @@ export default function DateTimeRangeField({
                   align="center"
                   sideOffset={0}
                   avoidCollisions={false}
-                  className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl animate-in fade-in-0 zoom-in-95"
+                  className="fixed inset-0 flex items-center justify-center z-[1000] p-4"
                   onOpenAutoFocus={(e) => e.preventDefault()}
                 >
-                  <Calendar
-                    mode="range"
+                  <div className="w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl animate-in fade-in-0 zoom-in-95">
+                    <Calendar
+                      mode="range"
                     numberOfMonths={1}
                     selected={{
                       from: value.from ?? undefined,
@@ -123,31 +124,32 @@ export default function DateTimeRangeField({
                     }}
                     onSelect={(r) => update({ from: r?.from, to: r?.to })}
                     defaultMonth={defaultMonth}
-                    initialFocus
-                  />
+                      initialFocus
+                    />
 
-                  {!hideTimeInputs && (
-                    <div className="flex items-center gap-4 border-t px-3 py-2">
-                      <div className="flex flex-col space-y-1">
-                        <Label className="text-xs">Start&nbsp;Time</Label>
-                        <Input
-                          type="time"
-                          value={value.fromTime ?? ""}
-                          onChange={(e) => update({ fromTime: e.target.value })}
-                          className="w-28"
-                        />
+                    {!hideTimeInputs && (
+                      <div className="flex items-center gap-4 border-t px-3 py-2">
+                        <div className="flex flex-col space-y-1">
+                          <Label className="text-xs">Start&nbsp;Time</Label>
+                          <Input
+                            type="time"
+                            value={value.fromTime ?? ""}
+                            onChange={(e) => update({ fromTime: e.target.value })}
+                            className="w-28"
+                          />
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <Label className="text-xs">End&nbsp;Time</Label>
+                          <Input
+                            type="time"
+                            value={value.toTime ?? ""}
+                            onChange={(e) => update({ toTime: e.target.value })}
+                            className="w-28"
+                          />
+                        </div>
                       </div>
-                      <div className="flex flex-col space-y-1">
-                        <Label className="text-xs">End&nbsp;Time</Label>
-                        <Input
-                          type="time"
-                          value={value.toTime ?? ""}
-                          onChange={(e) => update({ toTime: e.target.value })}
-                          className="w-28"
-                        />
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </PopoverPrimitive.Content>
               </PopoverPrimitive.Portal>
             </Popover>
