@@ -380,6 +380,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added appropriate empty state messages for each section when no trips are found
   - Enhanced user experience with clear temporal organization of travel plans and memories
   - Trip cards now display in chronological sections making it easier to distinguish active vs completed travels
+- July 22, 2025. Added "Current Trips" section for ongoing travel experiences:
+  - Enhanced trip categorization logic to identify trips where today falls between arrival and departure dates (inclusive)
+  - Added "Current Trips" section that appears prominently at the top when active trips exist
+  - Implemented three-way categorization: Current, Upcoming, and Past trips for both personal and shared trips
+  - Current trips section only displays when there are active trips to maintain clean interface
+  - Enhanced temporal awareness allowing users to quickly identify trips currently in progress
   - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
   - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
 - June 27, 2025. Fixed activity dialog day_id and date relationship handling:

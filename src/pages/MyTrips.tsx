@@ -142,33 +142,48 @@ const MyTrips = () => {
     }
   };
 
-  // Utility function to check if trip is upcoming or past
-  const isUpcomingTrip = (trip: Trip) => {
+  // Utility functions to categorize trips
+  const getTripCategory = (trip: Trip): 'upcoming' | 'current' | 'past' => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tripDate = new Date(trip.departure_date || trip.arrival_date || '');
-    return tripDate >= today;
+    const arrivalDate = new Date(trip.arrival_date || '');
+    const departureDate = new Date(trip.departure_date || '');
+    
+    // Current trip: today is between arrival and departure (inclusive)
+    if (today >= arrivalDate && today <= departureDate) {
+      return 'current';
+    }
+    
+    // Upcoming trip: arrival date is in the future
+    if (arrivalDate > today) {
+      return 'upcoming';
+    }
+    
+    // Past trip: departure date is in the past
+    return 'past';
   };
 
   // Memoize filtered and categorized trips to prevent unnecessary re-renders
-  const { upcomingMyTrips, pastMyTrips } = useMemo(() => {
-    if (!myTrips || !Array.isArray(myTrips)) return { upcomingMyTrips: [], pastMyTrips: [] };
+  const { upcomingMyTrips, currentMyTrips, pastMyTrips } = useMemo(() => {
+    if (!myTrips || !Array.isArray(myTrips)) return { upcomingMyTrips: [], currentMyTrips: [], pastMyTrips: [] };
     
     const filtered = myTrips.filter(trip => 
       trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const upcoming = filtered.filter(isUpcomingTrip);
-    const past = filtered.filter(trip => !isUpcomingTrip(trip));
+    const upcoming = filtered.filter(trip => getTripCategory(trip) === 'upcoming');
+    const current = filtered.filter(trip => getTripCategory(trip) === 'current');
+    const past = filtered.filter(trip => getTripCategory(trip) === 'past');
 
     return {
       upcomingMyTrips: upcoming,
+      currentMyTrips: current,
       pastMyTrips: past
     };
   }, [myTrips, searchQuery]);
 
-  const { upcomingSharedTrips, pastSharedTrips } = useMemo(() => {
-    if (!sharedTrips || !Array.isArray(sharedTrips)) return { upcomingSharedTrips: [], pastSharedTrips: [] };
+  const { upcomingSharedTrips, currentSharedTrips, pastSharedTrips } = useMemo(() => {
+    if (!sharedTrips || !Array.isArray(sharedTrips)) return { upcomingSharedTrips: [], currentSharedTrips: [], pastSharedTrips: [] };
     
     const filtered = sharedTrips
       .filter(trip => trip && trip.destination) // Filter out any undefined trips
@@ -176,11 +191,13 @@ const MyTrips = () => {
         trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-    const upcoming = filtered.filter(isUpcomingTrip);
-    const past = filtered.filter(trip => !isUpcomingTrip(trip));
+    const upcoming = filtered.filter(trip => getTripCategory(trip) === 'upcoming');
+    const current = filtered.filter(trip => getTripCategory(trip) === 'current');
+    const past = filtered.filter(trip => getTripCategory(trip) === 'past');
 
     return {
       upcomingSharedTrips: upcoming,
+      currentSharedTrips: current,
       pastSharedTrips: past
     };
   }, [sharedTrips, searchQuery]);
@@ -232,6 +249,29 @@ const MyTrips = () => {
               </div>
             ) : (
               <div className="space-y-12">
+                {/* Current Trips Section */}
+                {currentMyTrips.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl font-semibold text-earth-800 mb-6">
+                      Current Trips ({currentMyTrips.length})
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {currentMyTrips.map((trip) => (
+                        <TripCard
+                          key={trip.trip_id}
+                          trip={{
+                            ...trip,
+                            start_date: trip.arrival_date,
+                            end_date: trip.departure_date,
+                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          }}
+                          onHide={() => handleHideTrip(trip.trip_id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Upcoming Trips Section */}
                 <div>
                   <h2 className="text-2xl font-semibold text-earth-800 mb-6">
@@ -288,7 +328,7 @@ const MyTrips = () => {
                 </div>
 
                 {/* Show message if no trips at all */}
-                {upcomingMyTrips.length === 0 && pastMyTrips.length === 0 && (
+                {upcomingMyTrips.length === 0 && currentMyTrips.length === 0 && pastMyTrips.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-earth-500 mb-4">You haven't created any trips yet</p>
                     <Button onClick={() => navigate('/create-trip')}>Create Your First Trip</Button>
@@ -320,6 +360,29 @@ const MyTrips = () => {
               </div>
             ) : (
               <div className="space-y-12">
+                {/* Current Shared Trips Section */}
+                {currentSharedTrips.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl font-semibold text-earth-800 mb-6">
+                      Current Shared Trips ({currentSharedTrips.length})
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {currentSharedTrips.map((trip) => (
+                        <TripCard
+                          key={trip.trip_id}
+                          trip={{
+                            ...trip,
+                            start_date: trip.arrival_date,
+                            end_date: trip.departure_date,
+                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          }}
+                          // The trip already has isShared & sharedById properties from our earlier transformation
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Upcoming Shared Trips Section */}
                 <div>
                   <h2 className="text-2xl font-semibold text-earth-800 mb-6">
@@ -375,7 +438,7 @@ const MyTrips = () => {
                 </div>
 
                 {/* Show message if no shared trips at all */}
-                {upcomingSharedTrips.length === 0 && pastSharedTrips.length === 0 && (
+                {upcomingSharedTrips.length === 0 && currentSharedTrips.length === 0 && pastSharedTrips.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-earth-500">No trips have been shared with you yet</p>
                   </div>
