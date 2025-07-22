@@ -107,13 +107,19 @@ export default function DateTimeRangeField({
 
               <PopoverPrimitive.Portal>
                 <PopoverPrimitive.Content
-                  side="bottom"
-                  align="center"
-                  sideOffset={8}
                   avoidCollisions={true}
                   collisionPadding={40}
-                  collisionBoundary={typeof document !== 'undefined' ? document.querySelector('[data-radix-dialog-content]') || document.body : undefined}
-                  className="z-[700] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-lg"
+                  collisionBoundary={typeof document !== 'undefined' ? document.querySelector('[data-radix-dialog-content]') || document.querySelector('[role="dialog"]') || document.body : undefined}
+                  className="z-[700] w-[340px] max-w-[calc(100vw-3rem)] rounded-md border bg-white p-0 shadow-lg"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  style={{
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    maxHeight: 'calc(100vh - 80px)',
+                    overflow: 'auto'
+                  }}
                 >
                   <Calendar
                     mode="range"
