@@ -111,9 +111,11 @@ export default function DateTimeRangeField({
                   align="center"
                   sideOffset={8}
                   avoidCollisions={true}
-                  collisionPadding={40}
-                  collisionBoundary={typeof document !== 'undefined' ? document.querySelector('[data-radix-dialog-content]') || document.body : undefined}
-                  className="z-[700] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-lg"
+                  collisionPadding={20}
+                  sticky="always"
+                  collisionBoundary={typeof document !== 'undefined' ? [document.querySelector('[data-radix-dialog-content]'), document.documentElement].filter(Boolean) : undefined}
+                  className="z-[800] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl data-[side=top]:animate-slide-down data-[side=bottom]:animate-slide-up"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                   <Calendar
                     mode="range"
