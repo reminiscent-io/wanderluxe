@@ -373,6 +373,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - All sections now provide complete CRUD operations with uniform edit/delete buttons on items
   - Maintained formatting consistency across all secondary panels with earth-tone styling
   - Sidebar now offers comprehensive trip management with no missing functionality
+- July 22, 2025. Implemented upcoming/past trips categorization on My Trips page:
+  - Added intelligent trip categorization based on departure dates comparing to current date
+  - Created separate sections for "Upcoming Trips" and "Past Trips" with item counts in headings
+  - Applied categorization to both "My Trips" and "Shared With Me" tabs for consistent experience
+  - Added appropriate empty state messages for each section when no trips are found
+  - Enhanced user experience with clear temporal organization of travel plans and memories
+  - Trip cards now display in chronological sections making it easier to distinguish active vs completed travels
   - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
   - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
 - June 27, 2025. Fixed activity dialog day_id and date relationship handling:
