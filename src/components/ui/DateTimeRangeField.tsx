@@ -108,9 +108,12 @@ export default function DateTimeRangeField({
               <PopoverPrimitive.Portal>
                 <PopoverPrimitive.Content
                   side="bottom"
-                  align="start"
-                  sideOffset={6}
-                  className="z-[600] w-[340px] rounded-md border bg-white p-0 shadow-md"
+                  align="center"
+                  sideOffset={8}
+                  avoidCollisions={true}
+                  collisionPadding={40}
+                  collisionBoundary={typeof document !== 'undefined' ? document.querySelector('[data-radix-dialog-content]') || document.body : undefined}
+                  className="z-[700] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-lg"
                 >
                   <Calendar
                     mode="range"
