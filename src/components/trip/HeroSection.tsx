@@ -9,6 +9,7 @@ import ImageSection from '@/components/trip/create/ImageSection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ShareTripDialog from './ShareTripDialog';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface HeroSectionProps {
   tripId: string;
@@ -51,6 +52,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   unsplashUsername,
   isLoading = false,
 }) => {
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
@@ -65,6 +67,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         .eq('trip_id', tripId);
 
       if (error) throw error;
+      
+      // Invalidate the trip query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      
       setIsDialogOpen(false);
       toast.success('Cover image updated successfully');
     } catch (error) {
@@ -79,17 +85,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     // Save to localStorage for immediate persistence
     localStorage.setItem(`trip_image_position_${tripId}`, newPosition);
     
-    // Also attempt to save to database for future compatibility
-    try {
-      // We'll attempt this, but it will fail until the column is added
-      await supabase
-        .from('trips')
-        .update({ image_position: newPosition })
-        .eq('trip_id', tripId);
-    } catch (error) {
-      // We expect this error for now, so we'll just ignore it
-      // console.error('Error updating image position:', error);
-    }
+    // Note: Database storage for image position will be added in future version
   };
 
   const handleTitleSubmit = async () => {
@@ -102,6 +98,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         .eq('trip_id', tripId);
 
       if (error) throw error;
+      
+      // Invalidate the trip query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      
       setIsEditing(false);
       toast.success('Destination updated successfully');
     } catch (error) {
@@ -150,28 +150,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setImagePosition(savedPosition);
     }
     
-    // Also try to fetch from database for future compatibility
-    const fetchTripDetails = async () => {
-      try {
-        const { data } = await supabase
-          .from('trips')
-          .select('image_position')
-          .eq('trip_id', tripId)
-          .single();
-        
-        // Only update if we got a valid position from database
-        if (data?.image_position) {
-          setImagePosition(data.image_position);
-          // Update localStorage with latest from database
-          localStorage.setItem(`trip_image_position_${tripId}`, data.image_position);
-        }
-      } catch (error) {
-        // We expect this error until the column is added, so no need for error message
-        // console.error('Error fetching trip details:', error);
-      }
-    };
-
-    fetchTripDetails();
+    // Note: Database fetch for image position will be added in future version
   }, [tripId]);
 
   // Compute formatted date range using the last valid dates

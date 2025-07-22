@@ -343,6 +343,12 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced ActivityForm with intelligent date selection dropdown showing all valid trip dates (arrival to departure)
   - Implemented smart date preselection: current activity date when editing, specific date when adding from day cards
   - Added trip date range validation ensuring activities can only be scheduled within actual trip duration
+- July 22, 2025. Fixed cover image update issue on trip details page:
+  - Added React Query cache invalidation in HeroSection component after successful cover image updates
+  - Fixed issue where changing a cover image from default wouldn't reflect on trip page despite updating correctly on trips list
+  - Updated handleImageChange and handleTitleSubmit functions to invalidate ['trip', tripId] query key
+  - Removed TypeScript errors related to non-existent image_position database field
+  - Cover image updates now immediately refresh trip data ensuring visual consistency across all pages
   - Updated all activity dialog components (AddActivityDialog, EditActivityDialog, ActivityDialogs) to pass trip dates
   - Fixed Currency type handling and resolved all TypeScript interface compatibility issues
   - Enhanced sidebar to pass real trip arrival/departure dates to activity dialogs for proper validation
