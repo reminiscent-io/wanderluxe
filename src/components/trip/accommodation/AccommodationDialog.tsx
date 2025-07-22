@@ -130,7 +130,8 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onPointerDownOutside={(e) => e.preventDefault()}
-        className="sm:max-w-[600px] max-h-[90vh] overflow-visible relative"
+        className="sm:max-w-[600px] max-h-[90vh] overflow-visible"
+        style={{ marginTop: '5vh' }}
         data-radix-dialog-content
       >
         <div className="max-h-[80vh] overflow-y-auto overflow-x-visible pr-2 -mr-2">
