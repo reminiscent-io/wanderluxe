@@ -6,6 +6,7 @@ import FormActions from "./FormActions";
 import { supabase } from '@/integrations/supabase/client';
 import { getDaysBetweenDates } from '../../../utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
+import { toast } from 'sonner';
 
 interface CreateTripFormProps {
   destination: string;
@@ -35,10 +36,31 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   onCancel
 }) => {
   const [imagePosition, setImagePosition] = useState<string>("center 50%");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    
+    // Prevent double submission
+    if (isLoading || isSubmitting) return;
+    
+    // Validate required fields
+    if (!destination.trim()) {
+      toast.error('Please enter a destination');
+      return;
+    }
+    
+    if (!startDate || !endDate) {
+      toast.error('Please select travel dates');
+      return;
+    }
+    
+    if (new Date(startDate) >= new Date(endDate)) {
+      toast.error('End date must be after start date');
+      return;
+    }
+    
+    setIsSubmitting(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -77,16 +99,29 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           onSubmit(trip.trip_id);
         } catch (daysError) {
           console.error('Error creating trip days:', daysError);
+          toast.error('Failed to create trip schedule. Please try again.');
           throw daysError;
         }
       }
     } catch (error) {
       console.error('Error creating trip:', error);
+      toast.error('Failed to create trip. Please check your details and try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form 
+      onSubmit={handleSubmit} 
+      className="space-y-6"
+      onKeyDown={(e) => {
+        // Prevent Enter key submission when already submitting
+        if (e.key === 'Enter' && (isLoading || isSubmitting)) {
+          e.preventDefault();
+        }
+      }}
+    >
       <DestinationInput
         destination={destination}
         setDestination={setDestination}
@@ -107,8 +142,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       />
       
       <FormActions
-        isLoading={isLoading}
-        onSubmit={handleSubmit}
+        isLoading={isLoading || isSubmitting}
         onCancel={onCancel}
       />
     </form>

@@ -16,6 +16,7 @@ const FormActions: React.FC<FormActionsProps> = ({
         type="button"
         variant="ghost"
         onClick={onCancel}
+        disabled={isLoading}
         className="px-3"
       >
         Cancel
@@ -23,7 +24,11 @@ const FormActions: React.FC<FormActionsProps> = ({
       <Button 
         type="submit" 
         disabled={isLoading}
-        className="px-8 border border-primary bg-earth-400 hover:bg-earth-500 text-white"
+        className={`px-8 border border-primary ${
+          isLoading 
+            ? 'bg-earth-300 cursor-not-allowed' 
+            : 'bg-earth-400 hover:bg-earth-500'
+        } text-white transition-colors`}
       >
         {isLoading ? "Creating..." : "Create Trip"}
       </Button>
