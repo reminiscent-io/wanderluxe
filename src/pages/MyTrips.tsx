@@ -142,21 +142,47 @@ const MyTrips = () => {
     }
   };
 
-  // Memoize filtered trips to prevent unnecessary re-renders
-  const filteredMyTrips = useMemo(() => {
-    if (!myTrips || !Array.isArray(myTrips)) return [];
-    return myTrips.filter(trip => 
+  // Utility function to check if trip is upcoming or past
+  const isUpcomingTrip = (trip: Trip) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tripDate = new Date(trip.departure_date || trip.arrival_date || '');
+    return tripDate >= today;
+  };
+
+  // Memoize filtered and categorized trips to prevent unnecessary re-renders
+  const { upcomingMyTrips, pastMyTrips } = useMemo(() => {
+    if (!myTrips || !Array.isArray(myTrips)) return { upcomingMyTrips: [], pastMyTrips: [] };
+    
+    const filtered = myTrips.filter(trip => 
       trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const upcoming = filtered.filter(isUpcomingTrip);
+    const past = filtered.filter(trip => !isUpcomingTrip(trip));
+
+    return {
+      upcomingMyTrips: upcoming,
+      pastMyTrips: past
+    };
   }, [myTrips, searchQuery]);
 
-  const filteredSharedTrips = useMemo(() => {
-    if (!sharedTrips || !Array.isArray(sharedTrips)) return [];
-    return sharedTrips
+  const { upcomingSharedTrips, pastSharedTrips } = useMemo(() => {
+    if (!sharedTrips || !Array.isArray(sharedTrips)) return { upcomingSharedTrips: [], pastSharedTrips: [] };
+    
+    const filtered = sharedTrips
       .filter(trip => trip && trip.destination) // Filter out any undefined trips
       .filter(trip =>
         trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
       );
+
+    const upcoming = filtered.filter(isUpcomingTrip);
+    const past = filtered.filter(trip => !isUpcomingTrip(trip));
+
+    return {
+      upcomingSharedTrips: upcoming,
+      pastSharedTrips: past
+    };
   }, [sharedTrips, searchQuery]);
 
   if (!session) {
@@ -205,29 +231,70 @@ const MyTrips = () => {
                 ))}
               </div>
             ) : (
-              <>
-                {filteredMyTrips && filteredMyTrips.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredMyTrips.map((trip) => (
-                      <TripCard
-                        key={trip.trip_id}
-                        trip={{
-                          ...trip,
-                          start_date: trip.arrival_date,
-                          end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                        }}
-                        onHide={() => handleHideTrip(trip.trip_id)}
-                      />
-                    ))}
-                  </div>
-                ) : (
+              <div className="space-y-12">
+                {/* Upcoming Trips Section */}
+                <div>
+                  <h2 className="text-2xl font-semibold text-earth-800 mb-6">
+                    Upcoming Trips ({upcomingMyTrips.length})
+                  </h2>
+                  {upcomingMyTrips.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {upcomingMyTrips.map((trip) => (
+                        <TripCard
+                          key={trip.trip_id}
+                          trip={{
+                            ...trip,
+                            start_date: trip.arrival_date,
+                            end_date: trip.departure_date,
+                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          }}
+                          onHide={() => handleHideTrip(trip.trip_id)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-earth-500 mb-4">No upcoming trips planned</p>
+                      <Button onClick={() => navigate('/create-trip')}>Plan a New Trip</Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Past Trips Section */}
+                <div>
+                  <h2 className="text-2xl font-semibold text-earth-800 mb-6">
+                    Past Trips ({pastMyTrips.length})
+                  </h2>
+                  {pastMyTrips.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {pastMyTrips.map((trip) => (
+                        <TripCard
+                          key={trip.trip_id}
+                          trip={{
+                            ...trip,
+                            start_date: trip.arrival_date,
+                            end_date: trip.departure_date,
+                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          }}
+                          onHide={() => handleHideTrip(trip.trip_id)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-earth-500">No past trips yet</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Show message if no trips at all */}
+                {upcomingMyTrips.length === 0 && pastMyTrips.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-earth-500 mb-4">You haven't created any trips yet</p>
                     <Button onClick={() => navigate('/create-trip')}>Create Your First Trip</Button>
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             <div className="flex justify-center mt-12">
@@ -252,28 +319,68 @@ const MyTrips = () => {
                 ))}
               </div>
             ) : (
-              <>
-                {filteredSharedTrips && filteredSharedTrips.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredSharedTrips.map((trip) => (
-                      <TripCard
-                        key={trip.trip_id}
-                        trip={{
-                          ...trip,
-                          start_date: trip.arrival_date,
-                          end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                        }}
-                        // The trip already has isShared & sharedById properties from our earlier transformation
-                      />
-                    ))}
-                  </div>
-                ) : (
+              <div className="space-y-12">
+                {/* Upcoming Shared Trips Section */}
+                <div>
+                  <h2 className="text-2xl font-semibold text-earth-800 mb-6">
+                    Upcoming Shared Trips ({upcomingSharedTrips.length})
+                  </h2>
+                  {upcomingSharedTrips.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {upcomingSharedTrips.map((trip) => (
+                        <TripCard
+                          key={trip.trip_id}
+                          trip={{
+                            ...trip,
+                            start_date: trip.arrival_date,
+                            end_date: trip.departure_date,
+                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          }}
+                          // The trip already has isShared & sharedById properties from our earlier transformation
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-earth-500">No upcoming shared trips</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Past Shared Trips Section */}
+                <div>
+                  <h2 className="text-2xl font-semibold text-earth-800 mb-6">
+                    Past Shared Trips ({pastSharedTrips.length})
+                  </h2>
+                  {pastSharedTrips.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {pastSharedTrips.map((trip) => (
+                        <TripCard
+                          key={trip.trip_id}
+                          trip={{
+                            ...trip,
+                            start_date: trip.arrival_date,
+                            end_date: trip.departure_date,
+                            cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          }}
+                          // The trip already has isShared & sharedById properties from our earlier transformation
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-earth-500">No past shared trips yet</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Show message if no shared trips at all */}
+                {upcomingSharedTrips.length === 0 && pastSharedTrips.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-earth-500">No trips have been shared with you yet</p>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </TabsContent>
         </Tabs>
