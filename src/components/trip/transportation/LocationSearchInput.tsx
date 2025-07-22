@@ -34,8 +34,8 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
 
     setIsLoading(true);
     try {
-      // Use airport type only for flights, unrestricted search for everything else
-      const searchType = transportationType === 'flight' ? 'airport' : 'establishment';
+      // Use airport type only for flights, geocode for everything else (supports all address types)
+      const searchType = transportationType === 'flight' ? 'airport' : 'geocode';
       const results = await searchPlaces(query, searchType);
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
