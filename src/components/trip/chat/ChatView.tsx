@@ -185,11 +185,11 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
       const arrival = trip?.arrival_date ?? 'Unknown Date';
       const departure = trip?.departure_date ?? 'Unknown Date';
       const userMessage = text.trim();
-      
+
       /* ---------- 2.5 / Add user message immediately (optimistic update) ---------- */
       const tempUserMessageId = crypto.randomUUID();
       const nowIso = new Date().toISOString();
-      
+
       qc.setQueryData<ChatLogRow[]>(chatLogsKey(tripId), prev => [
         ...(prev ?? []),
         {
@@ -202,9 +202,9 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
           created_at: nowIso
         }
       ]);
-      
+
       // User message will be persisted by the edge function
-      
+
       const prompt = `TRAVEL CONTEXT: You are assisting with a trip to ${destination} from ${arrival} to ${departure}.
 \n\nUser question: ${userMessage}`;
       const body = JSON.stringify({ message: prompt, tripId, attachments });
@@ -215,13 +215,13 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         console.error('Session error:', sessionError);
         throw new Error('Authentication error - please refresh and try again.');
       }
-      
+
       const token = session.session?.access_token;
       if (!token) {
         console.error('No access token found in session:', session);
         throw new Error('Authentication expired – please sign in again.');
       }
-      
+
       console.log('Using auth token for edge function call');
 
       /* ---------- 4 / Call Edge Function ---------- */
@@ -420,7 +420,7 @@ const Bubble = ({
                 const match = /language-(\w+)/.exec(className || '');
                 const lang = match ? match[1] : '';
                 const isInline = !match;
-                
+
                 if (isInline) {
                   return (
                     <code className="bg-gray-200 px-1 rounded text-[0.88rem]" {...props}>
