@@ -402,6 +402,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Added multiple collision boundaries including dialog content and document root
   - Calendar now properly positions itself when space is limited at top or bottom of dialog
   - Prevented auto-focus issues that could cause positioning problems on mobile devices
+- July 22, 2025. Fixed accommodation dialog scrolling and calendar positioning issues:
+  - Enhanced accommodation dialog with proper overflow handling to prevent calendar cutoff
+  - Restructured dialog content with scrollable inner container and overflow-visible outer container
+  - Calendar popover now portals to document body with z-index 1000 to appear above dialog overlays
+  - Improved DateTimeRangeField positioning to use document boundary instead of dialog constraints
+  - Fixed accommodation form padding and structure for better scroll behavior within dialogs
+  - Calendar positioning now works correctly in both accommodation dialogs and create trip forms
   - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
   - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
 - June 27, 2025. Fixed activity dialog day_id and date relationship handling:

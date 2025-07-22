@@ -130,23 +130,26 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onPointerDownOutside={(e) => e.preventDefault()}
-        className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-[600px] max-h-[90vh] overflow-visible relative"
+        data-radix-dialog-content
       >
-        <DialogHeader>
-          <DialogTitle>
-            {initialData ? 'Edit Accommodation' : 'Add Accommodation'}
-          </DialogTitle>
-        </DialogHeader>
-        <AccommodationForm
-          initialData={initialData}
-          onSubmit={handleSubmit}
-          onCancel={() => onOpenChange(false)}
-          tripArrivalDate={tripDates.arrival_date}
-          tripDepartureDate={tripDates.departure_date}
-          checkin_time={initialData?.checkin_time || '14:00'}
-          checkout_time={initialData?.checkout_time || '11:00'}
-          onDelete={handleDelete}
-        />
+        <div className="max-h-[80vh] overflow-y-auto overflow-x-visible pr-2 -mr-2">
+          <DialogHeader>
+            <DialogTitle>
+              {initialData ? 'Edit Accommodation' : 'Add Accommodation'}
+            </DialogTitle>
+          </DialogHeader>
+          <AccommodationForm
+            initialData={initialData}
+            onSubmit={handleSubmit}
+            onCancel={() => onOpenChange(false)}
+            tripArrivalDate={tripDates.arrival_date}
+            tripDepartureDate={tripDates.departure_date}
+            checkin_time={initialData?.checkin_time || '14:00'}
+            checkout_time={initialData?.checkout_time || '11:00'}
+            onDelete={handleDelete}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

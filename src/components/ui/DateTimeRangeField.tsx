@@ -105,16 +105,16 @@ export default function DateTimeRangeField({
                 </Button>
               </PopoverTrigger>
 
-              <PopoverPrimitive.Portal>
+              <PopoverPrimitive.Portal container={typeof document !== 'undefined' ? document.body : undefined}>
                 <PopoverPrimitive.Content
                   side="bottom"
-                  align="center"
+                  align="start"
                   sideOffset={8}
                   avoidCollisions={true}
-                  collisionPadding={20}
+                  collisionPadding={16}
                   sticky="always"
-                  collisionBoundary={typeof document !== 'undefined' ? [document.querySelector('[data-radix-dialog-content]'), document.documentElement].filter(Boolean) : undefined}
-                  className="z-[800] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl data-[side=top]:animate-slide-down data-[side=bottom]:animate-slide-up"
+                  collisionBoundary={typeof document !== 'undefined' ? document.documentElement : undefined}
+                  className="z-[1000] w-[340px] max-w-[calc(100vw-2rem)] rounded-md border bg-white p-0 shadow-xl data-[side=top]:animate-slide-down data-[side=bottom]:animate-slide-up"
                   onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                   <Calendar
