@@ -410,12 +410,13 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Fixed accommodation form padding and structure for better scroll behavior within dialogs
   - Calendar positioning now works correctly in both accommodation dialogs and create trip forms
 - July 22, 2025. Implemented centered calendar positioning for all date picker forms:
-  - Changed calendar positioning from relative-to-input to fixed center-screen positioning
+  - Changed calendar positioning from relative-to-input to fixed center-screen positioning  
   - Calendar now appears in the center of dialogs with modal overlay for better focus
   - Eliminated all collision detection and viewport constraint issues
   - Added smooth fade-in and zoom animation for better visual feedback
   - Calendar positioning is now consistent across all forms regardless of dialog size or scroll position
   - Fixed positioning works for accommodation dialogs, create trip forms, and all other date inputs
+  - Enhanced centering with flexbox layout to ensure proper vertical and horizontal alignment in viewport
 - July 22, 2025. Fixed accommodation form TypeScript errors and data structure issues:
   - Resolved cost property type mismatch between database (number) and form interface (string)
   - Fixed schema validation to match AccommodationFormData interface requirements
