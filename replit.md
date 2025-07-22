@@ -394,6 +394,14 @@ The application uses a normalized PostgreSQL schema with the following core enti
   - Enhanced button states with visual feedback showing disabled state during submission
   - Added finally block to ensure isSubmitting state is always reset regardless of success/failure
   - Form now provides complete protection against accidental duplicate trip creation
+- July 22, 2025. Fixed calendar positioning issues in create trip dialog:
+  - Enhanced DateTimeRangeField popover positioning with improved collision detection
+  - Added sticky positioning and reduced collision padding for better viewport utilization
+  - Improved z-index stacking to ensure calendar appears above all other elements
+  - Enhanced create trip page layout with overflow-visible to prevent calendar clipping
+  - Added multiple collision boundaries including dialog content and document root
+  - Calendar now properly positions itself when space is limited at top or bottom of dialog
+  - Prevented auto-focus issues that could cause positioning problems on mobile devices
   - Fixed reservation dialog time input formatting issue by replacing raw HTML input with shadcn Input component
   - Fixed reservation dialog layout to fit properly within preferred max-w-lg width using text wrapping and flex constraints
 - June 27, 2025. Fixed activity dialog day_id and date relationship handling:
