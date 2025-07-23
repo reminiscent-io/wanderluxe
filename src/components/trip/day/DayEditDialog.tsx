@@ -137,12 +137,12 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="max-w-[95vw] sm:max-w-[425px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Day Details</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 flex-1 overflow-y-auto">
           {/* Title Row */}
           <div className="space-y-1">
             <Label htmlFor="day-title" className="text-sm font-medium text-gray-700">
@@ -208,7 +208,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
           <Button
             type="button"
             onClick={() => onOpenChange(false)}
