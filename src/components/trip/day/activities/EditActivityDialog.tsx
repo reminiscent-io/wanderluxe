@@ -44,7 +44,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
 
   return (
     <Dialog open={!!activityId} onOpenChange={(open) => { if (!open) onOpenChange(false) }}>
-      <DialogContent>
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[500px] mx-auto">
         <DialogHeader>
           <DialogTitle>Edit Activity</DialogTitle>
         </DialogHeader>
