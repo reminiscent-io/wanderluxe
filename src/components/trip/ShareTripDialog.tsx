@@ -214,7 +214,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           Share
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
           <DialogDescription>

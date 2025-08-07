@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import CategoryContainer from './CategoryContainer';
 import AddItemDialog from './AddItemDialog';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = React.useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Configure DnD sensors
   const sensors = useSensors(
@@ -50,6 +52,15 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
   );
 
   useEffect(() => {
+    // Track Vision Board page view
+    if (user && tripId && window.gtag) {
+      window.gtag('event', 'vision_board_page_view', {
+        event_category: 'engagement',
+        event_label: tripId,
+        user_id: user.id
+      });
+    }
+
     const channel = supabase
       .channel('vision-board-changes')
       .on(
@@ -70,7 +81,7 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [tripId, queryClient]);
+  }, [tripId, queryClient, user]);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['vision-board', tripId],
@@ -123,7 +134,17 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
     <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Vision Board</h2>
-        <Button onClick={() => setIsAddingItem(true)}>
+        <Button onClick={() => {
+          setIsAddingItem(true);
+          // Track add item button click
+          if (user && window.gtag) {
+            window.gtag('event', 'vision_board_add_item_click', {
+              event_category: 'engagement',
+              event_label: tripId,
+              user_id: user.id
+            });
+          }
+        }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Item
         </Button>

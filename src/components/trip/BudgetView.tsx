@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ExpenseTable from './budget/ExpenseTable';
 import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
@@ -10,6 +10,7 @@ import ExpenseActions from './budget/components/ExpenseActions';
 import { convertCurrency } from './budget/utils/currencyConverter';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
 import { useTripQuery } from '@/hooks/useTripQuery';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddExpenseData {
   description: string;
@@ -27,8 +28,32 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { data: expenses } = useExpenses(tripId);
   const { addExpense, updateExpense } = useBudgetMutations(tripId);
   const { trip } = useTripQuery(tripId);
+  const { user } = useAuth();
   // Use the hook that provides expenses and exchange rates
   const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
+
+  useEffect(() => {
+    if (tripId) {
+      trackBudgetPageView(tripId);
+    }
+  }, [tripId]);
+
+  const trackBudgetPageView = async (tripId: string) => {
+    try {
+      if (user) {
+        // Track in Google Analytics
+        window.gtag('event', 'budget_page_view', {
+          event_category: 'Budget',
+          event_label: tripId,
+          user_id: user.id
+        });
+
+        console.log('Budget page viewed by user:', user.id, 'for trip:', tripId);
+      }
+    } catch (error) {
+      console.error('Error tracking budget page view:', error);
+    }
+  };
 
   // Transform the exchangeRates array into an object:
   // { currency_from: { currency_to: rate, ... }, ... }
@@ -62,14 +87,31 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   }, [expenses?.items, selectedCurrency, ratesObject]);
 
   const handleAddExpense = async (data: AddExpenseData) => {
-    await addExpense.mutateAsync({
-      trip_id: tripId,
-      description: data.description,
-      cost: data.cost,
-      currency: data.currency,
-      date: data.date
-    });
-    setIsAddingExpense(false);
+    try {
+      await addExpense.mutateAsync({
+        trip_id: tripId,
+        description: data.description,
+        cost: data.cost,
+        currency: data.currency,
+        date: data.date
+      });
+
+      // Track expense addition in Google Analytics
+      if (user) {
+        window.gtag('event', 'expense_added', {
+          event_category: 'Budget',
+          event_label: tripId,
+          user_id: user.id,
+          value: data.cost
+        });
+
+        console.log('Expense added by user:', user.id, 'for trip:', tripId, 'amount:', data.cost);
+      }
+
+      setIsAddingExpense(false);
+    } catch (error) {
+      console.error('Error adding expense:', error);
+    }
   };
 
   // Remove the paid status update function since we've deprecated the is_paid feature

@@ -82,6 +82,8 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           accommodations={accommodations}
           onAdd={onAccommodationAdd}
           onEdit={onAccommodationEdit}
+          isMobile={isMobile}
+          onClose={onClose}
         />
       );
       break;
@@ -92,6 +94,8 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           transportation={transportation}
           onAdd={onTransportationAdd}
           onEdit={onTransportationEdit}
+          isMobile={isMobile}
+          onClose={onClose}
         />
       );
       break;
@@ -102,6 +106,8 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           activities={activities}
           onAdd={onActivityAdd}
           onEdit={onActivityEdit}
+          isMobile={isMobile}
+          onClose={onClose}
         />
       );
       break;
@@ -112,6 +118,8 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           reservations={reservations}
           onAdd={onReservationAdd}
           onEdit={onReservationEdit}
+          isMobile={isMobile}
+          onClose={onClose}
         />
       );
       break;
@@ -121,6 +129,8 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           {...headerProps}
           trip={trip}
           onEdit={onEditDates}
+          isMobile={isMobile}
+          onClose={onClose}
         />
       );
       break;
@@ -150,10 +160,11 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="left"
-        className="p-0 w-full"
-        overlayClassName="md:hidden bg-black/80"
+        className="p-0 w-full flex flex-col h-full"
       >
-        {panel}
+        <div className="flex-1 overflow-y-auto">
+          {panel}
+        </div>
       </SheetContent>
     </Sheet>
   );

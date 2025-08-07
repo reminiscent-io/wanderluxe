@@ -15,6 +15,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CurrencySelector from './CurrencySelector';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 
@@ -49,6 +50,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   defaultCurrency,
   defaultDate
 }) => {
+  const { user } = useAuth();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,6 +60,17 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       currency: defaultCurrency
     },
   });
+
+  // Track when expense dialog is opened
+  useEffect(() => {
+    if (open && user) {
+      window.gtag('event', 'expense_dialog_opened', {
+        event_category: 'Budget',
+        user_id: user.id
+      });
+      console.log('Add expense dialog opened by user:', user.id);
+    }
+  }, [open, user]);
 
   // Reset form with updated default date when dialog opens
   useEffect(() => {

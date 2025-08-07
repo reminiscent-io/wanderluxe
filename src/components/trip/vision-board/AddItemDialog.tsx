@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import VisionBoardItemForm from './VisionBoardItemForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddItemDialogProps {
   isOpen: boolean;
@@ -21,7 +21,8 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
   onClose
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingMetadata] = useState(false);
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
+  const { user } = useAuth();
 
   const handleSubmit = async (formData: any) => {
     setIsSubmitting(true);
@@ -45,6 +46,17 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
         });
 
       if (error) throw error;
+
+      // Track successful item addition
+      if (user && window.gtag) {
+        window.gtag('event', 'vision_board_item_added', {
+          event_category: 'engagement',
+          event_label: tripId,
+          category: formData.category,
+          user_id: user.id
+        });
+      }
+
       toast.success("Item added successfully");
       onClose();
     } catch (error) {
