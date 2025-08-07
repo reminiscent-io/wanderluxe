@@ -198,7 +198,7 @@ export default function AccommodationForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-4 p-6 relative"
+        className="space-y-4 p-4 sm:p-6 relative max-w-full overflow-x-hidden"
       >
         {/* Hotel Name */}
         <FormField
@@ -265,7 +265,7 @@ export default function AccommodationForm({
         />
 
         {/* Cost & Currency */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="cost"
@@ -303,33 +303,34 @@ export default function AccommodationForm({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-between pt-4">
+        <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
           {initialData && onDelete && (
             <Button
               type="button"
               variant="ghost"
               disabled={saving}
               onClick={onDelete}
-              className="text-red-500 hover:bg-red-50 hover:text-red-700"
+              className="text-red-500 hover:bg-red-50 hover:text-red-700 w-full sm:w-auto"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
           )}
 
-          <div className="ml-auto flex gap-2">
+          <div className="flex gap-2 sm:ml-auto">
             <Button
               type="button"
               variant="ghost"
               onClick={onCancel}
               disabled={saving}
+              className="flex-1 sm:flex-initial"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={saving}
-              className="bg-earth-500 text-white hover:bg-earth-600"
+              className="bg-earth-500 text-white hover:bg-earth-600 flex-1 sm:flex-initial"
             >
               {saving ? (
                 <>
