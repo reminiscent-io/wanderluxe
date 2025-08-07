@@ -73,7 +73,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[500px] mx-auto">
         <DialogHeader>
           <DialogTitle>Edit Vision Board Item</DialogTitle>
         </DialogHeader>

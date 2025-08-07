@@ -40,7 +40,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-lg"
+        className="w-[95vw] max-w-[95vw] sm:max-w-lg mx-auto"
         onPointerDownOutside={(e) => {
           // Prevent closing when clicking on Google Places dropdown results
           const target = e.target as Element;

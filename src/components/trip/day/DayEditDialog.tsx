@@ -137,7 +137,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[425px] max-h-[90vh] flex flex-col">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[425px] max-h-[90vh] flex flex-col mx-auto">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Day Details</DialogTitle>
         </DialogHeader>

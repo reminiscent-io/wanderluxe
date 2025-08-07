@@ -69,7 +69,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[500px] mx-auto">
         <DialogHeader>
           <DialogTitle>Add Vision Board Item</DialogTitle>
         </DialogHeader>
