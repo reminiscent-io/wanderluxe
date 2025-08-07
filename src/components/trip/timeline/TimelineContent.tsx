@@ -34,7 +34,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   );
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-4 md:space-y-8">
       {sortedDays.map((day, index) => {
         const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
         
