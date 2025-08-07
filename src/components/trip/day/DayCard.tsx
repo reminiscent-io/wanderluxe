@@ -213,7 +213,7 @@ const DayCard: React.FC<DayCardProps> = ({
 
   /* ---------- rendering ---------- */
   return (
-    <div className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-lg mb-6 bg-sand-300">
+    <div className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-lg mb-3 md:mb-6 bg-sand-300">
       {/* ---------- Day edit dialog ---------- */}
       <DayEditDialog
         open={isEditing}
@@ -239,12 +239,12 @@ const DayCard: React.FC<DayCardProps> = ({
       {/* ---------- Collapsible content ---------- */}
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleContent>
-          <div className="p-4 bg-sand-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-2 md:p-4 bg-sand-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
               {/* ========== LEFT COLUMN ========== */}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 md:gap-4">
                 {/* HOTEL STAY */}
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-gray-100 rounded-lg p-2 md:p-3">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">Hotel Stay</h3>
                     <Button
@@ -302,7 +302,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
 
                 {/* TRANSPORTATION */}
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-gray-100 rounded-lg p-2 md:p-3">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">
                       Flights and Transportation
@@ -370,9 +370,9 @@ const DayCard: React.FC<DayCardProps> = ({
               </div>
 
               {/* ========== RIGHT COLUMN ========== */}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 md:gap-4">
                 {/* ACTIVITIES */}
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-gray-100 rounded-lg p-2 md:p-3">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-base font-semibold">Activities</h3>
                     <Button
@@ -416,7 +416,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 </div>
 
                 {/* DINING */}
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-gray-100 rounded-lg p-2 md:p-3">
                   <DiningList
                     reservations={reservations || []}
                     formatTime={formatTime12}
