@@ -176,6 +176,10 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
             <p className="text-sm text-gray-700">Access to room upgrades, hotel credits, complimentary breakfast, and extended check-in/out times.</p>
           </div>
           <div className="space-y-2">
+            <h4 className="text-sm font-medium text-earth-600">Keep Your Rewards</h4>
+            <p className="text-sm text-gray-700">You still earn all your credit card points and hotel loyalty points when booking through Fora.</p>
+          </div>
+          <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Expert Knowledge</h4>
             <p className="text-sm text-gray-700">Insider tips and recommendations from someone who's been there and knows what works.</p>
           </div>
@@ -184,9 +188,20 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
             <p className="text-sm text-gray-700">Custom itineraries tailored to your preferences, budget, and travel style.</p>
           </div>
           <div className="space-y-2">
+            <h4 className="text-sm font-medium text-earth-600">Hotels & Accommodations</h4>
+            <p className="text-sm text-gray-700">Full service booking for hotels, resorts, and vacation rentals like Vrbo with exclusive advisor rates.</p>
+          </div>
+          <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Support When You Need It</h4>
             <p className="text-sm text-gray-700">Professional assistance before, during, and after your trip for peace of mind.</p>
           </div>
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-sand-100">
+          <p className="text-xs text-gray-600">
+            <strong>Current Services:</strong> Hotels, resorts, vacation rentals, ground transportation, and travel experiences. 
+            Flight booking services are currently limited but may be available for select destinations.
+          </p>
         </div>
       </Card>
     </div>
