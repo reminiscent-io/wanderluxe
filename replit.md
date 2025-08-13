@@ -6,6 +6,14 @@ WanderLuxe is a comprehensive travel planning web application built to enable us
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+**January 13, 2025** - Integrated authentic Fora Travel advisor profile
+- Updated BookingView component to replace placeholder text with Kevin Lowe's professional Fora Travel advisor profile
+- Added authentic profile data including photo, expertise areas, travel style, and contact information
+- Implemented proper Fora Travel branding and compliance with advisor title requirements
+- Added direct link to Fora Travel profile page for professional booking assistance
+- Enhanced UI with value proposition section explaining benefits of booking with a Fora Travel advisor
+
 ## System Architecture
 
 ### Frontend
