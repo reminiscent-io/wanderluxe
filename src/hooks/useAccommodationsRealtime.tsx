@@ -14,6 +14,7 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
 
   // Memoize the invalidation callback to prevent unnecessary re-subscriptions
   const handleAccommodationChange = useCallback((payload: any) => {
+    console.log(`Accommodation real-time change detected for trip ${tripId}:`, payload);
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
     });
