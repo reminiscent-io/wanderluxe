@@ -27,7 +27,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Activity item clicked:", activity);
+
         onEditClick(activity);
       }}
       className="bg-white p-3 rounded-md border border-gray-100 shadow-sm hover:bg-gray-50 cursor-pointer transition-colors w-full text-left"
