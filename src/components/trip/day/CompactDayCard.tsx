@@ -338,42 +338,42 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                 </div>
                 
                 {/* Quick Add Buttons */}
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t">
+                <div className="flex gap-1 pt-2 border-t">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onActivityAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Activity
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Activity</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onHotelAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Hotel
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Hotel</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onTransportationAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Transport
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Travel</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onReservationAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Dining
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Dining</span>
                   </Button>
                 </div>
               </div>
@@ -381,42 +381,42 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               <div className="text-center py-6">
                 <Calendar className="h-8 w-8 text-gray-300 mx-auto mb-3" />
                 <p className="text-sm text-gray-500 mb-3">No plans for this day yet</p>
-                <div className="flex flex-wrap gap-1.5 justify-center">
+                <div className="flex gap-1">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onActivityAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Activity
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Activity</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onHotelAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Hotel
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Hotel</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onTransportationAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Transport
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Travel</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onReservationAdd}
-                    className="text-xs px-2 py-1 h-7"
+                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Dining
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <span className="truncate">Dining</span>
                   </Button>
                 </div>
               </div>
