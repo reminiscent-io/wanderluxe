@@ -96,7 +96,7 @@ export default function DateTimeRangeField({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-sand-800 border-sand-700 text-sand-900",
+                    "w-full max-w-full justify-start text-left font-normal bg-sand-800 border-sand-700 text-sand-900 truncate",
                     !value.from && "text-sand-500"
                   )}
                 >

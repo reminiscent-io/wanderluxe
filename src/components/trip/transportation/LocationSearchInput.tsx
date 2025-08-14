@@ -128,7 +128,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   }, [autoFocus]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full max-w-full">
       <div className="relative">
         <Input
           ref={inputRef}
@@ -139,7 +139,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
           onBlur={handleBlur}
           onFocus={() => value.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
           placeholder={placeholder}
-          className="bg-white pr-8"
+          className="bg-white pr-8 w-full max-w-full"
           autoComplete="off"
         />
         {isLoading && (
