@@ -1,6 +1,5 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import RestaurantReservationForm from './RestaurantReservationForm';
 
 interface RestaurantReservationDialogProps {
@@ -40,36 +39,25 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="w-[95vw] max-w-[95vw] sm:max-w-lg mx-auto"
-        onPointerDownOutside={(e) => {
-          // Prevent closing when clicking on Google Places dropdown results
-          const target = e.target as Element;
-          if (target.closest('.pac-container') || target.closest('[data-radix-popper-content-wrapper]')) {
-            e.preventDefault();
-          }
-        }}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto"
       >
-        <div aria-describedby="restaurant-reservation-description" className="flex flex-col max-h-[90vh]">
+        <div className="flex flex-col max-h-[90vh]">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>Enter the details for your restaurant reservation.</DialogDescription>
           </DialogHeader>
-          <p id="restaurant-reservation-description" className="sr-only">
-            Please fill out the restaurant reservation form.
-          </p>
-          <ScrollArea className="flex-1 max-h-[60vh]">
-            <div className="px-1 pb-2">
-              <RestaurantReservationForm
-                onSubmit={handleFormSubmit}
-                isSubmitting={isSubmitting}
-                defaultValues={editingReservation}
-                onDelete={onDelete}
-                tripId={tripId}
-                tripArrivalDate={tripArrivalDate}
-                tripDepartureDate={tripDepartureDate}
-              />
-            </div>
-          </ScrollArea>
+          <div className="flex-1 overflow-y-auto scrollbar-none">
+            <RestaurantReservationForm
+              onSubmit={handleFormSubmit}
+              isSubmitting={isSubmitting}
+              defaultValues={editingReservation}
+              onDelete={onDelete}
+              tripId={tripId}
+              tripArrivalDate={tripArrivalDate}
+              tripDepartureDate={tripDepartureDate}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

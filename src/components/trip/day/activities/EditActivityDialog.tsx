@@ -44,20 +44,27 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
 
   return (
     <Dialog open={!!activityId} onOpenChange={(open) => { if (!open) onOpenChange(false) }}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[500px] mx-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Activity</DialogTitle>
-        </DialogHeader>
-        <ActivityForm
-          activity={activity}
-          onActivityChange={onActivityChange}
-          onSubmit={onSubmit}
-          onCancel={() => onOpenChange(false)}
-          onDelete={handleDelete}
-          submitLabel="Save Changes"
-          eventId={eventId}
-          tripDates={tripDates}
-        />
+      <DialogContent 
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto"
+      >
+        <div className="flex flex-col max-h-[90vh]">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Edit Activity</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto scrollbar-none">
+            <ActivityForm
+              activity={activity}
+              onActivityChange={onActivityChange}
+              onSubmit={onSubmit}
+              onCancel={() => onOpenChange(false)}
+              onDelete={handleDelete}
+              submitLabel="Save Changes"
+              eventId={eventId}
+              tripDates={tripDates}
+            />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
