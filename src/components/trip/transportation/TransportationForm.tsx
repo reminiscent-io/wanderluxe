@@ -59,8 +59,8 @@ export default function TransportationForm({
           ? {
               from: parse(initialData.start_date, "yyyy-MM-dd", new Date()),
               to: parse(initialData.end_date, "yyyy-MM-dd", new Date()),
-              fromTime: initialData.start_time ?? "",
-              toTime: initialData.end_time ?? "",
+              fromTime: initialData.start_time || "",
+              toTime: initialData.end_time || "",
             }
           : undefined,
       provider: initialData?.provider ?? "",
@@ -71,6 +71,21 @@ export default function TransportationForm({
     },
   });
 
+  // Debug initial data and form values
+  console.log('TransportationForm: Initial data and form setup', {
+    initialData: initialData ? {
+      id: initialData.id,
+      start_time: initialData.start_time,
+      end_time: initialData.end_time,
+      start_date: initialData.start_date,
+      end_date: initialData.end_date
+    } : null,
+    defaultTravelRange: initialData?.start_date && initialData?.end_date ? {
+      fromTime: initialData.start_time || "",
+      toTime: initialData.end_time || "",
+    } : "undefined"
+  });
+
   /* ------------------- reset on trip-date change ------------------- */
   useEffect(() => {
     // For new forms (no initialData) OR when initialData lacks proper dates, use trip dates as fallback
@@ -79,6 +94,10 @@ export default function TransportationForm({
     
     if (shouldUseTripDates && (tripArrivalDate || tripDepartureDate)) {
       const current = form.getValues();
+      // Preserve existing times from initialData if available, otherwise use current form values
+      const preservedFromTime = initialData?.start_time || current.travel_range?.fromTime || "";
+      const preservedToTime = initialData?.end_time || current.travel_range?.toTime || "";
+      
       form.reset({
         ...current,
         travel_range:
@@ -92,8 +111,8 @@ export default function TransportationForm({
                   tripDepartureDate
                     ? parse(tripDepartureDate, "yyyy-MM-dd", new Date())
                     : current.travel_range?.to,
-                fromTime: current.travel_range?.fromTime || "",
-                toTime: current.travel_range?.toTime || "",
+                fromTime: preservedFromTime,
+                toTime: preservedToTime,
               }
             : undefined,
       });
