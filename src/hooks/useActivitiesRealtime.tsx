@@ -14,6 +14,7 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
 
   // Memoize the invalidation callback to prevent unnecessary re-subscriptions
   const handleActivityChange = useCallback((payload: any) => {
+    console.log(`Activity real-time change detected for day ${dayId}:`, payload);
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
     });
