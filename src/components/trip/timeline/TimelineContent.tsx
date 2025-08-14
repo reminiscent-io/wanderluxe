@@ -176,190 +176,191 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             onSuccess={handleDialogSuccess}
           />
           
+          {/* Add Activity Dialog - only show when adding new activity */}
           {selectedDayId && (
-            <>
-              <AddActivityDialog
-                isOpen={activityOpen}
-                onOpenChange={setActivityOpen}
-                activity={newActivity}
-                onActivityChange={setNewActivity}
-                onSubmit={async () => {
-                  // Add the activity to the database
-                  try {
-                    const { error } = await supabase
-                      .from('day_activities')
-                      .insert({
-                        day_id: selectedDayId,
-                        trip_id: sortedDays[0].trip_id,
-                        title: newActivity.title,
-                        description: newActivity.description || null,
-                        start_time: newActivity.start_time || null,
-                        end_time: newActivity.end_time || null,
-                        cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
-                        currency: newActivity.currency || null,
-                        order_index: 0,
-                        is_paid: false
-                      });
-                      
-                    if (error) throw error;
-                    
-                    toast.success('Activity added successfully');
-                    setActivityOpen(false);
-                    setNewActivity({
-                      title: '',
-                      description: '',
-                      start_time: '',
-                      end_time: '',
-                      cost: '',
-                      currency: 'USD',
+            <AddActivityDialog
+              isOpen={activityOpen}
+              onOpenChange={setActivityOpen}
+              activity={newActivity}
+              onActivityChange={setNewActivity}
+              onSubmit={async () => {
+                // Add the activity to the database
+                try {
+                  const { error } = await supabase
+                    .from('day_activities')
+                    .insert({
+                      day_id: selectedDayId,
+                      trip_id: sortedDays[0].trip_id,
+                      title: newActivity.title,
+                      description: newActivity.description || null,
+                      start_time: newActivity.start_time || null,
+                      end_time: newActivity.end_time || null,
+                      cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
+                      currency: newActivity.currency || null,
+                      order_index: 0,
+                      is_paid: false
                     });
-                    handleDialogSuccess();
-                  } catch (error) {
-                    console.error('Error adding activity:', error);
-                    toast.error('Failed to add activity');
-                  }
-                }}
-                eventId={selectedDayId}
-              />
-              
-              <EditActivityDialog
-                activityId={editingActivity?.id || null}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setEditingActivity(null);
-                    setActivityEdit({
-                      title: '',
-                      description: '',
-                      start_time: '',
-                      end_time: '',
-                      cost: '',
-                      currency: 'USD',
-                    });
-                  }
-                }}
-                activity={activityEdit}
-                onActivityChange={setActivityEdit}
-                onSubmit={async (updatedActivity) => {
-                  if (editingActivity?.id) {
-                    try {
-                      const { error } = await supabase
-                        .from('day_activities')
-                        .update({
-                          title: updatedActivity.title,
-                          description: updatedActivity.description || null,
-                          start_time: updatedActivity.start_time || null,
-                          end_time: updatedActivity.end_time || null,
-                          cost: updatedActivity.cost ? parseFloat(updatedActivity.cost) : null,
-                          currency: updatedActivity.currency || null,
-                        })
-                        .eq('id', editingActivity.id);
-                      
-                      if (error) throw error;
-                      
-                      toast.success('Activity updated successfully');
-                      setEditingActivity(null);
-                      handleDialogSuccess();
-                    } catch (error) {
-                      console.error('Error updating activity:', error);
-                      toast.error('Failed to update activity');
-                    }
-                  }
-                }}
-                onDelete={async (id) => {
-                  try {
-                    const { error } = await supabase
-                      .from('day_activities')
-                      .delete()
-                      .eq('id', id);
                     
-                    if (error) throw error;
-                    
-                    toast.success('Activity deleted successfully');
-                    setEditingActivity(null);
-                    handleDialogSuccess();
-                  } catch (error) {
-                    console.error('Error deleting activity:', error);
-                    toast.error('Failed to delete activity');
-                  }
-                }}
-                eventId={editingActivity?.day_id || ''}
-              />
-              
-              <RestaurantReservationDialog
-                isOpen={reservationOpen}
-                onOpenChange={(open) => {
-                  setReservationOpen(open);
-                  if (!open) {
-                    setEditingReservation(null);
-                    setSelectedDayId(null);
-                  }
-                }}
-                tripId={sortedDays[0].trip_id}
-                title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
-                editingReservation={editingReservation || undefined}
-                isSubmitting={false}
-                onSubmit={async (data) => {
-                  // Handle the submission with proper day_id
-                  if (!editingReservation && selectedDayId) {
-                    // Add new reservation
-                    try {
-                      const { error } = await supabase
-                        .from('reservations')
-                        .insert({
-                          ...data,
-                          day_id: selectedDayId,
-                          trip_id: sortedDays[0].trip_id
-                        });
-                      
-                      if (error) throw error;
-                      toast.success('Reservation added successfully');
-                    } catch (error) {
-                      console.error('Error adding reservation:', error);
-                      toast.error('Failed to add reservation');
-                    }
-                  } else if (editingReservation) {
-                    // Update existing reservation
-                    try {
-                      const { error } = await supabase
-                        .from('reservations')
-                        .update(data)
-                        .eq('id', editingReservation.id);
-                      
-                      if (error) throw error;
-                      toast.success('Reservation updated successfully');
-                    } catch (error) {
-                      console.error('Error updating reservation:', error);
-                      toast.error('Failed to update reservation');
-                    }
-                  }
-                  setReservationOpen(false);
-                  setEditingReservation(null);
-                  setSelectedDayId(null);
+                  if (error) throw error;
+                  
+                  toast.success('Activity added successfully');
+                  setActivityOpen(false);
+                  setNewActivity({
+                    title: '',
+                    description: '',
+                    start_time: '',
+                    end_time: '',
+                    cost: '',
+                    currency: 'USD',
+                  });
                   handleDialogSuccess();
-                }}
-                onDelete={editingReservation ? async () => {
-                  try {
-                    const { error } = await supabase
-                      .from('reservations')
-                      .delete()
-                      .eq('id', editingReservation.id);
-                    
-                    if (error) throw error;
-                    
-                    toast.success('Reservation deleted successfully');
-                    setReservationOpen(false);
-                    setEditingReservation(null);
-                    handleDialogSuccess();
-                  } catch (error) {
-                    console.error('Error deleting reservation:', error);
-                    toast.error('Failed to delete reservation');
-                  }
-                } : undefined}
-                tripArrivalDate={tripArrivalDate}
-                tripDepartureDate={tripDepartureDate}
-              />
-            </>
+                } catch (error) {
+                  console.error('Error adding activity:', error);
+                  toast.error('Failed to add activity');
+                }
+              }}
+              eventId={selectedDayId}
+            />
           )}
+          
+          {/* Edit Activity Dialog - always available when editing */}
+          <EditActivityDialog
+            activityId={editingActivity?.id || null}
+            onOpenChange={(open) => {
+              if (!open) {
+                setEditingActivity(null);
+                setActivityEdit({
+                  title: '',
+                  description: '',
+                  start_time: '',
+                  end_time: '',
+                  cost: '',
+                  currency: 'USD',
+                });
+              }
+            }}
+            activity={activityEdit}
+            onActivityChange={setActivityEdit}
+            onSubmit={async (updatedActivity) => {
+              if (editingActivity?.id) {
+                try {
+                  const { error } = await supabase
+                    .from('day_activities')
+                    .update({
+                      title: updatedActivity.title,
+                      description: updatedActivity.description || null,
+                      start_time: updatedActivity.start_time || null,
+                      end_time: updatedActivity.end_time || null,
+                      cost: updatedActivity.cost ? parseFloat(updatedActivity.cost) : null,
+                      currency: updatedActivity.currency || null,
+                    })
+                    .eq('id', editingActivity.id);
+                  
+                  if (error) throw error;
+                  
+                  toast.success('Activity updated successfully');
+                  setEditingActivity(null);
+                  handleDialogSuccess();
+                } catch (error) {
+                  console.error('Error updating activity:', error);
+                  toast.error('Failed to update activity');
+                }
+              }
+            }}
+            onDelete={async (id) => {
+              try {
+                const { error } = await supabase
+                  .from('day_activities')
+                  .delete()
+                  .eq('id', id);
+                
+                if (error) throw error;
+                
+                toast.success('Activity deleted successfully');
+                setEditingActivity(null);
+                handleDialogSuccess();
+              } catch (error) {
+                console.error('Error deleting activity:', error);
+                toast.error('Failed to delete activity');
+              }
+            }}
+            eventId={editingActivity?.day_id || ''}
+          />
+          
+          {/* Restaurant Reservation Dialog - always available */}
+          <RestaurantReservationDialog
+            isOpen={reservationOpen}
+            onOpenChange={(open) => {
+              setReservationOpen(open);
+              if (!open) {
+                setEditingReservation(null);
+                setSelectedDayId(null);
+              }
+            }}
+            tripId={sortedDays[0].trip_id}
+            title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
+            editingReservation={editingReservation || undefined}
+            isSubmitting={false}
+            onSubmit={async (data) => {
+              // Handle the submission with proper day_id
+              if (!editingReservation && selectedDayId) {
+                // Add new reservation
+                try {
+                  const { error } = await supabase
+                    .from('reservations')
+                    .insert({
+                      ...data,
+                      day_id: selectedDayId,
+                      trip_id: sortedDays[0].trip_id
+                    });
+                  
+                  if (error) throw error;
+                  toast.success('Reservation added successfully');
+                } catch (error) {
+                  console.error('Error adding reservation:', error);
+                  toast.error('Failed to add reservation');
+                }
+              } else if (editingReservation) {
+                // Update existing reservation
+                try {
+                  const { error } = await supabase
+                    .from('reservations')
+                    .update(data)
+                    .eq('id', editingReservation.id);
+                  
+                  if (error) throw error;
+                  toast.success('Reservation updated successfully');
+                } catch (error) {
+                  console.error('Error updating reservation:', error);
+                  toast.error('Failed to update reservation');
+                }
+              }
+              setReservationOpen(false);
+              setEditingReservation(null);
+              setSelectedDayId(null);
+              handleDialogSuccess();
+            }}
+            onDelete={editingReservation ? async () => {
+              try {
+                const { error } = await supabase
+                  .from('reservations')
+                  .delete()
+                  .eq('id', editingReservation.id);
+                
+                if (error) throw error;
+                
+                toast.success('Reservation deleted successfully');
+                setReservationOpen(false);
+                setEditingReservation(null);
+                handleDialogSuccess();
+              } catch (error) {
+                console.error('Error deleting reservation:', error);
+                toast.error('Failed to delete reservation');
+              }
+            } : undefined}
+            tripArrivalDate={tripArrivalDate}
+            tripDepartureDate={tripDepartureDate}
+          />
         </>
       )}
     </>
