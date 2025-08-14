@@ -80,6 +80,22 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     setSelectedDayId(null);
   };
 
+  const handleAccommodationSuccess = () => {
+    if (sortedDays.length > 0) {
+      queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+      queryClient.invalidateQueries({ queryKey: ['accommodations', sortedDays[0].trip_id] });
+    }
+    setSelectedDayId(null);
+  };
+
+  const handleTransportationSuccess = () => {
+    if (sortedDays.length > 0) {
+      queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+      queryClient.invalidateQueries({ queryKey: ['transportation', sortedDays[0].trip_id] });
+    }
+    setSelectedDayId(null);
+  };
+
   return (
     <>
       {/* Day Cards */}
@@ -162,7 +178,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               if (!open) setEditingHotel(null);
             }}
             initialData={editingHotel as any || undefined}
-            onSuccess={handleDialogSuccess}
+            onSuccess={handleAccommodationSuccess}
           />
           
           <TransportationDialog
@@ -173,7 +189,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               if (!open) setEditingTransportation(null);
             }}
             initialData={editingTransportation as any || undefined}
-            onSuccess={handleDialogSuccess}
+            onSuccess={handleTransportationSuccess}
           />
           
           {/* Add Activity Dialog - only show when adding new activity */}
@@ -343,6 +359,10 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   
                   if (error) throw error;
                   toast.success('Reservation added successfully');
+                  
+                  // Invalidate both trip and reservation queries for real-time updates
+                  queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                  queryClient.invalidateQueries({ queryKey: ['reservations', sortedDays[0].trip_id, selectedDayId] });
                 } catch (error) {
                   console.error('Error adding reservation:', error);
                   toast.error('Failed to add reservation');
@@ -357,6 +377,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   
                   if (error) throw error;
                   toast.success('Reservation updated successfully');
+                  
+                  // Invalidate both trip and reservation queries for real-time updates
+                  queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                  if (editingReservation.day_id) {
+                    queryClient.invalidateQueries({ queryKey: ['reservations', sortedDays[0].trip_id, editingReservation.day_id] });
+                  }
                 } catch (error) {
                   console.error('Error updating reservation:', error);
                   toast.error('Failed to update reservation');
@@ -365,7 +391,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               setReservationOpen(false);
               setEditingReservation(null);
               setSelectedDayId(null);
-              handleDialogSuccess();
             }}
             onDelete={editingReservation ? async () => {
               try {
@@ -379,7 +404,14 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 toast.success('Reservation deleted successfully');
                 setReservationOpen(false);
                 setEditingReservation(null);
-                handleDialogSuccess();
+                
+                // Invalidate both trip and reservation queries for real-time updates
+                queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                if (editingReservation.day_id) {
+                  queryClient.invalidateQueries({ queryKey: ['reservations', sortedDays[0].trip_id, editingReservation.day_id] });
+                }
+                
+                setSelectedDayId(null);
               } catch (error) {
                 console.error('Error deleting reservation:', error);
                 toast.error('Failed to delete reservation');

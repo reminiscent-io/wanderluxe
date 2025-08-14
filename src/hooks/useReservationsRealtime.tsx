@@ -22,8 +22,13 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
 
   // Memoize the invalidation callback to prevent unnecessary re-subscriptions
   const handleReservationChange = useCallback((payload: any) => {
+    console.log(`Reservation real-time change detected for day ${dayId}:`, payload);
     queryClient.invalidateQueries({
       queryKey: ['reservations', tripId, dayId],
+    });
+    // Also invalidate trip queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip', tripId],
     });
   }, [queryClient, tripId, dayId]);
 
