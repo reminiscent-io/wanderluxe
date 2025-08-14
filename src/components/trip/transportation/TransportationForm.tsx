@@ -55,10 +55,10 @@ export default function TransportationForm({
       departure_location: initialData?.departure_location ?? "",
       arrival_location: initialData?.arrival_location ?? "",
       travel_range:
-        initialData?.start_date && initialData?.end_date
+        initialData?.start_date
           ? {
               from: parse(initialData.start_date, "yyyy-MM-dd", new Date()),
-              to: parse(initialData.end_date, "yyyy-MM-dd", new Date()),
+              to: initialData.end_date ? parse(initialData.end_date, "yyyy-MM-dd", new Date()) : parse(initialData.start_date, "yyyy-MM-dd", new Date()),
               fromTime: initialData.start_time || "",
               toTime: initialData.end_time || "",
             }
@@ -71,20 +71,7 @@ export default function TransportationForm({
     },
   });
 
-  // Debug initial data and form values
-  console.log('TransportationForm: Initial data and form setup', {
-    initialData: initialData ? {
-      id: initialData.id,
-      start_time: initialData.start_time,
-      end_time: initialData.end_time,
-      start_date: initialData.start_date,
-      end_date: initialData.end_date
-    } : null,
-    defaultTravelRange: initialData?.start_date && initialData?.end_date ? {
-      fromTime: initialData.start_time || "",
-      toTime: initialData.end_time || "",
-    } : "undefined"
-  });
+
 
   /* ------------------- reset on trip-date change ------------------- */
   useEffect(() => {

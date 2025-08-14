@@ -20,7 +20,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
   const queryClient = useQueryClient();
 
   const handleAddActivity = async (activity: ActivityFormData): Promise<void> => {
-    console.log("Adding activity:", activity);
+
     try {
       if (!activity.title.trim()) {
         toast.error('Activity title is required');
@@ -63,7 +63,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
   };
 
   const handleEditActivity = async (activityId: string, updatedActivity: ActivityFormData): Promise<void> => {
-    console.log("Editing activity with ID:", activityId, "and new data:", updatedActivity);
+
     try {
       if (!updatedActivity.title.trim()) {
         toast.error('Activity title is required');

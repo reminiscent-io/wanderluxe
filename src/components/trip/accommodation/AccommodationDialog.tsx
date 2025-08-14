@@ -42,7 +42,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         .single();
       if (!error && data) {
         if (data.arrival_date && data.departure_date) {
-          console.log('AccommodationDialog: Setting trip dates', data);
+
           setTripDates({
             arrival_date: data.arrival_date,
             departure_date: data.departure_date,
