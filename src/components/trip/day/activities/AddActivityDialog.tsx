@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import ActivityForm from '../../ActivityForm';
 import RequiredLabel from '@/components/ui/RequiredLabel';
@@ -41,6 +42,7 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
         <div className="flex flex-col max-h-[90vh]">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Add New Activity</DialogTitle>
+            <DialogDescription>Enter the details for your new activity.</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto scrollbar-none">
             <ActivityForm

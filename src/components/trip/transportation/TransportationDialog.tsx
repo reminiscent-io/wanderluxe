@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Tables } from '@/integrations/supabase/types';
 import TransportationForm from './TransportationForm';
@@ -132,6 +133,9 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             <DialogTitle>
               {initialData ? 'Edit Transportation' : 'Add Transportation'}
             </DialogTitle>
+            <DialogDescription>
+              {initialData ? 'Update your transportation details.' : 'Enter the details for your transportation.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto scrollbar-none">
             <TransportationForm
