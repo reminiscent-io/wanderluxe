@@ -213,7 +213,16 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     cost: '',
                     currency: 'USD',
                   });
-                  handleDialogSuccess();
+                  
+                  // Invalidate both trip and activity queries for real-time updates
+                  if (sortedDays.length > 0) {
+                    queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                  }
+                  if (selectedDayId) {
+                    queryClient.invalidateQueries({ queryKey: ['activities', selectedDayId] });
+                  }
+                  
+                  setSelectedDayId(null);
                 } catch (error) {
                   console.error('Error adding activity:', error);
                   toast.error('Failed to add activity');
@@ -259,8 +268,17 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   if (error) throw error;
                   
                   toast.success('Activity updated successfully');
+                  
+                  // Invalidate both trip and activity queries for real-time updates
+                  if (sortedDays.length > 0) {
+                    queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                  }
+                  if (editingActivity?.day_id) {
+                    queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
+                  }
+                  
                   setEditingActivity(null);
-                  handleDialogSuccess();
+                  setSelectedDayId(null);
                 } catch (error) {
                   console.error('Error updating activity:', error);
                   toast.error('Failed to update activity');
@@ -278,7 +296,16 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 
                 toast.success('Activity deleted successfully');
                 setEditingActivity(null);
-                handleDialogSuccess();
+                
+                // Invalidate both trip and activity queries for real-time updates
+                if (sortedDays.length > 0) {
+                  queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                }
+                if (editingActivity?.day_id) {
+                  queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
+                }
+                
+                setSelectedDayId(null);
               } catch (error) {
                 console.error('Error deleting activity:', error);
                 toast.error('Failed to delete activity');

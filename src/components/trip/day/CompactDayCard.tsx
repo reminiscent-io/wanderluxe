@@ -20,6 +20,7 @@ import { useActivitiesRealtime } from '@/hooks/useActivitiesRealtime';
 import { useAccommodationsRealtime } from '@/hooks/useAccommodationsRealtime';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import DayActivityManager from './components/DayActivityManager';
 import { cn } from '@/lib/utils';
 
 // Helper function to format time in 12-hour format
@@ -128,6 +129,13 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     },
     enabled: !!tripId,
   });
+
+  // Activity management functions
+  const {
+    handleAddActivity,
+    handleEditActivity,
+    handleDeleteActivity,
+  } = DayActivityManager({ id, tripId, activities });
   
   const dayOfWeek = format(parseISO(date), 'EEEE');
   const formattedDate = format(parseISO(date), 'MMM d');
