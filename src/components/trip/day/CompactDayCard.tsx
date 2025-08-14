@@ -338,12 +338,12 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                 </div>
                 
                 {/* Quick Add Buttons */}
-                <div className="flex flex-wrap gap-2 pt-3 border-t">
+                <div className="flex flex-wrap gap-1.5 pt-2 border-t">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onActivityAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Activity
@@ -352,7 +352,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onHotelAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Hotel
@@ -361,7 +361,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onTransportationAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Transport
@@ -370,7 +370,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onReservationAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Dining
@@ -378,15 +378,15 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8">
+              <div className="text-center py-6">
                 <Calendar className="h-8 w-8 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 mb-4">No plans for this day yet</p>
-                <div className="flex flex-wrap gap-2 justify-center">
+                <p className="text-sm text-gray-500 mb-3">No plans for this day yet</p>
+                <div className="flex flex-wrap gap-1.5 justify-center">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onActivityAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Add Activity
@@ -395,7 +395,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onHotelAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Add Hotel
@@ -404,7 +404,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onTransportationAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Add Transport
@@ -413,7 +413,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onReservationAdd}
-                    className="text-xs"
+                    className="text-xs px-2 py-1 h-7"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Add Dining
