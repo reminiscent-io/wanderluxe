@@ -73,7 +73,11 @@ export default function TransportationForm({
 
   /* ------------------- reset on trip-date change ------------------- */
   useEffect(() => {
-    if (!initialData && (tripArrivalDate || tripDepartureDate)) {
+    // For new forms (no initialData) OR when initialData lacks proper dates, use trip dates as fallback
+    const shouldUseTripDates = !initialData || 
+      (!initialData.start_date || !initialData.end_date);
+    
+    if (shouldUseTripDates && (tripArrivalDate || tripDepartureDate)) {
       const current = form.getValues();
       form.reset({
         ...current,
@@ -88,8 +92,8 @@ export default function TransportationForm({
                   tripDepartureDate
                     ? parse(tripDepartureDate, "yyyy-MM-dd", new Date())
                     : current.travel_range?.to,
-                fromTime: current.travel_range?.fromTime,
-                toTime: current.travel_range?.toTime,
+                fromTime: current.travel_range?.fromTime || "",
+                toTime: current.travel_range?.toTime || "",
               }
             : undefined,
       });
