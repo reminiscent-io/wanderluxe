@@ -77,7 +77,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   onTransportationClick,
   onReservationClick,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const { reservations } = useReservationsRealtime(id, tripId);
   const { transportations } = useTransportationEvents(tripId);
   
