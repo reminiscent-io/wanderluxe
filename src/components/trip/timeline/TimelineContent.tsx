@@ -131,6 +131,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   cost: activity.cost ? String(activity.cost) : '',
                   currency: activity.currency || 'USD',
                 });
+                // Don't open the add dialog when editing
+                setActivityOpen(false);
               }}
               onHotelClick={(hotel) => {
                 setEditingHotel(hotel);
@@ -142,7 +144,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               }}
               onReservationClick={(reservation) => {
                 setEditingReservation(reservation);
-                setReservationOpen(true);
+                setReservationOpen(true);  // Open the dialog when clicking a reservation
               }}
             />
           );
@@ -223,7 +225,17 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               <EditActivityDialog
                 activityId={editingActivity?.id || null}
                 onOpenChange={(open) => {
-                  if (!open) setEditingActivity(null);
+                  if (!open) {
+                    setEditingActivity(null);
+                    setActivityEdit({
+                      title: '',
+                      description: '',
+                      start_time: '',
+                      end_time: '',
+                      cost: '',
+                      currency: 'USD',
+                    });
+                  }
                 }}
                 activity={activityEdit}
                 onActivityChange={setActivityEdit}
@@ -286,9 +298,43 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
                 editingReservation={editingReservation || undefined}
                 isSubmitting={false}
-                onSubmit={async () => {
+                onSubmit={async (data) => {
+                  // Handle the submission with proper day_id
+                  if (!editingReservation && selectedDayId) {
+                    // Add new reservation
+                    try {
+                      const { error } = await supabase
+                        .from('reservations')
+                        .insert({
+                          ...data,
+                          day_id: selectedDayId,
+                          trip_id: sortedDays[0].trip_id
+                        });
+                      
+                      if (error) throw error;
+                      toast.success('Reservation added successfully');
+                    } catch (error) {
+                      console.error('Error adding reservation:', error);
+                      toast.error('Failed to add reservation');
+                    }
+                  } else if (editingReservation) {
+                    // Update existing reservation
+                    try {
+                      const { error } = await supabase
+                        .from('reservations')
+                        .update(data)
+                        .eq('id', editingReservation.id);
+                      
+                      if (error) throw error;
+                      toast.success('Reservation updated successfully');
+                    } catch (error) {
+                      console.error('Error updating reservation:', error);
+                      toast.error('Failed to update reservation');
+                    }
+                  }
                   setReservationOpen(false);
                   setEditingReservation(null);
+                  setSelectedDayId(null);
                   handleDialogSuccess();
                 }}
                 onDelete={editingReservation ? async () => {
