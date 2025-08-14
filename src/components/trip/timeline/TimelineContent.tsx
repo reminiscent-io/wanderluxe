@@ -63,12 +63,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   };
 
   return (
-    <div className="w-full overflow-x-hidden">
+    <>
       {/* Sticky Day Navigator */}
       <DayNavigator days={sortedDays} />
       
       {/* Day Cards */}
-      <div className="space-y-3 md:space-y-4 mt-4 px-3 md:px-0">
+      <div className="space-y-3 md:space-y-4 mt-4">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
           
@@ -175,7 +175,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           )}
         </>
       )}
-    </div>
+    </>
   );
 };
 

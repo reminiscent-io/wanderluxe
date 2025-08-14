@@ -85,21 +85,21 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
         className
       )}
     >
-      <div className="w-full max-w-7xl mx-auto px-3 md:px-6">
+      <div className="max-w-7xl mx-auto px-3 md:px-6">
         {/* Desktop View */}
         <div className="hidden md:flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigateDays('prev')}
               disabled={currentDayInView === 0}
-              className="h-8 w-8 p-0 flex-shrink-0"
+              className="h-8 w-8 p-0"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             
-            <div className="flex gap-1 overflow-x-auto min-w-0 flex-1 max-w-3xl">
+            <div className="flex gap-1 overflow-x-auto max-w-3xl">
               {days.map((day, index) => {
                 const isActive = index === currentDayInView;
                 const isTodayFlag = isToday(parseISO(day.date));
@@ -111,7 +111,7 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
                     size="sm"
                     onClick={() => scrollToDay(index)}
                     className={cn(
-                      "min-w-[80px] text-xs transition-all flex-shrink-0",
+                      "min-w-[80px] text-xs transition-all",
                       isTodayFlag && !isActive && "ring-1 ring-blue-500"
                     )}
                   >
@@ -165,7 +165,7 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
         
         {/* Mobile View - Compact */}
         <div className="md:hidden flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 min-w-0 flex-1">
+          <div className="flex items-center gap-1 flex-1 overflow-x-auto">
             <Button
               variant="ghost"
               size="sm"
@@ -176,7 +176,7 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
               <ChevronLeft className="h-3 w-3" />
             </Button>
             
-            <div className="overflow-x-auto flex gap-1 min-w-0 flex-1 no-scrollbar">
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
               {days.map((day, index) => {
                 const isActive = index === currentDayInView;
                 const isTodayFlag = isToday(parseISO(day.date));
