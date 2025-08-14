@@ -16,6 +16,10 @@ import {
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
+import { useActivitiesRealtime } from '@/hooks/useActivitiesRealtime';
+import { useAccommodationsRealtime } from '@/hooks/useAccommodationsRealtime';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
 // Helper function to format time in 12-hour format
@@ -65,9 +69,9 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   tripId,
   date,
   title,
-  activities,
+  activities: activitiesProp,
   index,
-  hotelStays,
+  hotelStays: hotelStaysProp,
   onActivityAdd,
   onHotelAdd,
   onTransportationAdd,
@@ -78,8 +82,52 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   onReservationClick,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  
+  // Use real-time hooks for all data
   const { reservations } = useReservationsRealtime(id, tripId);
   const { transportations } = useTransportationEvents(tripId);
+  useActivitiesRealtime(id, tripId);
+  useAccommodationsRealtime(tripId);
+  
+  // Fetch activities for this specific day
+  const { data: activities = [] } = useQuery({
+    queryKey: ['activities', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('day_activities')
+        .select('*')
+        .eq('day_id', id)
+        .order('start_time', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching activities:', error);
+        throw error;
+      }
+      
+      return data as DayActivity[];
+    },
+    enabled: !!id,
+  });
+  
+  // Fetch accommodations for this trip
+  const { data: hotelStays = [] } = useQuery({
+    queryKey: ['accommodations', tripId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('accommodations')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('order_index');
+      
+      if (error) {
+        console.error('Error fetching accommodations:', error);
+        throw error;
+      }
+      
+      return data as HotelStay[];
+    },
+    enabled: !!tripId,
+  });
   
   const dayOfWeek = format(parseISO(date), 'EEEE');
   const formattedDate = format(parseISO(date), 'MMM d');
@@ -225,7 +273,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     <Card 
       id={`day-${index}`}
       className={cn(
-        "relative overflow-hidden transition-all duration-200",
+        "relative overflow-hidden transition-all duration-200 bg-gray-50",
         isTodayFlag && "ring-2 ring-blue-500 ring-offset-2"
       )}
     >
