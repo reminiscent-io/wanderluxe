@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { TripDay, HotelStay, ActivityFormData, DayActivity, Transportation, RestaurantReservation } from '@/types/trip';
 import CompactDayCard from '../day/CompactDayCard';
-import DayNavigator from './DayNavigator';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import AddActivityDialog from '@/components/trip/day/activities/AddActivityDialog';
@@ -83,11 +82,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
 
   return (
     <>
-      {/* Sticky Day Navigator */}
-      <DayNavigator days={sortedDays} />
-      
-      {/* Day Cards - Add padding top to account for sticky navigator */}
-      <div className="space-y-3 md:space-y-4 pt-20 md:pt-16">
+      {/* Day Cards */}
+      <div className="space-y-3 md:space-y-4">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
           
@@ -163,7 +159,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               setAccommodationOpen(open);
               if (!open) setEditingHotel(null);
             }}
-            initialData={editingHotel || undefined}
+            initialData={editingHotel as any || undefined}
             onSuccess={handleDialogSuccess}
           />
           
@@ -174,7 +170,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               setTransportationOpen(open);
               if (!open) setEditingTransportation(null);
             }}
-            initialData={editingTransportation || undefined}
+            initialData={editingTransportation as any || undefined}
             onSuccess={handleDialogSuccess}
           />
           
@@ -287,9 +283,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   }
                 }}
                 tripId={sortedDays[0].trip_id}
-                dayId={selectedDayId || editingReservation?.day_id}
                 title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
                 editingReservation={editingReservation || undefined}
+                isSubmitting={false}
                 onSubmit={async () => {
                   setReservationOpen(false);
                   setEditingReservation(null);
