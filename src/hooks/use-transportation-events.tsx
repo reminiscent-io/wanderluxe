@@ -31,13 +31,34 @@ export function useTransportationEvents(tripId: string) {
     await queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
   }, [queryClient, tripId]);
 
+  // Real-time subscription for transportation changes
   useEffect(() => {
     if (!tripId) return;
 
-
+    const channel = supabase
+      .channel(`transportation:${tripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transportation',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        (payload) => {
+          queryClient.invalidateQueries({
+            queryKey: ['transportation', tripId],
+          });
+          // Also invalidate trip queries
+          queryClient.invalidateQueries({
+            queryKey: ['trip', tripId],
+          });
+        }
+      )
+      .subscribe();
 
     return () => {
-
+      supabase.removeChannel(channel);
     };
   }, [tripId]);
   

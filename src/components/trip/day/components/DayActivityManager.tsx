@@ -53,7 +53,8 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         throw error;
       }
       toast.success('Activity added successfully');
-      queryClient.invalidateQueries(['trip']);
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['activities', id] });
       return Promise.resolve();
     } catch (error) {
       console.error('Error adding activity:', error);
@@ -89,7 +90,8 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
 
       if (error) throw error;
       toast.success('Activity updated successfully');
-      queryClient.invalidateQueries(['trip']);
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['activities', id] });
       return Promise.resolve();
     } catch (error) {
       console.error('Error editing activity:', error);
@@ -106,7 +108,8 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         .eq('id', activityId);
       if (error) throw error;
       toast.success('Activity deleted successfully');
-      queryClient.invalidateQueries(['trip']);
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['activities', id] });
       return Promise.resolve();
     } catch (error) {
       console.error('Error deleting activity:', error);

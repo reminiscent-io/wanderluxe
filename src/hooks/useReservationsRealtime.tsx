@@ -25,6 +25,10 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
     queryClient.invalidateQueries({
       queryKey: ['reservations', tripId, dayId],
     });
+    // Also invalidate trip queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip', tripId],
+    });
   }, [queryClient, tripId, dayId]);
 
   // Set up real-time subscription for reservations
@@ -52,11 +56,6 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
       )
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
-        
-        // Handle channel errors with automatic reconnection
-        if (status === 'CHANNEL_ERROR') {
-          console.warn(`Reservation channel error for day ${dayId}, retrying automatically`);
-        }
       });
 
     channelRef.current = channel;
