@@ -150,7 +150,7 @@ export default function TransportationForm({
   /* ----------------------------------- JSX ----------------------------------- */
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 w-full max-w-full">
         <TransportationFormFields
           form={form}
           tripArrivalDate={tripArrivalDate}
