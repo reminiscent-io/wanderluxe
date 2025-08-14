@@ -14,7 +14,6 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
 
   // Memoize the invalidation callback to prevent unnecessary re-subscriptions
   const handleAccommodationChange = useCallback((payload: any) => {
-    console.log(`Accommodation real-time change detected for trip ${tripId}:`, payload);
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
     });
@@ -49,11 +48,6 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
       )
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
-        
-        // Handle channel errors with automatic reconnection
-        if (status === 'CHANNEL_ERROR') {
-          console.warn(`Accommodation channel error for trip ${tripId}, retrying automatically`);
-        }
       });
 
     channelRef.current = channel;

@@ -22,7 +22,6 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
 
   // Memoize the invalidation callback to prevent unnecessary re-subscriptions
   const handleReservationChange = useCallback((payload: any) => {
-    console.log(`Reservation real-time change detected for day ${dayId}:`, payload);
     queryClient.invalidateQueries({
       queryKey: ['reservations', tripId, dayId],
     });
@@ -57,11 +56,6 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
       )
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
-        
-        // Handle channel errors with automatic reconnection
-        if (status === 'CHANNEL_ERROR') {
-          console.warn(`Reservation channel error for day ${dayId}, retrying automatically`);
-        }
       });
 
     channelRef.current = channel;

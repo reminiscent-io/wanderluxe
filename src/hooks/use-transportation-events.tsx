@@ -46,7 +46,6 @@ export function useTransportationEvents(tripId: string) {
           filter: `trip_id=eq.${tripId}`,
         },
         (payload) => {
-          console.log(`Transportation real-time change detected for trip ${tripId}:`, payload);
           queryClient.invalidateQueries({
             queryKey: ['transportation', tripId],
           });
@@ -56,11 +55,7 @@ export function useTransportationEvents(tripId: string) {
           });
         }
       )
-      .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR') {
-          console.warn(`Transportation channel error for trip ${tripId}, retrying automatically`);
-        }
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
