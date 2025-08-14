@@ -124,23 +124,27 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[600px] max-h-[calc(100vh-100px)] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto"
       >
-        <DialogHeader>
-          <DialogTitle>
-            {initialData ? 'Edit Transportation' : 'Add Transportation'}
-          </DialogTitle>
-        </DialogHeader>
-        <TransportationForm
-          initialData={initialData || undefined}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          onDelete={initialData ? handleDelete : undefined}
-          tripArrivalDate={tripDates.arrival_date}
-          tripDepartureDate={tripDates.departure_date}
-          buttonClassName={buttonClassName}
-        />
+        <div className="flex flex-col max-h-[90vh]">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>
+              {initialData ? 'Edit Transportation' : 'Add Transportation'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto scrollbar-none">
+            <TransportationForm
+              initialData={initialData || undefined}
+              onSubmit={handleSubmit}
+              onCancel={handleCancel}
+              onDelete={initialData ? handleDelete : undefined}
+              tripArrivalDate={tripDates.arrival_date}
+              tripDepartureDate={tripDates.departure_date}
+              buttonClassName={buttonClassName}
+            />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

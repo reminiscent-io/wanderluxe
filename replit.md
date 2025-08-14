@@ -7,6 +7,14 @@ WanderLuxe is a comprehensive travel planning web application built to enable us
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**January 14, 2025** - Standardized Dialog Components for Consistent UX
+- Unified styling across all four dialog types (accommodations, transportation, activities, dining)
+- Implemented consistent responsive width settings (w-[95vw] max-w-[95vw] sm:max-w-[600px])
+- Added clean scroll functionality without visible scrollbar using overflow-y-auto with scrollbar-none CSS utility
+- Applied onPointerDownOutside prevention for all dialogs to maintain Google Places dropdown functionality
+- Fixed dialog header positioning with flex-shrink-0 for stable scrolling experience
+- Resolved type mismatches between database and form data (cost field conversion)
+
 **January 14, 2025** - Completed Real-time Updates for CompactDayCard
 - Implemented comprehensive real-time subscriptions for all data types (activities, accommodations, transportation, dining)
 - Added proper query invalidation for immediate UI updates without page refreshes

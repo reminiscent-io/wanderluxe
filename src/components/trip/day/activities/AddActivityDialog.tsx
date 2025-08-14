@@ -34,20 +34,27 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[500px] mx-auto">
-        <DialogHeader>
-          <DialogTitle>Add New Activity</DialogTitle>
-        </DialogHeader>
-        <ActivityForm
-          activity={activity}
-          onActivityChange={onActivityChange}
-          onSubmit={onSubmit}
-          onCancel={() => onOpenChange(false)}
-          submitLabel="Add Activity"
-          eventId={eventId}
-          tripDates={tripDates}
-          preselectedDate={preselectedDate}
-        />
+      <DialogContent 
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto"
+      >
+        <div className="flex flex-col max-h-[90vh]">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Add New Activity</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto scrollbar-none">
+            <ActivityForm
+              activity={activity}
+              onActivityChange={onActivityChange}
+              onSubmit={onSubmit}
+              onCancel={() => onOpenChange(false)}
+              submitLabel="Add Activity"
+              eventId={eventId}
+              tripDates={tripDates}
+              preselectedDate={preselectedDate}
+            />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
