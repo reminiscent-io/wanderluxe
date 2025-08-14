@@ -98,6 +98,12 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     );
   });
   
+  // Identify hotels where this is a stay day (not check-in or check-out)
+  const allDayHotels = filteredHotelStays.filter(stay => {
+    return stay.hotel_checkin_date !== normalizedDay && 
+           stay.hotel_checkout_date !== normalizedDay;
+  });
+  
   // Filter transportations for this day
   const safeTransportations = transportations || [];
   const filteredTransportations = safeTransportations.filter((t) => {
@@ -213,7 +219,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     ? summaryParts.join(' • ') 
     : 'No plans yet';
   
-  const hasContent = sortedTimelineItems.length > 0;
+  const hasContent = sortedTimelineItems.length > 0 || allDayHotels.length > 0;
   
   return (
     <Card 
@@ -273,7 +279,35 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
         <div className="border-t">
           <div className="p-3 md:p-4">
             {hasContent ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                {/* All Day Hotels Section */}
+                {allDayHotels.length > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">All Day</span>
+                    </div>
+                    {allDayHotels.map(stay => (
+                      <div 
+                        key={`allday-${stay.stay_id}`}
+                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded p-2 -m-1 transition-colors"
+                        onClick={() => onHotelClick && onHotelClick(stay)}
+                      >
+                        <Hotel className="h-3 w-3 text-gray-500" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                            Staying at {stay.hotel}
+                          </div>
+                          {stay.hotel_address && (
+                            <div className="text-xs text-gray-600">
+                              {stay.hotel_address}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {/* Timeline */}
                 <div className="relative">
                   {sortedTimelineItems.map((item, idx) => {

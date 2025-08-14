@@ -17,6 +17,9 @@ Preferred communication style: Simple, everyday language.
 - Made all timeline items clickable to open their respective edit dialogs
 - Added proper edit functionality for activities, accommodations, transportation, and dining reservations
 - Removed sticky Day Navigator based on user feedback for cleaner interface
+- Made Add buttons more compact to fit all 4 on one line for mobile devices
+- Set all day cards to be expanded by default for immediate timeline visibility
+- Added "All Day" section showing accommodations for days between check-in and check-out
 
 **January 13, 2025** - Integrated authentic Fora Travel advisor profile
 - Updated BookingView component to replace placeholder text with Kevin Lowe's professional Fora Travel advisor profile
