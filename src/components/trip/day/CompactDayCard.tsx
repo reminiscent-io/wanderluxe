@@ -43,6 +43,10 @@ interface CompactDayCardProps {
   onHotelAdd?: () => void;
   onTransportationAdd?: () => void;
   onReservationAdd?: () => void;
+  onActivityClick?: (activity: DayActivity) => void;
+  onHotelClick?: (hotel: HotelStay) => void;
+  onTransportationClick?: (transportation: Transportation) => void;
+  onReservationClick?: (reservation: RestaurantReservation) => void;
 }
 
 interface TimelineItem {
@@ -68,6 +72,10 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   onHotelAdd,
   onTransportationAdd,
   onReservationAdd,
+  onActivityClick,
+  onHotelClick,
+  onTransportationClick,
+  onReservationClick,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { reservations } = useReservationsRealtime(id, tripId);
@@ -268,48 +276,65 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               <div className="space-y-2">
                 {/* Timeline */}
                 <div className="relative">
-                  {sortedTimelineItems.map((item, idx) => (
-                    <div key={item.id} className="flex gap-3 pb-3 last:pb-0">
-                      {/* Time column */}
-                      <div className="w-16 md:w-20 flex-shrink-0 text-right">
-                        <span className="text-xs md:text-sm font-medium text-gray-600">
-                          {item.time ? formatTime12(item.time) : '—'}
-                        </span>
-                      </div>
-                      
-                      {/* Timeline line and dot */}
-                      <div className="relative flex flex-col items-center">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0 mt-1" />
-                        {idx < sortedTimelineItems.length - 1 && (
-                          <div className="absolute top-3 w-px bg-gray-200 h-full" />
-                        )}
-                      </div>
-                      
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2">
-                          <span className="text-gray-500 mt-0.5 flex-shrink-0">
-                            {item.icon}
+                  {sortedTimelineItems.map((item, idx) => {
+                    const handleItemClick = () => {
+                      if (item.type === 'activity' && onActivityClick && item.data) {
+                        onActivityClick(item.data);
+                      } else if (item.type === 'hotel' && onHotelClick && item.data) {
+                        onHotelClick(item.data);
+                      } else if (item.type === 'transportation' && onTransportationClick && item.data) {
+                        onTransportationClick(item.data);
+                      } else if (item.type === 'dining' && onReservationClick && item.data) {
+                        onReservationClick(item.data);
+                      }
+                    };
+                    
+                    return (
+                      <div key={item.id} className="flex gap-3 pb-3 last:pb-0">
+                        {/* Time column */}
+                        <div className="w-16 md:w-20 flex-shrink-0 text-right">
+                          <span className="text-xs md:text-sm font-medium text-gray-600">
+                            {item.time ? formatTime12(item.time) : '—'}
                           </span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900">
-                              {item.title}
+                        </div>
+                        
+                        {/* Timeline line and dot */}
+                        <div className="relative flex flex-col items-center">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0 mt-1" />
+                          {idx < sortedTimelineItems.length - 1 && (
+                            <div className="absolute top-3 w-px bg-gray-200 h-full" />
+                          )}
+                        </div>
+                        
+                        {/* Content - Now clickable */}
+                        <div 
+                          className="flex-1 min-w-0 cursor-pointer hover:bg-gray-50 rounded-md p-1 -m-1 transition-colors"
+                          onClick={handleItemClick}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500 mt-0.5 flex-shrink-0">
+                              {item.icon}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                                {item.title}
+                              </div>
+                              {item.endTime && (
+                                <div className="text-xs text-gray-500">
+                                  until {formatTime12(item.endTime)}
+                                </div>
+                              )}
+                              {item.description && (
+                                <div className="text-xs text-gray-600 mt-0.5">
+                                  {item.description}
+                                </div>
+                              )}
                             </div>
-                            {item.endTime && (
-                              <div className="text-xs text-gray-500">
-                                until {formatTime12(item.endTime)}
-                              </div>
-                            )}
-                            {item.description && (
-                              <div className="text-xs text-gray-600 mt-0.5">
-                                {item.description}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 
                 {/* Quick Add Buttons */}
