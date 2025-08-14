@@ -14,7 +14,6 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
 
   // Memoize the invalidation callback to prevent unnecessary re-subscriptions
   const handleActivityChange = useCallback((payload: any) => {
-    console.log(`Activity real-time change detected for day ${dayId}:`, payload);
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
     });
@@ -49,11 +48,6 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
       )
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
-        
-        // Handle channel errors with automatic reconnection
-        if (status === 'CHANNEL_ERROR') {
-          console.warn(`Activity channel error for day ${dayId}, retrying automatically`);
-        }
       });
 
     channelRef.current = channel;
