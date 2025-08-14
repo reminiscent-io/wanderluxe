@@ -225,7 +225,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     <Card 
       id={`day-${index}`}
       className={cn(
-        "relative overflow-hidden transition-all duration-200",
+        "relative overflow-hidden transition-all duration-200 bg-gray-50",
         isTodayFlag && "ring-2 ring-blue-500 ring-offset-2"
       )}
     >
