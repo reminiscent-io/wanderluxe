@@ -77,6 +77,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   const fetchPreviousEmails = async () => {
     try {
       const emails = await getPreviouslySharedEmails(tripId);
+      console.log('Fetched previous emails:', emails);
       setPreviousEmails(emails);
     } catch (error) {
       console.error('Error fetching previous emails:', error);
