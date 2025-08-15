@@ -4,6 +4,9 @@ import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
+import ShareTripDialog from './ShareTripDialog';
+import { Button } from '@/components/ui/button';
+import { Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
@@ -15,9 +18,10 @@ interface TimelineViewProps {
     arrival_date: string | null;
     departure_date: string | null;
   };
+  tripDestination?: string;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination }) => {
   // Keep the session alive while working on the timeline
   useSessionKeepAlive(10 * 60 * 1000); // 10 minutes - increased to prevent frequent refreshes
   
@@ -41,6 +45,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   const [localTripDates, setLocalTripDates] = useState<{
     arrival_date: string | null;
@@ -185,11 +190,29 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Trip Timeline</h2>
-        <ExportPdfButton 
-          tripId={tripId} 
-          className="bg-earth-500 hover:bg-earth-600 text-white"
-        />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsShareDialogOpen(true)}
+            className="border-earth-300 text-earth-700 hover:bg-earth-50"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+          <ExportPdfButton 
+            tripId={tripId} 
+            className="bg-earth-500 hover:bg-earth-600 text-white"
+          />
+        </div>
       </div>
+      
+      <ShareTripDialog 
+        tripId={tripId}
+        tripDestination={tripDestination || 'Trip'}
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+      />
       <TimelineContent
         days={days}
         dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}

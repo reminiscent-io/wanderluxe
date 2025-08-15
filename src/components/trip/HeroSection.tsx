@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
 import { Button } from '@/components/ui/button';
-import { PencilIcon, Share2 } from 'lucide-react';
+import { PencilIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import ImageSection from '@/components/trip/create/ImageSection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import ShareTripDialog from './ShareTripDialog';
+
 import { useQueryClient } from '@tanstack/react-query';
 
 interface HeroSectionProps {
@@ -56,7 +56,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
   const [imagePosition, setImagePosition] = useState<string>("center 50%");
 
   const handleImageChange = async (newImageUrl: string) => {
@@ -194,19 +194,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setIsShareDialogOpen(true);
-            }}
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="opacity-50 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm text-sand-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
               setIsDialogOpen(true);
             }}
           >
@@ -214,13 +201,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             Edit Cover
           </Button>
         </div>
-        
-        <ShareTripDialog 
-          tripId={tripId}
-          tripDestination={title}
-          open={isShareDialogOpen}
-          onOpenChange={setIsShareDialogOpen}
-        />
+
 
         <Dialog 
           open={isDialogOpen} 
