@@ -8,13 +8,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-**January 15, 2025** - Enhanced Trip Sharing UX with Email Dropdown
+**January 15, 2025** - Enhanced Trip Sharing UX and Mobile Keyboard Stability
 - Moved Share button from hero section to timeline toolbar, positioned left of Export PDF button
 - Created EmailCombobox component combining manual typing with dropdown suggestions
 - Added getPreviouslySharedEmails service to fetch user's sharing history from trip_shares table
 - Implemented smart filtering to exclude emails already shared with current trip
 - Enhanced ShareTripDialog with previous email suggestions for improved user experience
 - Maintained ability to manually type email addresses alongside dropdown functionality
+- Fixed dropdown visibility with z-index adjustments (z-[9999]) and modal={false} configuration
+- Resolved mobile keyboard resizing issues by updating viewport meta tag and CSS stable height properties
+- Fixed TypeScript and CSS syntax errors for production readiness
 **January 14, 2025** - Standardized Dialog Components for Consistent UX
 - Unified styling across all four dialog types (accommodations, transportation, activities, dining)
 - Implemented consistent responsive width settings (w-[95vw] max-w-[95vw] sm:max-w-[600px])

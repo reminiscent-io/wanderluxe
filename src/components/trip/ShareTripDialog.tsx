@@ -227,11 +227,8 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
         className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90vh] flex flex-col p-4 sm:p-6"
         style={{ 
           maxHeight: '90vh',
-          height: 'auto',
-          '--radix-dialog-content-transform-origin': 'var(--radix-popper-transform-origin)',
-          '--radix-dialog-content-available-width': 'var(--radix-popper-available-width)',
-          '--radix-dialog-content-available-height': '90vh'
-        }}
+          height: 'auto'
+        } as React.CSSProperties}
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="flex-shrink-0">
