@@ -23,6 +23,8 @@ Preferred communication style: Simple, everyday language.
 - Fixed location search input overflow with proper flex container constraints
 - Cleaned up all debugging console.log statements for production readiness
 - Standardized dialog content structure across all form types for consistent mobile behavior
+- Redesigned DateTimeRangeField to stack date and time vertically on mobile, preventing horizontal overflow
+- Enhanced date/time picker button with proper flex column layout and text truncation
 
 **January 14, 2025** - Completed Real-time Updates for CompactDayCard
 - Implemented comprehensive real-time subscriptions for all data types (activities, accommodations, transportation, dining)
