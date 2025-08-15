@@ -70,17 +70,15 @@ export default function DateTimeRangeField({
       control={control}
       render={({ field }) => {
         const value = (field.value || {}) as DateTimeRange;
-        const display = hideTimeInputs
-          ? (value.from && value.to
-              ? `${fmtDate(value.from)} – ${fmtDate(value.to)}`
-              : value.from
-              ? `${fmtDate(value.from)} → Select end date`
-              : "Select date range")
-          : (value.from && value.to
-              ? `${fmtDate(value.from)} – ${fmtDate(value.to)} at ${prettyTime(
-                  value.fromTime
-                )} → ${prettyTime(value.toTime)}`
-              : "Select date range");
+        const dateDisplay = value.from && value.to
+          ? `${fmtDate(value.from)} – ${fmtDate(value.to)}`
+          : value.from
+          ? `${fmtDate(value.from)} → Select end date`
+          : "Select date range";
+
+        const timeDisplay = !hideTimeInputs && value.fromTime && value.toTime
+          ? `${prettyTime(value.fromTime)} → ${prettyTime(value.toTime)}`
+          : null;
 
         const update = (patch: Partial<DateTimeRange>) =>
           field.onChange({ ...value, ...patch });
@@ -96,12 +94,19 @@ export default function DateTimeRangeField({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full max-w-full justify-start text-left font-normal bg-sand-800 border-sand-700 text-sand-900 truncate",
+                    "w-full max-w-full justify-start text-left font-normal bg-sand-800 border-sand-700 text-sand-900 h-auto py-2 px-3",
                     !value.from && "text-sand-500"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {display}
+                  <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-col items-start text-left min-w-0 flex-1">
+                    <span className="truncate w-full">{dateDisplay}</span>
+                    {timeDisplay && (
+                      <span className="text-xs text-sand-600 truncate w-full mt-0.5">
+                        {timeDisplay}
+                      </span>
+                    )}
+                  </div>
                 </Button>
               </PopoverTrigger>
 
