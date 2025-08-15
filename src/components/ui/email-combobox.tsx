@@ -29,6 +29,8 @@ export function EmailCombobox({
 }: EmailComboboxProps) {
   const [open, setOpen] = useState(false);
 
+
+
   return (
     <div className={cn("relative flex", className)}>
       <div className="relative flex-1">
@@ -41,36 +43,37 @@ export function EmailCombobox({
           className="pl-9 pr-10"
           autoFocus={false}
         />
-        {suggestions.length > 0 && (
-          <DropdownMenu open={open} onOpenChange={setOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+              disabled={suggestions.length === 0}
+            >
+              <ChevronDown className={`h-3 w-3 ${suggestions.length === 0 ? 'text-gray-300' : 'text-gray-600'}`} />
+            </Button>
+          </DropdownMenuTrigger>
+          {suggestions.length > 0 && (
+            <DropdownMenuContent align="end" className="w-[300px] z-50">
+              <DropdownMenuLabel>Previously shared with</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {suggestions.map((email) => (
+                <DropdownMenuItem 
+                  key={email} 
+                  onSelect={() => {
+                    onChange(email);
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-2"
                 >
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[300px]">
-                <DropdownMenuLabel>Previously shared with</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {suggestions.map((email) => (
-                  <DropdownMenuItem 
-                    key={email} 
-                    onSelect={() => {
-                      onChange(email);
-                      setOpen(false);
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    {email}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-        )}
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  {email}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          )}
+        </DropdownMenu>
       </div>
     </div>
   );
