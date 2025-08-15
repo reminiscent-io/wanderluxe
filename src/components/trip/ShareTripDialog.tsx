@@ -222,7 +222,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 
-      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90vh] flex flex-col p-4 sm:p-6">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
           <DialogDescription>
@@ -230,14 +230,14 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[60vh]">
-          <div className="space-y-4 px-1 pb-2">
+        <div className="flex-1 overflow-y-auto scrollbar-none" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+          <div className="space-y-4 pr-2">
           <div className="space-y-2">
             <p className="text-sm font-medium">Email addresses</p>
             
             {emails.map((email, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div className="relative flex-1">
+              <div key={index} className="flex items-center gap-1 sm:gap-2">
+                <div className="relative flex-1 min-w-0">
                   <EmailCombobox
                     value={email}
                     onChange={(value) => handleEmailChange(index, value)}
@@ -248,10 +248,11 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={() => removeEmailField(index)}
+                  className="h-8 w-8 p-0 flex-shrink-0"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             ))}
@@ -273,9 +274,9 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
             <RadioGroup 
               value={permissionLevel} 
               onValueChange={(value) => setPermissionLevel(value as PermissionLevel)}
-              className="grid grid-cols-2 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4"
             >
-              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
+              <div className="flex items-center space-x-2 border rounded-lg p-2 sm:p-3 hover:bg-gray-50">
                 <RadioGroupItem value="read" id="read" />
                 <Label htmlFor="read" className="flex items-center gap-2 cursor-pointer flex-1">
                   <Eye className="h-4 w-4 text-blue-600" />
@@ -285,12 +286,12 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                   </div>
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
+              <div className="flex items-center space-x-2 border rounded-lg p-2 sm:p-3 hover:bg-gray-50">
                 <RadioGroupItem value="edit" id="edit" />
                 <Label htmlFor="edit" className="flex items-center gap-2 cursor-pointer flex-1">
                   <Edit className="h-4 w-4 text-green-600" />
                   <div>
-                    <div className="font-medium">Full Access</div>
+                    <div className="font-medium">Full</div>
                     <div className="text-xs text-muted-foreground">Can view and edit all trip details</div>
                   </div>
                 </Label>
@@ -304,11 +305,11 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
               
               <div className="space-y-2">
                 {existingShares.map((share) => (
-                  <div key={share.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                    <div className="flex items-center gap-2 flex-1">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{share.shared_with_email}</span>
-                      <div className="flex items-center gap-1 ml-auto mr-2">
+                  <div key={share.id} className="flex items-center gap-1 sm:gap-2 rounded-md border p-2">
+                    <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+                      <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs sm:text-sm truncate">{share.shared_with_email}</span>
+                      <div className="flex items-center gap-1 ml-auto">
                         <Button
                           type="button"
                           variant="ghost"
@@ -317,14 +318,16 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                           className="h-auto p-1"
                         >
                           {(share.permission_level || 'edit') === 'read' ? (
-                            <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs hover:bg-blue-100 transition-colors">
-                              <Eye className="h-3 w-3" />
-                              View Only
+                            <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-1 sm:px-2 py-1 rounded-full text-xs hover:bg-blue-100 transition-colors">
+                              <Eye className="h-2 w-2 sm:h-3 sm:w-3" />
+                              <span className="hidden sm:inline">View Only</span>
+                              <span className="sm:hidden">View</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs hover:bg-green-100 transition-colors">
-                              <Edit className="h-3 w-3" />
-                              Full Access
+                            <div className="flex items-center gap-1 bg-green-50 text-green-700 px-1 sm:px-2 py-1 rounded-full text-xs hover:bg-green-100 transition-colors">
+                              <Edit className="h-2 w-2 sm:h-3 sm:w-3" />
+                              <span className="hidden sm:inline">Full</span>
+                              <span className="sm:hidden">Edit</span>
                             </div>
                           )}
                         </Button>
@@ -333,10 +336,11 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={() => handleRemoveShare(share.id)}
+                      className="h-6 w-6 p-0 flex-shrink-0"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 ))}
@@ -359,7 +363,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
             </div>
           </div>
         </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="flex sm:justify-between flex-shrink-0 border-t pt-4 mt-4">
           <Button
@@ -371,6 +375,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           <Button 
             onClick={handleSave}
             disabled={isSubmitting || isLoading}
+            className="bg-gray-800 hover:bg-gray-900 text-white"
           >
             Share Trip
           </Button>
