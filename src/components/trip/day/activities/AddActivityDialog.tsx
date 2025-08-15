@@ -37,14 +37,14 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
         onPointerDownOutside={(e) => e.preventDefault()}
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto"
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto p-4 sm:p-6"
       >
-        <div className="flex flex-col max-h-[90vh]">
+        <div className="flex flex-col max-h-[90vh] w-full">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Add New Activity</DialogTitle>
             <DialogDescription>Enter the details for your new activity.</DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto scrollbar-none">
+          <div className="flex-1 overflow-y-auto scrollbar-none px-1">
             <ActivityForm
               activity={activity}
               onActivityChange={onActivityChange}

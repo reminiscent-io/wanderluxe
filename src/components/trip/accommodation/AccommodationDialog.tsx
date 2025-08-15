@@ -42,13 +42,11 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         .single();
       if (!error && data) {
         if (data.arrival_date && data.departure_date) {
-          console.log('AccommodationDialog: Setting trip dates', data);
+
           setTripDates({
             arrival_date: data.arrival_date,
             departure_date: data.departure_date,
           });
-        } else {
-          console.log('AccommodationDialog: Skipping update - missing dates', data);
         }
       }
     };
@@ -131,9 +129,9 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onPointerDownOutside={(e) => e.preventDefault()}
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto"
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto p-4 sm:p-6"
       >
-        <div className="flex flex-col max-h-[90vh]">
+        <div className="flex flex-col max-h-[90vh] w-full">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {initialData ? 'Edit Accommodation' : 'Add Accommodation'}
@@ -142,7 +140,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
               {initialData ? 'Update your accommodation details.' : 'Enter the details for your accommodation.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto scrollbar-none">
+          <div className="flex-1 overflow-y-auto scrollbar-none px-1">
             <AccommodationForm
               initialData={initialData ? {
                 ...initialData,

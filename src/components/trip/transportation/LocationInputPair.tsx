@@ -45,8 +45,8 @@ const LocationInputPair: React.FC<LocationInputPairProps> = ({
   }, [onToChange]);
 
   return (
-    <div className="flex space-x-4">
-      <div className="flex-1">
+    <div className="flex space-x-4 w-full">
+      <div className="flex-1 min-w-0">
         <RequiredLabel>From</RequiredLabel>
         <LocationSearchInput
           key={`from-${transportationType}`}
@@ -56,7 +56,7 @@ const LocationInputPair: React.FC<LocationInputPairProps> = ({
           transportationType={transportationType}
         />
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <RequiredLabel>To</RequiredLabel>
         <LocationSearchInput
           key={`to-${transportationType}`}

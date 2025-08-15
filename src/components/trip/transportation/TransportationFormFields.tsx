@@ -51,7 +51,7 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
   }, [cost]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-w-full overflow-hidden">
       {/* Transportation Type */}
       <Controller
         control={control}
@@ -139,7 +139,7 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
       {/* Cost & Currency */}
       <div className="space-y-2">
         <Label>Cost & Currency</Label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 w-full">
           <Controller
             control={control}
             name="cost"
