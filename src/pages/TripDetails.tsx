@@ -81,6 +81,7 @@ const TripDetails = () => {
                         ? displayData.departure_date 
                         : null
                     }}
+                    tripDestination={displayData.destination}
                   />
                 </ErrorBoundary>
               )}

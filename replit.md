@@ -7,6 +7,14 @@ WanderLuxe is a comprehensive travel planning web application built to enable us
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+
+**January 15, 2025** - Enhanced Trip Sharing UX with Email Dropdown
+- Moved Share button from hero section to timeline toolbar, positioned left of Export PDF button
+- Created EmailCombobox component combining manual typing with dropdown suggestions
+- Added getPreviouslySharedEmails service to fetch user's sharing history from trip_shares table
+- Implemented smart filtering to exclude emails already shared with current trip
+- Enhanced ShareTripDialog with previous email suggestions for improved user experience
+- Maintained ability to manually type email addresses alongside dropdown functionality
 **January 14, 2025** - Standardized Dialog Components for Consistent UX
 - Unified styling across all four dialog types (accommodations, transportation, activities, dining)
 - Implemented consistent responsive width settings (w-[95vw] max-w-[95vw] sm:max-w-[600px])
