@@ -40,16 +40,9 @@ export function EmailCombobox({
           onChange={(e) => onChange(e.target.value)}
           className="pl-9 pr-10"
           autoFocus={false}
-          list={suggestions.length > 0 ? "email-suggestions" : undefined}
         />
         {suggestions.length > 0 && (
-          <>
-            <datalist id="email-suggestions">
-              {suggestions.map((email) => (
-                <option key={email} value={email} />
-              ))}
-            </datalist>
-            <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenu open={open} onOpenChange={setOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -77,7 +70,6 @@ export function EmailCombobox({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </>
         )}
       </div>
     </div>
