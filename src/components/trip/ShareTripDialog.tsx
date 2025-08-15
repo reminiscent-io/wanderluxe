@@ -290,7 +290,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                 <Label htmlFor="edit" className="flex items-center gap-2 cursor-pointer flex-1">
                   <Edit className="h-4 w-4 text-green-600" />
                   <div>
-                    <div className="font-medium">Full Access</div>
+                    <div className="font-medium">Full</div>
                     <div className="text-xs text-muted-foreground">Can view and edit all trip details</div>
                   </div>
                 </Label>
@@ -324,7 +324,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                           ) : (
                             <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs hover:bg-green-100 transition-colors">
                               <Edit className="h-3 w-3" />
-                              Full Access
+                              Full
                             </div>
                           )}
                         </Button>
@@ -371,6 +371,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           <Button 
             onClick={handleSave}
             disabled={isSubmitting || isLoading}
+            className="bg-gray-800 hover:bg-gray-900 text-white"
           >
             Share Trip
           </Button>
