@@ -222,7 +222,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 
-      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col p-4 sm:p-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
           <DialogDescription>
@@ -230,7 +230,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[60vh] overflow-y-auto -webkit-overflow-scrolling-touch">
+        <ScrollArea className="flex-1 max-h-[60vh]">
           <div className="space-y-4 px-1 pb-2">
           <div className="space-y-2">
             <p className="text-sm font-medium">Email addresses</p>
