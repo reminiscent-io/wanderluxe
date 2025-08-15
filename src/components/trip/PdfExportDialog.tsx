@@ -82,10 +82,11 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={className ?? 'bg-earth-500 hover:bg-earth-600 text-white'}
+          size="sm"
+          className={className ?? 'bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4'}
         >
-          <FileDown className="mr-2 h-4 w-4" />
-          Export PDF
+          <FileDown className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline">Export PDF</span>
         </Button>
       </DialogTrigger>
       

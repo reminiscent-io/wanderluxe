@@ -193,15 +193,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         <div className="flex gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={() => setIsShareDialogOpen(true)}
-            className="bg-earth-500 hover:bg-earth-600 text-white"
+            className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
           >
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
+            <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Share</span>
           </Button>
           <ExportPdfButton 
             tripId={tripId} 
-            className="bg-earth-500 hover:bg-earth-600 text-white"
+            className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
           />
         </div>
       </div>
