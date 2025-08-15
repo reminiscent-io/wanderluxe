@@ -287,17 +287,23 @@ export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
  */
 export const getPreviouslySharedEmails = async (currentTripId: string): Promise<string[]> => {
   try {
+    console.log('Getting previous emails for trip:', currentTripId);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.log('No user found');
       return [];
     }
+
+    console.log('Current user ID:', user.id);
 
     // Get all emails the current user has shared trips with
     const { data: allShares, error: allSharesError } = await supabase
       .from('trip_shares' as any)
-      .select('shared_with_email')
+      .select('shared_with_email, trip_id, created_at')
       .eq('shared_by_user_id', user.id)
       .order('created_at', { ascending: false });
+
+    console.log('All shares by user:', allShares, 'Error:', allSharesError);
 
     if (allSharesError) {
       console.error('Error fetching previous shares:', allSharesError);
@@ -310,6 +316,8 @@ export const getPreviouslySharedEmails = async (currentTripId: string): Promise<
       .select('shared_with_email')
       .eq('trip_id', currentTripId);
 
+    console.log('Current trip shares:', currentTripShares, 'Error:', currentSharesError);
+
     if (currentSharesError) {
       console.error('Error fetching current trip shares:', currentSharesError);
       return [];
@@ -320,6 +328,8 @@ export const getPreviouslySharedEmails = async (currentTripId: string): Promise<
       (currentTripShares || []).map((share: any) => share.shared_with_email.toLowerCase().trim())
     );
 
+    console.log('Current trip emails to exclude:', Array.from(currentTripEmails));
+
     // Get unique emails, excluding current trip shares and user's own email
     const uniqueEmails = new Set<string>();
     (allShares || []).forEach((share: any) => {
@@ -329,7 +339,9 @@ export const getPreviouslySharedEmails = async (currentTripId: string): Promise<
       }
     });
 
-    return Array.from(uniqueEmails).slice(0, 10); // Limit to 10 most recent unique emails
+    const result = Array.from(uniqueEmails).slice(0, 10);
+    console.log('Final previous emails result:', result);
+    return result;
   } catch (error) {
     console.error('Error fetching previously shared emails:', error);
     return [];
