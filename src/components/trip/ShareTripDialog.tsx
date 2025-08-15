@@ -243,6 +243,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
                     onChange={(value) => handleEmailChange(index, value)}
                     suggestions={previousEmails}
                     placeholder="email@example.com"
+                    autoFocus={false}
                   />
                 </div>
                 <Button
