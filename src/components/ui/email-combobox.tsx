@@ -43,7 +43,7 @@ export function EmailCombobox({
           className="pl-9 pr-10"
           autoFocus={false}
         />
-        <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -55,7 +55,12 @@ export function EmailCombobox({
             </Button>
           </DropdownMenuTrigger>
           {suggestions.length > 0 && (
-            <DropdownMenuContent align="end" className="w-[300px] z-50">
+            <DropdownMenuContent 
+              align="end" 
+              className="w-[300px] z-[9999]"
+              sideOffset={5}
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
               <DropdownMenuLabel>Previously shared with</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {suggestions.map((email) => (
