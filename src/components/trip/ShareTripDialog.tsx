@@ -15,10 +15,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { shareTrip, getTripShares, removeTripShare, updateTripSharePermission } from '@/services/tripSharingService';
+import { shareTrip, getTripShares, removeTripShare, updateTripSharePermission, getPreviouslySharedEmails } from '@/services/tripSharingService';
 import { supabase } from '@/integrations/supabase/client';
 // We're now using Supabase Edge Functions for email
 import { TripShare, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
+import { EmailCombobox } from '@/components/ui/email-combobox';
 
 interface ShareTripDialogProps {
   tripId: string;
@@ -42,6 +43,7 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
     fullName: null,
     email: null
   });
+  const [previousEmails, setPreviousEmails] = useState<string[]>([]);
 
   useEffect(() => {
     // Fetch current user info
@@ -64,12 +66,22 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
     getUserInfo();
   }, []);
 
-  // Load existing shares when dialog opens
+  // Load existing shares and previous emails when dialog opens
   useEffect(() => {
     if (dialogOpen) {
       fetchExistingShares();
+      fetchPreviousEmails();
     }
   }, [dialogOpen]);
+
+  const fetchPreviousEmails = async () => {
+    try {
+      const emails = await getPreviouslySharedEmails(tripId);
+      setPreviousEmails(emails);
+    } catch (error) {
+      console.error('Error fetching previous emails:', error);
+    }
+  };
 
   const fetchExistingShares = async () => {
     setIsLoading(true);
@@ -143,8 +155,9 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
         toast.success(`Trip shared with ${successCount} ${successCount === 1 ? 'person' : 'people'}`);
         // Reset form
         setEmails(['']);
-        // Refresh the list of shares
+        // Refresh the list of shares and previous emails
         fetchExistingShares();
+        fetchPreviousEmails();
       }
     } catch (error) {
       console.error('Error sharing trip:', error);
@@ -230,12 +243,11 @@ const ShareTripDialog = ({ tripId, tripDestination, open, onOpenChange }: ShareT
             {emails.map((email, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div className="relative flex-1">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="email@example.com"
+                  <EmailCombobox
                     value={email}
-                    onChange={(e) => handleEmailChange(index, e.target.value)}
-                    className="pl-9"
+                    onChange={(value) => handleEmailChange(index, value)}
+                    suggestions={previousEmails}
+                    placeholder="email@example.com"
                   />
                 </div>
                 <Button

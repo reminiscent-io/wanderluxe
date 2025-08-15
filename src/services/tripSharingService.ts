@@ -33,7 +33,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
 
     // Check if already shared with this email
     const { data: existingShare } = await supabase
-      .from('trip_shares')
+      .from('trip_shares' as any)
       .select('*')
       .eq('trip_id', tripId)
       .eq('shared_with_email', email.toLowerCase().trim())
@@ -59,7 +59,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
     }
 
     const { error: shareError } = await supabase
-      .from('trip_shares')
+      .from('trip_shares' as any)
       .insert(shareData);
 
     if (shareError) {
@@ -95,8 +95,8 @@ export const sendShareNotification = async (
 ): Promise<boolean> => {
   try {
     // Get the Supabase URL and anon key from environment
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
     
     if (!supabaseUrl) {
       toast.error('Configuration error. Please contact support.');
@@ -149,7 +149,7 @@ export const updateTripSharePermission = async (shareId: string, newPermissionLe
     
     // Direct update approach with comprehensive error handling
     const { data: updateResult, error: updateError } = await supabase
-      .from('trip_shares')
+      .from('trip_shares' as any)
       .update({ permission_level: newPermissionLevel } as any)
       .eq('id', shareId)
       .select('*')
@@ -183,7 +183,7 @@ export const updateTripSharePermission = async (shareId: string, newPermissionLe
 export const removeTripShare = async (shareId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('trip_shares')
+      .from('trip_shares' as any)
       .delete()
       .eq('id', shareId);
 
@@ -214,7 +214,7 @@ export const getSharedTrips = async () => {
 
     // Get all trips shared with the user's email
     const { data, error } = await supabase
-      .from('trip_shares')
+      .from('trip_shares' as any)
       .select(`
         *,
         trips (*)
@@ -228,11 +228,11 @@ export const getSharedTrips = async () => {
     }
 
     // Get owner information for each shared trip
-    const processedData = await Promise.all(data.map(async (share) => {
+    const processedData = await Promise.all((data || []).map(async (share: any) => {
       // Fetch the owner's profile information
       const { data: ownerData } = await supabase
         .from('profiles')
-        .select('full_name, email')
+        .select('full_name')
         .eq('id', share.shared_by_user_id)
         .single();
         
@@ -240,7 +240,7 @@ export const getSharedTrips = async () => {
         ...share,
         trips: share.trips || null,
         owner_name: ownerData?.full_name || '',
-        owner_email: ownerData?.email || ''
+        owner_email: '' // Email not available in profiles table
       };
     })) as SharedTripWithDetails[];
 
@@ -257,7 +257,7 @@ export const getSharedTrips = async () => {
 export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
   try {
     const { data, error } = await supabase
-      .from('trip_shares')
+      .from('trip_shares' as any)
       .select('*')
       .eq('trip_id', tripId)
       .order('created_at', { ascending: false });
@@ -268,15 +268,70 @@ export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
     }
 
     // Ensure permission_level has a default value for backward compatibility
-    const processedData = (data || []).map(share => ({
+    const processedData = (data || []).map((share: any) => ({
       ...share,
-      permission_level: (share as any).permission_level || 'edit'
+      permission_level: share.permission_level || 'edit'
     }));
 
     console.log('Fetched trip shares:', processedData);
-    return processedData as TripShare[];
+    return processedData as any;
   } catch (error) {
     console.error('Error fetching trip shares:', error);
+    return [];
+  }
+};
+
+/**
+ * Get unique email addresses that the current user has previously shared trips with
+ * (excluding emails that have already been shared with the current trip)
+ */
+export const getPreviouslySharedEmails = async (currentTripId: string): Promise<string[]> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return [];
+    }
+
+    // Get all emails the current user has shared trips with
+    const { data: allShares, error: allSharesError } = await supabase
+      .from('trip_shares' as any)
+      .select('shared_with_email')
+      .eq('shared_by_user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (allSharesError) {
+      console.error('Error fetching previous shares:', allSharesError);
+      return [];
+    }
+
+    // Get emails already shared with current trip
+    const { data: currentTripShares, error: currentSharesError } = await supabase
+      .from('trip_shares' as any)
+      .select('shared_with_email')
+      .eq('trip_id', currentTripId);
+
+    if (currentSharesError) {
+      console.error('Error fetching current trip shares:', currentSharesError);
+      return [];
+    }
+
+    // Create sets for efficient filtering
+    const currentTripEmails = new Set(
+      (currentTripShares || []).map((share: any) => share.shared_with_email.toLowerCase().trim())
+    );
+
+    // Get unique emails, excluding current trip shares and user's own email
+    const uniqueEmails = new Set<string>();
+    (allShares || []).forEach((share: any) => {
+      const email = share.shared_with_email.toLowerCase().trim();
+      if (!currentTripEmails.has(email) && email !== user.email?.toLowerCase()) {
+        uniqueEmails.add(email);
+      }
+    });
+
+    return Array.from(uniqueEmails).slice(0, 10); // Limit to 10 most recent unique emails
+  } catch (error) {
+    console.error('Error fetching previously shared emails:', error);
     return [];
   }
 };
