@@ -39,6 +39,7 @@ export function EmailCombobox({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="pl-9 pr-10"
+          autoFocus={false}
           list={suggestions.length > 0 ? "email-suggestions" : undefined}
         />
         {suggestions.length > 0 && (
