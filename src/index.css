@@ -17,6 +17,14 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  
+  /* Prevent dialog from shrinking when mobile keyboard appears */
+  .keyboard-stable {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+  }
+}
   /* Tailwind styles for Google Maps autocomplete */
   .pac-container {
     @apply z-[10000] rounded-md border border-gray-300 shadow-lg mt-1 bg-white;
@@ -51,6 +59,19 @@
 }
 
 @layer base {
+  /* Prevent mobile keyboard from resizing viewport */
+  html {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+
+  
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
