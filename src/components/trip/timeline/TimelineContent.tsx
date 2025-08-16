@@ -231,9 +231,10 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     currency: 'USD',
                   });
                   
-                  // Invalidate both trip and activity queries for real-time updates
+                  // Invalidate all related queries for immediate timeline updates
                   if (sortedDays.length > 0) {
                     queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                    queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
                   }
                   if (selectedDayId) {
                     queryClient.invalidateQueries({ queryKey: ['activities', selectedDayId] });
@@ -287,9 +288,10 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   
                   toast.success('Activity updated successfully');
                   
-                  // Invalidate both trip and activity queries for real-time updates
+                  // Invalidate all related queries for immediate timeline updates
                   if (sortedDays.length > 0) {
                     queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                    queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
                   }
                   if (editingActivity?.day_id) {
                     queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
@@ -315,9 +317,10 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 toast.success('Activity deleted successfully');
                 setEditingActivity(null);
                 
-                // Invalidate both trip and activity queries for real-time updates
+                // Invalidate all related queries for immediate timeline updates
                 if (sortedDays.length > 0) {
                   queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                  queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
                 }
                 if (editingActivity?.day_id) {
                   queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
