@@ -9,6 +9,9 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 **January 16, 2025** - Enhanced Activity Dialog Date Selection + Fixed Dining Edit Issue
+- Fixed missing date selection functionality in activity editing from compact day cards
+- Added tripDates prop to EditActivityDialog and AddActivityDialog in TimelineContent
+- Enhanced date selection now works consistently from both side panel and compact day cards
 - Upgraded activity form date selection to match dining reservation sophistication
 - Replaced basic HTML select with shadcn Select component for better UX
 - Added full date formatting showing "Wednesday, January 16, 2025" instead of abbreviated formats
