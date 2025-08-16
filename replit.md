@@ -8,13 +8,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-**January 16, 2025** - Fixed Dining Reservation Edit Data Loading Issue
+**January 16, 2025** - Enhanced Activity Dialog Date Selection + Fixed Dining Edit Issue
+- Upgraded activity form date selection to match dining reservation sophistication
+- Replaced basic HTML select with shadcn Select component for better UX
+- Added full date formatting showing "Wednesday, January 16, 2025" instead of abbreviated formats
+- Enhanced currency selection with consistent styling and improved dropdown behavior
+- Improved z-index handling and visual consistency across all form dialogs
 - Resolved critical bug where existing dining reservation data wasn't populating correctly in edit forms
 - Added database lookup to convert day_id back to reservation_date when editing reservations
 - Implemented useEffect hook in RestaurantReservationForm to fetch date from trip_days table
 - Fixed form initialization to properly handle reservation data without reservation_date field
 - Enhanced data flow between DiningList and RestaurantReservationForm components
-- All dining reservation fields now load correctly when editing existing reservations
 
 **January 15, 2025** - Enhanced Trip Sharing UX and Mobile Keyboard Stability
 - Moved Share button from hero section to timeline toolbar, positioned left of Export PDF button
