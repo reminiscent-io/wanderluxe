@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -90,9 +90,15 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   };
 
   const tripDates = generateTripDates();
+  const [resolvedDate, setResolvedDate] = useState<string>('');
 
   // Smart date preselection logic
   const getPreselectedDate = () => {
+    // If we've resolved the date from day_id lookup, use that
+    if (resolvedDate) {
+      return resolvedDate;
+    }
+    
     // If editing existing reservation, use its date
     if (defaultValues?.reservation_date) {
       return defaultValues.reservation_date;
@@ -122,6 +128,32 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       reservation_date: getPreselectedDate(), // Smart date preselection
     },
   });
+
+  // Effect to fetch date from day_id when editing a reservation
+  useEffect(() => {
+    const fetchDateFromDayId = async () => {
+      // Only fetch if we're editing (have an ID), have day_id but no reservation_date
+      if (defaultValues?.id && defaultValues?.day_id && !defaultValues?.reservation_date) {
+        try {
+          const { data: tripDay, error } = await supabase
+            .from('trip_days')
+            .select('date')
+            .eq('day_id', defaultValues.day_id)
+            .single();
+
+          if (!error && tripDay?.date) {
+            setResolvedDate(tripDay.date);
+            // Also update the form value directly
+            form.setValue('reservation_date', tripDay.date);
+          }
+        } catch (error) {
+          console.error('Failed to fetch date for day_id:', defaultValues.day_id, error);
+        }
+      }
+    };
+
+    fetchDateFromDayId();
+  }, [defaultValues?.id, defaultValues?.day_id, defaultValues?.reservation_date, form]);
 
   // ──────────────────────────────────────────────────────────────────────────────
   // Submit handler

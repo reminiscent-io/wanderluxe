@@ -211,7 +211,12 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
           isSubmitting={isSubmitting}
           editingReservation={
             editingId
-              ? reservations.find((r) => r.id === editingId)
+              ? (() => {
+                  const foundReservation = reservations.find((r) => r.id === editingId);
+                  // We need to add a placeholder reservation_date that will be resolved in the form
+                  // The form will need to look up the actual date from day_id
+                  return foundReservation ? { ...foundReservation } : null;
+                })()
               : { day_id: dayId, trip_id: tripId, order_index: reservations.length }
           }
           title={editingId ? 'Edit Reservation' : 'Add Reservation'}
