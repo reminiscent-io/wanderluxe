@@ -4,6 +4,8 @@ import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
 import { Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
@@ -181,20 +183,23 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <label htmlFor="date" className="block text-sm font-medium text-gray-700">
             Date <span className="text-red-500">*</span>
           </label>
-          <select
-            id="date"
-            value={activity.date || ''}
-            onChange={(e) => onActivityChange({ ...activity, date: e.target.value })}
-            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.date ? 'border-red-500' : 'border-gray-300'}`}
-            required
-          >
-            <option value="">Select a date</option>
-            {tripDateOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select onValueChange={(value) => onActivityChange({ ...activity, date: value })} value={activity.date || ''}>
+            <SelectTrigger className={`mt-1 ${errors.date ? 'border-red-500' : ''}`}>
+              <SelectValue placeholder="Select a date" />
+            </SelectTrigger>
+            <SelectContent className="z-[999]">
+              {tripDateOptions.map((option) => {
+                // Parse date safely without timezone issues for better formatting
+                const [year, month, day] = option.value.split('-').map(Number);
+                const safeDate = new Date(year, month - 1, day);
+                return (
+                  <SelectItem key={option.value} value={option.value}>
+                    {format(safeDate, 'EEEE, MMMM d, yyyy')}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
           {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
         </div>
       )}
@@ -254,18 +259,21 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
             Currency
           </label>
-          <select
-            id="currency"
-            value={activity.currency}
-            onChange={(e) => onActivityChange({ ...activity, currency: e.target.value as Currency })}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
-          >
-            {CURRENCIES.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency} {CURRENCY_SYMBOLS[currency]} - {CURRENCY_NAMES[currency]}
-              </option>
-            ))}
-          </select>
+          <Select onValueChange={(value) => onActivityChange({ ...activity, currency: value as Currency })} value={activity.currency || ''}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select currency" />
+            </SelectTrigger>
+            <SelectContent className="z-[999] max-h-48 overflow-y-auto">
+              {CURRENCIES.map((currency) => (
+                <SelectItem key={currency} value={currency}>
+                  <span className="font-medium">{currency}</span>
+                  <span className="ml-1 text-sand-600 text-sm">
+                    {CURRENCY_SYMBOLS[currency]}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
