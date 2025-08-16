@@ -146,6 +146,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   end_time: activity.end_time ? activity.end_time.slice(0, 5) : '',
                   cost: activity.cost ? String(activity.cost) : '',
                   currency: activity.currency || 'USD',
+                  date: day.date.split('T')[0], // Add the current day's date
                 });
                 // Don't open the add dialog when editing
                 setActivityOpen(false);
