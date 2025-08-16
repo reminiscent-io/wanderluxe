@@ -64,6 +64,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
               submitLabel="Save Changes"
               eventId={eventId}
               tripDates={tripDates}
+              preselectedDate={activity.date}
             />
           </div>
         </div>
