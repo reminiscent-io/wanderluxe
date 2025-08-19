@@ -1,20 +1,18 @@
 import * as React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { Controller, useFormContext, Control as RHFControl } from "react-hook-form";
+import {
+  Controller,
+  useFormContext,
+  Control as RHFControl,
+} from "react-hook-form";
 
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 
 export type DateTimeRange = {
   from?: Date | null;
@@ -28,10 +26,10 @@ interface Props {
   label: string;
   required?: boolean;
   defaultMonth?: Date;
+  /** Pass `control` if not inside a FormProvider */
   control?: RHFControl<any>;
+  /** Hide the time input section */
   hideTimeInputs?: boolean;
-  /** 15 or 30 minute steps */
-  minuteStep?: 15 | 30;
 }
 
 /* helper: "15:00" → "3:00 pm" */
@@ -42,18 +40,12 @@ const prettyTime = (t?: string) => {
   return format(d, "h:mm aa").toLowerCase();
 };
 
-/** format date only (no TZ confusion) */
-const fmtDate = (d?: Date | null) => (d ? format(d, "MMM d, yyyy") : "");
-
-const timeOptions = (step: 15 | 30 = 30) => {
-  const out: { value: string; label: string }[] = [];
-  for (let h = 0; h < 24; h++) {
-    for (let m = 0; m < 60; m += step) {
-      const v = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-      out.push({ value: v, label: prettyTime(v) });
-    }
-  }
-  return out;
+/** Strip out any timezone offset so we format only the date portion */
+const fmtDate = (d?: Date | null) => {
+  if (!d) return "";
+  // shift by local offset to treat as UTC midnight
+  const utcMidnight = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  return format(utcMidnight, "MMM d, yyyy");
 };
 
 export default function DateTimeRangeField({
@@ -63,20 +55,14 @@ export default function DateTimeRangeField({
   defaultMonth,
   control: externalControl,
   hideTimeInputs = false,
-  minuteStep = 30,
 }: Props) {
   const ctx = useFormContext();
   const control = ctx?.control ?? externalControl;
-  if (!control) throw new Error("DateTimeRangeField: no RHF control found.");
-
-  // when inside a Radix Dialog, portal into its content to avoid z fights
-  const dialogContainer =
-    typeof document !== "undefined"
-      ? (document.querySelector("[data-radix-dialog-content]") as HTMLElement | null) ??
-        (document.querySelector('[role="dialog"]') as HTMLElement | null)
-      : null;
-
-  const times = React.useMemo(() => timeOptions(minuteStep), [minuteStep]);
+  if (!control) {
+    throw new Error(
+      "DateTimeRangeField: no RHF control found. Wrap in <Form> or pass control prop."
+    );
+  }
 
   return (
     <Controller
@@ -84,6 +70,9 @@ export default function DateTimeRangeField({
       control={control}
       render={({ field }) => {
         const value = (field.value || {}) as DateTimeRange;
+
+        // Local popover state so interaction in Dialog doesn't auto-close it
+        const [open, setOpen] = React.useState(false);
 
         const dateDisplay =
           value.from && value.to
@@ -97,7 +86,15 @@ export default function DateTimeRangeField({
             ? `${prettyTime(value.fromTime)} → ${prettyTime(value.toTime)}`
             : null;
 
-        const update = (patch: Partial<DateTimeRange>) => field.onChange({ ...value, ...patch });
+        const update = (patch: Partial<DateTimeRange>) =>
+          field.onChange({ ...value, ...patch });
+
+        const clear = () => {
+          field.onChange({ from: null, to: null, fromTime: "", toTime: "" });
+          setOpen(false);
+        };
+
+        const applyAndClose = () => setOpen(false);
 
         return (
           <div className="space-y-1">
@@ -105,12 +102,13 @@ export default function DateTimeRangeField({
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover modal={false}>
+            <Popover open={open} onOpenChange={setOpen} modal={false}>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-sand-50 border-sand-200 text-sand-900 h-auto py-2 px-3",
+                    "w-full max-w-full justify-start text-left font-normal bg-white border-sand-300 text-sand-900 h-auto py-2 px-3",
                     !value.from && "text-sand-500"
                   )}
                 >
@@ -126,79 +124,93 @@ export default function DateTimeRangeField({
                 </Button>
               </PopoverTrigger>
 
+              {/* IMPORTANT:
+                 - modal={false} above lets the popover receive focus inside a Dialog
+                 - prevent auto focusing the first focusable which can fight with Dialog focus guards
+              */}
               <PopoverContent
-                // if we're in a dialog, mount here to share stacking context
-                // @ts-expect-error shadcn PopoverContent forwards to Radix Portal
-                container={dialogContainer ?? undefined}
                 align="start"
                 sideOffset={8}
-                className="z-[700] w-[340px] p-0 bg-white"
+                className="z-[1001] w-[360px] max-w-[calc(100vw-2rem)] p-0 rounded-md border bg-white shadow-lg"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => e.stopPropagation()}
+                // Clicking inside should never be treated as "outside"
+                onPointerDownOutside={(e) => {
+                  // If a native time dropdown fires a pointer event from its portal, ignore it
+                  // (prevents the popover from closing while using the time picker UI)
+                  // @ts-ignore
+                  if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
+                    e.preventDefault();
+                  }
+                }}
               >
-                <Calendar
-                  mode="range"
-                  numberOfMonths={1}
-                  selected={{ from: value.from ?? undefined, to: value.to ?? undefined }}
-                  onSelect={(r) => update({ from: r?.from ?? null, to: r?.to ?? null })}
-                  defaultMonth={defaultMonth}
-                  initialFocus
-                />
+                <div className="p-3 pb-2">
+                  <Calendar
+                    mode="range"
+                    numberOfMonths={1}
+                    captionLayout="buttons"
+                    selected={{
+                      from: value.from ?? undefined,
+                      to: value.to ?? undefined,
+                    }}
+                    onSelect={(r) => update({ from: r?.from ?? null, to: r?.to ?? null })}
+                    defaultMonth={value.from ?? defaultMonth}
+                    initialFocus
+                    className="rounded-md border"
+                  />
+                </div>
 
                 {!hideTimeInputs && (
-                  <div className="border-t px-3 py-2 space-y-2">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Start time</Label>
-                        <Select
-                          value={value.fromTime ?? ""}
-                          onValueChange={(v) => update({ fromTime: v })}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="--:--" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[240px]">
-                            {times.map((t) => (
-                              <SelectItem key={t.value} value={t.value}>
-                                {t.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">End time</Label>
-                        <Select
-                          value={value.toTime ?? ""}
-                          onValueChange={(v) => update({ toTime: v })}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="--:--" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[240px]">
-                            {times.map((t) => (
-                              <SelectItem key={t.value} value={t.value}>
-                                {t.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div className="flex items-end gap-3 border-t px-3 py-3">
+                    <div className="flex-1 flex flex-col space-y-1">
+                      <Label className="text-xs">Start Time</Label>
+                      <Input
+                        type="time"
+                        value={value.fromTime ?? ""}
+                        onChange={(e) => update({ fromTime: e.target.value })}
+                        className="w-full"
+                        data-keep-open
+                      />
                     </div>
-
-                    <div className="flex items-center justify-between pt-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => update({ from: null, to: null, fromTime: "", toTime: "" })}
-                      >
-                        Clear
-                      </Button>
-                      <Button type="button" size="sm" onClick={() => (document.activeElement as HTMLElement)?.blur()}>
-                        Apply
-                      </Button>
+                    <div className="flex-1 flex flex-col space-y-1">
+                      <Label className="text-xs">End Time</Label>
+                      <Input
+                        type="time"
+                        value={value.toTime ?? ""}
+                        onChange={(e) => update({ toTime: e.target.value })}
+                        className="w-full"
+                        data-keep-open
+                      />
                     </div>
                   </div>
                 )}
+
+                <div className="flex items-center justify-between border-t px-3 py-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="px-2"
+                    onClick={clear}
+                  >
+                    Clear
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setOpen(false)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={applyAndClose}
+                      className="bg-earth-500 text-white hover:bg-earth-600"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
               </PopoverContent>
             </Popover>
           </div>
