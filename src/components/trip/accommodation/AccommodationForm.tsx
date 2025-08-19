@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { format, parse, parseISO } from "date-fns";
+import { format, parse } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,17 +11,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormControl,
 } from "@/components/ui/form";
 import HotelSearchInput from "./HotelSearchInput";
 import HotelContactInfo from "./form/HotelContactInfo";
+import DateTimeRangeField, {
+  DateTimeRange,
+} from "@/components/ui/DateTimeRangeField";
 import { AccommodationFormData } from "@/services/accommodation/accommodationService";
 import { loadGoogleMapsAPI } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { CURRENCIES, CURRENCY_NAMES } from "@/utils/currencyConstants";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Input } from "@/components/ui/input";
 
 /* -------------------------------------------------------------------------- */
 /* Schema                                                                     */
@@ -253,123 +253,16 @@ export default function AccommodationForm({
         />
 
         {/* Unified Date + Time Picker */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="hotel_checkin_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Check-in Date</FormLabel>
-                  <FormControl>
-                    <DatePicker
-                      date={field.value ? parseISO(field.value) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          const dateStr = format(date, "yyyy-MM-dd");
-                          field.onChange(dateStr);
-                          // Update stay range as well
-                          const currentRange = form.getValues("stay_range");
-                          form.setValue("stay_range", {
-                            ...currentRange,
-                            from: date,
-                          });
-                        }
-                      }}
-                      disabled={saving}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="hotel_checkout_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Check-out Date</FormLabel>
-                  <FormControl>
-                    <DatePicker
-                      date={field.value ? parseISO(field.value) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          const dateStr = format(date, "yyyy-MM-dd");
-                          field.onChange(dateStr);
-                          // Update stay range as well
-                          const currentRange = form.getValues("stay_range");
-                          form.setValue("stay_range", {
-                            ...currentRange,
-                            to: date,
-                          });
-                        }
-                      }}
-                      disabled={saving}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="checkin_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Check-in Time</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="time"
-                      {...field}
-                      disabled={saving}
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                        // Update stay range as well
-                        const currentRange = form.getValues("stay_range");
-                        form.setValue("stay_range", {
-                          ...currentRange,
-                          fromTime: e.target.value,
-                        });
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="checkout_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Check-out Time</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="time"
-                      {...field}
-                      disabled={saving}
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                        // Update stay range as well
-                        const currentRange = form.getValues("stay_range");
-                        form.setValue("stay_range", {
-                          ...currentRange,
-                          toTime: e.target.value,
-                        });
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+        <DateTimeRangeField
+          name="stay_range"
+          label="Stay Dates"
+          required
+          defaultMonth={
+            tripArrivalDate
+              ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
+              : undefined
+          }
+        />
 
         {/* Cost & Currency */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
