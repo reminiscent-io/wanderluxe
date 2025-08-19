@@ -112,9 +112,9 @@ export default function DateTimeRangeField({
                     !value.from && "text-sand-500"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
                   <div className="flex flex-col items-start text-left min-w-0 flex-1">
-                    <span className="truncate w-full">{dateDisplay}</span>
+                    <span className="truncate w-full text-sm">{dateDisplay}</span>
                     {timeDisplay && (
                       <span className="text-xs text-sand-600 truncate w-full mt-0.5">
                         {timeDisplay}
@@ -130,8 +130,8 @@ export default function DateTimeRangeField({
               */}
               <PopoverContent
                 align="start"
-                sideOffset={8}
-                className="z-[1001] w-[360px] max-w-[calc(100vw-2rem)] p-0 rounded-md border bg-white shadow-lg"
+                sideOffset={4}
+                className="z-[1050] w-[320px] max-w-[calc(100vw-1rem)] p-0 rounded-md border bg-white shadow-lg"
                 onOpenAutoFocus={(e) => e.preventDefault()}
                 onEscapeKeyDown={(e) => e.stopPropagation()}
                 // Clicking inside should never be treated as "outside"
@@ -144,11 +144,11 @@ export default function DateTimeRangeField({
                   }
                 }}
               >
-                <div className="p-3 pb-2">
+                <div className="p-2">
                   <Calendar
                     mode="range"
                     numberOfMonths={1}
-                    captionLayout="buttons"
+                    captionLayout="dropdown"
                     selected={{
                       from: value.from ?? undefined,
                       to: value.to ?? undefined,
@@ -156,29 +156,29 @@ export default function DateTimeRangeField({
                     onSelect={(r) => update({ from: r?.from ?? null, to: r?.to ?? null })}
                     defaultMonth={value.from ?? defaultMonth}
                     initialFocus
-                    className="rounded-md border"
+                    className="rounded-md border-0"
                   />
                 </div>
 
                 {!hideTimeInputs && (
-                  <div className="flex items-end gap-3 border-t px-3 py-3">
+                  <div className="flex items-end gap-2 border-t px-3 py-2">
                     <div className="flex-1 flex flex-col space-y-1">
-                      <Label className="text-xs">Start Time</Label>
+                      <Label className="text-xs font-medium">Start Time</Label>
                       <Input
                         type="time"
                         value={value.fromTime ?? ""}
                         onChange={(e) => update({ fromTime: e.target.value })}
-                        className="w-full"
+                        className="w-full h-8 text-sm"
                         data-keep-open
                       />
                     </div>
                     <div className="flex-1 flex flex-col space-y-1">
-                      <Label className="text-xs">End Time</Label>
+                      <Label className="text-xs font-medium">End Time</Label>
                       <Input
                         type="time"
                         value={value.toTime ?? ""}
                         onChange={(e) => update({ toTime: e.target.value })}
-                        className="w-full"
+                        className="w-full h-8 text-sm"
                         data-keep-open
                       />
                     </div>
@@ -189,7 +189,8 @@ export default function DateTimeRangeField({
                   <Button
                     type="button"
                     variant="ghost"
-                    className="px-2"
+                    size="sm"
+                    className="px-2 h-7 text-xs"
                     onClick={clear}
                   >
                     Clear
@@ -198,14 +199,17 @@ export default function DateTimeRangeField({
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-3"
                       onClick={() => setOpen(false)}
                     >
                       Close
                     </Button>
                     <Button
                       type="button"
+                      size="sm"
+                      className="bg-earth-500 text-white hover:bg-earth-600 h-7 text-xs px-3"
                       onClick={applyAndClose}
-                      className="bg-earth-500 text-white hover:bg-earth-600"
                     >
                       Apply
                     </Button>
