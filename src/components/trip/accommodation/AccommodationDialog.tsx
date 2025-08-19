@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +6,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Tables } from '@/integrations/supabase/types';
-import AccommodationForm from './AccommodationForm';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { Tables } from "@/integrations/supabase/types";
+import AccommodationForm from "./AccommodationForm";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-type Accommodation = Tables<'accommodations'>;
+type Accommodation = Tables<"accommodations">;
 
 interface AccommodationDialogProps {
   tripId: string;
@@ -28,7 +28,10 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   initialData,
   onSuccess,
 }) => {
-  const [tripDates, setTripDates] = useState<{ arrival_date: string | null; departure_date: string | null }>({
+  const [tripDates, setTripDates] = useState<{
+    arrival_date: string | null;
+    departure_date: string | null;
+  }>({
     arrival_date: null,
     departure_date: null,
   });
@@ -36,13 +39,12 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   useEffect(() => {
     const fetchTripDates = async () => {
       const { data, error } = await supabase
-        .from('trips')
-        .select('arrival_date, departure_date')
-        .eq('trip_id', tripId)
+        .from("trips")
+        .select("arrival_date, departure_date")
+        .eq("trip_id", tripId)
         .single();
       if (!error && data) {
         if (data.arrival_date && data.departure_date) {
-
           setTripDates({
             arrival_date: data.arrival_date,
             departure_date: data.departure_date,
@@ -50,14 +52,11 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         }
       }
     };
-    if (open) {
-      fetchTripDates();
-    }
+    if (open) fetchTripDates();
   }, [tripId, open]);
 
   const handleSubmit = async (data: any) => {
     try {
-      // Consolidate the common accommodation fields
       const basePayload = {
         hotel: data.hotel,
         hotel_details: data.hotel_details,
@@ -66,7 +65,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         hotel_checkout_date: data.hotel_checkout_date,
         checkin_time: data.checkin_time,
         checkout_time: data.checkout_time,
-        cost: data.cost,
+        cost: data.cost, // number|null (kept numeric)
         currency: data.currency,
         hotel_address: data.hotel_address,
         hotel_phone: data.hotel_phone,
@@ -75,33 +74,31 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
       };
 
       if (initialData?.stay_id) {
-        // Update existing accommodation
         const { error } = await supabase
-          .from('accommodations')
+          .from("accommodations")
           .update({ ...basePayload })
-          .eq('stay_id', initialData.stay_id);
+          .eq("stay_id", initialData.stay_id);
         if (error) throw error;
-        toast.success('Accommodation updated successfully');
+        toast.success("Accommodation updated successfully");
       } else {
-        // Create new accommodation with extra fields
-        const { error } = await supabase
-          .from('accommodations')
-          .insert([{
+        const { error } = await supabase.from("accommodations").insert([
+          {
             trip_id: tripId,
-            title: data.hotel || 'Unnamed Accommodation', // Ensure title is set
+            title: data.hotel || "Unnamed Accommodation",
             ...basePayload,
             order_index: 0,
-            expense_type: 'accommodation',
+            expense_type: "accommodation",
             created_at: new Date().toISOString(),
-          }]);
+          },
+        ]);
         if (error) throw error;
-        toast.success('Accommodation added successfully');
+        toast.success("Accommodation added successfully");
       }
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving accommodation:', error);
-      toast.error('Failed to save accommodation');
+      console.error("Error saving accommodation:", error);
+      toast.error("Failed to save accommodation");
     }
   };
 
@@ -109,43 +106,45 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     try {
       if (initialData?.stay_id) {
         const { error } = await supabase
-          .from('accommodations')
+          .from("accommodations")
           .delete()
-          .eq('stay_id', initialData.stay_id);
-        
+          .eq("stay_id", initialData.stay_id);
+
         if (error) throw error;
-        
-        toast.success('Accommodation deleted successfully');
+
+        toast.success("Accommodation deleted successfully");
         onSuccess();
         onOpenChange(false);
       }
     } catch (error) {
-      console.error('Error deleting accommodation:', error);
-      toast.error('Failed to delete accommodation');
+      console.error("Error deleting accommodation:", error);
+      toast.error("Failed to delete accommodation");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        // keep the dialog open on outside clicks while editing
         onPointerDownOutside={(e) => e.preventDefault()}
         className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto p-4 sm:p-6"
       >
         <div className="flex flex-col max-h-[90vh] w-full">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>
-              {initialData ? 'Edit Accommodation' : 'Add Accommodation'}
+              {initialData ? "Edit Accommodation" : "Add Accommodation"}
             </DialogTitle>
             <DialogDescription>
-              {initialData ? 'Update your accommodation details.' : 'Enter the details for your accommodation.'}
+              {initialData
+                ? "Update your accommodation details."
+                : "Enter the details for your accommodation."}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Body */}
           <div className="flex-1 overflow-y-auto scrollbar-none px-1">
             <AccommodationForm
-              initialData={initialData ? {
-                ...initialData,
-                cost: initialData.cost?.toString() || null
-              } : undefined}
+              initialData={initialData ?? undefined}
               onSubmit={handleSubmit}
               onCancel={() => onOpenChange(false)}
               tripArrivalDate={tripDates.arrival_date}
