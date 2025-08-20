@@ -170,7 +170,7 @@ export default function LuxuryDateTimeRangePicker({
                   <div className="p-6">
                     <Calendar
                       mode="range"
-                      numberOfMonths={isMobile ? 1 : 2}
+                      numberOfMonths={1}
                       captionLayout="dropdown"
                       selected={{
                         from: value.start ?? undefined,

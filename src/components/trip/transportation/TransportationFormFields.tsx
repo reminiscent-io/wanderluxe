@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import DateTimeRangeField, { DateTimeRange } from "@/components/ui/DateTimeRangeField";
+import LuxuryDateTimeRangePicker, { LuxuryDateTimeRange } from "@/components/ui/LuxuryDateTimeRangePicker";
 import LocationInputPair from "./LocationInputPair";
 import {
   CURRENCIES,
@@ -104,7 +104,7 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
       />
 
       {/* Unified Date + Time Picker */}
-      <DateTimeRangeField
+      <LuxuryDateTimeRangePicker
         name="travel_range"
         label="Travel Dates"
         required
