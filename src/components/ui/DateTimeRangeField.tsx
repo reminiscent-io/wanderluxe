@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -6,13 +7,12 @@ import {
   Control as RHFControl,
 } from "react-hook-form";
 
-import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 export type DateTimeRange = {
   from?: Date | null;
@@ -70,18 +70,31 @@ export default function DateTimeRangeField({
       control={control}
       render={({ field }) => {
         const value = (field.value || {}) as DateTimeRange;
-        const dateDisplay = value.from && value.to
-          ? `${fmtDate(value.from)} – ${fmtDate(value.to)}`
-          : value.from
-          ? `${fmtDate(value.from)} → Select end date`
-          : "Select date range";
 
-        const timeDisplay = !hideTimeInputs && value.fromTime && value.toTime
-          ? `${prettyTime(value.fromTime)} → ${prettyTime(value.toTime)}`
-          : null;
+        // Local popover state so interaction in Dialog doesn't auto-close it
+        const [open, setOpen] = React.useState(false);
+
+        const dateDisplay =
+          value.from && value.to
+            ? `${fmtDate(value.from)} – ${fmtDate(value.to)}`
+            : value.from
+            ? `${fmtDate(value.from)} → Select end date`
+            : "Select date range";
+
+        const timeDisplay =
+          !hideTimeInputs && value.fromTime && value.toTime
+            ? `${prettyTime(value.fromTime)} → ${prettyTime(value.toTime)}`
+            : null;
 
         const update = (patch: Partial<DateTimeRange>) =>
           field.onChange({ ...value, ...patch });
+
+        const clear = () => {
+          field.onChange({ from: null, to: null, fromTime: "", toTime: "" });
+          setOpen(false);
+        };
+
+        const applyAndClose = () => setOpen(false);
 
         return (
           <div className="space-y-1">
@@ -89,18 +102,19 @@ export default function DateTimeRangeField({
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover>
+            <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   className={cn(
-                    "w-full max-w-full justify-start text-left font-normal bg-sand-800 border-sand-700 text-sand-900 h-auto py-2 px-3",
+                    "w-full max-w-full justify-start text-left font-normal bg-white border-sand-300 text-sand-900 h-auto py-2 px-3",
                     !value.from && "text-sand-500"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
                   <div className="flex flex-col items-start text-left min-w-0 flex-1">
-                    <span className="truncate w-full">{dateDisplay}</span>
+                    <span className="truncate w-full text-sm">{dateDisplay}</span>
                     {timeDisplay && (
                       <span className="text-xs text-sand-600 truncate w-full mt-0.5">
                         {timeDisplay}
@@ -110,58 +124,92 @@ export default function DateTimeRangeField({
                 </Button>
               </PopoverTrigger>
 
-              <PopoverPrimitive.Portal>
-                <PopoverPrimitive.Content
-                  avoidCollisions={true}
-                  collisionPadding={40}
-                  collisionBoundary={typeof document !== 'undefined' ? document.querySelector('[data-radix-dialog-content]') || document.querySelector('[role="dialog"]') || document.body : undefined}
-                  className="z-[700] w-[340px] max-w-[calc(100vw-3rem)] rounded-md border bg-white p-0 shadow-lg"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-                  style={{
-                    position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    maxHeight: 'calc(100vh - 80px)',
-                    overflow: 'auto'
-                  }}
-                >
+              <PopoverContent
+                align="start"
+                side="bottom"
+                sideOffset={4}
+                className="z-[1000] w-[300px] max-w-[calc(100vw-1rem)] p-0 rounded-md border bg-white shadow-lg"
+                onEscapeKeyDown={(e) => e.stopPropagation()}
+                onPointerDownOutside={(e) => {
+                  // @ts-ignore
+                  if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <div className="p-2">
                   <Calendar
                     mode="range"
                     numberOfMonths={1}
+                    captionLayout="dropdown"
                     selected={{
                       from: value.from ?? undefined,
                       to: value.to ?? undefined,
                     }}
-                    onSelect={(r) => update({ from: r?.from, to: r?.to })}
-                    defaultMonth={defaultMonth}
-                    initialFocus
+                    onSelect={(r) => {
+                      update({ from: r?.from ?? null, to: r?.to ?? null });
+                    }}
+                    defaultMonth={value.from ?? defaultMonth}
+                    className="rounded-md"
                   />
+                </div>
 
-                  {!hideTimeInputs && (
-                    <div className="flex items-center gap-4 border-t px-3 py-2">
-                      <div className="flex flex-col space-y-1">
-                        <Label className="text-xs">Start&nbsp;Time</Label>
-                        <Input
-                          type="time"
-                          value={value.fromTime ?? ""}
-                          onChange={(e) => update({ fromTime: e.target.value })}
-                          className="w-28"
-                        />
-                      </div>
-                      <div className="flex flex-col space-y-1">
-                        <Label className="text-xs">End&nbsp;Time</Label>
-                        <Input
-                          type="time"
-                          value={value.toTime ?? ""}
-                          onChange={(e) => update({ toTime: e.target.value })}
-                          className="w-28"
-                        />
-                      </div>
+                {!hideTimeInputs && (
+                  <div className="flex items-end gap-2 border-t px-3 py-2">
+                    <div className="flex-1 flex flex-col space-y-1">
+                      <Label className="text-xs font-medium">Start Time</Label>
+                      <Input
+                        type="time"
+                        value={value.fromTime ?? ""}
+                        onChange={(e) => update({ fromTime: e.target.value })}
+                        className="w-full h-8 text-sm"
+                        data-keep-open
+                      />
                     </div>
-                  )}
-                </PopoverPrimitive.Content>
-              </PopoverPrimitive.Portal>
+                    <div className="flex-1 flex flex-col space-y-1">
+                      <Label className="text-xs font-medium">End Time</Label>
+                      <Input
+                        type="time"
+                        value={value.toTime ?? ""}
+                        onChange={(e) => update({ toTime: e.target.value })}
+                        className="w-full h-8 text-sm"
+                        data-keep-open
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between border-t px-3 py-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="px-2 h-7 text-xs"
+                    onClick={clear}
+                  >
+                    Clear
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-3"
+                      onClick={() => setOpen(false)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-earth-500 text-white hover:bg-earth-600 h-7 text-xs px-3"
+                      onClick={applyAndClose}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
             </Popover>
           </div>
         );

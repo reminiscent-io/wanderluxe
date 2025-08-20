@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/form";
 import HotelSearchInput from "./HotelSearchInput";
 import HotelContactInfo from "./form/HotelContactInfo";
-import DateTimeRangeField, {
-  DateTimeRange,
-} from "@/components/ui/DateTimeRangeField";
+import LuxuryDateTimeRangePicker, {
+  LuxuryDateTimeRange,
+} from "@/components/ui/LuxuryDateTimeRangePicker";
 import { AccommodationFormData } from "@/services/accommodation/accommodationService";
 import { loadGoogleMapsAPI } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
@@ -96,6 +96,7 @@ export default function AccommodationForm({
         initialData?.hotel_checkout_date ?? tripDepartureDate ?? "",
       checkin_time: initialData?.checkin_time ?? "15:00",
       checkout_time: initialData?.checkout_time ?? "11:00",
+      // IMPORTANT: keep number/null here; don't coerce to string
       cost: initialData?.cost ?? null,
       currency: initialData?.currency ?? "USD",
       hotel_address: initialData?.hotel_address ?? "",
@@ -109,17 +110,25 @@ export default function AccommodationForm({
       stay_range:
         initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
           ? {
-              from: parse(initialData.hotel_checkin_date, "yyyy-MM-dd", new Date()),
-              to: parse(initialData.hotel_checkout_date, "yyyy-MM-dd", new Date()),
-              fromTime: initialData.checkin_time ?? "15:00",
-              toTime: initialData.checkout_time ?? "11:00",
+              start: parse(
+                initialData.hotel_checkin_date,
+                "yyyy-MM-dd",
+                new Date()
+              ),
+              end: parse(
+                initialData.hotel_checkout_date,
+                "yyyy-MM-dd",
+                new Date()
+              ),
+              startTime: initialData.checkin_time ?? "15:00",
+              endTime: initialData.checkout_time ?? "11:00",
             }
           : tripArrivalDate && tripDepartureDate
           ? {
-              from: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
-              to: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
-              fromTime: "15:00",
-              toTime: "11:00",
+              start: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
+              end: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
+              startTime: "15:00",
+              endTime: "11:00",
             }
           : undefined,
     },
@@ -127,13 +136,17 @@ export default function AccommodationForm({
 
   /* -------------------- Reset form when trip dates arrive ------------- */
   useEffect(() => {
-    // Only set dates for new accommodations when trip dates become available
-    if (!initialData && tripArrivalDate && tripDepartureDate && !form.getValues("stay_range")) {
+    if (
+      !initialData &&
+      tripArrivalDate &&
+      tripDepartureDate &&
+      !form.getValues("stay_range")
+    ) {
       const newStayRange = {
-        from: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
-        to: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
-        fromTime: "15:00",
-        toTime: "11:00",
+        start: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
+        end: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
+        startTime: "15:00",
+        endTime: "11:00",
       };
       form.setValue("stay_range", newStayRange);
       form.setValue("hotel_checkin_date", tripArrivalDate);
@@ -145,32 +158,24 @@ export default function AccommodationForm({
   const stayRange = useWatch({
     control: form.control,
     name: "stay_range",
-  }) as DateTimeRange;
+  }) as LuxuryDateTimeRange;
 
   useEffect(() => {
-    if (stayRange?.from) {
-      form.setValue(
-        "hotel_checkin_date",
-        format(stayRange.from, "yyyy-MM-dd"),
-        { shouldValidate: false }
-      );
-      form.setValue(
-        "checkin_time",
-        stayRange.fromTime ?? "15:00",
-        { shouldValidate: false }
-      );
+    if (stayRange?.start) {
+      form.setValue("hotel_checkin_date", format(stayRange.start, "yyyy-MM-dd"), {
+        shouldValidate: false,
+      });
+      form.setValue("checkin_time", stayRange.startTime ?? "15:00", {
+        shouldValidate: false,
+      });
     }
-    if (stayRange?.to) {
-      form.setValue(
-        "hotel_checkout_date",
-        format(stayRange.to, "yyyy-MM-dd"),
-        { shouldValidate: false }
-      );
-      form.setValue(
-        "checkout_time",
-        stayRange.toTime ?? "11:00",
-        { shouldValidate: false }
-      );
+    if (stayRange?.end) {
+      form.setValue("hotel_checkout_date", format(stayRange.end, "yyyy-MM-dd"), {
+        shouldValidate: false,
+      });
+      form.setValue("checkout_time", stayRange.endTime ?? "11:00", {
+        shouldValidate: false,
+      });
     }
   }, [stayRange, form]);
 
@@ -252,11 +257,12 @@ export default function AccommodationForm({
           )}
         />
 
-        {/* Unified Date + Time Picker */}
-        <DateTimeRangeField
+        {/* Luxury Date + Time Picker */}
+        <LuxuryDateTimeRangePicker
           name="stay_range"
           label="Stay Dates"
           required
+          placeholder="Select check-in and check-out dates"
           defaultMonth={
             tripArrivalDate
               ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
@@ -275,7 +281,10 @@ export default function AccommodationForm({
                 <input
                   type="number"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  onChange={(e) => {
+                    const n = e.target.value === "" ? null : e.target.valueAsNumber;
+                    field.onChange(Number.isFinite(n as number) ? n : null);
+                  }}
                   className="w-full rounded-md border p-2"
                 />
               </FormItem>
@@ -287,10 +296,7 @@ export default function AccommodationForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Currency</FormLabel>
-                <select
-                  {...field}
-                  className="w-full rounded-md border p-2"
-                >
+                <select {...field} className="w-full rounded-md border p-2">
                   {CURRENCY_OPTIONS.map((c) => (
                     <option key={c.value} value={c.value}>
                       {c.label}

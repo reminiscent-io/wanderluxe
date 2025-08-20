@@ -7,7 +7,7 @@ import { format, parse } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import TransportationFormFields from "./TransportationFormFields";
-import { DateTimeRange } from "@/components/ui/DateTimeRangeField";
+import { LuxuryDateTimeRange } from "@/components/ui/LuxuryDateTimeRangePicker";
 import { CURRENCIES } from "@/utils/currencyConstants";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
@@ -57,10 +57,10 @@ export default function TransportationForm({
       travel_range:
         initialData?.start_date
           ? {
-              from: parse(initialData.start_date, "yyyy-MM-dd", new Date()),
-              to: initialData.end_date ? parse(initialData.end_date, "yyyy-MM-dd", new Date()) : parse(initialData.start_date, "yyyy-MM-dd", new Date()),
-              fromTime: initialData.start_time || "",
-              toTime: initialData.end_time || "",
+              start: parse(initialData.start_date, "yyyy-MM-dd", new Date()),
+              end: initialData.end_date ? parse(initialData.end_date, "yyyy-MM-dd", new Date()) : parse(initialData.start_date, "yyyy-MM-dd", new Date()),
+              startTime: initialData.start_time || "",
+              endTime: initialData.end_time || "",
             }
           : undefined,
       provider: initialData?.provider ?? "",
@@ -75,33 +75,16 @@ export default function TransportationForm({
 
   /* ------------------- reset on trip-date change ------------------- */
   useEffect(() => {
-    // For new forms (no initialData) OR when initialData lacks proper dates, use trip dates as fallback
-    const shouldUseTripDates = !initialData || 
-      (!initialData.start_date || !initialData.end_date);
-    
-    if (shouldUseTripDates && (tripArrivalDate || tripDepartureDate)) {
+    // Only use trip dates for completely new forms (no initialData at all)
+    // Don't override existing transportation data with trip dates
+    if (!initialData && (tripArrivalDate || tripDepartureDate)) {
       const current = form.getValues();
-      // Preserve existing times from initialData if available, otherwise use current form values
-      const preservedFromTime = initialData?.start_time || current.travel_range?.fromTime || "";
-      const preservedToTime = initialData?.end_time || current.travel_range?.toTime || "";
       
-      form.reset({
-        ...current,
-        travel_range:
-          tripArrivalDate || tripDepartureDate
-            ? {
-                from:
-                  tripArrivalDate
-                    ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
-                    : current.travel_range?.from,
-                to:
-                  tripDepartureDate
-                    ? parse(tripDepartureDate, "yyyy-MM-dd", new Date())
-                    : current.travel_range?.to,
-                fromTime: preservedFromTime,
-                toTime: preservedToTime,
-              }
-            : undefined,
+      form.setValue("travel_range", {
+        start: tripArrivalDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
+        end: tripDepartureDate ? parse(tripDepartureDate, "yyyy-MM-dd", new Date()) : null,
+        startTime: "",
+        endTime: "",
       });
     }
   }, [tripArrivalDate, tripDepartureDate, initialData, form]);
@@ -110,19 +93,19 @@ export default function TransportationForm({
   const travelRange = useWatch({
     control: form.control,
     name: "travel_range",
-  }) as DateTimeRange;
+  }) as LuxuryDateTimeRange;
 
   /* ------------------- submit handler ------------------- */
   const [saving, setSaving] = useState(false);
   const handleSubmit = async (data: z.infer<typeof schema>) => {
-    if (!travelRange?.from || !travelRange?.to) {
+    if (!travelRange?.start || !travelRange?.end) {
       toast.error("Please select departure and arrival dates");
       return;
     }
 
     const payload: Partial<Transportation> = {
       ...initialData,
-      type: data.type,
+      type: data.type as any,
       departure_location: data.departure_location,
       arrival_location: data.arrival_location,
       provider: data.provider,
@@ -130,10 +113,10 @@ export default function TransportationForm({
       confirmation_number: data.confirmation_number,
       cost: data.cost,
       currency: data.currency,
-      start_date: format(travelRange.from, "yyyy-MM-dd"),
-      end_date: format(travelRange.to, "yyyy-MM-dd"),
-      start_time: travelRange.fromTime || null,
-      end_time: travelRange.toTime || null,
+      start_date: format(travelRange.start, "yyyy-MM-dd"),
+      end_date: format(travelRange.end, "yyyy-MM-dd"),
+      start_time: travelRange.startTime || null,
+      end_time: travelRange.endTime || null,
     };
 
     try {
