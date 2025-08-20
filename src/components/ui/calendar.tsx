@@ -33,7 +33,7 @@ export function Calendar({
           "relative h-8 w-8 p-0 text-center text-sm "
           + "[&:has([aria-selected].day-range-start)]:rounded-l-md "
           + "[&:has([aria-selected].day-range-end)]:rounded-r-md",
-        day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 text-sm hover:bg-sand-100 cursor-pointer",
+        day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 text-sm hover:bg-sand-100 cursor-pointer transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-sand-400 focus:ring-offset-1 rounded-md flex items-center justify-center",
 
         // ANY selected day (covers single and range start/end)
         day_selected: "bg-sand-500 text-sand-50 hover:bg-sand-600",

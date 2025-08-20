@@ -102,7 +102,7 @@ export default function DateTimeRangeField({
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover open={open} onOpenChange={setOpen} modal={false}>
+            <Popover open={open} onOpenChange={setOpen} modal={true}>
               <PopoverTrigger asChild>
                 <Button
                   type="button"
@@ -124,27 +124,41 @@ export default function DateTimeRangeField({
                 </Button>
               </PopoverTrigger>
 
-              {/* IMPORTANT:
-                 - modal={false} above lets the popover receive focus inside a Dialog
-                 - prevent auto focusing the first focusable which can fight with Dialog focus guards
-              */}
-              <PopoverContent
-                align="start"
-                sideOffset={4}
-                className="z-[1050] w-[320px] max-w-[calc(100vw-1rem)] p-0 rounded-md border bg-white shadow-lg"
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                onEscapeKeyDown={(e) => e.stopPropagation()}
-                // Clicking inside should never be treated as "outside"
-                onPointerDownOutside={(e) => {
-                  // If a native time dropdown fires a pointer event from its portal, ignore it
-                  // (prevents the popover from closing while using the time picker UI)
-                  // @ts-ignore
-                  if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
-                    e.preventDefault();
-                  }
-                }}
-              >
-                <div className="p-2">
+              {open && (
+                <>
+                  {/* Backdrop overlay */}
+                  <div 
+                    className="fixed inset-0 bg-black/20 z-[9998]" 
+                    onClick={() => setOpen(false)}
+                  />
+                  
+                  {/* Center the popover on screen with modal behavior */}
+                  <PopoverContent
+                    align="center"
+                    side="top" 
+                    sideOffset={0}
+                    className="z-[9999] w-[340px] max-w-[calc(100vw-2rem)] p-0 rounded-lg border bg-white shadow-2xl fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                    style={{
+                      position: 'fixed',
+                      left: '50%',
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 9999,
+                    }}
+                    onEscapeKeyDown={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                    }}
+                    onPointerDownOutside={(e) => {
+                      // Allow clicking on time dropdowns without closing
+                      // @ts-ignore
+                      if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
+                        e.preventDefault();
+                        return;
+                      }
+                    }}
+                  >
+                <div className="p-3">
                   <Calendar
                     mode="range"
                     numberOfMonths={1}
@@ -153,9 +167,11 @@ export default function DateTimeRangeField({
                       from: value.from ?? undefined,
                       to: value.to ?? undefined,
                     }}
-                    onSelect={(r) => update({ from: r?.from ?? null, to: r?.to ?? null })}
+                    onSelect={(r) => {
+                      console.log('Calendar selected:', r);
+                      update({ from: r?.from ?? null, to: r?.to ?? null });
+                    }}
                     defaultMonth={value.from ?? defaultMonth}
-                    initialFocus
                     className="rounded-md border-0"
                   />
                 </div>
@@ -215,7 +231,9 @@ export default function DateTimeRangeField({
                     </Button>
                   </div>
                 </div>
-              </PopoverContent>
+                  </PopoverContent>
+                </>
+              )}
             </Popover>
           </div>
         );
