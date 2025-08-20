@@ -75,33 +75,16 @@ export default function TransportationForm({
 
   /* ------------------- reset on trip-date change ------------------- */
   useEffect(() => {
-    // For new forms (no initialData) OR when initialData lacks proper dates, use trip dates as fallback
-    const shouldUseTripDates = !initialData || 
-      (!initialData.start_date || !initialData.end_date);
-    
-    if (shouldUseTripDates && (tripArrivalDate || tripDepartureDate)) {
+    // Only use trip dates for completely new forms (no initialData at all)
+    // Don't override existing transportation data with trip dates
+    if (!initialData && (tripArrivalDate || tripDepartureDate)) {
       const current = form.getValues();
-      // Preserve existing times from initialData if available, otherwise use current form values
-      const preservedFromTime = initialData?.start_time || current.travel_range?.startTime || "";
-      const preservedToTime = initialData?.end_time || current.travel_range?.endTime || "";
       
-      form.reset({
-        ...current,
-        travel_range:
-          tripArrivalDate || tripDepartureDate
-            ? {
-                start:
-                  tripArrivalDate
-                    ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
-                    : current.travel_range?.start,
-                end:
-                  tripDepartureDate
-                    ? parse(tripDepartureDate, "yyyy-MM-dd", new Date())
-                    : current.travel_range?.end,
-                startTime: preservedFromTime,
-                endTime: preservedToTime,
-              }
-            : undefined,
+      form.setValue("travel_range", {
+        start: tripArrivalDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
+        end: tripDepartureDate ? parse(tripDepartureDate, "yyyy-MM-dd", new Date()) : null,
+        startTime: "",
+        endTime: "",
       });
     }
   }, [tripArrivalDate, tripDepartureDate, initialData, form]);
@@ -122,7 +105,7 @@ export default function TransportationForm({
 
     const payload: Partial<Transportation> = {
       ...initialData,
-      type: data.type,
+      type: data.type as any,
       departure_location: data.departure_location,
       arrival_location: data.arrival_location,
       provider: data.provider,
