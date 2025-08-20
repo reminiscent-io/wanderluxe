@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/form";
 import HotelSearchInput from "./HotelSearchInput";
 import HotelContactInfo from "./form/HotelContactInfo";
-import DateTimeRangeField, {
-  DateTimeRange,
-} from "@/components/ui/DateTimeRangeField";
+import LuxuryDateTimeRangePicker, {
+  LuxuryDateTimeRange,
+} from "@/components/ui/LuxuryDateTimeRangePicker";
 import { AccommodationFormData } from "@/services/accommodation/accommodationService";
 import { loadGoogleMapsAPI } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
@@ -110,25 +110,25 @@ export default function AccommodationForm({
       stay_range:
         initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
           ? {
-              from: parse(
+              start: parse(
                 initialData.hotel_checkin_date,
                 "yyyy-MM-dd",
                 new Date()
               ),
-              to: parse(
+              end: parse(
                 initialData.hotel_checkout_date,
                 "yyyy-MM-dd",
                 new Date()
               ),
-              fromTime: initialData.checkin_time ?? "15:00",
-              toTime: initialData.checkout_time ?? "11:00",
+              startTime: initialData.checkin_time ?? "15:00",
+              endTime: initialData.checkout_time ?? "11:00",
             }
           : tripArrivalDate && tripDepartureDate
           ? {
-              from: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
-              to: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
-              fromTime: "15:00",
-              toTime: "11:00",
+              start: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
+              end: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
+              startTime: "15:00",
+              endTime: "11:00",
             }
           : undefined,
     },
@@ -143,10 +143,10 @@ export default function AccommodationForm({
       !form.getValues("stay_range")
     ) {
       const newStayRange = {
-        from: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
-        to: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
-        fromTime: "15:00",
-        toTime: "11:00",
+        start: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
+        end: parse(tripDepartureDate, "yyyy-MM-dd", new Date()),
+        startTime: "15:00",
+        endTime: "11:00",
       };
       form.setValue("stay_range", newStayRange);
       form.setValue("hotel_checkin_date", tripArrivalDate);
@@ -158,22 +158,22 @@ export default function AccommodationForm({
   const stayRange = useWatch({
     control: form.control,
     name: "stay_range",
-  }) as DateTimeRange;
+  }) as LuxuryDateTimeRange;
 
   useEffect(() => {
-    if (stayRange?.from) {
-      form.setValue("hotel_checkin_date", format(stayRange.from, "yyyy-MM-dd"), {
+    if (stayRange?.start) {
+      form.setValue("hotel_checkin_date", format(stayRange.start, "yyyy-MM-dd"), {
         shouldValidate: false,
       });
-      form.setValue("checkin_time", stayRange.fromTime ?? "15:00", {
+      form.setValue("checkin_time", stayRange.startTime ?? "15:00", {
         shouldValidate: false,
       });
     }
-    if (stayRange?.to) {
-      form.setValue("hotel_checkout_date", format(stayRange.to, "yyyy-MM-dd"), {
+    if (stayRange?.end) {
+      form.setValue("hotel_checkout_date", format(stayRange.end, "yyyy-MM-dd"), {
         shouldValidate: false,
       });
-      form.setValue("checkout_time", stayRange.toTime ?? "11:00", {
+      form.setValue("checkout_time", stayRange.endTime ?? "11:00", {
         shouldValidate: false,
       });
     }
@@ -257,11 +257,12 @@ export default function AccommodationForm({
           )}
         />
 
-        {/* Unified Date + Time Picker */}
-        <DateTimeRangeField
+        {/* Luxury Date + Time Picker */}
+        <LuxuryDateTimeRangePicker
           name="stay_range"
           label="Stay Dates"
           required
+          placeholder="Select check-in and check-out dates"
           defaultMonth={
             tripArrivalDate
               ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
