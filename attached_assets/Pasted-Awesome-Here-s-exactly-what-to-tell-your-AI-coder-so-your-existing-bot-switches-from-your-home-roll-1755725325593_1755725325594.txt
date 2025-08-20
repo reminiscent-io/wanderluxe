@@ -1,0 +1,183 @@
+Awesome. Here’s exactly what to tell your AI coder so your existing bot switches from your home‑rolled GPT calls to your new **OpenAI Assistant** with hidden structured outputs, event creation actions, and better file parsing—without losing any of your current features.
+
+# 1) High‑level plan (what’s changing)
+
+* **Keep**: your React ChatView, Supabase auth/RLS, file uploads to Supabase Storage, conversation storage.
+* **Replace/Upgrade**:
+
+  * Backend Edge Function that currently calls GPT‑4o‑mini → **proxy to the OpenAI Assistants API** (primary model: **GPT‑4o**; route simple tasks to **GPT‑4o‑mini**).
+  * Use **Assistant “Actions”** to call our API endpoints (`get_schema`, `search_trips`, `create_event`, `update_event`) so writes are secure and server‑controlled.
+  * Enable **Files & Code Interpreter** so PDFs/screenshots parse natively.
+  * Adopt **structured outputs**: the assistant produces the `event_proposal` **in function arguments**, not in chat text.
+
+# 2) Backend: new Edge Function skeleton
+
+Create/replace a Supabase Edge Function `chat-assistant` that:
+
+* Creates/gets a **thread** per chat.
+* Uploads user files (or passes Supabase Storage signed URLs) to the Assistant.
+* Streams run status, relays assistant messages to the frontend.
+* Handles **tool calls** (Actions) by calling your API and sending the results back via `submit_tool_outputs`.
+
+```ts
+// supabase/functions/chat-assistant/index.ts
+import OpenAI from "openai";
+import { serve } from "https://deno.land/std/http/server.ts";
+
+const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY")! });
+
+// routing rule: cheap for trivial, 4o for parsing/reasoning
+const pickModel = (payload: { hasFile: boolean; task: "parse"|"light"|"research" }) =>
+  payload.task === "light" && !payload.hasFile ? "gpt-4o-mini" : "gpt-4o";
+
+serve(async (req) => {
+  const { threadId, message, files, userId, task } = await req.json();
+
+  // 1) ensure thread
+  const thread = threadId
+    ? { id: threadId }
+    : await openai.beta.threads.create({});
+
+  // 2) attach files (optional)
+  let file_ids: string[] = [];
+  for (const f of (files ?? [])) {
+    // Option A: raw upload:
+    // const uploaded = await openai.files.create({ file: f, purpose: "assistants" });
+    // file_ids.push(uploaded.id);
+    // Option B: if you store in Supabase, create a signed URL and send as content text with URL
+  }
+
+  // 3) add user message
+  await openai.beta.threads.messages.create(thread.id, {
+    role: "user",
+    content: [{ type: "text", text: message }],
+    attachments: file_ids.map(id => ({ file_id: id })),
+  });
+
+  // 4) run assistant
+  const model = pickModel({ hasFile: (file_ids.length>0), task: task ?? "parse" });
+  const run = await openai.beta.threads.runs.create(thread.id, {
+    assistant_id: Deno.env.get("OPENAI_ASSISTANT_ID")!,
+    model, // override if needed
+    // instructions can be appended here if you want dynamic context, else keep in assistant
+  });
+
+  // 5) handle tool calls loop (blocking simple version)
+  let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+  while (runStatus.status === "requires_action") {
+    const toolCalls = runStatus.required_action!.submit_tool_outputs.tool_calls;
+    const outputs = await Promise.all(toolCalls.map(async (tc) => {
+      switch (tc.function.name) {
+        case "get_schema": {
+          const args = JSON.parse(tc.function.arguments);
+          const result = await fetch(`${Deno.env.get("API_URL")}/schema`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(args)
+          }).then(r => r.json());
+          return { tool_call_id: tc.id, output: JSON.stringify(result) };
+        }
+        case "search_trips": {
+          const args = JSON.parse(tc.function.arguments);
+          const result = await fetch(`${Deno.env.get("API_URL")}/trips/search`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...args, userId })
+          }).then(r => r.json());
+          return { tool_call_id: tc.id, output: JSON.stringify(result) };
+        }
+        case "create_event": {
+          const args = JSON.parse(tc.function.arguments);
+          const result = await fetch(`${Deno.env.get("API_URL")}/events/create`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...args, userId })
+          }).then(r => r.json());
+          return { tool_call_id: tc.id, output: JSON.stringify(result) };
+        }
+        case "update_event": {
+          const args = JSON.parse(tc.function.arguments);
+          const result = await fetch(`${Deno.env.get("API_URL")}/events/update`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...args, userId })
+          }).then(r => r.json());
+          return { tool_call_id: tc.id, output: JSON.stringify(result) };
+        }
+        default:
+          return { tool_call_id: tc.id, output: JSON.stringify({ error: "Unknown tool" }) };
+      }
+    }));
+
+    await openai.beta.threads.runs.submitToolOutputs(thread.id, run.id, {
+      tool_outputs: outputs
+    });
+    runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+  }
+
+  // 6) fetch latest messages to return to UI
+  const messages = await openai.beta.threads.messages.list(thread.id, { order: "asc" });
+
+  return new Response(JSON.stringify({ threadId: thread.id, messages }), {
+    headers: { "Content-Type": "application/json" }
+  });
+});
+```
+
+**Notes**
+
+* Keep Supabase **RLS ON**; the API behind Actions enforces auth/ownership with your JWT.
+* Do **not** expose service role to the assistant; the Edge Function is your trusted proxy.
+
+# 3) Frontend: ChatView integration changes
+
+* Keep your UI the same. Update the call that previously hit your GPT Edge Function to now call `/functions/v1/chat-assistant`.
+* **Do not show JSON**. Render only the assistant’s **text** in chat.
+* When the assistant proposes an event, your assistant will have already called an Action with the proposal in JSON (function args). **You receive it via the messages/runs API.** Use that to prefill your **Edit ➜ Confirm** dialog in the UI.
+* Support file uploads the same way; pass file blobs (or signed URLs) to the Edge Function.
+
+# 4) Register the Actions in your OpenAI Assistant
+
+In the OpenAI UI (or via API), add these **functions** with JSON schemas:
+
+* `get_schema(tables?: string[])`
+* `search_trips(traveler_id: string, query?: string)`
+* `create_event(trip_id: string, type: "accommodation"|"transportation"|"activity"|"reservation", fields: object)`
+* `update_event(type: "...", event_id: string, patch: object)`
+
+These **do not** display JSON in chat; they pass arguments silently.
+
+# 5) Update your Assistant’s system prompt (key deltas)
+
+Add these lines (on top of the full prompt we finalized):
+
+* “When producing an event proposal, **return it only via function call arguments** (structured output). **Never display raw JSON** in the chat.”
+* “For parsing files, use files/images tools; summarize for the user in bullets, and keep the proposal JSON for Actions only.”
+* “If the user confirms, call `create_event`. If they request changes, update proposal and call `update_event`.”
+
+# 6) Model & routing
+
+* Default to **gpt‑4o** in the Assistant.
+* Add a simple router in the Edge Function:
+
+  * `gpt‑4o‑mini` for short, low‑risk steps (simple edits, confirmations).
+  * `gpt‑4o` for anything with files, schema mapping, or research.
+
+# 7) Security & validation (server)
+
+* Validate all incoming `fields` on your API (`YYYY‑MM‑DD`, `HH:mm`, numeric cost, ISO currency).
+* Enforce trip ownership by `userId`.
+* Add **idempotency key** to `create_event` (e.g., hash of trip\_id + conf + dates) to prevent dupes.
+* Log `source_evidence` reference (file id & page) if available.
+
+# 8) Testing checklist
+
+* ✅ PDF hotel: parses → proposes → confirm → row created in `accommodations`.
+* ✅ Flight image: missing arrival time → asks one clarifier → then proposes.
+* ✅ Edit flow: user changes time → assistant calls `update_event` → UI reflects change.
+* ✅ Research: assistant lists options with citations; on “Add”, calls `create_event` with prefilled fields.
+* ✅ Mobile: file upload + parse + confirm roundtrip < a few seconds; no JSON visible to user.
+
+---
+
+If you want, I can also hand you:
+
+* an **OpenAPI YAML** for your four Actions (so you can one‑click import into OpenAI),
+* tiny **Next.js API routes** for `/schema`, `/trips/search`, `/events/create`, `/events/update`,
+* and a 20‑line **chat streaming hook** for React to render partial assistant text as it arrives.
