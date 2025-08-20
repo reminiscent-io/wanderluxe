@@ -102,7 +102,7 @@ export default function DateTimeRangeField({
               {label} {required && <span className="text-red-500">*</span>}
             </label>
 
-            <Popover open={open} onOpenChange={setOpen} modal={true}>
+            <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
                   type="button"
@@ -124,41 +124,20 @@ export default function DateTimeRangeField({
                 </Button>
               </PopoverTrigger>
 
-              {open && (
-                <>
-                  {/* Backdrop overlay */}
-                  <div 
-                    className="fixed inset-0 bg-black/20 z-[9998]" 
-                    onClick={() => setOpen(false)}
-                  />
-                  
-                  {/* Center the popover on screen with modal behavior */}
-                  <PopoverContent
-                    align="center"
-                    side="top" 
-                    sideOffset={0}
-                    className="z-[9999] w-[340px] max-w-[calc(100vw-2rem)] p-0 rounded-lg border bg-white shadow-2xl fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                    style={{
-                      position: 'fixed',
-                      left: '50%',
-                      top: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      zIndex: 9999,
-                    }}
-                    onEscapeKeyDown={(e) => {
-                      e.stopPropagation();
-                      setOpen(false);
-                    }}
-                    onPointerDownOutside={(e) => {
-                      // Allow clicking on time dropdowns without closing
-                      // @ts-ignore
-                      if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
-                        e.preventDefault();
-                        return;
-                      }
-                    }}
-                  >
-                <div className="p-3">
+              <PopoverContent
+                align="start"
+                side="bottom"
+                sideOffset={4}
+                className="z-[1000] w-[300px] max-w-[calc(100vw-1rem)] p-0 rounded-md border bg-white shadow-lg"
+                onEscapeKeyDown={(e) => e.stopPropagation()}
+                onPointerDownOutside={(e) => {
+                  // @ts-ignore
+                  if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <div className="p-2">
                   <Calendar
                     mode="range"
                     numberOfMonths={1}
@@ -168,11 +147,10 @@ export default function DateTimeRangeField({
                       to: value.to ?? undefined,
                     }}
                     onSelect={(r) => {
-                      console.log('Calendar selected:', r);
                       update({ from: r?.from ?? null, to: r?.to ?? null });
                     }}
                     defaultMonth={value.from ?? defaultMonth}
-                    className="rounded-md border-0"
+                    className="rounded-md"
                   />
                 </div>
 
@@ -231,9 +209,7 @@ export default function DateTimeRangeField({
                     </Button>
                   </div>
                 </div>
-                  </PopoverContent>
-                </>
-              )}
+              </PopoverContent>
             </Popover>
           </div>
         );
