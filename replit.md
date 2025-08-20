@@ -8,6 +8,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**January 16, 2025** - Implemented Luxury Date-Time Range Picker for Premium UX
+- Created premium LuxuryDateTimeRangePicker component with mobile-first modal design
+- Implemented responsive behavior: full-screen modal on mobile, elegant popover on desktop
+- Added luxury sand/earth tone styling with refined typography and spacing
+- Enhanced mobile UX with centered modal, backdrop overlay, and touch-friendly interactions
+- Integrated proper React Hook Form compatibility using Controller pattern
+- Fixed date-time selection issues with improved click handling and accessibility
+- Added dual-month calendar view for desktop, single month for mobile optimization
+- Implemented professional action buttons (Clear, Cancel, Apply) with consistent styling
+- Enhanced time inputs with better visual hierarchy and focus management
+- Replaced problematic DateTimeRangeField with production-ready luxury solution
+- Updated AccommodationForm to use new picker, maintaining form state synchronization
+
 **January 16, 2025** - Enhanced Activity Dialog Date Selection + Fixed Dining Edit Issue + Immediate Timeline Updates
 - Fixed missing date selection functionality in activity editing from compact day cards
 - Added tripDates prop to EditActivityDialog and AddActivityDialog in TimelineContent
