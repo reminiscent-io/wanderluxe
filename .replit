@@ -40,3 +40,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "bun run dev"
+
+[agent]
+integrations = ["javascript_openai==1.0.0"]
