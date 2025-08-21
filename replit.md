@@ -8,6 +8,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 21, 2025** - Fixed Multi-Day Transportation Timeline Display
+- Fixed transportation timeline bug where multi-day journeys showed start time on all days
+- Start day now correctly shows departure time and location
+- End day now correctly shows arrival time and location
+- Middle days (for 3+ day journeys) show "In Transit" status
+- Single-day transportation continues to work as before with full journey details
+- Enhanced timeline logic in CompactDayCard component for better multi-day event handling
+
 **January 16, 2025** - Implemented Luxury Date-Time Range Picker for Premium UX
 - Created premium LuxuryDateTimeRangePicker component with mobile-first modal design
 - Implemented responsive behavior: full-screen modal on mobile, elegant popover on desktop

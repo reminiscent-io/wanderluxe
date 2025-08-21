@@ -215,22 +215,51 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   
   // Add transportations
   filteredTransportations.forEach(transport => {
-    if (transport.start_time) {
-      const typeLabel = transport.type === 'flight' ? 'Flight' : 
-                       transport.type === 'train' ? 'Train' :
-                       transport.type === 'car' ? 'Car' :
-                       transport.type === 'bus' ? 'Bus' : 'Transport';
-      timelineItems.push({
-        type: 'transportation',
-        time: transport.start_time,
-        endTime: transport.end_time || undefined,
-        title: `${typeLabel}: ${transport.departure_location || 'Departure'} → ${transport.arrival_location || 'Arrival'}`,
-        description: transport.details,
-        icon: <Plane className="h-3 w-3" />,
-        id: transport.id,
-        data: transport
-      });
+    const typeLabel = transport.type === 'flight' ? 'Flight' : 
+                     transport.type === 'train' ? 'Train' :
+                     transport.type === 'car' ? 'Car' :
+                     transport.type === 'bus' ? 'Bus' : 'Transport';
+                     
+    const startDate = transport.start_date;
+    const endDate = transport.end_date || startDate;
+    const isStartDay = normalizedDay === startDate;
+    const isEndDay = normalizedDay === endDate;
+    const isMultiDay = startDate !== endDate;
+    
+    // Determine which time to show and title based on the day
+    let displayTime: string | undefined;
+    let title: string;
+    
+    if (isMultiDay) {
+      if (isStartDay) {
+        // First day: show start time and departure
+        displayTime = transport.start_time || undefined;
+        title = `${typeLabel} Departure: ${transport.departure_location || 'Departure'}`;
+      } else if (isEndDay) {
+        // Last day: show end time and arrival
+        displayTime = transport.end_time || undefined;
+        title = `${typeLabel} Arrival: ${transport.arrival_location || 'Arrival'}`;
+      } else {
+        // Middle day: show "In transit"
+        displayTime = undefined;
+        title = `${typeLabel} (In Transit): ${transport.departure_location || 'Departure'} → ${transport.arrival_location || 'Arrival'}`;
+      }
+    } else {
+      // Single day: show full journey with start time
+      displayTime = transport.start_time || undefined;
+      title = `${typeLabel}: ${transport.departure_location || 'Departure'} → ${transport.arrival_location || 'Arrival'}`;
     }
+    
+    timelineItems.push({
+      type: 'transportation',
+      time: displayTime,
+      endTime: isStartDay && transport.end_time ? transport.end_time : undefined,
+      title,
+      description: transport.details,
+      icon: <Plane className="h-3 w-3" />,
+      id: transport.id,
+      data: transport
+    });
   });
   
   // Add dining reservations
