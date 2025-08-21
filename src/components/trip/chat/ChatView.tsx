@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 
 const API_ENDPOINT =
-  'https://arnengxblsfnezrqcsxw.functions.supabase.co/chat-assistant';
+  'https://arnengxblsfnezrqcsxw.functions.supabase.co/chat-ai';
 const MAX_BUBBLE_WIDTH = '68ch';
 
 /* ------------------------------------------------------------------ */
@@ -48,20 +48,14 @@ const MAX_BUBBLE_WIDTH = '68ch';
 /* ------------------------------------------------------------------ */
 
 /**
- * Extract the assistant message text from the OpenAI Assistant API response.
+ * Extract the assistant message text (and any extracted data) from the
+ * heterogeneous Edge‑Function responses we receive.
  */
 function extractAssistantMessage(res: any): {
   text: string;
   extractedData?: unknown;
 } {
-  // OpenAI Assistant format ➜ { success: true, aiMessage: { content, ... } }
-  if (res?.aiMessage?.content) {
-    return {
-      text: res.aiMessage.content,
-      extractedData: null,
-    };
-  }
-  // Legacy format ➜ { success: true, aiMessage: { message, extractedData } }
+  // New format ➜ { success: true, aiMessage: { message, extractedData } }
   if (res?.aiMessage?.message) {
     return {
       text: res.aiMessage.message,
@@ -110,11 +104,6 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const { data: rawMessages = [], isLoading } = useChat(tripId);
-  
-  // Store OpenAI Assistant thread ID in localStorage for persistence
-  const [threadId, setThreadId] = useState<string | null>(() => {
-    return localStorage.getItem(`chat_thread_${tripId}`) || null;
-  });
 
   // Transform DB rows → UI messages.
   const messages: ChatMessageDB[] = useMemo(
@@ -216,20 +205,9 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
 
       // User message will be persisted by the edge function
 
-      // Format files for the assistant API
-      const files = attachments.map(att => ({
-        name: att.name || 'uploaded-file',
-        url: att.url,
-        type: att.type
-      }));
-
-      const body = JSON.stringify({ 
-        threadId: threadId, // Pass existing thread ID or null for new thread
-        message: userMessage,
-        tripId, 
-        files: files.length > 0 ? files : undefined,
-        task: files.length > 0 ? "parse" : "light"
-      });
+      const prompt = `TRAVEL CONTEXT: You are assisting with a trip to ${destination} from ${arrival} to ${departure}.
+\n\nUser question: ${userMessage}`;
+      const body = JSON.stringify({ message: prompt, tripId, attachments });
 
       /* ---------- 3 / Supabase Auth token ---------- */
       const { data: session, error: sessionError } = await supabase.auth.getSession();

@@ -8,16 +8,6 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-**January 20, 2025** - Upgraded AI Assistant to OpenAI Assistant API
-- Migrated from direct OpenAI API calls to OpenAI Assistant API for enhanced conversation management
-- Implemented new chat-assistant Supabase Edge Function with thread management capabilities
-- Updated ChatView component to use new assistant endpoint instead of chat-ai function
-- Added thread ID persistence using localStorage for conversation continuity across sessions
-- Configured OPENAI_ASSISTANT_ID environment variable for proper assistant routing
-- Enhanced error handling and response processing for Assistant API integration
-- Maintained all existing travel planning features including document processing and budget analysis
-- Improved conversation flow with persistent thread management for better user experience
-
 **January 16, 2025** - Implemented Luxury Date-Time Range Picker for Premium UX
 - Created premium LuxuryDateTimeRangePicker component with mobile-first modal design
 - Implemented responsive behavior: full-screen modal on mobile, elegant popover on desktop
