@@ -1,7 +1,7 @@
 
 import React, { useEffect, useCallback } from 'react';
 import { Label } from "@/components/ui/label";
-import DateTimeRangeField, { DateTimeRange } from "@/components/ui/DateTimeRangeField";
+import LuxuryDateTimeRangePicker, { LuxuryDateTimeRange } from "@/components/ui/LuxuryDateTimeRangePicker";
 import { useForm, FormProvider } from "react-hook-form";
 import { format } from "date-fns";
 
@@ -21,25 +21,25 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   const form = useForm({
     defaultValues: {
       travelDates: {
-        from: startDate ? new Date(startDate) : null,
-        to: endDate ? new Date(endDate) : null,
-        fromTime: undefined,
-        toTime: undefined,
-      } as DateTimeRange
+        start: startDate ? new Date(startDate) : null,
+        end: endDate ? new Date(endDate) : null,
+        startTime: undefined,
+        endTime: undefined,
+      } as LuxuryDateTimeRange
     }
   });
 
-  const handleDateChange = useCallback((values: DateTimeRange) => {
-    if (values.from) {
-      const fromStr = format(values.from, 'yyyy-MM-dd');
-      onStartDateChange(fromStr);
+  const handleDateChange = useCallback((values: LuxuryDateTimeRange) => {
+    if (values.start) {
+      const startStr = format(values.start, 'yyyy-MM-dd');
+      onStartDateChange(startStr);
     } else {
       onStartDateChange('');
     }
     
-    if (values.to) {
-      const toStr = format(values.to, 'yyyy-MM-dd');
-      onEndDateChange(toStr);
+    if (values.end) {
+      const endStr = format(values.end, 'yyyy-MM-dd');
+      onEndDateChange(endStr);
     } else {
       onEndDateChange('');
     }
@@ -49,7 +49,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   useEffect(() => {
     const subscription = form.watch((values) => {
       if (values.travelDates) {
-        handleDateChange(values.travelDates as DateTimeRange);
+        handleDateChange(values.travelDates as LuxuryDateTimeRange);
       }
     });
     return () => subscription.unsubscribe();
@@ -62,11 +62,12 @@ const TimingSection: React.FC<TimingSectionProps> = ({
           When are you planning to travel? 
         </Label>
 
-        <DateTimeRangeField
+        <LuxuryDateTimeRangePicker
           name="travelDates"
           label="Travel Dates"
           required
           hideTimeInputs={true}
+          placeholder="Select your travel dates"
         />
       </div>
     </FormProvider>

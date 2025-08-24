@@ -8,6 +8,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 24, 2025** - Upgraded Create Trip Calendar to Luxury Date Picker
+- Migrated create trip form from basic DateTimeRangeField to premium LuxuryDateTimeRangePicker
+- Ensures consistent luxury date selection experience across the entire application
+- Create trip calendar now matches the polished UX of accommodations and other forms
+- Enhanced mobile responsiveness with full-screen modal and elegant desktop popover
+- Improved accessibility with better keyboard navigation and touch interactions
+- Updated data structure handling for seamless form state management
+
 **August 21, 2025** - Fixed Multi-Day Transportation Timeline Display
 - Fixed transportation timeline bug where multi-day journeys showed start time on all days
 - Start day now correctly shows departure time and location
