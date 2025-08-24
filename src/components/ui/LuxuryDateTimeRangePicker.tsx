@@ -172,6 +172,8 @@ export default function LuxuryDateTimeRangePicker({
                       mode="range"
                       numberOfMonths={1}
                       captionLayout="dropdown"
+                      fromYear={2024}
+                      toYear={2027}
                       selected={{
                         from: value.start ?? undefined,
                         to: value.end ?? undefined,
