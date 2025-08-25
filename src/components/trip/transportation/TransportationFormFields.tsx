@@ -114,29 +114,29 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         control={control}
       />
 
-      {/* Provider */}
-      <Controller
-        control={control}
-        name="provider"
-        render={({ field }) => (
-          <div className="space-y-2">
-            <Label>Provider</Label>
-            <Input {...field} placeholder="Airline, train company…" />
-          </div>
-        )}
-      />
-
-      {/* Confirmation Number */}
-      <Controller
-        control={control}
-        name="confirmation_number"
-        render={({ field }) => (
-          <div className="space-y-2">
-            <Label>Confirmation Number</Label>
-            <Input {...field} placeholder="Booking reference" />
-          </div>
-        )}
-      />
+      {/* Provider & Confirmation Number */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Controller
+          control={control}
+          name="provider"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <Label>Provider</Label>
+              <Input {...field} placeholder="Airline, train company…" />
+            </div>
+          )}
+        />
+        <Controller
+          control={control}
+          name="confirmation_number"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <Label>Confirmation Number</Label>
+              <Input {...field} placeholder="Booking reference" />
+            </div>
+          )}
+        />
+      </div>
 
       {/* Cost & Currency */}
       <div className="space-y-2">
