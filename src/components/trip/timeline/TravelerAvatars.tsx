@@ -34,18 +34,25 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
     queryKey: ['event-travelers', eventType, eventId],
     queryFn: async () => {
       let result;
+      let actualEventId = eventId;
+      
+      // Handle composite IDs for accommodation check-in/check-out
+      if (eventType === 'accommodation' && (eventId.startsWith('checkin-') || eventId.startsWith('checkout-'))) {
+        actualEventId = eventId.replace(/^(checkin-|checkout-)/, '');
+      }
+      
       switch (eventType) {
         case 'accommodation':
-          result = await getAccommodationTravelerIds(tripId, eventId);
+          result = await getAccommodationTravelerIds(tripId, actualEventId);
           break;
         case 'transportation':
-          result = await getTransportationTravelerIds(tripId, eventId);
+          result = await getTransportationTravelerIds(tripId, actualEventId);
           break;
         case 'activity':
-          result = await getDayActivityTravelerIds(tripId, eventId);
+          result = await getDayActivityTravelerIds(tripId, actualEventId);
           break;
         case 'dining':
-          result = await getReservationTravelerIds(tripId, eventId);
+          result = await getReservationTravelerIds(tripId, actualEventId);
           break;
         default:
           return [];
