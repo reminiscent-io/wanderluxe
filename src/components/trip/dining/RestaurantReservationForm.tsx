@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
 import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
+import CurrencySelector from '../budget/CurrencySelector';
 
 // Assuming CurrencySelector is imported and available in this scope.
 // If it's not defined in the provided snippets, it's a placeholder for a custom component.
