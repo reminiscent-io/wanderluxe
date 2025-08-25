@@ -57,7 +57,7 @@ export default function TravelersTagMultiSelect({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -90,54 +90,65 @@ export default function TravelersTagMultiSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-full p-0 z-[99999] bg-white border shadow-md" 
+          className="w-full p-0 z-[99999] bg-white border shadow-md pointer-events-auto" 
           align="start"
+          side="bottom"
+          sideOffset={4}
           onOpenAutoFocus={(e) => e.preventDefault()}
+          style={{ zIndex: 99999 }}
         >
-          <Command className="bg-white" shouldFilter={false}>
-            <CommandInput placeholder="Search travelers..." className="bg-white" />
-            <CommandEmpty>
-              {travelers.length === 0 
-                ? "No travelers added yet." 
-                : "No results found."
-              }
-            </CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto bg-white">
-              {travelers.map((traveler) => (
-                <CommandItem
-                  key={traveler.id}
-                  value={traveler.id}
-                  onSelect={() => {
-                    handleSelect(traveler);
-                    // Keep the dropdown open for multiple selections
-                  }}
-                  className="cursor-pointer hover:bg-gray-50 bg-white data-[selected=true]:bg-gray-100"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value.includes(traveler.id) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="flex flex-col">
-                    <span className="flex items-center gap-2">
-                      {getDisplayName(traveler)}
-                      {traveler.is_owner && (
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                          Owner
+          <div className="relative pointer-events-auto">
+            <Command className="bg-white pointer-events-auto" shouldFilter={false}>
+              <CommandInput placeholder="Search travelers..." className="bg-white pointer-events-auto" />
+              <CommandEmpty>
+                {travelers.length === 0 
+                  ? "No travelers added yet." 
+                  : "No results found."
+                }
+              </CommandEmpty>
+              <CommandGroup className="max-h-64 overflow-auto bg-white pointer-events-auto">
+                {travelers.map((traveler) => (
+                  <CommandItem
+                    key={traveler.id}
+                    value={traveler.id}
+                    onSelect={(e) => {
+                      e?.preventDefault?.();
+                      handleSelect(traveler);
+                      // Keep the dropdown open for multiple selections
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelect(traveler);
+                    }}
+                    className="cursor-pointer hover:bg-gray-50 bg-white data-[selected=true]:bg-gray-100 pointer-events-auto"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value.includes(traveler.id) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex flex-col pointer-events-none">
+                      <span className="flex items-center gap-2">
+                        {getDisplayName(traveler)}
+                        {traveler.is_owner && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                            Owner
+                          </span>
+                        )}
+                      </span>
+                      {traveler.shared_with_email && (
+                        <span className="text-xs text-muted-foreground">
+                          {traveler.shared_with_email}
                         </span>
                       )}
-                    </span>
-                    {traveler.shared_with_email && (
-                      <span className="text-xs text-muted-foreground">
-                        {traveler.shared_with_email}
-                      </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
