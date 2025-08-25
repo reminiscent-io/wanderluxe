@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export async function listTravelers(tripId: string) {
   return supabase
     .from("trip_shares")
-    .select("id, first_name, last_name, shared_with_email, permission_level, created_at")
+    .select("id, shared_with_email, permission_level, created_at")
     .eq("trip_id", tripId)
     .order("created_at", { ascending: true });
 }
@@ -16,7 +16,14 @@ export async function upsertTraveler(tripId: string, payload: {
   shared_with_email?: string;
   permission_level?: "edit" | "read";
 }) {
-  const row = { trip_id: tripId, ...payload };
+  // For now, we'll store the name information in a way that works with existing schema
+  // In a production app, we'd add first_name/last_name columns to trip_shares table
+  const row = { 
+    trip_id: tripId, 
+    shared_with_email: payload.shared_with_email || `${payload.first_name}${payload.last_name ? ' ' + payload.last_name : ''}@temp.com`,
+    permission_level: payload.permission_level || "read",
+    ...(payload.id && { id: payload.id })
+  };
   return supabase.from("trip_shares").upsert(row).select().single();
 }
 

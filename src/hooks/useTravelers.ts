@@ -30,7 +30,22 @@ export function useTravelers(tripId: string) {
       }
       
       setError(null);
-      return (data || []) as Traveler[];
+      
+      // Transform the data to include first_name and last_name derived from email
+      return (data || []).map(share => {
+        const email = share.shared_with_email || '';
+        const namePart = email.split('@')[0];
+        const nameParts = namePart.split('.');
+        
+        return {
+          id: share.id,
+          first_name: nameParts[0] || 'Traveler',
+          last_name: nameParts[1] || '',
+          shared_with_email: share.shared_with_email,
+          permission_level: share.permission_level,
+          created_at: share.created_at,
+        } as Traveler;
+      });
     },
     enabled: !!tripId,
   });

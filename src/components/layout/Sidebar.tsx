@@ -214,7 +214,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             transportation={transportation}
             activities={activities}
             reservations={reservations}
-            trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : null}
+            trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date, id: trip.trip_id } : null}
             onAccommodationAdd={handleAccommodationAdd}
             onAccommodationEdit={handleAccommodationEdit}
             onTransportationAdd={handleTransportationAdd}
@@ -223,6 +223,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
             onActivityEdit={handleActivityEdit}
             onReservationAdd={handleReservationAdd}
             onReservationEdit={handleReservationEdit}
+            onTravelerAdd={handleTravelerAdd}
+            onTravelerEdit={handleTravelerEdit}
             onEditDates={handleEditDates}
           />
 
@@ -347,14 +349,14 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
       
       <TravelerDialog
         open={travelerOpen}
-        onOpenChange={setTravelerOpen}
+        onOpenChange={(open) => {
+          setTravelerOpen(open);
+          if (!open) {
+            setSelectedTraveler(null);
+          }
+        }}
         tripId={tripId}
         traveler={selectedTraveler}
-        onSuccess={() => {
-          setTravelerOpen(false);
-          setSelectedTraveler(null);
-          queryClient.invalidateQueries({ queryKey: ['travelers', tripId] });
-        }}
       />
     </>
   );
