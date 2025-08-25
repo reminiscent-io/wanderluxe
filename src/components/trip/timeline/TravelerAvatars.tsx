@@ -1,103 +1,135 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  getAccommodationTravelerIds, 
-  getTransportationTravelerIds, 
-  getDayActivityTravelerIds, 
-  getReservationTravelerIds, 
-  listTravelers 
-} from '@/services/travelers';
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  getAccommodationTravelerIds,
+  getTransportationTravelerIds,
+  getDayActivityTravelerIds,
+  getReservationTravelerIds,
+  listTravelers,
+} from "@/services/travelers";
+
+type EventType = "accommodation" | "transportation" | "activity" | "dining";
+
+interface Traveler {
+  id: string;
+  first_name: string;
+  last_name?: string | null;
+  shared_with_email?: string | null;
+  is_owner?: boolean | null;
+}
 
 interface TravelerAvatarsProps {
   tripId: string;
-  eventType: 'accommodation' | 'transportation' | 'activity' | 'dining';
+  eventType: EventType;
   eventId: string;
   maxShow?: number;
 }
 
-const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({ 
-  tripId, 
-  eventType, 
-  eventId, 
-  maxShow = 3 
+function asTravelerArray(input: unknown): Traveler[] {
+  if (Array.isArray(input)) return input as Traveler[];
+  if (input && typeof input === "object") {
+    const anyInput = input as any;
+    if (Array.isArray(anyInput.data)) return anyInput.data as Traveler[];
+    if (Array.isArray(anyInput.travelers)) return anyInput.travelers as Traveler[];
+  }
+  return [];
+}
+
+function asIdArray(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return (input as unknown[]).filter((v): v is string => typeof v === "string");
+}
+
+const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
+  tripId,
+  eventType,
+  eventId,
+  maxShow = 3,
 }) => {
-  // Get all travelers for the trip
-  const { data: allTravelers = [] } = useQuery({
-    queryKey: ['travelers', tripId],
+  // Namespaced keys to avoid shape collisions with other hooks
+  const { data: allTravelersRaw } = useQuery({
+    queryKey: ["trip-travelers:list", tripId],
     queryFn: () => listTravelers(tripId),
-    select: (data) => data.data || []
+    select: (raw) => asTravelerArray(raw),
+    staleTime: 10_000,
+    refetchOnWindowFocus: false,
   });
 
-  // Get assigned traveler IDs for this specific event
-  const { data: assignedTravelerIds = [] } = useQuery({
-    queryKey: ['event-travelers', eventType, eventId],
+  const allTravelers = allTravelersRaw ?? [];
+
+  const { data: assignedIdsRaw } = useQuery({
+    queryKey: ["trip-travelers:assigned", tripId, eventType, eventId],
     queryFn: async () => {
-      let result;
       switch (eventType) {
-        case 'accommodation':
-          result = await getAccommodationTravelerIds(tripId, eventId);
-          break;
-        case 'transportation':
-          result = await getTransportationTravelerIds(tripId, eventId);
-          break;
-        case 'activity':
-          result = await getDayActivityTravelerIds(tripId, eventId);
-          break;
-        case 'dining':
-          result = await getReservationTravelerIds(tripId, eventId);
-          break;
+        case "accommodation": {
+          const res = await getAccommodationTravelerIds(tripId, eventId);
+          return res?.data ?? res ?? [];
+        }
+        case "transportation": {
+          const res = await getTransportationTravelerIds(tripId, eventId);
+          return res?.data ?? res ?? [];
+        }
+        case "activity": {
+          const res = await getDayActivityTravelerIds(tripId, eventId);
+          return res?.data ?? res ?? [];
+        }
+        case "dining": {
+          const res = await getReservationTravelerIds(tripId, eventId);
+          return res?.data ?? res ?? [];
+        }
         default:
           return [];
       }
-      return result.data || [];
     },
-    enabled: !!eventId && !!tripId
+    select: (raw) => asIdArray(raw),
+    enabled: Boolean(tripId && eventId),
+    staleTime: 10_000,
+    refetchOnWindowFocus: false,
   });
 
-  // Filter travelers to only show assigned ones
-  const assignedTravelers = allTravelers.filter(traveler => 
-    assignedTravelerIds.includes(traveler.id)
+  const assignedIds = assignedIdsRaw ?? [];
+
+  const assignedTravelers = useMemo(
+    () => allTravelers.filter((t) => assignedIds.includes(t.id)),
+    [allTravelers, assignedIds]
   );
 
-  if (assignedTravelers.length === 0) {
-    return null;
-  }
+  if (assignedTravelers.length === 0) return null;
 
-  // Get initials from first name and last name
-  const getInitials = (firstName: string, lastName?: string) => {
-    const first = firstName?.charAt(0)?.toUpperCase() || '';
-    const last = lastName?.charAt(0)?.toUpperCase() || '';
-    return first + last || first || '?';
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
+    const f = (firstName ?? "").trim();
+    const l = (lastName ?? "").trim();
+    const a = f ? f[0].toUpperCase() : "";
+    const b = l ? l[0].toUpperCase() : "";
+    return (a + b) || a || "?";
   };
 
-  // Show visible travelers and count overflow
-  const visibleTravelers = assignedTravelers.slice(0, maxShow);
+  const visible = assignedTravelers.slice(0, maxShow);
   const overflowCount = Math.max(0, assignedTravelers.length - maxShow);
 
   return (
     <TooltipProvider>
       <div className="flex -space-x-1">
-        {visibleTravelers.map((traveler) => {
-          const initials = getInitials(traveler.first_name, traveler.last_name);
-          const displayName = `${traveler.first_name} ${traveler.last_name || ''}`.trim();
-          const tooltipText = traveler.shared_with_email 
-            ? `${displayName} (${traveler.shared_with_email})`
+        {visible.map((t) => {
+          const initials = getInitials(t.first_name, t.last_name);
+          const displayName = [t.first_name, t.last_name].filter(Boolean).join(" ");
+          const tooltipText = t.shared_with_email
+            ? `${displayName} (${t.shared_with_email})`
             : displayName;
 
           return (
-            <Tooltip key={traveler.id}>
+            <Tooltip key={t.id}>
               <TooltipTrigger asChild>
-                <div 
-                  className={`
-                    inline-flex h-6 w-6 items-center justify-center rounded-full
+                <div
+                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full
                     text-xs font-medium text-white ring-2 ring-white
-                    ${traveler.is_owner 
-                      ? 'bg-earth-600' 
-                      : 'bg-sand-500'
-                    }
-                    hover:z-10
-                  `}
+                    ${t.is_owner ? "bg-earth-600" : "bg-sand-500"} hover:z-10`}
                 >
                   {initials}
                 </div>
@@ -105,13 +137,13 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
               <TooltipContent>
                 <p className="text-sm">
                   {tooltipText}
-                  {traveler.is_owner && ' (Owner)'}
+                  {t.is_owner ? " (Owner)" : ""}
                 </p>
               </TooltipContent>
             </Tooltip>
           );
         })}
-        
+
         {overflowCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -121,7 +153,7 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-sm">
-                {overflowCount} more traveler{overflowCount > 1 ? 's' : ''}
+                {overflowCount} more traveler{overflowCount > 1 ? "s" : ""}
               </p>
             </TooltipContent>
           </Tooltip>

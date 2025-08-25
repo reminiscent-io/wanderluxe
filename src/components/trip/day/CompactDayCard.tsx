@@ -461,10 +461,10 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                             </div>
                             {/* Traveler Avatars */}
                             <div className="flex-shrink-0 ml-2">
-                              <TravelerAvatars 
+                              <TravelerAvatars
                                 tripId={tripId}
-                                eventType={item.type === 'hotel' ? 'accommodation' : item.type}
-                                eventId={item.id}
+                                eventType={item.type === "hotel" ? "accommodation" : item.type}
+                                eventId={item.type === "hotel" ? item.data.stay_id : item.id}
                                 maxShow={3}
                               />
                             </div>
