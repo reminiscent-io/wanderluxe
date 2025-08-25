@@ -21,6 +21,13 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
     queryClient.invalidateQueries({
       queryKey: ['activities', dayId],
     });
+    // Invalidate TravelerAvatars queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:list', tripId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:assigned', tripId],
+    });
   }, [queryClient, tripId, dayId]);
 
   // Set up real-time subscription for activities
