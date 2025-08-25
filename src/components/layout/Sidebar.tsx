@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { 
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed, 
-  MessageCircle, Lightbulb, BarChart2, Package, Settings, 
+  MessageCircle, BarChart2, Package, Settings, 
   ArrowLeft, ChevronDown, ChevronRight, Users 
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -41,7 +41,6 @@ export const tripNavItems = [
     ]
   },
   { title: "AI Assistant", icon: MessageCircle, href: "chat" },
-  { title: "Vision Board", icon: Lightbulb, href: "vision-board" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
 ];
