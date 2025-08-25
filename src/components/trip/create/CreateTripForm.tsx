@@ -6,6 +6,7 @@ import FormActions from "./FormActions";
 import { supabase } from '@/integrations/supabase/client';
 import { getDaysBetweenDates } from '../../../utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
+import { addOwnerToTripShares } from '@/services/travelers';
 import { toast } from 'sonner';
 
 interface CreateTripFormProps {
@@ -89,6 +90,9 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
+
+          // Automatically add the trip owner to trip_shares table
+          await addOwnerToTripShares(trip.trip_id, user.id);
 
           // Save the image position for this trip in localStorage
           if (imagePosition && coverImageUrl) {
