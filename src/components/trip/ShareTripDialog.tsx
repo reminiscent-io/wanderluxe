@@ -9,8 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Share2, PlusCircle, X, Mail, Eye, Edit } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   shareTrip,
@@ -22,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { TripShare, PermissionLevel } from "@/integrations/supabase/trip_shares_types";
 import { EmailCombobox } from "@/components/ui/email-combobox";
+import { cn } from "@/lib/utils";
 
 interface ShareTripDialogProps {
   tripId: string;
@@ -30,7 +29,6 @@ interface ShareTripDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-// Basic email validation (same logic used inline to enable/disable per-line share)
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
 const ShareTripDialog = ({
@@ -44,15 +42,11 @@ const ShareTripDialog = ({
   const setDialogOpen = onOpenChange || setIsOpen;
 
   const [emails, setEmails] = useState<string[]>([""]);
-  const [permissionLevel, setPermissionLevel] =
-    useState<PermissionLevel>("edit");
+  const [permissionLevel, setPermissionLevel] = useState<PermissionLevel>("edit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
-  const [currentUser, setCurrentUser] = useState<{
-    fullName: string | null;
-    email: string | null;
-  }>({
+  const [currentUser, setCurrentUser] = useState<{ fullName: string | null; email: string | null; }>({
     fullName: null,
     email: null,
   });
@@ -74,7 +68,6 @@ const ShareTripDialog = ({
         });
       }
     };
-
     getUserInfo();
   }, []);
 
@@ -137,10 +130,8 @@ const ShareTripDialog = ({
     try {
       const ok = await shareTrip(tripId, email, tripDestination, permissionLevel);
       if (ok) {
-        // Refresh lists
         fetchExistingShares();
         fetchPreviousEmails();
-        // Clear the field if it was the only one
         setEmails((prev) => prev.map((e) => (e === email ? "" : e)));
       }
     } catch (err) {
@@ -154,7 +145,6 @@ const ShareTripDialog = ({
       toast.error("Please enter at least one email address");
       return;
     }
-    // Validate all
     for (const e of nonEmptyEmails) {
       if (!isValidEmail(e)) {
         toast.error(`Invalid email format: ${e}`);
@@ -194,36 +184,36 @@ const ShareTripDialog = ({
     }
   };
 
-  const handleSetPermission = async (
-    shareId: string,
-    target: PermissionLevel
-  ) => {
+  const handleSetPermission = async (shareId: string, target: PermissionLevel) => {
     try {
       // Optimistic
       setExistingShares((prev) =>
-        prev.map((s) =>
-          s.id === shareId ? { ...s, permission_level: target } : s
-        )
+        prev.map((s) => (s.id === shareId ? { ...s, permission_level: target } : s))
       );
       const ok = await updateTripSharePermission(shareId, target);
       if (!ok) {
-        // Revert
+        // Revert (default fallback to 'edit' if missing)
         setExistingShares((prev) =>
           prev.map((s) =>
-            s.id === shareId ? { ...s, permission_level: s.permission_level || "edit" } : s
+            s.id === shareId ? { ...s, permission_level: (s.permission_level || "edit") as PermissionLevel } : s
           )
         );
       }
     } catch (err) {
       console.error("Error updating permission:", err);
-      // Revert on error
       setExistingShares((prev) =>
         prev.map((s) =>
-          s.id === shareId ? { ...s, permission_level: s.permission_level || "edit" } : s
+          s.id === shareId ? { ...s, permission_level: (s.permission_level || "edit") as PermissionLevel } : s
         )
       );
     }
   };
+
+  // Shared button styles for dark selection
+  const baseBtn = "h-8 px-3";
+  const baseBtnSmall = "h-7 px-2";
+  const selected = "bg-earth-600 text-white hover:bg-earth-700";
+  const unselected = "border";
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -234,9 +224,7 @@ const ShareTripDialog = ({
       >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
-          <DialogDescription>
-            Invite people by email and set their access level.
-          </DialogDescription>
+          
         </DialogHeader>
 
         <div
@@ -264,9 +252,8 @@ const ShareTripDialog = ({
                     {/* Inline Share button */}
                     <Button
                       type="button"
-                      variant="default"
                       size="sm"
-                      className="h-8 px-2 sm:px-3 flex-shrink-0"
+                      className={cn("h-8 px-2 sm:px-3 flex-shrink-0", selected)}
                       onClick={() => handleShareSingle(email)}
                       disabled={!valid || isSubmitting}
                     >
@@ -301,48 +288,34 @@ const ShareTripDialog = ({
               Add Another
             </Button>
 
-            {/* New invite permission (radio-like) */}
+            {/* New invite permission — two-button dark selection */}
             <div className="space-y-3 border-t pt-4 mt-4">
               <p className="text-sm font-medium">Permission for new invites</p>
-              <RadioGroup
-                value={permissionLevel}
-                onValueChange={(v) => setPermissionLevel(v as PermissionLevel)}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4"
-              >
-                <div className="flex items-center space-x-2 border rounded-lg p-2 sm:p-3 hover:bg-gray-50">
-                  <RadioGroupItem value="read" id="read" />
-                  <Label
-                    htmlFor="read"
-                    className="flex items-center gap-2 cursor-pointer flex-1"
-                  >
-                    <Eye className="h-4 w-4 text-blue-600" />
-                    <div>
-                      <div className="font-medium">View Only</div>
-                      <div className="text-xs text-muted-foreground">
-                        Can view trip details but cannot edit
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2 border rounded-lg p-2 sm:p-3 hover:bg-gray-50">
-                  <RadioGroupItem value="edit" id="edit" />
-                  <Label
-                    htmlFor="edit"
-                    className="flex items-center gap-2 cursor-pointer flex-1"
-                  >
-                    <Edit className="h-4 w-4 text-green-600" />
-                    <div>
-                      <div className="font-medium">Full</div>
-                      <div className="text-xs text-muted-foreground">
-                        Can view and edit all trip details
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-              </RadioGroup>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setPermissionLevel("read")}
+                  className={cn(baseBtn, permissionLevel === "read" ? selected : unselected)}
+                  variant="outline"
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  View
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setPermissionLevel("edit")}
+                  className={cn(baseBtn, permissionLevel === "edit" ? selected : unselected)}
+                  variant="outline"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              </div>
             </div>
 
-            {/* Existing shares with two-button permission control */}
+            {/* Existing shares — per-row two-button dark selection */}
             {existingShares.length > 0 && (
               <div className="space-y-2 border-t pt-4 mt-6">
                 <p className="text-sm font-medium">Currently shared with</p>
@@ -360,31 +333,28 @@ const ShareTripDialog = ({
                           <span className="text-sm truncate">{share.shared_with_email}</span>
                         </div>
 
-                        {/* View Only */}
                         <Button
                           type="button"
                           size="sm"
-                          variant={current === "read" ? "default" : "outline"}
-                          className="h-7 px-2"
                           onClick={() => handleSetPermission(share.id, "read")}
+                          className={cn(baseBtnSmall, current === "read" ? selected : unselected)}
+                          variant="outline"
                         >
                           <Eye className="h-3 w-3 mr-1" />
                           View
                         </Button>
 
-                        {/* Full */}
                         <Button
                           type="button"
                           size="sm"
-                          variant={current === "edit" ? "default" : "outline"}
-                          className="h-7 px-2"
                           onClick={() => handleSetPermission(share.id, "edit")}
+                          className={cn(baseBtnSmall, current === "edit" ? selected : unselected)}
+                          variant="outline"
                         >
                           <Edit className="h-3 w-3 mr-1" />
                           Edit
                         </Button>
 
-                        {/* Remove share */}
                         <Button
                           type="button"
                           variant="ghost"
@@ -435,7 +405,7 @@ const ShareTripDialog = ({
           <Button
             onClick={handleSaveAll}
             disabled={isSubmitting || isLoading || nonEmptyEmails.length === 0}
-            className="bg-gray-800 hover:bg-gray-900 text-white"
+            className="bg-earth-600 hover:bg-earth-700 text-white"
           >
             <Share2 className="h-4 w-4 mr-2" />
             Share All

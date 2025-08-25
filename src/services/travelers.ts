@@ -1,6 +1,10 @@
 // /src/services/travelers.ts
 import { supabase } from "@/integrations/supabase/client";
 
+// Normalize DB value to 'read' | 'edit'
+const normalizePerm = (p?: string | null): "read" | "edit" =>
+  (p && p.toLowerCase() === "edit") ? "edit" : "read";
+
 // Helper function to add owner to trip_shares when trip is created
 export async function addOwnerToTripShares(tripId: string, userId: string) {
   try {
@@ -12,108 +16,117 @@ export async function addOwnerToTripShares(tripId: string, userId: string) {
       .single();
 
     // Parse full_name into first_name and last_name
-    const fullName = profile?.full_name || 'Trip Owner';
-    const nameParts = fullName.split(' ');
+    const fullName = (profile?.full_name || 'Trip Owner').trim();
+    const nameParts = fullName.split(' ').filter(Boolean);
     const firstName = nameParts[0] || 'Trip';
     const lastName = nameParts.slice(1).join(' ') || 'Owner';
 
-    // Insert owner as a trip share record
+    // Insert owner as a trip share record (owner always has edit)
     await supabase
-      .from('trip_shares')
+      .from('trip_shares' as any)
       .insert({
         trip_id: tripId,
         shared_by_user_id: userId,
-        shared_with_user_id: userId,  // Owner shares with themselves
+        shared_with_user_id: userId, // owner shares with themselves
         first_name: firstName,
         last_name: lastName,
-        is_owner: true,
-        created_at: new Date().toISOString()
+        shared_with_email: null,
+        permission_level: 'edit',     // <— ensure DB reflects edit
+        created_at: new Date().toISOString(),
       });
 
     console.log('Successfully added owner to trip_shares');
   } catch (error) {
     console.error('Error adding owner to trip_shares:', error);
-    // Don't throw - trip creation should still succeed even if this fails
+    // Do not throw; trip creation should still succeed
   }
 }
 
 export async function listTravelers(tripId: string) {
   try {
-    // Get all trip shares (including owner who is now in trip_shares)
-    const { data: sharesData } = await supabase
-      .from("trip_shares")
-      .select("id, first_name, last_name, shared_with_email, shared_by_user_id, shared_with_user_id, created_at")
-      .eq("trip_id", tripId)
-      .order("created_at", { ascending: true });
-    
-    const shares = sharesData || [];
-    
-    // Mark owners (where shared_by_user_id = shared_with_user_id)
-    const travelers = shares.map(share => ({
+    // Pull ALL travelers (including owner row) with permission_level
+    const { data: sharesData, error } = await supabase
+      .from('trip_shares' as any)
+      .select(
+        'id, trip_id, first_name, last_name, shared_with_email, shared_by_user_id, shared_with_user_id, permission_level, created_at'
+      )
+      .eq('trip_id', tripId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error("Error fetching travelers:", error);
+      return { data: [], error };
+    }
+
+    const shares = sharesData ?? [];
+
+    // Mark owner by user_id equality and normalize permission
+    const travelers = shares.map((share: any) => ({
       ...share,
-      is_owner: share.shared_by_user_id === share.shared_with_user_id
+      permission_level: normalizePerm(share.permission_level),
+      is_owner: share.shared_by_user_id && share.shared_with_user_id
+        ? share.shared_by_user_id === share.shared_with_user_id
+        : false,
     }));
-    
+
     return { data: travelers, error: null };
-  } catch (error) {
-    console.error("Error fetching travelers:", error);
-    return { data: [], error: error as any };
+  } catch (err) {
+    console.error("Error fetching travelers:", err);
+    return { data: [], error: err as any };
   }
 }
 
-export async function upsertTraveler(tripId: string, payload: {
-  id?: string;
-  first_name: string;
-  last_name?: string;
-  shared_with_email?: string;
-  permission_level?: "edit" | "read";
-}) {
-  const row = { 
+export async function upsertTraveler(
+  tripId: string,
+  payload: {
+    id?: string;
+    first_name: string;
+    last_name?: string;
+    shared_with_email?: string | null;
+    permission_level?: "edit" | "read";
+  }
+) {
+  const row = {
     trip_id: tripId,
     first_name: payload.first_name,
-    last_name: payload.last_name || null,
-    shared_with_email: payload.shared_with_email || null,
-    permission_level: payload.permission_level || "read",
-    is_owner: false,
-    ...(payload.id && { id: payload.id })
+    last_name: payload.last_name ?? null,
+    shared_with_email: payload.shared_with_email?.trim() || null,
+    permission_level: normalizePerm(payload.permission_level), // keep DB tidy
+    ...(payload.id && { id: payload.id }),
   };
-  
-  // Get current user to ensure we have proper RLS context
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
 
-  // Add the user ID to the row for RLS
+  // Ensure RLS context
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
   const rowWithUser = {
     ...row,
-    shared_by_user_id: user.id
+    shared_by_user_id: user.id,
   };
 
-  return supabase.from("trip_shares").upsert(rowWithUser).select().single();
+  return supabase.from('trip_shares' as any).upsert(rowWithUser).select().single();
 }
 
 export async function deleteTraveler(id: string) {
   try {
-    return await supabase.from("trip_shares").delete().eq("id", id);
+    return await supabase.from('trip_shares' as any).delete().eq('id', id);
   } catch (error) {
     console.warn("Could not delete from trip_shares:", error);
     return { data: null, error: error as any };
   }
 }
 
-// Now using the real database junction tables
+// ===== Junction table helpers =====
 
 // Accommodation travelers
 export async function getAccommodationTravelerIds(tripId: string, stayId: string) {
   try {
     const { data, error } = await supabase
-      .from("accommodation_travelers")
-      .select("traveler_id")
+      .from('accommodation_travelers' as any)
+      .select('traveler_id')
       .match({ trip_id: tripId, stay_id: stayId });
-    
     if (error) return { data: [], error };
-    return { data: data?.map(row => row.traveler_id) || [], error: null };
+    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
   } catch (error) {
     console.error("Error loading accommodation travelers:", error);
     return { data: [], error: error as any };
@@ -122,23 +135,10 @@ export async function getAccommodationTravelerIds(tripId: string, stayId: string
 
 export async function setAccommodationTravelers(tripId: string, stayId: string, travelerIds: string[]) {
   try {
-    // Delete existing associations
-    await supabase.from("accommodation_travelers").delete().match({ trip_id: tripId, stay_id: stayId });
-    
+    await supabase.from('accommodation_travelers' as any).delete().match({ trip_id: tripId, stay_id: stayId });
     if (travelerIds.length === 0) return { data: [], error: null };
-    
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
-      trip_id: tripId, 
-      stay_id: stayId, 
-      traveler_id 
-    }));
-    
-    const { data, error } = await supabase
-      .from("accommodation_travelers")
-      .insert(rows)
-      .select();
-      
+    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, stay_id: stayId, traveler_id }));
+    const { data, error } = await supabase.from('accommodation_travelers' as any).insert(rows).select();
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving accommodation travelers:", error);
@@ -150,12 +150,11 @@ export async function setAccommodationTravelers(tripId: string, stayId: string, 
 export async function getTransportationTravelerIds(tripId: string, transportationId: string) {
   try {
     const { data, error } = await supabase
-      .from("transportation_travelers")
-      .select("traveler_id")
+      .from('transportation_travelers' as any)
+      .select('traveler_id')
       .match({ trip_id: tripId, transportation_id: transportationId });
-    
     if (error) return { data: [], error };
-    return { data: data?.map(row => row.traveler_id) || [], error: null };
+    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
   } catch (error) {
     console.error("Error loading transportation travelers:", error);
     return { data: [], error: error as any };
@@ -164,23 +163,10 @@ export async function getTransportationTravelerIds(tripId: string, transportatio
 
 export async function setTransportationTravelers(tripId: string, transportationId: string, travelerIds: string[]) {
   try {
-    // Delete existing associations
-    await supabase.from("transportation_travelers").delete().match({ trip_id: tripId, transportation_id: transportationId });
-    
+    await supabase.from('transportation_travelers' as any).delete().match({ trip_id: tripId, transportation_id: transportationId });
     if (travelerIds.length === 0) return { data: [], error: null };
-    
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
-      trip_id: tripId, 
-      transportation_id: transportationId, 
-      traveler_id 
-    }));
-    
-    const { data, error } = await supabase
-      .from("transportation_travelers")
-      .insert(rows)
-      .select();
-      
+    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, transportation_id, traveler_id }));
+    const { data, error } = await supabase.from('transportation_travelers' as any).insert(rows).select();
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving transportation travelers:", error);
@@ -192,12 +178,11 @@ export async function setTransportationTravelers(tripId: string, transportationI
 export async function getDayActivityTravelerIds(tripId: string, activityId: string) {
   try {
     const { data, error } = await supabase
-      .from("day_activity_travelers")
-      .select("traveler_id")
+      .from('day_activity_travelers' as any)
+      .select('traveler_id')
       .match({ trip_id: tripId, activity_id: activityId });
-    
     if (error) return { data: [], error };
-    return { data: data?.map(row => row.traveler_id) || [], error: null };
+    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
   } catch (error) {
     console.error("Error loading activity travelers:", error);
     return { data: [], error: error as any };
@@ -206,23 +191,10 @@ export async function getDayActivityTravelerIds(tripId: string, activityId: stri
 
 export async function setDayActivityTravelers(tripId: string, activityId: string, travelerIds: string[]) {
   try {
-    // Delete existing associations
-    await supabase.from("day_activity_travelers").delete().match({ trip_id: tripId, activity_id: activityId });
-    
+    await supabase.from('day_activity_travelers' as any).delete().match({ trip_id: tripId, activity_id: activityId });
     if (travelerIds.length === 0) return { data: [], error: null };
-    
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
-      trip_id: tripId, 
-      activity_id: activityId, 
-      traveler_id 
-    }));
-    
-    const { data, error } = await supabase
-      .from("day_activity_travelers")
-      .insert(rows)
-      .select();
-      
+    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, activity_id: activityId, traveler_id }));
+    const { data, error } = await supabase.from('day_activity_travelers' as any).insert(rows).select();
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving activity travelers:", error);
@@ -234,12 +206,11 @@ export async function setDayActivityTravelers(tripId: string, activityId: string
 export async function getReservationTravelerIds(tripId: string, reservationId: string) {
   try {
     const { data, error } = await supabase
-      .from("reservation_travelers")
-      .select("traveler_id")
+      .from('reservation_travelers' as any)
+      .select('traveler_id')
       .match({ trip_id: tripId, reservation_id: reservationId });
-    
     if (error) return { data: [], error };
-    return { data: data?.map(row => row.traveler_id) || [], error: null };
+    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
   } catch (error) {
     console.error("Error loading reservation travelers:", error);
     return { data: [], error: error as any };
@@ -248,23 +219,10 @@ export async function getReservationTravelerIds(tripId: string, reservationId: s
 
 export async function setReservationTravelers(tripId: string, reservationId: string, travelerIds: string[]) {
   try {
-    // Delete existing associations
-    await supabase.from("reservation_travelers").delete().match({ trip_id: tripId, reservation_id: reservationId });
-    
+    await supabase.from('reservation_travelers' as any).delete().match({ trip_id: tripId, reservation_id: reservationId });
     if (travelerIds.length === 0) return { data: [], error: null };
-    
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
-      trip_id: tripId, 
-      reservation_id: reservationId, 
-      traveler_id 
-    }));
-    
-    const { data, error } = await supabase
-      .from("reservation_travelers")
-      .insert(rows)
-      .select();
-      
+    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, reservation_id, traveler_id }));
+    const { data, error } = await supabase.from('reservation_travelers' as any).insert(rows).select();
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving reservation travelers:", error);
