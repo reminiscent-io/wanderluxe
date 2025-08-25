@@ -131,16 +131,13 @@ export const sendShareNotification = async (
 
     if (!response.ok || !result.success) {
       console.error('Email notification failed:', result.message || 'Unknown error');
-      toast.warning(`Trip shared with ${toEmail}, but email notification couldn't be sent.`);
       return false;
     }
 
     // Success!
-    toast.success(`Trip shared with ${toEmail} successfully and notification sent!`);
     return true;
   } catch (error) {
     console.error('Error in share notification process:', error);
-    toast.error(`Failed to send notification email to ${toEmail}.`);
     return false;
   }
 };
