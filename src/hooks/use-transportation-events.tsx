@@ -57,6 +57,13 @@ export function useTransportationEvents(tripId: string) {
           queryClient.invalidateQueries({
             queryKey: ['trip', tripId],
           });
+          // Invalidate TravelerAvatars queries
+          queryClient.invalidateQueries({
+            queryKey: ['trip-travelers:list', tripId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['trip-travelers:assigned', tripId],
+          });
         }
       )
       .on(
@@ -74,6 +81,13 @@ export function useTransportationEvents(tripId: string) {
           // Also invalidate trip queries
           queryClient.invalidateQueries({
             queryKey: ['trip', tripId],
+          });
+          // Invalidate TravelerAvatars queries
+          queryClient.invalidateQueries({
+            queryKey: ['trip-travelers:list', tripId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['trip-travelers:assigned', tripId],
           });
         }
       )

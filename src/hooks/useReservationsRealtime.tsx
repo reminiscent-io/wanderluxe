@@ -29,6 +29,13 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
     });
+    // Invalidate TravelerAvatars queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:list', tripId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:assigned', tripId],
+    });
   }, [queryClient, tripId, dayId]);
 
   // Set up real-time subscription for reservations

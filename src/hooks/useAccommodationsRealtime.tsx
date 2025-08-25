@@ -21,6 +21,13 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
     queryClient.invalidateQueries({
       queryKey: ['accommodations', tripId],
     });
+    // Invalidate TravelerAvatars queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:list', tripId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:assigned', tripId],
+    });
   }, [queryClient, tripId]);
 
   // Set up real-time subscription for accommodations
