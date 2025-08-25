@@ -10,6 +10,7 @@ export interface Traveler {
   shared_with_email?: string;
   permission_level: "edit" | "read";
   created_at: string;
+  is_owner?: boolean;
 }
 
 export function useTravelers(tripId: string) {
@@ -31,14 +32,15 @@ export function useTravelers(tripId: string) {
       
       setError(null);
       
-      // Now that we have first_name and last_name columns, use them directly
-      return (data || []).map(share => ({
-        id: share.id,
-        first_name: share.first_name || 'Traveler',
-        last_name: share.last_name || '',
-        shared_with_email: share.shared_with_email,
-        permission_level: share.permission_level,
-        created_at: share.created_at,
+      // Return travelers including the owner
+      return (data || []).map(traveler => ({
+        id: traveler.id,
+        first_name: traveler.first_name || 'Traveler',
+        last_name: traveler.last_name || '',
+        shared_with_email: traveler.shared_with_email,
+        permission_level: traveler.permission_level,
+        created_at: traveler.created_at,
+        is_owner: traveler.is_owner || false,
       } as Traveler));
     },
     enabled: !!tripId,

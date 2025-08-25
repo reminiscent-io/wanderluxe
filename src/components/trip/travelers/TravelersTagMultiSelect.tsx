@@ -88,21 +88,21 @@ export default function TravelersTagMultiSelect({
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 z-[9999]" align="start">
-          <Command>
-            <CommandInput placeholder="Search travelers..." />
+        <PopoverContent className="w-full p-0 z-[9999] bg-white border shadow-md" align="start">
+          <Command className="bg-white">
+            <CommandInput placeholder="Search travelers..." className="bg-white" />
             <CommandEmpty>
               {travelers.length === 0 
                 ? "No travelers added yet." 
                 : "No results found."
               }
             </CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
+            <CommandGroup className="max-h-64 overflow-auto bg-white">
               {travelers.map((traveler) => (
                 <CommandItem
                   key={traveler.id}
                   onSelect={() => handleSelect(traveler)}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-gray-50 bg-white"
                 >
                   <Check
                     className={cn(
@@ -111,7 +111,14 @@ export default function TravelersTagMultiSelect({
                     )}
                   />
                   <div className="flex flex-col">
-                    <span>{getDisplayName(traveler)}</span>
+                    <span className="flex items-center gap-2">
+                      {getDisplayName(traveler)}
+                      {traveler.is_owner && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                          Owner
+                        </span>
+                      )}
+                    </span>
                     {traveler.shared_with_email && (
                       <span className="text-xs text-muted-foreground">
                         {traveler.shared_with_email}

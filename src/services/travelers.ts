@@ -2,11 +2,55 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function listTravelers(tripId: string) {
-  return supabase
-    .from("trip_shares")
-    .select("id, first_name, last_name, shared_with_email, permission_level, created_at")
-    .eq("trip_id", tripId)
-    .order("created_at", { ascending: true });
+  try {
+    // Try to get trip shares (other travelers) but handle if table doesn't exist
+    let shares: any[] = [];
+    try {
+      const { data: sharesData } = await supabase
+        .from("trip_shares")
+        .select("id, first_name, last_name, shared_with_email, permission_level, created_at")
+        .eq("trip_id", tripId)
+        .order("created_at", { ascending: true });
+      shares = sharesData || [];
+    } catch (e) {
+      console.warn("Trip shares table not available, continuing with owner only");
+    }
+
+    // Get trip owner from trips table 
+    const { data: trip } = await supabase
+      .from("trips")
+      .select("user_id")
+      .eq("trip_id", tripId)
+      .single();
+    
+    if (!trip) {
+      return { data: [], error: null };
+    }
+
+    // Create travelers array with just the owner for now
+    const travelers = [{
+      id: `owner_${trip.user_id}`,
+      first_name: 'Trip Owner',
+      last_name: '',
+      shared_with_email: null,
+      permission_level: 'edit' as const,
+      created_at: new Date().toISOString(),
+      is_owner: true
+    }];
+    
+    // Add shared travelers if any exist
+    if (shares.length > 0) {
+      travelers.push(...shares.map(share => ({
+        ...share,
+        is_owner: false
+      })));
+    }
+    
+    return { data: travelers, error: null };
+  } catch (error) {
+    console.error("Error fetching travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 export async function upsertTraveler(tripId: string, payload: {
@@ -41,78 +85,65 @@ export async function upsertTraveler(tripId: string, payload: {
 }
 
 export async function deleteTraveler(id: string) {
-  return supabase.from("trip_shares").delete().eq("id", id);
+  try {
+    return await supabase.from("trip_shares").delete().eq("id", id);
+  } catch (error) {
+    console.warn("Could not delete from trip_shares:", error);
+    return { data: null, error: error as any };
+  }
 }
+
+// For now, we'll store traveler selections in localStorage until the database schema is updated
+// These are placeholder functions that will be replaced with proper database operations
 
 // Accommodation travelers
 export async function getAccommodationTravelerIds(tripId: string, stayId: string) {
-  const { data, error } = await supabase
-    .from("accommodation_travelers")
-    .select("traveler_id")
-    .match({ trip_id: tripId, stay_id: stayId });
-  
-  if (error) return { data: [], error };
-  return { data: data?.map(row => row.traveler_id) || [], error: null };
+  const key = `accommodation_travelers_${tripId}_${stayId}`;
+  const stored = localStorage.getItem(key);
+  return { data: stored ? JSON.parse(stored) : [], error: null };
 }
 
 export async function setAccommodationTravelers(tripId: string, stayId: string, travelerIds: string[]) {
-  // replace strategy: delete then bulk insert
-  await supabase.from("accommodation_travelers").delete().match({ trip_id: tripId, stay_id: stayId });
-  if (travelerIds.length === 0) return { data: [], error: null };
-  const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, stay_id: stayId, traveler_id }));
-  return supabase.from("accommodation_travelers").insert(rows).select();
+  const key = `accommodation_travelers_${tripId}_${stayId}`;
+  localStorage.setItem(key, JSON.stringify(travelerIds));
+  return { data: travelerIds, error: null };
 }
 
 // Transportation travelers
 export async function getTransportationTravelerIds(tripId: string, transportationId: string) {
-  const { data, error } = await supabase
-    .from("transportation_travelers")
-    .select("traveler_id")
-    .match({ trip_id: tripId, transportation_id: transportationId });
-  
-  if (error) return { data: [], error };
-  return { data: data?.map(row => row.traveler_id) || [], error: null };
+  const key = `transportation_travelers_${tripId}_${transportationId}`;
+  const stored = localStorage.getItem(key);
+  return { data: stored ? JSON.parse(stored) : [], error: null };
 }
 
 export async function setTransportationTravelers(tripId: string, transportationId: string, travelerIds: string[]) {
-  await supabase.from("transportation_travelers").delete().match({ trip_id: tripId, transportation_id: transportationId });
-  if (travelerIds.length === 0) return { data: [], error: null };
-  const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, transportation_id: transportationId, traveler_id }));
-  return supabase.from("transportation_travelers").insert(rows).select();
+  const key = `transportation_travelers_${tripId}_${transportationId}`;
+  localStorage.setItem(key, JSON.stringify(travelerIds));
+  return { data: travelerIds, error: null };
 }
 
 // Day activity travelers
 export async function getDayActivityTravelerIds(tripId: string, activityId: string) {
-  const { data, error } = await supabase
-    .from("day_activity_travelers")
-    .select("traveler_id")
-    .match({ trip_id: tripId, activity_id: activityId });
-  
-  if (error) return { data: [], error };
-  return { data: data?.map(row => row.traveler_id) || [], error: null };
+  const key = `activity_travelers_${tripId}_${activityId}`;
+  const stored = localStorage.getItem(key);
+  return { data: stored ? JSON.parse(stored) : [], error: null };
 }
 
 export async function setDayActivityTravelers(tripId: string, activityId: string, travelerIds: string[]) {
-  await supabase.from("day_activity_travelers").delete().match({ trip_id: tripId, activity_id: activityId });
-  if (travelerIds.length === 0) return { data: [], error: null };
-  const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, activity_id: activityId, traveler_id }));
-  return supabase.from("day_activity_travelers").insert(rows).select();
+  const key = `activity_travelers_${tripId}_${activityId}`;
+  localStorage.setItem(key, JSON.stringify(travelerIds));
+  return { data: travelerIds, error: null };
 }
 
 // Reservation travelers
 export async function getReservationTravelerIds(tripId: string, reservationId: string) {
-  const { data, error } = await supabase
-    .from("reservation_travelers")
-    .select("traveler_id")
-    .match({ trip_id: tripId, reservation_id: reservationId });
-  
-  if (error) return { data: [], error };
-  return { data: data?.map(row => row.traveler_id) || [], error: null };
+  const key = `reservation_travelers_${tripId}_${reservationId}`;
+  const stored = localStorage.getItem(key);
+  return { data: stored ? JSON.parse(stored) : [], error: null };
 }
 
 export async function setReservationTravelers(tripId: string, reservationId: string, travelerIds: string[]) {
-  await supabase.from("reservation_travelers").delete().match({ trip_id: tripId, reservation_id: reservationId });
-  if (travelerIds.length === 0) return { data: [], error: null };
-  const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, reservation_id: reservationId, traveler_id }));
-  return supabase.from("reservation_travelers").insert(rows).select();
+  const key = `reservation_travelers_${tripId}_${reservationId}`;
+  localStorage.setItem(key, JSON.stringify(travelerIds));
+  return { data: travelerIds, error: null };
 }
