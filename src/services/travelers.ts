@@ -66,12 +66,14 @@ export async function upsertTraveler(tripId: string, payload: {
   first_name: string;
   last_name?: string;
   shared_with_email?: string;
+  permission_level?: "edit" | "read";
 }) {
   const row = { 
     trip_id: tripId,
     first_name: payload.first_name,
     last_name: payload.last_name || null,
     shared_with_email: payload.shared_with_email || null,
+    permission_level: payload.permission_level || "read",
     is_owner: false,
     ...(payload.id && { id: payload.id })
   };

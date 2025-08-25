@@ -8,6 +8,7 @@ export interface Traveler {
   first_name: string;
   last_name?: string;
   shared_with_email?: string;
+  permission_level?: "edit" | "read";
   created_at: string;
   is_owner?: boolean;
 }
@@ -37,6 +38,7 @@ export function useTravelers(tripId: string) {
         first_name: traveler.first_name || 'Traveler',
         last_name: traveler.last_name || '',
         shared_with_email: traveler.shared_with_email,
+        permission_level: (traveler as any).permission_level || 'read',
         created_at: traveler.created_at,
         is_owner: traveler.is_owner || false,
       } as Traveler));
