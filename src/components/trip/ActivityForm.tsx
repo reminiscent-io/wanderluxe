@@ -32,6 +32,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   eventId,
   tripDates,
   preselectedDate,
+  tripId,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -277,6 +278,20 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      {/* Travelers */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Tag Travelers
+        </label>
+        <div className="mt-1">
+          <TravelersTagMultiSelect
+            tripId={tripId}
+            value={activity.travelers || []}
+            onChange={(travelers) => onActivityChange({ ...activity, travelers })}
+          />
         </div>
       </div>
 

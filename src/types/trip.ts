@@ -9,6 +9,7 @@ export interface ActivityFormData {
   end_time?: string;
   cost?: string;
   currency: Currency;
+  travelers?: string[];
 }
 
 // Define the database types (number-based for database storage)

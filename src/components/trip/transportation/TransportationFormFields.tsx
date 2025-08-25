@@ -22,15 +22,17 @@ import {
   formatTransportationType, 
   getTransportationIcon 
 } from "@/utils/transportationUtils";
+import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
 
 interface Props {
   form: UseFormReturn<any>;
   tripArrivalDate?: string | null;
+  tripId: string;
 }
 
 const Required = () => <span className="text-red-500">*</span>;
 
-export default function TransportationFormFields({ form, tripArrivalDate }: Props) {
+export default function TransportationFormFields({ form, tripArrivalDate, tripId }: Props) {
   const { control, setValue } = form;
 
   // watch departure & arrival so UI updates properly
@@ -194,6 +196,23 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
           </div>
         )}
       />
+
+      {/* Travelers */}
+      <Controller
+        control={control}
+        name="travelers"
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label>Tag Travelers</Label>
+            <TravelersTagMultiSelect
+              tripId={tripId}
+              value={field.value || []}
+              onChange={field.onChange}
+            />
+          </div>
+        )}
+      />
     </div>
   );
 }
+

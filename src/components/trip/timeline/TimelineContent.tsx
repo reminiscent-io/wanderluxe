@@ -248,6 +248,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               }}
               eventId={selectedDayId}
               tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
+              tripId={sortedDays[0].trip_id}
             />
           )}
           
@@ -334,6 +335,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             }}
             eventId={editingActivity?.day_id || ''}
             tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
+            tripId={sortedDays[0].trip_id}
           />
           
           {/* Restaurant Reservation Dialog - always available */}
