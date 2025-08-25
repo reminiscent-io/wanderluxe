@@ -22,15 +22,11 @@ export default function TravelersTagMultiSelect({
   disabled = false,
   className,
 }: TravelersTagMultiSelectProps) {
-  // Temporarily disabled until database tables are created
-  return (
-    <div className={cn("min-h-[2.5rem] border border-input rounded-md px-3 py-2", className)}>
-      <span className="text-sm text-muted-foreground">Traveler tagging available after database setup</span>
-    </div>
-  );
+  const [open, setOpen] = useState(false);
+  const { travelers, loading } = useTravelers(tripId);
 
-  const selectedTravelers = (travelers || []).filter(traveler => 
-    traveler && traveler.id && value.includes(traveler.id)
+  const selectedTravelers = travelers.filter(traveler => 
+    value.includes(traveler.id)
   );
 
   const handleSelect = (traveler: Traveler) => {
