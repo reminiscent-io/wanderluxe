@@ -36,6 +36,7 @@ export default function TravelersTagMultiSelect({
     } else {
       onChange([...value, traveler.id]);
     }
+    // Don't close the dropdown after selection to allow multiple selections
   };
 
   const handleRemove = (travelerId: string) => {
@@ -88,8 +89,12 @@ export default function TravelersTagMultiSelect({
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 z-[9999] bg-white border shadow-md" align="start">
-          <Command className="bg-white">
+        <PopoverContent 
+          className="w-full p-0 z-[9999] bg-white border shadow-md" 
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <Command className="bg-white" shouldFilter={false}>
             <CommandInput placeholder="Search travelers..." className="bg-white" />
             <CommandEmpty>
               {travelers.length === 0 
@@ -101,8 +106,12 @@ export default function TravelersTagMultiSelect({
               {travelers.map((traveler) => (
                 <CommandItem
                   key={traveler.id}
-                  onSelect={() => handleSelect(traveler)}
-                  className="cursor-pointer hover:bg-gray-50 bg-white"
+                  value={traveler.id}
+                  onSelect={() => {
+                    handleSelect(traveler);
+                    // Keep the dropdown open for multiple selections
+                  }}
+                  className="cursor-pointer hover:bg-gray-50 bg-white data-[selected=true]:bg-gray-100"
                 >
                   <Check
                     className={cn(
