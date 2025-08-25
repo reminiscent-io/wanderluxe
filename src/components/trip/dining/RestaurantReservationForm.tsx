@@ -159,6 +159,21 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   }, [defaultValues?.id, defaultValues?.day_id, defaultValues?.reservation_date, form]);
 
   // ──────────────────────────────────────────────────────────────────────────────
+  // Load existing travelers
+  // ──────────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (defaultValues?.id && tripId) {
+      getReservationTravelerIds(tripId, defaultValues.id.toString())
+        .then(({ data }) => {
+          if (data) {
+            form.setValue("travelers", data);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [defaultValues?.id, tripId, form]);
+
+  // ──────────────────────────────────────────────────────────────────────────────
   // Submit handler
   // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitForm = form.handleSubmit(async (data) => {
@@ -216,6 +231,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
     try {
       await onSubmit(processedData);
+      
+      // Save traveler tags if we have an id (for edit) or after successful creation
+      if (defaultValues?.id && data.travelers) {
+        await setReservationTravelers(effectiveTripId, defaultValues.id.toString(), data.travelers);
+      }
 
     } catch (err) {
       console.error('Failed to save reservation:', err);
@@ -428,6 +448,25 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             )}
           />
         </div>
+
+        {/* Travelers */}
+        <FormField
+          control={form.control}
+          name="travelers"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tag Travelers</FormLabel>
+              <FormControl>
+                <TravelersTagMultiSelect
+                  tripId={tripId}
+                  value={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Buttons */}
         <div className="flex justify-between items-center pt-4">

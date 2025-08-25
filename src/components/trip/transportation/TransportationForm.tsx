@@ -143,6 +143,7 @@ export default function TransportationForm({
         <TransportationFormFields
           form={form}
           tripArrivalDate={tripArrivalDate}
+          tripId={tripId}
         />
 
         <div className="flex items-center justify-between pt-4">

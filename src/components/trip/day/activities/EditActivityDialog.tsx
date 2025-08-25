@@ -18,6 +18,7 @@ interface EditActivityDialogProps {
   onDelete: (id: string) => void;
   eventId: string;
   tripDates?: { arrival_date: string; departure_date: string };
+  tripId: string;
 }
 
 const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
@@ -29,6 +30,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
   onDelete,
   eventId,
   tripDates,
+  tripId,
 }) => {
   useEffect(() => {
     if (activityId) {
@@ -65,6 +67,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
               eventId={eventId}
               tripDates={tripDates}
               preselectedDate={activity.date}
+              tripId={tripId}
             />
           </div>
         </div>
