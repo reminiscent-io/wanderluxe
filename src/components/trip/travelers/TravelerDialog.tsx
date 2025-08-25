@@ -12,6 +12,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Traveler } from "@/hooks/useTravelers";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface TravelerDialogProps {
   open: boolean;
@@ -41,6 +42,18 @@ export default function TravelerDialog({
 
   const watchedEmail = form.watch("shared_with_email");
   const hasEmail = !!watchedEmail;
+
+  // Reset form when traveler changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        first_name: traveler?.first_name || "",
+        last_name: traveler?.last_name || "",
+        shared_with_email: traveler?.shared_with_email || "",
+        permission_level: traveler?.permission_level || "read",
+      });
+    }
+  }, [open, traveler, form]);
 
   const upsertMutation = useMutation({
     mutationFn: async (data: TravelerForm) => {
@@ -185,7 +198,7 @@ export default function TravelerDialog({
               <Button
                 type="submit"
                 disabled={upsertMutation.isPending}
-                className="flex-1"
+                className="flex-1 bg-earth-600 hover:bg-earth-700 text-white"
               >
                 {upsertMutation.isPending
                   ? 'Saving...'
