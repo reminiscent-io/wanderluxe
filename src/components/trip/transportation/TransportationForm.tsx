@@ -101,6 +101,24 @@ export default function TransportationForm({
     name: "travel_range",
   }) as LuxuryDateTimeRange;
 
+  /* ------------------- load existing travelers ------------------- */
+  useEffect(() => {
+    const loadTravelers = async () => {
+      if (initialData?.id) {
+        try {
+          const { data: travelerIds, error } = await getTransportationTravelerIds(tripId, initialData.id);
+          if (!error && travelerIds) {
+            form.setValue("travelers", travelerIds);
+          }
+        } catch (error) {
+          console.error("Error loading transportation travelers:", error);
+        }
+      }
+    };
+    
+    loadTravelers();
+  }, [initialData?.id, tripId, form]);
+
   /* ------------------- submit handler ------------------- */
   const [saving, setSaving] = useState(false);
   const handleSubmit = async (data: z.infer<typeof schema>) => {
@@ -127,7 +145,15 @@ export default function TransportationForm({
 
     try {
       setSaving(true);
-      await onSubmit(payload);
+      const result = await onSubmit(payload);
+      
+      // Save traveler assignments after successful transportation save
+      if (data.travelers && data.travelers.length > 0) {
+        const transportationId = initialData?.id || (result as any)?.id;
+        if (transportationId) {
+          await setTransportationTravelers(tripId, transportationId, data.travelers);
+        }
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to save transportation");
