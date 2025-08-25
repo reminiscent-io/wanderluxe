@@ -93,57 +93,196 @@ export async function deleteTraveler(id: string) {
   }
 }
 
-// For now, we'll store traveler selections in localStorage until the database schema is updated
-// These are placeholder functions that will be replaced with proper database operations
+// Now using the real database junction tables
 
 // Accommodation travelers
 export async function getAccommodationTravelerIds(tripId: string, stayId: string) {
-  const key = `accommodation_travelers_${tripId}_${stayId}`;
-  const stored = localStorage.getItem(key);
-  return { data: stored ? JSON.parse(stored) : [], error: null };
+  try {
+    const { data, error } = await supabase
+      .from("accommodation_travelers")
+      .select("traveler_id")
+      .match({ trip_id: tripId, stay_id: stayId });
+    
+    if (error) return { data: [], error };
+    return { data: data?.map(row => row.traveler_id) || [], error: null };
+  } catch (error) {
+    console.error("Error loading accommodation travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 export async function setAccommodationTravelers(tripId: string, stayId: string, travelerIds: string[]) {
-  const key = `accommodation_travelers_${tripId}_${stayId}`;
-  localStorage.setItem(key, JSON.stringify(travelerIds));
-  return { data: travelerIds, error: null };
+  try {
+    // Delete existing associations
+    await supabase.from("accommodation_travelers").delete().match({ trip_id: tripId, stay_id: stayId });
+    
+    if (travelerIds.length === 0) return { data: [], error: null };
+    
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
+      trip_id: tripId, 
+      stay_id: stayId, 
+      traveler_id 
+    }));
+    
+    const { data, error } = await supabase
+      .from("accommodation_travelers")
+      .insert(rows)
+      .select();
+      
+    return { data: data || [], error };
+  } catch (error) {
+    console.error("Error saving accommodation travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 // Transportation travelers
 export async function getTransportationTravelerIds(tripId: string, transportationId: string) {
-  const key = `transportation_travelers_${tripId}_${transportationId}`;
-  const stored = localStorage.getItem(key);
-  return { data: stored ? JSON.parse(stored) : [], error: null };
+  try {
+    const { data, error } = await supabase
+      .from("transportation_travelers")
+      .select("traveler_id")
+      .match({ trip_id: tripId, transportation_id: transportationId });
+    
+    if (error) return { data: [], error };
+    return { data: data?.map(row => row.traveler_id) || [], error: null };
+  } catch (error) {
+    console.error("Error loading transportation travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 export async function setTransportationTravelers(tripId: string, transportationId: string, travelerIds: string[]) {
-  const key = `transportation_travelers_${tripId}_${transportationId}`;
-  localStorage.setItem(key, JSON.stringify(travelerIds));
-  return { data: travelerIds, error: null };
+  try {
+    // Delete existing associations
+    await supabase.from("transportation_travelers").delete().match({ trip_id: tripId, transportation_id: transportationId });
+    
+    if (travelerIds.length === 0) return { data: [], error: null };
+    
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
+      trip_id: tripId, 
+      transportation_id: transportationId, 
+      traveler_id 
+    }));
+    
+    const { data, error } = await supabase
+      .from("transportation_travelers")
+      .insert(rows)
+      .select();
+      
+    return { data: data || [], error };
+  } catch (error) {
+    console.error("Error saving transportation travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 // Day activity travelers
 export async function getDayActivityTravelerIds(tripId: string, activityId: string) {
-  const key = `activity_travelers_${tripId}_${activityId}`;
-  const stored = localStorage.getItem(key);
-  return { data: stored ? JSON.parse(stored) : [], error: null };
+  try {
+    const { data, error } = await supabase
+      .from("day_activity_travelers")
+      .select("traveler_id")
+      .match({ trip_id: tripId, activity_id: activityId });
+    
+    if (error) return { data: [], error };
+    return { data: data?.map(row => row.traveler_id) || [], error: null };
+  } catch (error) {
+    console.error("Error loading activity travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 export async function setDayActivityTravelers(tripId: string, activityId: string, travelerIds: string[]) {
-  const key = `activity_travelers_${tripId}_${activityId}`;
-  localStorage.setItem(key, JSON.stringify(travelerIds));
-  return { data: travelerIds, error: null };
+  try {
+    // Delete existing associations
+    await supabase.from("day_activity_travelers").delete().match({ trip_id: tripId, activity_id: activityId });
+    
+    if (travelerIds.length === 0) return { data: [], error: null };
+    
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
+      trip_id: tripId, 
+      activity_id: activityId, 
+      traveler_id 
+    }));
+    
+    const { data, error } = await supabase
+      .from("day_activity_travelers")
+      .insert(rows)
+      .select();
+      
+    return { data: data || [], error };
+  } catch (error) {
+    console.error("Error saving activity travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 // Reservation travelers
 export async function getReservationTravelerIds(tripId: string, reservationId: string) {
-  const key = `reservation_travelers_${tripId}_${reservationId}`;
-  const stored = localStorage.getItem(key);
-  return { data: stored ? JSON.parse(stored) : [], error: null };
+  try {
+    const { data, error } = await supabase
+      .from("reservation_travelers")
+      .select("traveler_id")
+      .match({ trip_id: tripId, reservation_id: reservationId });
+    
+    if (error) return { data: [], error };
+    return { data: data?.map(row => row.traveler_id) || [], error: null };
+  } catch (error) {
+    console.error("Error loading reservation travelers:", error);
+    return { data: [], error: error as any };
+  }
 }
 
 export async function setReservationTravelers(tripId: string, reservationId: string, travelerIds: string[]) {
-  const key = `reservation_travelers_${tripId}_${reservationId}`;
-  localStorage.setItem(key, JSON.stringify(travelerIds));
-  return { data: travelerIds, error: null };
+  try {
+    // Delete existing associations
+    await supabase.from("reservation_travelers").delete().match({ trip_id: tripId, reservation_id: reservationId });
+    
+    if (travelerIds.length === 0) return { data: [], error: null };
+    
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
+      trip_id: tripId, 
+      reservation_id: reservationId, 
+      traveler_id 
+    }));
+    
+    const { data, error } = await supabase
+      .from("reservation_travelers")
+      .insert(rows)
+      .select();
+      
+    return { data: data || [], error };
+  } catch (error) {
+    console.error("Error saving reservation travelers:", error);
+    return { data: [], error: error as any };
+  }
 }

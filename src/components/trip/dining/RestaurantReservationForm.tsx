@@ -217,11 +217,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       finalDayId = tripDay.day_id;
     }
 
-    // Remove reservation_date since it doesn't exist in the database - we use day_id instead
-    const { reservation_date, ...dataWithoutDate } = data;
+    // Remove reservation_date and travelers since they don't exist in the database - we use day_id and junction tables instead
+    const { reservation_date, travelers, ...dataWithoutExtraFields } = data;
     
     const processedData = {
-      ...dataWithoutDate,
+      ...dataWithoutExtraFields,
       trip_id: effectiveTripId,
       day_id: finalDayId,
       order_index: (defaultValues as any)?.order_index ?? 0,
@@ -230,11 +230,14 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
 
     try {
-      await onSubmit(processedData);
+      const result = await onSubmit(processedData);
       
-      // Save traveler tags if we have an id (for edit) or after successful creation
-      if (defaultValues?.id && data.travelers) {
-        await setReservationTravelers(effectiveTripId, defaultValues.id.toString(), data.travelers);
+      // Save traveler tags if we have travelers selected
+      if (travelers && travelers.length > 0) {
+        const reservationId = defaultValues?.id || (result as any)?.id;
+        if (reservationId) {
+          await setReservationTravelers(effectiveTripId, reservationId.toString(), travelers);
+        }
       }
 
     } catch (err) {
