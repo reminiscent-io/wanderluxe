@@ -19,7 +19,11 @@ export function useTransportationEvents(tripId: string) {
         console.error('Error fetching transportation data:', error);
         throw error;
       }
-      return data as Transportation[];
+      // Map the data to ensure all required fields are present
+      return (data || []).map(item => ({
+        ...item,
+        is_paid: (item as any).is_paid ?? false,
+      })) as Transportation[];
     },
     enabled: !!tripId,
   });
@@ -43,6 +47,24 @@ export function useTransportationEvents(tripId: string) {
           event: '*',
           schema: 'public',
           table: 'transportation',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        (payload) => {
+          queryClient.invalidateQueries({
+            queryKey: ['transportation', tripId],
+          });
+          // Also invalidate trip queries
+          queryClient.invalidateQueries({
+            queryKey: ['trip', tripId],
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transportation_travelers',
           filter: `trip_id=eq.${tripId}`,
         },
         (payload) => {
