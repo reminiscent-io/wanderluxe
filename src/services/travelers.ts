@@ -1,50 +1,58 @@
 // /src/services/travelers.ts
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper function to add owner to trip_shares when trip is created
+export async function addOwnerToTripShares(tripId: string, userId: string) {
+  try {
+    // Get owner's profile info
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single();
+
+    // Parse full_name into first_name and last_name
+    const fullName = profile?.full_name || 'Trip Owner';
+    const nameParts = fullName.split(' ');
+    const firstName = nameParts[0] || 'Trip';
+    const lastName = nameParts.slice(1).join(' ') || 'Owner';
+
+    // Insert owner as a trip share record
+    await supabase
+      .from('trip_shares' as any)
+      .insert({
+        trip_id: tripId,
+        shared_by_user_id: userId,
+        shared_with_user_id: userId,  // Owner shares with themselves
+        first_name: firstName,
+        last_name: lastName,
+        permission_level: 'edit',
+        created_at: new Date().toISOString()
+      });
+
+    console.log('Successfully added owner to trip_shares');
+  } catch (error) {
+    console.error('Error adding owner to trip_shares:', error);
+    // Don't throw - trip creation should still succeed even if this fails
+  }
+}
+
 export async function listTravelers(tripId: string) {
   try {
-    // Try to get trip shares (other travelers) but handle if table doesn't exist
-    let shares: any[] = [];
-    try {
-      const { data: sharesData } = await supabase
-        .from("trip_shares")
-        .select("id, first_name, last_name, shared_with_email, permission_level, created_at")
-        .eq("trip_id", tripId)
-        .order("created_at", { ascending: true });
-      shares = sharesData || [];
-    } catch (e) {
-      console.warn("Trip shares table not available, continuing with owner only");
-    }
-
-    // Get trip owner from trips table 
-    const { data: trip } = await supabase
-      .from("trips")
-      .select("user_id")
+    // Get all trip shares (including owner who is now in trip_shares)
+    const { data: sharesData } = await supabase
+      .from("trip_shares" as any)
+      .select("id, first_name, last_name, shared_with_email, shared_by_user_id, shared_with_user_id, permission_level, created_at")
       .eq("trip_id", tripId)
-      .single();
+      .order("created_at", { ascending: true });
     
-    if (!trip) {
-      return { data: [], error: null };
-    }
-
-    // Create travelers array with just the owner for now
-    const travelers = [{
-      id: `owner_${trip.user_id}`,
-      first_name: 'Trip Owner',
-      last_name: '',
-      shared_with_email: null,
-      permission_level: 'edit' as const,
-      created_at: new Date().toISOString(),
-      is_owner: true
-    }];
+    const shares = sharesData || [];
     
-    // Add shared travelers if any exist
-    if (shares.length > 0) {
-      travelers.push(...shares.map(share => ({
-        ...share,
-        is_owner: false
-      })));
-    }
+    // Mark owners (where shared_by_user_id = shared_with_user_id)
+    const travelers = shares.map(share => ({
+      ...share,
+      is_owner: share.shared_by_user_id === share.shared_with_user_id
+    }));
     
     return { data: travelers, error: null };
   } catch (error) {
@@ -81,7 +89,7 @@ export async function upsertTraveler(tripId: string, payload: {
     shared_by_user_id: user.id
   };
 
-  return supabase.from("trip_shares").upsert(rowWithUser).select().single();
+  return supabase.from("trip_shares" as any).upsert(rowWithUser).select().single();
 }
 
 export async function deleteTraveler(id: string) {
@@ -99,7 +107,7 @@ export async function deleteTraveler(id: string) {
 export async function getAccommodationTravelerIds(tripId: string, stayId: string) {
   try {
     const { data, error } = await supabase
-      .from("accommodation_travelers")
+      .from("accommodation_travelers" as any)
       .select("traveler_id")
       .match({ trip_id: tripId, stay_id: stayId });
     
@@ -114,25 +122,19 @@ export async function getAccommodationTravelerIds(tripId: string, stayId: string
 export async function setAccommodationTravelers(tripId: string, stayId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("accommodation_travelers").delete().match({ trip_id: tripId, stay_id: stayId });
+    await supabase.from("accommodation_travelers" as any).delete().match({ trip_id: tripId, stay_id: stayId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations (filter out owner IDs that are not UUIDs)
-    const validTravelerIds = travelerIds.filter(id => 
-      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
-    );
-    
-    if (validTravelerIds.length === 0) return { data: [], error: null };
-    
-    const rows = validTravelerIds.map((traveler_id) => ({ 
+    // Insert new associations
+    const rows = travelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       stay_id: stayId, 
       traveler_id 
     }));
     
     const { data, error } = await supabase
-      .from("accommodation_travelers")
+      .from("accommodation_travelers" as any)
       .insert(rows)
       .select();
       
@@ -147,7 +149,7 @@ export async function setAccommodationTravelers(tripId: string, stayId: string, 
 export async function getTransportationTravelerIds(tripId: string, transportationId: string) {
   try {
     const { data, error } = await supabase
-      .from("transportation_travelers")
+      .from("transportation_travelers" as any)
       .select("traveler_id")
       .match({ trip_id: tripId, transportation_id: transportationId });
     
@@ -162,25 +164,19 @@ export async function getTransportationTravelerIds(tripId: string, transportatio
 export async function setTransportationTravelers(tripId: string, transportationId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("transportation_travelers").delete().match({ trip_id: tripId, transportation_id: transportationId });
+    await supabase.from("transportation_travelers" as any).delete().match({ trip_id: tripId, transportation_id: transportationId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations (filter out owner IDs that are not UUIDs)
-    const validTravelerIds = travelerIds.filter(id => 
-      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
-    );
-    
-    if (validTravelerIds.length === 0) return { data: [], error: null };
-    
-    const rows = validTravelerIds.map((traveler_id) => ({ 
+    // Insert new associations
+    const rows = travelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       transportation_id: transportationId, 
       traveler_id 
     }));
     
     const { data, error } = await supabase
-      .from("transportation_travelers")
+      .from("transportation_travelers" as any)
       .insert(rows)
       .select();
       
@@ -195,7 +191,7 @@ export async function setTransportationTravelers(tripId: string, transportationI
 export async function getDayActivityTravelerIds(tripId: string, activityId: string) {
   try {
     const { data, error } = await supabase
-      .from("day_activity_travelers")
+      .from("day_activity_travelers" as any)
       .select("traveler_id")
       .match({ trip_id: tripId, activity_id: activityId });
     
@@ -210,25 +206,19 @@ export async function getDayActivityTravelerIds(tripId: string, activityId: stri
 export async function setDayActivityTravelers(tripId: string, activityId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("day_activity_travelers").delete().match({ trip_id: tripId, activity_id: activityId });
+    await supabase.from("day_activity_travelers" as any).delete().match({ trip_id: tripId, activity_id: activityId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations (filter out owner IDs that are not UUIDs)
-    const validTravelerIds = travelerIds.filter(id => 
-      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
-    );
-    
-    if (validTravelerIds.length === 0) return { data: [], error: null };
-    
-    const rows = validTravelerIds.map((traveler_id) => ({ 
+    // Insert new associations
+    const rows = travelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       activity_id: activityId, 
       traveler_id 
     }));
     
     const { data, error } = await supabase
-      .from("day_activity_travelers")
+      .from("day_activity_travelers" as any)
       .insert(rows)
       .select();
       
@@ -243,7 +233,7 @@ export async function setDayActivityTravelers(tripId: string, activityId: string
 export async function getReservationTravelerIds(tripId: string, reservationId: string) {
   try {
     const { data, error } = await supabase
-      .from("reservation_travelers")
+      .from("reservation_travelers" as any)
       .select("traveler_id")
       .match({ trip_id: tripId, reservation_id: reservationId });
     
@@ -258,25 +248,19 @@ export async function getReservationTravelerIds(tripId: string, reservationId: s
 export async function setReservationTravelers(tripId: string, reservationId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("reservation_travelers").delete().match({ trip_id: tripId, reservation_id: reservationId });
+    await supabase.from("reservation_travelers" as any).delete().match({ trip_id: tripId, reservation_id: reservationId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations (filter out owner IDs that are not UUIDs)
-    const validTravelerIds = travelerIds.filter(id => 
-      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
-    );
-    
-    if (validTravelerIds.length === 0) return { data: [], error: null };
-    
-    const rows = validTravelerIds.map((traveler_id) => ({ 
+    // Insert new associations
+    const rows = travelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       reservation_id: reservationId, 
       traveler_id 
     }));
     
     const { data, error } = await supabase
-      .from("reservation_travelers")
+      .from("reservation_travelers" as any)
       .insert(rows)
       .select();
       
