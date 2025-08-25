@@ -1,0 +1,20 @@
+<div class="luna-console-preview" data-id="91"><div class="luna-console-preview-container"><div class="luna-console-preview-icon-container"><span class="luna-console-icon luna-console-icon-caret-right"></span></div><span class="luna-console-preview-content-container"><span class="luna-console-descriptor">TypeError</span> <span class="luna-console-object-preview">{}</span></span></div><div class="luna-console-json luna-console-hidden"></div></div>
+
+The above error occurred in the <TravelersTagMultiSelect> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+
+Uncaught error: 
+TypeError {}
+message: "travelers.filter is not a function"
+stack: "TypeError: travelers.filter is not a function↵ at TravelersTagMultiSelect (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/src/components/trip/travelers/TravelersTagMultiSelect.tsx?t=1756155880148:34:41)↵ at react-stack-bottom-frame (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:17424:20)↵ at renderWithHooks (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:4206:24)↵ at updateFunctionComponent (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:6619:21)↵ at beginWork (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:7654:20)↵ at runWithFiberInDEV (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:1485:72)↵ at performUnitOfWork (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:10868:98)↵ at workLoopSync (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:10728:43)↵ at renderRootSync (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:10711:13)↵ at performWorkOnRoot (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/node_modules/.vite/deps/react-dom_client.js?v=c2599123:10359:46)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+ 
+Object {componentStack: "↵    at TravelersTagMultiSelect…"}
+
+at t.value (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

@@ -25,7 +25,7 @@ export default function TravelersTagMultiSelect({
   const [open, setOpen] = useState(false);
   const { travelers, loading } = useTravelers(tripId);
 
-  const selectedTravelers = travelers.filter(traveler => 
+  const selectedTravelers = (travelers || []).filter(traveler => 
     value.includes(traveler.id)
   );
 
@@ -101,13 +101,13 @@ export default function TravelersTagMultiSelect({
             <Command className="bg-white pointer-events-auto" shouldFilter={false}>
               <CommandInput placeholder="Search travelers..." className="bg-white pointer-events-auto" />
               <CommandEmpty>
-                {travelers.length === 0 
+                {(travelers || []).length === 0 
                   ? "No travelers added yet." 
                   : "No results found."
                 }
               </CommandEmpty>
               <CommandGroup className="max-h-64 overflow-auto bg-white pointer-events-auto">
-                {travelers.map((traveler) => (
+                {(travelers || []).map((traveler) => (
                   <CommandItem
                     key={traveler.id}
                     value={traveler.id}
