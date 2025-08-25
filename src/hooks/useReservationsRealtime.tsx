@@ -54,6 +54,16 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
         },
         handleReservationChange
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleReservationChange
+      )
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
       });

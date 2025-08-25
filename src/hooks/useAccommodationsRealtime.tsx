@@ -46,6 +46,16 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
         },
         handleAccommodationChange
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleAccommodationChange
+      )
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
       });

@@ -46,6 +46,16 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
         },
         handleActivityChange
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'day_activity_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleActivityChange
+      )
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
       });
