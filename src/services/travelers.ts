@@ -118,8 +118,14 @@ export async function setAccommodationTravelers(tripId: string, stayId: string, 
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       stay_id: stayId, 
       traveler_id 
@@ -160,8 +166,14 @@ export async function setTransportationTravelers(tripId: string, transportationI
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       transportation_id: transportationId, 
       traveler_id 
@@ -202,8 +214,14 @@ export async function setDayActivityTravelers(tripId: string, activityId: string
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       activity_id: activityId, 
       traveler_id 
@@ -244,8 +262,14 @@ export async function setReservationTravelers(tripId: string, reservationId: str
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
-    // Insert new associations
-    const rows = travelerIds.map((traveler_id) => ({ 
+    // Insert new associations (filter out owner IDs that are not UUIDs)
+    const validTravelerIds = travelerIds.filter(id => 
+      !id.startsWith('owner_') && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validTravelerIds.length === 0) return { data: [], error: null };
+    
+    const rows = validTravelerIds.map((traveler_id) => ({ 
       trip_id: tripId, 
       reservation_id: reservationId, 
       traveler_id 

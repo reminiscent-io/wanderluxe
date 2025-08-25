@@ -37,6 +37,19 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load existing travelers for edit mode
+  useEffect(() => {
+    if ((activity as any).id && tripId && !activity.travelers) {
+      getDayActivityTravelerIds(tripId, (activity as any).id)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            onActivityChange({ ...activity, travelers: data });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [(activity as any).id, tripId]);
+
   // New local state for time values
   const [startTime, setStartTime] = useState(activity.start_time || "");
   const [endTime, setEndTime] = useState(activity.end_time || "");
@@ -134,7 +147,20 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(activity);
+      // Remove travelers from form data as it's handled separately
+      const { travelers, ...activityData } = activity;
+      
+      const result = await onSubmit(activityData);
+      
+      // Save traveler tags if we have travelers selected
+      if (travelers && travelers.length > 0) {
+        // For edit mode, we might have an existing activity ID, or we get it from the result
+        const activityId = (activity as any).id || (result as any)?.id;
+        if (activityId) {
+          await setDayActivityTravelers(tripId, activityId, travelers);
+        }
+      }
+      
       toast.success('Activity saved successfully');
       onCancel();
     } catch (error) {
