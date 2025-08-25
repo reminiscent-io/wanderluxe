@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export async function listTravelers(tripId: string) {
   return supabase
     .from("trip_shares")
-    .select("id, shared_with_email, permission_level, created_at")
+    .select("id, first_name, last_name, shared_with_email, permission_level, created_at")
     .eq("trip_id", tripId)
     .order("created_at", { ascending: true });
 }
@@ -16,15 +16,28 @@ export async function upsertTraveler(tripId: string, payload: {
   shared_with_email?: string;
   permission_level?: "edit" | "read";
 }) {
-  // For now, we'll store the name information in a way that works with existing schema
-  // In a production app, we'd add first_name/last_name columns to trip_shares table
   const row = { 
-    trip_id: tripId, 
-    shared_with_email: payload.shared_with_email || `${payload.first_name}${payload.last_name ? ' ' + payload.last_name : ''}@temp.com`,
+    trip_id: tripId,
+    first_name: payload.first_name,
+    last_name: payload.last_name || null,
+    shared_with_email: payload.shared_with_email || null,
     permission_level: payload.permission_level || "read",
     ...(payload.id && { id: payload.id })
   };
-  return supabase.from("trip_shares").upsert(row).select().single();
+  
+  // Get current user to ensure we have proper RLS context
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  // Add the user ID to the row for RLS
+  const rowWithUser = {
+    ...row,
+    shared_by_user_id: user.id
+  };
+
+  return supabase.from("trip_shares").upsert(rowWithUser).select().single();
 }
 
 export async function deleteTraveler(id: string) {
