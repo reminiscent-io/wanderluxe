@@ -27,7 +27,8 @@ export function useTravelers(tripId: string) {
       if (error) {
         console.error('Error fetching travelers:', error);
         setError(error.message);
-        throw error;
+        // Don't throw - return empty array instead to prevent crashes
+        return [];
       }
       
       setError(null);

@@ -19,7 +19,7 @@ export async function addOwnerToTripShares(tripId: string, userId: string) {
 
     // Insert owner as a trip share record
     await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .insert({
         trip_id: tripId,
         shared_by_user_id: userId,
@@ -41,7 +41,7 @@ export async function listTravelers(tripId: string) {
   try {
     // Get all trip shares (including owner who is now in trip_shares)
     const { data: sharesData } = await supabase
-      .from("trip_shares" as any)
+      .from("trip_shares")
       .select("id, first_name, last_name, shared_with_email, shared_by_user_id, shared_with_user_id, permission_level, created_at")
       .eq("trip_id", tripId)
       .order("created_at", { ascending: true });
@@ -57,7 +57,7 @@ export async function listTravelers(tripId: string) {
     return { data: travelers, error: null };
   } catch (error) {
     console.error("Error fetching travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
@@ -89,7 +89,7 @@ export async function upsertTraveler(tripId: string, payload: {
     shared_by_user_id: user.id
   };
 
-  return supabase.from("trip_shares" as any).upsert(rowWithUser).select().single();
+  return supabase.from("trip_shares").upsert(rowWithUser).select().single();
 }
 
 export async function deleteTraveler(id: string) {
@@ -97,7 +97,7 @@ export async function deleteTraveler(id: string) {
     return await supabase.from("trip_shares").delete().eq("id", id);
   } catch (error) {
     console.warn("Could not delete from trip_shares:", error);
-    return { data: null, error: error as any };
+    return { data: null, error: error };
   }
 }
 
@@ -107,7 +107,7 @@ export async function deleteTraveler(id: string) {
 export async function getAccommodationTravelerIds(tripId: string, stayId: string) {
   try {
     const { data, error } = await supabase
-      .from("accommodation_travelers" as any)
+      .from("accommodation_travelers")
       .select("traveler_id")
       .match({ trip_id: tripId, stay_id: stayId });
     
@@ -115,14 +115,14 @@ export async function getAccommodationTravelerIds(tripId: string, stayId: string
     return { data: data?.map(row => row.traveler_id) || [], error: null };
   } catch (error) {
     console.error("Error loading accommodation travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
 export async function setAccommodationTravelers(tripId: string, stayId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("accommodation_travelers" as any).delete().match({ trip_id: tripId, stay_id: stayId });
+    await supabase.from("accommodation_travelers").delete().match({ trip_id: tripId, stay_id: stayId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
@@ -134,14 +134,14 @@ export async function setAccommodationTravelers(tripId: string, stayId: string, 
     }));
     
     const { data, error } = await supabase
-      .from("accommodation_travelers" as any)
+      .from("accommodation_travelers")
       .insert(rows)
       .select();
       
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving accommodation travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
@@ -149,7 +149,7 @@ export async function setAccommodationTravelers(tripId: string, stayId: string, 
 export async function getTransportationTravelerIds(tripId: string, transportationId: string) {
   try {
     const { data, error } = await supabase
-      .from("transportation_travelers" as any)
+      .from("transportation_travelers")
       .select("traveler_id")
       .match({ trip_id: tripId, transportation_id: transportationId });
     
@@ -157,14 +157,14 @@ export async function getTransportationTravelerIds(tripId: string, transportatio
     return { data: data?.map(row => row.traveler_id) || [], error: null };
   } catch (error) {
     console.error("Error loading transportation travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
 export async function setTransportationTravelers(tripId: string, transportationId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("transportation_travelers" as any).delete().match({ trip_id: tripId, transportation_id: transportationId });
+    await supabase.from("transportation_travelers").delete().match({ trip_id: tripId, transportation_id: transportationId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
@@ -176,14 +176,14 @@ export async function setTransportationTravelers(tripId: string, transportationI
     }));
     
     const { data, error } = await supabase
-      .from("transportation_travelers" as any)
+      .from("transportation_travelers")
       .insert(rows)
       .select();
       
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving transportation travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
@@ -191,7 +191,7 @@ export async function setTransportationTravelers(tripId: string, transportationI
 export async function getDayActivityTravelerIds(tripId: string, activityId: string) {
   try {
     const { data, error } = await supabase
-      .from("day_activity_travelers" as any)
+      .from("day_activity_travelers")
       .select("traveler_id")
       .match({ trip_id: tripId, activity_id: activityId });
     
@@ -199,14 +199,14 @@ export async function getDayActivityTravelerIds(tripId: string, activityId: stri
     return { data: data?.map(row => row.traveler_id) || [], error: null };
   } catch (error) {
     console.error("Error loading activity travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
 export async function setDayActivityTravelers(tripId: string, activityId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("day_activity_travelers" as any).delete().match({ trip_id: tripId, activity_id: activityId });
+    await supabase.from("day_activity_travelers").delete().match({ trip_id: tripId, activity_id: activityId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
@@ -218,14 +218,14 @@ export async function setDayActivityTravelers(tripId: string, activityId: string
     }));
     
     const { data, error } = await supabase
-      .from("day_activity_travelers" as any)
+      .from("day_activity_travelers")
       .insert(rows)
       .select();
       
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving activity travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
@@ -233,7 +233,7 @@ export async function setDayActivityTravelers(tripId: string, activityId: string
 export async function getReservationTravelerIds(tripId: string, reservationId: string) {
   try {
     const { data, error } = await supabase
-      .from("reservation_travelers" as any)
+      .from("reservation_travelers")
       .select("traveler_id")
       .match({ trip_id: tripId, reservation_id: reservationId });
     
@@ -241,14 +241,14 @@ export async function getReservationTravelerIds(tripId: string, reservationId: s
     return { data: data?.map(row => row.traveler_id) || [], error: null };
   } catch (error) {
     console.error("Error loading reservation travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
 
 export async function setReservationTravelers(tripId: string, reservationId: string, travelerIds: string[]) {
   try {
     // Delete existing associations
-    await supabase.from("reservation_travelers" as any).delete().match({ trip_id: tripId, reservation_id: reservationId });
+    await supabase.from("reservation_travelers").delete().match({ trip_id: tripId, reservation_id: reservationId });
     
     if (travelerIds.length === 0) return { data: [], error: null };
     
@@ -260,13 +260,13 @@ export async function setReservationTravelers(tripId: string, reservationId: str
     }));
     
     const { data, error } = await supabase
-      .from("reservation_travelers" as any)
+      .from("reservation_travelers")
       .insert(rows)
       .select();
       
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving reservation travelers:", error);
-    return { data: [], error: error as any };
+    return { data: [], error: error };
   }
 }
