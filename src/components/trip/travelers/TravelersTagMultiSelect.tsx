@@ -111,14 +111,8 @@ export default function TravelersTagMultiSelect({
                   <CommandItem
                     key={traveler.id}
                     value={traveler.id}
-                    onSelect={(e) => {
-                      e?.preventDefault?.();
-                      handleSelect(traveler);
-                      // Keep the dropdown open for multiple selections
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onSelect={() => {
+                      // Only use onSelect to prevent double firing
                       handleSelect(traveler);
                     }}
                     className="cursor-pointer hover:bg-gray-50 bg-white data-[selected=true]:bg-gray-100 pointer-events-auto"
