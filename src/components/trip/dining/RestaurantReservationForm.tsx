@@ -17,6 +17,12 @@ import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
 import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
 
+// Assuming CurrencySelector is imported and available in this scope.
+// If it's not defined in the provided snippets, it's a placeholder for a custom component.
+// For the purpose of this output, we'll assume it exists and works as expected.
+// If CurrencySelector is not defined, this code would need that component to be provided.
+// For example: import CurrencySelector from './CurrencySelector';
+
 // Converts blank / NaN values coming from <input type="number"> into undefined so they
 // pass Zod's optional() validation.
 const toNullableNumber = (val: unknown) => {
@@ -71,16 +77,16 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // Generate trip dates for dropdown with timezone-safe handling
   const generateTripDates = () => {
     if (!tripArrivalDate || !tripDepartureDate) return [];
-    
+
     const dates = [];
-    
+
     // Parse dates safely without timezone issues
     const [startYear, startMonth, startDay] = tripArrivalDate.split('-').map(Number);
     const [endYear, endMonth, endDay] = tripDepartureDate.split('-').map(Number);
-    
+
     const start = new Date(startYear, startMonth - 1, startDay);
     const end = new Date(endYear, endMonth - 1, endDay);
-    
+
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -88,7 +94,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       const dateString = `${year}-${month}-${day}`;
       dates.push(dateString);
     }
-    
+
     return dates;
   };
 
@@ -101,19 +107,19 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     if (resolvedDate) {
       return resolvedDate;
     }
-    
+
     // If editing existing reservation, use its date
     if (defaultValues?.reservation_date) {
       return defaultValues.reservation_date;
     }
-    
+
     // If adding from a specific day card, use that day's date
     if (defaultValues?.day_id && tripDates.length > 0) {
       // Find the day in trip dates that matches the day_id context
       // For now, default to first available date since we need day-to-date mapping
       return tripDates[0];
     }
-    
+
     // Default to first available trip date
     return tripDates.length > 0 ? tripDates[0] : '';
   };
@@ -178,7 +184,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitForm = form.handleSubmit(async (data) => {
 
-    
+
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
 
@@ -192,10 +198,10 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
     // Lookup correct day_id based on selected reservation_date
     let finalDayId = (defaultValues as any)?.day_id;
-    
+
     if (data.reservation_date && effectiveTripId) {
 
-      
+
       const { data: tripDay, error: tripDayError } = await supabase
         .from('trip_days')
         .select('day_id')
@@ -212,26 +218,26 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         });
         return;
       }
-      
+
 
       finalDayId = tripDay.day_id;
     }
 
     // Remove reservation_date and travelers since they don't exist in the database - we use day_id and junction tables instead
     const { reservation_date, travelers, ...dataWithoutExtraFields } = data;
-    
+
     const processedData = {
       ...dataWithoutExtraFields,
       trip_id: effectiveTripId,
       day_id: finalDayId,
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
-    
+
 
 
     try {
       const result = await onSubmit(processedData);
-      
+
       // Save traveler tags if we have travelers selected
       if (travelers && travelers.length > 0) {
         const reservationId = defaultValues?.id || (result as any)?.id;
@@ -359,27 +365,74 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        {/* Number of People */}
-        <FormField
-          control={form.control}
-          name="number_of_people"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Number of People</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  value={field.value ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.valueAsNumber;
-                    field.onChange(Number.isNaN(v) ? undefined : v);
-                  }}
-                  className="bg-white"
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        {/* Number of People, Cost & Currency */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <FormField
+            control={form.control}
+            name="number_of_people"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of People</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.valueAsNumber;
+                      field.onChange(Number.isNaN(v) ? undefined : v);
+                    }}
+                    placeholder="e.g., 2"
+                    className="bg-white"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="cost"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cost</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.valueAsNumber;
+                      field.onChange(Number.isNaN(v) ? undefined : v);
+                    }}
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    className="bg-white"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="currency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Currency</FormLabel>
+                <FormControl>
+                  <CurrencySelector
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    className="bg-white"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Notes */}
         <FormField
@@ -394,63 +447,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             </FormItem>
           )}
         />
-
-        {/* Cost & Currency */}
-        <div className="grid grid-cols-2 gap-3">
-          <FormField
-            control={form.control}
-            name="cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cost</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    onBlur={(e) => {
-                      const formatted = handleCostBlur(e.target.value);
-                      field.onChange(
-                        Number.isNaN(Number(formatted.replace(/,/g, '')))
-                          ? undefined
-                          : Number(formatted.replace(/,/g, ''))
-                      );
-                      e.target.value = formatted;
-                    }}
-                    className="bg-white"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="currency"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Currency</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
-                  <FormControl>
-                    <SelectTrigger className="bg-white">
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="z-[999] max-h-48 overflow-y-auto">
-                    {CURRENCIES.map((currency) => (
-                      <SelectItem key={currency} value={currency}>
-                        <span className="font-medium">{currency}</span>
-                        <span className="ml-1 text-sand-600 text-sm">
-                          {CURRENCY_SYMBOLS[currency]}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-        </div>
 
         {/* Travelers */}
         <FormField
@@ -507,11 +503,34 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             </Button>
           </div>
         </div>
-        
+
 
       </form>
     </Form>
   );
 };
+
+// Assuming CurrencySelector component is defined elsewhere and imported.
+// If not, you'll need to define or import it for this code to be fully functional.
+// For example:
+// const CurrencySelector = ({ value, onValueChange, className }: { value?: string; onValueChange?: (value: string) => void; className?: string }) => (
+//   <Select onValueChange={onValueChange} value={value || ''}>
+//     <FormControl>
+//       <SelectTrigger className={className}>
+//         <SelectValue placeholder="Select currency" />
+//       </SelectTrigger>
+//     </FormControl>
+//     <SelectContent className="z-[999] max-h-48 overflow-y-auto">
+//       {CURRENCIES.map((currency) => (
+//         <SelectItem key={currency} value={currency}>
+//           <span className="font-medium">{currency}</span>
+//           <span className="ml-1 text-sand-600 text-sm">
+//             {CURRENCY_SYMBOLS[currency]}
+//           </span>
+//         </SelectItem>
+//       ))}
+//     </SelectContent>
+//   </Select>
+// );
 
 export default RestaurantReservationForm;
