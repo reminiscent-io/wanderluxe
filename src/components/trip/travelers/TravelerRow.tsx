@@ -61,13 +61,13 @@ export default function TravelerRow({ traveler, onEdit, tripId }: TravelerRowPro
   });
 
   const getInitials = () => {
-    const firstInitial = traveler.first_name.charAt(0).toUpperCase();
-    const lastInitial = traveler.last_name?.charAt(0).toUpperCase() || '';
+    const firstInitial = (traveler.first_name || 'T').charAt(0).toUpperCase();
+    const lastInitial = (traveler.last_name || '').charAt(0).toUpperCase();
     return firstInitial + lastInitial;
   };
 
   const getFullName = () => {
-    return [traveler.first_name, traveler.last_name].filter(Boolean).join(' ');
+    return [traveler.first_name || 'Traveler', traveler.last_name].filter(Boolean).join(' ');
   };
 
   const hasEmail = !!traveler.shared_with_email;
