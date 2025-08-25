@@ -6,6 +6,8 @@ import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS, Currency } from '@/utils/
 import { Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
+import TravelersTagMultiSelect from './travelers/TravelersTagMultiSelect';
+import { getDayActivityTravelerIds, setDayActivityTravelers } from '@/services/travelers';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
@@ -17,6 +19,7 @@ interface ActivityFormProps {
   eventId: string;
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
+  tripId: string;
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({

@@ -27,6 +27,8 @@ export interface SidebarState {
   setActivityOpen: (open: boolean) => void;
   reservationOpen: boolean;
   setReservationOpen: (open: boolean) => void;
+  travelerOpen: boolean;
+  setTravelerOpen: (open: boolean) => void;
   // Selected items for editing
   selectedAccommodation: any;
   setSelectedAccommodation: (item: any) => void;
@@ -36,6 +38,8 @@ export interface SidebarState {
   setSelectedActivity: (item: any) => void;
   selectedReservation: any;
   setSelectedReservation: (item: any) => void;
+  selectedTraveler: any;
+  setSelectedTraveler: (item: any) => void;
   // Activity form state
   newActivity: ActivityFormData;
   setNewActivity: (data: ActivityFormData) => void;
@@ -72,6 +76,8 @@ export interface SidebarState {
   handleSaveDates: () => Promise<void>;
   handleAddActivity: (activity: ActivityFormData) => Promise<void>;
   handleEditActivity: (id: string, data: ActivityFormData) => Promise<void>;
+  handleTravelerAdd: () => void;
+  handleTravelerEdit: (traveler: any) => void;
 }
 
 /**
@@ -92,6 +98,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const [tripDatesOpen, setTripDatesOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
+  const [travelerOpen, setTravelerOpen] = useState(false);
 
   // Trip date editing fields
   const [newArrival, setNewArrival] = useState('');
@@ -103,6 +110,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
+  const [selectedTraveler, setSelectedTraveler] = useState<any>(null);
 
   // Activity form state for adding/editing
   const initialActivityForm: ActivityFormData = {
@@ -549,6 +557,17 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     }
   };
 
+  // Traveler handlers
+  const handleTravelerAdd = () => {
+    setSelectedTraveler(null);
+    setTravelerOpen(true);
+  };
+
+  const handleTravelerEdit = (traveler: any) => {
+    setSelectedTraveler(traveler);
+    setTravelerOpen(true);
+  };
+
   return {
     isOpen,
     setIsOpen,
@@ -566,6 +585,8 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setActivityOpen,
     reservationOpen,
     setReservationOpen,
+    travelerOpen,
+    setTravelerOpen,
     selectedAccommodation,
     setSelectedAccommodation,
     selectedTransportation,
@@ -574,6 +595,8 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setSelectedActivity,
     selectedReservation,
     setSelectedReservation,
+    selectedTraveler,
+    setSelectedTraveler,
     newActivity,
     setNewActivity,
     activityEdit,
@@ -606,5 +629,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     handleSaveDates,
     handleAddActivity,
     handleEditActivity,
+    handleTravelerAdd,
+    handleTravelerEdit,
   };
 }

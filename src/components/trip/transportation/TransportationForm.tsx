@@ -12,6 +12,8 @@ import { CURRENCIES } from "@/utils/currencyConstants";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
+import { getTransportationTravelerIds, setTransportationTravelers } from "@/services/travelers";
 
 type Transportation = Tables<"transportation">;
 
@@ -23,6 +25,7 @@ interface Props {
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
   buttonClassName?: string;
+  tripId: string;
 }
 
 export default function TransportationForm({
@@ -33,6 +36,7 @@ export default function TransportationForm({
   tripArrivalDate,
   tripDepartureDate,
   buttonClassName,
+  tripId,
 }: Props) {
   /* ------------------------------------------------------------------------ */
   const schema = z.object({
@@ -45,6 +49,7 @@ export default function TransportationForm({
     confirmation_number: z.string().optional(),
     cost: z.number().nullable(),
     currency: z.string().min(1),
+    travelers: z.array(z.string()).optional(),
   });
 
   /* ------------------------------------------------------------------------ */
@@ -68,6 +73,7 @@ export default function TransportationForm({
       confirmation_number: initialData?.confirmation_number ?? "",
       cost: initialData?.cost ?? null,
       currency: initialData?.currency ?? CURRENCIES[0],
+      travelers: [],
     },
   });
 

@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { 
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed, 
   MessageCircle, Lightbulb, BarChart2, Package, Settings, 
-  ArrowLeft, ChevronDown, ChevronRight 
+  ArrowLeft, ChevronDown, ChevronRight, Users 
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +20,7 @@ import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
 import ActivityDialogs from "../trip/day/activities/ActivityDialogs";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
+import TravelerDialog from "../trip/travelers/TravelerDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +37,7 @@ export const tripNavItems = [
       { title: "Transportation", icon: Car, key: "transportation" },
       { title: "Activities", icon: MapPin, key: "activities" },
       { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
+      { title: "Travelers", icon: Users, key: "travelers" },
     ]
   },
   { title: "AI Assistant", icon: MessageCircle, href: "chat" },
@@ -66,10 +68,12 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     tripDatesOpen, setTripDatesOpen,
     activityOpen, setActivityOpen,
     reservationOpen, setReservationOpen,
+    travelerOpen, setTravelerOpen,
     selectedAccommodation, setSelectedAccommodation,
     selectedTransportation, setSelectedTransportation,
     selectedActivity, setSelectedActivity,
     selectedReservation, setSelectedReservation,
+    selectedTraveler, setSelectedTraveler,
     newActivity, setNewActivity,
     activityEdit, setActivityEdit,
     newArrival, setNewArrival,
@@ -83,7 +87,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     handleReservationAdd, handleReservationEdit, handleReservationDelete,
     handleActivityAdd, handleActivityEdit, handleActivityDelete,
     handleEditDates, handleSaveDates,
-    handleAddActivity, handleEditActivity
+    handleAddActivity, handleEditActivity,
+    handleTravelerAdd, handleTravelerEdit
   } = sidebar;
   const handleBackFromSecondary = () => {
     setSecondaryPanel(null);          // close the panel
@@ -338,6 +343,18 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onArrivalChange={setNewArrival}
         onDepartureChange={setNewDeparture}
         onSave={handleSaveDates}
+      />
+      
+      <TravelerDialog
+        open={travelerOpen}
+        onOpenChange={setTravelerOpen}
+        tripId={tripId}
+        traveler={selectedTraveler}
+        onSuccess={() => {
+          setTravelerOpen(false);
+          setSelectedTraveler(null);
+          queryClient.invalidateQueries({ queryKey: ['travelers', tripId] });
+        }}
       />
     </>
   );
