@@ -14,6 +14,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
+import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
 
 // Converts blank / NaN values coming from <input type="number"> into undefined so they
 // pass Zod's optional() validation.
@@ -40,6 +42,7 @@ const formSchema = z.object({
   currency: z.string().optional().nullable(),
   place_id: z.string().optional().nullable(),
   rating: z.preprocess(toNullableNumber, z.number().optional()),
+  travelers: z.array(z.string()).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;

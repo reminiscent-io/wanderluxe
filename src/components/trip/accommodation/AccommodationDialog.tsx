@@ -150,6 +150,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
               tripArrivalDate={tripDates.arrival_date}
               tripDepartureDate={tripDates.departure_date}
               onDelete={handleDelete}
+              tripId={tripId}
             />
           </div>
         </div>

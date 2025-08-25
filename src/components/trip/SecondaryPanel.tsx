@@ -7,6 +7,7 @@ import TransportationPanel from "@/components/trip/transportation/Transportation
 import ActivitiesPanel from "@/components/trip/day/activities/ActivitiesPanel";
 import ReservationsPanel from "@/components/trip/dining/ReservationsPanel";
 import TripDatesPanel from "@/components/trip/timeline/TripDatesPanel";
+import TravelersPanel from "@/components/trip/travelers/TravelersPanel";
 
 /* --- tiny media-query hook ------------------------------------------------ */
 function useMediaQuery(q: string) {
@@ -33,7 +34,7 @@ interface SecondaryPanelProps {
   transportation: any[];
   activities: any[];
   reservations: any[];
-  trip: { arrival_date: string; departure_date: string } | null;
+  trip: { arrival_date: string; departure_date: string; id: string } | null;
 
   onAccommodationAdd: () => void;
   onAccommodationEdit: (a: any) => void;
@@ -43,6 +44,8 @@ interface SecondaryPanelProps {
   onActivityEdit: (a: any) => void;
   onReservationAdd: () => void;
   onReservationEdit: (r: any) => void;
+  onTravelerAdd: () => void;
+  onTravelerEdit: (t: any) => void;
   onEditDates: () => void;
 }
 
@@ -64,6 +67,8 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
     onActivityEdit,
     onReservationAdd,
     onReservationEdit,
+    onTravelerAdd,
+    onTravelerEdit,
     onEditDates,
   } = props;
 
@@ -129,6 +134,18 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           {...headerProps}
           trip={trip}
           onEdit={onEditDates}
+          isMobile={isMobile}
+          onClose={onClose}
+        />
+      );
+      break;
+    case "travelers":
+      panel = (
+        <TravelersPanel
+          {...headerProps}
+          tripId={trip?.id || ""}
+          onAdd={onTravelerAdd}
+          onEdit={onTravelerEdit}
           isMobile={isMobile}
           onClose={onClose}
         />

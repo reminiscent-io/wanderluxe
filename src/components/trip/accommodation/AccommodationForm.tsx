@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormControl,
 } from "@/components/ui/form";
 import HotelSearchInput from "./HotelSearchInput";
 import HotelContactInfo from "./form/HotelContactInfo";
@@ -22,6 +23,8 @@ import { loadGoogleMapsAPI } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { CURRENCIES, CURRENCY_NAMES } from "@/utils/currencyConstants";
+import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
+import { getAccommodationTravelerIds, setAccommodationTravelers } from "@/services/travelers";
 
 /* -------------------------------------------------------------------------- */
 /* Schema                                                                     */
@@ -46,6 +49,7 @@ const schema = z
     expense_date: z.string().optional(),
     order_index: z.number(),
     stay_range: z.any().optional(), // handled by component
+    travelers: z.array(z.string()).optional(), // traveler IDs
   })
   .refine(
     (d) => new Date(d.hotel_checkout_date) > new Date(d.hotel_checkin_date),
@@ -62,6 +66,7 @@ interface Props {
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
+  tripId: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -82,6 +87,7 @@ export default function AccommodationForm({
   initialData,
   tripArrivalDate,
   tripDepartureDate,
+  tripId,
 }: Props) {
   /* ----------------------------- RHF init ----------------------------- */
   const form = useForm<z.infer<typeof schema>>({
@@ -107,6 +113,7 @@ export default function AccommodationForm({
       is_paid: initialData?.is_paid ?? false,
       expense_date: initialData?.expense_date ?? "",
       order_index: initialData?.order_index ?? 0,
+      travelers: [],
       stay_range:
         initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
           ? {
@@ -184,12 +191,33 @@ export default function AccommodationForm({
     loadGoogleMapsAPI().catch(console.error);
   }, []);
 
+  /* ---------------------- Load existing travelers --------------------- */
+  useEffect(() => {
+    if (initialData?.stay_id && tripId) {
+      getAccommodationTravelerIds(tripId, initialData.stay_id.toString())
+        .then(({ data }) => {
+          if (data) {
+            form.setValue("travelers", data);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [initialData?.stay_id, tripId, form]);
+
   /* ------------------------------ Submit ------------------------------- */
   const [saving, setSaving] = useState(false);
   const handleSubmit = async (data: z.infer<typeof schema>) => {
     try {
       setSaving(true);
-      await onSubmit(data);
+      const formData = { ...data };
+      delete formData.travelers; // Remove travelers from form data as it's handled separately
+      
+      await onSubmit(formData);
+      
+      // Save traveler tags if we have a stay_id (for edit) or after successful creation
+      if (initialData?.stay_id && data.travelers) {
+        await setAccommodationTravelers(tripId, initialData.stay_id.toString(), data.travelers);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to save accommodation");
@@ -307,6 +335,25 @@ export default function AccommodationForm({
             )}
           />
         </div>
+
+        {/* Travelers */}
+        <FormField
+          control={form.control}
+          name="travelers"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tag Travelers</FormLabel>
+              <FormControl>
+                <TravelersTagMultiSelect
+                  tripId={tripId}
+                  value={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
