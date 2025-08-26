@@ -172,7 +172,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   };
 
   const handleCostChange = (value: string) => {
-    onActivityChange({ ...activity, cost: value });
+    const numericValue = Number(value.replace(/,/g, ''));
+    onActivityChange({ ...activity, cost: Number.isNaN(numericValue) ? undefined : numericValue });
   };
 
   return (
@@ -279,8 +280,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <input
             id="cost"
             type="text"
-            value={activity.cost || ''}
+            value={activity.cost !== undefined && activity.cost !== null ? new Intl.NumberFormat('en-US').format(activity.cost) : ''}
             onChange={(e) => handleCostChange(e.target.value)}
+            onBlur={(e) => {
+              // The field value is already set by onChange, this ensures visual formatting
+            }}
+            placeholder="0"
             className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.cost ? 'border-red-500' : 'border-gray-300'}`}
           />
           {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}

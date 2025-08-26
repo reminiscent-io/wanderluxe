@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -38,8 +38,8 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
     }
   }, [activityId, activity]);
 
-  const handleDelete = async () => {
-    if (activityId && onDelete) {
+  const handleDelete = () => {
+    if (activityId) {
       onDelete(activityId);
       onOpenChange(false);
     }
@@ -47,29 +47,24 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
 
   return (
     <Dialog open={!!activityId} onOpenChange={(open) => { if (!open) onOpenChange(false) }}>
-      <DialogContent 
-        onPointerDownOutside={(e) => e.preventDefault()}
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto p-4 sm:p-6"
-      >
-        <div className="flex flex-col max-h-[90vh] w-full">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Edit Activity</DialogTitle>
-            <DialogDescription>Update your activity details.</DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto scrollbar-none px-1">
-            <ActivityForm
-              activity={activity}
-              onActivityChange={onActivityChange}
-              onSubmit={onSubmit}
-              onCancel={() => onOpenChange(false)}
-              onDelete={handleDelete}
-              submitLabel="Save Changes"
-              eventId={eventId}
-              tripDates={tripDates}
-              preselectedDate={activity.date}
-              tripId={tripId}
-            />
-          </div>
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>Edit Activity</DialogTitle>
+          <DialogDescription>Update your activity details.</DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
+          <ActivityForm
+            activity={activity}
+            onActivityChange={onActivityChange}
+            onSubmit={onSubmit}
+            onCancel={() => onOpenChange(false)}
+            onDelete={handleDelete}
+            submitLabel="Save Changes"
+            eventId={eventId}
+            tripDates={tripDates}
+            preselectedDate={activity.date}
+            tripId={tripId}
+          />
         </div>
       </DialogContent>
     </Dialog>
