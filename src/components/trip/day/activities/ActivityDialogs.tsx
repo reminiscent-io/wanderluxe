@@ -1,6 +1,5 @@
 import React from 'react';
-import AddActivityDialog from './AddActivityDialog';
-import EditActivityDialog from './EditActivityDialog';
+import ActivityDialog from './ActivityDialog';
 import { ActivityFormData } from '@/types/trip';
 
 interface ActivityDialogsProps {
@@ -18,6 +17,7 @@ interface ActivityDialogsProps {
   eventId: string;
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
+  tripId: string;
 }
 
 const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
@@ -35,15 +35,12 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
   eventId,
   tripDates,
   preselectedDate,
+  tripId,
 }) => {
-  // Helper function to handle the dialog closing
-  const handleEditActivityDialogClose = () => {
-    setEditingActivity(null);
-  };
-
   return (
     <>
-      <AddActivityDialog
+      {/* Add Activity Dialog */}
+      <ActivityDialog
         isOpen={isAddingActivity}
         onOpenChange={setIsAddingActivity}
         activity={newActivity}
@@ -52,18 +49,23 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         eventId={eventId}
         tripDates={tripDates}
         preselectedDate={preselectedDate}
+        tripId={tripId}
       />
-      <EditActivityDialog
-        activityId={editingActivity}
-        onOpenChange={handleEditActivityDialogClose}
+      
+      {/* Edit Activity Dialog */}
+      <ActivityDialog
+        isOpen={!!editingActivity}
+        onOpenChange={(open) => !open && setEditingActivity(null)}
         activity={activityEdit}
         onActivityChange={setActivityEdit}
         onSubmit={(updatedActivity: ActivityFormData) =>
-          editingActivity && onEditActivity(editingActivity, updatedActivity)
+          editingActivity && onEditActivity(editingActivity, updatedActivity || activityEdit)
         }
         onDelete={onDeleteActivity}
         eventId={eventId}
         tripDates={tripDates}
+        tripId={tripId}
+        activityId={editingActivity}
       />
     </>
   );
