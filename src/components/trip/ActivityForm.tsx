@@ -4,6 +4,7 @@ import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
 import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
 import { Trash2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import TravelersTagMultiSelect from './travelers/TravelersTagMultiSelect';
@@ -57,26 +58,26 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   // Generate trip date options with timezone-safe handling
   const tripDateOptions = React.useMemo(() => {
     if (!tripDates) return [];
-    
+
     const dates = [];
-    
+
     // Parse dates safely without timezone issues
     const [startYear, startMonth, startDay] = tripDates.arrival_date.split('-').map(Number);
     const [endYear, endMonth, endDay] = tripDates.departure_date.split('-').map(Number);
-    
+
     const startDate = new Date(startYear, startMonth - 1, startDay);
     const endDate = new Date(endYear, endMonth - 1, endDay);
-    
+
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       const dateString = `${year}-${month}-${day}`;
-      
+
       // Safe date formatting without timezone shifts
       const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
       const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      
+
       dates.push({
         value: dateString,
         label: `${dayName}, ${monthDay}`
@@ -149,9 +150,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     try {
       // Remove travelers from form data as it's handled separately
       const { travelers, ...activityData } = activity;
-      
+
       const result = await onSubmit(activityData);
-      
+
       // Save traveler tags if we have travelers selected
       if (travelers && travelers.length > 0) {
         // For edit mode, we might have an existing activity ID, or we get it from the result
@@ -160,7 +161,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           await setDayActivityTravelers(tripId, activityId, travelers);
         }
       }
-      
+
       toast.success('Activity saved successfully');
       onCancel();
     } catch (error) {
@@ -341,14 +342,15 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           )}
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
             onClick={onCancel}
+            variant="ghost"
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
             disabled={isSubmitting}
           >
             Cancel
-          </button>
+          </Button>
           <button
             type="submit"
             className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border-2 border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50"
