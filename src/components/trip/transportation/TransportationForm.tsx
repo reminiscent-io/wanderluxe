@@ -207,9 +207,9 @@ export default function TransportationForm({
                   Saving…
                 </>
               ) : initialData ? (
-                "Update Transportation"
+                "Save"
               ) : (
-                "Add Transportation"
+                "Save"
               )}
             </Button>
           </div>
