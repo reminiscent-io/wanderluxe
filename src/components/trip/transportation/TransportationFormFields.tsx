@@ -148,13 +148,17 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
             render={({ field }) => (
               <div>
                 <Input
-                  value={costDisplay}
+                  type="text"
+                  value={cost !== undefined && cost !== null ? new Intl.NumberFormat('en-US').format(cost) : ''}
                   onChange={(e) => {
-                    const raw = e.target.value.replace(/[^\d.-]/g, "");
-                    setCostDisplay(raw);
-                    field.onChange(raw ? parseFloat(raw) : null);
+                    const numericValue = Number(e.target.value.replace(/,/g, ''));
+                    setValue("cost", Number.isNaN(numericValue) ? null : numericValue);
+                  }}
+                  onBlur={(e) => {
+                    // The field value is already set by onChange, this ensures visual formatting
                   }}
                   placeholder="0"
+                  className="bg-white"
                 />
               </div>
             )}
@@ -215,4 +219,3 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
     </div>
   );
 }
-
