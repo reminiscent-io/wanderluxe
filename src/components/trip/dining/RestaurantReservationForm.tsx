@@ -511,7 +511,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   Saving...
                 </>
               ) : (
-                'Save Reservation'
+                'Save'
               )}
             </Button>
           </div>
