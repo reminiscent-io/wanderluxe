@@ -231,7 +231,7 @@ export default function AccommodationForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-4 p-4 sm:p-6 relative max-w-full overflow-x-hidden"
+        className="space-y-3 w-full max-w-none"
       >
         {/* Hotel Name */}
         <FormField
