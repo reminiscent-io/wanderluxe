@@ -32,14 +32,18 @@ export const tripNavItems = [
   { title: "Booking", icon: Package, href: "booking" },
 ];
 
-export const timelineManagementItems = [
-  { title: "Trip Dates", icon: CalendarDays, key: "dates" },
-  { title: "Accommodations", icon: Building, key: "accommodations" },
-  { title: "Transportation", icon: Car, key: "transportation" },
-  { title: "Activities", icon: MapPin, key: "activities" },
-  { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
-  { title: "Travelers", icon: Users, key: "travelers" },
-];
+export const timelineManagementItems = {
+  primary: [
+    { title: "Trip Dates", icon: CalendarDays, key: "dates" },
+    { title: "Travelers", icon: Users, key: "travelers" },
+  ],
+  secondary: [
+    { title: "Accommodations", icon: Building, key: "accommodations" },
+    { title: "Transportation", icon: Car, key: "transportation" },
+    { title: "Activities", icon: MapPin, key: "activities" },
+    { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
+  ]
+};
 
 interface SidebarProps {
   tripId: string | undefined;
@@ -130,8 +134,33 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               {/* Show Timeline management items after Timeline button */}
               {item.title === "Timeline" && (
                 <div className="mt-2 mb-4">
+                  {/* Primary group: Trip Dates and Travelers */}
+                  <div className="space-y-1 mb-3">
+                    {timelineManagementItems.primary.map(child => (
+                      <Button
+                        key={child.key}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSubitemClick(child.key)}
+                        className={cn(
+                          "w-full justify-start pl-6 h-8 text-xs",
+                          secondaryPanel === child.key
+                            ? "bg-earth-50 text-earth-600 font-medium"
+                            : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
+                        )}
+                      >
+                        <child.icon className="mr-2 h-3 w-3" />
+                        {child.title}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  {/* Thin separator line */}
+                  <Separator className="my-3" />
+                  
+                  {/* Secondary group: Accommodations, Transportation, Activities, Reservations */}
                   <div className="space-y-1">
-                    {timelineManagementItems.map(child => (
+                    {timelineManagementItems.secondary.map(child => (
                       <Button
                         key={child.key}
                         variant="ghost"
