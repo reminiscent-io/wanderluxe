@@ -269,22 +269,6 @@ export default function AccommodationForm({
           phone={form.watch("hotel_phone")}
         />
 
-        {/* Details */}
-        <FormField
-          control={form.control}
-          name="hotel_details"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Additional Details</FormLabel>
-              <textarea
-                {...field}
-                rows={1}
-                className="w-full rounded-md border p-2"
-              />
-            </FormItem>
-          )}
-        />
-
         {/* Luxury Date + Time Picker */}
         <LuxuryDateTimeRangePicker
           name="stay_range"
@@ -339,6 +323,22 @@ export default function AccommodationForm({
             )}
           />
         </div>
+
+        {/* Additional Details */}
+        <FormField
+          control={form.control}
+          name="hotel_details"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Additional Details</FormLabel>
+              <textarea
+                {...field}
+                rows={1}
+                className="w-full rounded-md border p-2"
+              />
+            </FormItem>
+          )}
+        />
 
         {/* Travelers */}
         <FormField
