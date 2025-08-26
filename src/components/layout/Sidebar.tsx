@@ -26,22 +26,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 
 export const tripNavItems = [
-  {
-    title: "Timeline",
-    icon: Calendar,
-    href: "timeline",
-    children: [
-      { title: "Trip Dates", icon: CalendarDays, key: "dates" },
-      { title: "Accommodations", icon: Building, key: "accommodations" },
-      { title: "Transportation", icon: Car, key: "transportation" },
-      { title: "Activities", icon: MapPin, key: "activities" },
-      { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
-      { title: "Travelers", icon: Users, key: "travelers" },
-    ]
-  },
+  { title: "Timeline", icon: Calendar, href: "timeline" },
   { title: "AI Assistant", icon: MessageCircle, href: "chat" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
+];
+
+export const timelineManagementItems = [
+  { title: "Trip Dates", icon: CalendarDays, key: "dates" },
+  { title: "Accommodations", icon: Building, key: "accommodations" },
+  { title: "Transportation", icon: Car, key: "transportation" },
+  { title: "Activities", icon: MapPin, key: "activities" },
+  { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
+  { title: "Travelers", icon: Users, key: "travelers" },
 ];
 
 interface SidebarProps {
@@ -114,56 +111,45 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           <Separator className="my-4" />
           {tripNavItems.map(item => (
             <div key={item.title}>
-              {item.title === "Timeline" ? (
-                <>
-                  {/* Timeline Section - Permanently expanded */}
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-2 text-earth-700">
-                      <Calendar className="h-4 w-4" />
-                      <span className="font-normal">Timeline</span>
-                    </div>
-                    <div className="space-y-1">
-                      {item.children.map(child => (
-                        <Button
-                          key={child.key}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSubitemClick(child.key)}
-                          className={cn(
-                            "w-full justify-start pl-6 h-8 text-xs",
-                            secondaryPanel === child.key
-                              ? "bg-earth-50 text-earth-600 font-medium"
-                              : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
-                          )}
-                        >
-                          <child.icon className="mr-2 h-3 w-3" />
-                          {child.title}
-                        </Button>
-                      ))}
-                    </div>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start text-left",
+                  activeTab === item.href
+                    ? "bg-earth-100 text-earth-700 font-medium"
+                    : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
+                )}
+                onClick={() => {
+                  onTabChange(item.href);
+                }}
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.title}
+              </Button>
+              
+              {/* Show Timeline management items after Timeline button */}
+              {item.title === "Timeline" && (
+                <div className="mt-2 mb-4">
+                  <div className="space-y-1">
+                    {timelineManagementItems.map(child => (
+                      <Button
+                        key={child.key}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSubitemClick(child.key)}
+                        className={cn(
+                          "w-full justify-start pl-6 h-8 text-xs",
+                          secondaryPanel === child.key
+                            ? "bg-earth-50 text-earth-600 font-medium"
+                            : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
+                        )}
+                      >
+                        <child.icon className="mr-2 h-3 w-3" />
+                        {child.title}
+                      </Button>
+                    ))}
                   </div>
-                </>
-              ) : (
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-between text-left",
-                    activeTab === item.href
-                      ? "bg-earth-100 text-earth-700 font-medium"
-                      : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
-                  )}
-                  onClick={() => {
-                    onTabChange(item.href);
-                  }}
-                >
-                  <div className="flex items-center">
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.title}
-                  </div>
-                  {item.children && (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
+                </div>
               )}
             </div>
           ))}
