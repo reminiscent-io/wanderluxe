@@ -70,7 +70,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             onSubmit={onSubmit}
             onCancel={() => onOpenChange(false)}
             onDelete={isEditMode ? handleDelete : undefined}
-            submitLabel={isEditMode ? 'Save Changes' : 'Save'}
+            submitLabel={isEditMode ? 'Save' : 'Save'}
             eventId={eventId}
             tripDates={tripDates}
             preselectedDate={preselectedDate || (isEditMode ? activity.date : undefined)}
