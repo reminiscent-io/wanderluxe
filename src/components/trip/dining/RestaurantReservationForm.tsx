@@ -399,15 +399,17 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 <FormLabel>Cost</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    value={field.value ?? ''}
+                    type="text"
+                    value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
                     onChange={(e) => {
-                      const v = e.target.valueAsNumber;
-                      field.onChange(Number.isNaN(v) ? undefined : v);
+                      const numericValue = Number(e.target.value.replace(/,/g, ''));
+                      field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
                     }}
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
+                    onBlur={(e) => {
+                      const formatted = handleCostBlur(e.target.value);
+                      // The field value is already set by onChange, this just ensures visual formatting
+                    }}
+                    placeholder="0"
                     className="bg-white"
                   />
                 </FormControl>
