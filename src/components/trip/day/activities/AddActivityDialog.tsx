@@ -46,7 +46,7 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
             onActivityChange={onActivityChange}
             onSubmit={onSubmit}
             onCancel={() => onOpenChange(false)}
-            submitLabel="Add Activity"
+            submitLabel="Save"
             eventId={eventId}
             tripDates={tripDates}
             preselectedDate={preselectedDate}

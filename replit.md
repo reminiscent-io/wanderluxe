@@ -8,6 +8,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 26, 2025** - Consolidated Activity Dialog Components for Reduced Code Duplication
+- Merged separate AddActivityDialog and EditActivityDialog components into single ActivityDialog
+- Updated TimelineContent to use consolidated dialog with proper add/edit mode handling
+- Enhanced ActivityDialogs wrapper component to use unified dialog for both operations
+- Improved code maintainability by reducing duplication while preserving full functionality
+- Added tripId prop to ActivityDialogs component for proper form initialization
+- Fixed type errors and ensured seamless add/edit transitions in timeline views
+
 **August 24, 2025** - Upgraded Create Trip Calendar to Luxury Date Picker
 - Migrated create trip form from basic DateTimeRangeField to premium LuxuryDateTimeRangePicker
 - Ensures consistent luxury date selection experience across the entire application

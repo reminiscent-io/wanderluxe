@@ -59,7 +59,7 @@ const EditActivityDialog: React.FC<EditActivityDialogProps> = ({
             onSubmit={onSubmit}
             onCancel={() => onOpenChange(false)}
             onDelete={handleDelete}
-            submitLabel="Save Changes"
+            submitLabel="Save"
             eventId={eventId}
             tripDates={tripDates}
             preselectedDate={activity.date}
