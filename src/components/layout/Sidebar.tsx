@@ -334,6 +334,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onDeleteActivity={handleActivityDelete}
         eventId={tripId || ""}
         tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
+        tripId={tripId || ""}
       />
       
       <TripDateEditDialog
