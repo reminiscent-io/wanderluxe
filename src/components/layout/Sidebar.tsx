@@ -155,8 +155,10 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                     ))}
                   </div>
                   
-                  {/* Thin separator line */}
-                  <Separator className="my-3" />
+                  {/* Subtle separator line */}
+                  <div className="flex justify-center my-2">
+                    <Separator className="w-8" />
+                  </div>
                   
                   {/* Secondary group: Accommodations, Transportation, Activities, Reservations */}
                   <div className="space-y-1">
