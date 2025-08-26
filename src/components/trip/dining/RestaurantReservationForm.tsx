@@ -459,7 +459,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           name="travelers"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tag Travelers</FormLabel>
+              <FormLabel>Travelers</FormLabel>
               <FormControl>
                 <TravelersTagMultiSelect
                   tripId={tripId}

@@ -346,7 +346,7 @@ export default function AccommodationForm({
           name="travelers"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tag Travelers</FormLabel>
+              <FormLabel>Travelers</FormLabel>
               <FormControl>
                 <TravelersTagMultiSelect
                   tripId={tripId}
