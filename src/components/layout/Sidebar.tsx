@@ -156,7 +156,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                   </div>
                   
                   {/* Subtle separator line */}
-                  <div className="flex justify-center my-2">
+                  <div className="pl-6 my-2">
                     <Separator className="w-8" />
                   </div>
                   
