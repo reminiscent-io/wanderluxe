@@ -42,7 +42,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
   // Load existing travelers for edit mode
   useEffect(() => {
-    if (activityId && tripId && !activity.travelers) {
+    if (activityId && tripId && (!activity.travelers || activity.travelers.length === 0)) {
       getDayActivityTravelerIds(tripId, activityId)
         .then(({ data }) => {
           if (data && data.length > 0) {
