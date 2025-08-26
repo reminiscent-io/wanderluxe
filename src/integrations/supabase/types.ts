@@ -9,6 +9,52 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      accommodation_travelers: {
+        Row: {
+          id: string
+          trip_id: string
+          stay_id: string
+          traveler_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          stay_id: string
+          traveler_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          stay_id?: string
+          traveler_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accommodation_travelers_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
+          },
+          {
+            foreignKeyName: "accommodation_travelers_stay_id_fkey"
+            columns: ["stay_id"]
+            isOneToOne: false
+            referencedRelation: "accommodations"
+            referencedColumns: ["stay_id"]
+          },
+          {
+            foreignKeyName: "accommodation_travelers_traveler_id_fkey"
+            columns: ["traveler_id"]
+            isOneToOne: false
+            referencedRelation: "trip_shares"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       accommodations: {
         Row: {
           cost: number | null
@@ -35,6 +81,7 @@ export type Database = {
           stay_id: string
           title: string
           trip_id: string
+          amount_paid: number | null
         }
         Insert: {
           cost?: number | null
@@ -61,6 +108,7 @@ export type Database = {
           stay_id?: string
           title: string
           trip_id: string
+          amount_paid?: number | null
         }
         Update: {
           cost?: number | null
@@ -87,6 +135,7 @@ export type Database = {
           stay_id?: string
           title?: string
           trip_id?: string
+          amount_paid?: number | null
         }
         Relationships: [
           {
@@ -102,7 +151,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
-          },
+          }
         ]
       }
       accommodations_days: {
@@ -141,7 +190,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "accommodations"
             referencedColumns: ["stay_id"]
-          },
+          }
         ]
       }
       currencies: {
@@ -166,44 +215,38 @@ export type Database = {
         Row: {
           cost: number | null
           created_at: string
-          currency: string | null
-          day_id: string
+          currency: string
           description: string | null
+          day_id: string
           end_time: string | null
           id: string
-          is_paid: boolean | null
           order_index: number
           start_time: string | null
           title: string
-          trip_id: string
         }
         Insert: {
           cost?: number | null
           created_at?: string
-          currency?: string | null
-          day_id: string
+          currency?: string
           description?: string | null
+          day_id: string
           end_time?: string | null
           id?: string
-          is_paid?: boolean | null
           order_index: number
           start_time?: string | null
           title: string
-          trip_id: string
         }
         Update: {
           cost?: number | null
           created_at?: string
-          currency?: string | null
-          day_id?: string
+          currency?: string
           description?: string | null
+          day_id?: string
           end_time?: string | null
           id?: string
-          is_paid?: boolean | null
           order_index?: number
           start_time?: string | null
           title?: string
-          trip_id?: string
         }
         Relationships: [
           {
@@ -219,14 +262,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trip_days"
             referencedColumns: ["day_id"]
-          },
+          }
+        ]
+      }
+      day_activity_travelers: {
+        Row: {
+          id: string
+          trip_id: string
+          activity_id: string
+          traveler_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          activity_id: string
+          traveler_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          activity_id?: string
+          traveler_id?: string
+          created_at?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "day_activities_trip_id_fkey"
+            foreignKeyName: "day_activity_travelers_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
           },
+          {
+            foreignKeyName: "day_activity_travelers_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "day_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "day_activity_travelers_traveler_id_fkey"
+            columns: ["traveler_id"]
+            isOneToOne: false
+            referencedRelation: "trip_shares"
+            referencedColumns: ["id"]
+          }
         ]
       }
       exchange_rates: {
@@ -265,117 +347,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["currency"]
-          },
-        ]
-      }
-      expenses: {
-        Row: {
-          accommodation_id: string | null
-          activity_id: string | null
-          category: string
-          cost: number | null
-          created_at: string | null
-          currency: string | null
-          description: string
-          id: string
-          is_paid: boolean | null
-          transportation_id: string | null
-          trip_id: string
-        }
-        Insert: {
-          accommodation_id?: string | null
-          activity_id?: string | null
-          category: string
-          cost?: number | null
-          created_at?: string | null
-          currency?: string | null
-          description: string
-          id?: string
-          is_paid?: boolean | null
-          transportation_id?: string | null
-          trip_id: string
-        }
-        Update: {
-          accommodation_id?: string | null
-          activity_id?: string | null
-          category?: string
-          cost?: number | null
-          created_at?: string | null
-          currency?: string | null
-          description?: string
-          id?: string
-          is_paid?: boolean | null
-          transportation_id?: string | null
-          trip_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "expenses_accommodation_id_fkey"
-            columns: ["accommodation_id"]
-            isOneToOne: false
-            referencedRelation: "accommodations"
-            referencedColumns: ["stay_id"]
-          },
-          {
-            foreignKeyName: "expenses_activity_id_fkey"
-            columns: ["activity_id"]
-            isOneToOne: false
-            referencedRelation: "day_activities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_currency_fkey"
-            columns: ["currency"]
-            isOneToOne: false
-            referencedRelation: "currencies"
-            referencedColumns: ["currency"]
-          },
-          {
-            foreignKeyName: "expenses_transportation_id_fkey"
-            columns: ["transportation_id"]
-            isOneToOne: false
-            referencedRelation: "transportation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["trip_id"]
-          },
+          }
         ]
       }
       other_expenses: {
         Row: {
-          cost: number | null
-          created_at: string
-          currency: string | null
-          date: string | null
-          description: string
           id: string
-          is_paid: boolean | null
           trip_id: string
+          title: string
+          description: string | null
+          cost: number | null
+          currency: string
+          created_at: string
+          expense_date: string | null
         }
         Insert: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          date?: string | null
-          description: string
           id?: string
-          is_paid?: boolean | null
           trip_id: string
+          title: string
+          description?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
+          expense_date?: string | null
         }
         Update: {
-          cost?: number | null
-          created_at?: string
-          currency?: string | null
-          date?: string | null
-          description?: string
           id?: string
-          is_paid?: boolean | null
           trip_id?: string
+          title?: string
+          description?: string | null
+          cost?: number | null
+          currency?: string
+          created_at?: string
+          expense_date?: string | null
         }
         Relationships: [
           {
@@ -391,7 +395,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
-          },
+          }
         ]
       }
       profiles: {
@@ -421,26 +425,70 @@ export type Database = {
         }
         Relationships: []
       }
+      reservation_travelers: {
+        Row: {
+          id: string
+          trip_id: string
+          reservation_id: string
+          traveler_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          reservation_id: string
+          traveler_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          reservation_id?: string
+          traveler_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_travelers_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
+          },
+          {
+            foreignKeyName: "reservation_travelers_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_travelers_traveler_id_fkey"
+            columns: ["traveler_id"]
+            isOneToOne: false
+            referencedRelation: "trip_shares"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       reservations: {
         Row: {
           address: string | null
           confirmation_number: string | null
           cost: number | null
           created_at: string
-          currency: string | null
+          currency: string
           day_id: string
+          trip_id: string
           id: string
-          is_paid: boolean | null
           notes: string | null
           number_of_people: number | null
           order_index: number
           phone_number: string | null
           place_id: string | null
           rating: number | null
-          reservation_date: string | null
           reservation_time: string | null
           restaurant_name: string
-          trip_id: string
           website: string | null
         }
         Insert: {
@@ -448,10 +496,10 @@ export type Database = {
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
-          currency?: string | null
+          currency?: string
           day_id: string
+          trip_id: string
           id?: string
-          is_paid?: boolean | null
           notes?: string | null
           number_of_people?: number | null
           order_index: number
@@ -460,7 +508,6 @@ export type Database = {
           rating?: number | null
           reservation_time?: string | null
           restaurant_name: string
-          trip_id: string
           website?: string | null
         }
         Update: {
@@ -468,10 +515,10 @@ export type Database = {
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
-          currency?: string | null
+          currency?: string
           day_id?: string
+          trip_id?: string
           id?: string
-          is_paid?: boolean | null
           notes?: string | null
           number_of_people?: number | null
           order_index?: number
@@ -480,7 +527,6 @@ export type Database = {
           rating?: number | null
           reservation_time?: string | null
           restaurant_name?: string
-          trip_id?: string
           website?: string | null
         }
         Relationships: [
@@ -504,7 +550,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
-          },
+          }
         ]
       }
       transportation: {
@@ -513,13 +559,14 @@ export type Database = {
           confirmation_number: string | null
           cost: number | null
           created_at: string
-          currency: string | null
+          currency: string
           departure_location: string | null
           details: string | null
           end_date: string | null
           end_time: string | null
           id: string
-          is_paid: boolean | null
+          is_arrival: boolean
+          is_departure: boolean
           provider: string | null
           start_date: string
           start_time: string | null
@@ -531,13 +578,14 @@ export type Database = {
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
-          currency?: string | null
+          currency?: string
           departure_location?: string | null
           details?: string | null
           end_date?: string | null
           end_time?: string | null
           id?: string
-          is_paid?: boolean | null
+          is_arrival?: boolean
+          is_departure?: boolean
           provider?: string | null
           start_date: string
           start_time?: string | null
@@ -549,13 +597,14 @@ export type Database = {
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
-          currency?: string | null
+          currency?: string
           departure_location?: string | null
           details?: string | null
           end_date?: string | null
           end_time?: string | null
           id?: string
-          is_paid?: boolean | null
+          is_arrival?: boolean
+          is_departure?: boolean
           provider?: string | null
           start_date?: string
           start_time?: string | null
@@ -576,7 +625,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
+          }
+        ]
+      }
+      transportation_travelers: {
+        Row: {
+          id: string
+          trip_id: string
+          transportation_id: string
+          traveler_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          transportation_id: string
+          traveler_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          transportation_id?: string
+          traveler_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transportation_travelers_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
           },
+          {
+            foreignKeyName: "transportation_travelers_transportation_id_fkey"
+            columns: ["transportation_id"]
+            isOneToOne: false
+            referencedRelation: "transportation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transportation_travelers_traveler_id_fkey"
+            columns: ["traveler_id"]
+            isOneToOne: false
+            referencedRelation: "trip_shares"
+            referencedColumns: ["id"]
+          }
         ]
       }
       trip_days: {
@@ -614,7 +709,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
-          },
+          }
+        ]
+      }
+      trip_shares: {
+        Row: {
+          id: string
+          trip_id: string
+          shared_by_user_id: string
+          shared_with_user_id: string | null
+          shared_with_email: string | null
+          first_name: string
+          last_name: string | null
+          is_owner: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          shared_by_user_id: string
+          shared_with_user_id?: string | null
+          shared_with_email?: string | null
+          first_name: string
+          last_name?: string | null
+          is_owner?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          shared_by_user_id?: string
+          shared_with_user_id?: string | null
+          shared_with_email?: string | null
+          first_name?: string
+          last_name?: string | null
+          is_owner?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_shares_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
+          }
         ]
       }
       trips: {
@@ -624,7 +763,9 @@ export type Database = {
           created_at: string
           departure_date: string
           destination: string
-          hidden: boolean | null
+          end_date: string
+          hidden: boolean
+          start_date: string
           trip_id: string
           user_id: string
         }
@@ -634,7 +775,9 @@ export type Database = {
           created_at?: string
           departure_date: string
           destination: string
-          hidden?: boolean | null
+          end_date: string
+          hidden?: boolean
+          start_date: string
           trip_id?: string
           user_id: string
         }
@@ -644,7 +787,9 @@ export type Database = {
           created_at?: string
           departure_date?: string
           destination?: string
-          hidden?: boolean | null
+          end_date?: string
+          hidden?: boolean
+          start_date?: string
           trip_id?: string
           user_id?: string
         }
@@ -652,53 +797,43 @@ export type Database = {
       }
       vision_board_items: {
         Row: {
-          category: string
-          created_at: string
-          description: string | null
           id: string
-          image_url: string | null
-          order_index: number
-          source_url: string | null
-          title: string
           trip_id: string
+          title: string
+          description: string | null
+          image_url: string | null
+          link_url: string | null
+          created_at: string
+          order_index: number
         }
         Insert: {
-          category: string
-          created_at?: string
-          description?: string | null
           id?: string
-          image_url?: string | null
-          order_index: number
-          source_url?: string | null
-          title: string
           trip_id: string
+          title: string
+          description?: string | null
+          image_url?: string | null
+          link_url?: string | null
+          created_at?: string
+          order_index: number
         }
         Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
           id?: string
-          image_url?: string | null
-          order_index?: number
-          source_url?: string | null
-          title?: string
           trip_id?: string
+          title?: string
+          description?: string | null
+          image_url?: string | null
+          link_url?: string | null
+          created_at?: string
+          order_index?: number
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_trip"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["trip_id"]
-          },
           {
             foreignKeyName: "vision_board_items_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["trip_id"]
-          },
+          }
         ]
       }
     }
@@ -706,30 +841,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_expenses_by_category:
-        | {
-            Args: Record<PropertyKey, never>
-            Returns: {
-              category: string
-              total: number
-            }[]
-          }
-        | {
-            Args: {
-              expenses: Json
-              category: string
-            }
-            Returns: Json
-          }
+      [_ in never]: never
     }
     Enums: {
-      transportation_type:
-        | "flight"
-        | "train"
-        | "car_service"
-        | "shuttle"
-        | "ferry"
-        | "rental_car"
+      transportation_type: "flight" | "train" | "car_service" | "shuttle" | "ferry" | "rental_car"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -737,37 +852,27 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
-
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
+  PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] & Database["public"]["Views"]) | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] & Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] & Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+  ? (Database["public"]["Tables"] & Database["public"]["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
     : never
+  : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
+  PublicTableNameOrOptions extends keyof Database["public"]["Tables"] | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
@@ -777,18 +882,16 @@ export type TablesInsert<
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
     : never
+  : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
+  PublicTableNameOrOptions extends keyof Database["public"]["Tables"] | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
@@ -798,31 +901,27 @@ export type TablesUpdate<
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
     : never
+  : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
+  PublicEnumNameOrOptions extends keyof Database["public"]["Enums"] | { schema: keyof Database },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = PublicEnumNameOrOptions extends { schema: keyof Database }
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
+  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
+  PublicCompositeTypeNameOrOptions extends keyof Database["public"]["CompositeTypes"] | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
   }
@@ -830,6 +929,6 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  : PublicCompositeTypeNameOrOptions extends keyof Database["public"]["CompositeTypes"]
+  ? Database["public"]["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never

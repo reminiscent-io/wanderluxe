@@ -6,6 +6,8 @@ import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS, Currency } from '@/utils/
 import { Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
+import TravelersTagMultiSelect from './travelers/TravelersTagMultiSelect';
+import { getDayActivityTravelerIds, setDayActivityTravelers } from '@/services/travelers';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
@@ -17,6 +19,7 @@ interface ActivityFormProps {
   eventId: string;
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
+  tripId: string;
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -29,9 +32,23 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   eventId,
   tripDates,
   preselectedDate,
+  tripId,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load existing travelers for edit mode
+  useEffect(() => {
+    if ((activity as any).id && tripId && !activity.travelers) {
+      getDayActivityTravelerIds(tripId, (activity as any).id)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            onActivityChange({ ...activity, travelers: data });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [(activity as any).id, tripId]);
 
   // New local state for time values
   const [startTime, setStartTime] = useState(activity.start_time || "");
@@ -130,7 +147,20 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(activity);
+      // Remove travelers from form data as it's handled separately
+      const { travelers, ...activityData } = activity;
+      
+      const result = await onSubmit(activityData);
+      
+      // Save traveler tags if we have travelers selected
+      if (travelers && travelers.length > 0) {
+        // For edit mode, we might have an existing activity ID, or we get it from the result
+        const activityId = (activity as any).id || (result as any)?.id;
+        if (activityId) {
+          await setDayActivityTravelers(tripId, activityId, travelers);
+        }
+      }
+      
       toast.success('Activity saved successfully');
       onCancel();
     } catch (error) {
@@ -142,7 +172,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   };
 
   const handleCostChange = (value: string) => {
-    onActivityChange({ ...activity, cost: value });
+    const numericValue = Number(value.replace(/,/g, ''));
+    onActivityChange({ ...activity, cost: Number.isNaN(numericValue) ? undefined : numericValue });
   };
 
   return (
@@ -249,8 +280,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <input
             id="cost"
             type="text"
-            value={activity.cost || ''}
+            value={activity.cost !== undefined && activity.cost !== null ? new Intl.NumberFormat('en-US').format(activity.cost) : ''}
             onChange={(e) => handleCostChange(e.target.value)}
+            onBlur={(e) => {
+              // The field value is already set by onChange, this ensures visual formatting
+            }}
+            placeholder="0"
             className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.cost ? 'border-red-500' : 'border-gray-300'}`}
           />
           {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
@@ -274,6 +309,20 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      {/* Travelers */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Tag Travelers
+        </label>
+        <div className="mt-1">
+          <TravelersTagMultiSelect
+            tripId={tripId}
+            value={activity.travelers || []}
+            onChange={(travelers) => onActivityChange({ ...activity, travelers })}
+          />
         </div>
       </div>
 

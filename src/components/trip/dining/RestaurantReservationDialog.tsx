@@ -45,7 +45,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
         <div className="flex flex-col max-h-[90vh] w-full">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>Enter the details for your restaurant reservation.</DialogDescription>
+            
           </DialogHeader>
           <div className="flex-1 overflow-y-auto scrollbar-none px-1">
             <RestaurantReservationForm

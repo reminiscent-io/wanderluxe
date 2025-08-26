@@ -21,6 +21,13 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
     queryClient.invalidateQueries({
       queryKey: ['activities', dayId],
     });
+    // Invalidate TravelerAvatars queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:list', tripId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:assigned', tripId],
+    });
   }, [queryClient, tripId, dayId]);
 
   // Set up real-time subscription for activities
@@ -43,6 +50,16 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
           schema: 'public',
           table: 'day_activities',
           filter: `day_id=eq.${dayId}`,
+        },
+        handleActivityChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'day_activity_travelers',
+          filter: `trip_id=eq.${tripId}`,
         },
         handleActivityChange
       )

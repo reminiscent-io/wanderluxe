@@ -20,7 +20,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
       <SelectTrigger className={`w-[180px] rounded-lg px-3 py-2 text-sm bg-sand-50 border border-gray-200 ${className}`}>
         <SelectValue placeholder="Currency" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="z-[9999]">
         {CURRENCIES.map(currency => (
           <SelectItem key={currency} value={currency}>
             <TooltipProvider>

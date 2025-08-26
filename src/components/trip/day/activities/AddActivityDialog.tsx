@@ -21,6 +21,7 @@ interface AddActivityDialogProps {
   eventId: string;
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
+  tripId: string;
 }
 
 const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
@@ -32,6 +33,7 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
   eventId,
   tripDates,
   preselectedDate,
+  tripId,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -54,6 +56,7 @@ const AddActivityDialog: React.FC<AddActivityDialogProps> = ({
               eventId={eventId}
               tripDates={tripDates}
               preselectedDate={preselectedDate}
+              tripId={tripId}
             />
           </div>
         </div>

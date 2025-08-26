@@ -22,15 +22,17 @@ import {
   formatTransportationType, 
   getTransportationIcon 
 } from "@/utils/transportationUtils";
+import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
 
 interface Props {
   form: UseFormReturn<any>;
   tripArrivalDate?: string | null;
+  tripId: string;
 }
 
 const Required = () => <span className="text-red-500">*</span>;
 
-export default function TransportationFormFields({ form, tripArrivalDate }: Props) {
+export default function TransportationFormFields({ form, tripArrivalDate, tripId }: Props) {
   const { control, setValue } = form;
 
   // watch departure & arrival so UI updates properly
@@ -112,29 +114,29 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
         control={control}
       />
 
-      {/* Provider */}
-      <Controller
-        control={control}
-        name="provider"
-        render={({ field }) => (
-          <div className="space-y-2">
-            <Label>Provider</Label>
-            <Input {...field} placeholder="Airline, train company…" />
-          </div>
-        )}
-      />
-
-      {/* Confirmation Number */}
-      <Controller
-        control={control}
-        name="confirmation_number"
-        render={({ field }) => (
-          <div className="space-y-2">
-            <Label>Confirmation Number</Label>
-            <Input {...field} placeholder="Booking reference" />
-          </div>
-        )}
-      />
+      {/* Provider & Confirmation Number */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Controller
+          control={control}
+          name="provider"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <Label>Provider</Label>
+              <Input {...field} placeholder="Airline, train company…" />
+            </div>
+          )}
+        />
+        <Controller
+          control={control}
+          name="confirmation_number"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <Label>Confirmation Number</Label>
+              <Input {...field} placeholder="Booking reference" />
+            </div>
+          )}
+        />
+      </div>
 
       {/* Cost & Currency */}
       <div className="space-y-2">
@@ -146,13 +148,17 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
             render={({ field }) => (
               <div>
                 <Input
-                  value={costDisplay}
+                  type="text"
+                  value={cost !== undefined && cost !== null ? new Intl.NumberFormat('en-US').format(cost) : ''}
                   onChange={(e) => {
-                    const raw = e.target.value.replace(/[^\d.-]/g, "");
-                    setCostDisplay(raw);
-                    field.onChange(raw ? parseFloat(raw) : null);
+                    const numericValue = Number(e.target.value.replace(/,/g, ''));
+                    setValue("cost", Number.isNaN(numericValue) ? null : numericValue);
+                  }}
+                  onBlur={(e) => {
+                    // The field value is already set by onChange, this ensures visual formatting
                   }}
                   placeholder="0"
+                  className="bg-white"
                 />
               </div>
             )}
@@ -191,6 +197,22 @@ export default function TransportationFormFields({ form, tripArrivalDate }: Prop
           <div className="space-y-2">
             <Label>Details</Label>
             <Textarea {...field} rows={1} placeholder="Additional details" />
+          </div>
+        )}
+      />
+
+      {/* Travelers */}
+      <Controller
+        control={control}
+        name="travelers"
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label>Tag Travelers</Label>
+            <TravelersTagMultiSelect
+              tripId={tripId}
+              value={field.value || []}
+              onChange={field.onChange}
+            />
           </div>
         )}
       />

@@ -21,6 +21,13 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
     queryClient.invalidateQueries({
       queryKey: ['accommodations', tripId],
     });
+    // Invalidate TravelerAvatars queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:list', tripId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:assigned', tripId],
+    });
   }, [queryClient, tripId]);
 
   // Set up real-time subscription for accommodations
@@ -42,6 +49,16 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
           event: '*',
           schema: 'public',
           table: 'accommodations',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleAccommodationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodation_travelers',
           filter: `trip_id=eq.${tripId}`,
         },
         handleAccommodationChange

@@ -29,6 +29,13 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
     });
+    // Invalidate TravelerAvatars queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:list', tripId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:assigned', tripId],
+    });
   }, [queryClient, tripId, dayId]);
 
   // Set up real-time subscription for reservations
@@ -51,6 +58,16 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
           schema: 'public',
           table: 'reservations',
           filter: `day_id=eq.${dayId}`,
+        },
+        handleReservationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservation_travelers',
+          filter: `trip_id=eq.${tripId}`,
         },
         handleReservationChange
       )

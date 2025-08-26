@@ -39,32 +39,37 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       .eq('shared_with_email', email.toLowerCase().trim())
       .maybeSingle();
 
+    let shareCreated = false;
     if (existingShare) {
-      toast.info('This trip is already shared with this email address');
-      return true;
+      // Already shared, but we'll still send the email notification
+      console.log('Trip already shared with this email, but will resend notification');
+    } else {
+      shareCreated = true;
     }
 
-    // Create the share record
-    const shareData: any = {
-      trip_id: tripId,
-      shared_by_user_id: user.id,
-      shared_with_email: email.toLowerCase().trim()
-    };
+    // Create the share record only if it doesn't exist
+    if (shareCreated) {
+      const shareData: any = {
+        trip_id: tripId,
+        shared_by_user_id: user.id,
+        shared_with_email: email.toLowerCase().trim()
+      };
 
-    // Only add permission_level if it's supported (after migration)
-    try {
-      shareData.permission_level = permissionLevel;
-    } catch (e) {
-      // Column doesn't exist yet, will default to 'edit' after migration
-    }
+      // Only add permission_level if it's supported (after migration)
+      try {
+        shareData.permission_level = permissionLevel;
+      } catch (e) {
+        // Column doesn't exist yet, will default to 'edit' after migration
+      }
 
-    const { error: shareError } = await supabase
-      .from('trip_shares' as any)
-      .insert(shareData);
+      const { error: shareError } = await supabase
+        .from('trip_shares' as any)
+        .insert(shareData);
 
-    if (shareError) {
-      toast.error('Failed to share the trip. Please try again.');
-      return false;
+      if (shareError) {
+        toast.error('Failed to share the trip. Please try again.');
+        return false;
+      }
     }
 
     // Send email notification
@@ -72,9 +77,9 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
     
     // Even if notification fails, the trip is still shared in the database
     if (!notificationSent) {
-      toast.warning('Trip shared, but email notification could not be sent');
+      toast.warning(shareCreated ? 'Trip shared, but email notification could not be sent' : 'Email notification could not be sent');
     } else {
-      toast.success('Trip shared successfully and notification sent');
+      toast.success(shareCreated ? 'Trip shared successfully and notification sent' : 'Email notification sent successfully');
     }
 
     return true;
@@ -126,16 +131,13 @@ export const sendShareNotification = async (
 
     if (!response.ok || !result.success) {
       console.error('Email notification failed:', result.message || 'Unknown error');
-      toast.warning(`Trip shared with ${toEmail}, but email notification couldn't be sent.`);
       return false;
     }
 
     // Success!
-    toast.success(`Trip shared with ${toEmail} successfully and notification sent!`);
     return true;
   } catch (error) {
     console.error('Error in share notification process:', error);
-    toast.error(`Failed to send notification email to ${toEmail}.`);
     return false;
   }
 };

@@ -12,6 +12,8 @@ import { CURRENCIES } from "@/utils/currencyConstants";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
+import { getTransportationTravelerIds, setTransportationTravelers } from "@/services/travelers";
 
 type Transportation = Tables<"transportation">;
 
@@ -23,6 +25,7 @@ interface Props {
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
   buttonClassName?: string;
+  tripId: string;
 }
 
 export default function TransportationForm({
@@ -33,6 +36,7 @@ export default function TransportationForm({
   tripArrivalDate,
   tripDepartureDate,
   buttonClassName,
+  tripId,
 }: Props) {
   /* ------------------------------------------------------------------------ */
   const schema = z.object({
@@ -45,6 +49,7 @@ export default function TransportationForm({
     confirmation_number: z.string().optional(),
     cost: z.number().nullable(),
     currency: z.string().min(1),
+    travelers: z.array(z.string()).optional(),
   });
 
   /* ------------------------------------------------------------------------ */
@@ -68,6 +73,7 @@ export default function TransportationForm({
       confirmation_number: initialData?.confirmation_number ?? "",
       cost: initialData?.cost ?? null,
       currency: initialData?.currency ?? CURRENCIES[0],
+      travelers: [],
     },
   });
 
@@ -95,6 +101,24 @@ export default function TransportationForm({
     name: "travel_range",
   }) as LuxuryDateTimeRange;
 
+  /* ------------------- load existing travelers ------------------- */
+  useEffect(() => {
+    const loadTravelers = async () => {
+      if (initialData?.id) {
+        try {
+          const { data: travelerIds, error } = await getTransportationTravelerIds(tripId, initialData.id);
+          if (!error && travelerIds) {
+            form.setValue("travelers", travelerIds);
+          }
+        } catch (error) {
+          console.error("Error loading transportation travelers:", error);
+        }
+      }
+    };
+    
+    loadTravelers();
+  }, [initialData?.id, tripId, form]);
+
   /* ------------------- submit handler ------------------- */
   const [saving, setSaving] = useState(false);
   const handleSubmit = async (data: z.infer<typeof schema>) => {
@@ -121,7 +145,15 @@ export default function TransportationForm({
 
     try {
       setSaving(true);
-      await onSubmit(payload);
+      const result = await onSubmit(payload);
+      
+      // Save traveler assignments after successful transportation save
+      if (data.travelers && data.travelers.length > 0) {
+        const transportationId = initialData?.id || (result as any)?.id;
+        if (transportationId) {
+          await setTransportationTravelers(tripId, transportationId, data.travelers);
+        }
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to save transportation");
@@ -137,6 +169,7 @@ export default function TransportationForm({
         <TransportationFormFields
           form={form}
           tripArrivalDate={tripArrivalDate}
+          tripId={tripId}
         />
 
         <div className="flex items-center justify-between pt-4">

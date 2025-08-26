@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DayActivityManager from './components/DayActivityManager';
 import { cn } from '@/lib/utils';
+import TravelerAvatars from '../timeline/TravelerAvatars';
 
 // Helper function to format time in 12-hour format
 const formatTime12 = (time?: string) => {
@@ -388,6 +389,15 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                             </div>
                           )}
                         </div>
+                        {/* Traveler Avatars for All Day Hotels */}
+                        <div className="flex-shrink-0 ml-2">
+                          <TravelerAvatars 
+                            tripId={tripId}
+                            eventType="accommodation"
+                            eventId={stay.stay_id}
+                            maxShow={3}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -448,6 +458,15 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                   {item.description}
                                 </div>
                               )}
+                            </div>
+                            {/* Traveler Avatars */}
+                            <div className="flex-shrink-0 ml-2">
+                              <TravelerAvatars
+                                tripId={tripId}
+                                eventType={item.type === "hotel" ? "accommodation" : item.type}
+                                eventId={item.type === "hotel" ? item.data.stay_id : item.id}
+                                maxShow={3}
+                              />
                             </div>
                           </div>
                         </div>
