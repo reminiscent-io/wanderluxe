@@ -11,7 +11,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import NavigationLogo from "../NavigationLogo";
@@ -27,22 +26,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 
 export const tripNavItems = [
-  {
-    title: "Timeline",
-    icon: Calendar,
-    href: "timeline",
-    children: [
-      { title: "Trip Dates", icon: CalendarDays, key: "dates" },
-      { title: "Accommodations", icon: Building, key: "accommodations" },
-      { title: "Transportation", icon: Car, key: "transportation" },
-      { title: "Activities", icon: MapPin, key: "activities" },
-      { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
-      { title: "Travelers", icon: Users, key: "travelers" },
-    ]
-  },
+  { title: "Timeline", icon: Calendar, href: "timeline" },
   { title: "AI Assistant", icon: MessageCircle, href: "chat" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
+];
+
+export const timelineManagementItems = [
+  { title: "Trip Dates", icon: CalendarDays, key: "dates" },
+  { title: "Accommodations", icon: Building, key: "accommodations" },
+  { title: "Transportation", icon: Car, key: "transportation" },
+  { title: "Activities", icon: MapPin, key: "activities" },
+  { title: "Reservations", icon: UtensilsCrossed, key: "reservations" },
+  { title: "Travelers", icon: Users, key: "travelers" },
 ];
 
 interface SidebarProps {
@@ -115,59 +111,46 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           <Separator className="my-4" />
           {tripNavItems.map(item => (
             <div key={item.title}>
-              <Collapsible
-                open={expandedItems.includes(item.title.toLowerCase())}
-                onOpenChange={() => toggleExpanded(item.title.toLowerCase())}
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start text-left",
+                  activeTab === item.href
+                    ? "bg-earth-100 text-earth-700 font-medium"
+                    : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
+                )}
+                onClick={() => {
+                  onTabChange(item.href);
+                }}
               >
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-between text-left",
-                      activeTab === item.href
-                        ? "bg-earth-100 text-earth-700 font-medium"
-                        : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
-                    )}
-                    onClick={() => {
-                      onTabChange(item.href);
-                      onTabChange(item.href);
-                    }}
-                  >
-                    <div className="flex items-center">
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {item.title}
-                    </div>
-                    {item.children && (
-                      expandedItems.includes(item.title.toLowerCase()) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-                {item.children && (
-                  <CollapsibleContent className="ml-6 mt-1 space-y-1">
-                    {item.children.map(child => (
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.title}
+              </Button>
+              
+              {/* Show Timeline management items after Timeline button */}
+              {item.title === "Timeline" && (
+                <div className="mt-2 mb-4">
+                  <div className="space-y-1">
+                    {timelineManagementItems.map(child => (
                       <Button
                         key={child.key}
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleSubitemClick(child.key)}
                         className={cn(
-                          "w-full justify-start text-xs",
+                          "w-full justify-start pl-6 h-8 text-xs",
                           secondaryPanel === child.key
                             ? "bg-earth-50 text-earth-600 font-medium"
                             : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
                         )}
-                        onClick={() => handleSubitemClick(child.key)}
                       >
                         <child.icon className="mr-2 h-3 w-3" />
                         {child.title}
                       </Button>
                     ))}
-                  </CollapsibleContent>
-                )}
-              </Collapsible>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -267,7 +250,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               setSelectedTransportation(null);
             }}
           />
-          
+
       <TripDateEditDialog
         isOpen={tripDatesOpen}
         onOpenChange={setTripDatesOpen}
@@ -353,7 +336,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         tripId={tripId || ""}
         activityId={selectedActivity}
       />
-      
+
       <TripDateEditDialog
         isOpen={tripDatesOpen}
         onOpenChange={setTripDatesOpen}
@@ -363,7 +346,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onDepartureChange={setNewDeparture}
         onSave={handleSaveDates}
       />
-      
+
       <TravelerDialog
         open={travelerOpen}
         onOpenChange={(open) => {
