@@ -75,6 +75,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             tripDates={tripDates}
             preselectedDate={preselectedDate || (isEditMode ? activity.date : undefined)}
             tripId={tripId}
+            activityId={activityId}
           />
         </div>
       </DialogContent>
