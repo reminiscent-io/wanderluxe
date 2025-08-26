@@ -1,17 +1,22 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
+import { useParams } from 'react-router-dom';
+import TimelineView from '@/components/trip/TimelineView';
 
 const Timeline = () => {
-  return (
-    <div className="min-h-screen bg-sand-50/95">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-earth-600 mb-8">Timeline</h1>
-        <Card className="p-6">
-          <p className="text-sand-600">Timeline view coming soon...</p>
-        </Card>
+  const { tripId } = useParams<{ tripId: string }>();
+
+  if (!tripId) {
+    return (
+      <div className="min-h-screen bg-sand-50/95 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-earth-600 mb-4">No Trip Selected</h1>
+          <p className="text-sand-600">Please select a trip to view its timeline.</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <TimelineView tripId={tripId} />;
 };
 
 export default Timeline;
