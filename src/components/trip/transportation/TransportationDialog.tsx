@@ -70,6 +70,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         currency: data.currency,
       };
 
+      let savedRecord: TransportationType;
+
       if (initialData?.id) {
         // Update existing
         const { data: updatedRecord, error } = await supabase
@@ -79,8 +81,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           .select('*')
           .single();
         if (error || !updatedRecord) throw error;
+        savedRecord = updatedRecord;
         toast.success('Transportation updated successfully');
-        onSuccess(updatedRecord);
       } else {
         // Insert new
         const { data: inserted, error } = await supabase
@@ -89,14 +91,17 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           .select('*')
           .single();
         if (error || !inserted) throw error;
+        savedRecord = inserted;
         toast.success('Transportation added successfully');
-        onSuccess(inserted);
       }
 
+      onSuccess(savedRecord);
       onOpenChange(false);
+      return savedRecord; // Return the saved record so TransportationForm can use the ID for traveler saving
     } catch (err) {
       console.error('Error saving transportation:', err);
       toast.error('Failed to save transportation');
+      throw err; // Re-throw so TransportationForm can handle the error
     }
   };
 
@@ -143,6 +148,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             tripArrivalDate={tripDates.arrival_date}
             tripDepartureDate={tripDates.departure_date}
             buttonClassName={buttonClassName}
+            tripId={tripId}
           />
         </div>
       </DialogContent>
