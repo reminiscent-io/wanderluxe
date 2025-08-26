@@ -53,7 +53,6 @@ const ActivityDialogs: React.FC<ActivityDialogsProps> = ({
         tripDates={tripDates}
         preselectedDate={preselectedDate}
       />
-
       <EditActivityDialog
         activityId={editingActivity}
         onOpenChange={handleEditActivityDialogClose}

@@ -43,13 +43,11 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         .select("arrival_date, departure_date")
         .eq("trip_id", tripId)
         .single();
-      if (!error && data) {
-        if (data.arrival_date && data.departure_date) {
-          setTripDates({
-            arrival_date: data.arrival_date,
-            departure_date: data.departure_date,
-          });
-        }
+      if (!error && data && data.arrival_date && data.departure_date) {
+        setTripDates({
+          arrival_date: data.arrival_date,
+          departure_date: data.departure_date,
+        });
       }
     };
     if (open) fetchTripDates();
@@ -65,7 +63,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         hotel_checkout_date: data.hotel_checkout_date,
         checkin_time: data.checkin_time,
         checkout_time: data.checkout_time,
-        cost: data.cost, // number|null (kept numeric)
+        cost: data.cost,
         currency: data.currency,
         hotel_address: data.hotel_address,
         hotel_phone: data.hotel_phone,
@@ -109,9 +107,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           .from("accommodations")
           .delete()
           .eq("stay_id", initialData.stay_id);
-
         if (error) throw error;
-
         toast.success("Accommodation deleted successfully");
         onSuccess();
         onOpenChange(false);
@@ -125,34 +121,29 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        // keep the dialog open on outside clicks while editing
+        // Keep the dialog open on outside clicks while editing
         onPointerDownOutside={(e) => e.preventDefault()}
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto p-4 sm:p-6"
       >
-        <div className="flex flex-col max-h-[90vh] w-full">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>
-              {initialData ? "Edit Accommodation" : "Add Accommodation"}
-            </DialogTitle>
-            <DialogDescription>
-              {initialData
-                ? "Update your accommodation details."
-                : "Enter the details for your accommodation."}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto scrollbar-none px-1">
-            <AccommodationForm
-              initialData={initialData ?? undefined}
-              onSubmit={handleSubmit}
-              onCancel={() => onOpenChange(false)}
-              tripArrivalDate={tripDates.arrival_date}
-              tripDepartureDate={tripDates.departure_date}
-              onDelete={handleDelete}
-              tripId={tripId}
-            />
-          </div>
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>
+            {initialData ? "Edit Accommodation" : "Add Accommodation"}
+          </DialogTitle>
+          <DialogDescription>
+            {initialData
+              ? "Update your accommodation details."
+              : "Enter the details for your accommodation."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
+          <AccommodationForm
+            initialData={initialData ?? undefined}
+            onSubmit={handleSubmit}
+            onCancel={() => onOpenChange(false)}
+            tripArrivalDate={tripDates.arrival_date}
+            tripDepartureDate={tripDates.departure_date}
+            onDelete={handleDelete}
+            tripId={tripId}
+          />
         </div>
       </DialogContent>
     </Dialog>

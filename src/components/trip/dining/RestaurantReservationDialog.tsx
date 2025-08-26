@@ -1,5 +1,11 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog";
 import RestaurantReservationForm from './RestaurantReservationForm';
 
 interface RestaurantReservationDialogProps {
@@ -10,7 +16,7 @@ interface RestaurantReservationDialogProps {
   editingReservation?: any;
   title: string;
   onDelete?: () => Promise<void>;
-  tripId: string; // must be provided
+  tripId: string;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
 }
@@ -38,26 +44,21 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent 
-        onPointerDownOutside={(e) => e.preventDefault()}
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto p-4 sm:p-6"
-      >
-        <div className="flex flex-col max-h-[90vh] w-full">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>{title}</DialogTitle>
-            
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto scrollbar-none px-1">
-            <RestaurantReservationForm
-              onSubmit={handleFormSubmit}
-              isSubmitting={isSubmitting}
-              defaultValues={editingReservation}
-              onDelete={onDelete}
-              tripId={tripId}
-              tripArrivalDate={tripArrivalDate}
-              tripDepartureDate={tripDepartureDate}
-            />
-          </div>
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>{title}</DialogTitle>
+          {/* No description provided for this dialog */}
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
+          <RestaurantReservationForm
+            onSubmit={handleFormSubmit}
+            isSubmitting={isSubmitting}
+            defaultValues={editingReservation}
+            onDelete={onDelete}
+            tripId={tripId}
+            tripArrivalDate={tripArrivalDate}
+            tripDepartureDate={tripDepartureDate}
+          />
         </div>
       </DialogContent>
     </Dialog>
