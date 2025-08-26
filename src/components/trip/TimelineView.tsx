@@ -189,7 +189,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
 
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Trip Timeline</h2>
+        <h2 className="text-2xl font-bold text-earth-500">Trip Timeline</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
