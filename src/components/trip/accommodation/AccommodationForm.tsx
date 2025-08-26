@@ -360,33 +360,33 @@ export default function AccommodationForm({
         />
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
-          {initialData && onDelete && (
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={saving}
-              onClick={onDelete}
-              className="text-red-500 hover:bg-red-50 hover:text-red-700 w-8 h-8 p-0"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-
-          <div className="flex gap-2 sm:ml-auto">
+        <div className="flex justify-between items-center pt-4">
+          <div>
+            {initialData && onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={saving}
+                onClick={onDelete}
+                className="text-red-500 hover:bg-red-50 hover:text-red-700 w-8 h-8 p-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="ghost"
               onClick={onCancel}
               disabled={saving}
-              className="flex-1 sm:flex-initial"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={saving}
-              className="bg-earth-500 text-white hover:bg-earth-600 flex-1 sm:flex-initial"
+              className="bg-earth-500 text-white hover:bg-earth-600"
             >
               {saving ? (
                 <>
