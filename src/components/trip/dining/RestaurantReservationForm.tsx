@@ -367,7 +367,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         </div>
 
         {/* Number of People, Cost & Currency */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_1.5fr] gap-3">
           <FormField
             control={form.control}
             name="number_of_people"
