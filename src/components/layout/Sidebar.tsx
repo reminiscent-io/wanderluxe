@@ -18,7 +18,7 @@ import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
-import ActivityDialogs from "../trip/day/activities/ActivityDialogs";
+import ActivityDialog from "../trip/day/activities/ActivityDialog";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import TravelerDialog from "../trip/travelers/TravelerDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -320,21 +320,38 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           }
         }}
       />
-      <ActivityDialogs
-        isAddingActivity={activityOpen}
-        setIsAddingActivity={setActivityOpen}
-        editingActivity={selectedActivity}
-        setEditingActivity={setSelectedActivity}
-        newActivity={newActivity}
-        setNewActivity={setNewActivity}
-        activityEdit={activityEdit}
-        setActivityEdit={setActivityEdit}
-        onAddActivity={handleAddActivity}
-        onEditActivity={handleEditActivity}
-        onDeleteActivity={handleActivityDelete}
+      <ActivityDialog
+        isOpen={activityOpen || !!selectedActivity}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActivityOpen(false);
+            setSelectedActivity(null);
+            setActivityEdit({
+              title: '',
+              description: '',
+              start_time: '',
+              end_time: '',
+              cost: '',
+              currency: 'USD',
+            });
+          }
+        }}
+        activity={selectedActivity ? activityEdit : newActivity}
+        onActivityChange={selectedActivity ? setActivityEdit : setNewActivity}
+        onSubmit={(activity) => {
+          if (selectedActivity) {
+            handleEditActivity(selectedActivity, activity);
+          } else {
+            handleAddActivity(activity);
+          }
+        }}
+        onDelete={(id) => {
+          handleActivityDelete(id);
+        }}
         eventId={tripId || ""}
         tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
         tripId={tripId || ""}
+        activityId={selectedActivity}
       />
       
       <TripDateEditDialog
