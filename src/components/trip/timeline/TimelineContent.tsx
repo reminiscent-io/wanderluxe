@@ -9,6 +9,7 @@ import RestaurantReservationDialog from '@/components/trip/dining/RestaurantRese
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { setDayActivityTravelers } from '@/services/travelers';
 
 interface TimelineContentProps {
   days?: TripDay[];
@@ -229,6 +230,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     .eq('id', editingActivity.id);
                   
                   if (error) throw error;
+                  
+                  // Save traveler tags if we have travelers selected
+                  if (activityEdit.travelers && editingActivity?.id) {
+                    await setDayActivityTravelers(sortedDays[0].trip_id, editingActivity.id, activityEdit.travelers);
+                  }
+                  
                   toast.success('Activity updated successfully');
                   
                   // Invalidate queries
@@ -248,7 +255,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               } else {
                 // Add mode
                 try {
-                  const { error } = await supabase
+                  const { data, error } = await supabase
                     .from('day_activities')
                     .insert({
                       day_id: selectedDayId,
@@ -261,9 +268,17 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                       currency: newActivity.currency || null,
                       order_index: 0,
                       is_paid: false
-                    });
+                    })
+                    .select()
+                    .single();
                     
                   if (error) throw error;
+                  
+                  // Save traveler tags if we have travelers selected
+                  if (newActivity.travelers && newActivity.travelers.length > 0 && data?.id) {
+                    await setDayActivityTravelers(sortedDays[0].trip_id, data.id, newActivity.travelers);
+                  }
+                  
                   toast.success('Activity added successfully');
                   setActivityOpen(false);
                   setNewActivity({
