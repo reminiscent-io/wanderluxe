@@ -394,7 +394,7 @@ export default function AccommodationForm({
                   Saving…
                 </>
               ) : (
-                "Save Accommodation"
+                "Save"
               )}
             </Button>
           </div>
