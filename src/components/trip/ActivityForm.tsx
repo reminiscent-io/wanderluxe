@@ -21,6 +21,7 @@ interface ActivityFormProps {
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
   tripId: string;
+  activityId?: string | null; // Add activity ID for edit mode
 }
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -34,14 +35,15 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   tripDates,
   preselectedDate,
   tripId,
+  activityId,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load existing travelers for edit mode
   useEffect(() => {
-    if ((activity as any).id && tripId && !activity.travelers) {
-      getDayActivityTravelerIds(tripId, (activity as any).id)
+    if (activityId && tripId && !activity.travelers) {
+      getDayActivityTravelerIds(tripId, activityId)
         .then(({ data }) => {
           if (data && data.length > 0) {
             onActivityChange({ ...activity, travelers: data });
@@ -49,7 +51,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         })
         .catch(console.error);
     }
-  }, [(activity as any).id, tripId]);
+  }, [activityId, tripId]);
 
   // New local state for time values
   const [startTime, setStartTime] = useState(activity.start_time || "");
