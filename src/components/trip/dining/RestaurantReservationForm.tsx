@@ -59,6 +59,7 @@ interface RestaurantReservationFormProps {
   defaultValues?: Partial<FormValues> & { id?: string; trip_id?: string; day_id?: string; order_index?: number };
   isSubmitting?: boolean;
   onDelete?: () => Promise<void>;
+  onCancel?: () => void;
   tripId: string;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
@@ -69,6 +70,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   defaultValues,
   isSubmitting = false,
   onDelete,
+  onCancel,
   tripId,
   tripArrivalDate,
   tripDepartureDate,
@@ -485,7 +487,16 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               </Button>
             )}
           </div>
-          <div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="text-gray-600 hover:text-gray-700"
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
