@@ -334,10 +334,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               type="button"
               onClick={onDelete}
               disabled={isSubmitting}
-              className="flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent border-0 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              className="flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent border-0 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
+              <Trash2 className="w-4 h-4" />
             </button>
           )}
         </div>

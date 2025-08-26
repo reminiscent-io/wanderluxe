@@ -367,10 +367,9 @@ export default function AccommodationForm({
               variant="ghost"
               disabled={saving}
               onClick={onDelete}
-              className="text-red-500 hover:bg-red-50 hover:text-red-700 w-full sm:w-auto"
+              className="text-red-500 hover:bg-red-50 hover:text-red-700 w-8 h-8 p-0"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              <Trash2 className="h-4 w-4" />
             </Button>
           )}
 
