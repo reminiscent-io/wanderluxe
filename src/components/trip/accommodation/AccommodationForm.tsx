@@ -48,8 +48,8 @@ const schema = z
     is_paid: z.boolean(),
     expense_date: z.string().optional(),
     order_index: z.number(),
-    stay_range: z.any().optional(), // handled by component
     travelers: z.array(z.string()).optional(), // traveler IDs
+    stay_range: z.any().optional(), // handled by component
   })
   .refine(
     (d) => new Date(d.hotel_checkout_date) > new Date(d.hotel_checkin_date),
@@ -211,9 +211,9 @@ export default function AccommodationForm({
       setSaving(true);
       const formData = { ...data };
       delete formData.travelers; // Remove travelers from form data as it's handled separately
-      
+
       await onSubmit(formData);
-      
+
       // Save traveler tags if we have a stay_id (for edit) or after successful creation
       if (initialData?.stay_id && data.travelers) {
         await setAccommodationTravelers(tripId, initialData.stay_id.toString(), data.travelers);
@@ -307,12 +307,16 @@ export default function AccommodationForm({
               <FormItem>
                 <FormLabel>Cost</FormLabel>
                 <input
-                  type="number"
-                  {...field}
+                  type="text"
+                  value={field.value !== undefined && field.value !== null ? new Intl.NumberFormat('en-US').format(field.value) : ''}
                   onChange={(e) => {
-                    const n = e.target.value === "" ? null : e.target.valueAsNumber;
-                    field.onChange(Number.isFinite(n as number) ? n : null);
+                    const numericValue = Number(e.target.value.replace(/,/g, ''));
+                    field.onChange(Number.isNaN(numericValue) ? null : numericValue);
                   }}
+                  onBlur={(e) => {
+                    // The field value is already set by onChange, this ensures visual formatting
+                  }}
+                  placeholder="0"
                   className="w-full rounded-md border p-2"
                 />
               </FormItem>
