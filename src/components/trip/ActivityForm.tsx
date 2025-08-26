@@ -174,7 +174,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
   const handleCostChange = (value: string) => {
     const numericValue = Number(value.replace(/,/g, ''));
-    onActivityChange({ ...activity, cost: Number.isNaN(numericValue) ? undefined : numericValue });
+    onActivityChange({ ...activity, cost: Number.isNaN(numericValue) ? '' : numericValue.toString() });
   };
 
   return (
@@ -281,7 +281,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <input
             id="cost"
             type="text"
-            value={activity.cost !== undefined && activity.cost !== null ? new Intl.NumberFormat('en-US').format(activity.cost) : ''}
+            value={activity.cost !== undefined && activity.cost !== null && activity.cost !== '' ? new Intl.NumberFormat('en-US').format(Number(activity.cost)) : ''}
             onChange={(e) => handleCostChange(e.target.value)}
             onBlur={(e) => {
               // The field value is already set by onChange, this ensures visual formatting
@@ -330,7 +330,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       {/* Buttons */}
       <div className="flex justify-between items-center pt-4">
         <div>
-          {submitLabel === 'Save Changes' && onDelete && (
+          {onDelete && (
             <button
               type="button"
               onClick={onDelete}
