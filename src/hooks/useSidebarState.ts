@@ -324,6 +324,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       end_time: activity.end_time || '',
       cost: activity.cost ? String(activity.cost) : '',
       currency: (activity.currency as Currency) || 'USD',
+      travelers: [], // Initialize empty travelers array - will be loaded by useEffect in ActivityForm
     });
   };
   const handleActivityDelete = async (id: string) => {
