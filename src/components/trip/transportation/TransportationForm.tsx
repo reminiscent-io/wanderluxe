@@ -150,19 +150,9 @@ export default function TransportationForm({
       // Save traveler assignments after successful transportation save
       if (data.travelers && data.travelers.length > 0) {
         const transportationId = initialData?.id || (result as any)?.id;
-        console.log('Saving transportation travelers:', { tripId, transportationId, travelers: data.travelers });
         if (transportationId) {
-          try {
-            await setTransportationTravelers(tripId, transportationId, data.travelers);
-            console.log('Transportation travelers saved successfully');
-          } catch (travelerError) {
-            console.error('Error saving transportation travelers:', travelerError);
-          }
-        } else {
-          console.error('No transportation ID available for traveler saving');
+          await setTransportationTravelers(tripId, transportationId, data.travelers);
         }
-      } else {
-        console.log('No travelers to save or travelers array is empty');
       }
     } catch (err) {
       console.error(err);
