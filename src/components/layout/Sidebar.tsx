@@ -156,8 +156,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                   </div>
                   
                   {/* Subtle separator line */}
-                  <div className="pl-6 my-2">
-                    <Separator className="w-8" />
+                  <div className="pl-6 pr-4 my-2">
+                    <Separator />
                   </div>
                   
                   {/* Secondary group: Accommodations, Transportation, Activities, Reservations */}
