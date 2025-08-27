@@ -231,7 +231,7 @@ export default function AccommodationForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-4 p-4 sm:p-6 relative max-w-full overflow-x-hidden"
+        className="space-y-3 w-full max-w-none"
       >
         {/* Hotel Name */}
         <FormField
@@ -267,22 +267,6 @@ export default function AccommodationForm({
         <HotelContactInfo
           address={form.watch("hotel_address")}
           phone={form.watch("hotel_phone")}
-        />
-
-        {/* Details */}
-        <FormField
-          control={form.control}
-          name="hotel_details"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Additional Details</FormLabel>
-              <textarea
-                {...field}
-                rows={1}
-                className="w-full rounded-md border p-2"
-              />
-            </FormItem>
-          )}
         />
 
         {/* Luxury Date + Time Picker */}
@@ -340,13 +324,29 @@ export default function AccommodationForm({
           />
         </div>
 
+        {/* Additional Details */}
+        <FormField
+          control={form.control}
+          name="hotel_details"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Additional Details</FormLabel>
+              <textarea
+                {...field}
+                rows={1}
+                className="w-full rounded-md border p-2"
+              />
+            </FormItem>
+          )}
+        />
+
         {/* Travelers */}
         <FormField
           control={form.control}
           name="travelers"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tag Travelers</FormLabel>
+              <FormLabel>Travelers</FormLabel>
               <FormControl>
                 <TravelersTagMultiSelect
                   tripId={tripId}
@@ -360,34 +360,33 @@ export default function AccommodationForm({
         />
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
-          {initialData && onDelete && (
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={saving}
-              onClick={onDelete}
-              className="text-red-500 hover:bg-red-50 hover:text-red-700 w-full sm:w-auto"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          )}
-
-          <div className="flex gap-2 sm:ml-auto">
+        <div className="flex justify-between items-center pt-4">
+          <div>
+            {initialData && onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={saving}
+                onClick={onDelete}
+                className="text-red-500 hover:bg-red-50 hover:text-red-700 w-8 h-8 p-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="ghost"
               onClick={onCancel}
               disabled={saving}
-              className="flex-1 sm:flex-initial"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={saving}
-              className="bg-earth-500 text-white hover:bg-earth-600 flex-1 sm:flex-initial"
+              className="bg-earth-500 text-white hover:bg-earth-600"
             >
               {saving ? (
                 <>
@@ -395,7 +394,7 @@ export default function AccommodationForm({
                   Saving…
                 </>
               ) : (
-                "Save Accommodation"
+                "Save"
               )}
             </Button>
           </div>

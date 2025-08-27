@@ -40,7 +40,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   // Load the current day image and position when dialog opens
   useEffect(() => {
     if (open && dayId) {
-      // Load current image and position data from database
       const loadDayImage = async () => {
         try {
           const { data, error } = await supabase
@@ -48,15 +47,11 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             .select('image_url, image_position')
             .eq('day_id', dayId)
             .single();
-            
           if (!error && data) {
-            // Set the image from database if available
             if (data.image_url) {
               setCurrentImage(data.image_url);
               setSelectedImage(data.image_url);
             }
-            
-            // Set position from database if available
             if (data.image_position) {
               const positionMatch = data.image_position.match(/center\s+(\d+)%/);
               if (positionMatch?.[1]) {
@@ -70,9 +65,7 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
           console.error('Error loading day image data:', error);
         }
       };
-      
       loadDayImage();
-      
       // Fallback to localStorage if needed
       if (!currentImage) {
         const savedPosition = localStorage.getItem(`day_image_position_${dayId}`);
@@ -100,26 +93,15 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Create update data with current title and image position
-      const updateData: { 
-        title: string; 
-        image_url?: string; 
-        image_position?: string 
-      } = { 
+      const updateData: { title: string; image_url?: string; image_position?: string } = { 
         title,
         image_position: `center ${imagePosition}%`
       };
-      
-      // Only include image_url if an image was selected
       if (selectedImage) {
         updateData.image_url = selectedImage;
         console.log('Selected image to save:', selectedImage);
       }
-      
-      // Save the data
       await onSave(updateData);
-      
-      // Close dialog after successful save
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving day:', error);
@@ -133,17 +115,14 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
     setImagePosition(value[0]);
   };
 
-  // No longer needed as we removed the adjustment buttons
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[425px] max-h-[90vh] flex flex-col mx-auto">
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="sm:max-w-[425px]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Day Details</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4 py-4 flex-1 overflow-y-auto">
-          {/* Title Row */}
+        <div className="space-y-4 py-4 flex-1 overflow-y-auto px-1">
+          {/* Title Field */}
           <div className="space-y-1">
             <Label htmlFor="day-title" className="text-sm font-medium text-gray-700">
               Title
@@ -158,25 +137,19 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
               placeholder="Enter day title"
             />
           </div>
-
           {/* Image Position Adjustment */}
           {selectedImage && (
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">
-                Image Position{" "}
-                <span className="text-sm text-gray-500 ml-2">
-                  ({imagePosition}%)
-                </span>
+                Image Position <span className="text-sm text-gray-500 ml-2">({imagePosition}%)</span>
               </Label>
-              
-              {/* Image preview and vertical slider layout */}
               <div className="flex mt-4 h-32 gap-4">
-                {/* Vertical slider on the left */}
+                {/* Vertical slider for image position */}
                 <div className="h-full flex items-center">
                   <Slider 
-                    defaultValue={[imagePosition]} 
-                    min={0} 
-                    max={100} 
+                    defaultValue={[imagePosition]}
+                    min={0}
+                    max={100}
                     step={1}
                     value={[imagePosition]}
                     onValueChange={handlePositionChange}
@@ -184,20 +157,20 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
                     className="h-full"
                   />
                 </div>
-                
-                {/* Preview of the selected image with position applied */}
+                {/* Image preview with applied position */}
                 <div className="relative flex-1 overflow-hidden rounded-md">
-                  <img 
-                    src={selectedImage} 
-                    alt="Selected with position applied" 
-                    className="absolute inset-0 h-full w-full object-cover"
-                    style={{ objectPosition: `center ${imagePosition}%` }}
-                  />
+                  {selectedImage && (
+                    <img 
+                      src={selectedImage}
+                      alt="Selected preview"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      style={{ objectPosition: `center ${imagePosition}%` }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
           )}
-
           {/* Image Generation Section */}
           <div className="space-y-1">
             <ImageGenerationSection
@@ -207,7 +180,6 @@ const DayEditDialog: React.FC<DayEditDialogProps> = ({
             />
           </div>
         </div>
-
         <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
           <Button
             type="button"

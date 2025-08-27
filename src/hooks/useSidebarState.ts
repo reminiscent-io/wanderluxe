@@ -8,6 +8,7 @@ import { Currency } from '@/utils/currencyConstants';
 import { ActivityFormData } from '@/types/trip';
 import { generateDatesArray } from '@/services/accommodation/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
+import { setDayActivityTravelers } from '@/services/travelers';
 
 export interface SidebarState {
   isOpen: boolean;
@@ -323,6 +324,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       end_time: activity.end_time || '',
       cost: activity.cost ? String(activity.cost) : '',
       currency: (activity.currency as Currency) || 'USD',
+      travelers: [], // Initialize empty travelers array - will be loaded by useEffect in ActivityForm
     });
   };
   const handleActivityDelete = async (id: string) => {
@@ -370,8 +372,14 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         currency: activity.currency || 'USD',
         order_index: 0,
       };
-      const { error } = await supabase.from('day_activities').insert(newActivityEntry);
+      const { data, error } = await supabase.from('day_activities').insert(newActivityEntry).select().single();
       if (error) throw error;
+      
+      // Save traveler tags if we have travelers selected
+      if (activity.travelers && activity.travelers.length > 0 && data?.id) {
+        await setDayActivityTravelers(tripId, data.id, activity.travelers);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setActivityOpen(false);
@@ -408,6 +416,12 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       };
       const { error } = await supabase.from('day_activities').update(updates).eq('id', id);
       if (error) throw error;
+      
+      // Save traveler tags if we have travelers selected
+      if (updatedActivity.travelers) {
+        await setDayActivityTravelers(tripId, id, updatedActivity.travelers);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       setSelectedActivity(null);

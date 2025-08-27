@@ -150,7 +150,7 @@ export async function setAccommodationTravelers(tripId: string, stayId: string, 
 export async function getTransportationTravelerIds(tripId: string, transportationId: string) {
   try {
     const { data, error } = await supabase
-      .from('transportation_travelers' as any)
+      .from('transportation_travelers')
       .select('traveler_id')
       .match({ trip_id: tripId, transportation_id: transportationId });
     if (error) return { data: [], error };
@@ -163,10 +163,10 @@ export async function getTransportationTravelerIds(tripId: string, transportatio
 
 export async function setTransportationTravelers(tripId: string, transportationId: string, travelerIds: string[]) {
   try {
-    await supabase.from('transportation_travelers' as any).delete().match({ trip_id: tripId, transportation_id: transportationId });
+    await supabase.from('transportation_travelers').delete().match({ trip_id: tripId, transportation_id: transportationId });
     if (travelerIds.length === 0) return { data: [], error: null };
-    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, transportation_id, traveler_id }));
-    const { data, error } = await supabase.from('transportation_travelers' as any).insert(rows).select();
+    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, transportation_id: transportationId, traveler_id }));
+    const { data, error } = await supabase.from('transportation_travelers').insert(rows).select();
     return { data: data || [], error };
   } catch (error) {
     console.error("Error saving transportation travelers:", error);

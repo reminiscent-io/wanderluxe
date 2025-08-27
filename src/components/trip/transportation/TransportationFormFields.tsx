@@ -207,7 +207,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         name="travelers"
         render={({ field }) => (
           <div className="space-y-2">
-            <Label>Tag Travelers</Label>
+            <Label>Travelers</Label>
             <TravelersTagMultiSelect
               tripId={tripId}
               value={field.value || []}

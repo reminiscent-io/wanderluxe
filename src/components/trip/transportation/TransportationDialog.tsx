@@ -1,4 +1,3 @@
-// src/components/trip/transportation/TransportationDialog.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -71,6 +70,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         currency: data.currency,
       };
 
+      let savedRecord: TransportationType;
+
       if (initialData?.id) {
         // Update existing
         const { data: updatedRecord, error } = await supabase
@@ -80,8 +81,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           .select('*')
           .single();
         if (error || !updatedRecord) throw error;
+        savedRecord = updatedRecord;
         toast.success('Transportation updated successfully');
-        onSuccess(updatedRecord);
       } else {
         // Insert new
         const { data: inserted, error } = await supabase
@@ -90,14 +91,17 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           .select('*')
           .single();
         if (error || !inserted) throw error;
+        savedRecord = inserted;
         toast.success('Transportation added successfully');
-        onSuccess(inserted);
       }
 
+      onSuccess(savedRecord);
       onOpenChange(false);
+      return savedRecord; // Return the saved record so TransportationForm can use the ID for traveler saving
     } catch (err) {
       console.error('Error saving transportation:', err);
       toast.error('Failed to save transportation');
+      throw err; // Re-throw so TransportationForm can handle the error
     }
   };
 
@@ -114,7 +118,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         .eq('id', initialData.id);
       if (error) throw error;
       toast.success('Transportation deleted successfully');
-      // return empty record? you could call onSuccess with a flag or refetch
+      // Close dialog after deletion
       onOpenChange(false);
     } catch (err) {
       console.error('Error deleting transportation:', err);
@@ -124,30 +128,28 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        onPointerDownOutside={(e) => e.preventDefault()}
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] mx-auto p-4 sm:p-6"
-      >
-        <div className="flex flex-col max-h-[90vh] w-full">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>
-              {initialData ? 'Edit Transportation' : 'Add Transportation'}
-            </DialogTitle>
-            <DialogDescription>
-              {initialData ? 'Update your transportation details.' : 'Enter the details for your transportation.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto scrollbar-none px-1">
-            <TransportationForm
-              initialData={initialData || undefined}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              onDelete={initialData ? handleDelete : undefined}
-              tripArrivalDate={tripDates.arrival_date}
-              tripDepartureDate={tripDates.departure_date}
-              buttonClassName={buttonClassName}
-            />
-          </div>
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>
+            {initialData ? 'Edit Transportation' : 'Add Transportation'}
+          </DialogTitle>
+          <DialogDescription>
+            {initialData
+              ? 'Update your transportation details.'
+              : 'Enter the details for your transportation.'}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
+          <TransportationForm
+            initialData={initialData || undefined}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            onDelete={initialData ? handleDelete : undefined}
+            tripArrivalDate={tripDates.arrival_date}
+            tripDepartureDate={tripDates.departure_date}
+            buttonClassName={buttonClassName}
+            tripId={tripId}
+          />
         </div>
       </DialogContent>
     </Dialog>

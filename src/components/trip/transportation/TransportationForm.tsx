@@ -19,7 +19,7 @@ type Transportation = Tables<"transportation">;
 
 interface Props {
   initialData?: Partial<Transportation>;
-  onSubmit: (data: Partial<Transportation>) => Promise<void> | void;
+  onSubmit: (data: Partial<Transportation>) => Promise<any> | any;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
   tripArrivalDate?: string | null;
@@ -179,10 +179,9 @@ export default function TransportationForm({
               variant="ghost"
               onClick={onDelete}
               disabled={saving}
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="text-red-600 hover:bg-red-50 hover:text-red-700 w-8 h-8 p-0"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              <Trash2 className="h-4 w-4" />
             </Button>
           )}
 
@@ -208,9 +207,9 @@ export default function TransportationForm({
                   Saving…
                 </>
               ) : initialData ? (
-                "Update Transportation"
+                "Save"
               ) : (
-                "Add Transportation"
+                "Save"
               )}
             </Button>
           </div>

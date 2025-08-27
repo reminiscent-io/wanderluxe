@@ -4,12 +4,12 @@ import { TripDay, HotelStay, ActivityFormData, DayActivity, Transportation, Rest
 import CompactDayCard from '../day/CompactDayCard';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
-import AddActivityDialog from '@/components/trip/day/activities/AddActivityDialog';
-import EditActivityDialog from '@/components/trip/day/activities/EditActivityDialog';
+import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
 import RestaurantReservationDialog from '@/components/trip/dining/RestaurantReservationDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { setDayActivityTravelers } from '@/services/travelers';
 
 interface TimelineContentProps {
   days?: TripDay[];
@@ -193,17 +193,69 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             onSuccess={handleTransportationSuccess}
           />
           
-          {/* Add Activity Dialog - only show when adding new activity */}
-          {selectedDayId && (
-            <AddActivityDialog
-              isOpen={activityOpen}
-              onOpenChange={setActivityOpen}
-              activity={newActivity}
-              onActivityChange={setNewActivity}
-              onSubmit={async () => {
-                // Add the activity to the database
+          {/* Consolidated Activity Dialog - handles both add and edit */}
+          <ActivityDialog
+            isOpen={activityOpen || !!editingActivity}
+            onOpenChange={(open) => {
+              if (!open) {
+                setActivityOpen(false);
+                setEditingActivity(null);
+                setActivityEdit({
+                  title: '',
+                  description: '',
+                  start_time: '',
+                  end_time: '',
+                  cost: '',
+                  currency: 'USD',
+                });
+                setSelectedDayId(null);
+              }
+            }}
+            activity={editingActivity ? activityEdit : newActivity}
+            onActivityChange={editingActivity ? setActivityEdit : setNewActivity}
+            onSubmit={async (activity) => {
+              if (editingActivity?.id) {
+                // Edit mode
                 try {
                   const { error } = await supabase
+                    .from('day_activities')
+                    .update({
+                      title: activityEdit.title,
+                      description: activityEdit.description || null,
+                      start_time: activityEdit.start_time || null,
+                      end_time: activityEdit.end_time || null,
+                      cost: activityEdit.cost ? parseFloat(activityEdit.cost) : null,
+                      currency: activityEdit.currency || null,
+                    })
+                    .eq('id', editingActivity.id);
+                  
+                  if (error) throw error;
+                  
+                  // Save traveler tags if we have travelers selected
+                  if (activityEdit.travelers && editingActivity?.id) {
+                    await setDayActivityTravelers(sortedDays[0].trip_id, editingActivity.id, activityEdit.travelers);
+                  }
+                  
+                  toast.success('Activity updated successfully');
+                  
+                  // Invalidate queries
+                  if (sortedDays.length > 0) {
+                    queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
+                    queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
+                  }
+                  if (editingActivity?.day_id) {
+                    queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
+                  }
+                  
+                  setEditingActivity(null);
+                } catch (error) {
+                  console.error('Error updating activity:', error);
+                  toast.error('Failed to update activity');
+                }
+              } else {
+                // Add mode
+                try {
+                  const { data, error } = await supabase
                     .from('day_activities')
                     .insert({
                       day_id: selectedDayId,
@@ -216,9 +268,16 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                       currency: newActivity.currency || null,
                       order_index: 0,
                       is_paid: false
-                    });
+                    })
+                    .select()
+                    .single();
                     
                   if (error) throw error;
+                  
+                  // Save traveler tags if we have travelers selected
+                  if (newActivity.travelers && newActivity.travelers.length > 0 && data?.id) {
+                    await setDayActivityTravelers(sortedDays[0].trip_id, data.id, newActivity.travelers);
+                  }
                   
                   toast.success('Activity added successfully');
                   setActivityOpen(false);
@@ -231,7 +290,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     currency: 'USD',
                   });
                   
-                  // Invalidate all related queries for immediate timeline updates
+                  // Invalidate queries
                   if (sortedDays.length > 0) {
                     queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
                     queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
@@ -239,72 +298,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   if (selectedDayId) {
                     queryClient.invalidateQueries({ queryKey: ['activities', selectedDayId] });
                   }
-                  
-                  setSelectedDayId(null);
                 } catch (error) {
                   console.error('Error adding activity:', error);
                   toast.error('Failed to add activity');
                 }
-              }}
-              eventId={selectedDayId}
-              tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
-              tripId={sortedDays[0].trip_id}
-            />
-          )}
-          
-          {/* Edit Activity Dialog - always available when editing */}
-          <EditActivityDialog
-            activityId={editingActivity?.id || null}
-            onOpenChange={(open) => {
-              if (!open) {
-                setEditingActivity(null);
-                setActivityEdit({
-                  title: '',
-                  description: '',
-                  start_time: '',
-                  end_time: '',
-                  cost: '',
-                  currency: 'USD',
-                });
               }
-            }}
-            activity={activityEdit}
-            onActivityChange={setActivityEdit}
-            onSubmit={async (updatedActivity) => {
-              if (editingActivity?.id) {
-                try {
-                  const { error } = await supabase
-                    .from('day_activities')
-                    .update({
-                      title: updatedActivity.title,
-                      description: updatedActivity.description || null,
-                      start_time: updatedActivity.start_time || null,
-                      end_time: updatedActivity.end_time || null,
-                      cost: updatedActivity.cost ? parseFloat(updatedActivity.cost) : null,
-                      currency: updatedActivity.currency || null,
-                    })
-                    .eq('id', editingActivity.id);
-                  
-                  if (error) throw error;
-                  
-                  toast.success('Activity updated successfully');
-                  
-                  // Invalidate all related queries for immediate timeline updates
-                  if (sortedDays.length > 0) {
-                    queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-                    queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
-                  }
-                  if (editingActivity?.day_id) {
-                    queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
-                  }
-                  
-                  setEditingActivity(null);
-                  setSelectedDayId(null);
-                } catch (error) {
-                  console.error('Error updating activity:', error);
-                  toast.error('Failed to update activity');
-                }
-              }
+              setSelectedDayId(null);
             }}
             onDelete={async (id) => {
               try {
@@ -314,11 +313,10 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   .eq('id', id);
                 
                 if (error) throw error;
-                
                 toast.success('Activity deleted successfully');
                 setEditingActivity(null);
                 
-                // Invalidate all related queries for immediate timeline updates
+                // Invalidate queries
                 if (sortedDays.length > 0) {
                   queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
                   queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
@@ -326,16 +324,15 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 if (editingActivity?.day_id) {
                   queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
                 }
-                
-                setSelectedDayId(null);
               } catch (error) {
                 console.error('Error deleting activity:', error);
                 toast.error('Failed to delete activity');
               }
             }}
-            eventId={editingActivity?.day_id || ''}
+            eventId={editingActivity?.day_id || selectedDayId || ''}
             tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
             tripId={sortedDays[0].trip_id}
+            activityId={editingActivity?.id || null}
           />
           
           {/* Restaurant Reservation Dialog - always available */}

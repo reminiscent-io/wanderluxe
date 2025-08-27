@@ -59,6 +59,7 @@ interface RestaurantReservationFormProps {
   defaultValues?: Partial<FormValues> & { id?: string; trip_id?: string; day_id?: string; order_index?: number };
   isSubmitting?: boolean;
   onDelete?: () => Promise<void>;
+  onCancel?: () => void;
   tripId: string;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
@@ -69,6 +70,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   defaultValues,
   isSubmitting = false,
   onDelete,
+  onCancel,
   tripId,
   tripArrivalDate,
   tripDepartureDate,
@@ -367,13 +369,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         </div>
 
         {/* Number of People, Cost & Currency */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_1.5fr] gap-3">
           <FormField
             control={form.control}
             name="number_of_people"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Number of People</FormLabel>
+                <FormLabel># of People</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -457,7 +459,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           name="travelers"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tag Travelers</FormLabel>
+              <FormLabel>Travelers</FormLabel>
               <FormControl>
                 <TravelersTagMultiSelect
                   tripId={tripId}
@@ -479,14 +481,22 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 variant="ghost"
                 onClick={onDelete}
                 disabled={isSubmitting}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 w-8 h-8 p-0"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                <Trash2 className="w-4 h-4" />
               </Button>
             )}
           </div>
-          <div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="text-gray-600 hover:text-gray-700"
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -501,7 +511,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   Saving...
                 </>
               ) : (
-                'Save Reservation'
+                'Save'
               )}
             </Button>
           </div>
