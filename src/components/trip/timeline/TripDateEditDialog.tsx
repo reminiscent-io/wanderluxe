@@ -57,15 +57,15 @@ export default function TripDateEditDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] z-[300]">
-        <DialogHeader>
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[450px] max-h-[90vh] z-[300] p-4 sm:p-6">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Trip Dates</DialogTitle>
           <DialogDescription>
             Select your trip's arrival and departure dates.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4 overflow-y-auto flex-1">
           <Calendar
             mode="range"
             selected={range}
@@ -75,7 +75,7 @@ export default function TripDateEditDialog({
             className="rounded-md border shadow mx-auto"
           />
           
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-2 pt-4 flex-shrink-0">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               Cancel
             </Button>
