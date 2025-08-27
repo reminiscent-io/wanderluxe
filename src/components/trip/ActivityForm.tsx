@@ -318,7 +318,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       {/* Travelers */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
-          Tag Travelers
+          Travelers
         </label>
         <div className="mt-1">
           <TravelersTagMultiSelect

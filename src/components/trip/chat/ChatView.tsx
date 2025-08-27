@@ -285,7 +285,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <header className="mb-4">
-        <h3 className="text-lg font-semibold text-earth-800">Trip Assistant</h3>
+        <h2 className="text-2xl font-bold text-earth-500">Trip Assistant</h2>
         <p className="text-sm text-earth-600">
           Ask anything about your trip or drop travel documents to analyze.
         </p>
