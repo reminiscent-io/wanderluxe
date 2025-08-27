@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import LuxuryDateTimeRangePicker from '@/components/ui/LuxuryDateTimeRangePicker';
+import { Calendar } from "@/components/ui/calendar";
+import type { DateRange } from "react-day-picker";
 
 interface TripDateEditDialogProps {
   isOpen: boolean;
@@ -29,43 +30,23 @@ export default function TripDateEditDialog({
   onDepartureChange,
   onSave,
 }: TripDateEditDialogProps) {
-  const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-    startTime: string;
-    endTime: string;
-  }>({
-    startDate: null,
-    endDate: null,
-    startTime: '09:00',
-    endTime: '17:00',
-  });
+  const [range, setRange] = useState<DateRange | undefined>();
 
-  // Initialize date range when dialog opens
+  // Initialize when opening
   useEffect(() => {
     if (isOpen && arrivalDate && departureDate) {
-      setDateRange({
-        startDate: parseLocalDate(arrivalDate),
-        endDate: parseLocalDate(departureDate),
-        startTime: '09:00',
-        endTime: '17:00',
-      });
+      const newRange = {
+        from: parseLocalDate(arrivalDate),
+        to: parseLocalDate(departureDate),
+      };
+      setRange(newRange);
     }
   }, [isOpen, arrivalDate, departureDate]);
 
-  const handleDateRangeChange = (newDateRange: {
-    startDate: Date | null;
-    endDate: Date | null;
-    startTime: string;
-    endTime: string;
-  }) => {
-    setDateRange(newDateRange);
-  };
-
   const handleSave = () => {
-    if (dateRange.startDate && dateRange.endDate) {
-      const newArrival = format(dateRange.startDate, 'yyyy-MM-dd');
-      const newDeparture = format(dateRange.endDate, 'yyyy-MM-dd');
+    if (range?.from && range?.to) {
+      const newArrival = format(range.from, 'yyyy-MM-dd');
+      const newDeparture = format(range.to, 'yyyy-MM-dd');
       console.log('TripDateEditDialog saving dates:', { newArrival, newDeparture });
       onArrivalChange(newArrival);
       onDepartureChange(newDeparture);
@@ -79,21 +60,26 @@ export default function TripDateEditDialog({
       <DialogContent className="sm:max-w-[500px] z-[300]">
         <DialogHeader>
           <DialogTitle>Edit Trip Dates</DialogTitle>
+          <DialogDescription>
+            Select your trip's arrival and departure dates.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <LuxuryDateTimeRangePicker
-            value={dateRange}
-            onChange={handleDateRangeChange}
-            placeholder="Select trip dates..."
-            showTime={false}
+          <Calendar
+            mode="range"
+            selected={range}
+            onSelect={setRange}
+            defaultMonth={range?.from}
+            numberOfMonths={1}
+            className="rounded-md border shadow mx-auto"
           />
           
           <div className="flex gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleSave} className="flex-1">
+            <Button onClick={handleSave} className="flex-1" disabled={!range?.from || !range?.to}>
               Save Changes
             </Button>
           </div>
