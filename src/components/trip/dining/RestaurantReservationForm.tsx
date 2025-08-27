@@ -351,7 +351,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             name="reservation_time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
+                <FormLabel className="text-sm font-medium text-sand-700">
                   Reservation Time <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
@@ -360,9 +360,10 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     value={field.value || ''}
                     onChange={field.onChange}
                     step="300" // 5-minute increments
-                    className="bg-white"
+                    className="w-full bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
