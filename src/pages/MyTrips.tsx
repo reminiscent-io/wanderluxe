@@ -263,10 +263,10 @@ const MyTrips = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
                   >
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-2">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-2 text-earth-800">
                       My Travel Journey
                     </h1>
-                    <p className="text-white/80 text-lg md:text-xl mb-6">
+                    <p className="text-earth-700 text-lg md:text-xl mb-6">
                       {totalCurrentTrips > 0 ? `Currently exploring ${totalCurrentTrips} destination${totalCurrentTrips > 1 ? 's' : ''}` :
                        totalUpcomingTrips > 0 ? `${totalUpcomingTrips} adventure${totalUpcomingTrips > 1 ? 's' : ''} awaiting` :
                        'Ready to plan your next adventure'}
