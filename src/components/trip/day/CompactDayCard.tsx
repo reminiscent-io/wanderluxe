@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
   Hotel, 
@@ -11,7 +13,8 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  Calendar
+  Calendar,
+  DollarSign
 } from 'lucide-react';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
@@ -307,63 +310,111 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   
   const hasContent = sortedTimelineItems.length > 0 || allDayHotels.length > 0;
   
+  // Determine day status badges
+  const isCheckInDay = filteredHotelStays.some(stay => stay.hotel_checkin_date === normalizedDay);
+  const isCheckOutDay = filteredHotelStays.some(stay => stay.hotel_checkout_date === normalizedDay);
+  const isTravelDay = filteredTransportations.length > 0;
+  const totalEvents = sortedTimelineItems.length;
+  
   return (
-    <Card 
-      id={`day-${index}`}
-      className={cn(
-        "relative overflow-hidden transition-all duration-200 bg-gray-50",
-        isTodayFlag && "ring-2 ring-blue-500 ring-offset-2"
-      )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
     >
-      {/* Day Header */}
-      <div 
-        className="p-3 md:p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+      <Card 
+        id={`day-${index}`}
+        className={cn(
+          "relative overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md border border-sand-200 rounded-xl",
+          isTodayFlag && "border-l-4 border-l-earth-600 shadow-lg"
+        )}
+      >
+      {/* Enhanced Day Header */}
+      <motion.div 
+        className="p-4 md:p-6 cursor-pointer hover:bg-sand-25 transition-colors duration-200"
         onClick={() => setIsExpanded(!isExpanded)}
+        whileHover={{ backgroundColor: "rgba(250, 245, 235, 0.5)" }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-lg md:text-xl font-bold text-gray-900">
-                Day {index}
-              </span>
-              {isTodayFlag && (
-                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                  Today
+          <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col">
+                <span className="text-xl md:text-2xl font-bold text-earth-800">
+                  Day {index}
                 </span>
-              )}
-            </div>
-            <div className="text-sm md:text-base text-gray-600">
-              {dayTitle} • {formattedDate}
+                <div className="text-sm md:text-base text-earth-600 font-medium">
+                  {dayTitle} • {formattedDate}
+                </div>
+              </div>
+              
+              {/* Status Badges */}
+              <div className="flex flex-wrap gap-2">
+                {isTodayFlag && (
+                  <Badge className="bg-emerald-500 text-white text-xs px-2 py-1">
+                    Today
+                  </Badge>
+                )}
+                {isTravelDay && (
+                  <Badge className="bg-sky-500 text-white text-xs px-2 py-1">
+                    Travel Day
+                  </Badge>
+                )}
+                {isCheckInDay && (
+                  <Badge className="bg-amber-500 text-white text-xs px-2 py-1">
+                    Check-in
+                  </Badge>
+                )}
+                {isCheckOutDay && (
+                  <Badge className="bg-amber-600 text-white text-xs px-2 py-1">
+                    Check-out
+                  </Badge>
+                )}
+                {totalEvents > 0 && (
+                  <Badge className="bg-earth-200 text-earth-800 text-xs px-2 py-1">
+                    {totalEvents} event{totalEvents > 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
+          
           <div className="flex items-center gap-3">
-            <span className="text-xs md:text-sm text-gray-500 hidden sm:inline">
+            <span className="text-sm text-earth-500 hidden lg:inline font-medium">
               {summary}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-10 w-10 p-0 hover:bg-earth-100 transition-colors"
             >
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
+              <motion.div
+                animate={{ rotate: isExpanded ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronDown className="h-5 w-5 text-earth-600" />
+              </motion.div>
             </Button>
           </div>
         </div>
         
         {/* Mobile summary */}
-        <div className="text-xs text-gray-500 mt-1 sm:hidden">
+        <div className="text-sm text-earth-500 mt-2 lg:hidden">
           {summary}
         </div>
-      </div>
+      </motion.div>
       
-      {/* Expanded Content */}
-      {isExpanded && (
-        <div className="border-t">
-          <div className="p-3 md:p-4">
+      {/* Enhanced Expanded Content with Animation */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="border-t border-sand-200 overflow-hidden"
+          >
+            <div className="p-4 md:p-6">
             {hasContent ? (
               <div className="space-y-3">
                 {/* All Day Hotels Section */}
@@ -403,7 +454,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                   </div>
                 )}
                 
-                {/* Timeline */}
+                {/* Enhanced Timeline with Colored Rail */}
                 <div className="relative">
                   {sortedTimelineItems.map((item, idx) => {
                     const handleItemClick = () => {
@@ -418,44 +469,85 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       }
                     };
                     
+                    // Get color scheme by event type
+                    const getEventColors = (type: string) => {
+                      switch (type) {
+                        case 'hotel':
+                          return { node: 'bg-amber-500', line: 'bg-amber-200', icon: 'text-amber-600' };
+                        case 'transportation':
+                          return { node: 'bg-sky-500', line: 'bg-sky-200', icon: 'text-sky-600' };
+                        case 'activity':
+                          return { node: 'bg-emerald-500', line: 'bg-emerald-200', icon: 'text-emerald-600' };
+                        case 'dining':
+                          return { node: 'bg-rose-500', line: 'bg-rose-200', icon: 'text-rose-600' };
+                        default:
+                          return { node: 'bg-earth-400', line: 'bg-earth-200', icon: 'text-earth-600' };
+                      }
+                    };
+                    
+                    const colors = getEventColors(item.type);
+                    
                     return (
-                      <div key={item.id} className="flex gap-3 pb-3 last:pb-0">
+                      <motion.div 
+                        key={item.id} 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1, duration: 0.3 }}
+                        className="flex gap-4 pb-4 last:pb-0"
+                      >
                         {/* Time column */}
-                        <div className="w-16 md:w-20 flex-shrink-0 text-right">
-                          <span className="text-xs md:text-sm font-medium text-gray-600">
+                        <div className="w-20 md:w-24 flex-shrink-0 text-right">
+                          <span className="text-sm font-semibold text-earth-700">
                             {item.time ? formatTime12(item.time) : '—'}
                           </span>
                         </div>
                         
-                        {/* Timeline line and dot */}
+                        {/* Enhanced Timeline line and colored node */}
                         <div className="relative flex flex-col items-center">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0 mt-1" />
+                          <div className={cn(
+                            "w-3 h-3 rounded-full flex-shrink-0 mt-0.5 border-2 border-white shadow-sm",
+                            colors.node
+                          )} />
                           {idx < sortedTimelineItems.length - 1 && (
-                            <div className="absolute top-3 w-px bg-gray-200 h-full" />
+                            <div className={cn(
+                              "absolute top-4 w-0.5 h-full rounded-full",
+                              colors.line
+                            )} />
                           )}
                         </div>
                         
-                        {/* Content - Now clickable */}
-                        <div 
-                          className="flex-1 min-w-0 cursor-pointer hover:bg-gray-50 rounded-md p-1 -m-1 transition-colors"
+                        {/* Enhanced Content Card */}
+                        <motion.div 
+                          className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-3 -m-1 transition-all duration-200 hover:shadow-sm"
                           onClick={handleItemClick}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-500 mt-0.5 flex-shrink-0">
+                          <div className="flex items-start gap-3">
+                            <span className={cn("mt-0.5 flex-shrink-0", colors.icon)}>
                               {item.icon}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                              <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors">
                                 {item.title}
                               </div>
                               {item.endTime && (
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-earth-500 mt-1">
                                   until {formatTime12(item.endTime)}
                                 </div>
                               )}
                               {item.description && (
-                                <div className="text-xs text-gray-600 mt-0.5">
+                                <div className="text-xs text-earth-600 mt-1">
                                   {item.description}
+                                </div>
+                              )}
+                              {/* Cost Badge */}
+                              {item.data?.cost && (
+                                <div className="flex items-center gap-1 mt-2">
+                                  <DollarSign className="h-3 w-3 text-earth-500" />
+                                  <span className="text-xs text-earth-600 font-medium">
+                                    {item.data.currency || 'USD'} {item.data.cost}
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -469,100 +561,110 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                               />
                             </div>
                           </div>
-                        </div>
-                      </div>
+                        </motion.div>
+                      </motion.div>
                     );
                   })}
                 </div>
                 
-                {/* Quick Add Buttons */}
-                <div className="flex gap-1 pt-2 border-t">
+                {/* Enhanced Quick Add Buttons */}
+                <div className="flex gap-2 pt-4 border-t border-sand-200">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onActivityAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
+                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
                   >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Activity</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onHotelAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
+                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
                   >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Hotel</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onTransportationAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
+                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
                   >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Travel</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onReservationAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
+                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
                   >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Dining</span>
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-6">
-                <Calendar className="h-8 w-8 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 mb-3">No plans for this day yet</p>
-                <div className="flex gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onActivityAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
-                  >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
-                    <span className="truncate">Activity</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onHotelAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
-                  >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
-                    <span className="truncate">Hotel</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onTransportationAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
-                  >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
-                    <span className="truncate">Travel</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onReservationAdd}
-                    className="text-xs px-1.5 py-1 h-6 flex-1 min-w-0"
-                  >
-                    <Plus className="h-2.5 w-2.5 mr-0.5" />
-                    <span className="truncate">Dining</span>
-                  </Button>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-center py-8"
+              >
+                <div className="bg-sand-50 rounded-xl p-6 border-2 border-dashed border-sand-200">
+                  <Calendar className="h-10 w-10 text-earth-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-earth-800 mb-2">No plans yet</h3>
+                  <p className="text-sm text-earth-600 mb-6">Start planning your day by adding activities, hotels, or transportation</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onActivityAdd}
+                      className="text-sm px-4 py-3 h-auto bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      <span>Add Activity</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onHotelAdd}
+                      className="text-sm px-4 py-3 h-auto bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      <span>Add Hotel</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onTransportationAdd}
+                      className="text-sm px-4 py-3 h-auto bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      <span>Add Travel</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onReservationAdd}
+                      className="text-sm px-4 py-3 h-auto bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      <span>Add Dining</span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             )}
-          </div>
-        </div>
-      )}
-    </Card>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </Card>
+    </motion.div>
   );
 };
 

@@ -20,6 +20,7 @@ import Budget from "./pages/Budget";
 import Timeline from "./pages/Timeline";
 import PackingList from "./pages/PackingList";
 import Settings from "./pages/Settings";
+import LLMTraining from "./pages/LLMTraining";
 
 // Move queryClient inside the component to ensure proper React context
 const App = () => {
@@ -45,6 +46,7 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/llm-training" element={<LLMTraining />} />
                 <Route
                   path="/create-trip"
                   element={
