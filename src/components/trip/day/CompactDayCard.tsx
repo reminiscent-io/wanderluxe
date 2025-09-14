@@ -431,7 +431,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     {allDayHotels.map(stay => (
                       <div 
                         key={`allday-${stay.stay_id}`}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded p-2 -m-1 transition-colors"
+                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded p-2 m-0 sm:-m-1 transition-colors"
                         onClick={() => onHotelClick && onHotelClick(stay)}
                       >
                         <Hotel className="h-3 w-3 text-gray-500" />
