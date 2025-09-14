@@ -223,10 +223,11 @@ const MyTrips = () => {
 
   const daysUntilNextTrip = useMemo(() => {
     if (!nextTrip || !nextTrip.arrival_date) return null;
+    // Use UTC dates to be timezone agnostic
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tripDate = new Date(nextTrip.arrival_date);
-    return differenceInDays(tripDate, today);
+    const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    const tripDateUTC = new Date(nextTrip.arrival_date + 'T00:00:00.000Z');
+    return differenceInDays(tripDateUTC, todayUTC);
   }, [nextTrip]);
 
   // Calculate total trips stats
@@ -279,9 +280,10 @@ const MyTrips = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4, duration: 0.5 }}
-                      className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm"
+                      className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm cursor-pointer hover:bg-white/80 transition-colors"
+                      onClick={() => navigate(`/trip/${nextTrip.trip_id}`)}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4">
                         <div className="bg-earth-600 rounded-full p-3">
                           {daysUntilNextTrip === 0 ? <Plane className="h-6 w-6 text-white" /> : <Clock className="h-6 w-6 text-white" />}
                         </div>
