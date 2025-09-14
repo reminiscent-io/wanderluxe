@@ -263,7 +263,7 @@ const MyTrips = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
                   >
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight mb-2">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-2">
                       My Travel Journey
                     </h1>
                     <p className="text-white/80 text-lg md:text-xl mb-6">
