@@ -316,17 +316,22 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   const isTravelDay = filteredTransportations.length > 0;
   const totalEvents = sortedTimelineItems.length;
   
+  // Detect if device supports hover (desktop) vs touch (mobile)
+  const isHoverable = typeof window !== 'undefined' && 
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+      whileHover={isHoverable ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
+      className="w-full max-w-full overflow-hidden"
     >
       <Card 
         id={`day-${index}`}
         className={cn(
-          "relative overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md border border-sand-200 rounded-xl",
+          "relative overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md border border-sand-200 rounded-xl w-full",
           isTodayFlag && "border-l-4 border-l-earth-600 shadow-lg"
         )}
       >
@@ -518,9 +523,9 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                         
                         {/* Enhanced Content Card */}
                         <motion.div 
-                          className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-3 -m-1 transition-all duration-200 hover:shadow-sm"
+                          className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-3 m-0 sm:-m-1 transition-all duration-200 hover:shadow-sm"
                           onClick={handleItemClick}
-                          whileHover={{ scale: 1.02 }}
+                          whileHover={isHoverable ? { scale: 1.02 } : undefined}
                           whileTap={{ scale: 0.98 }}
                         >
                           <div className="flex items-start gap-3">
@@ -528,7 +533,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                               {item.icon}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors">
+                              <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors break-words">
                                 {item.title}
                               </div>
                               {item.endTime && (
@@ -537,7 +542,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                 </div>
                               )}
                               {item.description && (
-                                <div className="text-xs text-earth-600 mt-1">
+                                <div className="text-xs text-earth-600 mt-1 break-words">
                                   {item.description}
                                 </div>
                               )}

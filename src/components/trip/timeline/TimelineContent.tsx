@@ -99,7 +99,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   return (
     <>
       {/* Day Cards */}
-      <div className="space-y-3 md:space-y-4">
+      <div className="space-y-3 md:space-y-4 w-full max-w-full overflow-x-hidden">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
           
