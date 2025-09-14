@@ -67,7 +67,7 @@ const TripDetails = () => {
           </div>
 
           <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
-            <div className="max-w-full mx-auto px-4 py-8">
+            <div className="max-w-none mx-auto px-4 py-8">
               {/* Render content based on active tab */}
               {activeTab === 'timeline' && (
                 <ErrorBoundary>
