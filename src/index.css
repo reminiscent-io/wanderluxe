@@ -63,13 +63,11 @@
   html {
     height: 100vh;
     height: -webkit-fill-available;
-    overflow-x: hidden;
   }
   
   body {
     height: 100vh;
     height: -webkit-fill-available;
-    overflow-x: hidden;
   }
   
   :root {

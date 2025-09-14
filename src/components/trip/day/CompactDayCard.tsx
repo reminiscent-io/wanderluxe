@@ -316,22 +316,17 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   const isTravelDay = filteredTransportations.length > 0;
   const totalEvents = sortedTimelineItems.length;
   
-  // Detect if device supports hover (desktop) vs touch (mobile)
-  const isHoverable = typeof window !== 'undefined' && 
-    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      whileHover={isHoverable ? { scale: 1.02, transition: { duration: 0.2 } } : undefined}
-      className="w-full max-w-full overflow-hidden"
+      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
     >
       <Card 
         id={`day-${index}`}
         className={cn(
-          "relative overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md border border-sand-200 rounded-xl w-full",
+          "relative overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md border border-sand-200 rounded-xl",
           isTodayFlag && "border-l-4 border-l-earth-600 shadow-lg"
         )}
       >
@@ -431,7 +426,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     {allDayHotels.map(stay => (
                       <div 
                         key={`allday-${stay.stay_id}`}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded p-2 m-0 sm:-m-1 transition-colors"
+                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 rounded p-2 -m-1 transition-colors"
                         onClick={() => onHotelClick && onHotelClick(stay)}
                       >
                         <Hotel className="h-3 w-3 text-gray-500" />
@@ -523,9 +518,9 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                         
                         {/* Enhanced Content Card */}
                         <motion.div 
-                          className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-3 m-0 sm:-m-1 transition-all duration-200 hover:shadow-sm"
+                          className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-3 -m-1 transition-all duration-200 hover:shadow-sm"
                           onClick={handleItemClick}
-                          whileHover={isHoverable ? { scale: 1.02 } : undefined}
+                          whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
                           <div className="flex items-start gap-3">
@@ -533,7 +528,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                               {item.icon}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors break-words">
+                              <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors">
                                 {item.title}
                               </div>
                               {item.endTime && (
@@ -542,7 +537,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                 </div>
                               )}
                               {item.description && (
-                                <div className="text-xs text-earth-600 mt-1 break-words">
+                                <div className="text-xs text-earth-600 mt-1">
                                   {item.description}
                                 </div>
                               )}
