@@ -32,6 +32,7 @@ const Hero = () => {
           className="w-full h-full object-cover min-h-[100vh]"
           objectPosition="center center"
           alt="Travel background"
+          showAttribution={false}
         />
         <div className="absolute inset-0 bg-black/30" />
       </div>
