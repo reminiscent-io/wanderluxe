@@ -246,12 +246,12 @@ const MyTrips = () => {
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
-          {/* Hero Section */}
-          <div className="relative bg-gradient-to-r from-earth-800 via-earth-700 to-earth-600 rounded-2xl p-8 md:p-12 text-white shadow-xl overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
+          {/* Enhanced Hero Section */}
+          <div className="relative bg-gradient-to-br from-sand-100 via-sand-50 to-earth-100 rounded-2xl p-8 md:p-12 shadow-xl overflow-hidden border border-sand-200">
+            {/* Subtle Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
               <div className="absolute inset-0" style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
               }} />
             </div>
             
@@ -263,10 +263,10 @@ const MyTrips = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
                   >
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-2 text-black">
+                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-4 text-earth-900">
                       My Travel Journey
                     </h1>
-                    <p className="text-black text-lg md:text-xl mb-6">
+                    <p className="text-earth-700 text-xl md:text-2xl font-medium mb-8 leading-relaxed">
                       {totalCurrentTrips > 0 ? `Currently exploring ${totalCurrentTrips} destination${totalCurrentTrips > 1 ? 's' : ''}` :
                        totalUpcomingTrips > 0 ? `${totalUpcomingTrips} adventure${totalUpcomingTrips > 1 ? 's' : ''} awaiting` :
                        'Ready to plan your next adventure'}
@@ -279,19 +279,19 @@ const MyTrips = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4, duration: 0.5 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                      className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="bg-white/20 rounded-full p-2">
-                          {daysUntilNextTrip === 0 ? <Plane className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+                        <div className="bg-earth-600 rounded-full p-3">
+                          {daysUntilNextTrip === 0 ? <Plane className="h-6 w-6 text-white" /> : <Clock className="h-6 w-6 text-white" />}
                         </div>
                         <div>
-                          <p className="text-sm text-white/70 font-medium">
+                          <p className="text-sm text-earth-600 font-semibold">
                             {daysUntilNextTrip === 0 ? 'Departure Today!' :
                              daysUntilNextTrip === 1 ? 'Departure Tomorrow!' :
                              `Next Trip in ${daysUntilNextTrip} days`}
                           </p>
-                          <p className="text-white font-semibold text-lg">
+                          <p className="text-earth-900 font-bold text-xl">
                             {nextTrip.destination}
                           </p>
                         </div>
@@ -307,21 +307,21 @@ const MyTrips = () => {
                   transition={{ delay: 0.3, duration: 0.5 }}
                   className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:min-w-[200px]"
                 >
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="text-2xl font-bold">{totalMyTrips + totalSharedTrips}</div>
-                    <div className="text-white/70 text-sm">Total Trips</div>
+                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm">
+                    <div className="text-3xl font-black text-earth-900">{totalMyTrips + totalSharedTrips}</div>
+                    <div className="text-earth-600 text-sm font-semibold">Total Trips</div>
                   </div>
                   
                   {totalCurrentTrips > 0 && (
-                    <div className="bg-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-emerald-400/30">
-                      <div className="text-2xl font-bold text-emerald-100">{totalCurrentTrips}</div>
-                      <div className="text-emerald-200 text-sm">Active Now</div>
+                    <div className="bg-emerald-100 backdrop-blur-sm rounded-xl p-5 border border-emerald-300 shadow-sm">
+                      <div className="text-3xl font-black text-emerald-800">{totalCurrentTrips}</div>
+                      <div className="text-emerald-700 text-sm font-semibold">Active Now</div>
                     </div>
                   )}
                   
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="text-2xl font-bold">{totalUpcomingTrips}</div>
-                    <div className="text-white/70 text-sm">Upcoming</div>
+                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm">
+                    <div className="text-3xl font-black text-earth-900">{totalUpcomingTrips}</div>
+                    <div className="text-earth-600 text-sm font-semibold">Upcoming</div>
                   </div>
                 </motion.div>
               </div>
