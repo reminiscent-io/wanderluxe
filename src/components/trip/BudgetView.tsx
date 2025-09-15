@@ -179,7 +179,29 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const filteredExpenses = useMemo(() => {
     return convertedExpenses.filter(expense => {
       const matchesSearch = expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
-      const matchesCategory = selectedCategory === 'all' || expense.category === selectedCategory;
+      
+      // Handle category matching with proper mapping
+      let matchesCategory = selectedCategory === 'all';
+      if (!matchesCategory && expense.category) {
+        const expenseCategory = expense.category.toLowerCase();
+        switch (selectedCategory) {
+          case 'transportation':
+            matchesCategory = expenseCategory === 'transportation';
+            break;
+          case 'accommodation':
+            matchesCategory = expenseCategory === 'accommodations' || expenseCategory === 'accommodation';
+            break;
+          case 'food':
+            matchesCategory = expenseCategory === 'dining' || expenseCategory === 'food';
+            break;
+          case 'activities':
+            matchesCategory = expenseCategory === 'activities' || expenseCategory === 'entertainment';
+            break;
+          default:
+            matchesCategory = expenseCategory === selectedCategory.toLowerCase();
+        }
+      }
+      
       return matchesSearch && matchesCategory;
     });
   }, [convertedExpenses, searchQuery, selectedCategory]);
