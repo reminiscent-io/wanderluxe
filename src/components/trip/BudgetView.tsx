@@ -60,7 +60,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const queryClient = useQueryClient();
   // Use the hook that provides expenses and exchange rates
   const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
-  
+
   // Additional state for the modern UI
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState("overview");
@@ -73,32 +73,32 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const formatNumber = (value: string): string => {
     // Remove all non-numeric characters except decimal point
     const cleanValue = value.replace(/[^\d.]/g, '');
-    
+
     // Handle empty or invalid input
     if (!cleanValue || cleanValue === '.') return '';
-    
+
     // Ensure only one decimal point
     const parts = cleanValue.split('.');
     if (parts.length > 2) {
       parts[1] = parts.slice(1).join('');
       parts.length = 2;
     }
-    
+
     // Limit to 2 decimal places
     if (parts[1] && parts[1].length > 2) {
       parts[1] = parts[1].substring(0, 2);
     }
-    
+
     // Add commas to the integer part (handle empty integer part)
     if (parts[0] && parts[0] !== '') {
       parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
-    
+
     // Return formatted number
     if (parts.length === 2 && parts[1] !== undefined) {
       return parts[0] + '.' + parts[1];
     }
-    
+
     return parts[0] || '';
   };
 
@@ -210,7 +210,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   // Budget update function
   const updateBudget = async () => {
     const budgetValue = parseNumber(budgetInput);
-    
+
     if (isNaN(budgetValue) || budgetValue < 0) {
       toast.error('Please enter a valid budget amount');
       return;
@@ -226,7 +226,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
       // Invalidate the trip query to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      
+
       setIsEditingBudget(false);
       toast.success('Budget updated successfully');
     } catch (error) {
@@ -313,7 +313,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50">
       <div className="container max-w-7xl mx-auto px-4 py-6">
-        
+
         {/* Header Section */}
         <div className="mb-6">
           <motion.div
@@ -400,7 +400,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -412,7 +412,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -581,7 +581,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                       const categoryExpenses = convertedExpenses.filter(e => e.category?.toLowerCase() === category);
                       const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.convertedCost, 0);
                       const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
-                      
+
                       return (
                         <div key={category} className="space-y-2">
                           <div className="flex items-center justify-between">
