@@ -233,6 +233,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               photographer={photographer}
               unsplashUsername={unsplashUsername}
               objectPosition={imagePosition}
+              showAttribution={false}
             />
           </div>
         ) : (

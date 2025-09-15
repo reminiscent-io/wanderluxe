@@ -115,14 +115,17 @@ const MyTrips = () => {
       const { error } = await supabase
         .from('trips')
         .update({ hidden: true })
-        .eq('trip_id', tripId)
-        .select();
+        .eq('trip_id', tripId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error hiding trip:', error);
+        throw error;
+      }
 
       toast.success('Trip hidden successfully');
-      queryClient.invalidateQueries({ queryKey: ['my-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['my-trips', showHidden] });
     } catch (error) {
+      console.error('Failed to hide trip:', error);
       toast.error('Failed to hide trip');
     }
   };
