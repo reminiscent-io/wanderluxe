@@ -69,15 +69,19 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
 
-  // Format number with commas and handle decimal places
+  // Format number with commas and handle decimal places (#,###.##)
   const formatNumber = (value: string): string => {
     // Remove all non-numeric characters except decimal point
     const cleanValue = value.replace(/[^\d.]/g, '');
     
+    // Handle empty or invalid input
+    if (!cleanValue || cleanValue === '.') return '';
+    
     // Ensure only one decimal point
     const parts = cleanValue.split('.');
     if (parts.length > 2) {
-      return parts[0] + '.' + parts.slice(1).join('');
+      parts[1] = parts.slice(1).join('');
+      parts.length = 2;
     }
     
     // Limit to 2 decimal places
@@ -85,16 +89,23 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       parts[1] = parts[1].substring(0, 2);
     }
     
-    // Add commas to the integer part
-    if (parts[0]) {
+    // Add commas to the integer part (handle empty integer part)
+    if (parts[0] && parts[0] !== '') {
       parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
     
-    return parts.join('.');
+    // Return formatted number
+    if (parts.length === 2 && parts[1] !== undefined) {
+      return parts[0] + '.' + parts[1];
+    }
+    
+    return parts[0] || '';
   };
 
   const parseNumber = (formattedValue: string): number => {
-    return parseFloat(formattedValue.replace(/,/g, '')) || 0;
+    const cleanValue = formattedValue.replace(/,/g, '');
+    const parsed = parseFloat(cleanValue);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   // Initialize budget input when trip data loads
