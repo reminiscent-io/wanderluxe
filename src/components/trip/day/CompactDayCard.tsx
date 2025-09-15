@@ -341,10 +341,10 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
             <div className="flex items-center gap-3">
               <div className="flex flex-col">
                 <span className="text-xl md:text-2xl font-bold text-earth-800">
-                  Day {index}
+                  {dayTitle} {formattedDate}
                 </span>
                 <div className="text-sm md:text-base text-earth-600 font-medium">
-                  {dayTitle} • {formattedDate}
+                  Day {index}
                 </div>
               </div>
               
