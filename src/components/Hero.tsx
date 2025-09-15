@@ -49,7 +49,7 @@ const Hero = () => {
     return () => clearInterval(intervalId);
   }, [images.length]);
 
-  const getRandomImage = () => images[currentImageIndex];
+  
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
@@ -57,17 +57,25 @@ const Hero = () => {
         ref={parallaxRef}
         className="absolute inset-0 min-h-[100vh]"
       >
-        <UnsplashImage
-          style={{
-            transition: "opacity 1s ease-in-out",
-            opacity: currentImageIndex ? 1 : 0
-          }}
-          src={getRandomImage()}
-          className="w-full h-full object-cover min-h-[100vh]"
-          objectPosition="center center"
-          alt="Travel background"
-          showAttribution={false}
-        />
+        {images.map((image, index) => (
+          <UnsplashImage
+            key={index}
+            style={{
+              transition: "opacity 1.5s ease-in-out",
+              opacity: index === currentImageIndex ? 1 : 0,
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%"
+            }}
+            src={image}
+            className="w-full h-full object-cover min-h-[100vh]"
+            objectPosition="center center"
+            alt="Travel background"
+            showAttribution={false}
+          />
+        ))}
         <div className="absolute inset-0 bg-black/30" />
       </div>
 
