@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
 
-const SLIDE_MS = 6000; // time each image is shown
+const SLIDE_MS = 4000; // time each image is shown
 const FADE_MS = 1200;  // crossfade duration
 
 const Hero = () => {
