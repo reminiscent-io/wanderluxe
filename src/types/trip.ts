@@ -182,5 +182,6 @@ export interface Trip {
   hidden: boolean;
   arrival_date: string;
   departure_date: string;
+  budget: number | null;
   accommodations?: Accommodation[];
 }

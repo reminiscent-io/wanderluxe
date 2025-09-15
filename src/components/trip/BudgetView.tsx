@@ -31,8 +31,14 @@ import {
   Hotel,
   ShoppingBag,
   Camera,
-  Filter
+  Filter,
+  Edit3,
+  Check,
+  X
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 interface AddExpenseData {
   description: string;
@@ -51,6 +57,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const { addExpense, updateExpense } = useBudgetMutations(tripId);
   const { trip } = useTripQuery(tripId);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   // Use the hook that provides expenses and exchange rates
   const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
   
@@ -59,6 +66,15 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [budgetInput, setBudgetInput] = useState('');
+
+  // Initialize budget input when trip data loads
+  useEffect(() => {
+    if (trip?.budget !== null && trip?.budget !== undefined) {
+      setBudgetInput(trip.budget.toString());
+    }
+  }, [trip?.budget]);
 
   useEffect(() => {
     if (tripId) {
@@ -146,6 +162,39 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
     }
   };
 
+  // Budget update function
+  const updateBudget = async () => {
+    const budgetValue = parseFloat(budgetInput);
+    
+    if (isNaN(budgetValue) || budgetValue < 0) {
+      toast.error('Please enter a valid budget amount');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .update({ budget: budgetValue } as any)
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+
+      // Invalidate the trip query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      
+      setIsEditingBudget(false);
+      toast.success('Budget updated successfully');
+    } catch (error) {
+      console.error('Error updating budget:', error);
+      toast.error('Failed to update budget. Please try again.');
+    }
+  };
+
+  const cancelBudgetEdit = () => {
+    setBudgetInput(trip?.budget?.toString() || '');
+    setIsEditingBudget(false);
+  };
+
   const handleAddExpense = async (data: AddExpenseData) => {
     try {
       await addExpense.mutateAsync({
@@ -178,7 +227,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
   // Calculate totals using converted values
   const totalSpent = convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0);
-  const totalBudget = 5000; // TODO: Get from trip settings or user preference
+  const totalBudget = trip?.budget || 0;
   const remainingBudget = totalBudget - totalSpent;
 
   // Modern ExpenseCard component
@@ -256,9 +305,51 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Total Budget</p>
-                  <p className="text-2xl font-bold text-earth-600">{formatCurrencyWithSymbol(totalBudget, selectedCurrency)}</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm text-sand-600">Total Budget</p>
+                    {!isEditingBudget && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditingBudget(true)}
+                        className="h-6 w-6 p-0 text-sand-500 hover:text-earth-600"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                  {isEditingBudget ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        value={budgetInput}
+                        onChange={(e) => setBudgetInput(e.target.value)}
+                        className="h-8 text-lg font-bold border-earth-300 focus:border-earth-500"
+                        placeholder="Enter budget amount"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={updateBudget}
+                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={cancelBudgetEdit}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-earth-600">
+                      {totalBudget > 0 ? formatCurrencyWithSymbol(totalBudget, selectedCurrency) : 'Set Budget'}
+                    </p>
+                  )}
                 </div>
                 <DollarSign className="w-8 h-8 text-earth-500" />
               </div>

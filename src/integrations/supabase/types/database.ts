@@ -768,6 +768,7 @@ export type Database = {
           hidden: boolean
           arrival_date: string
           departure_date: string
+          budget: number | null
         }
         Insert: {
           trip_id?: string
@@ -780,6 +781,7 @@ export type Database = {
           hidden?: boolean
           arrival_date: string
           departure_date: string
+          budget?: number | null
         }
         Update: {
           trip_id?: string
@@ -792,6 +794,7 @@ export type Database = {
           hidden?: boolean
           arrival_date?: string
           departure_date?: string
+          budget?: number | null
         }
         Relationships: []
       }
