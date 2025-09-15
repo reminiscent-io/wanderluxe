@@ -13,10 +13,10 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="destination">Where are you going?<span className="text-red-500"> *</span></Label>
+      <Label htmlFor="destination">Trip name<span className="text-red-500"> *</span></Label>
       <Input
         id="destination"
-        placeholder="Enter destination"
+        placeholder="e.g., NYE in Paris"
         value={destination}
         onChange={(e) => setDestination(e.target.value)}
         required
