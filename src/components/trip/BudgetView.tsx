@@ -69,12 +69,46 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
 
+  // Format number with commas and handle decimal places
+  const formatNumber = (value: string): string => {
+    // Remove all non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Limit to 2 decimal places
+    if (parts[1] && parts[1].length > 2) {
+      parts[1] = parts[1].substring(0, 2);
+    }
+    
+    // Add commas to the integer part
+    if (parts[0]) {
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    
+    return parts.join('.');
+  };
+
+  const parseNumber = (formattedValue: string): number => {
+    return parseFloat(formattedValue.replace(/,/g, '')) || 0;
+  };
+
   // Initialize budget input when trip data loads
   useEffect(() => {
     if (trip?.budget !== null && trip?.budget !== undefined) {
-      setBudgetInput(trip.budget.toString());
+      setBudgetInput(formatNumber(trip.budget.toString()));
     }
   }, [trip?.budget]);
+
+  const handleBudgetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const formattedValue = formatNumber(rawValue);
+    setBudgetInput(formattedValue);
+  };
 
   useEffect(() => {
     if (tripId) {
@@ -164,7 +198,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
   // Budget update function
   const updateBudget = async () => {
-    const budgetValue = parseFloat(budgetInput);
+    const budgetValue = parseNumber(budgetInput);
     
     if (isNaN(budgetValue) || budgetValue < 0) {
       toast.error('Please enter a valid budget amount');
@@ -191,7 +225,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
   };
 
   const cancelBudgetEdit = () => {
-    setBudgetInput(trip?.budget?.toString() || '');
+    setBudgetInput(trip?.budget ? formatNumber(trip.budget.toString()) : '');
     setIsEditingBudget(false);
   };
 
@@ -322,11 +356,11 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                   {isEditingBudget ? (
                     <div className="flex items-center gap-2">
                       <Input
-                        type="number"
+                        type="text"
                         value={budgetInput}
-                        onChange={(e) => setBudgetInput(e.target.value)}
+                        onChange={handleBudgetInputChange}
                         className="h-8 text-lg font-bold border-earth-300 focus:border-earth-500"
-                        placeholder="Enter budget amount"
+                        placeholder="e.g., 5,000.00"
                       />
                       <Button
                         variant="ghost"
