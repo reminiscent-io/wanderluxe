@@ -73,13 +73,10 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
         .insert([{
           user_id: user.id,
           destination,
-          start_date: startDate,
-          end_date: endDate,
           arrival_date: startDate,
           departure_date: endDate,
-          cover_image_url: coverImageUrl,
-          created_at: new Date().toISOString()
-        }])
+          cover_image_url: coverImageUrl
+        } as any])
         .select()
         .single();
 
