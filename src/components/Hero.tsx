@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import UnsplashImage from "./UnsplashImage";
@@ -8,6 +8,24 @@ import LogoFromSupabase from "./LogoFromSupabase";
 const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const images = [
+    "https://images.unsplash.com/photo-1506929562872-bb421503ef21",
+    "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17",
+    "https://images.unsplash.com/photo-1649955092030-fb171eda019a",
+    "https://images.unsplash.com/photo-1632937018569-841a551be57a",
+    "https://plus.unsplash.com/premium_photo-1722201172121-9ab816dc1c34",
+    "https://images.unsplash.com/photo-1624963053656-cecdf576d028",
+    "https://images.unsplash.com/photo-1571663237561-397f179622fb",
+    "https://images.unsplash.com/photo-1643981670720-eef07ebdb179",
+    "https://images.unsplash.com/photo-1516496636080-14fb876e029d",
+    "https://images.unsplash.com/photo-1498036882173-b41c28a8ba34",
+    "https://images.unsplash.com/photo-1541628951107-a9af5346a3e4",
+    "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc",
+    "https://images.unsplash.com/photo-1663841365361-db6ca65ac126",
+    "https://images.unsplash.com/photo-1586752488885-6ce47fdfd874"
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +39,18 @@ const Hero = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => {
+        return (prevIndex + 1) % images.length;
+      });
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [images.length]);
+
+  const getRandomImage = () => images[currentImageIndex];
+
   return (
     <div className="relative h-screen w-full overflow-hidden">
       <div
@@ -33,39 +63,10 @@ const Hero = () => {
             opacity: currentImageIndex ? 1 : 0
           }}
           src={getRandomImage()}
-          const [currentImageIndex, setCurrentImageIndex] = useState(0);
-        const images = [
-        "https://images.unsplash.com/photo-1506929562872-bb421503ef21",
-        "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17",
-        "https://images.unsplash.com/photo-1649955092030-fb171eda019a",
-        "https://images.unsplash.com/photo-1632937018569-841a551be57a",
-        "https://plus.unsplash.com/premium_photo-1722201172121-9ab816dc1c34",
-        "https://images.unsplash.com/photo-1624963053656-cecdf576d028",
-        "https://images.unsplash.com/photo-1571663237561-397f179622fb",
-        "https://images.unsplash.com/photo-1643981670720-eef07ebdb179",
-        "https://images.unsplash.com/photo-1516496636080-14fb876e029d",
-        "https://images.unsplash.com/photo-1498036882173-b41c28a8ba34",
-        "https://images.unsplash.com/photo-1541628951107-a9af5346a3e4",
-        "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc",
-        "https://images.unsplash.com/photo-1663841365361-db6ca65ac126",
-        "https://images.unsplash.com/photo-1586752488885-6ce47fdfd874"
-        ];
-
-        useEffect(() => {
-          const intervalId = setInterval(() => {
-          setCurrentImageIndex((prevIndex) => {
-            return (prevIndex + 1) % images.length;
-          });
-          }, 3000);
-
-          return () => clearInterval(intervalId);
-        }, []);
-
-        const getRandomImage = () => images[currentImageIndex];
-        className="w-full h-full object-cover min-h-[100vh]"
-        objectPosition="center center"
-        alt="Travel background"
-        showAttribution={false}
+          className="w-full h-full object-cover min-h-[100vh]"
+          objectPosition="center center"
+          alt="Travel background"
+          showAttribution={false}
         />
         <div className="absolute inset-0 bg-black/30" />
       </div>
