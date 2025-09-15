@@ -340,11 +340,11 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
           <div className="flex items-center gap-4 flex-1">
             <div className="flex items-center gap-3">
               <div className="flex flex-col">
-                <span className="text-xl md:text-2xl font-bold text-earth-800">
-                  Day {index}
+                <span className="text-lg md:text-xl font-bold text-earth-800">
+                  {dayTitle} {formattedDate}
                 </span>
                 <div className="text-sm md:text-base text-earth-600 font-medium">
-                  {dayTitle} • {formattedDate}
+                  Day {index}
                 </div>
               </div>
               
@@ -575,7 +575,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     onClick={onActivityAdd}
                     className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Activity</span>
                   </Button>
                   <Button
@@ -584,7 +583,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     onClick={onHotelAdd}
                     className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Hotel</span>
                   </Button>
                   <Button
@@ -593,7 +591,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     onClick={onTransportationAdd}
                     className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Travel</span>
                   </Button>
                   <Button
@@ -602,7 +599,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     onClick={onReservationAdd}
                     className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
                     <span className="truncate">Dining</span>
                   </Button>
                 </div>
@@ -625,8 +621,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       onClick={onActivityAdd}
                       className="text-sm px-4 py-3 h-auto bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      <span>Add Activity</span>
+                      <span>+ Activity</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -634,8 +629,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       onClick={onHotelAdd}
                       className="text-sm px-4 py-3 h-auto bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      <span>Add Hotel</span>
+                      <span>+ Hotel</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -643,8 +637,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       onClick={onTransportationAdd}
                       className="text-sm px-4 py-3 h-auto bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      <span>Add Travel</span>
+                      <span>+ Travel</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -652,8 +645,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       onClick={onReservationAdd}
                       className="text-sm px-4 py-3 h-auto bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      <span>Add Dining</span>
+                      <span>+ Dining</span>
                     </Button>
                   </div>
                 </div>
