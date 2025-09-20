@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Plus, 
   Hotel, 
   Plane, 
   MapPin, 
   Utensils,
-  Clock,
   ChevronDown,
-  ChevronUp,
   Calendar,
   DollarSign
 } from 'lucide-react';
@@ -48,7 +45,8 @@ interface CompactDayCardProps {
   activities: DayActivity[];
   index: number;
   hotelStays: HotelStay[];
-  onActivityAdd?: () => void;
+  /** UPDATED: pass context to parent so dialog can preselect the day */
+  onActivityAdd?: (opts: { dayId: string; date: string }) => void;
   onHotelAdd?: () => void;
   onTransportationAdd?: () => void;
   onReservationAdd?: () => void;
@@ -87,13 +85,13 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   onReservationClick,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  
+
   // Use real-time hooks for all data
   const { reservations } = useReservationsRealtime(id, tripId);
   const { transportations } = useTransportationEvents(tripId);
   useActivitiesRealtime(id, tripId);
   useAccommodationsRealtime(tripId);
-  
+
   // Fetch activities for this specific day
   const { data: activities = [] } = useQuery({
     queryKey: ['activities', id],
@@ -103,17 +101,17 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
         .select('*')
         .eq('day_id', id)
         .order('start_time', { ascending: true });
-      
+
       if (error) {
         console.error('Error fetching activities:', error);
         throw error;
       }
-      
+
       return data as DayActivity[];
     },
     enabled: !!id,
   });
-  
+
   // Fetch accommodations for this trip
   const { data: hotelStays = [] } = useQuery({
     queryKey: ['accommodations', tripId],
@@ -123,12 +121,12 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
         .select('*')
         .eq('trip_id', tripId)
         .order('order_index');
-      
+
       if (error) {
         console.error('Error fetching accommodations:', error);
         throw error;
       }
-      
+
       return data as HotelStay[];
     },
     enabled: !!tripId,
@@ -140,14 +138,14 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     handleEditActivity,
     handleDeleteActivity,
   } = DayActivityManager({ id, tripId, activities });
-  
+
   const dayOfWeek = format(parseISO(date), 'EEEE');
   const formattedDate = format(parseISO(date), 'MMM d');
   const dayTitle = title || dayOfWeek;
   const isTodayFlag = isToday(parseISO(date));
-  
+
   const normalizedDay = getNormalizedDay(date);
-  
+
   // Filter hotel stays for this day
   const filteredHotelStays = hotelStays.filter((stay) => {
     if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
@@ -157,13 +155,13 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       dayDate <= new Date(stay.hotel_checkout_date)
     );
   });
-  
+
   // Identify hotels where this is a stay day (not check-in or check-out)
   const allDayHotels = filteredHotelStays.filter(stay => {
     return stay.hotel_checkin_date !== normalizedDay && 
            stay.hotel_checkout_date !== normalizedDay;
   });
-  
+
   // Filter transportations for this day
   const safeTransportations = transportations || [];
   const filteredTransportations = safeTransportations.filter((t) => {
@@ -172,10 +170,10 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     const dayDate = new Date(normalizedDay);
     return dayDate >= new Date(start) && dayDate <= new Date(end);
   });
-  
+
   // Create a unified timeline of all items with times
   const timelineItems: TimelineItem[] = [];
-  
+
   // Add activities
   activities.forEach(activity => {
     if (activity.id) {
@@ -191,7 +189,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       });
     }
   });
-  
+
   // Add hotel check-ins and check-outs
   filteredHotelStays.forEach(stay => {
     if (stay.hotel_checkin_date === normalizedDay && stay.checkin_time) {
@@ -216,44 +214,39 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       });
     }
   });
-  
+
   // Add transportations
   filteredTransportations.forEach(transport => {
     const typeLabel = transport.type === 'flight' ? 'Flight' : 
                      transport.type === 'train' ? 'Train' :
                      transport.type === 'car' ? 'Car' :
                      transport.type === 'bus' ? 'Bus' : 'Transport';
-                     
+
     const startDate = transport.start_date;
     const endDate = transport.end_date || startDate;
     const isStartDay = normalizedDay === startDate;
     const isEndDay = normalizedDay === endDate;
     const isMultiDay = startDate !== endDate;
-    
-    // Determine which time to show and title based on the day
+
     let displayTime: string | undefined;
     let title: string;
-    
+
     if (isMultiDay) {
       if (isStartDay) {
-        // First day: show start time and departure
         displayTime = transport.start_time || undefined;
         title = `${typeLabel} Departure: ${transport.departure_location || 'Departure'}`;
       } else if (isEndDay) {
-        // Last day: show end time and arrival
         displayTime = transport.end_time || undefined;
         title = `${typeLabel} Arrival: ${transport.arrival_location || 'Arrival'}`;
       } else {
-        // Middle day: show "In transit"
         displayTime = undefined;
         title = `${typeLabel} (In Transit): ${transport.departure_location || 'Departure'} → ${transport.arrival_location || 'Arrival'}`;
       }
     } else {
-      // Single day: show full journey with start time
       displayTime = transport.start_time || undefined;
       title = `${typeLabel}: ${transport.departure_location || 'Departure'} → ${transport.arrival_location || 'Arrival'}`;
     }
-    
+
     timelineItems.push({
       type: 'transportation',
       time: displayTime,
@@ -265,7 +258,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       data: transport
     });
   });
-  
+
   // Add dining reservations
   if (reservations) {
     reservations.forEach(reservation => {
@@ -282,7 +275,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       }
     });
   }
-  
+
   // Sort timeline items by time
   const sortedTimelineItems = timelineItems.sort((a, b) => {
     if (!a.time && !b.time) return 0;
@@ -290,32 +283,37 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     if (!b.time) return -1;
     return a.time.localeCompare(b.time);
   });
-  
+
   // Generate summary line
   const summaryParts: string[] = [];
-  
+
   const activityCount = activities.length;
   const hotelCount = filteredHotelStays.length;
   const transportCount = filteredTransportations.length;
   const diningCount = reservations?.length || 0;
-  
+
   if (activityCount > 0) summaryParts.push(`${activityCount} ${activityCount === 1 ? 'activity' : 'activities'}`);
   if (hotelCount > 0) summaryParts.push(`${hotelCount} hotel`);
   if (transportCount > 0) summaryParts.push(`${transportCount} transport`);
   if (diningCount > 0) summaryParts.push(`${diningCount} dining`);
-  
+
   const summary = summaryParts.length > 0 
     ? summaryParts.join(' • ') 
     : 'No plans yet';
-  
+
   const hasContent = sortedTimelineItems.length > 0 || allDayHotels.length > 0;
-  
+
   // Determine day status badges
   const isCheckInDay = filteredHotelStays.some(stay => stay.hotel_checkin_date === normalizedDay);
   const isCheckOutDay = filteredHotelStays.some(stay => stay.hotel_checkout_date === normalizedDay);
   const isTravelDay = filteredTransportations.length > 0;
   const totalEvents = sortedTimelineItems.length;
-  
+
+  /** helper to invoke add with context */
+  const addActivityForThisDay = () => {
+    onActivityAdd?.({ dayId: id, date: normalizedDay });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -347,7 +345,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                   Day {index}
                 </div>
               </div>
-              
+
               {/* Status Badges */}
               <div className="flex flex-wrap gap-2">
                 {isTodayFlag && (
@@ -378,7 +376,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <span className="text-sm text-earth-500 hidden lg:inline font-medium">
               {summary}
@@ -397,13 +395,13 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
             </Button>
           </div>
         </div>
-        
+
         {/* Mobile summary */}
         <div className="text-sm text-earth-500 mt-2 lg:hidden">
           {summary}
         </div>
       </motion.div>
-      
+
       {/* Enhanced Expanded Content with Animation */}
       <AnimatePresence>
         {isExpanded && (
@@ -453,7 +451,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     ))}
                   </div>
                 )}
-                
+
                 {/* Enhanced Timeline with Colored Rail */}
                 <div className="relative">
                   {sortedTimelineItems.map((item, idx) => {
@@ -468,7 +466,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                         onReservationClick(item.data);
                       }
                     };
-                    
+
                     // Get color scheme by event type
                     const getEventColors = (type: string) => {
                       switch (type) {
@@ -484,9 +482,9 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                           return { node: 'bg-earth-400', line: 'bg-earth-200', icon: 'text-earth-600' };
                       }
                     };
-                    
+
                     const colors = getEventColors(item.type);
-                    
+
                     return (
                       <motion.div 
                         key={item.id} 
@@ -501,7 +499,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                             {item.time ? formatTime12(item.time) : '—'}
                           </span>
                         </div>
-                        
+
                         {/* Enhanced Timeline line and colored node */}
                         <div className="relative flex flex-col items-center">
                           <div className={cn(
@@ -515,7 +513,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                             )} />
                           )}
                         </div>
-                        
+
                         {/* Enhanced Content Card */}
                         <motion.div 
                           className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-3 -m-1 transition-all duration-200 hover:shadow-sm"
@@ -566,13 +564,13 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     );
                   })}
                 </div>
-                
+
                 {/* Enhanced Quick Add Buttons */}
                 <div className="flex gap-2 pt-4 border-t border-sand-200">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={onActivityAdd}
+                    onClick={addActivityForThisDay}
                     className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
                   >
                     <span className="truncate">Activity</span>
@@ -618,7 +616,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={onActivityAdd}
+                      onClick={addActivityForThisDay}
                       className="text-sm px-4 py-3 h-auto bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
                     >
                       <span>+ Activity</span>
