@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrencyWithSymbol } from '../components/trip/budget/utils/budgetCalculations';
 import ExpenseActions from '../components/trip/budget/components/ExpenseActions';
+import { useExpenses } from '../components/trip/budget/hooks/useExpenses';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import CurrencySelector from '../components/trip/budget/CurrencySelector';
 import { 
   Search, 
@@ -26,70 +29,150 @@ import {
   Filter
 } from 'lucide-react';
 
-// Mock data for demonstration
-const mockExpenses = [
-  {
-    id: '1',
-    description: 'Flight tickets to Paris',
-    amount: 850,
-    category: 'transportation',
-    date: '2025-09-10',
-    location: 'Travel Agency',
-    status: 'confirmed'
-  },
-  {
-    id: '2',
-    description: 'Hotel booking - 3 nights',
-    amount: 450,
-    category: 'accommodation',
-    date: '2025-09-12',
-    location: 'Paris, France',
-    status: 'confirmed'
-  },
-  {
-    id: '3',
-    description: 'Restaurant dinner',
-    amount: 85,
-    category: 'food',
-    date: '2025-09-13',
-    location: 'Le Petit Bistro',
-    status: 'pending'
-  },
-  {
-    id: '4',
-    description: 'Museum entrance tickets',
-    amount: 35,
-    category: 'entertainment',
-    date: '2025-09-14',
-    location: 'Louvre Museum',
-    status: 'confirmed'
-  },
-  {
-    id: '5',
-    description: 'Local transportation',
-    amount: 25,
-    category: 'transportation',
-    date: '2025-09-15',
-    location: 'Metro Pass',
-    status: 'confirmed'
-  }
-];
+// Interface for combined expense data across all trips
+interface CombinedExpense {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  date: string;
+  location: string;
+  status: string;
+  tripId: string;
+  currency: string;
+}
 
 const Budget = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("categories");
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { user } = useAuth();
 
-  // Mock query for expenses
-  const { data: expenses = mockExpenses, isLoading } = useQuery({
-    queryKey: ['expenses'],
+  // Fetch all user trips and their expenses
+  const { data: allExpenses = [], isLoading } = useQuery({
+    queryKey: ['all-expenses', user?.id],
     queryFn: async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockExpenses;
-    }
+      if (!user) return [];
+
+      // Get all user trips
+      const { data: trips, error: tripsError } = await supabase
+        .from('trips')
+        .select('trip_id, destination')
+        .eq('user_id', user.id);
+
+      if (tripsError || !trips) return [];
+
+      // Get expenses for all trips
+      const allExpensesPromises = trips.map(async (trip) => {
+        const [
+          { data: activities },
+          { data: accommodations },
+          { data: transportation },
+          { data: restaurants },
+          { data: otherExpenses }
+        ] = await Promise.all([
+          supabase.from('day_activities').select('*').eq('trip_id', trip.trip_id),
+          supabase.from('accommodations').select('*').eq('trip_id', trip.trip_id),
+          supabase.from('transportation').select('*').eq('trip_id', trip.trip_id),
+          supabase.from('reservations').select('*').eq('trip_id', trip.trip_id),
+          supabase.from('other_expenses').select('*').eq('trip_id', trip.trip_id)
+        ]);
+
+        const tripExpenses: CombinedExpense[] = [];
+
+        // Map accommodations (fix the categorization issue)
+        (accommodations || []).forEach(acc => {
+          if (acc.cost) {
+            tripExpenses.push({
+              id: acc.stay_id,
+              description: acc.title || acc.hotel || 'Accommodation',
+              amount: acc.cost,
+              category: 'accommodation', // Fixed: use lowercase to match UI categories
+              date: acc.hotel_checkin_date || acc.created_at,
+              location: acc.hotel_address || trip.destination,
+              status: acc.is_paid ? 'confirmed' : 'pending',
+              tripId: trip.trip_id,
+              currency: acc.currency || 'USD'
+            });
+          }
+        });
+
+        // Map other expense types
+        (activities || []).forEach(act => {
+          if (act.cost) {
+            tripExpenses.push({
+              id: act.id,
+              description: act.title,
+              amount: act.cost,
+              category: 'entertainment',
+              date: act.created_at,
+              location: trip.destination,
+              status: 'pending', // activities don't have is_paid field
+              tripId: trip.trip_id,
+              currency: act.currency || 'USD'
+            });
+          }
+        });
+
+        (transportation || []).forEach(trans => {
+          if (trans.cost) {
+            tripExpenses.push({
+              id: trans.id,
+              description: trans.type,
+              amount: trans.cost,
+              category: 'transportation',
+              date: trans.start_date || trans.created_at,
+              location: trip.destination,
+              status: 'pending', // transportation doesn't have is_paid field
+              tripId: trip.trip_id,
+              currency: trans.currency || 'USD'
+            });
+          }
+        });
+
+        (restaurants || []).forEach(rest => {
+          if (rest.cost) {
+            tripExpenses.push({
+              id: rest.id,
+              description: rest.restaurant_name,
+              amount: rest.cost,
+              category: 'food',
+              date: rest.created_at,
+              location: trip.destination,
+              status: 'pending', // reservations don't have is_paid field
+              tripId: trip.trip_id,
+              currency: rest.currency || 'USD'
+            });
+          }
+        });
+
+        (otherExpenses || []).forEach(expense => {
+          if (expense.cost) {
+            tripExpenses.push({
+              id: expense.id,
+              description: expense.description,
+              amount: expense.cost,
+              category: 'other',
+              date: expense.expense_date || expense.created_at, // Fixed: use expense_date not date
+              location: trip.destination,
+              status: 'pending', // other_expenses don't have is_paid field
+              tripId: trip.trip_id,
+              currency: expense.currency || 'USD'
+            });
+          }
+        });
+
+        return tripExpenses;
+      });
+
+      const results = await Promise.all(allExpensesPromises);
+      return results.flat();
+    },
+    enabled: !!user
   });
+
+  const expenses = allExpenses;
 
   // Filter expenses based on search and category
   const filteredExpenses = useMemo(() => {
@@ -112,6 +195,7 @@ const Budget = () => {
       case 'accommodation': return <Hotel className="w-4 h-4" />;
       case 'food': return <Utensils className="w-4 h-4" />;
       case 'entertainment': return <Camera className="w-4 h-4" />;
+      case 'other': return <ShoppingBag className="w-4 h-4" />;
       default: return <ShoppingBag className="w-4 h-4" />;
     }
   };
@@ -122,6 +206,7 @@ const Budget = () => {
       case 'accommodation': return 'bg-green-100 text-green-800';
       case 'food': return 'bg-orange-100 text-orange-800';
       case 'entertainment': return 'bg-purple-100 text-purple-800';
+      case 'other': return 'bg-pink-100 text-pink-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -278,9 +363,9 @@ const Budget = () => {
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="overview">Recent</TabsTrigger>
+              <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -360,6 +445,7 @@ const Budget = () => {
                     <option value="accommodation">Accommodation</option>
                     <option value="food">Food & Dining</option>
                     <option value="entertainment">Entertainment</option>
+                    <option value="other">Other</option>
                   </select>
                   <ExpenseActions onAddExpense={() => console.log('Add expense')} />
                 </div>
@@ -419,8 +505,19 @@ const Budget = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {['transportation', 'accommodation', 'food', 'entertainment'].map((category) => {
-                      const categoryExpenses = expenses.filter(e => e.category === category);
+                    {['transportation', 'accommodation', 'food', 'entertainment', 'other'].map((category) => {
+                      const categoryExpenses = expenses.filter(e => {
+                        const expenseCategory = e.category?.toLowerCase() || '';
+                        // Handle food/dining mapping
+                        if (category === 'food') {
+                          return expenseCategory === 'food' || expenseCategory === 'dining';
+                        }
+                        // Handle accommodation variations
+                        if (category === 'accommodation') {
+                          return expenseCategory === 'accommodation' || expenseCategory === 'accommodations';
+                        }
+                        return expenseCategory === category.toLowerCase();
+                      });
                       const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
                       const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
                       

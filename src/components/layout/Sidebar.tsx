@@ -115,21 +115,18 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           <Separator className="my-4" />
           {tripNavItems.map(item => (
             <div key={item.title}>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start text-left",
-                  activeTab === item.href
+              <NavLink
+                to={`/trip/${tripId}/${item.href}`}
+                className={({ isActive }) => cn(
+                  "w-full justify-start text-left flex items-center px-4 py-2 rounded-md transition-colors",
+                  isActive
                     ? "bg-earth-100 text-earth-700 font-medium"
                     : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
                 )}
-                onClick={() => {
-                  onTabChange(item.href);
-                }}
               >
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.title}
-              </Button>
+              </NavLink>
               
               {/* Show Timeline management items after Timeline button */}
               {item.title === "Timeline" && (

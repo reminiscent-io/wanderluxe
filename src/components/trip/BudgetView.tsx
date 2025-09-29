@@ -63,7 +63,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
 
   // Additional state for the modern UI
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("categories");
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
@@ -197,6 +197,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
           case 'activities':
             matchesCategory = expenseCategory === 'activities' || expenseCategory === 'entertainment';
             break;
+          case 'other':
+            matchesCategory = expenseCategory === 'other';
+            break;
           default:
             matchesCategory = expenseCategory === selectedCategory.toLowerCase();
         }
@@ -214,6 +217,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       case 'food': return <Utensils className="w-4 h-4" />;
       case 'activities': 
       case 'entertainment': return <Camera className="w-4 h-4" />;
+      case 'other': return <ShoppingBag className="w-4 h-4" />;
       default: return <ShoppingBag className="w-4 h-4" />;
     }
   };
@@ -225,6 +229,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
       case 'food': return 'bg-orange-100 text-orange-800';
       case 'activities':
       case 'entertainment': return 'bg-purple-100 text-purple-800';
+      case 'other': return 'bg-pink-100 text-pink-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -458,9 +463,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="overview">Recent</TabsTrigger>
+              <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -540,6 +545,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                     <option value="accommodation">Accommodation</option>
                     <option value="food">Food & Dining</option>
                     <option value="activities">Activities</option>
+                    <option value="other">Other</option>
                   </select>
                   <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
                 </div>
@@ -599,8 +605,19 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {['transportation', 'accommodation', 'food', 'activities'].map((category) => {
-                      const categoryExpenses = convertedExpenses.filter(e => e.category?.toLowerCase() === category);
+                    {['transportation', 'accommodation', 'food', 'activities', 'other'].map((category) => {
+                      const categoryExpenses = convertedExpenses.filter(e => {
+                        const expenseCategory = e.category?.toLowerCase() || '';
+                        // Handle food/dining mapping
+                        if (category === 'food') {
+                          return expenseCategory === 'food' || expenseCategory === 'dining';
+                        }
+                        // Handle accommodation variations
+                        if (category === 'accommodation') {
+                          return expenseCategory === 'accommodation' || expenseCategory === 'accommodations';
+                        }
+                        return expenseCategory === category;
+                      });
                       const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.convertedCost, 0);
                       const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
 
