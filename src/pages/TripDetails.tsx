@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
@@ -30,6 +30,13 @@ const TripDetails = () => {
     if (path.includes('/vision-board')) return 'vision-board';
     return 'timeline'; // default
   }, [location.pathname]);
+  
+  // Redirect to timeline if at base trip URL
+  useEffect(() => {
+    if (tripId && location.pathname === `/trip/${tripId}`) {
+      navigate(`/trip/${tripId}/timeline`, { replace: true });
+    }
+  }, [tripId, location.pathname, navigate]);
 
   // Use the custom hook for trip data fetching
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);

@@ -64,20 +64,13 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/trip/:tripId"
+                  path="/trip/:tripId/*"
                   element={
                     <ProtectedRoute>
                       <TripDetails />
                     </ProtectedRoute>
                   }
-                >
-                  <Route index element={<Navigate to="timeline" replace />} />
-                  <Route path="timeline" element={null} />
-                  <Route path="budget" element={null} />
-                  <Route path="booking" element={null} />
-                  <Route path="chat" element={null} />
-                  <Route path="vision-board" element={null} />
-                </Route>
+                />
                 <Route path="/profile" element={<Profile />} />
                 <Route
                   path="/accommodations"
