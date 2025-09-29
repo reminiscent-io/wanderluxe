@@ -45,7 +45,7 @@ interface CombinedExpense {
 const Budget = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("categories");
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { user } = useAuth();
 
@@ -195,6 +195,7 @@ const Budget = () => {
       case 'accommodation': return <Hotel className="w-4 h-4" />;
       case 'food': return <Utensils className="w-4 h-4" />;
       case 'entertainment': return <Camera className="w-4 h-4" />;
+      case 'other': return <ShoppingBag className="w-4 h-4" />;
       default: return <ShoppingBag className="w-4 h-4" />;
     }
   };
@@ -205,6 +206,7 @@ const Budget = () => {
       case 'accommodation': return 'bg-green-100 text-green-800';
       case 'food': return 'bg-orange-100 text-orange-800';
       case 'entertainment': return 'bg-purple-100 text-purple-800';
+      case 'other': return 'bg-pink-100 text-pink-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -361,9 +363,9 @@ const Budget = () => {
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="overview">Recent</TabsTrigger>
+              <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -443,6 +445,7 @@ const Budget = () => {
                     <option value="accommodation">Accommodation</option>
                     <option value="food">Food & Dining</option>
                     <option value="entertainment">Entertainment</option>
+                    <option value="other">Other</option>
                   </select>
                   <ExpenseActions onAddExpense={() => console.log('Add expense')} />
                 </div>
@@ -502,7 +505,7 @@ const Budget = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {['transportation', 'accommodation', 'food', 'entertainment'].map((category) => {
+                    {['transportation', 'accommodation', 'food', 'entertainment', 'other'].map((category) => {
                       const categoryExpenses = expenses.filter(e => e.category === category);
                       const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
                       const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
