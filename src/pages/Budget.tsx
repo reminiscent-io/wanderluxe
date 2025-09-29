@@ -506,7 +506,18 @@ const Budget = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {['transportation', 'accommodation', 'food', 'entertainment', 'other'].map((category) => {
-                      const categoryExpenses = expenses.filter(e => e.category === category);
+                      const categoryExpenses = expenses.filter(e => {
+                        const expenseCategory = e.category?.toLowerCase() || '';
+                        // Handle food/dining mapping
+                        if (category === 'food') {
+                          return expenseCategory === 'food' || expenseCategory === 'dining';
+                        }
+                        // Handle accommodation variations
+                        if (category === 'accommodation') {
+                          return expenseCategory === 'accommodation' || expenseCategory === 'accommodations';
+                        }
+                        return expenseCategory === category.toLowerCase();
+                      });
                       const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
                       const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
                       

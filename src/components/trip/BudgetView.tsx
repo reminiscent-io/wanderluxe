@@ -606,7 +606,18 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                 <CardContent>
                   <div className="space-y-4">
                     {['transportation', 'accommodation', 'food', 'activities', 'other'].map((category) => {
-                      const categoryExpenses = convertedExpenses.filter(e => e.category?.toLowerCase() === category);
+                      const categoryExpenses = convertedExpenses.filter(e => {
+                        const expenseCategory = e.category?.toLowerCase() || '';
+                        // Handle food/dining mapping
+                        if (category === 'food') {
+                          return expenseCategory === 'food' || expenseCategory === 'dining';
+                        }
+                        // Handle accommodation variations
+                        if (category === 'accommodation') {
+                          return expenseCategory === 'accommodation' || expenseCategory === 'accommodations';
+                        }
+                        return expenseCategory === category;
+                      });
                       const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.convertedCost, 0);
                       const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
 
