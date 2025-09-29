@@ -16,8 +16,10 @@ interface ActivityDialogProps {
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (activity?: ActivityFormData) => void;
   onDelete?: (id: string) => void;
+  /** this is the Day (event) id that owns the activity */
   eventId: string;
   tripDates?: { arrival_date: string; departure_date: string };
+  /** when opening via a specific DayCard, we pass YYYY-MM-DD here */
   preselectedDate?: string;
   tripId: string;
   activityId?: string | null; // For edit mode
@@ -37,6 +39,21 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
   activityId,
 }) => {
   const isEditMode = !!activityId;
+
+  // NEW: If creating a new activity and a preselectedDate is provided,
+  // hydrate the form with that date (and ensure the eventId is correct).
+  useEffect(() => {
+    if (!isEditMode && preselectedDate) {
+      // only update if we're not already set to this date
+      if (activity?.date !== preselectedDate) {
+        onActivityChange({
+          ...activity,
+          date: preselectedDate,
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, preselectedDate]);
 
   useEffect(() => {
     if (isEditMode && activityId) {
@@ -73,6 +90,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             submitLabel={isEditMode ? 'Save' : 'Save'}
             eventId={eventId}
             tripDates={tripDates}
+            // keep the explicit preselectedDate prop too, so the form can honor it directly
             preselectedDate={preselectedDate || (isEditMode ? activity.date : undefined)}
             tripId={tripId}
             activityId={activityId}
