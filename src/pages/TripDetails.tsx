@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar from "@/components/layout/Sidebar";
@@ -17,7 +17,19 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
-  const [activeTab, setActiveTab] = useState('timeline');
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Determine active tab from URL
+  const activeTab = useMemo(() => {
+    const path = location.pathname;
+    if (path.includes('/timeline')) return 'timeline';
+    if (path.includes('/budget')) return 'budget';
+    if (path.includes('/booking')) return 'booking';
+    if (path.includes('/chat')) return 'chat';
+    if (path.includes('/vision-board')) return 'vision-board';
+    return 'timeline'; // default
+  }, [location.pathname]);
 
   // Use the custom hook for trip data fetching
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
@@ -43,7 +55,7 @@ const TripDetails = () => {
   }
 
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
+    navigate(`/trip/${tripId}/${tab}`);
   };
 
   const sidebar = <Sidebar tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
