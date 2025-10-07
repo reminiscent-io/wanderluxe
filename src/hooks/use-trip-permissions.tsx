@@ -38,8 +38,15 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
     const checkPermissions = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        // First, check if trip is public and get trip data
+        const { data: tripData, error: tripError } = await supabase
+          .from('trips')
+          .select('user_id, is_public')
+          .eq('trip_id', tripId)
+          .single();
+
+        if (tripError) {
+          console.error('Error checking trip data:', tripError);
           setPermissions({
             canEdit: false,
             canView: false,
@@ -50,15 +57,21 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
           return;
         }
 
-        // Check if user is the owner
-        const { data: tripData, error: tripError } = await supabase
-          .from('trips')
-          .select('user_id')
-          .eq('trip_id', tripId)
-          .single();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // If trip is public and no user is logged in, allow view-only access
+        if (tripData.is_public && !user) {
+          setPermissions({
+            canEdit: false,
+            canView: true,
+            isOwner: false,
+            permissionLevel: 'read',
+            isLoading: false,
+          });
+          return;
+        }
 
-        if (tripError) {
-          console.error('Error checking trip ownership:', tripError);
+        if (!user) {
           setPermissions({
             canEdit: false,
             canView: false,
@@ -71,12 +84,39 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
         const isOwner = tripData.user_id === user.id;
 
+        // Check if user is Kevin (special admin access for public trips)
+        const isKevin = user.email?.toLowerCase() === 'kevin@wanderluxe.io';
+
         if (isOwner) {
           setPermissions({
             canEdit: true,
             canView: true,
             isOwner: true,
             permissionLevel: 'edit',
+            isLoading: false,
+          });
+          return;
+        }
+
+        // If trip is public and user is Kevin, grant edit access
+        if (tripData.is_public && isKevin) {
+          setPermissions({
+            canEdit: true,
+            canView: true,
+            isOwner: false,
+            permissionLevel: 'edit',
+            isLoading: false,
+          });
+          return;
+        }
+
+        // If trip is public (but user is not Kevin), allow view-only access
+        if (tripData.is_public) {
+          setPermissions({
+            canEdit: false,
+            canView: true,
+            isOwner: false,
+            permissionLevel: 'read',
             isLoading: false,
           });
           return;
@@ -105,7 +145,7 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
         const permissionLevel = shareData.permission_level as PermissionLevel;
         setPermissions({
           canEdit: permissionLevel === 'edit',
-          canView: true, // All shared users can view
+          canView: true,
           isOwner: false,
           permissionLevel,
           isLoading: false,

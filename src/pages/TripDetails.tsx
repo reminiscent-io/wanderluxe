@@ -13,12 +13,18 @@ import BookingView from "../components/trip/BookingView";
 import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
 import ChatView from "../components/trip/chat/ChatView";
 import ErrorBoundary from "@/components/ErrorBoundary";
-
+import { useTripPermissions } from '@/hooks/use-trip-permissions';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Lock, ArrowLeft } from 'lucide-react';
+import { useAuth } from "@/contexts/AuthContext";
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const { canView, canEdit, isLoading: permissionsLoading } = useTripPermissions(tripId);
   
   // Determine active tab from URL
   const activeTab = useMemo(() => {
@@ -49,6 +55,11 @@ const TripDetails = () => {
     return <TripDetailsSkeleton />;
   }
 
+  // Handle permissions loading
+  if (permissionsLoading) {
+    return <TripDetailsSkeleton />;
+  }
+
   // Handle error state
   if (tripError) {
     return <TripDetailsError />;
@@ -59,6 +70,45 @@ const TripDetails = () => {
   // If no data is available
   if (!displayData) {
     return <TripDetailsError message="The requested trip could not be found." />;
+  }
+
+  // Handle access denied - user cannot view this trip
+  if (!canView) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="bg-earth-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
+            <Lock className="h-12 w-12 text-earth-600 mx-auto" />
+          </div>
+          <h2 className="text-2xl font-bold text-earth-800 mb-3">
+            Access Restricted
+          </h2>
+          <p className="text-earth-600 mb-6">
+            {session 
+              ? "You don't have permission to view this trip. Please contact the trip owner for access."
+              : "This is a private trip. Please sign in to continue."}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button 
+              onClick={() => navigate(-1)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+            {!session && (
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="bg-earth-600 hover:bg-earth-700 text-white"
+              >
+                Sign In
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   const handleTabChange = (tab: string) => {
