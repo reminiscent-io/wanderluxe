@@ -18,6 +18,7 @@ interface TimelineContentProps {
   onDayDelete: (id: string) => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  canEdit?: boolean;
 }
 
 const TimelineContent: React.FC<TimelineContentProps> = ({
@@ -26,7 +27,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   hotelStays,
   onDayDelete,
   tripArrivalDate,
-  tripDepartureDate
+  tripDepartureDate,
+  canEdit = true
 }) => {
   const queryClient = useQueryClient();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
@@ -163,6 +165,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 setEditingReservation(reservation);
                 setReservationOpen(true);  // Open the dialog when clicking a reservation
               }}
+              canEdit={canEdit}
             />
           );
         })}

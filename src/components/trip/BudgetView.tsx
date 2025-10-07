@@ -49,9 +49,10 @@ interface AddExpenseData {
 
 interface BudgetViewProps {
   tripId: string;
+  canEdit?: boolean;
 }
 
-const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
+const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
   const { selectedCurrency, handleCurrencyChange, lastUpdated: currencyLastUpdated } = useCurrencyState();
   const { data: expenses } = useExpenses(tripId);
   const { addExpense, updateExpense } = useBudgetMutations(tripId);
@@ -547,7 +548,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                     <option value="activities">Activities</option>
                     <option value="other">Other</option>
                   </select>
-                  <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />
+                  {canEdit && <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />}
                 </div>
               </div>
 
@@ -584,13 +585,15 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId }) => {
                           : 'Start by adding your first expense to track your spending.'
                         }
                       </p>
-                      <Button 
-                        onClick={() => setIsAddingExpense(true)}
-                        className="bg-earth-500 hover:bg-earth-600 text-sand-50"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Your First Expense
-                      </Button>
+                      {canEdit && (
+                        <Button 
+                          onClick={() => setIsAddingExpense(true)}
+                          className="bg-earth-500 hover:bg-earth-600 text-sand-50"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Your First Expense
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 )}

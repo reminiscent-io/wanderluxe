@@ -20,6 +20,7 @@ interface HeroSectionProps {
   photographer?: string;
   unsplashUsername?: string;
   isLoading?: boolean;
+  canEdit?: boolean;
 }
 
 interface DateRangeDisplayProps {
@@ -51,6 +52,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   photographer,
   unsplashUsername,
   isLoading = false,
+  canEdit = true,
 }) => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -186,21 +188,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <div className="relative w-full mb-0">
       <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden rounded-lg rounded-b-none group">
-        <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="opacity-50 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm text-sand-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDialogOpen(true);
-            }}
-          >
-            <PencilIcon className="h-4 w-4 mr-2" />
-            Edit Cover
-          </Button>
-        </div>
+        {canEdit && (
+          <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="opacity-50 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm text-sand-50"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDialogOpen(true);
+              }}
+            >
+              <PencilIcon className="h-4 w-4 mr-2" />
+              Edit Cover
+            </Button>
+          </div>
+        )}
 
 
         <Dialog 
@@ -261,17 +265,22 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           ) : (
             <div className="group relative inline-block">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg text-center cursor-pointer" onClick={() => setIsEditing(true)}>
+              <h1 
+                className={`text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg text-center ${canEdit ? 'cursor-pointer' : ''}`} 
+                onClick={canEdit ? () => setIsEditing(true) : undefined}
+              >
                 {lastValidTitle}
               </h1>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => setIsEditing(true)}
-              >
-                <PencilIcon className="h-4 w-4" />
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <PencilIcon className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           )}
 
