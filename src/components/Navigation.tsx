@@ -1,11 +1,13 @@
 
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import NavigationLogo from "./navigation/NavigationLogo";
 import NavigationLinks from "./navigation/NavigationLinks";
 import NavigationAuth from "./navigation/NavigationAuth";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, Compass, FolderOpen } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 interface NavigationProps {
@@ -14,7 +16,14 @@ interface NavigationProps {
 
 const Navigation = ({ mobileMenuTrigger }: NavigationProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isTripPage = location.pathname.startsWith('/trip/');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleMobileNavigation = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
 
   return (
     <motion.nav
@@ -33,6 +42,36 @@ const Navigation = ({ mobileMenuTrigger }: NavigationProps) => {
               {mobileMenuTrigger}
             </div>
           )}
+          
+          {/* Mobile menu for non-trip pages */}
+          {!isTripPage && (
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64">
+                <div className="flex flex-col space-y-4 mt-8">
+                  <button
+                    onClick={() => handleMobileNavigation('/explore')}
+                    className="flex items-center gap-3 px-4 py-3 text-left text-sand-700 hover:bg-sand-50 rounded-lg transition-colors"
+                  >
+                    <Compass className="h-5 w-5" />
+                    <span className="font-medium">Explore</span>
+                  </button>
+                  <button
+                    onClick={() => handleMobileNavigation('/my-trips')}
+                    className="flex items-center gap-3 px-4 py-3 text-left text-sand-700 hover:bg-sand-50 rounded-lg transition-colors"
+                  >
+                    <FolderOpen className="h-5 w-5" />
+                    <span className="font-medium">My Trips</span>
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
+          
           {!isTripPage && <NavigationLogo />}
         </div>
         <NavigationLinks />
