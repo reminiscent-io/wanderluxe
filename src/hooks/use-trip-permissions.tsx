@@ -84,8 +84,10 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
         const isOwner = tripData.user_id === user.id;
 
-        // Check if user is Kevin (special admin access for public trips)
-        const isKevin = user.email?.toLowerCase() === 'kevin@wanderluxe.io';
+        // Check if user is admin (special admin access for public trips)
+        // @ts-ignore - import.meta.env is available in Vite
+        const adminEmail = (import.meta.env?.VITE_ADMIN_EMAIL as string | undefined)?.toLowerCase() || 'kevin@wanderluxe.io';
+        const isKevin = user.email?.toLowerCase() === adminEmail;
 
         if (isOwner) {
           setPermissions({

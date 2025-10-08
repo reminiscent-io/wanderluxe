@@ -14,6 +14,12 @@ const Footer = () => {
           </div>
           <div className="flex justify-center gap-4">
             <Link 
+              to="/explore" 
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Explore Trips
+            </Link>
+            <Link 
               to="/terms" 
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
