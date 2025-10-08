@@ -54,6 +54,7 @@ interface CompactDayCardProps {
   onHotelClick?: (hotel: HotelStay) => void;
   onTransportationClick?: (transportation: Transportation) => void;
   onReservationClick?: (reservation: RestaurantReservation) => void;
+  canEdit?: boolean;
 }
 
 interface TimelineItem {
@@ -83,6 +84,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   onHotelClick,
   onTransportationClick,
   onReservationClick,
+  canEdit = true,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -566,40 +568,42 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                 </div>
 
                 {/* Enhanced Quick Add Buttons */}
-                <div className="flex gap-2 pt-4 border-t border-sand-200">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addActivityForThisDay}
-                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
-                  >
-                    <span className="truncate">Activity</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onHotelAdd}
-                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
-                  >
-                    <span className="truncate">Hotel</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onTransportationAdd}
-                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
-                  >
-                    <span className="truncate">Travel</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onReservationAdd}
-                    className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
-                  >
-                    <span className="truncate">Dining</span>
-                  </Button>
-                </div>
+                {canEdit && (
+                  <div className="flex gap-2 pt-4 border-t border-sand-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addActivityForThisDay}
+                      className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
+                    >
+                      <span className="truncate">Activity</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onHotelAdd}
+                      className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
+                    >
+                      <span className="truncate">Hotel</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onTransportationAdd}
+                      className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
+                    >
+                      <span className="truncate">Travel</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onReservationAdd}
+                      className="text-xs px-3 py-2 h-8 flex-1 min-w-0 bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
+                    >
+                      <span className="truncate">Dining</span>
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <motion.div 
@@ -611,41 +615,43 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                 <div className="bg-sand-50 rounded-xl p-6 border-2 border-dashed border-sand-200">
                   <Calendar className="h-10 w-10 text-earth-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-earth-800 mb-2">No plans yet</h3>
-                  <p className="text-sm text-earth-600 mb-6">Start planning your day by adding activities, hotels, or transportation</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={addActivityForThisDay}
-                      className="text-sm px-4 py-3 h-auto bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
-                    >
-                      <span>+ Activity</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onHotelAdd}
-                      className="text-sm px-4 py-3 h-auto bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
-                    >
-                      <span>+ Hotel</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onTransportationAdd}
-                      className="text-sm px-4 py-3 h-auto bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
-                    >
-                      <span>+ Travel</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onReservationAdd}
-                      className="text-sm px-4 py-3 h-auto bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
-                    >
-                      <span>+ Dining</span>
-                    </Button>
-                  </div>
+                  <p className="text-sm text-earth-600 mb-6">{canEdit ? 'Start planning your day by adding activities, hotels, or transportation' : 'This day has no activities planned'}</p>
+                  {canEdit && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addActivityForThisDay}
+                        className="text-sm px-4 py-3 h-auto bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all"
+                      >
+                        <span>+ Activity</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onHotelAdd}
+                        className="text-sm px-4 py-3 h-auto bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all"
+                      >
+                        <span>+ Hotel</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onTransportationAdd}
+                        className="text-sm px-4 py-3 h-auto bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all"
+                      >
+                        <span>+ Travel</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onReservationAdd}
+                        className="text-sm px-4 py-3 h-auto bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all"
+                      >
+                        <span>+ Dining</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}

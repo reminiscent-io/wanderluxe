@@ -13,12 +13,18 @@ import BookingView from "../components/trip/BookingView";
 import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
 import ChatView from "../components/trip/chat/ChatView";
 import ErrorBoundary from "@/components/ErrorBoundary";
-
+import { useTripPermissions } from '@/hooks/use-trip-permissions';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Lock, ArrowLeft } from 'lucide-react';
+import { useAuth } from "@/contexts/AuthContext";
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const { canView, canEdit, isLoading: permissionsLoading } = useTripPermissions(tripId);
   
   // Determine active tab from URL
   const activeTab = useMemo(() => {
@@ -49,6 +55,11 @@ const TripDetails = () => {
     return <TripDetailsSkeleton />;
   }
 
+  // Handle permissions loading
+  if (permissionsLoading) {
+    return <TripDetailsSkeleton />;
+  }
+
   // Handle error state
   if (tripError) {
     return <TripDetailsError />;
@@ -59,6 +70,45 @@ const TripDetails = () => {
   // If no data is available
   if (!displayData) {
     return <TripDetailsError message="The requested trip could not be found." />;
+  }
+
+  // Handle access denied - user cannot view this trip
+  if (!canView) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="bg-earth-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
+            <Lock className="h-12 w-12 text-earth-600 mx-auto" />
+          </div>
+          <h2 className="text-2xl font-bold text-earth-800 mb-3">
+            Access Restricted
+          </h2>
+          <p className="text-earth-600 mb-6">
+            {session 
+              ? "You don't have permission to view this trip. Please contact the trip owner for access."
+              : "This is a private trip. Please sign in to continue."}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button 
+              onClick={() => navigate(-1)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+            {!session && (
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="bg-earth-600 hover:bg-earth-700 text-white"
+              >
+                Sign In
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   const handleTabChange = (tab: string) => {
@@ -82,11 +132,43 @@ const TripDetails = () => {
               arrivalDate={displayData.arrival_date}
               departureDate={displayData.departure_date}
               isLoading={tripLoading && !previousTrip}
+              canEdit={canEdit}
             />
           </div>
 
           <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
             <div className="max-w-none mx-auto px-4 py-8">
+              {/* Read-only mode banner */}
+              {!canEdit && (
+                <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700 font-medium">
+                        {session 
+                          ? "You're viewing this trip in read-only mode. Contact the trip owner for edit access."
+                          : "You're viewing this public trip. Sign in to create your own trips!"}
+                      </p>
+                    </div>
+                    {!session && (
+                      <div className="ml-auto">
+                        <Button
+                          onClick={() => navigate('/auth')}
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          Sign In
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               {/* Render content based on active tab */}
               {activeTab === 'timeline' && (
                 <ErrorBoundary>
@@ -101,24 +183,25 @@ const TripDetails = () => {
                         : null
                     }}
                     tripDestination={displayData.destination}
+                    canEdit={canEdit}
                   />
                 </ErrorBoundary>
               )}
               
               {activeTab === 'chat' && (
-                <ChatView tripId={tripId || ''} />
+                <ChatView tripId={tripId || ''} canEdit={canEdit} />
               )}
               
               {activeTab === 'vision-board' && (
-                <VisionBoardView tripId={tripId} />
+                <VisionBoardView tripId={tripId} canEdit={canEdit} />
               )}
               
               {activeTab === 'budget' && (
-                <BudgetView tripId={tripId} />
+                <BudgetView tripId={tripId} canEdit={canEdit} />
               )}
               
               {activeTab === 'booking' && (
-                <BookingView tripId={tripId} />
+                <BookingView tripId={tripId} canEdit={canEdit} />
               )}
             </div>
           </div>

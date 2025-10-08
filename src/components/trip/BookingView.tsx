@@ -8,9 +8,10 @@ import { ExternalLink, MapPin, Star, Mail, Phone } from 'lucide-react';
 
 interface BookingViewProps {
   tripId: string | undefined;
+  canEdit?: boolean;
 }
 
-const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
+const BookingView: React.FC<BookingViewProps> = ({ tripId, canEdit = true }) => {
   const { toast } = useToast();
   const { user } = useAuth();
 

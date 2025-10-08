@@ -92,12 +92,13 @@ interface ChatMessageDB {
 
 interface ChatViewProps {
   tripId: string;
+  canEdit?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
 /* Main Component                                                     */
 /* ------------------------------------------------------------------ */
-const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
+const ChatView: React.FC<ChatViewProps> = ({ tripId, canEdit = true }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -352,7 +353,7 @@ const ChatView: React.FC<ChatViewProps> = ({ tripId }) => {
         uploads={uploads}
         setUploads={setUploads}
         onSend={send}
-        disabled={isSending}
+        disabled={isSending || !canEdit}
         validate={validate}
       />
     </div>

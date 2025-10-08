@@ -19,9 +19,10 @@ interface TimelineViewProps {
     departure_date: string | null;
   };
   tripDestination?: string;
+  canEdit?: boolean;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination, canEdit = true }) => {
   // Keep the session alive while working on the timeline
   useSessionKeepAlive(10 * 60 * 1000); // 10 minutes - increased to prevent frequent refreshes
 
@@ -220,6 +221,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         onDayDelete={handleDayDelete}
         tripArrivalDate={localTripDates.arrival_date || undefined}
         tripDepartureDate={localTripDates.departure_date || undefined}
+        canEdit={canEdit}
       />
     </div>
   );
