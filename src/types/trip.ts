@@ -7,7 +7,7 @@ export interface ActivityFormData {
   date?: string;
   start_time?: string;
   end_time?: string;
-  cost?: string;
+  cost?: string | null;
   currency: Currency;
   travelers?: string[];
 }

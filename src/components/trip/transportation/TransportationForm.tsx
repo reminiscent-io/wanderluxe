@@ -88,7 +88,7 @@ export default function TransportationForm({
       
       form.setValue("travel_range", {
         start: tripArrivalDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
-        end: tripDepartureDate ? parse(tripDepartureDate, "yyyy-MM-dd", new Date()) : null,
+        end: tripDepartureDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
         startTime: "",
         endTime: "",
       });
