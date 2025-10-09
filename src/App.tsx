@@ -12,6 +12,8 @@ import NotFound from "./pages/NotFound";
 import MyTrips from "./pages/MyTrips";
 import TripDetails from "./pages/TripDetails";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import UpdatePassword from "./pages/Auth/UpdatePassword";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Profile from "./pages/Profile";
@@ -45,6 +47,8 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                <Route path="/auth/update-password" element={<UpdatePassword />} />
                 <Route path="/explore" element={<Explore />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
