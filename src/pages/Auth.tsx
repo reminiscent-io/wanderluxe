@@ -241,6 +241,19 @@ const Auth = () => {
                 </Button>
               </div>
             </form>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-center text-muted-foreground mb-3">
+                Not ready to sign up?
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => navigate("/explore")}
+              >
+                Explore Public Trips
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
