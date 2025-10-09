@@ -136,20 +136,16 @@ const Explore = () => {
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
                   <Compass className="h-8 w-8 text-white" />
                 </div>
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight text-white">
+                <h1 className="text-5xl md:text-3xl lg:text-6xl font-black leading-tight text-white">
                   Explore Trips
                 </h1>
               </div>
-              <p className="text-white/90 text-xl md:text-2xl font-medium mb-8 leading-relaxed max-w-3xl">
-                Discover curated travel experiences and get inspired for your next adventure
-              </p>
-
               {!session && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.5 }}
-                  className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
+                  className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20"
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -379,14 +375,14 @@ const Explore = () => {
             transition={{ delay: 0.8, duration: 0.5 }}
             className="mt-12"
           >
-            <Card className="p-8 md:p-12 text-center bg-gradient-to-br from-earth-600 to-earth-700 border-0 shadow-xl">
-              <div className="max-w-2xl mx-auto">
+            <Card className="p-3 md:p-6 text-center bg-gradient-to-br from-earth-600 to-earth-700 border-0 shadow-xl">
+              <div className="max-w-xl mx-auto">
                 <Sparkles className="h-12 w-12 text-yellow-300 mx-auto mb-4" />
-                <h3 className="text-3xl font-bold text-white mb-4">
+                <h3 className="text-3xl font-bold text-white mb-3">
                   Inspired? Start Planning Your Journey
                 </h3>
-                <p className="text-white/90 text-lg mb-8">
-                  Create your personalized travel itinerary with AI-powered planning, collaborative features, and more
+                <p className="text-white/90 text-lg mb-3">
+                  Still planning trips in google sheets? Manage your travel plans all in one place with WanderLuxe. New features released monthly - sign up today!
                 </p>
                 <Button 
                   onClick={() => {
