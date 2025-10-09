@@ -11,11 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import LuxuryDateTimeRangePicker, { LuxuryDateTimeRange } from "@/components/ui/LuxuryDateTimeRangePicker";
+import LuxuryDateTimeRangePicker from "@/components/ui/LuxuryDateTimeRangePicker";
 import LocationInputPair from "./LocationInputPair";
 import {
   CURRENCIES,
-  CURRENCY_NAMES,
   CURRENCY_SYMBOLS,
 } from "@/utils/currencyConstants";
 import { 
@@ -23,6 +22,7 @@ import {
   getTransportationIcon 
 } from "@/utils/transportationUtils";
 import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
+import { Switch } from "@/components/ui/switch";
 
 interface Props {
   form: UseFormReturn<any>;
@@ -33,21 +33,34 @@ interface Props {
 const Required = () => <span className="text-red-500">*</span>;
 
 export default function TransportationFormFields({ form, tripArrivalDate, tripId }: Props) {
-  const { control, setValue } = form;
+  const { control, setValue, getValues } = form;
 
-  // watch departure & arrival so UI updates properly
-  const departure = useWatch({
-    control,
-    name: "departure_location",
-  }) as string;
-  const arrival = useWatch({
-    control,
-    name: "arrival_location",
-  }) as string;
+  // watch outbound locations so UI updates properly
+  const departure = useWatch({ control, name: "departure_location" }) as string;
+  const arrival = useWatch({ control, name: "arrival_location" }) as string;
+
+  // watch type & RT state
+  const type = useWatch({ control, name: "type" }) as string;
+  const isRoundtrip = useWatch({ control, name: "is_roundtrip" }) as boolean;
+
+  // return leg watch
+  const returnDeparture = useWatch({ control, name: "return_departure_location" }) as string;
+  const returnArrival = useWatch({ control, name: "return_arrival_location" }) as string;
+
+  // track whether the user manually edited return fields (to avoid over-syncing)
+  const [returnTouched, setReturnTouched] = useState(false);
+
+  useEffect(() => {
+    if (type === "flight" && isRoundtrip && !returnTouched) {
+      // auto-sync swap unless user has typed in return fields
+      setValue("return_departure_location", arrival || "");
+      setValue("return_arrival_location", departure || "");
+    }
+  }, [type, isRoundtrip, departure, arrival, returnTouched, setValue]);
 
   // watch cost for formatted display
   const cost = useWatch({ control, name: "cost" }) as number | null;
-  const [costDisplay, setCostDisplay] = useState(cost?.toString() ?? "");
+  const [_, setCostDisplay] = useState(cost?.toString() ?? "");
   useEffect(() => {
     setCostDisplay(cost?.toString() ?? "");
   }, [cost]);
@@ -63,7 +76,12 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
             <Label>
               Transportation Type <Required />
             </Label>
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select value={field.value} onValueChange={(v) => {
+              field.onChange(v);
+              if (v !== 'flight') {
+                setValue('is_roundtrip', false);
+              }
+            }}>
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Select type">
                   {field.value && (
@@ -96,7 +114,34 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         )}
       />
 
-      {/* Departure / Arrival Locations */}
+      {/* Roundtrip toggle (flights only) */}
+      {type === "flight" && (
+        <Controller
+          control={control}
+          name="is_roundtrip"
+          render={({ field }) => (
+            <div className="flex items-center justify-between rounded-md border border-sand-200 bg-sand-50 p-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm">Roundtrip</Label>
+                <p className="text-xs text-sand-600">
+                  Adds a return flight and auto‑uses swapped locations.
+                </p>
+              </div>
+              <Switch checked={!!field.value} onCheckedChange={(checked) => {
+                field.onChange(checked);
+                if (checked) {
+                  const a = getValues("arrival_location") || "";
+                  const d = getValues("departure_location") || "";
+                  setValue("return_departure_location", a);
+                  setValue("return_arrival_location", d);
+                }
+              }} />
+            </div>
+          )}
+        />
+      )}
+
+      {/* Departure / Arrival Locations (Outbound) */}
       <LocationInputPair
         fromValue={departure}
         toValue={arrival}
@@ -105,7 +150,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         transportationType={form.getValues("type") as string}
       />
 
-      {/* Unified Date + Time Picker */}
+      {/* Unified Date + Time Picker (Outbound) */}
       <LuxuryDateTimeRangePicker
         name="travel_range"
         label="Travel Dates"
@@ -153,9 +198,6 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
                   onChange={(e) => {
                     const numericValue = Number(e.target.value.replace(/,/g, ''));
                     setValue("cost", Number.isNaN(numericValue) ? null : numericValue);
-                  }}
-                  onBlur={(e) => {
-                    // The field value is already set by onChange, this ensures visual formatting
                   }}
                   placeholder="0"
                   className="bg-white"
@@ -216,6 +258,29 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
           </div>
         )}
       />
+
+      {/* Return Flight (visible only when roundtrip is ON for flights) */}
+      {type === "flight" && isRoundtrip && (
+        <fieldset className="mt-3 rounded-md border border-sand-200 p-3">
+          <legend className="px-1 text-xs text-sand-600">Return flight</legend>
+
+          <LocationInputPair
+            fromValue={returnDeparture || ""}
+            toValue={returnArrival || ""}
+            onFromChange={(v) => { setValue("return_departure_location", v); setReturnTouched(true); }}
+            onToChange={(v) => { setValue("return_arrival_location", v); setReturnTouched(true); }}
+            transportationType="flight"
+          />
+
+          <LuxuryDateTimeRangePicker
+            name="return_travel_range"
+            label="Return Travel Dates"
+            required
+            defaultMonth={tripArrivalDate ? new Date(tripArrivalDate) : undefined}
+            control={control}
+          />
+        </fieldset>
+      )}
     </div>
   );
 }
