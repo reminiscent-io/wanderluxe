@@ -108,7 +108,8 @@ const Explore = () => {
         event_label: `Trip Click - ${category}`,
         content_type: 'trip',
         item_id: trip.trip_id,
-        destination: trip.destination
+        destination: trip.destination,
+        trip_category: category.toLowerCase()
       });
     }
   };
