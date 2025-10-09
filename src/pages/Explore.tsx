@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navigation from "../components/Navigation";
@@ -16,6 +16,18 @@ const Explore = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { session } = useAuth();
+
+  // Track page view on component mount
+  useEffect(() => {
+    if (window.gtag) {
+      window.gtag('event', 'page_view', {
+        page_title: 'Explore Trips',
+        page_location: window.location.href,
+        page_path: window.location.pathname,
+        user_authenticated: !!session
+      });
+    }
+  }, [session]);
 
   const { data: publicTrips, isLoading } = useQuery({
     queryKey: ['public-trips'],
@@ -42,6 +54,22 @@ const Explore = () => {
       trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [publicTrips, searchQuery]);
+
+  // Track search queries
+  useEffect(() => {
+    if (searchQuery && window.gtag) {
+      const timeoutId = setTimeout(() => {
+        window.gtag('event', 'search', {
+          search_term: searchQuery,
+          event_category: 'Explore',
+          event_label: 'Destination Search',
+          results_count: filteredTrips.length
+        });
+      }, 500); // Debounce search tracking
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchQuery, filteredTrips.length]);
 
   const getTripCategory = (trip: Trip): 'upcoming' | 'current' | 'past' => {
     const today = new Date();
@@ -71,6 +99,19 @@ const Explore = () => {
       pastTrips: past
     };
   }, [filteredTrips]);
+
+  // Track trip click
+  const handleTripClick = (trip: Trip, category: string) => {
+    if (window.gtag) {
+      window.gtag('event', 'select_content', {
+        event_category: 'Explore',
+        event_label: `Trip Click - ${category}`,
+        content_type: 'trip',
+        item_id: trip.trip_id,
+        destination: trip.destination
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50">
@@ -118,7 +159,16 @@ const Explore = () => {
                       </div>
                     </div>
                     <Button 
-                      onClick={() => navigate('/auth')}
+                      onClick={() => {
+                        if (window.gtag) {
+                          window.gtag('event', 'click', {
+                            event_category: 'Conversion',
+                            event_label: 'Get Started - Header CTA',
+                            value: 1
+                          });
+                        }
+                        navigate('/auth');
+                      }}
                       className="bg-white text-earth-800 hover:bg-white/90 px-6 py-3 rounded-xl font-semibold flex items-center gap-2 whitespace-nowrap"
                     >
                       Get Started
@@ -185,6 +235,7 @@ const Explore = () => {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
+                      onClick={() => handleTripClick(trip, 'Current')}
                     >
                       <TripCard
                         trip={{
@@ -226,6 +277,7 @@ const Explore = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1, duration: 0.3 }}
+                      onClick={() => handleTripClick(trip, 'Upcoming')}
                     >
                       <TripCard
                         trip={{
@@ -267,6 +319,7 @@ const Explore = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05, duration: 0.3 }}
+                      onClick={() => handleTripClick(trip, 'Past')}
                     >
                       <TripCard
                         trip={{
@@ -297,7 +350,16 @@ const Explore = () => {
                   </p>
                   {!session && (
                     <Button 
-                      onClick={() => navigate('/auth')} 
+                      onClick={() => {
+                        if (window.gtag) {
+                          window.gtag('event', 'click', {
+                            event_category: 'Conversion',
+                            event_label: 'Create Your Own Trip - Empty State CTA',
+                            value: 1
+                          });
+                        }
+                        navigate('/auth');
+                      }} 
                       className="bg-earth-600 hover:bg-earth-700 text-white px-8 py-3 rounded-xl font-medium"
                     >
                       Create Your Own Trip
@@ -326,7 +388,16 @@ const Explore = () => {
                   Create your personalized travel itinerary with AI-powered planning, collaborative features, and more
                 </p>
                 <Button 
-                  onClick={() => navigate('/auth')} 
+                  onClick={() => {
+                    if (window.gtag) {
+                      window.gtag('event', 'click', {
+                        event_category: 'Conversion',
+                        event_label: 'Sign Up Free - Bottom CTA',
+                        value: 1
+                      });
+                    }
+                    navigate('/auth');
+                  }} 
                   size="lg"
                   className="bg-white text-earth-800 hover:bg-white/90 px-10 py-4 rounded-xl font-bold text-lg flex items-center gap-3 mx-auto"
                 >
