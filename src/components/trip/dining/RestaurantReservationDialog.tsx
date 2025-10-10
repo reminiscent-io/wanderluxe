@@ -1,60 +1,108 @@
+
 import React from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
 } from "@/components/ui/dialog";
 import RestaurantReservationForm from './RestaurantReservationForm';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface RestaurantReservationDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: any) => Promise<void>;
-  isSubmitting: boolean;
-  editingReservation?: any;
-  title: string;
-  onDelete?: () => Promise<void>;
   tripId: string;
+  initialData?: any;
+  onSuccess?: () => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
 }
 
 const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = ({
-  isOpen,
+  open,
   onOpenChange,
-  onSubmit,
-  isSubmitting,
-  editingReservation,
-  title,
-  onDelete,
   tripId,
+  initialData,
+  onSuccess,
   tripArrivalDate,
   tripDepartureDate,
 }) => {
-  const handleFormSubmit = async (data: any) => {
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleSubmit = async (data: any) => {
+    setIsSubmitting(true);
     try {
-      await onSubmit(data);
-    } catch (error) {
+      if (initialData?.id) {
+        // Update existing reservation
+        const { error } = await supabase
+          .from('reservations')
+          .update(data)
+          .eq('id', initialData.id)
+          .eq('trip_id', tripId);
+        
+        if (error) throw error;
+        toast.success('Reservation updated');
+      } else {
+        // Create new reservation
+        const { error } = await supabase
+          .from('reservations')
+          .insert([{ ...data, trip_id: tripId }]);
+        
+        if (error) throw error;
+        toast.success('Reservation added');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
       console.error('Failed to save reservation:', error);
-      throw error;
+      toast.error(error.message || 'Failed to save reservation');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!initialData?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', initialData.id)
+        .eq('trip_id', tripId);
+      
+      if (error) throw error;
+      toast.success('Reservation deleted');
+      
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Failed to delete reservation:', error);
+      toast.error(error.message || 'Failed to delete reservation');
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>{title}</DialogTitle>
-          {/* No description provided for this dialog */}
+          <DialogTitle>{initialData?.id ? 'Edit Reservation' : 'Add Reservation'}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none px-1">
           <RestaurantReservationForm
-            onSubmit={handleFormSubmit}
+            onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
-            defaultValues={editingReservation}
-            onDelete={onDelete}
+            defaultValues={initialData}
+            onDelete={initialData?.id ? handleDelete : undefined}
             onCancel={() => onOpenChange(false)}
             tripId={tripId}
             tripArrivalDate={tripArrivalDate}
