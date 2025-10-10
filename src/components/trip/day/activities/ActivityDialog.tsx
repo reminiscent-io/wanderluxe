@@ -14,11 +14,18 @@ interface ActivityDialogProps {
   isOpen?: boolean;           // legacy support
   onOpenChange: (open: boolean) => void;
 
-  activity: ActivityFormData;
-  onActivityChange: (activity: ActivityFormData) => void;
-  onSubmit: (activity?: ActivityFormData) => void;
+  // Legacy interface (timeline/sidebar)
+  activity?: ActivityFormData;
+  onActivityChange?: (activity: ActivityFormData) => void;
+  onSubmit?: (activity?: ActivityFormData) => void;
   onDelete?: (id: string) => void;
-  eventId: string; // day (event) id
+  eventId?: string; // day (event) id
+  
+  // New interface (chat system)
+  initialData?: any;
+  onSuccess?: () => void;
+  
+  // Common props
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
   tripId: string;
@@ -35,6 +42,8 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     onSubmit,
     onDelete,
     eventId,
+    initialData,
+    onSuccess,
     tripDates,
     preselectedDate,
     tripId,
@@ -43,6 +52,23 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
   const finalOpen = open ?? isOpen ?? false;
   const isEditMode = !!activityId;
+  
+  // Handle chat system interface
+  const [internalActivity, setInternalActivity] = React.useState<ActivityFormData>(
+    initialData || activity || {
+      title: '',
+      description: '',
+      date: '',
+      start_time: '',
+      end_time: '',
+      cost: '',
+      currency: 'USD'
+    }
+  );
+  
+  const finalActivity = activity || internalActivity;
+  const finalOnChange = onActivityChange || setInternalActivity;
+  const finalEventId = eventId || tripId; // Use tripId as fallback for chat system
 
   useEffect(() => {
     if (!isEditMode && preselectedDate) {
@@ -58,11 +84,55 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
       console.log("Editing activity with data:", activity);
     }
   }, [isEditMode, activityId, activity]);
+  
+  useEffect(() => {
+    if (initialData) {
+      setInternalActivity(initialData);
+    }
+  }, [initialData]);
 
   const handleDelete = () => {
     if (activityId && onDelete) {
       onDelete(activityId);
       onOpenChange(false);
+    }
+  };
+  
+  const handleSubmit = async (activityData?: ActivityFormData) => {
+    if (onSubmit) {
+      // Legacy interface
+      await onSubmit(activityData);
+    } else if (onSuccess) {
+      // Chat system interface - save directly
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { toast } = await import('sonner');
+        
+        const dataToSave = activityData || finalActivity;
+        
+        if (activityId) {
+          const { error } = await supabase
+            .from('day_activities')
+            .update(dataToSave)
+            .eq('id', activityId);
+          
+          if (error) throw error;
+          toast.success('Activity updated');
+        } else {
+          const { error } = await supabase
+            .from('day_activities')
+            .insert([{ ...dataToSave, trip_id: tripId }]);
+          
+          if (error) throw error;
+          toast.success('Activity added');
+        }
+        
+        onOpenChange(false);
+        onSuccess();
+      } catch (error: any) {
+        const { toast } = await import('sonner');
+        toast.error(error.message || 'Failed to save activity');
+      }
     }
   };
 
@@ -82,15 +152,15 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none">
           <ActivityForm
-            activity={activity}
-            onActivityChange={onActivityChange}
-            onSubmit={onSubmit}
+            activity={finalActivity}
+            onActivityChange={finalOnChange}
+            onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
             onDelete={isEditMode ? handleDelete : undefined}
             submitLabel={isEditMode ? "Save" : "Save"}
-            eventId={eventId}
+            eventId={finalEventId}
             tripDates={tripDates}
-            preselectedDate={preselectedDate || (isEditMode ? activity.date : undefined)}
+            preselectedDate={preselectedDate || (isEditMode ? finalActivity.date : undefined)}
             tripId={tripId}
             activityId={activityId}
           />
