@@ -93,7 +93,13 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   // Keep internal state in sync when chat passes new initialData
   useEffect(() => {
     if (initialData) {
-      setInternalActivity((curr) => ({ ...curr, ...initialData }));
+      // Map 'name' to 'title' for chat system compatibility
+      const mapped = { ...initialData };
+      if (mapped.name && !mapped.title) {
+        mapped.title = mapped.name;
+        delete mapped.name;
+      }
+      setInternalActivity((curr) => ({ ...curr, ...mapped }));
     }
   }, [initialData]);
 
