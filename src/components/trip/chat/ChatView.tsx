@@ -1,121 +1,126 @@
-// This replaces the old interactive chat with a guided OCR-to-form flow.
-// - Step 1: User selects one of: accommodation | transportation | activity | reservation
-// - Step 2: User uploads image/PDF or clicks Paste to read from clipboard
-// - Step 3: We POST to the Edge Function, receive structured JSON, and
-// - Step 4: Open the appropriate dialog prefilled. The user reviews & saves.
-//
-// Security & infra:
-// - We follow your legacy pattern of calling a Supabase Edge Function with the
-//   user's bearer token (as ChatView previously did).:contentReference[oaicite:5]{index=5}
-//
-// RLS:
-// - Saving still occurs through your existing dialogs/tables and respects
-//   user_has_edit_permission(trip_id), etc. (no DB change).:contentReference[oaicite:6]{index=6}:contentReference[oaicite:7]{index=7}
-
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Upload, ClipboardPaste, FileImage, FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Upload, ClipboardPaste, FileImage, FileText, Loader2, X, AlertTriangle } from "lucide-react";
+import * as z from "zod";
 
-// === Dialogs ===
-// TransportationDialog path verified from your repo structure:
 import TransportationDialog from "@/components/trip/transportation/TransportationDialog";
-
-// TODO: adjust these three imports to your actual paths:
-import AccommodationDialog from "@/components/trip/accommodation/AccommodationDialog"; 
-import ActivityDialog from "@/components/trip/day/activities/ActivityDialog"; 
-import RestaurantReservationDialog from "@/components/trip/dining/RestaurantReservationDialog"; 
+// TODO: confirm these three paths for your codebase:
+import AccommodationDialog from "@/components/trip/accommodation/AccommodationDialog";
+import ActivityDialog from "@/components/trip//day/activities/ActivityDialog";
+import RestaurantReservationDialog from "@/components/trip/dining/RestaurantReservationDialog";
 
 import type { Tables } from "@/integrations/supabase/types";
 
-// Your project’s functions domain. Mirror the legacy pattern used for chat-ai.:contentReference[oaicite:8]{index=8}
-const PARSE_ENDPOINT = "https://arnengxblsfnezrqcsxw.functions.supabase.co/parse-travel-doc";
-
 type TravelItemType = "accommodation" | "transportation" | "activity" | "reservation";
-
-interface ChatViewProps {
-  tripId: string;
-  canEdit?: boolean;
-}
-
-type OCRAccommodation = {
-  name?: string | null;
-  address?: string | null;
-  check_in_date?: string | null;  // YYYY-MM-DD
-  check_in_time?: string | null;  // HH:mm
-  check_out_date?: string | null;
-  check_out_time?: string | null;
-  confirmation_number?: string | null;
-  provider?: string | null;
-  cost?: number | null;
-  currency?: string | null;
-};
-
-type OCRTransportation = {
-  type?: string | null; // flight, train, etc.
-  carrier?: string | null;
-  departure_location?: string | null;
-  arrival_location?: string | null;
-  departure_date?: string | null; // YYYY-MM-DD
-  departure_time?: string | null; // HH:mm
-  arrival_date?: string | null;
-  arrival_time?: string | null;
-  confirmation_number?: string | null;
-  cost?: number | null;
-  currency?: string | null;
-};
-
-type OCRActivity = {
-  name?: string | null;
-  date?: string | null;
-  start_time?: string | null;
-  end_time?: string | null;
-  location?: string | null;
-  provider?: string | null;
-  confirmation_number?: string | null;
-  notes?: string | null;
-};
-
-type OCRReservation = {
-  restaurant_name?: string | null;
-  date?: string | null;
-  time?: string | null;        // HH:mm
-  party_size?: number | null;
-  address?: string | null;
-  confirmation_number?: string | null;
-};
+interface Props { tripId: string; canEdit?: boolean; }
 
 const okTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
-
 const MAX_FILE_MB = 15;
-
 const toDbTime = (t?: string | null) => (t && /^\d{2}:\d{2}$/.test(t) ? t : null);
 
-export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
-  const { toast } = useToast();
+// ---- Edge response schema (Zod) ----
+const baseFields = z.record(z.unknown());
+const edgeResponseSchema = z.object({
+  itemType: z.enum(["accommodation", "transportation", "activity", "reservation"]),
+  fields: baseFields,
+  missingRequired: z.array(z.string()),
+  meta: z.object({ model: z.string(), pagesUsed: z.number() }).optional(),
+});
+type EdgePayload = z.infer<typeof edgeResponseSchema>;
 
-  // Step selection + file
+// ---- ENV endpoint (don’t hard-code) ----
+const PARSE_ENDPOINT =
+  import.meta.env.VITE_PARSE_TRAVEL_DOC_URL ||
+  "https://arnengxblsfnezrqcsxw.functions.supabase.co/parse-travel-doc";
+
+// --------- OCR → initial dialog mapping helpers ----------
+const mapToTransportation = (f: Record<string, any>): Partial<Tables<"transportation">> => {
+  const toType = (raw?: string | null): Tables<"transportation">["type"] | undefined => {
+    const v = (raw || "").toLowerCase();
+    if (v.includes("flight") || v.includes("air")) return "flight";
+    if (v.includes("train")) return "train";
+    if (v.includes("ferry")) return "ferry";
+    if (v.includes("shuttle")) return "shuttle";
+    if (v.includes("rental")) return "rental_car";
+    if (v.includes("car")) return "car_service";
+    return "flight";
+  };
+
+  return {
+    type: toType(f.type),
+    provider: f.carrier ?? null,
+    departure_location: f.departure_location ?? null,
+    arrival_location: f.arrival_location ?? null,
+    start_date: f.departure_date ?? null,
+    start_time: toDbTime(f.departure_time),
+    end_date: (f.arrival_date ?? f.departure_date) ?? null,
+    end_time: toDbTime(f.arrival_time),
+    confirmation_number: f.confirmation_number ?? null,
+    cost: typeof f.cost === "number" ? f.cost : null,
+    currency: f.currency ?? null,
+    details: null,
+  };
+};
+
+const mapToAccommodation = (f: Record<string, any>, tripId: string) => ({
+  name: f.name ?? "",
+  address: f.address ?? "",
+  check_in_date: f.check_in_date ?? "",
+  check_in_time: toDbTime(f.check_in_time),
+  check_out_date: f.check_out_date ?? "",
+  check_out_time: toDbTime(f.check_out_time),
+  confirmation_number: f.confirmation_number ?? "",
+  provider: f.provider ?? "",
+  cost: typeof f.cost === "number" ? f.cost : null,
+  currency: f.currency ?? "",
+  trip_id: tripId,
+});
+
+const mapToActivity = (f: Record<string, any>, tripId: string) => ({
+  name: f.name ?? "",
+  date: f.date ?? "",
+  start_time: toDbTime(f.start_time),
+  end_time: toDbTime(f.end_time),
+  location: f.location ?? "",
+  provider: f.provider ?? "",
+  confirmation_number: f.confirmation_number ?? "",
+  notes: f.notes ?? "",
+  trip_id: tripId,
+});
+
+const mapToReservation = (f: Record<string, any>, tripId: string) => ({
+  restaurant_name: f.restaurant_name ?? "",
+  date: f.date ?? "",
+  time: toDbTime(f.time),
+  party_size: typeof f.party_size === "number" ? f.party_size : null,
+  address: f.address ?? "",
+  confirmation_number: f.confirmation_number ?? "",
+  trip_id: tripId,
+});
+
+export default function ChatView({ tripId, canEdit = true }: Props) {
+  // Step + file
   const [itemType, setItemType] = useState<TravelItemType | "">("");
   const [file, setFile] = useState<File | null>(null);
 
-  // Processing state
+  // Preview state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewIsConverted, setPreviewIsConverted] = useState(false);
+  const [convertedForSend, setConvertedForSend] = useState<File | null>(null);
+
+  // Processing + OCR
   const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [edgeData, setEdgeData] = useState<EdgePayload | null>(null);
+  const [showJson, setShowJson] = useState(false);
 
-  // OCR result
-  const [ocrData, setOcrData] = useState<any>(null);
-
-  // Dialog open flags
+  // Dialogs
   const [openAcc, setOpenAcc] = useState(false);
   const [openTp, setOpenTp] = useState(false);
   const [openAct, setOpenAct] = useState(false);
@@ -123,30 +128,33 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --------- helpers ----------
-  const validate = useCallback((f: File) => {
+  // ---------- helpers ----------
+  const validateFile = useCallback((f: File) => {
     if (!okTypes.includes(f.type)) return "Only JPG, PNG, or PDF files are allowed.";
-    if (f.size > MAX_FILE_MB * 1024 * 1024)
-      return `Max file size is ${MAX_FILE_MB} MB.`;
+    if (f.size > MAX_FILE_MB * 1024 * 1024) return `Max file size is ${MAX_FILE_MB} MB.`;
     return null;
   }, []);
+
+  const revokePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewIsConverted(false);
+  };
+  useEffect(() => () => revokePreview(), []); // cleanup on unmount
 
   const pickFile = () => fileInputRef.current?.click();
 
   const onInputFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files?.length) return;
     const f = files[0];
-    const err = validate(f);
-    if (err) {
-      toast({ title: "Invalid file", description: err, variant: "destructive" });
-      return;
-    }
+    const err = validateFile(f);
+    if (err) return toast.error(err);
     setFile(f);
+    preparePreview(f).catch((e) => toast.error(`Preview failed: ${String(e?.message || e)}`));
   };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    if (!canEdit) return;
     if (!e.dataTransfer.files?.length) return;
     onInputFiles(e.dataTransfer.files);
   };
@@ -154,10 +162,7 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
   const onPasteClick = async () => {
     try {
       if (!navigator.clipboard || !("read" in navigator.clipboard)) {
-        toast({
-          title: "Paste not supported",
-          description: "Use the upload button or drag-and-drop.",
-        });
+        toast.info("Paste not supported. Use Upload instead.");
         return;
       }
       const items = await (navigator.clipboard as any).read();
@@ -166,44 +171,34 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
           if (type.startsWith("image/") || type === "image/png" || type === "image/jpeg") {
             const blob = await it.getType(type);
             const pasted = new File([blob], `pasted.${type.split("/")[1]}`, { type });
-            const err = validate(pasted);
-            if (err) throw new Error(err);
+            const err = validateFile(pasted); if (err) throw new Error(err);
             setFile(pasted);
+            await preparePreview(pasted);
             return;
           }
           if (type === "application/pdf") {
             const blob = await it.getType(type);
             const pasted = new File([blob], "pasted.pdf", { type });
-            const err = validate(pasted);
-            if (err) throw new Error(err);
+            const err = validateFile(pasted); if (err) throw new Error(err);
             setFile(pasted);
+            await preparePreview(pasted);
             return;
           }
         }
       }
-      toast({
-        title: "No image or PDF found in clipboard",
-        description: "Copy a screenshot or PDF, then press Paste again.",
-      });
+      toast.message("No image or PDF found in clipboard");
     } catch (e: any) {
-      toast({
-        title: "Paste failed",
-        description: e?.message ?? "Clipboard read is blocked by the browser.",
-        variant: "destructive",
-      });
+      toast.error(e?.message ?? "Clipboard read blocked by browser.");
     }
   };
 
-  // Convert first page of a PDF to PNG (client-side) so the Edge Function sees an image.
-  // Keeps us from storing PDFs anywhere, but still supports PDF confirmations.
+  // --- PDF → PNG (first page)
   const pdfFirstPageToPng = async (pdfFile: File): Promise<File> => {
     const ab = await pdfFile.arrayBuffer();
-    // Use the correct import paths for pdfjs-dist with Vite
-    const pdfjs = await import("pdfjs-dist");
-    const pdfjsWorker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-    pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
-
-    const pdf = await pdfjs.getDocument({ data: ab }).promise;
+    const pdfjs = await import("pdfjs-dist/legacy/build/pdf");
+    const worker = await import("pdfjs-dist/legacy/build/pdf.worker.min.js?url");
+    (pdfjs as any).GlobalWorkerOptions.workerSrc = (worker as any).default;
+    const pdf = await (pdfjs as any).getDocument({ data: ab }).promise;
     const page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale: 2 });
     const canvas = document.createElement("canvas");
@@ -211,7 +206,6 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     await page.render({ canvasContext: ctx, viewport }).promise;
-
     const blob = await new Promise<Blob>((resolve) =>
       canvas.toBlob((b) => resolve(b!), "image/png")
     );
@@ -221,16 +215,31 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
     });
   };
 
-  // POST to the Edge Function
-  const extract = async (f: File, type: TravelItemType) => {
+  // --- Build preview (and prepare converted file we also reuse for extraction)
+  const preparePreview = async (f: File) => {
+    revokePreview();
+    setConvertedForSend(null);
+    setEdgeData(null);
+
+    if (f.type === "application/pdf") {
+      const converted = await pdfFirstPageToPng(f);
+      const url = URL.createObjectURL(converted);
+      setPreviewUrl(url);
+      setConvertedForSend(converted);
+      setPreviewIsConverted(true);
+    } else {
+      const url = URL.createObjectURL(f);
+      setPreviewUrl(url);
+      setConvertedForSend(null);
+      setPreviewIsConverted(false);
+    }
+  };
+
+  // --- Call Edge Function + Zod-validate
+  const extract = async (original: File, type: TravelItemType) => {
     setProcessing(true);
-    setError(null);
     try {
-      let toSend = f;
-      if (f.type === "application/pdf") {
-        // Convert first page to image for vision model.
-        toSend = await pdfFirstPageToPng(f);
-      }
+      const toSend = convertedForSend || original;
 
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
@@ -245,142 +254,69 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
         body: fd,
       });
 
-      const json = await resp.json();
-      if (!resp.ok || json?.error) {
-        throw new Error(json?.error || `Extraction failed (${resp.status})`);
+      const asText = await resp.text(); // robust: read text then parse as JSON
+      let parsed: any;
+      try { parsed = JSON.parse(asText); } catch {
+        throw new Error(asText || `Extraction failed (${resp.status})`);
       }
-      setOcrData(json);
-      return json;
+      if (!resp.ok || parsed?.error) throw new Error(parsed?.error || `Extraction failed (${resp.status})`);
+
+      const safe = edgeResponseSchema.parse(parsed);
+      setEdgeData(safe);
+      toast.success("Details extracted. Prefilling the form…");
+      return safe;
     } catch (e: any) {
-      console.error(e);
-      setError(e?.message ?? "Failed to extract details.");
-      toast({ title: "Extraction error", description: String(e?.message || e), variant: "destructive" });
+      toast.error(e?.message ?? "Failed to extract details.");
+      return null;
     } finally {
       setProcessing(false);
     }
   };
 
   const handleExtract = async () => {
-    if (!itemType) {
-      toast({ title: "Select item type", description: "Choose what to create first." });
-      return;
-    }
-    if (!file) {
-      toast({ title: "Add a file", description: "Upload or paste an image/PDF." });
-      return;
-    }
+    if (!itemType) return toast.info("Choose what to create first.");
+    if (!file) return toast.info("Upload or paste an image/PDF.");
+
     const data = await extract(file, itemType as TravelItemType);
     if (!data) return;
 
-    // Open the right dialog after we have data
-    switch (itemType) {
-      case "accommodation":
-        setOpenAcc(true);
-        break;
-      case "transportation":
-        setOpenTp(true);
-        break;
-      case "activity":
-        setOpenAct(true);
-        break;
-      case "reservation":
-        setOpenRes(true);
-        break;
+    // Open the appropriate dialog
+    switch (data.itemType) {
+      case "accommodation": setOpenAcc(true); break;
+      case "transportation": setOpenTp(true); break;
+      case "activity": setOpenAct(true); break;
+      case "reservation": setOpenRes(true); break;
     }
   };
 
-  // ------------- mappings → dialog initialData ----------------
+  // --------- map OCR → initialData ----------
+  const initTransportation = useMemo<Partial<Tables<"transportation">>>(
+    () => (edgeData?.itemType === "transportation" ? mapToTransportation(edgeData.fields) : {}),
+    [edgeData]
+  );
+  const initAccommodation = useMemo(
+    () => (edgeData?.itemType === "accommodation" ? mapToAccommodation(edgeData.fields, tripId) : {}),
+    [edgeData, tripId]
+  );
+  const initActivity = useMemo(
+    () => (edgeData?.itemType === "activity" ? mapToActivity(edgeData.fields, tripId) : {}),
+    [edgeData, tripId]
+  );
+  const initReservation = useMemo(
+    () => (edgeData?.itemType === "reservation" ? mapToReservation(edgeData.fields, tripId) : {}),
+    [edgeData, tripId]
+  );
 
-  const initTransportation = useMemo<Partial<Tables<"transportation">>>(() => {
-    const t = (ocrData || {}) as OCRTransportation;
-    const toType = (raw?: string | null): Tables<"transportation">["type"] | undefined => {
-      const v = (raw || "").toLowerCase();
-      if (v.includes("flight") || v.includes("air")) return "flight";
-      if (v.includes("train")) return "train";
-      if (v.includes("ferry")) return "ferry";
-      if (v.includes("shuttle")) return "shuttle";
-      if (v.includes("rental")) return "rental_car";
-      if (v.includes("car")) return "car_service";
-      return "flight"; // sensible default; user can change
-    };
+  const missing = edgeData?.missingRequired ?? [];
 
-    const depDate = t.departure_date || null;
-    const arrDate = t.arrival_date || t.departure_date || null;
-    const depTime = toDbTime(t.departure_time);
-    const arrTime = toDbTime(t.arrival_time);
-
-    return {
-      type: toType(t.type),
-      provider: t.carrier ?? null,
-      departure_location: t.departure_location ?? null,
-      arrival_location: t.arrival_location ?? null,
-      start_date: depDate,
-      start_time: depTime,
-      end_date: arrDate,
-      end_time: arrTime,
-      confirmation_number: t.confirmation_number ?? null,
-      cost: t.cost ?? null,
-      currency: t.currency ?? null,
-      details: null,
-    };
-  }, [ocrData]);
-
-  // NOTE: I’m passing minimal initialData to the other dialogs; adjust keys if your dialogs expect different names.
-
-  const initAccommodation = useMemo(() => {
-    const a = (ocrData || {}) as OCRAccommodation;
-    return {
-      name: a.name ?? "",
-      address: a.address ?? "",
-      check_in_date: a.check_in_date ?? "",
-      check_in_time: toDbTime(a.check_in_time),
-      check_out_date: a.check_out_date ?? "",
-      check_out_time: toDbTime(a.check_out_time),
-      confirmation_number: a.confirmation_number ?? "",
-      provider: a.provider ?? "",
-      cost: a.cost ?? null,
-      currency: a.currency ?? "",
-      trip_id: tripId,
-    } as any;
-  }, [ocrData, tripId]);
-
-  const initActivity = useMemo(() => {
-    const a = (ocrData || {}) as OCRActivity;
-    return {
-      name: a.name ?? "",
-      date: a.date ?? "",
-      start_time: toDbTime(a.start_time),
-      end_time: toDbTime(a.end_time),
-      location: a.location ?? "",
-      provider: a.provider ?? "",
-      confirmation_number: a.confirmation_number ?? "",
-      notes: a.notes ?? "",
-      trip_id: tripId,
-    } as any;
-  }, [ocrData, tripId]);
-
-  const initReservation = useMemo(() => {
-    const r = (ocrData || {}) as OCRReservation;
-    return {
-      restaurant_name: r.restaurant_name ?? "",
-      date: r.date ?? "",
-      time: toDbTime(r.time),
-      party_size: r.party_size ?? null,
-      address: r.address ?? "",
-      confirmation_number: r.confirmation_number ?? "",
-      trip_id: tripId,
-    } as any;
-  }, [ocrData, tripId]);
-
-  // ------------- render ----------------
-
+  // ---------- UI ----------
   return (
     <div className="max-w-3xl mx-auto">
       <Card className="mt-2">
         <CardHeader>
           <CardTitle className="text-earth-600">Create from a document</CardTitle>
           <p className="text-sm text-sand-600">
-            Select what you’re creating, then upload or paste an image/PDF of the confirmation. We’ll prefill the form so you can review & save.
+            Select what you’re creating, then upload or paste a confirmation. We’ll prefill the form for you to review.
           </p>
         </CardHeader>
         <CardContent>
@@ -422,12 +358,38 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
               <p className="text-sm text-sand-700">
                 2. Drag & drop an image/PDF here, or use the buttons below.
               </p>
-              {file && (
-                <p className="text-xs text-sand-600">
+
+              {/* Live preview (image or first page of PDF) */}
+              {previewUrl ? (
+                <div className="mt-3 relative">
+                  <img
+                    src={previewUrl}
+                    alt="Upload preview"
+                    className="max-h-56 rounded-md border border-sand-200 shadow-sm object-contain bg-white"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -top-3 -right-3 rounded-full"
+                    onClick={() => { revokePreview(); setFile(null); setEdgeData(null); }}
+                    aria-label="Remove file"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  <p className="text-xs text-sand-600 mt-1">
+                    {previewIsConverted ? "Previewing first page of PDF" : "Previewing image"}
+                  </p>
+                </div>
+              ) : null}
+
+              {/* File name fallback */}
+              {file && !previewUrl && (
+                <p className="text-xs text-sand-600 mt-2">
                   Selected: <span className="font-medium">{file.name}</span>
                 </p>
               )}
-              <div className="flex gap-2 mt-2">
+
+              <div className="flex gap-2 mt-3">
                 <Button variant="outline" onClick={pickFile} disabled={!canEdit}>
                   <Upload className="w-4 h-4 mr-2" />
                   Upload
@@ -452,56 +414,67 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
             </Button>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 mt-2" role="alert">
-              {error}
-            </p>
+          {/* Missing required hints (from edge) */}
+          {!!missing.length && (
+            <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-amber-800">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="text-sm">
+                Missing required: <span className="font-medium">{missing.join(", ")}</span>. You can fill these in the form.
+              </div>
+            </div>
+          )}
+
+          {/* Optional JSON debug */}
+          {edgeData && (
+            <div className="mt-3">
+              <Button variant="ghost" size="sm" onClick={() => setShowJson((v) => !v)}>
+                {showJson ? "Hide parsed JSON" : "Show parsed JSON"}
+              </Button>
+              {showJson && (
+                <pre className="mt-2 text-xs overflow-x-auto max-h-56 bg-white border border-sand-200 p-2 rounded">
+{JSON.stringify(edgeData, null, 2)}
+                </pre>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Prefilled dialogs */}
-      {/* Accommodation */}
       {openAcc && (
         <AccommodationDialog
           open={openAcc}
           onOpenChange={setOpenAcc}
           tripId={tripId}
           initialData={initAccommodation as any}
-          onSuccess={() => setOcrData(null)}
+          onSuccess={() => setEdgeData(null)}
         />
       )}
-
-      {/* Transportation */}
       {openTp && (
         <TransportationDialog
           open={openTp}
           onOpenChange={setOpenTp}
           tripId={tripId}
           initialData={initTransportation as Partial<Tables<"transportation">>}
-          onSuccess={() => setOcrData(null)}
+          onSuccess={() => setEdgeData(null)}
         />
       )}
-
-      {/* Activity */}
       {openAct && (
         <ActivityDialog
           open={openAct}
           onOpenChange={setOpenAct}
           tripId={tripId}
           initialData={initActivity as any}
-          onSuccess={() => setOcrData(null)}
+          onSuccess={() => setEdgeData(null)}
         />
       )}
-
-      {/* Restaurant Reservation */}
       {openRes && (
         <RestaurantReservationDialog
           open={openRes}
           onOpenChange={setOpenRes}
           tripId={tripId}
           initialData={initReservation as any}
-          onSuccess={() => setOcrData(null)}
+          onSuccess={() => setEdgeData(null)}
         />
       )}
     </div>
