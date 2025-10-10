@@ -12,7 +12,7 @@ import * as z from "zod";
 
 import TransportationDialog from "@/components/trip/transportation/TransportationDialog";
 import AccommodationDialog from "@/components/trip/accommodation/AccommodationDialog";
-import ActivityDialog from "@/components/trip//day/activities/ActivityDialog";
+import ActivityDialog from "@/components/trip/day/activities/ActivityDialog";
 import RestaurantReservationDialog from "@/components/trip/dining/RestaurantReservationDialog";
 
 import type { Tables } from "@/integrations/supabase/types";

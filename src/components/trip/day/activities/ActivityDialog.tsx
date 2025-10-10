@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,50 +6,48 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import ActivityForm from '../../ActivityForm';
-import { ActivityFormData } from '@/types/trip';
+import ActivityForm from "../../ActivityForm";
+import { ActivityFormData } from "@/types/trip";
 
 interface ActivityDialogProps {
-  isOpen: boolean;
+  open?: boolean;             // NEW preferred
+  isOpen?: boolean;           // legacy support
   onOpenChange: (open: boolean) => void;
+
   activity: ActivityFormData;
   onActivityChange: (activity: ActivityFormData) => void;
   onSubmit: (activity?: ActivityFormData) => void;
   onDelete?: (id: string) => void;
-  /** this is the Day (event) id that owns the activity */
-  eventId: string;
+  eventId: string; // day (event) id
   tripDates?: { arrival_date: string; departure_date: string };
-  /** when opening via a specific DayCard, we pass YYYY-MM-DD here */
   preselectedDate?: string;
   tripId: string;
-  activityId?: string | null; // For edit mode
+  activityId?: string | null; // edit mode
 }
 
-const ActivityDialog: React.FC<ActivityDialogProps> = ({
-  isOpen,
-  onOpenChange,
-  activity,
-  onActivityChange,
-  onSubmit,
-  onDelete,
-  eventId,
-  tripDates,
-  preselectedDate,
-  tripId,
-  activityId,
-}) => {
+const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
+  const {
+    open,
+    isOpen,
+    onOpenChange,
+    activity,
+    onActivityChange,
+    onSubmit,
+    onDelete,
+    eventId,
+    tripDates,
+    preselectedDate,
+    tripId,
+    activityId,
+  } = props;
+
+  const finalOpen = open ?? isOpen ?? false;
   const isEditMode = !!activityId;
 
-  // NEW: If creating a new activity and a preselectedDate is provided,
-  // hydrate the form with that date (and ensure the eventId is correct).
   useEffect(() => {
     if (!isEditMode && preselectedDate) {
-      // only update if we're not already set to this date
       if (activity?.date !== preselectedDate) {
-        onActivityChange({
-          ...activity,
-          date: preselectedDate,
-        });
+        onActivityChange({ ...activity, date: preselectedDate });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,7 +55,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
 
   useEffect(() => {
     if (isEditMode && activityId) {
-      console.log('Editing activity with data:', activity);
+      console.log("Editing activity with data:", activity);
     }
   }, [isEditMode, activityId, activity]);
 
@@ -69,15 +67,17 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent 
+    <Dialog open={finalOpen} onOpenChange={onOpenChange}>
+      <DialogContent
         className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto scrollbar-none p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>{isEditMode ? 'Edit Activity' : 'Add New Activity'}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
           <DialogDescription>
-            {isEditMode ? 'Update your activity details.' : 'Enter the details for your new activity.'}
+            {isEditMode
+              ? "Update your activity details."
+              : "Enter the details for your new activity."}
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none">
@@ -87,10 +87,9 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             onSubmit={onSubmit}
             onCancel={() => onOpenChange(false)}
             onDelete={isEditMode ? handleDelete : undefined}
-            submitLabel={isEditMode ? 'Save' : 'Save'}
+            submitLabel={isEditMode ? "Save" : "Save"}
             eventId={eventId}
             tripDates={tripDates}
-            // keep the explicit preselectedDate prop too, so the form can honor it directly
             preselectedDate={preselectedDate || (isEditMode ? activity.date : undefined)}
             tripId={tripId}
             activityId={activityId}
