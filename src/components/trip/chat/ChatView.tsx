@@ -195,10 +195,12 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   // --- PDF → PNG (first page)
   const pdfFirstPageToPng = async (pdfFile: File): Promise<File> => {
     const ab = await pdfFile.arrayBuffer();
-    const pdfjs = await import("pdfjs-dist/legacy/build/pdf");
-    const worker = await import("pdfjs-dist/legacy/build/pdf.worker.min.js?url");
-    (pdfjs as any).GlobalWorkerOptions.workerSrc = (worker as any).default;
-    const pdf = await (pdfjs as any).getDocument({ data: ab }).promise;
+    const pdfjs = await import("pdfjs-dist/build/pdf.mjs");
+    
+    // Set worker source to CDN version for Vite compatibility
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+    
+    const pdf = await pdfjs.getDocument({ data: ab }).promise;
     const page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale: 2 });
     const canvas = document.createElement("canvas");
