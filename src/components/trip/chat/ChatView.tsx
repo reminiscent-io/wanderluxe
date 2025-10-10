@@ -11,12 +11,14 @@ import { Upload, ClipboardPaste, FileImage, FileText, Loader2, X, AlertTriangle 
 import * as z from "zod";
 
 import TransportationDialog from "@/components/trip/transportation/TransportationDialog";
-// TODO: confirm these three paths for your codebase:
 import AccommodationDialog from "@/components/trip/accommodation/AccommodationDialog";
 import ActivityDialog from "@/components/trip//day/activities/ActivityDialog";
 import RestaurantReservationDialog from "@/components/trip/dining/RestaurantReservationDialog";
 
 import type { Tables } from "@/integrations/supabase/types";
+
+// ✅ pdfjs-dist v5.x ships the worker as .mjs — import the URL statically so Vite bundles it
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 type TravelItemType = "accommodation" | "transportation" | "activity" | "reservation";
 interface Props { tripId: string; canEdit?: boolean; }
@@ -114,6 +116,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewIsConverted, setPreviewIsConverted] = useState(false);
   const [convertedForSend, setConvertedForSend] = useState<File | null>(null);
+  const [previewReady, setPreviewReady] = useState(false);
 
   // Processing + OCR
   const [processing, setProcessing] = useState(false);
@@ -147,7 +150,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const onInputFiles = (files: FileList | null) => {
     if (!files?.length) return;
     const f = files[0];
-    const err = validateFile(f);
+       const err = validateFile(f);
     if (err) return toast.error(err);
     setFile(f);
     preparePreview(f).catch((e) => toast.error(`Preview failed: ${String(e?.message || e)}`));
@@ -192,25 +195,29 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
     }
   };
 
-  // --- PDF → PNG (first page)
+  // --- PDF → PNG (first page) using pdfjs-dist v5 build + statically imported worker URL
   const pdfFirstPageToPng = async (pdfFile: File): Promise<File> => {
     const ab = await pdfFile.arrayBuffer();
-    const pdfjs = await import("pdfjs-dist/build/pdf.mjs");
-    
-    // Set worker source to CDN version for Vite compatibility
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
-    
-    const pdf = await pdfjs.getDocument({ data: ab }).promise;
+
+    // Keep this import dynamic to avoid loading pdf.js unless needed.
+    const pdfjs = await import("pdfjs-dist/build/pdf");
+    (pdfjs as any).GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+    const pdf = await (pdfjs as any).getDocument({ data: ab }).promise;
     const page = await pdf.getPage(1);
+
     const viewport = page.getViewport({ scale: 2 });
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d")!;
     canvas.width = viewport.width;
     canvas.height = viewport.height;
+
     await page.render({ canvasContext: ctx, viewport }).promise;
+
     const blob = await new Promise<Blob>((resolve) =>
       canvas.toBlob((b) => resolve(b!), "image/png")
     );
+
     return new File([blob], pdfFile.name.replace(/\.pdf$/i, ".png"), {
       type: "image/png",
       lastModified: Date.now(),
@@ -222,6 +229,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
     revokePreview();
     setConvertedForSend(null);
     setEdgeData(null);
+    setPreviewReady(false);
 
     if (f.type === "application/pdf") {
       const converted = await pdfFirstPageToPng(f);
@@ -229,11 +237,13 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
       setPreviewUrl(url);
       setConvertedForSend(converted);
       setPreviewIsConverted(true);
+      setPreviewReady(true);
     } else {
       const url = URL.createObjectURL(f);
       setPreviewUrl(url);
       setConvertedForSend(null);
       setPreviewIsConverted(false);
+      setPreviewReady(true);
     }
   };
 
@@ -241,6 +251,9 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const extract = async (original: File, type: TravelItemType) => {
     setProcessing(true);
     try {
+      if (original.type === "application/pdf" && !convertedForSend) {
+        throw new Error("We couldn’t render the PDF. Please try again or upload an image.");
+      }
       const toSend = convertedForSend || original;
 
       const { data: session } = await supabase.auth.getSession();
@@ -256,7 +269,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
         body: fd,
       });
 
-      const asText = await resp.text(); // robust: read text then parse as JSON
+      const asText = await resp.text();
       let parsed: any;
       try { parsed = JSON.parse(asText); } catch {
         throw new Error(asText || `Extraction failed (${resp.status})`);
@@ -278,11 +291,11 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const handleExtract = async () => {
     if (!itemType) return toast.info("Choose what to create first.");
     if (!file) return toast.info("Upload or paste an image/PDF.");
+    if (!previewReady) return toast.error("Preview isn’t ready yet. If you uploaded a PDF, we’re rendering the first page.");
 
     const data = await extract(file, itemType as TravelItemType);
     if (!data) return;
 
-    // Open the appropriate dialog
     switch (data.itemType) {
       case "accommodation": setOpenAcc(true); break;
       case "transportation": setOpenTp(true); break;
@@ -317,9 +330,6 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
       <Card className="mt-2">
         <CardHeader>
           <CardTitle className="text-earth-600">Create from a document</CardTitle>
-          <p className="text-sm text-sand-600">
-            Select what you’re creating, then upload or paste a confirmation. We’ll prefill the form for you to review.
-          </p>
         </CardHeader>
         <CardContent>
           {/* 1. Choose type */}
@@ -373,7 +383,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
                     variant="ghost"
                     size="icon"
                     className="absolute -top-3 -right-3 rounded-full"
-                    onClick={() => { revokePreview(); setFile(null); setEdgeData(null); }}
+                    onClick={() => { revokePreview(); setFile(null); setEdgeData(null); setPreviewReady(false); }}
                     aria-label="Remove file"
                   >
                     <X className="w-4 h-4" />
@@ -409,7 +419,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
             <Button
               className="bg-earth-500 hover:bg-earth-600"
               onClick={handleExtract}
-              disabled={!canEdit || !itemType || !file || processing}
+              disabled={!canEdit || !itemType || !file || !previewReady || processing}
             >
               {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Extract details
