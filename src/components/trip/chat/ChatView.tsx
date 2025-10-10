@@ -49,10 +49,12 @@ const mapToTransportation = (f: Record<string, any>): Partial<Tables<"transporta
     if (v.includes("flight") || v.includes("air")) return "flight";
     if (v.includes("train")) return "train";
     if (v.includes("ferry")) return "ferry";
-    if (v.includes("shuttle")) return "shuttle";
+    if (v.includes("shuttle") || v.includes("bus") || v.includes("coach")) return "shuttle";
     if (v.includes("rental")) return "rental_car";
-    if (v.includes("car")) return "car_service";
-    return "flight";
+    if (v.includes("uber") || v.includes("lyft") || v.includes("taxi") || v.includes("car")) return "car_service";
+    if (v.includes("car_service")) return "car_service";
+    if (v.includes("rental_car")) return "rental_car";
+    return (f.type as any) || "flight";
   };
 
   return {
@@ -71,39 +73,62 @@ const mapToTransportation = (f: Record<string, any>): Partial<Tables<"transporta
   };
 };
 
-const mapToAccommodation = (f: Record<string, any>, tripId: string) => ({
-  name: f.name ?? "",
-  address: f.address ?? "",
-  check_in_date: f.check_in_date ?? "",
-  check_in_time: toDbTime(f.check_in_time),
-  check_out_date: f.check_out_date ?? "",
-  check_out_time: toDbTime(f.check_out_time),
-  confirmation_number: f.confirmation_number ?? "",
-  provider: f.provider ?? "",
-  cost: typeof f.cost === "number" ? f.cost : null,
-  currency: f.currency ?? "",
-  trip_id: tripId,
-});
+// Matches AccommodationForm schema (hotel*, times, cost/currency, contact)
+const mapToAccommodation = (f: Record<string, any>, tripId: string) => {
+  const parts: string[] = [];
+  if (f.provider) parts.push(`Booked via ${f.provider}`);
+  if (f.confirmation_number) parts.push(`Confirmation ${f.confirmation_number}`);
 
+  return {
+    hotel: f.name ?? "",
+    hotel_details: parts.join(" • "),
+    hotel_url: f.website ?? "",
+    hotel_checkin_date: f.check_in_date ?? "",
+    hotel_checkout_date: f.check_out_date ?? "",
+    checkin_time: toDbTime(f.check_in_time) ?? "15:00",
+    checkout_time: toDbTime(f.check_out_time) ?? "11:00",
+    cost: typeof f.cost === "number" ? f.cost : null,
+    currency: f.currency ?? "USD",
+    hotel_address: f.address ?? "",
+    hotel_phone: f.phone ?? "",
+    hotel_place_id: "",
+    hotel_website: f.website ?? "",
+    expense_type: "accommodation",
+    is_paid: false,
+    expense_date: "",
+    order_index: 0,
+    travelers: [],
+    trip_id: tripId,
+  };
+};
+
+// Matches ActivityFormData (title, description, etc.)
 const mapToActivity = (f: Record<string, any>, tripId: string) => ({
-  name: f.name ?? "",
+  title: f.name ?? "",
+  description: f.notes ?? "",
   date: f.date ?? "",
   start_time: toDbTime(f.start_time),
   end_time: toDbTime(f.end_time),
-  location: f.location ?? "",
-  provider: f.provider ?? "",
-  confirmation_number: f.confirmation_number ?? "",
-  notes: f.notes ?? "",
+  cost: typeof f.cost === "number" ? String(f.cost) : "",
+  currency: f.currency ?? "",
+  travelers: [],
   trip_id: tripId,
 });
 
+// Matches RestaurantReservationForm (reservation_date, reservation_time, number_of_people, etc.)
 const mapToReservation = (f: Record<string, any>, tripId: string) => ({
   restaurant_name: f.restaurant_name ?? "",
-  date: f.date ?? "",
-  time: toDbTime(f.time),
-  party_size: typeof f.party_size === "number" ? f.party_size : null,
+  reservation_date: f.date ?? "",
+  reservation_time: toDbTime(f.time) ?? "",
+  number_of_people: typeof f.party_size === "number" ? f.party_size : undefined,
   address: f.address ?? "",
-  confirmation_number: f.confirmation_number ?? "",
+  phone_number: f.phone ?? undefined,
+  website: f.website ?? undefined,
+  notes: f.notes ?? "",
+  cost: typeof f.cost === "number" ? f.cost : undefined,
+  currency: f.currency ?? undefined,
+  place_id: undefined,
+  rating: undefined,
   trip_id: tripId,
 });
 
@@ -121,7 +146,6 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   // Processing + OCR
   const [processing, setProcessing] = useState(false);
   const [edgeData, setEdgeData] = useState<EdgePayload | null>(null);
-  const [showJson, setShowJson] = useState(false);
 
   // Dialogs
   const [openAcc, setOpenAcc] = useState(false);
@@ -150,7 +174,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const onInputFiles = (files: FileList | null) => {
     if (!files?.length) return;
     const f = files[0];
-       const err = validateFile(f);
+    const err = validateFile(f);
     if (err) return toast.error(err);
     setFile(f);
     preparePreview(f).catch((e) => toast.error(`Preview failed: ${String(e?.message || e)}`));
@@ -433,20 +457,6 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
               <div className="text-sm">
                 Missing required: <span className="font-medium">{missing.join(", ")}</span>. You can fill these in the form.
               </div>
-            </div>
-          )}
-
-          {/* Optional JSON debug */}
-          {edgeData && (
-            <div className="mt-3">
-              <Button variant="ghost" size="sm" onClick={() => setShowJson((v) => !v)}>
-                {showJson ? "Hide parsed JSON" : "Show parsed JSON"}
-              </Button>
-              {showJson && (
-                <pre className="mt-2 text-xs overflow-x-auto max-h-56 bg-white border border-sand-200 p-2 rounded">
-{JSON.stringify(edgeData, null, 2)}
-                </pre>
-              )}
             </div>
           )}
         </CardContent>
