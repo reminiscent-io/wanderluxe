@@ -198,12 +198,12 @@ export default function ChatView({ tripId, canEdit = true }: ChatViewProps) {
   // Keeps us from storing PDFs anywhere, but still supports PDF confirmations.
   const pdfFirstPageToPng = async (pdfFile: File): Promise<File> => {
     const ab = await pdfFile.arrayBuffer();
-    // Lazy import pdfjs to avoid bundling it unless needed
-    const pdfjs = await import("pdfjs-dist/build/pdf");
-    const pdfjsWorker = await import("pdfjs-dist/build/pdf.worker.min?url");
-    (pdfjs as any).GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
+    // Use the correct import paths for pdfjs-dist with Vite
+    const pdfjs = await import("pdfjs-dist");
+    const pdfjsWorker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+    pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
 
-    const pdf = await (pdfjs as any).getDocument({ data: ab }).promise;
+    const pdf = await pdfjs.getDocument({ data: ab }).promise;
     const page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale: 2 });
     const canvas = document.createElement("canvas");
