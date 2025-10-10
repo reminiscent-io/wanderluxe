@@ -12,36 +12,57 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface RestaurantReservationDialogProps {
-  open: boolean;
+  open?: boolean;              // NEW preferred
+  isOpen?: boolean;            // legacy support
   onOpenChange: (open: boolean) => void;
   tripId: string;
-  initialData?: any;
+  initialData?: any;           // NEW preferred
+  editingReservation?: any;    // legacy support
   onSuccess?: () => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  // Legacy props from Sidebar
+  title?: string;
+  isSubmitting?: boolean;
+  onSubmit?: (data: any) => Promise<void>;
+  onDelete?: () => Promise<void>;
 }
 
 const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = ({
   open,
+  isOpen,
   onOpenChange,
   tripId,
   initialData,
+  editingReservation,
   onSuccess,
   tripArrivalDate,
   tripDepartureDate,
+  title,
+  isSubmitting: legacyIsSubmitting,
+  onSubmit: legacyOnSubmit,
+  onDelete: legacyOnDelete,
 }) => {
+  const finalOpen = open ?? isOpen ?? false;
+  const finalInitialData = initialData || editingReservation;
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmit = async (data: any) => {
+    // Use legacy onSubmit if provided (from Sidebar)
+    if (legacyOnSubmit) {
+      await legacyOnSubmit(data);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      if (initialData?.id) {
+      if (finalInitialData?.id) {
         // Update existing reservation
         const { error } = await supabase
           .from('reservations')
           .update(data)
-          .eq('id', initialData.id)
+          .eq('id', finalInitialData.id)
           .eq('trip_id', tripId);
         
         if (error) throw error;
@@ -69,13 +90,19 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   };
 
   const handleDelete = async () => {
-    if (!initialData?.id) return;
+    // Use legacy onDelete if provided (from Sidebar)
+    if (legacyOnDelete) {
+      await legacyOnDelete();
+      return;
+    }
+
+    if (!finalInitialData?.id) return;
     
     try {
       const { error } = await supabase
         .from('reservations')
         .delete()
-        .eq('id', initialData.id)
+        .eq('id', finalInitialData.id)
         .eq('trip_id', tripId);
       
       if (error) throw error;
@@ -92,17 +119,17 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={finalOpen} onOpenChange={onOpenChange}>
       <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>{initialData?.id ? 'Edit Reservation' : 'Add Reservation'}</DialogTitle>
+          <DialogTitle>{title || (finalInitialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none px-1">
           <RestaurantReservationForm
             onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            defaultValues={initialData}
-            onDelete={initialData?.id ? handleDelete : undefined}
+            isSubmitting={legacyIsSubmitting ?? isSubmitting}
+            defaultValues={finalInitialData}
+            onDelete={finalInitialData?.id ? handleDelete : undefined}
             onCancel={() => onOpenChange(false)}
             tripId={tripId}
             tripArrivalDate={tripArrivalDate}
