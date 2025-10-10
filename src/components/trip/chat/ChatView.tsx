@@ -455,6 +455,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
       {/* Prefilled dialogs */}
       {openAcc && (
         <AccommodationDialog
+          key={`acc-${JSON.stringify(initAccommodation)}`}
           open={openAcc}
           onOpenChange={setOpenAcc}
           tripId={tripId}
@@ -464,6 +465,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
       )}
       {openTp && (
         <TransportationDialog
+          key={`tp-${JSON.stringify(initTransportation)}`}
           open={openTp}
           onOpenChange={setOpenTp}
           tripId={tripId}
@@ -473,6 +475,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
       )}
       {openAct && (
         <ActivityDialog
+          key={`act-${JSON.stringify(initActivity)}`}
           open={openAct}
           onOpenChange={setOpenAct}
           tripId={tripId}
@@ -482,6 +485,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
       )}
       {openRes && (
         <RestaurantReservationDialog
+          key={`res-${JSON.stringify(initReservation)}`}
           open={openRes}
           onOpenChange={setOpenRes}
           tripId={tripId}

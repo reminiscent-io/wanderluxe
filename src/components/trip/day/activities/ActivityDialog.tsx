@@ -10,8 +10,8 @@ import ActivityForm from "../../ActivityForm";
 import { ActivityFormData } from "@/types/trip";
 
 interface ActivityDialogProps {
-  open?: boolean;             // NEW preferred
-  isOpen?: boolean;           // legacy support
+  open?: boolean;                 // NEW preferred
+  isOpen?: boolean;               // legacy support
   onOpenChange: (open: boolean) => void;
 
   // Legacy interface (timeline/sidebar)
@@ -19,12 +19,12 @@ interface ActivityDialogProps {
   onActivityChange?: (activity: ActivityFormData) => void;
   onSubmit?: (activity?: ActivityFormData) => void;
   onDelete?: (id: string) => void;
-  eventId?: string; // day (event) id
-  
+  eventId?: string;
+
   // New interface (chat system)
   initialData?: any;
   onSuccess?: () => void;
-  
+
   // Common props
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
@@ -52,42 +52,48 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
   const finalOpen = open ?? isOpen ?? false;
   const isEditMode = !!activityId;
-  
-  // Handle chat system interface
-  const [internalActivity, setInternalActivity] = React.useState<ActivityFormData>(
-    initialData || activity || {
-      title: '',
-      description: '',
-      date: '',
-      start_time: '',
-      end_time: '',
-      cost: '',
-      currency: 'USD'
-    }
-  );
-  
-  const finalActivity = activity || internalActivity;
-  const finalOnChange = onActivityChange || setInternalActivity;
-  const finalEventId = eventId || tripId; // Use tripId as fallback for chat system
 
+  // Chat-system internal state fallback
+  const [internalActivity, setInternalActivity] = React.useState<ActivityFormData>(
+    initialData ||
+      activity || {
+        title: "",
+        description: "",
+        date: "",
+        start_time: "",
+        end_time: "",
+        cost: "",
+        currency: "USD",
+      }
+  );
+
+  const finalActivity: ActivityFormData = (activity as ActivityFormData) || internalActivity;
+  const finalOnChange = onActivityChange || setInternalActivity;
+  const finalEventId = eventId || tripId;
+
+  // ✅ Safe prefill for preselectedDate — use final* and guard against undefined
   useEffect(() => {
     if (!isEditMode && preselectedDate) {
-      if (activity?.date !== preselectedDate) {
-        onActivityChange({ ...activity, date: preselectedDate });
+      if ((finalActivity?.date || "") !== preselectedDate) {
+        const next: ActivityFormData = { ...(finalActivity || ({} as any)), date: preselectedDate };
+        finalOnChange(next);
       }
     }
+    // We intentionally depend on preselectedDate + isEditMode only to avoid infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, preselectedDate]);
 
+  // Debug aid for real edit mode
   useEffect(() => {
     if (isEditMode && activityId) {
-      console.log("Editing activity with data:", activity);
+      console.log("Editing activity with data:", finalActivity);
     }
-  }, [isEditMode, activityId, activity]);
-  
+  }, [isEditMode, activityId, finalActivity]);
+
+  // Keep internal state in sync when chat passes new initialData
   useEffect(() => {
     if (initialData) {
-      setInternalActivity(initialData);
+      setInternalActivity((curr) => ({ ...curr, ...initialData }));
     }
   }, [initialData]);
 
@@ -97,44 +103,39 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
       onOpenChange(false);
     }
   };
-  
+
   const handleSubmit = async (activityData?: ActivityFormData) => {
     if (onSubmit) {
       // Legacy interface
       await onSubmit(activityData);
-    } else if (onSuccess) {
-      // Chat system interface - save directly
-      try {
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { toast } = await import('sonner');
-        
-        const dataToSave = activityData || finalActivity;
-        
-        if (activityId) {
-          const { error } = await supabase
-            .from('day_activities')
-            .update(dataToSave)
-            .eq('id', activityId);
-          
-          if (error) throw error;
-          toast.success('Activity updated');
-        } else {
-          const { data, error } = await supabase
-            .from('day_activities')
-            .insert([{ ...dataToSave, trip_id: tripId }])
-            .select()
-            .single();
-          
-          if (error) throw error;
-          toast.success('Activity added');
-        }
-        
-        onOpenChange(false);
-        onSuccess();
-      } catch (error: any) {
-        const { toast } = await import('sonner');
-        toast.error(error.message || 'Failed to save activity');
+      return;
+    }
+    if (!onSuccess) return;
+
+    // Chat system interface - save directly
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { toast } = await import("sonner");
+
+      const dataToSave = activityData || finalActivity;
+
+      if (activityId) {
+        const { error } = await supabase.from("day_activities").update(dataToSave).eq("id", activityId);
+        if (error) throw error;
+        toast.success("Activity updated");
+      } else {
+        const { error } = await supabase
+          .from("day_activities")
+          .insert([{ ...dataToSave, trip_id: tripId }]);
+        if (error) throw error;
+        toast.success("Activity added");
       }
+
+      onOpenChange(false);
+      onSuccess();
+    } catch (error: any) {
+      const { toast } = await import("sonner");
+      toast.error(error?.message || "Failed to save activity");
     }
   };
 
@@ -147,11 +148,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
           <DialogDescription>
-            {isEditMode
-              ? "Update your activity details."
-              : "Enter the details for your new activity."}
+            {isEditMode ? "Update your activity details." : "Enter the details for your new activity."}
           </DialogDescription>
         </DialogHeader>
+
         <div className="flex-1 overflow-y-auto scrollbar-none">
           <ActivityForm
             activity={finalActivity}
