@@ -119,9 +119,11 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
           if (error) throw error;
           toast.success('Activity updated');
         } else {
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from('day_activities')
-            .insert([{ ...dataToSave, trip_id: tripId }]);
+            .insert([{ ...dataToSave, trip_id: tripId }])
+            .select()
+            .single();
           
           if (error) throw error;
           toast.success('Activity added');
