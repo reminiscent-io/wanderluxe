@@ -18,7 +18,8 @@ import RestaurantReservationDialog from "@/components/trip/dining/RestaurantRese
 import type { Tables } from "@/integrations/supabase/types";
 
 // ✅ pdfjs-dist v5.x ships the worker as .mjs — import the URL statically so Vite bundles it
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+// Removed static import of pdfWorkerUrl as it was causing issues with Vite.
+// The workerSrc will be set dynamically using a CDN or a relative path if needed.
 
 type TravelItemType = "accommodation" | "transportation" | "activity" | "reservation";
 interface Props { tripId: string; canEdit?: boolean; }
@@ -195,13 +196,14 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
     }
   };
 
-  // --- PDF → PNG (first page) using pdfjs-dist v5 build + statically imported worker URL
+  // --- PDF → PNG (first page) using pdfjs-dist v5 build + dynamically set workerSrc
   const pdfFirstPageToPng = async (pdfFile: File): Promise<File> => {
     const ab = await pdfFile.arrayBuffer();
 
     // Keep this import dynamic to avoid loading pdf.js unless needed.
     const pdfjs = await import("pdfjs-dist/build/pdf");
-    (pdfjs as any).GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+    // Dynamically set workerSrc to a CDN or a relevant path. Adjust this URL as needed.
+    (pdfjs as any).GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
 
     const pdf = await (pdfjs as any).getDocument({ data: ab }).promise;
     const page = await pdf.getPage(1);
