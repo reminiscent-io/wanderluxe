@@ -168,14 +168,44 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
       const dataToSave = activityData || finalActivity;
 
+      if (!dataToSave.title?.trim()) {
+        throw new Error('Activity title is required');
+      }
+
+      // Find the corresponding day_id for the selected date
+      const { data: tripDay, error: tripDayError } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', tripId)
+        .eq('date', dataToSave.date)
+        .single();
+
+      if (tripDayError || !tripDay) {
+        throw new Error('Could not find trip day for selected date. Please select a valid date.');
+      }
+
+      // Convert cost from string to number
+      const costNum = dataToSave.cost && dataToSave.cost.trim() !== '' ? parseFloat(dataToSave.cost) : null;
+
+      // Create database-compatible object (remove date, add day_id, convert cost)
+      const dbData = {
+        day_id: tripDay.day_id,
+        title: dataToSave.title.trim(),
+        description: dataToSave.description?.trim() || null,
+        start_time: dataToSave.start_time || null,
+        end_time: dataToSave.end_time || null,
+        cost: costNum,
+        currency: dataToSave.currency || 'USD',
+      };
+
       if (activityId) {
-        const { error } = await supabase.from("day_activities").update(dataToSave).eq("id", activityId);
+        const { error } = await supabase.from("day_activities").update(dbData).eq("id", activityId);
         if (error) throw error;
         toast.success("Activity updated");
       } else {
         const { error } = await supabase
           .from("day_activities")
-          .insert([{ ...dataToSave, trip_id: tripId }]);
+          .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
         if (error) throw error;
         toast.success("Activity added");
       }
