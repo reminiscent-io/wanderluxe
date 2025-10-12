@@ -10,6 +10,7 @@ import ActivityForm from "../../ActivityForm";
 import { ActivityFormData } from "@/types/trip";
 // ⬇️ NEW: we’ll safely fetch trip_days to derive arrival/departure if not provided
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ActivityDialogProps {
   open?: boolean;                 // NEW preferred
@@ -52,6 +53,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     activityId,
   } = props;
 
+  const queryClient = useQueryClient();
   const finalOpen = open ?? isOpen ?? false;
   const isEditMode = !!activityId;
 
@@ -162,7 +164,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
     // Chat system path: persist on explicit Save
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
       const { toast } = await import("sonner");
 
       const dataToSave = activityData || finalActivity;
@@ -178,6 +179,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         if (error) throw error;
         toast.success("Activity added");
       }
+
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
 
       onOpenChange(false);
       onSuccess();

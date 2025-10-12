@@ -62,13 +62,13 @@ const mapToTransportation = (f: Record<string, any>): Partial<Tables<"transporta
     provider: f.carrier ?? null,
     departure_location: f.departure_location ?? null,
     arrival_location: f.arrival_location ?? null,
-    start_date: f.departure_date ?? null,
+    start_date: f.departure_date ?? "",
     start_time: toDbTime(f.departure_time),
-    end_date: (f.arrival_date ?? f.departure_date) ?? null,
+    end_date: (f.arrival_date ?? f.departure_date) ?? "",
     end_time: toDbTime(f.arrival_time),
     confirmation_number: f.confirmation_number ?? null,
     cost: typeof f.cost === "number" ? f.cost : null,
-    currency: f.currency ?? null,
+    currency: f.currency ?? "USD",
     details: null,
   };
 };
@@ -107,10 +107,10 @@ const mapToActivity = (f: Record<string, any>, tripId: string) => ({
   title: f.name ?? "",
   description: f.notes ?? "",
   date: f.date ?? "",
-  start_time: toDbTime(f.start_time),
-  end_time: toDbTime(f.end_time),
+  start_time: toDbTime(f.start_time) ?? "",
+  end_time: toDbTime(f.end_time) ?? "",
   cost: typeof f.cost === "number" ? String(f.cost) : "",
-  currency: f.currency ?? "",
+  currency: f.currency ?? "USD",
   travelers: [],
   trip_id: tripId,
 });
@@ -126,7 +126,7 @@ const mapToReservation = (f: Record<string, any>, tripId: string) => ({
   website: f.website ?? undefined,
   notes: f.notes ?? "",
   cost: typeof f.cost === "number" ? f.cost : undefined,
-  currency: f.currency ?? undefined,
+  currency: f.currency ?? "USD",
   place_id: undefined,
   rating: undefined,
   trip_id: tripId,
@@ -224,6 +224,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
     const ab = await pdfFile.arrayBuffer();
 
     // Keep this import dynamic to avoid loading pdf.js unless needed.
+    // @ts-expect-error - pdfjs-dist types may not be fully compatible with dynamic import
     const pdfjs = await import("pdfjs-dist/build/pdf");
     (pdfjs as any).GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
