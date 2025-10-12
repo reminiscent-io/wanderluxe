@@ -73,14 +73,12 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
         .insert([{
           user_id: user.id,
           destination,
-          start_date: startDate,
-          end_date: endDate,
           arrival_date: startDate,
           departure_date: endDate,
           cover_image_url: coverImageUrl,
-          is_public: false
+          is_public: false,
         } as any])
-        .select()
+        .select('trip_id')
         .single();
 
       if (tripError) throw tripError;
