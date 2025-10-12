@@ -64,50 +64,34 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log('Auth check:', { user, userError });
-      
-      if (userError) {
-        console.error('Auth error:', userError);
-        throw new Error(`Authentication error: ${userError.message}`);
-      }
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
 
-      const tripData = {
-        user_id: user.id,
-        destination,
-        arrival_date: startDate,
-        departure_date: endDate,
-        cover_image_url: coverImageUrl
-      };
-      
-      console.log('Attempting to insert trip with data:', tripData);
-      
       // Insert the trip into the database with user_id and cover_image_url
       const { data: trip, error: tripError } = await supabase
         .from('trips')
-        .insert([tripData as any])
+        .insert([{
+          user_id: user.id,
+          destination,
+          arrival_date: startDate,
+          departure_date: endDate,
+          cover_image_url: coverImageUrl
+        } as any])
         .select()
         .single();
 
-      console.log('Insert result:', { trip, tripError });
-      
       if (tripError) throw tripError;
 
       if (trip) {
         try {
-          // Automatically add the trip owner to trip_shares table FIRST
-          // This is required for trip_days RLS policy to pass
-          await addOwnerToTripShares(trip.trip_id, user.id);
-
           // Generate an array of dates between start and end dates (inclusive)
           const days = getDaysBetweenDates(startDate, endDate);
 
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
+
+          // Automatically add the trip owner to trip_shares table
+          await addOwnerToTripShares(trip.trip_id, user.id);
 
           // Save the image position for this trip in localStorage
           if (imagePosition && coverImageUrl) {
@@ -122,12 +106,9 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           throw daysError;
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating trip:', error);
-      const errorMessage = error?.message || error?.error_description || error?.toString() || 'Unknown error';
-      console.error('Detailed error:', { error, errorMessage });
-      
-      toast.error(`Failed to create trip: ${errorMessage}`);
+      toast.error('Failed to create trip. Please check your details and try again.');
     } finally {
       setIsSubmitting(false);
     }
