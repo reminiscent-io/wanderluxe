@@ -64,22 +64,37 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('Auth check:', { user, userError });
+      
+      if (userError) {
+        console.error('Auth error:', userError);
+        throw new Error(`Authentication error: ${userError.message}`);
+      }
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
+      const tripData = {
+        user_id: user.id,
+        destination,
+        arrival_date: startDate,
+        departure_date: endDate,
+        cover_image_url: coverImageUrl
+      };
+      
+      console.log('Attempting to insert trip with data:', tripData);
+      
       // Insert the trip into the database with user_id and cover_image_url
       const { data: trip, error: tripError } = await supabase
         .from('trips')
-        .insert([{
-          user_id: user.id,
-          destination,
-          arrival_date: startDate,
-          departure_date: endDate,
-          cover_image_url: coverImageUrl
-        } as any])
+        .insert([tripData as any])
         .select()
         .single();
 
+      console.log('Insert result:', { trip, tripError });
+      
       if (tripError) throw tripError;
 
       if (trip) {
