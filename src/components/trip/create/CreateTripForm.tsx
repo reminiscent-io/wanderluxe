@@ -77,7 +77,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           end_date: endDate,
           arrival_date: startDate,
           departure_date: endDate,
-          cover_image_url: coverImageUrl
+          cover_image_url: coverImageUrl,
+          is_public: false
         } as any])
         .select()
         .single();
