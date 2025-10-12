@@ -84,14 +84,15 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 
       if (trip) {
         try {
+          // Automatically add the trip owner to trip_shares table FIRST
+          // This is required for trip_days RLS policy to pass
+          await addOwnerToTripShares(trip.trip_id, user.id);
+
           // Generate an array of dates between start and end dates (inclusive)
           const days = getDaysBetweenDates(startDate, endDate);
 
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
-
-          // Automatically add the trip owner to trip_shares table
-          await addOwnerToTripShares(trip.trip_id, user.id);
 
           // Save the image position for this trip in localStorage
           if (imagePosition && coverImageUrl) {
@@ -106,9 +107,12 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           throw daysError;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating trip:', error);
-      toast.error('Failed to create trip. Please check your details and try again.');
+      const errorMessage = error?.message || error?.error_description || error?.toString() || 'Unknown error';
+      console.error('Detailed error:', { error, errorMessage });
+      
+      toast.error(`Failed to create trip: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
