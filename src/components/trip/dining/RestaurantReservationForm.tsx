@@ -18,14 +18,6 @@ import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
 import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
 import CurrencySelector from '../budget/CurrencySelector';
 
-// Assuming CurrencySelector is imported and available in this scope.
-// If it's not defined in the provided snippets, it's a placeholder for a custom component.
-// For the purpose of this output, we'll assume it exists and works as expected.
-// If CurrencySelector is not defined, this code would need that component to be provided.
-// For example: import CurrencySelector from './CurrencySelector';
-
-// Converts blank / NaN values coming from <input type="number"> into undefined so they
-// pass Zod's optional() validation.
 const toNullableNumber = (val: unknown) => {
   if (val === '' || val === null || typeof val === 'undefined') return undefined;
   if (typeof val === 'number' && !Number.isNaN(val)) return val;

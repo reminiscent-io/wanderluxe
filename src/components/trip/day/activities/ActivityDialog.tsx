@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,60 +6,144 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import ActivityForm from '../../ActivityForm';
-import { ActivityFormData } from '@/types/trip';
+import ActivityForm from "../../ActivityForm";
+import { ActivityFormData } from "@/types/trip";
+// ⬇️ NEW: we’ll safely fetch trip_days to derive arrival/departure if not provided
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ActivityDialogProps {
-  isOpen: boolean;
+  open?: boolean;                 // NEW preferred
+  isOpen?: boolean;               // legacy support
   onOpenChange: (open: boolean) => void;
-  activity: ActivityFormData;
-  onActivityChange: (activity: ActivityFormData) => void;
-  onSubmit: (activity?: ActivityFormData) => void;
+
+  // Legacy interface (timeline/sidebar)
+  activity?: ActivityFormData;
+  onActivityChange?: (activity: ActivityFormData) => void;
+  onSubmit?: (activity?: ActivityFormData) => void;
   onDelete?: (id: string) => void;
-  /** this is the Day (event) id that owns the activity */
-  eventId: string;
+  eventId?: string;
+
+  // New interface (chat system)
+  initialData?: any;
+  onSuccess?: () => void;
+
+  // Common props
   tripDates?: { arrival_date: string; departure_date: string };
-  /** when opening via a specific DayCard, we pass YYYY-MM-DD here */
   preselectedDate?: string;
   tripId: string;
-  activityId?: string | null; // For edit mode
+  activityId?: string | null; // edit mode
 }
 
-const ActivityDialog: React.FC<ActivityDialogProps> = ({
-  isOpen,
-  onOpenChange,
-  activity,
-  onActivityChange,
-  onSubmit,
-  onDelete,
-  eventId,
-  tripDates,
-  preselectedDate,
-  tripId,
-  activityId,
-}) => {
+const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
+  const {
+    open,
+    isOpen,
+    onOpenChange,
+    activity,
+    onActivityChange,
+    onSubmit,
+    onDelete,
+    eventId,
+    initialData,
+    onSuccess,
+    tripDates,
+    preselectedDate,
+    tripId,
+    activityId,
+  } = props;
+
+  const queryClient = useQueryClient();
+  const finalOpen = open ?? isOpen ?? false;
   const isEditMode = !!activityId;
 
-  // NEW: If creating a new activity and a preselectedDate is provided,
-  // hydrate the form with that date (and ensure the eventId is correct).
+  // ---------- Internal activity state (used by chat flow) ----------
+  const [internalActivity, setInternalActivity] = React.useState<ActivityFormData>(
+    initialData ||
+      activity || {
+        title: "",
+        description: "",
+        date: "",
+        start_time: "",
+        end_time: "",
+        cost: "",
+        currency: "USD",
+      }
+  );
+  const finalActivity: ActivityFormData = (activity as ActivityFormData) || internalActivity;
+  const finalOnChange = onActivityChange || setInternalActivity;
+  const finalEventId = eventId || tripId;
+
+  // ---------- NEW: resolve tripDates if not provided (chat flow) ----------
+  const [resolvedTripDates, setResolvedTripDates] = React.useState<ActivityDialogProps["tripDates"] | undefined>(tripDates);
+
+  // Keep in sync with parent-provided tripDates
+  useEffect(() => {
+    if (tripDates?.arrival_date && tripDates?.departure_date) {
+      setResolvedTripDates(tripDates);
+    }
+  }, [tripDates]);
+
+  // If none provided (chat path), derive from trip_days (min/max)
+  useEffect(() => {
+    if (tripDates || !finalOpen || !tripId) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("trip_days")
+          .select("date")
+          .eq("trip_id", tripId)
+          .order("date", { ascending: true });
+
+        if (!cancelled && !error && data && data.length > 0) {
+          const arrival = data[0].date as string;
+          const departure = data[data.length - 1].date as string;
+          setResolvedTripDates({ arrival_date: arrival, departure_date: departure });
+        }
+      } catch (e) {
+        // Non-fatal; if this fails, ActivityForm will fall back to hiding the date picker
+        console.error("Failed to resolve trip dates for ActivityDialog:", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tripDates, finalOpen, tripId]);
+
+  // ✅ Safe prefill for preselectedDate — use final* and guard against undefined
   useEffect(() => {
     if (!isEditMode && preselectedDate) {
-      // only update if we're not already set to this date
-      if (activity?.date !== preselectedDate) {
-        onActivityChange({
-          ...activity,
-          date: preselectedDate,
-        });
+      if ((finalActivity?.date || "") !== preselectedDate) {
+        const next: ActivityFormData = { ...(finalActivity || ({} as any)), date: preselectedDate };
+        finalOnChange(next);
       }
     }
+    // We intentionally depend on preselectedDate + isEditMode only to avoid loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, preselectedDate]);
 
+  // Debug aid for real edit mode
   useEffect(() => {
     if (isEditMode && activityId) {
-      console.log('Editing activity with data:', activity);
+      console.log("Editing activity with data:", finalActivity);
     }
-  }, [isEditMode, activityId, activity]);
+  }, [isEditMode, activityId, finalActivity]);
+
+  // Keep internal state in sync when chat passes new initialData (OCR result)
+  useEffect(() => {
+    if (initialData) {
+      // Map 'name' to 'title' for chat system compatibility
+      const mapped = { ...initialData };
+      if (mapped.name && !mapped.title) {
+        mapped.title = mapped.name;
+        delete mapped.name;
+      }
+      setInternalActivity((curr) => ({ ...curr, ...mapped }));
+    }
+  }, [initialData]);
 
   const handleDelete = () => {
     if (activityId && onDelete) {
@@ -68,30 +152,100 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
     }
   };
 
+  // ❗ Save is ONLY triggered when user clicks "Save" in the form
+  // (Opening the dialog never saves automatically.)
+  const handleSubmit = async (activityData?: ActivityFormData) => {
+    if (onSubmit) {
+      // Legacy path: parent manages persistence
+      await onSubmit(activityData);
+      return;
+    }
+    if (!onSuccess) return;
+
+    // Chat system path: persist on explicit Save
+    try {
+      const { toast } = await import("sonner");
+
+      const dataToSave = activityData || finalActivity;
+
+      if (!dataToSave.title?.trim()) {
+        throw new Error('Activity title is required');
+      }
+
+      // Find the corresponding day_id for the selected date
+      const { data: tripDay, error: tripDayError } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', tripId)
+        .eq('date', dataToSave.date)
+        .single();
+
+      if (tripDayError || !tripDay) {
+        throw new Error('Could not find trip day for selected date. Please select a valid date.');
+      }
+
+      // Convert cost from string to number
+      const costNum = dataToSave.cost && dataToSave.cost.trim() !== '' ? parseFloat(dataToSave.cost) : null;
+
+      // Create database-compatible object (remove date, add day_id, convert cost)
+      const dbData = {
+        day_id: tripDay.day_id,
+        title: dataToSave.title.trim(),
+        description: dataToSave.description?.trim() || null,
+        start_time: dataToSave.start_time || null,
+        end_time: dataToSave.end_time || null,
+        cost: costNum,
+        currency: dataToSave.currency || 'USD',
+      };
+
+      if (activityId) {
+        const { error } = await supabase.from("day_activities").update(dbData).eq("id", activityId);
+        if (error) throw error;
+        toast.success("Activity updated");
+      } else {
+        const { error } = await supabase
+          .from("day_activities")
+          .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
+        if (error) throw error;
+        toast.success("Activity added");
+      }
+
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+
+      onOpenChange(false);
+      onSuccess();
+    } catch (error: any) {
+      const { toast } = await import("sonner");
+      toast.error(error?.message || "Failed to save activity");
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent 
+    <Dialog open={finalOpen} onOpenChange={onOpenChange}>
+      <DialogContent
         className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto scrollbar-none p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>{isEditMode ? 'Edit Activity' : 'Add New Activity'}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
           <DialogDescription>
-            {isEditMode ? 'Update your activity details.' : 'Enter the details for your new activity.'}
+            {isEditMode ? "Update your activity details." : "Enter the details for your new activity."}
           </DialogDescription>
         </DialogHeader>
+
         <div className="flex-1 overflow-y-auto scrollbar-none">
           <ActivityForm
-            activity={activity}
-            onActivityChange={onActivityChange}
-            onSubmit={onSubmit}
+            activity={finalActivity}
+            onActivityChange={finalOnChange}
+            onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
             onDelete={isEditMode ? handleDelete : undefined}
-            submitLabel={isEditMode ? 'Save' : 'Save'}
-            eventId={eventId}
-            tripDates={tripDates}
-            // keep the explicit preselectedDate prop too, so the form can honor it directly
-            preselectedDate={preselectedDate || (isEditMode ? activity.date : undefined)}
+            submitLabel={isEditMode ? "Save" : "Save"}
+            eventId={finalEventId}
+            tripDates={resolvedTripDates}
+            preselectedDate={preselectedDate || (isEditMode ? finalActivity.date : undefined)}
             tripId={tripId}
             activityId={activityId}
           />
