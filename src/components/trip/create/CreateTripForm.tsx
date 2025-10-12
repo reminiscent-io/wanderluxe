@@ -73,6 +73,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
         .insert([{
           user_id: user.id,
           destination,
+          start_date: startDate,
+          end_date: endDate,
           arrival_date: startDate,
           departure_date: endDate,
           cover_image_url: coverImageUrl
@@ -84,14 +86,15 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 
       if (trip) {
         try {
+          // Automatically add the trip owner to trip_shares table FIRST
+          // This is required for trip_days RLS policy to pass
+          await addOwnerToTripShares(trip.trip_id, user.id);
+
           // Generate an array of dates between start and end dates (inclusive)
           const days = getDaysBetweenDates(startDate, endDate);
 
           // Create trip days in the database for each date with both IDs
           await createTripDays(trip.trip_id, days);
-
-          // Automatically add the trip owner to trip_shares table
-          await addOwnerToTripShares(trip.trip_id, user.id);
 
           // Save the image position for this trip in localStorage
           if (imagePosition && coverImageUrl) {
