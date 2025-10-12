@@ -442,11 +442,11 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
           {/* 3. Extract */}
           <div className="mt-4 flex justify-end">
             <Button
-              className="bg-earth-500 hover:bg-earth-600"
+              className="bg-earth-500 hover:bg-earth-600 text-white"
               onClick={handleExtract}
               disabled={!canEdit || !itemType || !file || !previewReady || processing}
             >
-              {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin text-white" /> : null}
+              {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Extract details
             </Button>
           </div>
