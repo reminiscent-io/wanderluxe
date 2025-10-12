@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import ActivityForm from "../../ActivityForm";
 import { ActivityFormData } from "@/types/trip";
+// ⬇️ NEW: we’ll safely fetch trip_days to derive arrival/departure if not provided
+import { supabase } from "@/integrations/supabase/client";
 
 interface ActivityDialogProps {
   open?: boolean;                 // NEW preferred
@@ -53,7 +55,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   const finalOpen = open ?? isOpen ?? false;
   const isEditMode = !!activityId;
 
-  // Chat-system internal state fallback
+  // ---------- Internal activity state (used by chat flow) ----------
   const [internalActivity, setInternalActivity] = React.useState<ActivityFormData>(
     initialData ||
       activity || {
@@ -66,10 +68,48 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         currency: "USD",
       }
   );
-
   const finalActivity: ActivityFormData = (activity as ActivityFormData) || internalActivity;
   const finalOnChange = onActivityChange || setInternalActivity;
   const finalEventId = eventId || tripId;
+
+  // ---------- NEW: resolve tripDates if not provided (chat flow) ----------
+  const [resolvedTripDates, setResolvedTripDates] = React.useState<ActivityDialogProps["tripDates"] | undefined>(tripDates);
+
+  // Keep in sync with parent-provided tripDates
+  useEffect(() => {
+    if (tripDates?.arrival_date && tripDates?.departure_date) {
+      setResolvedTripDates(tripDates);
+    }
+  }, [tripDates]);
+
+  // If none provided (chat path), derive from trip_days (min/max)
+  useEffect(() => {
+    if (tripDates || !finalOpen || !tripId) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("trip_days")
+          .select("date")
+          .eq("trip_id", tripId)
+          .order("date", { ascending: true });
+
+        if (!cancelled && !error && data && data.length > 0) {
+          const arrival = data[0].date as string;
+          const departure = data[data.length - 1].date as string;
+          setResolvedTripDates({ arrival_date: arrival, departure_date: departure });
+        }
+      } catch (e) {
+        // Non-fatal; if this fails, ActivityForm will fall back to hiding the date picker
+        console.error("Failed to resolve trip dates for ActivityDialog:", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tripDates, finalOpen, tripId]);
 
   // ✅ Safe prefill for preselectedDate — use final* and guard against undefined
   useEffect(() => {
@@ -79,7 +119,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         finalOnChange(next);
       }
     }
-    // We intentionally depend on preselectedDate + isEditMode only to avoid infinite loops
+    // We intentionally depend on preselectedDate + isEditMode only to avoid loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, preselectedDate]);
 
@@ -90,7 +130,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     }
   }, [isEditMode, activityId, finalActivity]);
 
-  // Keep internal state in sync when chat passes new initialData
+  // Keep internal state in sync when chat passes new initialData (OCR result)
   useEffect(() => {
     if (initialData) {
       // Map 'name' to 'title' for chat system compatibility
@@ -110,15 +150,17 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     }
   };
 
+  // ❗ Save is ONLY triggered when user clicks "Save" in the form
+  // (Opening the dialog never saves automatically.)
   const handleSubmit = async (activityData?: ActivityFormData) => {
     if (onSubmit) {
-      // Legacy interface
+      // Legacy path: parent manages persistence
       await onSubmit(activityData);
       return;
     }
     if (!onSuccess) return;
 
-    // Chat system interface - save directly
+    // Chat system path: persist on explicit Save
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       const { toast } = await import("sonner");
@@ -167,7 +209,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
             onDelete={isEditMode ? handleDelete : undefined}
             submitLabel={isEditMode ? "Save" : "Save"}
             eventId={finalEventId}
-            tripDates={tripDates}
+            tripDates={resolvedTripDates}
             preselectedDate={preselectedDate || (isEditMode ? finalActivity.date : undefined)}
             tripId={tripId}
             activityId={activityId}
