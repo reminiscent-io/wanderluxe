@@ -230,9 +230,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
       >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
-          <DialogDescription>
-            {isEditMode ? "Update your activity details." : "Enter the details for your new activity."}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto scrollbar-none">
