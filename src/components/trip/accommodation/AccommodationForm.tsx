@@ -84,21 +84,22 @@ const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({
   value: c,
 }));
 
-/** Resolve a usable image URL from the proxy metadata or directly via Google Photos endpoint. */
+/** Resolve a usable image URL (prefer our proxy; fall back to direct Google endpoint only if a public key exists). */
 const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
-  // 1) Try the app's proxy helper (keeps keys server-side if configured)
   const viaProxy = getPhotoUrl?.(p, maxWidth);
   if (viaProxy) return viaProxy;
 
-  // 2) If the proxy already expanded to an URL, use it
   if (p.url) return p.url;
 
-  // 3) Fallback to Google Photos endpoint if a browser key is available
-  //    Supports both Next.js and Vite env naming.
+  // Optional fallback: direct Google photo endpoint if you’ve exposed a browser key (not required when proxy works)
   // eslint-disable-next-line no-undef
-  const nextKey = typeof process !== "undefined" ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined) : undefined;
+  const nextKey = typeof process !== "undefined"
+    ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
+    : undefined;
   // @ts-ignore Vite env at runtime (SSR-safe check)
-  const viteKey: string | undefined = (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) || undefined;
+  const viteKey: string | undefined =
+    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) ||
+    undefined;
   const key = nextKey || viteKey;
 
   if (key && p.photo_reference) {
@@ -110,7 +111,6 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
     return `https://maps.googleapis.com/maps/api/place/photo?${params.toString()}`;
   }
 
-  // No way to build a URL
   return null;
 };
 
@@ -139,7 +139,7 @@ export default function AccommodationForm({
         initialData?.hotel_checkout_date ?? tripDepartureDate ?? "",
       checkin_time: initialData?.checkin_time ?? "15:00",
       checkout_time: initialData?.checkout_time ?? "11:00",
-      cost: initialData?.cost ?? null, // keep number/null
+      cost: initialData?.cost ?? null,
       currency: initialData?.currency ?? "USD",
       hotel_address: initialData?.hotel_address ?? "",
       hotel_phone: initialData?.hotel_phone ?? "",
@@ -152,16 +152,8 @@ export default function AccommodationForm({
       stay_range:
         initialData?.hotel_checkin_date && initialData?.hotel_checkout_date
           ? {
-              start: parse(
-                initialData.hotel_checkin_date,
-                "yyyy-MM-dd",
-                new Date()
-              ),
-              end: parse(
-                initialData.hotel_checkout_date,
-                "yyyy-MM-dd",
-                new Date()
-              ),
+              start: parse(initialData.hotel_checkin_date, "yyyy-MM-dd", new Date()),
+              end: parse(initialData.hotel_checkout_date, "yyyy-MM-dd", new Date()),
               startTime: initialData.checkin_time ?? "15:00",
               endTime: initialData.checkout_time ?? "11:00",
             }
@@ -197,27 +189,16 @@ export default function AccommodationForm({
   }, [tripArrivalDate, tripDepartureDate, initialData, form]);
 
   /* --------------------- Sync picker → legacy fields ------------------ */
-  const stayRange = useWatch({
-    control: form.control,
-    name: "stay_range",
-  }) as LuxuryDateTimeRange;
+  const stayRange = useWatch({ control: form.control, name: "stay_range" }) as LuxuryDateTimeRange;
 
   useEffect(() => {
     if (stayRange?.start) {
-      form.setValue("hotel_checkin_date", format(stayRange.start, "yyyy-MM-dd"), {
-        shouldValidate: false,
-      });
-      form.setValue("checkin_time", stayRange.startTime ?? "15:00", {
-        shouldValidate: false,
-      });
+      form.setValue("hotel_checkin_date", format(stayRange.start, "yyyy-MM-dd"), { shouldValidate: false });
+      form.setValue("checkin_time", stayRange.startTime ?? "15:00", { shouldValidate: false });
     }
     if (stayRange?.end) {
-      form.setValue("hotel_checkout_date", format(stayRange.end, "yyyy-MM-dd"), {
-        shouldValidate: false,
-      });
-      form.setValue("checkout_time", stayRange.endTime ?? "11:00", {
-        shouldValidate: false,
-      });
+      form.setValue("hotel_checkout_date", format(stayRange.end, "yyyy-MM-dd"), { shouldValidate: false });
+      form.setValue("checkout_time", stayRange.endTime ?? "11:00", { shouldValidate: false });
     }
   }, [stayRange, form]);
 
@@ -257,15 +238,11 @@ export default function AccommodationForm({
     try {
       setSaving(true);
       const formData = { ...data };
-      delete formData.travelers; // handled separately
+      delete (formData as any).travelers; // handled separately
       await onSubmit(formData);
 
       if (initialData?.stay_id && data.travelers) {
-        await setAccommodationTravelers(
-          tripId,
-          initialData.stay_id.toString(),
-          data.travelers
-        );
+        await setAccommodationTravelers(tripId, initialData.stay_id.toString(), data.travelers);
       }
     } catch (err) {
       console.error(err);
@@ -278,10 +255,7 @@ export default function AccommodationForm({
   /* ------------------------------- JSX --------------------------------- */
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-3 w-full max-w-none"
-      >
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 w-full max-w-none">
         {/* Hotel Name */}
         <FormField
           control={form.control}
@@ -302,11 +276,10 @@ export default function AccommodationForm({
                   form.setValue("hotel_website", d?.website ?? "");
                   form.setValue("hotel_url", d?.website ?? "");
 
-                  // Prefer photos that come with the selection...
+                  // Prefer photos that come with the selection; otherwise fetch details now to get photos.
                   if (Array.isArray(d?.photos) && d.photos.length) {
                     setHotelPhotos(d.photos as PlacePhotoMeta[]);
                   } else if (d?.place_id) {
-                    // ...otherwise fetch details now to get photos.
                     getPlaceDetails(d.place_id)
                       .then((res) => setHotelPhotos(res?.photos ?? []))
                       .catch(() => setHotelPhotos([]));
@@ -321,10 +294,7 @@ export default function AccommodationForm({
         />
 
         {/* Contact Preview */}
-        <HotelContactInfo
-          address={form.watch("hotel_address")}
-          phone={form.watch("hotel_phone")}
-        />
+        <HotelContactInfo address={form.watch("hotel_address")} phone={form.watch("hotel_phone")} />
 
         {/* Photo strip (side-scroll) */}
         {hotelPhotos.length > 0 && (
@@ -350,6 +320,7 @@ export default function AccommodationForm({
                       {attribution && (
                         <div
                           className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
+                          // Google provides sanitized HTML for attribution
                           dangerouslySetInnerHTML={{ __html: attribution }}
                         />
                       )}
@@ -367,11 +338,7 @@ export default function AccommodationForm({
           label="Stay Dates"
           required
           placeholder="Select check-in and check-out dates"
-          defaultMonth={
-            tripArrivalDate
-              ? parse(tripArrivalDate, "yyyy-MM-dd", new Date())
-              : undefined
-          }
+          defaultMonth={tripArrivalDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : undefined}
         />
 
         {/* Cost & Currency */}
@@ -437,11 +404,7 @@ export default function AccommodationForm({
             <FormItem>
               <FormLabel>Travelers</FormLabel>
               <FormControl>
-                <TravelersTagMultiSelect
-                  tripId={tripId}
-                  value={field.value || []}
-                  onChange={field.onChange}
-                />
+                <TravelersTagMultiSelect tripId={tripId} value={field.value || []} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
