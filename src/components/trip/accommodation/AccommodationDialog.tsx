@@ -140,11 +140,6 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           <DialogTitle>
             {initialData ? "Edit Accommodation" : "Add Accommodation"}
           </DialogTitle>
-          <DialogDescription>
-            {initialData
-              ? "Update your accommodation details."
-              : "Enter the details for your accommodation."}
-          </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none px-1">
           <AccommodationForm
