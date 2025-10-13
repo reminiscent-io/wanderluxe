@@ -59,7 +59,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         control={control}
         name="type"
         render={({ field }) => (
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>
               Transportation Type <Required />
             </Label>
@@ -120,7 +120,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
           control={control}
           name="provider"
           render={({ field }) => (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Provider</Label>
               <Input {...field} placeholder="Airline, train company…" />
             </div>
@@ -130,7 +130,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
           control={control}
           name="confirmation_number"
           render={({ field }) => (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Confirmation Number</Label>
               <Input {...field} placeholder="Booking reference" />
             </div>
@@ -139,7 +139,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
       </div>
 
       {/* Cost & Currency */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label>Cost & Currency</Label>
         <div className="grid grid-cols-2 gap-3 w-full">
           <Controller
@@ -194,7 +194,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         control={control}
         name="details"
         render={({ field }) => (
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>Details</Label>
             <Textarea {...field} rows={1} placeholder="Additional details" />
           </div>
@@ -206,7 +206,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         control={control}
         name="travelers"
         render={({ field }) => (
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>Travelers</Label>
             <TravelersTagMultiSelect
               tripId={tripId}
