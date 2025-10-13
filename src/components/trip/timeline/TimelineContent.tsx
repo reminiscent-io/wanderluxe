@@ -32,6 +32,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [preselectedDate, setPreselectedDate] = useState<string | undefined>(undefined);
   const [accommodationOpen, setAccommodationOpen] = useState(false);
   const [transportationOpen, setTransportationOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
@@ -125,6 +126,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               })}
               onActivityAdd={() => {
                 setSelectedDayId(day.day_id);
+                setPreselectedDate(day.date.split('T')[0]);
                 setActivityOpen(true);
               }}
               onHotelAdd={() => {
@@ -212,10 +214,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   currency: 'USD',
                 });
                 setSelectedDayId(null);
+                setPreselectedDate(undefined);
               }
             }}
             activity={editingActivity ? activityEdit : newActivity}
             onActivityChange={editingActivity ? setActivityEdit : setNewActivity}
+            preselectedDate={!editingActivity ? preselectedDate : undefined}
             onSubmit={async (activity) => {
               if (editingActivity?.id) {
                 // Edit mode
@@ -307,6 +311,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 }
               }
               setSelectedDayId(null);
+              setPreselectedDate(undefined);
             }}
             onDelete={async (id) => {
               try {

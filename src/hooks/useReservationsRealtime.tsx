@@ -25,6 +25,10 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
     queryClient.invalidateQueries({
       queryKey: ['reservations', tripId, dayId],
     });
+    // Invalidate trip-level reservations queries (for sidebar)
+    queryClient.invalidateQueries({
+      queryKey: ['reservations', tripId],
+    });
     // Also invalidate trip queries
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
