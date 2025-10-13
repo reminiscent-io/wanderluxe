@@ -77,7 +77,7 @@ const ImageSection: React.FC<ImageSectionProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <Label className="text-sm font-medium text-gray-700">
         Cover Image
       </Label>

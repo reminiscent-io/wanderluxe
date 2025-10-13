@@ -119,7 +119,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   return (
     <form 
       onSubmit={handleSubmit} 
-      className="space-y-6"
+      className="space-y-2"
       onKeyDown={(e) => {
         // Prevent Enter key submission when already submitting
         if (e.key === 'Enter' && (isLoading || isSubmitting)) {
