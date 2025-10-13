@@ -11,7 +11,11 @@ import {
   Utensils,
   ChevronDown,
   Calendar,
-  DollarSign
+  DollarSign,
+  Train,
+  Car,
+  Bus,
+  Ship
 } from 'lucide-react';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
@@ -36,6 +40,20 @@ const formatTime12 = (time?: string) => {
 
 // Helper function to normalize date to YYYY-MM-DD format
 const getNormalizedDay = (date: string) => date.split('T')[0];
+
+// Helper function to get transportation icon based on type
+const getTransportationIconComponent = (type: string) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    'flight': <Plane className="h-3 w-3" />,
+    'train': <Train className="h-3 w-3" />,
+    'car_service': <Car className="h-3 w-3" />,
+    'shuttle': <Bus className="h-3 w-3" />,
+    'ferry': <Ship className="h-3 w-3" />,
+    'rental_car': <Car className="h-3 w-3" />
+  };
+  
+  return iconMap[type] || <Bus className="h-3 w-3" />;
+};
 
 interface CompactDayCardProps {
   id: string;
@@ -255,7 +273,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       endTime: isStartDay && transport.end_time ? transport.end_time : undefined,
       title,
       description: transport.details,
-      icon: <Plane className="h-3 w-3" />,
+      icon: getTransportationIconComponent(transport.type),
       id: transport.id,
       data: transport
     });
