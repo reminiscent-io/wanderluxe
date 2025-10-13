@@ -19,7 +19,7 @@ import LuxuryDateTimeRangePicker, {
   LuxuryDateTimeRange,
 } from "@/components/ui/LuxuryDateTimeRangePicker";
 import { AccommodationFormData } from "@/services/accommodation/accommodationService";
-import { loadGoogleMapsAPI } from "@/utils/googleMapsLoader";
+import { loadGoogleMapsAPI, getPlaceDetails } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { CURRENCIES, CURRENCY_NAMES } from "@/utils/currencyConstants";
@@ -141,6 +141,9 @@ export default function AccommodationForm({
     },
   });
 
+  /* ----------------------------- Local state -------------------------- */
+  const [hotelPhotos, setHotelPhotos] = useState<google.maps.places.PlacePhoto[]>([]);
+
   /* -------------------- Reset form when trip dates arrive ------------- */
   useEffect(() => {
     if (
@@ -190,6 +193,23 @@ export default function AccommodationForm({
   useEffect(() => {
     loadGoogleMapsAPI().catch(console.error);
   }, []);
+
+  // When editing an existing stay with a place_id, fetch its photos once.
+  useEffect(() => {
+    const pid = form.getValues("hotel_place_id");
+    if (!pid) return;
+    (async () => {
+      try {
+        await loadGoogleMapsAPI();
+        const details = await getPlaceDetails(pid, ["photos"]);
+        setHotelPhotos(details?.photos ?? []);
+      } catch {
+        setHotelPhotos([]);
+      }
+    })();
+    // only when initial place_id changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.hotel_place_id]);
 
   /* ---------------------- Load existing travelers --------------------- */
   useEffect(() => {
@@ -255,6 +275,8 @@ export default function AccommodationForm({
                     form.setValue("hotel_place_id", d.place_id ?? "");
                     form.setValue("hotel_website", d.website ?? "");
                     form.setValue("hotel_url", d.website ?? "");
+                    // NEW: capture photos from Place Details
+                    setHotelPhotos(d.photos ?? []);
                   }
                 }}
               />
@@ -268,6 +290,51 @@ export default function AccommodationForm({
           address={form.watch("hotel_address")}
           phone={form.watch("hotel_phone")}
         />
+
+        {/* Photo strip: horizontally scrollable below address */}
+        {hotelPhotos?.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs text-sand-600">Photos</div>
+            <div className="-mx-1 overflow-x-auto">
+              <div
+                className="flex gap-2 px-1 snap-x snap-mandatory"
+                role="list"
+                aria-label="Hotel photos"
+              >
+                {hotelPhotos.slice(0, 12).map((p, idx) => {
+                  const url = p.getUrl({ maxWidth: 640, maxHeight: 420 });
+                  const attribution = p.html_attributions?.[0];
+                  return (
+                    <div
+                      key={idx}
+                      className="relative flex-none snap-start"
+                      role="listitem"
+                    >
+                      <img
+                        src={url}
+                        alt={
+                          form.watch("hotel")
+                            ? `${form.watch("hotel")} photo ${idx + 1}`
+                            : `Hotel photo ${idx + 1}`
+                        }
+                        className="h-28 w-44 rounded-md object-cover"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                      {attribution && (
+                        <div
+                          className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
+                          // Google provides safe HTML for attribution links
+                          dangerouslySetInnerHTML={{ __html: attribution }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Luxury Date + Time Picker */}
         <LuxuryDateTimeRangePicker
