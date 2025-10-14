@@ -303,24 +303,53 @@ export default function AccommodationForm({
             <div className="-mx-1 overflow-x-auto">
               <div className="flex gap-2 px-1 py-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {hotelPhotos.slice(0, 12).map((p, i) => {
-                  const url = resolvePhotoUrl(p, 360);
-                  if (!url) return null;
+                  // Offer progressively larger versions; min = 480px
+                  const url480  = resolvePhotoUrl(p, 480);
+                  const url720  = resolvePhotoUrl(p, 720);
+                  const url896  = resolvePhotoUrl(p, 896);
+                  const url1200 = resolvePhotoUrl(p, 1200);
+
+                  const src = url720 || url896 || url1200 || url480;
+                  if (!src) return null;
+
+                  const srcSet = [
+                    url480  && `${url480} 480w`,
+                    url720  && `${url720} 720w`,
+                    url896  && `${url896} 896w`,
+                    url1200 && `${url1200} 1200w`,
+                  ]
+                    .filter(Boolean)
+                    .join(", ");
+
+                  // Match your Tailwind widths:
+                  // mobile: w-72 = 288px, sm: w-96 = 384px, md: w-[28rem] = 448px
+                  const sizes = "(min-width: 768px) 448px, (min-width: 640px) 384px, 288px";
 
                   const attribution = p.html_attributions?.[0];
 
                   return (
-                    <div key={`${p.photo_reference || p.url || i}`} className="relative flex-none snap-start">
+                    <div
+                      key={`${p.photo_reference || p.url || i}`}
+                      className="relative flex-none snap-start"
+                    >
                       <img
-                        src={url}
+                        src={src}
+                        srcSet={srcSet}
+                        sizes={sizes}
                         alt={`${form.watch("hotel") || "Hotel"} photo ${i + 1}`}
-                        className="h-24 w-36 rounded-md object-cover border border-sand-200"
+                        className="
+                          h-48 w-72
+                          sm:h-64 sm:w-96
+                          md:h-64 md:w-[28rem]
+                          rounded-md object-cover border border-sand-200
+                        "
                         loading="lazy"
+                        decoding="async"
                         referrerPolicy="no-referrer"
                       />
                       {attribution && (
                         <div
                           className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
-                          // Google provides sanitized HTML for attribution
                           dangerouslySetInnerHTML={{ __html: attribution }}
                         />
                       )}
