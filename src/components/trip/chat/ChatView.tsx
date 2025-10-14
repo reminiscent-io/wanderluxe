@@ -352,14 +352,14 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   // ---------- UI ----------
   return (
     <div className="max-w-3xl mx-auto">
-      <Card className="mt-2">
+      <Card className="mt-1 bg-white">
         <CardHeader>
-          <CardTitle className="text-earth-600">Create from a document</CardTitle>
+          <CardTitle className="text-earth-600">Upload a booking confirmation</CardTitle>
         </CardHeader>
         <CardContent>
           {/* 1. Choose type */}
           <div className="space-y-2 mb-4">
-            <Label className="text-sm">1. What do you want to create?</Label>
+            <Label className="text-sm">1. Select item type (e.g., transportation)</Label>
             <Select value={itemType} onValueChange={(v) => setItemType(v as TravelItemType)}>
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Select item type…" />
