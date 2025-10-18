@@ -16,6 +16,11 @@ import {
   getPhotoUrl,
   type PlacePhotoMeta,
 } from "@/utils/googleMapsLoader";
+import {
+  getCachedPlacePhotos,
+  setCachedPlacePhotos,
+  clearExpiredPlacePhotoCache,
+} from "@/utils/placePhotoCache";
 
 /* --------------------------- photo helpers --------------------------- */
 const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
@@ -43,6 +48,22 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   return null;
 };
 
+/* Optional: warm image HTTP cache for first few images/sizes */
+function warmImageCache(photos: PlacePhotoMeta[]) {
+  const sample = photos.slice(0, 3);
+  const widths = [320, 480, 640];
+  for (const ph of sample) {
+    for (const w of widths) {
+      const url = resolvePhotoUrl(ph, w);
+      if (!url) continue;
+      const img = new Image();
+      img.decoding = "async";
+      img.loading = "eager";
+      img.src = url;
+    }
+  }
+}
+
 /* -------------------------- lazy photo strip ------------------------- */
 function PhotoStrip({ placeId, title }: { placeId?: string | null; title: string }) {
   const [photos, setPhotos] = useState<PlacePhotoMeta[]>([]);
@@ -60,8 +81,24 @@ function PhotoStrip({ placeId, title }: { placeId?: string | null; title: string
 
     const load = () => {
       setTriggered(true);
+
+      // 1) Try cache first
+      const cached = getCachedPlacePhotos(placeId);
+      if (cached?.length) {
+        setPhotos(cached);
+        // Warm HTTP cache in the background for instant re-renders
+        warmImageCache(cached);
+        return;
+      }
+
+      // 2) Fetch details (once) and store
       getPlaceDetails(placeId)
-        .then((res) => setPhotos(res?.photos ?? []))
+        .then((res) => {
+          const ph = res?.photos ?? [];
+          setPhotos(ph);
+          setCachedPlacePhotos(placeId, ph);
+          warmImageCache(ph);
+        })
         .catch(() => setPhotos([]));
     };
 
@@ -102,9 +139,7 @@ function PhotoStrip({ placeId, title }: { placeId?: string | null; title: string
                 url480 && `${url480} 480w`,
                 url640 && `${url640} 640w`,
                 url896 && `${url896} 896w`,
-              ]
-                .filter(Boolean)
-                .join(", ");
+              ].filter(Boolean).join(", ");
 
               const sizes = "(min-width: 768px) 384px, (min-width: 640px) 320px, 240px";
               const attribution = p.html_attributions?.[0];
@@ -153,8 +188,7 @@ interface Props {
     checkout_time?: string | null;
     cost?: number | null;
     currency?: string | null;
-    /** Optional: when present, enables photo strip */
-    hotel_place_id?: string | null;
+    hotel_place_id?: string | null; // when present, enables photo strip
   }>;
   onAdd: () => void;
   onEdit: (a: any) => void;
@@ -171,6 +205,11 @@ export default function AccommodationPanel({
   onClose,
   onBack,
 }: Props) {
+  // Housekeeping: sweep expired entries occasionally
+  useEffect(() => {
+    clearExpiredPlacePhotoCache();
+  }, []);
+
   // Group by check-in date
   const grouped = accommodations.reduce<Record<string, typeof accommodations>>(
     (acc, a) => {
@@ -227,10 +266,7 @@ export default function AccommodationPanel({
                   className="ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors hover:bg-sand-100"
                 >
                   {/* Clickable header block */}
-                  <button
-                    onClick={() => onEdit(a)}
-                    className="w-full text-left"
-                  >
+                  <button onClick={() => onEdit(a)} className="w-full text-left">
                     <h4 className="mb-1 text-sm font-medium">{a.hotel}</h4>
                     <p className="text-xs text-sand-600">
                       {timeDisplay}

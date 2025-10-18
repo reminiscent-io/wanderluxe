@@ -11,6 +11,11 @@ import {
   getPhotoUrl,
   type PlacePhotoMeta,
 } from "@/utils/googleMapsLoader";
+import {
+  getCachedPlacePhotos,
+  setCachedPlacePhotos,
+  clearExpiredPlacePhotoCache,
+} from "@/utils/placePhotoCache";
 
 /* --------------------------- photo helpers --------------------------- */
 const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
@@ -18,7 +23,6 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   if (viaProxy) return viaProxy;
   if (p?.url) return p.url;
 
-  // Optional fallback if a browser key is present
   const nextKey =
     typeof process !== "undefined"
       ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
@@ -39,6 +43,21 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   return null;
 };
 
+function warmImageCache(photos: PlacePhotoMeta[]) {
+  const sample = photos.slice(0, 3);
+  const widths = [320, 480, 640];
+  for (const ph of sample) {
+    for (const w of widths) {
+      const url = resolvePhotoUrl(ph, w);
+      if (!url) continue;
+      const img = new Image();
+      img.decoding = "async";
+      img.loading = "eager";
+      img.src = url;
+    }
+  }
+}
+
 /* -------------------------- lazy photo strip ------------------------- */
 function PhotoStrip({ placeId, title }: { placeId?: string | null; title: string }) {
   const [photos, setPhotos] = useState<PlacePhotoMeta[]>([]);
@@ -56,8 +75,21 @@ function PhotoStrip({ placeId, title }: { placeId?: string | null; title: string
 
     const load = () => {
       setTriggered(true);
+
+      const cached = getCachedPlacePhotos(placeId);
+      if (cached?.length) {
+        setPhotos(cached);
+        warmImageCache(cached);
+        return;
+      }
+
       getPlaceDetails(placeId)
-        .then((res) => setPhotos(res?.photos ?? []))
+        .then((res) => {
+          const ph = res?.photos ?? [];
+          setPhotos(ph);
+          setCachedPlacePhotos(placeId, ph);
+          warmImageCache(ph);
+        })
         .catch(() => setPhotos([]));
     };
 
@@ -168,6 +200,11 @@ export default function ReservationsPanel({
   onClose,
   onBack,
 }: Props) {
+  // Housekeeping: sweep expired entries occasionally
+  useEffect(() => {
+    clearExpiredPlacePhotoCache();
+  }, []);
+
   const grouped = reservations.reduce((acc: Record<string, any[]>, r) => {
     const d = r.trip_days?.date || "No Date";
     (acc[d] ||= []).push(r);
