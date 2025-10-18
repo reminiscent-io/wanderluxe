@@ -11,18 +11,55 @@ import RestaurantSearchInput from './RestaurantSearchInput';
 import RestaurantContactInfo from './form/RestaurantContactInfo';
 import { Loader, Trash2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
 import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
 import CurrencySelector from '../budget/CurrencySelector';
 
+import {
+  loadGoogleMapsAPI,
+  getPlaceDetails,
+  getPhotoUrl,
+  type PlacePhotoMeta,
+} from "@/utils/googleMapsLoader";
+
+/* ------------------------------ helpers ------------------------------ */
 const toNullableNumber = (val: unknown) => {
   if (val === '' || val === null || typeof val === 'undefined') return undefined;
   if (typeof val === 'number' && !Number.isNaN(val)) return val;
   const num = Number(val);
   return Number.isNaN(num) ? undefined : num;
+};
+
+/** Prefer our proxy photo URL; fall back to direct Google endpoint only if a public key exists. */
+const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
+  const viaProxy = getPhotoUrl?.(p, maxWidth);
+  if (viaProxy) return viaProxy;
+
+  if (p.url) return p.url;
+
+  // Optional fallback if a browser key is present
+  const nextKey =
+    typeof process !== "undefined"
+      ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
+      : undefined;
+
+  // @ts-ignore Vite env at runtime (SSR-safe check)
+  const viteKey: string | undefined =
+    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) || undefined;
+
+  const key = nextKey || viteKey;
+
+  if (key && p.photo_reference) {
+    const params = new URLSearchParams({
+      maxwidth: String(maxWidth),
+      photo_reference: p.photo_reference,
+      key,
+    });
+    return `https://maps.googleapis.com/maps/api/place/photo?${params.toString()}`;
+  }
+  return null;
 };
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -73,9 +110,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const generateTripDates = () => {
     if (!tripArrivalDate || !tripDepartureDate) return [];
 
-    const dates = [];
+    const dates: string[] = [];
 
-    // Parse dates safely without timezone issues
     const [startYear, startMonth, startDay] = tripArrivalDate.split('-').map(Number);
     const [endYear, endMonth, endDay] = tripDepartureDate.split('-').map(Number);
 
@@ -86,8 +122,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
-      dates.push(dateString);
+      dates.push(`${year}-${month}-${day}`);
     }
 
     return dates;
@@ -98,24 +133,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
   // Smart date preselection logic
   const getPreselectedDate = () => {
-    // If we've resolved the date from day_id lookup, use that
-    if (resolvedDate) {
-      return resolvedDate;
-    }
-
-    // If editing existing reservation, use its date
-    if (defaultValues?.reservation_date) {
-      return defaultValues.reservation_date;
-    }
-
-    // If adding from a specific day card, use that day's date
-    if (defaultValues?.day_id && tripDates.length > 0) {
-      // Find the day in trip dates that matches the day_id context
-      // For now, default to first available date since we need day-to-date mapping
-      return tripDates[0];
-    }
-
-    // Default to first available trip date
+    if (resolvedDate) return resolvedDate;
+    if (defaultValues?.reservation_date) return defaultValues.reservation_date;
+    if (defaultValues?.day_id && tripDates.length > 0) return tripDates[0];
     return tripDates.length > 0 ? tripDates[0] : '';
   };
 
@@ -133,10 +153,28 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     },
   });
 
+  /* ------------------------------ Google Maps init ------------------------------ */
+  useEffect(() => {
+    loadGoogleMapsAPI().catch(console.error);
+  }, []);
+
+  /* ------------------------------ Photos state --------------------------------- */
+  const [restaurantPhotos, setRestaurantPhotos] = useState<PlacePhotoMeta[]>([]);
+
+  // Load photos for edit mode when a place_id already exists
+  useEffect(() => {
+    const pid = defaultValues?.place_id || undefined;
+    if (!pid) return;
+    getPlaceDetails(pid)
+      .then((res) => {
+        if (res?.photos?.length) setRestaurantPhotos(res.photos);
+      })
+      .catch(() => setRestaurantPhotos([]));
+  }, [defaultValues?.place_id]);
+
   // Effect to fetch date from day_id when editing a reservation
   useEffect(() => {
     const fetchDateFromDayId = async () => {
-      // Only fetch if we're editing (have an ID), have day_id but no reservation_date
       if (defaultValues?.id && defaultValues?.day_id && !defaultValues?.reservation_date) {
         try {
           const { data: tripDay, error } = await supabase
@@ -147,7 +185,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
           if (!error && tripDay?.date) {
             setResolvedDate(tripDay.date);
-            // Also update the form value directly
             form.setValue('reservation_date', tripDay.date);
           }
         } catch (error) {
@@ -159,30 +196,21 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     fetchDateFromDayId();
   }, [defaultValues?.id, defaultValues?.day_id, defaultValues?.reservation_date, form]);
 
-  // ──────────────────────────────────────────────────────────────────────────────
   // Load existing travelers
-  // ──────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (defaultValues?.id && tripId) {
       getReservationTravelerIds(tripId, defaultValues.id.toString())
         .then(({ data }) => {
-          if (data) {
-            form.setValue("travelers", data);
-          }
+          if (data) form.setValue("travelers", data);
         })
         .catch(console.error);
     }
   }, [defaultValues?.id, tripId, form]);
 
-  // ──────────────────────────────────────────────────────────────────────────────
   // Submit handler
-  // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitForm = form.handleSubmit(async (data) => {
-
-
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
-
       toast({
         variant: 'destructive',
         title: 'Missing trip',
@@ -195,8 +223,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     let finalDayId = (defaultValues as any)?.day_id;
 
     if (data.reservation_date && effectiveTripId) {
-
-
       const { data: tripDay, error: tripDayError } = await supabase
         .from('trip_days')
         .select('day_id')
@@ -213,34 +239,28 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         });
         return;
       }
-
-
       finalDayId = tripDay.day_id;
     }
 
-    // Remove reservation_date and travelers since they don't exist in the database - we use day_id and junction tables instead
-    const { reservation_date, travelers, ...dataWithoutExtraFields } = data;
+    // Remove reservation_date and travelers (db uses day_id and junction tables)
+    const { reservation_date, travelers, ...dataWithout } = data;
 
     const processedData = {
-      ...dataWithoutExtraFields,
+      ...dataWithout,
       trip_id: effectiveTripId,
       day_id: finalDayId,
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
 
-
-
     try {
       const result = await onSubmit(processedData);
 
-      // Save traveler tags if we have travelers selected
       if (travelers && travelers.length > 0) {
         const reservationId = defaultValues?.id || (result as any)?.id;
         if (reservationId) {
           await setReservationTravelers(effectiveTripId, reservationId.toString(), travelers);
         }
       }
-
     } catch (err) {
       console.error('Failed to save reservation:', err);
       toast({
@@ -251,22 +271,17 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     }
   });
 
-  // ──────────────────────────────────────────────────────────────────────────────
   // Helpers
-  // ──────────────────────────────────────────────────────────────────────────────
   const handleCostBlur = (value: string) => {
     const numericValue = Number(value.replace(/,/g, ''));
     if (!isNaN(numericValue)) {
-      const formatted = new Intl.NumberFormat('en-US').format(numericValue);
       form.setValue('cost', numericValue);
-      return formatted;
+      return new Intl.NumberFormat('en-US').format(numericValue);
     }
     return value;
   };
 
-  // ──────────────────────────────────────────────────────────────────────────────
   // UI
-  // ──────────────────────────────────────────────────────────────────────────────
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitForm} className="space-y-3 w-full max-w-none">
@@ -290,6 +305,25 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     form.setValue('website', details.website || '');
                     form.setValue('place_id', details.place_id || '');
                     form.setValue('rating', details.rating || undefined);
+
+                    // Prefer picker-supplied photos; else fetch via Place Details
+                    if (Array.isArray(details?.photos) && details.photos.length) {
+                      setRestaurantPhotos(details.photos as PlacePhotoMeta[]);
+                    } else if (details?.place_id) {
+                      getPlaceDetails(details.place_id)
+                        .then((res) => setRestaurantPhotos(res?.photos ?? []))
+                        .catch(() => setRestaurantPhotos([]));
+                    } else {
+                      setRestaurantPhotos([]);
+                    }
+                  } else {
+                    // Raw text entry (no place_id): just clear photo strip
+                    setRestaurantPhotos([]);
+                    form.setValue('place_id', null);
+                    form.setValue('website', null);
+                    form.setValue('address', null);
+                    form.setValue('phone_number', null);
+                    form.setValue('rating', undefined as any);
                   }
                 }}
               />
@@ -303,6 +337,62 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           website={form.watch('website')}
           rating={form.watch('rating')}
         />
+
+        {/* Photo strip (side-scroll) */}
+        {restaurantPhotos.length > 0 && (
+          <div className="mt-2 space-y-2">
+            <div className="text-xs text-sand-600">Photos</div>
+            <div className="-mx-1 overflow-x-auto">
+              <div className="flex gap-2 px-1 py-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {restaurantPhotos.slice(0, 12).map((p, i) => {
+                  const url480  = resolvePhotoUrl(p, 480);
+                  const url720  = resolvePhotoUrl(p, 720);
+                  const url896  = resolvePhotoUrl(p, 896);
+                  const url1200 = resolvePhotoUrl(p, 1200);
+
+                  const src = url720 || url896 || url1200 || url480;
+                  if (!src) return null;
+
+                  const srcSet = [
+                    url480  && `${url480} 480w`,
+                    url720  && `${url720} 720w`,
+                    url896  && `${url896} 896w`,
+                    url1200 && `${url1200} 1200w`,
+                  ].filter(Boolean).join(", ");
+
+                  const sizes = "(min-width: 768px) 448px, (min-width: 640px) 384px, 288px";
+                  const attribution = p.html_attributions?.[0];
+
+                  return (
+                    <div key={`${p.photo_reference || p.url || i}`} className="relative flex-none snap-start">
+                      <img
+                        src={src}
+                        srcSet={srcSet}
+                        sizes={sizes}
+                        alt={`${form.watch("restaurant_name") || "Restaurant"} photo ${i + 1}`}
+                        className="
+                          h-48 w-72
+                          sm:h-64 sm:w-96
+                          md:h-64 md:w-[28rem]
+                          rounded-md object-cover border border-sand-200
+                        "
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                      />
+                      {attribution && (
+                        <div
+                          className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
+                          dangerouslySetInnerHTML={{ __html: attribution }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Reservation Date & Time */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -322,7 +412,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   </FormControl>
                   <SelectContent className="z-[999]">
                     {tripDates.map((date) => {
-                      // Parse date safely without timezone issues
                       const [year, month, day] = date.split('-').map(Number);
                       const safeDate = new Date(year, month - 1, day);
                       return (
@@ -351,7 +440,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     type="time"
                     value={field.value || ''}
                     onChange={field.onChange}
-                    step="300" // 5-minute increments
+                    step="300"
                     className="w-full bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                   />
                 </FormControl>
@@ -401,8 +490,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
                     }}
                     onBlur={(e) => {
-                      const formatted = handleCostBlur(e.target.value);
-                      // The field value is already set by onChange, this just ensures visual formatting
+                      handleCostBlur(e.target.value);
                     }}
                     placeholder="0"
                     className="bg-white"
@@ -494,9 +582,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               type="submit"
               disabled={isSubmitting}
               className="bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
-              onClick={(e) => {
-
-              }}
             >
               {isSubmitting ? (
                 <>
@@ -509,34 +594,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             </Button>
           </div>
         </div>
-
-
       </form>
     </Form>
   );
 };
-
-// Assuming CurrencySelector component is defined elsewhere and imported.
-// If not, you'll need to define or import it for this code to be fully functional.
-// For example:
-// const CurrencySelector = ({ value, onValueChange, className }: { value?: string; onValueChange?: (value: string) => void; className?: string }) => (
-//   <Select onValueChange={onValueChange} value={value || ''}>
-//     <FormControl>
-//       <SelectTrigger className={className}>
-//         <SelectValue placeholder="Select currency" />
-//       </SelectTrigger>
-//     </FormControl>
-//     <SelectContent className="z-[999] max-h-48 overflow-y-auto">
-//       {CURRENCIES.map((currency) => (
-//         <SelectItem key={currency} value={currency}>
-//           <span className="font-medium">{currency}</span>
-//           <span className="ml-1 text-sand-600 text-sm">
-//             {CURRENCY_SYMBOLS[currency]}
-//           </span>
-//         </SelectItem>
-//       ))}
-//     </SelectContent>
-//   </Select>
-// );
 
 export default RestaurantReservationForm;
