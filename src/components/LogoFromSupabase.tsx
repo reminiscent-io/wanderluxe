@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { fetchLogosFromSupabase } from '@/utils/storageUtils';
 
@@ -26,48 +25,48 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
         setIsLoading(false);
         return;
       }
-      
+
       // Use direct URLs for other logos
       if (logoName === "Black Simple") {
         setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Black%20Simple.png");
         setIsLoading(false);
         return;
       }
-      
+
       if (logoName === "White Full") {
         setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//White%20Full.png");
         setIsLoading(false);
         return;
       }
-      
+
       if (logoName === "White Simple") {
         setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//White%20Simple.png");
         setIsLoading(false);
         return;
       }
-      
+
       if (logoName === "Sand Simple") {
         setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Sand%20Simple.png");
         setIsLoading(false);
         return;
       }
-      
+
       try {
         const logos = await fetchLogosFromSupabase();
         console.log("Available logos:", logos.map(l => l.name)); // Debugging
-        
+
         // Try exact match with dashes, then partial match
         const exactMatch = logos.find(l => 
           l.name.toLowerCase() === `wanderluxe-${logoName.toLowerCase()}.png` ||
           l.name.toLowerCase() === `${logoName.toLowerCase()}.png`
         );
-        
+
         const partialMatch = logos.find(l => 
           l.name.toLowerCase().includes(logoName.toLowerCase())
         );
-        
+
         setLogoUrl(exactMatch?.url || partialMatch?.url || null);
-        
+
         if (!exactMatch && !partialMatch) {
           console.warn(`No logo found matching "${logoName}"`);
         }
