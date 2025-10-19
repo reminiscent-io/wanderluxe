@@ -395,6 +395,9 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
               <p className="text-sm text-sand-700">
                 2. Drag & drop an image/PDF here, or use the buttons below.
               </p>
+              <p className= "text-xs text-sand-500 italic">
+                All files are securely passed to OpenAI; we do not store any uplaods
+              </p>
 
               {/* Live preview (image or first page of PDF) */}
               {previewUrl ? (
