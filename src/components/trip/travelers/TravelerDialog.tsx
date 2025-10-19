@@ -221,10 +221,9 @@ export default function TravelerDialog({
                 <FormLabel>Pick from your contacts</FormLabel>
                 <Select onValueChange={(v) => handlePickContact(v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a person you’ve shared with before" />
+                    <SelectValue placeholder="Select a person you've shared with before" />
                   </SelectTrigger>
-                  {/* z-index fix so it appears above the Dialog */}
-                  <SelectContent className="z-[70]">
+                  <SelectContent className="z-[9999]">
                     {contacts.map((c) => (
                       <SelectItem key={c.key} value={c.key}>
                         {pickBestName(c)} {c.email ? `— ${c.email}` : ""}
