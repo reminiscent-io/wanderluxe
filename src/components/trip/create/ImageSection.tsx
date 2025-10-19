@@ -16,6 +16,32 @@ interface ImageSectionProps {
   onPositionChange?: (position: string) => void;
 }
 
+// Helper to get signed URL from storage path or existing signed URL
+async function getSignedImageUrl(urlOrPath: string): Promise<string> {
+  if (!urlOrPath) return '';
+  
+  // If it's already a signed URL or external URL, return as-is
+  if (urlOrPath.includes('token=') || urlOrPath.startsWith('http') && !urlOrPath.includes('supabase.co/storage')) {
+    return urlOrPath;
+  }
+  
+  try {
+    // Extract the file path from the storage URL
+    const pathMatch = urlOrPath.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
+    const filePath = pathMatch ? pathMatch[1] : urlOrPath;
+    
+    const { data: { signedUrl }, error } = await supabase.storage
+      .from('trip-images')
+      .createSignedUrl(filePath, 31536000); // 1 year
+    
+    if (error) throw error;
+    return signedUrl || urlOrPath;
+  } catch (err) {
+    console.error('Error getting signed URL:', err);
+    return urlOrPath;
+  }
+}
+
 interface UnsplashImage {
   id: string;
   url: string;

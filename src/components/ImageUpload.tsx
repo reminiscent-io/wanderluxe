@@ -83,12 +83,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         throw uploadError;
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      // Generate a signed URL that expires in 1 year for authenticated access
+      const { data: { signedUrl }, error: urlError } = await supabase.storage
         .from('trip-images')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 31536000); // 1 year in seconds
 
-      setPreview(publicUrl);
-      onChange(publicUrl);
+      if (urlError) {
+        throw urlError;
+      }
+
+      setPreview(signedUrl);
+      onChange(signedUrl);
       toast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Error uploading image:', error);
