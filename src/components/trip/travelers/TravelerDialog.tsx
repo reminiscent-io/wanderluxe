@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { Eye, Edit, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { shareTrip } from "@/services/tripSharingService";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { getConnectedContacts, pickBestName } from "@/services/contactsService";
 
 interface TravelerDialogProps {
   open: boolean;
@@ -48,12 +50,10 @@ export default function TravelerDialog({
     },
   });
 
-  // Drive highlight from watch() so it re-renders instantly
   const perm = (form.watch("permission_level") as Perm) || "read";
   const watchedEmail = form.watch("shared_with_email");
   const hasEmail = !!watchedEmail?.trim();
 
-  // Reset on open + traveler change, with normalized permission
   useEffect(() => {
     if (!open) return;
     form.reset({
@@ -68,11 +68,9 @@ export default function TravelerDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, traveler?.id, traveler?.permission_level]);
 
-  // ✨ NEW: Hydrate from DB when dialog opens to ensure correct highlight even if hook omitted/was stale
   useEffect(() => {
     const hydrate = async () => {
       if (!open) return;
-      // Only non-owner, existing record
       const id = (traveler as any)?.id;
       if (!id || isOwner) return;
       const { data, error } = await supabase
@@ -90,6 +88,36 @@ export default function TravelerDialog({
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, (traveler as any)?.id]);
+
+  // Contacts for quick prefilling
+  const [contacts, setContacts] = useState<any[]>([]);
+  useEffect(() => {
+    const run = async () => {
+      if (!open) return;
+      try {
+        const list = await getConnectedContacts();
+        setContacts(list.filter((c) => !!(c.email || c.profile_full_name)));
+      } catch (e) {
+        console.error("contacts load failed", e);
+      }
+    };
+    run();
+  }, [open]);
+
+  const handlePickContact = (key: string) => {
+    const c = contacts.find((x) => x.key === key);
+    if (!c) return;
+    const name = (c.profile_full_name && c.profile_full_name.trim())
+      ? c.profile_full_name.trim()
+      : `${c.share_first_name ?? ""} ${c.share_last_name ?? ""}`.trim();
+    const [first, ...rest] = name ? name.split(" ") : [""];
+    const last = rest.join(" ");
+    if (!isOwner) {
+      form.setValue("first_name", first || "", { shouldDirty: true });
+      form.setValue("last_name", last || "", { shouldDirty: true });
+      if (c.email) form.setValue("shared_with_email", c.email, { shouldDirty: true });
+    }
+  };
 
   const upsertMutation = useMutation({
     mutationFn: async (data: TravelerForm) => {
@@ -138,7 +166,6 @@ export default function TravelerDialog({
     if (!canShare) return;
     try {
       setSending(true);
-      // Upsert first so names/permission persist
       try {
         await upsertTraveler(tripId, {
           ...(isEditing && (traveler as any)?.id ? { id: (traveler as any).id } : {}),
@@ -188,6 +215,26 @@ export default function TravelerDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Quick pick from known contacts */}
+            {!isOwner && contacts.length > 0 && (
+              <FormItem>
+                <FormLabel>Pick from your contacts</FormLabel>
+                <Select onValueChange={(v) => handlePickContact(v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a person you’ve shared with before" />
+                  </SelectTrigger>
+                  {/* z-index fix so it appears above the Dialog */}
+                  <SelectContent className="z-[70]">
+                    {contacts.map((c) => (
+                      <SelectItem key={c.key} value={c.key}>
+                        {pickBestName(c)} {c.email ? `— ${c.email}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+
             <FormField
               control={form.control}
               name="first_name"
@@ -255,7 +302,7 @@ export default function TravelerDialog({
               )}
             />
 
-            {/* Permission buttons driven by watch() and setValue() */}
+            {/* Permission buttons */}
             <FormField
               control={form.control}
               name="permission_level"

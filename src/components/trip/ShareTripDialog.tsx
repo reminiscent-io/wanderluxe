@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,6 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { TripShare, PermissionLevel } from "@/integrations/supabase/trip_shares_types";
 import { EmailCombobox } from "@/components/ui/email-combobox";
 import { cn } from "@/lib/utils";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { getConnectedContacts, contactsByEmail, pickBestName } from "@/services/contactsService";
 
 interface ShareTripDialogProps {
   tripId: string;
@@ -50,7 +51,12 @@ const ShareTripDialog = ({
     fullName: null,
     email: null,
   });
+
+  // contacts + suggestions
   const [previousEmails, setPreviousEmails] = useState<string[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [contactsMap, setContactsMap] = useState<Record<string, any>>({});
+  const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
     const getUserInfo = async () => {
@@ -75,6 +81,7 @@ const ShareTripDialog = ({
     if (dialogOpen) {
       fetchExistingShares();
       fetchPreviousEmails();
+      fetchContacts();
     }
   }, [dialogOpen]);
 
@@ -86,6 +93,22 @@ const ShareTripDialog = ({
       console.error("Error fetching previous emails:", error);
     }
   };
+
+  const fetchContacts = async () => {
+    try {
+      const list = await getConnectedContacts();
+      setContacts(list);
+      setContactsMap(contactsByEmail(list));
+    } catch (e) {
+      console.error("Error fetching contacts", e);
+    }
+  };
+
+  useEffect(() => {
+    const fromContacts = contacts.map((c) => c.email).filter(Boolean) as string[];
+    const merged = Array.from(new Set([...previousEmails, ...fromContacts])).sort();
+    setEmailSuggestions(merged);
+  }, [previousEmails, contacts]);
 
   const fetchExistingShares = async () => {
     setIsLoading(true);
@@ -117,10 +140,51 @@ const ShareTripDialog = ({
     }
   };
 
+  const handlePickContact = (email: string) => {
+    if (!email) return;
+    const firstEmpty = emails.findIndex((e) => !e.trim());
+    const next = [...emails];
+    if (firstEmpty >= 0) next[firstEmpty] = email;
+    else next.push(email);
+    setEmails(next);
+  };
+
   const nonEmptyEmails = useMemo(
     () => emails.map((e) => e.trim()).filter((e) => e !== ""),
     [emails]
   );
+
+  const prefillNameForEmail = async (email: string) => {
+    const known = contactsMap[email.toLowerCase()];
+    if (!known) return;
+    const first =
+      known.share_first_name ||
+      (known.profile_full_name ? known.profile_full_name.split(" ")[0] : undefined);
+    const last =
+      known.share_last_name ||
+      (known.profile_full_name ? known.profile_full_name.split(" ").slice(1).join(" ") : undefined);
+
+    if (!first && !last) return;
+
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      await supabase
+        .from("trip_shares" as any)
+        .upsert(
+          {
+            trip_id: tripId,
+            shared_by_user_id: auth.user?.id,
+            shared_with_email: email.trim(),
+            first_name: first,
+            last_name: last || null,
+            permission_level: permissionLevel,
+          },
+          { onConflict: "trip_id,shared_with_email" }
+        );
+    } catch {
+      // non-blocking
+    }
+  };
 
   const handleShareSingle = async (email: string) => {
     if (!isValidEmail(email)) {
@@ -128,6 +192,7 @@ const ShareTripDialog = ({
       return;
     }
     try {
+      await prefillNameForEmail(email);
       const ok = await shareTrip(tripId, email, tripDestination, permissionLevel);
       if (ok) {
         fetchExistingShares();
@@ -156,6 +221,7 @@ const ShareTripDialog = ({
     try {
       let successCount = 0;
       for (const email of nonEmptyEmails) {
+        await prefillNameForEmail(email);
         const ok = await shareTrip(tripId, email, tripDestination, permissionLevel);
         if (ok) successCount++;
       }
@@ -192,7 +258,6 @@ const ShareTripDialog = ({
       );
       const ok = await updateTripSharePermission(shareId, target);
       if (!ok) {
-        // Revert (default fallback to 'edit' if missing)
         setExistingShares((prev) =>
           prev.map((s) =>
             s.id === shareId ? { ...s, permission_level: (s.permission_level || "edit") as PermissionLevel } : s
@@ -209,7 +274,6 @@ const ShareTripDialog = ({
     }
   };
 
-  // Shared button styles for dark selection
   const baseBtn = "h-8 px-3";
   const baseBtnSmall = "h-7 px-2";
   const selected = "bg-earth-600 text-white hover:bg-earth-700";
@@ -224,7 +288,6 @@ const ShareTripDialog = ({
       >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
-          
         </DialogHeader>
 
         <div
@@ -232,6 +295,29 @@ const ShareTripDialog = ({
           style={{ maxHeight: "calc(90vh - 200px)" }}
         >
           <div className="space-y-4 pr-2">
+
+            {/* Quick pick from known contacts */}
+            {contacts.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Pick from your contacts</p>
+                <Select onValueChange={(v) => handlePickContact(v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a person you’ve shared with before" />
+                  </SelectTrigger>
+                  {/* z-index fix so it appears above the Dialog */}
+                  <SelectContent className="z-[70]">
+                    {contacts
+                      .filter((c) => !!c.email)
+                      .map((c) => (
+                        <SelectItem key={c.key} value={c.email!}>
+                          {pickBestName(c)} — {c.email}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Email inputs */}
             <div className="space-y-2">
               <p className="text-sm font-medium">Email addresses</p>
@@ -244,7 +330,7 @@ const ShareTripDialog = ({
                       <EmailCombobox
                         value={email}
                         onChange={(value) => handleEmailChange(index, value)}
-                        suggestions={previousEmails}
+                        suggestions={emailSuggestions}
                         placeholder="email@example.com"
                       />
                     </div>
@@ -288,7 +374,7 @@ const ShareTripDialog = ({
               Add Another
             </Button>
 
-            {/* New invite permission — two-button dark selection */}
+            {/* New invite permission */}
             <div className="space-y-3 border-t pt-4 mt-4">
               <p className="text-sm font-medium">Permission for new invites</p>
               <div className="flex items-center gap-2">
@@ -315,7 +401,7 @@ const ShareTripDialog = ({
               </div>
             </div>
 
-            {/* Existing shares — per-row two-button dark selection */}
+            {/* Existing shares */}
             {existingShares.length > 0 && (
               <div className="space-y-2 border-t pt-4 mt-6">
                 <p className="text-sm font-medium">Currently shared with</p>
