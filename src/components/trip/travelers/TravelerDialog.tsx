@@ -54,9 +54,6 @@ export default function TravelerDialog({
   const watchedEmail = form.watch("shared_with_email");
   const hasEmail = !!watchedEmail?.trim();
 
-  // NEW: remember the row created by Share so subsequent Save is an UPDATE, not a duplicate INSERT
-  const [createdShareId, setCreatedShareId] = useState<string | null>(null);
-
   useEffect(() => {
     if (!open) return;
     form.reset({
@@ -68,7 +65,6 @@ export default function TravelerDialog({
     if (isOwner) {
       form.setValue("permission_level", "edit", { shouldDirty: false, shouldTouch: false });
     }
-    setCreatedShareId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, traveler?.id, traveler?.permission_level]);
 
@@ -125,18 +121,13 @@ export default function TravelerDialog({
 
   const upsertMutation = useMutation({
     mutationFn: async (data: TravelerForm) => {
-      // Use existing id, or the id captured when Share created the row
-      const idToUse =
-        ((isEditing && (traveler as any)?.id) ? (traveler as any).id : createdShareId) || undefined;
-
       const payload = {
-        ...(idToUse ? { id: idToUse } : {}),
+        ...(isEditing && (traveler as any)?.id ? { id: (traveler as any).id } : {}),
         first_name: data.first_name,
         last_name: data.last_name || undefined,
         shared_with_email: data.shared_with_email?.trim() || undefined,
         permission_level: normalizePermission(data.permission_level),
       };
-
       const { data: result, error } = await upsertTraveler(tripId, payload);
       if (error) throw error;
       return result;
@@ -146,20 +137,9 @@ export default function TravelerDialog({
       queryClient.invalidateQueries({ queryKey: ["travelers", tripId] });
       onOpenChange(false);
       form.reset();
-      setCreatedShareId(null);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("Error saving traveler:", error);
-      const msg = String(error?.message || "").toLowerCase();
-      const isDup = msg.includes("duplicate key") || error?.code === "23505";
-      if (isDup) {
-        // already exists; treat as success for UX
-        toast.success("Traveler already added");
-        onOpenChange(false);
-        form.reset();
-        setCreatedShareId(null);
-        return;
-      }
       toast.error("Failed to save traveler");
     },
   });
@@ -170,18 +150,12 @@ export default function TravelerDialog({
       onOpenChange(false);
       return;
     }
-    // Prevent "second save after share" no-op from throwing confusing errors
-    if (!form.formState.isDirty) {
-      onOpenChange(false);
-      return;
-    }
     upsertMutation.mutate(data);
   };
 
   const handleClose = () => {
     onOpenChange(false);
     form.reset();
-    setCreatedShareId(null);
   };
 
   // Share email
@@ -192,61 +166,30 @@ export default function TravelerDialog({
     if (!canShare) return;
     try {
       setSending(true);
-
-      // 1) Idempotent create/update of the traveler row
-      const payload = {
-        ...(isEditing && (traveler as any)?.id ? { id: (traveler as any).id } : {}),
-        first_name: form.getValues("first_name"),
-        last_name: form.getValues("last_name") || undefined,
-        shared_with_email: watchedEmail.trim(),
-        permission_level: normalizePermission(form.getValues("permission_level")),
-      };
-      const { data: upserted, error: upsertErr } = await upsertTraveler(tripId, payload);
-
-      if (upsertErr) {
-        const msg = String(upsertErr.message || "").toLowerCase();
-        const isDup = msg.includes("duplicate key") || (upsertErr as any)?.code === "23505";
-        if (!isDup) {
-          toast.error("Could not add traveler");
-          return;
-        }
-      }
-
-      // 2) Capture created/located id so subsequent Save becomes UPDATE
-      if ((upserted as any)?.id) {
-        setCreatedShareId((upserted as any).id);
-      } else {
-        const { data: row } = await supabase
-          .from("trip_shares" as any)
-          .select("id")
-          .eq("trip_id", tripId)
-          .eq("shared_with_email", watchedEmail.trim())
-          .maybeSingle();
-        if (row?.id) setCreatedShareId(row.id);
-      }
-
-      // 3) Send email
+      try {
+        await upsertTraveler(tripId, {
+          ...(isEditing && (traveler as any)?.id ? { id: (traveler as any).id } : {}),
+          first_name: form.getValues("first_name"),
+          last_name: form.getValues("last_name") || undefined,
+          shared_with_email: watchedEmail.trim(),
+          permission_level: normalizePermission(form.getValues("permission_level")),
+        });
+      } catch {}
       const { data: trip } = await supabase
         .from("trips")
         .select("destination")
         .eq("trip_id", tripId)
         .single();
       const destination = trip?.destination || "your trip";
-
       const ok = await shareTrip(
         tripId,
         watchedEmail.trim(),
         destination,
         normalizePermission(form.getValues("permission_level"))
       );
-
       if (ok) {
-        toast.success("Traveler added & email sent");
+        toast.success("Share email sent");
         queryClient.invalidateQueries({ queryKey: ["travelers", tripId] });
-
-        // 4) Reset dirty state so Save doesn't try to re-insert
-        const current = form.getValues();
-        form.reset(current);
       }
     } catch (err) {
       console.error("Error sending share email:", err);
@@ -416,7 +359,7 @@ export default function TravelerDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={upsertMutation.isPending || isOwner || !form.formState.isDirty}
+                disabled={upsertMutation.isPending || isOwner}
                 className="flex-1 bg-earth-600 hover:bg-earth-700 text-white"
               >
                 {upsertMutation.isPending ? "Saving..." : isEditing ? "Update" : "Add"}

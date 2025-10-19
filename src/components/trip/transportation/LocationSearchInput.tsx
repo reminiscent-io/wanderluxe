@@ -62,7 +62,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
       if (details) {
         // For airports, try to extract airport code or use name
         let displayValue = details.name || details.formatted_address || '';
-
+        
         if (transportationType === 'flight' && details.name) {
           // Check if the name contains an airport code in parentheses
           const airportCodeMatch = details.name.match(/\(([A-Z]{3})\)/);
@@ -90,7 +90,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev =>
+        setSelectedIndex(prev => 
           prev < suggestions.length - 1 ? prev + 1 : prev
         );
         break;
@@ -150,9 +150,9 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
         {!isLoading && showSuggestions && (
           <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-sand-500" />
         )}
-
+        
         {showSuggestions && suggestions.length > 0 && (
-          <div
+          <div 
             ref={dropdownRef}
             className="absolute z-[999] w-full mt-1 bg-white border border-sand-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
           >

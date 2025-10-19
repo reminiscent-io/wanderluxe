@@ -139,7 +139,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       {!isLoading && showSuggestions && (
         <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-sand-500" />
       )}
-
+      
       {showSuggestions && suggestions.length > 0 && (
         <div 
           ref={dropdownRef}
