@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { EyeOff, Share2, Users, Calendar, MapPin, Clock } from 'lucide-react';
 import { format, getYear, parseISO, differenceInDays, isToday, isTomorrow } from 'date-fns';
@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trip } from '@/types/trip';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from '@/integrations/supabase/client';
 
 interface TripCardProps {
   trip: Trip & { 
@@ -30,10 +31,42 @@ const TripCard = ({
   isShared
 }: TripCardProps) => {
   const navigate = useNavigate();
+  const [imageUrl, setImageUrl] = useState(trip.cover_image_url);
   
   // Use either the isShared prop or check if the trip object has isShared property
   const tripIsShared = isShared || trip.isShared;
   const shareCount = trip.shareCount || 0;
+
+  useEffect(() => {
+    const loadImage = async () => {
+      const src = trip.cover_image_url;
+      
+      // Check if this is a Supabase storage URL
+      if (src && src.includes('supabase.co/storage') && src.includes('trip-images')) {
+        // Extract file path and get signed URL if not already signed
+        if (!src.includes('token=')) {
+          const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
+          if (pathMatch) {
+            try {
+              const { data: { signedUrl }, error } = await supabase.storage
+                .from('trip-images')
+                .createSignedUrl(pathMatch[1], 31536000); // 1 year
+              
+              if (!error && signedUrl) {
+                setImageUrl(signedUrl);
+                return;
+              }
+            } catch (err) {
+              console.error('Error getting signed URL:', err);
+            }
+          }
+        }
+      }
+      setImageUrl(src);
+    };
+
+    loadImage();
+  }, [trip.cover_image_url]);
 
   const formatDateRange = (trip: Trip) => {
     // If arrival and departure dates are available, use those
@@ -106,7 +139,7 @@ const TripCard = ({
       >
         <div className="relative h-56 overflow-hidden">
           <motion.img 
-            src={trip.cover_image_url}
+            src={imageUrl}
             alt={trip.destination} 
             className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
             whileHover={{ scale: 1.05 }}
