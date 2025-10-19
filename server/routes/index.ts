@@ -1,9 +1,8 @@
-import { Express } from 'express';
-import shareNotificationRoutes from './share-notification';
+import express from 'express';
 import tripPdfRoutes from './trip-pdf';
 
-export function registerRoutes(app: Express) {
-  // Register all routes here
-  app.use(shareNotificationRoutes);
-  app.use(tripPdfRoutes);
-}
+const router = express.Router();
+
+router.use(tripPdfRoutes);
+
+export default router;
