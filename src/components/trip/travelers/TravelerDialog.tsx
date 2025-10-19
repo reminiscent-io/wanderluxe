@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Traveler } from "@/hooks/useTravelers";
 import { cn } from "@/lib/utils";
-import { Eye, Edit, Share2 } from "lucide-react";
+import { Eye, Edit, Share2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { shareTrip } from "@/services/tripSharingService";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -54,7 +54,7 @@ export default function TravelerDialog({
   const watchedEmail = form.watch("shared_with_email");
   const hasEmail = !!watchedEmail?.trim();
 
-  // NEW: remember the row created by Share so subsequent Save is an UPDATE, not a duplicate INSERT
+  // Remember the row created by Share so subsequent Save is an UPDATE, not a duplicate INSERT
   const [createdShareId, setCreatedShareId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -256,6 +256,69 @@ export default function TravelerDialog({
     }
   };
 
+  // ----- DELETE FUNCTIONALITY -----
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      // Guard: never delete owner
+      if (isOwner) {
+        throw new Error("Owner cannot be removed");
+      }
+
+      // Prefer explicit id (existing traveler row or one created during Share)
+      const id =
+        (traveler as any)?.id ||
+        createdShareId ||
+        null;
+
+      if (id) {
+        const { error } = await supabase
+          .from("trip_shares" as any)
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+        return;
+      }
+
+      // Fallback: delete by (trip_id, shared_with_email) if no id is known yet
+      const email = (form.getValues("shared_with_email") || "").trim();
+      if (!email) {
+        throw new Error("No traveler id or email available for deletion");
+      }
+
+      const { error } = await supabase
+        .from("trip_shares" as any)
+        .delete()
+        .eq("trip_id", tripId)
+        .eq("shared_with_email", email);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Traveler removed");
+      queryClient.invalidateQueries({ queryKey: ["travelers", tripId] });
+      setCreatedShareId(null);
+      onOpenChange(false);
+    },
+    onError: (err: any) => {
+      const msg = err?.message || "Failed to remove traveler";
+      toast.error(msg);
+    },
+  });
+
+  const handleDelete = () => {
+    if (isOwner) {
+      toast.info("The trip owner cannot be removed.");
+      return;
+    }
+    const name = `${form.getValues("first_name") || ""} ${form.getValues("last_name") || ""}`.trim();
+    const email = (form.getValues("shared_with_email") || "").trim();
+    const label = name || email || "this traveler";
+    if (window.confirm(`Remove ${label} from this trip? This will revoke their access.`)) {
+      deleteMutation.mutate();
+    }
+  };
+  // ----- END DELETE FUNCTIONALITY -----
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md" key={(traveler as any)?.id ?? "new"}>
@@ -411,6 +474,20 @@ export default function TravelerDialog({
             />
 
             <div className="flex gap-2 pt-4">
+              {/* DELETE (only when editing a non-owner) */}
+              {isEditing && !isOwner && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  title="Delete traveler"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              )}
+
               <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
                 Cancel
               </Button>

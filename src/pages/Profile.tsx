@@ -201,8 +201,8 @@ const Profile = () => {
                     c.directions.includes("incoming") && c.directions.includes("outgoing")
                       ? "Both ways"
                       : c.directions.includes("outgoing")
-                      ? "You → Them"
-                      : "Them → You";
+                      ? "Outgoing"
+                      : "Incoming";
                   return (
                     <li key={c.key} className="flex items-center gap-3 rounded-md border p-3">
                       <Avatar className="h-9 w-9">
