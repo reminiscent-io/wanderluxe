@@ -6,18 +6,6 @@ const Footer = () => {
     <footer className="py-6 border-t mt-auto">
       <div className="w-full">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-full text-center mb-4 bg-[#f5f0e6] p-4">
-            <h2 className="text-sm font-semibold mb-2">About WanderLuxe</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              WanderLuxe is your all-in-one free travel planning companion that lets you create, customize, and share detailed trip itineraries. Plan your accommodations, activities, dining experiences, and transportation seamlessly. Collaborate with fellow travelers and keep all your travel details organized in one place.
-            </p>
-            <Link 
-              to="/explore"
-              className="inline-block px-6 py-2 bg-earth-500 text-white text-sm font-medium rounded-full hover:bg-earth-600 transition-colors"
-            >
-              Explore Now
-            </Link>
-          </div>
           <div className="flex justify-center gap-4">
             <Link 
               to="/about" 
