@@ -19,8 +19,6 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Profile from "./pages/Profile";
 import Accommodations from "./pages/Accommodations";
 import Budget from "./pages/Budget";
-import Timeline from "./pages/Timeline";
-import PackingList from "./pages/PackingList";
 import Settings from "./pages/Settings";
 import LLMTraining from "./pages/LLMTraining";
 import Explore from "./pages/Explore";
@@ -87,22 +85,6 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <Budget />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/timeline"
-                  element={
-                    <ProtectedRoute>
-                      <Timeline />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/packing"
-                  element={
-                    <ProtectedRoute>
-                      <PackingList />
                     </ProtectedRoute>
                   }
                 />

@@ -25,7 +25,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   days = [],
   dayIndexMap,
   hotelStays,
-  onDayDelete,
   tripArrivalDate,
   tripDepartureDate,
   canEdit = true

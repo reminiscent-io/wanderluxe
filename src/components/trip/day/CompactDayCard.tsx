@@ -15,7 +15,8 @@ import {
   Train,
   Car,
   Bus,
-  Ship
+  Ship,
+  Clock
 } from 'lucide-react';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
@@ -41,6 +42,28 @@ const formatTime12 = (time?: string) => {
 // Helper function to normalize date to YYYY-MM-DD format
 const getNormalizedDay = (date: string) => date.split('T')[0];
 
+// Helper: date + "HH:mm" -> Date (assumes local time semantics)
+const combineDateAndTime = (dateISO: string, time?: string) => {
+  if (!time) return null;
+  return new Date(`${dateISO}T${time}:00`);
+};
+
+// Helper: try to extract an IATA code (e.g., "JFK") from free text; fallback to whole string
+const extractIata = (loc?: string) => {
+  if (!loc) return '';
+  const m = loc.match(/\b([A-Z]{3})\b/);
+  return m ? m[1] : loc;
+};
+
+const diffMinutes = (a: Date, b: Date) => Math.max(0, Math.round((b.getTime() - a.getTime()) / 60000));
+const humanizeMinutes = (mins: number) => {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
+};
+
 // Helper function to get transportation icon based on type
 const getTransportationIconComponent = (type: string) => {
   const iconMap: Record<string, React.ReactNode> = {
@@ -51,7 +74,7 @@ const getTransportationIconComponent = (type: string) => {
     'ferry': <Ship className="h-3 w-3" />,
     'rental_car': <Car className="h-3 w-3" />
   };
-  
+
   return iconMap[type] || <Bus className="h-3 w-3" />;
 };
 
@@ -75,8 +98,10 @@ interface CompactDayCardProps {
   canEdit?: boolean;
 }
 
+type TimelineType = 'activity' | 'hotel' | 'transportation' | 'dining' | 'layover';
+
 interface TimelineItem {
-  type: 'activity' | 'hotel' | 'transportation' | 'dining';
+  type: TimelineType;
   time?: string;
   endTime?: string;
   title: string;
@@ -311,6 +336,48 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     return a.time.localeCompare(b.time);
   });
 
+  // Insert Layover rows between connecting flights on THIS day
+  const timelineWithLayovers: TimelineItem[] = [];
+  for (let i = 0; i < sortedTimelineItems.length; i++) {
+    const curr = sortedTimelineItems[i];
+    timelineWithLayovers.push(curr);
+
+    const next = sortedTimelineItems[i + 1];
+    if (!next) continue;
+
+    const currIsFlight = curr.type === 'transportation' && curr.data?.type === 'flight';
+    const nextIsFlight = next.type === 'transportation' && next.data?.type === 'flight';
+    if (!currIsFlight || !nextIsFlight) continue;
+
+    // need curr arrival time and next departure time visible on this day
+    if (!curr.endTime || !next.time) continue;
+
+    // match airport
+    const currArrive = extractIata(curr.data?.arrival_location);
+    const nextDepart = extractIata(next.data?.departure_location);
+    if (!currArrive || currArrive !== nextDepart) continue;
+
+    // compute gap using day-local times
+    const arriveAt = combineDateAndTime(getNormalizedDay(date), curr.endTime);
+    const departAt = combineDateAndTime(getNormalizedDay(date), next.time);
+    if (!arriveAt || !departAt) continue;
+
+    const gapMins = diffMinutes(arriveAt, departAt);
+    if (gapMins <= 0) continue;
+
+    // synthesize layover item
+    timelineWithLayovers.push({
+      type: 'layover',
+      time: curr.endTime,                 // show at arrival time
+      endTime: next.time,                 // until next departure
+      title: `Layover (${currArrive})`,
+      description: `${humanizeMinutes(gapMins)} • until ${formatTime12(next.time!)}`,
+      icon: <Clock className="h-3 w-3" />,
+      id: `layover-${curr.id}-${next.id}`,
+      data: { fromId: curr.id, toId: next.id, airport: currArrive, minutes: gapMins }
+    });
+  }
+
   // Generate summary line
   const summaryParts: string[] = [];
 
@@ -328,17 +395,37 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     ? summaryParts.join(' • ') 
     : 'No plans yet';
 
-  const hasContent = sortedTimelineItems.length > 0 || allDayHotels.length > 0;
+  const hasContent = timelineWithLayovers.length > 0 || allDayHotels.length > 0;
 
   // Determine day status badges
   const isCheckInDay = filteredHotelStays.some(stay => stay.hotel_checkin_date === normalizedDay);
   const isCheckOutDay = filteredHotelStays.some(stay => stay.hotel_checkout_date === normalizedDay);
   const isTravelDay = filteredTransportations.length > 0;
-  const totalEvents = sortedTimelineItems.length;
+
+  // Optional: do not count layovers toward "events" badge
+  const totalEvents = sortedTimelineItems.filter(i => i.type !== 'layover').length;
 
   /** helper to invoke add with context */
   const addActivityForThisDay = () => {
     onActivityAdd?.({ dayId: id, date: normalizedDay });
+  };
+
+  // Get color scheme by event type (extended with 'layover')
+  const getEventColors = (type: TimelineType) => {
+    switch (type) {
+      case 'hotel':
+        return { node: 'bg-amber-500', line: 'bg-amber-200', icon: 'text-amber-600' };
+      case 'transportation':
+        return { node: 'bg-sky-500', line: 'bg-sky-200', icon: 'text-sky-600' };
+      case 'activity':
+        return { node: 'bg-emerald-500', line: 'bg-emerald-200', icon: 'text-emerald-600' };
+      case 'dining':
+        return { node: 'bg-rose-500', line: 'bg-rose-200', icon: 'text-rose-600' };
+      case 'layover':
+        return { node: 'bg-purple-500', line: 'bg-purple-200', icon: 'text-purple-600' };
+      default:
+        return { node: 'bg-earth-400', line: 'bg-earth-200', icon: 'text-earth-600' };
+    }
   };
 
   return (
@@ -481,8 +568,12 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
 
                 {/* Enhanced Timeline with Colored Rail */}
                 <div className="relative">
-                  {sortedTimelineItems.map((item, idx) => {
+                  {timelineWithLayovers.map((item, idx) => {
                     const handleItemClick = () => {
+                      if (item.type === 'layover') {
+                        // no-op or open a popover showing both legs
+                        return;
+                      }
                       if (item.type === 'activity' && onActivityClick && item.data) {
                         onActivityClick(item.data);
                       } else if (item.type === 'hotel' && onHotelClick && item.data) {
@@ -491,22 +582,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                         onTransportationClick(item.data);
                       } else if (item.type === 'dining' && onReservationClick && item.data) {
                         onReservationClick(item.data);
-                      }
-                    };
-
-                    // Get color scheme by event type
-                    const getEventColors = (type: string) => {
-                      switch (type) {
-                        case 'hotel':
-                          return { node: 'bg-amber-500', line: 'bg-amber-200', icon: 'text-amber-600' };
-                        case 'transportation':
-                          return { node: 'bg-sky-500', line: 'bg-sky-200', icon: 'text-sky-600' };
-                        case 'activity':
-                          return { node: 'bg-emerald-500', line: 'bg-emerald-200', icon: 'text-emerald-600' };
-                        case 'dining':
-                          return { node: 'bg-rose-500', line: 'bg-rose-200', icon: 'text-rose-600' };
-                        default:
-                          return { node: 'bg-earth-400', line: 'bg-earth-200', icon: 'text-earth-600' };
                       }
                     };
 
@@ -533,7 +608,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                             "w-3 h-3 rounded-full flex-shrink-0 mt-0.5 border-2 border-white shadow-sm",
                             colors.node
                           )} />
-                          {idx < sortedTimelineItems.length - 1 && (
+                          {idx < timelineWithLayovers.length - 1 && (
                             <div className={cn(
                               "absolute top-4 w-0.5 h-full rounded-full",
                               colors.line
@@ -543,31 +618,45 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
 
                         {/* Enhanced Content Card */}
                         <motion.div 
-                          className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-3 -m-1 transition-all duration-200 hover:shadow-sm"
+                          className={cn(
+                            "flex-1 min-w-0 rounded-lg p-3 -m-1 transition-all duration-200",
+                            item.type === 'layover'
+                              ? "bg-purple-50/70 border border-purple-100 text-purple-900"
+                              : "cursor-pointer hover:bg-sand-50 hover:shadow-sm"
+                          )}
                           onClick={handleItemClick}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={item.type === 'layover' ? undefined : { scale: 1.02 }}
+                          whileTap={item.type === 'layover' ? undefined : { scale: 0.98 }}
                         >
                           <div className="flex items-start gap-3">
                             <span className={cn("mt-0.5 flex-shrink-0", colors.icon)}>
                               {item.icon}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors">
+                              <div className={cn(
+                                "text-sm font-semibold",
+                                item.type === 'layover' ? "text-purple-900" : "text-earth-800 hover:text-earth-900 transition-colors"
+                              )}>
                                 {item.title}
                               </div>
                               {item.endTime && (
-                                <div className="text-xs text-earth-500 mt-1">
+                                <div className={cn(
+                                  "text-xs mt-1",
+                                  item.type === 'layover' ? "text-purple-800" : "text-earth-500"
+                                )}>
                                   until {formatTime12(item.endTime)}
                                 </div>
                               )}
                               {item.description && (
-                                <div className="text-xs text-earth-600 mt-1">
+                                <div className={cn(
+                                  "text-xs mt-1",
+                                  item.type === 'layover' ? "text-purple-900/80" : "text-earth-600"
+                                )}>
                                   {item.description}
                                 </div>
                               )}
                               {/* Cost Badge */}
-                              {item.data?.cost && (
+                              {item.data?.cost && item.type !== 'layover' && (
                                 <div className="flex items-center gap-1 mt-2">
                                   <DollarSign className="h-3 w-3 text-earth-500" />
                                   <span className="text-xs text-earth-600 font-medium">
@@ -580,8 +669,14 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                             <div className="flex-shrink-0 ml-2">
                               <TravelerAvatars
                                 tripId={tripId}
-                                eventType={item.type === "hotel" ? "accommodation" : item.type}
-                                eventId={item.type === "hotel" ? item.data.stay_id : item.id}
+                                eventType={
+                                  item.type === "hotel" ? "accommodation" :
+                                  item.type === "layover" ? "transportation" : item.type
+                                }
+                                eventId={
+                                  item.type === "hotel" ? item.data.stay_id :
+                                  item.type === "layover" ? item.data.fromId : item.id
+                                }
                                 maxShow={3}
                               />
                             </div>
