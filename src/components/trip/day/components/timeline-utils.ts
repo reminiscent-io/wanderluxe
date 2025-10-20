@@ -108,16 +108,16 @@ export const humanizeMinutes = (mins: number) => {
 };
 
 // icon per transport
-export const getTransportationIconComponent = (type: string) => {
-  const iconMap: Record<string, React.ReactNode> = {
-    flight: <Plane className="h-3 w-3" />,
-    train: <Train className="h-3 w-3" />,
-    car_service: <Car className="h-3 w-3" />,
-    shuttle: <Bus className="h-3 w-3" />,
-    ferry: <Ship className="h-3 w-3" />,
-    rental_car: <Car className="h-3 w-3" />
+export const getTransportationIconComponent = (type: string): React.ComponentType<{ className?: string }> => {
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    flight: Plane,
+    train: Train,
+    car_service: Car,
+    shuttle: Bus,
+    ferry: Ship,
+    rental_car: Car
   };
-  return iconMap[type] || <Bus className="h-3 w-3" />;
+  return iconMap[type] || Bus;
 };
 
 // color scheme per event type

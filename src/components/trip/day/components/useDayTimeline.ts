@@ -88,7 +88,7 @@ export function useDayTimeline({
         endTime: activity.end_time || undefined,
         title: activity.title,
         description: activity.description || undefined,
-        icon: <span className="inline-block" />, // icon injected in row via CSS color
+        icon: null, // icon injected in row via CSS color
         id: activity.id,
         data: activity,
       });
@@ -102,7 +102,7 @@ export function useDayTimeline({
           time: stay.checkin_time,
           title: `Check-in: ${stay.hotel}`,
           description: stay.hotel_address,
-          icon: <span className="inline-block" />,
+          icon: null,
           id: `checkin-${stay.stay_id}`,
           data: stay,
         });
@@ -112,7 +112,7 @@ export function useDayTimeline({
           type: 'hotel',
           time: stay.checkout_time,
           title: `Check-out: ${stay.hotel}`,
-          icon: <span className="inline-block" />,
+          icon: null,
           id: `checkout-${stay.stay_id}`,
           data: stay,
         });
@@ -155,13 +155,14 @@ export function useDayTimeline({
       const departTimeOnThisDay = isStartDay ? t.start_time : undefined;
       const arriveTimeOnThisDay = isEndDay ? t.end_time : (isStartDay && !isMultiDay ? t.end_time : undefined);
 
+      const IconComponent = getTransportationIconComponent(t.type);
       items.push({
         type: 'transportation',
         time: displayTime,
         endTime: departTimeOnThisDay && arriveTimeOnThisDay ? arriveTimeOnThisDay : undefined,
         title,
         description: t.details,
-        icon: getTransportationIconComponent(t.type),
+        icon: React.createElement(IconComponent, { className: 'h-3 w-3' }),
         id: t.id,
         data: {
           ...t,
@@ -179,7 +180,7 @@ export function useDayTimeline({
         time: r.reservation_time,
         title: r.restaurant_name,
         description: r.notes || undefined,
-        icon: <span className="inline-block" />,
+        icon: null,
         id: r.id,
         data: r,
       });
