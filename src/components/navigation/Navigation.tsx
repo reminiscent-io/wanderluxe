@@ -1,7 +1,7 @@
 import React from "react";
-import NavigationLogo from "./navigation/NavigationLogo";
-import NavigationLinks from "./navigation/NavigationLinks";
-import NavigationAuth from "./navigation/NavigationAuth";
+import NavigationLogo from "./NavigationLogo";
+import NavigationLinks from "./NavigationLinks";
+import NavigationAuth from "./NavigationAuth";
 
 /**
  * Sticky/fixed header that publishes its height via [data-app-nav].
