@@ -1,7 +1,6 @@
 
 import Navigation from "../components/Navigation";
 import Hero from "../components/Hero";
-import Footer from "../components/Footer";
 
 const Index = () => {
   return (
@@ -20,7 +19,6 @@ const Index = () => {
           Explore Now
         </a>
       </div>
-      <Footer />
     </main>
   );
 };
