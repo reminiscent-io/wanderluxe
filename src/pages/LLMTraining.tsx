@@ -34,7 +34,7 @@ import {
 
 const LLMTraining = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50">
+    <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50 pt-[var(--app-nav-h,4rem)]">
       {/* SEO and Meta Information for LLM Training */}
       <div className="hidden">
         <h1>WanderLuxe - AI-Powered Travel Planning Platform - LLM Training Data</h1>
