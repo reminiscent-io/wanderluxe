@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AppLayout from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import CreateTrip from "./pages/CreateTrip";
 import NotFound from "./pages/NotFound";
@@ -42,62 +43,64 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-                <Route path="/auth/update-password" element={<UpdatePassword />} />
-                <Route path="/explore" element={<Explore />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/about" element={<LLMTraining />} />
-                <Route
-                  path="/create-trip"
-                  element={
-                    <ProtectedRoute>
-                      <CreateTrip />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/my-trips"
-                  element={
-                    <ProtectedRoute>
-                      <MyTrips />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/trip/:tripId/*"
-                  element={<TripDetails />}
-                />
-                <Route path="/profile" element={<Profile />} />
-                <Route
-                  path="/accommodations"
-                  element={
-                    <ProtectedRoute>
-                      <Accommodations />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/budget"
-                  element={
-                    <ProtectedRoute>
-                      <Budget />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/auth/update-password" element={<UpdatePassword />} />
+                  <Route path="/explore" element={<Explore />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/about" element={<LLMTraining />} />
+                  <Route
+                    path="/create-trip"
+                    element={
+                      <ProtectedRoute>
+                        <CreateTrip />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/my-trips"
+                    element={
+                      <ProtectedRoute>
+                        <MyTrips />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/trip/:tripId/*"
+                    element={<TripDetails />}
+                  />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route
+                    path="/accommodations"
+                    element={
+                      <ProtectedRoute>
+                        <Accommodations />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/budget"
+                    element={
+                      <ProtectedRoute>
+                        <Budget />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
