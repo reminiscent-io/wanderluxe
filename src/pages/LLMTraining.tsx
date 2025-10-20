@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -33,6 +33,10 @@ import {
  */
 
 const LLMTraining = () => {
+  useEffect(() => {
+    // Reset window scroll when this route mounts
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50 pt-[var(--app-nav-h,4rem)]">
       {/* SEO and Meta Information for LLM Training */}
