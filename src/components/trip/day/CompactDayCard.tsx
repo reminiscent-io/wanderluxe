@@ -118,7 +118,10 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('day_activities')
-        .select('*')
+        .select(`
+          *,
+          trip_days!inner(date)
+        `)
         .eq('day_id', id)
         .order('start_time', { ascending: true });
 
@@ -127,7 +130,11 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
         throw error;
       }
 
-      return data as DayActivity[];
+      // Map the data to include the date field directly on the activity
+      return (data || []).map(activity => ({
+        ...activity,
+        date: activity.trip_days?.date || date.split('T')[0]
+      })) as DayActivity[];
     },
     enabled: !!id,
   });
