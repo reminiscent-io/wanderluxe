@@ -155,14 +155,13 @@ export function useDayTimeline({
       const departTimeOnThisDay = isStartDay ? t.start_time : undefined;
       const arriveTimeOnThisDay = isEndDay ? t.end_time : (isStartDay && !isMultiDay ? t.end_time : undefined);
 
-      const IconComponent = getTransportationIconComponent(t.type);
       items.push({
         type: 'transportation',
         time: displayTime,
         endTime: departTimeOnThisDay && arriveTimeOnThisDay ? arriveTimeOnThisDay : undefined,
         title,
         description: t.details,
-        icon: React.createElement(IconComponent, { className: 'h-3 w-3' }),
+        icon: null, // Icon will be rendered in TimelineRow based on transportation type
         id: t.id,
         data: {
           ...t,

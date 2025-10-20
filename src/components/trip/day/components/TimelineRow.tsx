@@ -3,7 +3,7 @@ import { DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import TravelerAvatars from '../../timeline/TravelerAvatars'; // adjust path if needed
-import { TimelineItem, TimelineType, getEventColors, formatTime12 } from './timeline-utils';
+import { TimelineItem, TimelineType, getEventColors, formatTime12, getTransportationIconComponent } from './timeline-utils';
 
 type Props = {
   item: TimelineItem;
@@ -52,7 +52,13 @@ const TimelineRow: React.FC<Props> = ({
         onClick={handleItemClick}
       >
         <div className="flex items-start gap-3">
-          <span className={cn("mt-0.5 flex-shrink-0", colors.icon)}>{item.icon}</span>
+          <span className={cn("mt-0.5 flex-shrink-0", colors.icon)}>
+            {item.type === 'transportation' && item.data?.type ? (
+              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-3 w-3' })
+            ) : (
+              item.icon || <div className="h-3 w-3" />
+            )}
+          </span>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors">
               {item.title}
