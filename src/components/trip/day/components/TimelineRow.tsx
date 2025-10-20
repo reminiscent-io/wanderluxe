@@ -60,11 +60,11 @@ const TimelineRow: React.FC<Props> = ({
             )}
           </span>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors">
+            <div className="text-m font-semibold text-earth-800 hover:text-earth-900 transition-colors">
               {item.title}
             </div>
             {item.endTime && (
-              <div className="text-xs text-earth-500 mt-1">until {formatTime12(item.endTime)}</div>
+              <div className="text-sm text-earth-500 mt-1">until {formatTime12(item.endTime)}</div>
             )}
             {item.description && (
               <div className="text-xs text-earth-600 mt-1">{item.description}</div>
@@ -72,7 +72,7 @@ const TimelineRow: React.FC<Props> = ({
             {item.data?.cost && (
               <div className="flex items-center gap-1 mt-2">
                 <DollarSign className="h-3 w-3 text-earth-500" />
-                <span className="text-xs text-earth-600 font-medium">
+                <span className="text-xs text-earth-600">
                   {item.data.currency || 'USD'} {item.data.cost}
                 </span>
               </div>
