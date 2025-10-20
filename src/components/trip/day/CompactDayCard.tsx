@@ -109,7 +109,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     reservations,
   });
 
-  const dayTitle = title || new Date(date).toLocaleDateString(undefined, { weekday: 'long' });
+  const dayTitle = title || new Date(date).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long' });
 
   const addActivityForThisDay = () => {
     onActivityAdd?.({ dayId: id, date: getNormalizedDay(date) });

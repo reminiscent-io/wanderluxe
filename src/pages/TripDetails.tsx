@@ -1,7 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-// ⬇️ REMOVE this import of the page-level Navigation
-// import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar from "@/components/layout/Sidebar";
 import { useTripQuery } from '@/hooks/useTripQuery';
@@ -89,13 +87,15 @@ const TripDetails = () => {
   const sidebar = <Sidebar tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
   return (
+    // Offset the page content by the fixed navbar height so the hero touches the bottom of the nav
     <div className="flex min-h-screen">
       {sidebar}
       <main className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">
-          {/* Do NOT render a second Navigation here; AppLayout already provides the fixed header */}
+          {/* Global header is already fixed via AppLayout; no page-level header here */}
 
-          <div className="w-full">
+          {/* Ensure no unintended top margin before the hero */}
+          <div className="w-full mt-0">
             <HeroSection
               tripId={tripId}
               title={displayData.destination}
@@ -107,7 +107,7 @@ const TripDetails = () => {
             />
           </div>
 
-          <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
+          <div className="relative flex-1 bg-sand-50/95 w-full z-10">
             <div className="max-w-none mx-auto px-4 py-8">
               {!canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">

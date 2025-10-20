@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
@@ -49,7 +48,7 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
 }
 
-export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ tripId }: SidebarProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
@@ -75,8 +74,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     trip, accommodations, transportation, activities, reservations,
     handleBackToTrips,
     handleSubitemClick,
-    handleAccommodationAdd, handleAccommodationEdit, handleAccommodationDelete,
-    handleTransportationAdd, handleTransportationEdit, handleTransportationDelete,
+    handleAccommodationAdd, handleAccommodationEdit,
+    handleTransportationAdd, handleTransportationEdit,
     handleReservationAdd, handleReservationEdit, handleReservationDelete,
     handleActivityAdd, handleActivityEdit, handleActivityDelete,
     handleEditDates, handleSaveDates,
@@ -90,9 +89,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-sand-200 pt-6">
-        <NavigationLogo />
-      </div>
+      {/* Removed the duplicate logo/header block to avoid double-branding */}
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-2 py-4">
           <Button
@@ -168,6 +165,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           ))}
         </div>
       </ScrollArea>
+
       <div className="p-4 border-t border-sand-200">
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
@@ -343,8 +341,8 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         activity={selectedActivity ? activityEdit : newActivity}
         onActivityChange={selectedActivity ? setActivityEdit : setNewActivity}
         onSubmit={(activity) => {
-          if (selectedActivity) handleEditActivity(selectedActivity, activity);
-          else handleAddActivity(activity);
+          if (selectedActivity) handleActivityEdit(selectedActivity, activity);
+          else handleActivityAdd(activity);
         }}
         onDelete={(id) => handleActivityDelete(id)}
         eventId={tripId || ""}
