@@ -4,13 +4,22 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import ActivityForm from "../../ActivityForm";
 import { ActivityFormData } from "@/types/trip";
-// ⬇️ NEW: we’ll safely fetch trip_days to derive arrival/departure if not provided
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+
+/** ---------------------- small helpers (robust & local) ---------------------- */
+
+// Normalize to "YYYY-MM-DD" from many shapes (ISO, "YYYY-MM-DD", etc.)
+const normalizeDateForDB = (value?: string) => {
+  if (!value) return "";
+  const m = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+};
 
 interface ActivityDialogProps {
   open?: boolean;                 // NEW preferred
@@ -70,12 +79,15 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         currency: "USD",
       }
   );
-  const finalActivity: ActivityFormData = (activity as ActivityFormData) || internalActivity;
+
+  const finalActivity: ActivityFormData =
+    (activity as ActivityFormData) || internalActivity;
   const finalOnChange = onActivityChange || setInternalActivity;
   const finalEventId = eventId || tripId;
 
-  // ---------- NEW: resolve tripDates if not provided (chat flow) ----------
-  const [resolvedTripDates, setResolvedTripDates] = React.useState<ActivityDialogProps["tripDates"] | undefined>(tripDates);
+  // ---------- Resolve tripDates if not provided (chat path) ----------
+  const [resolvedTripDates, setResolvedTripDates] =
+    React.useState<ActivityDialogProps["tripDates"] | undefined>(tripDates);
 
   // Keep in sync with parent-provided tripDates
   useEffect(() => {
@@ -100,10 +112,12 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         if (!cancelled && !error && data && data.length > 0) {
           const arrival = data[0].date as string;
           const departure = data[data.length - 1].date as string;
-          setResolvedTripDates({ arrival_date: arrival, departure_date: departure });
+          setResolvedTripDates({
+            arrival_date: arrival,
+            departure_date: departure,
+          });
         }
       } catch (e) {
-        // Non-fatal; if this fails, ActivityForm will fall back to hiding the date picker
         console.error("Failed to resolve trip dates for ActivityDialog:", e);
       }
     })();
@@ -113,15 +127,17 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     };
   }, [tripDates, finalOpen, tripId]);
 
-  // ✅ Safe prefill for preselectedDate — use final* and guard against undefined
+  // ✅ Only prefill date for ADD flow (never in edit)
   useEffect(() => {
     if (!isEditMode && preselectedDate) {
       if ((finalActivity?.date || "") !== preselectedDate) {
-        const next: ActivityFormData = { ...(finalActivity || ({} as any)), date: preselectedDate };
+        const next: ActivityFormData = {
+          ...(finalActivity || ({} as any)),
+          date: preselectedDate,
+        };
         finalOnChange(next);
       }
     }
-    // We intentionally depend on preselectedDate + isEditMode only to avoid loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, preselectedDate]);
 
@@ -135,7 +151,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   // Keep internal state in sync when chat passes new initialData (OCR result)
   useEffect(() => {
     if (initialData) {
-      // Map 'name' to 'title' for chat system compatibility
       const mapped = { ...initialData };
       if (mapped.name && !mapped.title) {
         mapped.title = mapped.name;
@@ -152,42 +167,49 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     }
   };
 
-  // ❗ Save is ONLY triggered when user clicks "Save" in the form
-  // (Opening the dialog never saves automatically.)
+  /**
+   * Save handler
+   * - EDIT: always persist here (recompute day_id from selected date), even if legacy `onSubmit` exists.
+   * - ADD:
+   *    - Chat path (no onSubmit): persist here.
+   *    - Legacy path (onSubmit provided): delegate to parent, unchanged.
+   */
   const handleSubmit = async (activityData?: ActivityFormData) => {
-    if (onSubmit) {
-      // Legacy path: parent manages persistence
-      await onSubmit(activityData);
-      return;
-    }
-    if (!onSuccess) return;
+    const dataToSave = activityData || finalActivity;
 
-    // Chat system path: persist on explicit Save
     try {
       const { toast } = await import("sonner");
 
-      const dataToSave = activityData || finalActivity;
-
       if (!dataToSave.title?.trim()) {
-        throw new Error('Activity title is required');
+        throw new Error("Activity title is required");
+      }
+
+      const selectedDate = normalizeDateForDB(dataToSave.date);
+      if (!selectedDate) {
+        throw new Error("Please choose a valid date");
       }
 
       // Find the corresponding day_id for the selected date
       const { data: tripDay, error: tripDayError } = await supabase
-        .from('trip_days')
-        .select('day_id')
-        .eq('trip_id', tripId)
-        .eq('date', dataToSave.date)
+        .from("trip_days")
+        .select("day_id")
+        .eq("trip_id", tripId)
+        .eq("date", selectedDate)
         .single();
 
       if (tripDayError || !tripDay) {
-        throw new Error('Could not find trip day for selected date. Please select a valid date.');
+        throw new Error(
+          "Could not find trip day for selected date. Please select a valid date."
+        );
       }
 
       // Convert cost from string to number
-      const costNum = dataToSave.cost && dataToSave.cost.trim() !== '' ? parseFloat(dataToSave.cost) : null;
+      const costNum =
+        dataToSave.cost && dataToSave.cost.trim() !== ""
+          ? parseFloat(dataToSave.cost)
+          : null;
 
-      // Create database-compatible object (remove date, add day_id, convert cost)
+      // DB payload
       const dbData = {
         day_id: tripDay.day_id,
         title: dataToSave.title.trim(),
@@ -195,32 +217,55 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         start_time: dataToSave.start_time || null,
         end_time: dataToSave.end_time || null,
         cost: costNum,
-        currency: dataToSave.currency || 'USD',
+        currency: dataToSave.currency || "USD",
       };
 
-      if (activityId) {
-        const { error } = await supabase.from("day_activities").update(dbData).eq("id", activityId);
-        if (error) throw error;
-        toast.success("Activity updated");
-      } else {
+      if (isEditMode) {
+        // 🚑 Fix: always persist EDIT here so day_id updates correctly for DayCard (which filters by day_id)
         const { error } = await supabase
           .from("day_activities")
-          .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
+          .update(dbData)
+          .eq("id", activityId!);
         if (error) throw error;
-        toast.success("Activity added");
+
+        toast.success("Activity updated");
+        // optional: let parent know, but persistence is already handled
+        if (onSubmit) {
+          try {
+            await onSubmit(dataToSave);
+          } catch {
+            /* parent callback is best-effort */
+          }
+        }
+      } else {
+        if (!onSubmit) {
+          // Chat path: create here
+          const { error } = await supabase
+            .from("day_activities")
+            .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
+          if (error) throw error;
+          toast.success("Activity added");
+        } else {
+          // Legacy add path: delegate (unchanged behavior)
+          await onSubmit(dataToSave);
+        }
       }
 
-      // Invalidate queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['activities'] });
-      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      // Invalidate queries to refresh the UI (DayCard uses ['activities', dayId])
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["trip"] });
 
       onOpenChange(false);
-      onSuccess();
+      onSuccess?.();
     } catch (error: any) {
       const { toast } = await import("sonner");
       toast.error(error?.message || "Failed to save activity");
     }
   };
+
+  // Only pass preselectedDate for ADD flow; never for EDIT (prevents pinning)
+  const resolvedPreselectedDate =
+    !isEditMode ? preselectedDate || finalActivity.date : undefined;
 
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
@@ -242,7 +287,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
             submitLabel={isEditMode ? "Save" : "Save"}
             eventId={finalEventId}
             tripDates={resolvedTripDates}
-            preselectedDate={preselectedDate || (isEditMode ? finalActivity.date : undefined)}
+            preselectedDate={resolvedPreselectedDate}
             tripId={tripId}
             activityId={activityId}
           />

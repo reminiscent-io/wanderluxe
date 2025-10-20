@@ -41,33 +41,28 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Prevent double submission
+
     if (isLoading || isSubmitting) return;
-    
-    // Validate required fields
+
     if (!destination.trim()) {
       toast.error('Please enter a destination');
       return;
     }
-    
     if (!startDate || !endDate) {
       toast.error('Please select travel dates');
       return;
     }
-    
     if (new Date(startDate) >= new Date(endDate)) {
       toast.error('End date must be after start date');
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Insert the trip into the database with user_id and cover_image_url
       const { data: trip, error: tripError } = await supabase
         .from('trips')
         .insert([{
@@ -84,29 +79,17 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       if (tripError) throw tripError;
 
       if (trip) {
-        try {
-          // Automatically add the trip owner to trip_shares table FIRST
-          // This is required for trip_days RLS policy to pass
-          await addOwnerToTripShares(trip.trip_id, user.id);
+        await addOwnerToTripShares(trip.trip_id, user.id);
 
-          // Generate an array of dates between start and end dates (inclusive)
-          const days = getDaysBetweenDates(startDate, endDate);
+        const days = getDaysBetweenDates(startDate, endDate);
+        await createTripDays(trip.trip_id, days);
 
-          // Create trip days in the database for each date with both IDs
-          await createTripDays(trip.trip_id, days);
-
-          // Save the image position for this trip in localStorage
-          if (imagePosition && coverImageUrl) {
-            localStorage.setItem(`trip_image_position_${trip.trip_id}`, imagePosition);
-          }
-          
-          // Call the parent's onSubmit callback with the tripId
-          onSubmit(trip.trip_id);
-        } catch (daysError) {
-          console.error('Error creating trip days:', daysError);
-          toast.error('Failed to create trip schedule. Please try again.');
-          throw daysError;
+        // persist the vertical focus so hero & card match
+        if (imagePosition && coverImageUrl) {
+          localStorage.setItem(`trip_image_position_${trip.trip_id}`, imagePosition);
         }
+
+        onSubmit(trip.trip_id);
       }
     } catch (error) {
       console.error('Error creating trip:', error);
@@ -117,20 +100,16 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   };
 
   return (
-    <form 
-      onSubmit={handleSubmit} 
+    <form
+      onSubmit={handleSubmit}
       className="space-y-2"
       onKeyDown={(e) => {
-        // Prevent Enter key submission when already submitting
         if (e.key === 'Enter' && (isLoading || isSubmitting)) {
           e.preventDefault();
         }
       }}
     >
-      <DestinationInput
-        destination={destination}
-        setDestination={setDestination}
-      />
+      <DestinationInput destination={destination} setDestination={setDestination} />
 
       <TimingSection
         startDate={startDate}
@@ -145,7 +124,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
         objectPosition={imagePosition}
         onPositionChange={setImagePosition}
       />
-      
+
       <FormActions
         isLoading={isLoading || isSubmitting}
         onCancel={onCancel}

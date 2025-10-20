@@ -1,6 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import Navigation from "../components/Navigation";
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar from "@/components/layout/Sidebar";
 import { useTripQuery } from '@/hooks/useTripQuery';
@@ -25,8 +24,7 @@ const TripDetails = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { canView, canEdit, isLoading: permissionsLoading } = useTripPermissions(tripId);
-  
-  // Determine active tab from URL
+
   const activeTab = useMemo(() => {
     const path = location.pathname;
     if (path.includes('/timeline')) return 'timeline';
@@ -34,45 +32,25 @@ const TripDetails = () => {
     if (path.includes('/booking')) return 'booking';
     if (path.includes('/chat')) return 'chat';
     if (path.includes('/vision-board')) return 'vision-board';
-    return 'timeline'; // default
+    return 'timeline';
   }, [location.pathname]);
-  
-  // Redirect to timeline if at base trip URL
+
   useEffect(() => {
     if (tripId && location.pathname === `/trip/${tripId}`) {
       navigate(`/trip/${tripId}/timeline`, { replace: true });
     }
   }, [tripId, location.pathname, navigate]);
 
-  // Use the custom hook for trip data fetching
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
-
-  // Use the custom hook for real-time subscriptions
   useTripSubscription(tripId);
 
-  // Handle loading state with skeleton UI
-  if (tripLoading && !previousTrip) {
-    return <TripDetailsSkeleton />;
-  }
-
-  // Handle permissions loading
-  if (permissionsLoading) {
-    return <TripDetailsSkeleton />;
-  }
-
-  // Handle error state
-  if (tripError) {
-    return <TripDetailsError />;
-  }
+  if (tripLoading && !previousTrip) return <TripDetailsSkeleton />;
+  if (permissionsLoading) return <TripDetailsSkeleton />;
+  if (tripError) return <TripDetailsError />;
 
   const displayData = trip || previousTrip;
+  if (!displayData) return <TripDetailsError message="The requested trip could not be found." />;
 
-  // If no data is available
-  if (!displayData) {
-    return <TripDetailsError message="The requested trip could not be found." />;
-  }
-
-  // Handle access denied - user cannot view this trip
   if (!canView) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 flex items-center justify-center p-4">
@@ -80,28 +58,19 @@ const TripDetails = () => {
           <div className="bg-earth-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
             <Lock className="h-12 w-12 text-earth-600 mx-auto" />
           </div>
-          <h2 className="text-2xl font-bold text-earth-800 mb-3">
-            Access Restricted
-          </h2>
+          <h2 className="text-2xl font-bold text-earth-800 mb-3">Access Restricted</h2>
           <p className="text-earth-600 mb-6">
-            {session 
+            {session
               ? "You don't have permission to view this trip. Please contact the trip owner for access."
               : "This is a private trip. Please sign in to continue."}
           </p>
           <div className="flex gap-3 justify-center">
-            <Button 
-              onClick={() => navigate(-1)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
+            <Button onClick={() => navigate(-1)} variant="outline" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Go Back
             </Button>
             {!session && (
-              <Button 
-                onClick={() => navigate('/auth')}
-                className="bg-earth-600 hover:bg-earth-700 text-white"
-              >
+              <Button onClick={() => navigate('/auth')} className="bg-earth-600 hover:bg-earth-700 text-white">
                 Sign In
               </Button>
             )}
@@ -118,17 +87,19 @@ const TripDetails = () => {
   const sidebar = <Sidebar tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
   return (
+    // Offset the page content by the fixed navbar height so the hero touches the bottom of the nav
     <div className="flex min-h-screen">
       {sidebar}
       <main className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">
-          <Navigation mobileMenuTrigger={sidebar} />
+          {/* Global header is already fixed via AppLayout; no page-level header here */}
 
-          <div className="w-full">
-            <HeroSection 
+          {/* Ensure no unintended top margin before the hero */}
+          <div className="w-full mt-0">
+            <HeroSection
               tripId={tripId}
               title={displayData.destination}
-              imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"} //Default Trip Hero Image
+              imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
               arrivalDate={displayData.arrival_date}
               departureDate={displayData.departure_date}
               isLoading={tripLoading && !previousTrip}
@@ -136,9 +107,8 @@ const TripDetails = () => {
             />
           </div>
 
-          <div className="relative flex-1 bg-sand-50/95 w-full z-10 -mt-1">
+          <div className="relative flex-1 bg-sand-50/95 w-full z-10">
             <div className="max-w-none mx-auto px-4 py-8">
-              {/* Read-only mode banner */}
               {!canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                   <div className="flex items-center">
@@ -149,18 +119,14 @@ const TripDetails = () => {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm text-blue-700 font-medium">
-                        {session 
+                        {session
                           ? "You're viewing this trip in read-only mode. Contact the trip owner for edit access."
                           : "You're viewing this public trip. Sign in to create your own trips!"}
                       </p>
                     </div>
                     {!session && (
                       <div className="ml-auto">
-                        <Button
-                          onClick={() => navigate('/auth')}
-                          size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
+                        <Button onClick={() => navigate('/auth')} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
                           Sign In
                         </Button>
                       </div>
@@ -168,41 +134,25 @@ const TripDetails = () => {
                   </div>
                 </div>
               )}
-              
-              {/* Render content based on active tab */}
+
               {activeTab === 'timeline' && (
                 <ErrorBoundary>
-                  <TimelineView 
+                  <TimelineView
                     tripId={tripId}
                     tripDates={{
-                      arrival_date: displayData?.arrival_date && displayData.arrival_date.trim() !== '' 
-                        ? displayData.arrival_date 
-                        : null,
-                      departure_date: displayData?.departure_date && displayData.departure_date.trim() !== '' 
-                        ? displayData.departure_date 
-                        : null
+                      arrival_date: displayData?.arrival_date && displayData.arrival_date.trim() !== '' ? displayData.arrival_date : null,
+                      departure_date: displayData?.departure_date && displayData.departure_date.trim() !== '' ? displayData.departure_date : null
                     }}
                     tripDestination={displayData.destination}
                     canEdit={canEdit}
                   />
                 </ErrorBoundary>
               )}
-              
-              {activeTab === 'chat' && (
-                <ChatView tripId={tripId || ''} canEdit={canEdit} />
-              )}
-              
-              {activeTab === 'vision-board' && (
-                <VisionBoardView tripId={tripId} canEdit={canEdit} />
-              )}
-              
-              {activeTab === 'budget' && (
-                <BudgetView tripId={tripId} canEdit={canEdit} />
-              )}
-              
-              {activeTab === 'booking' && (
-                <BookingView tripId={tripId} canEdit={canEdit} />
-              )}
+
+              {activeTab === 'chat' && <ChatView tripId={tripId || ''} canEdit={canEdit} />}
+              {activeTab === 'vision-board' && <VisionBoardView tripId={tripId} canEdit={canEdit} />}
+              {activeTab === 'budget' && <BudgetView tripId={tripId} canEdit={canEdit} />}
+              {activeTab === 'booking' && <BookingView tripId={tripId} canEdit={canEdit} />}
             </div>
           </div>
         </div>

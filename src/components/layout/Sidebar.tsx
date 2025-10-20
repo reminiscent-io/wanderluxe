@@ -1,10 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { 
-  Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed, 
-  MessageCircle, Lightbulb, BarChart2, Package, Settings, 
-  ArrowLeft, ChevronDown, ChevronRight, Users 
+import {
+  Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
+  MessageCircle, BarChart2, Package, Settings, ArrowLeft, Users
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-import NavigationLogo from "../NavigationLogo";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
 import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
@@ -23,7 +21,6 @@ import TravelerDialog from "../trip/travelers/TravelerDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
 import { supabase } from "@/integrations/supabase/client";
-
 
 export const tripNavItems = [
   { title: "Timeline", icon: Calendar, href: "timeline" },
@@ -51,16 +48,13 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
 }
 
-export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ tripId }: SidebarProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  // Initialize sidebar state and handlers for this trip
   const sidebar = useSidebarState(tripId);
+
   const {
     isOpen, setIsOpen,
-    expandedItems, toggleExpanded,
     secondaryPanel, setSecondaryPanel,
     accommodationOpen, setAccommodationOpen,
     transportationOpen, setTransportationOpen,
@@ -77,31 +71,25 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     activityEdit, setActivityEdit,
     newArrival, setNewArrival,
     newDeparture, setNewDeparture,
-    trip, tripLoading,
-    accommodations, transportation, activities, reservations,
+    trip, accommodations, transportation, activities, reservations,
     handleBackToTrips,
     handleSubitemClick,
-    handleAccommodationAdd, handleAccommodationEdit, handleAccommodationDelete,
-    handleTransportationAdd, handleTransportationEdit, handleTransportationDelete,
+    handleAccommodationAdd, handleAccommodationEdit,
+    handleTransportationAdd, handleTransportationEdit,
     handleReservationAdd, handleReservationEdit, handleReservationDelete,
     handleActivityAdd, handleActivityEdit, handleActivityDelete,
     handleEditDates, handleSaveDates,
-    handleAddActivity, handleEditActivity,
     handleTravelerAdd, handleTravelerEdit
   } = sidebar;
+
   const handleBackFromSecondary = () => {
-    setSecondaryPanel(null);          // close the panel
-    if (window.innerWidth < 768) {    // reopen the Sheet menu on mobile
-      setIsOpen(true);
-    }
+    setSecondaryPanel(null);
+    if (window.innerWidth < 768) setIsOpen(true);
   };
 
-  // Primary sidebar navigation content
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-sand-200 pt-6">
-        <NavigationLogo />
-      </div>
+      {/* Removed the duplicate logo/header block to avoid double-branding */}
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-2 py-4">
           <Button
@@ -127,11 +115,9 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.title}
               </NavLink>
-              
-              {/* Show Timeline management items after Timeline button */}
+
               {item.title === "Timeline" && (
                 <div className="mt-2 mb-4">
-                  {/* Primary group: Trip Dates and Travelers */}
                   <div className="space-y-1 mb-3">
                     {timelineManagementItems.primary.map(child => (
                       <Button
@@ -151,13 +137,9 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
                       </Button>
                     ))}
                   </div>
-                  
-                  {/* Subtle separator line */}
                   <div className="pl-6 pr-4 my-2">
                     <Separator />
                   </div>
-                  
-                  {/* Secondary group: Accommodations, Transportation, Activities, Reservations */}
                   <div className="space-y-1">
                     {timelineManagementItems.secondary.map(child => (
                       <Button
@@ -183,6 +165,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           ))}
         </div>
       </ScrollArea>
+
       <div className="p-4 border-t border-sand-200">
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
@@ -206,78 +189,88 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
     </div>
   );
 
-      return (
-        <>
-          {/* Desktop */}
-          <div className="hidden md:flex">
-            <div className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-sand-200 z-30">
-              {sidebarContent}
-            </div>
-          </div>
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex">
+        <div
+          className="fixed left-0 w-[280px] bg-white border-r border-sand-200 z-30"
+          style={{
+            top: "var(--app-nav-h, 64px)",
+            height: "calc(100vh - var(--app-nav-h, 64px))",
+          }}
+        >
+          {sidebarContent}
+        </div>
+      </div>
 
-          {/* SecondaryPanel */}
-          <SecondaryPanel
-            activeKey={secondaryPanel}
-            onClose={() => setSecondaryPanel(null)}
-            onBack={handleBackFromSecondary}
-            accommodations={accommodations}
-            transportation={transportation}
-            activities={activities}
-            reservations={reservations}
-            trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date, id: trip.trip_id } : null}
-            onAccommodationAdd={handleAccommodationAdd}
-            onAccommodationEdit={handleAccommodationEdit}
-            onTransportationAdd={handleTransportationAdd}
-            onTransportationEdit={handleTransportationEdit}
-            onActivityAdd={handleActivityAdd}
-            onActivityEdit={handleActivityEdit}
-            onReservationAdd={handleReservationAdd}
-            onReservationEdit={handleReservationEdit}
-            onTravelerAdd={handleTravelerAdd}
-            onTravelerEdit={handleTravelerEdit}
-            onEditDates={handleEditDates}
-          />
+      {/* Secondary Panel */}
+      <SecondaryPanel
+        activeKey={secondaryPanel}
+        onClose={() => setSecondaryPanel(null)}
+        onBack={handleBackFromSecondary}
+        accommodations={accommodations}
+        transportation={transportation}
+        activities={activities}
+        reservations={reservations}
+        trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date, id: trip.trip_id } : null}
+        onAccommodationAdd={handleAccommodationAdd}
+        onAccommodationEdit={handleAccommodationEdit}
+        onTransportationAdd={handleTransportationAdd}
+        onTransportationEdit={handleTransportationEdit}
+        onActivityAdd={handleActivityAdd}
+        onActivityEdit={handleActivityEdit}
+        onReservationAdd={handleReservationAdd}
+        onReservationEdit={handleReservationEdit}
+        onTravelerAdd={handleTravelerAdd}
+        onTravelerEdit={handleTravelerEdit}
+        onEditDates={handleEditDates}
+      />
 
-          {/* Mobile */}
-          <div className="md:hidden">
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50 bg-white shadow-md">
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-[280px]">
-                {sidebarContent}
-              </SheetContent>
-            </Sheet>
-          </div>
+      {/* Mobile Sidebar */}
+      <div className="md:hidden">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="fixed left-4 z-50 bg-white shadow-md"
+              style={{ top: "calc(var(--app-nav-h, 56px) + 0.5rem)" }}
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-[280px]">
+            {sidebarContent}
+          </SheetContent>
+        </Sheet>
+      </div>
 
-          {/* Dialogs */}
-          <AccommodationDialog
-            open={accommodationOpen}
-            onOpenChange={setAccommodationOpen}
-            initialData={selectedAccommodation}
-            tripId={tripId || ""}
-            onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
-              queryClient.invalidateQueries({ queryKey: ["accommodations", tripId] });
-              setSelectedAccommodation(null);
-            }}
-          />
+      {/* Dialogs */}
+      <AccommodationDialog
+        open={accommodationOpen}
+        onOpenChange={setAccommodationOpen}
+        initialData={selectedAccommodation}
+        tripId={tripId || ""}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+          queryClient.invalidateQueries({ queryKey: ["accommodations", tripId] });
+          setSelectedAccommodation(null);
+        }}
+      />
 
-          <TransportationDialog
-            open={transportationOpen}
-            onOpenChange={setTransportationOpen}
-            initialData={selectedTransportation}
-            tripId={tripId || ""}
-            onSuccess={(updated) => {
-              // immediately patch local state
-              handleTransportationEdit(updated);
-              queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
-              queryClient.invalidateQueries({ queryKey: ["transportation", tripId] });
-              setSelectedTransportation(null);
-            }}
-          />
+      <TransportationDialog
+        open={transportationOpen}
+        onOpenChange={setTransportationOpen}
+        initialData={selectedTransportation}
+        tripId={tripId || ""}
+        onSuccess={(updated) => {
+          handleTransportationEdit(updated);
+          queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+          queryClient.invalidateQueries({ queryKey: ["transportation", tripId] });
+          setSelectedTransportation(null);
+        }}
+      />
 
       <TripDateEditDialog
         isOpen={tripDatesOpen}
@@ -288,6 +281,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onDepartureChange={setNewDeparture}
         onSave={handleSaveDates}
       />
+
       <RestaurantReservationDialog
         isOpen={reservationOpen}
         onOpenChange={setReservationOpen}
@@ -305,7 +299,6 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         onSubmit={async data => {
           try {
             if (selectedReservation) {
-              // Update existing reservation
               const { error } = await supabase
                 .from('reservations')
                 .update(data)
@@ -314,10 +307,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
               if (error) throw error;
               toast({ title: 'Success', description: 'Reservation updated' });
             } else {
-              // Create new reservation
-              const { error } = await supabase
-                .from('reservations')
-                .insert([data]);
+              const { error } = await supabase.from('reservations').insert([data]);
               if (error) throw error;
               toast({ title: 'Success', description: 'Reservation added' });
             }
@@ -331,6 +321,7 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
           }
         }}
       />
+
       <ActivityDialog
         isOpen={activityOpen || !!selectedActivity}
         onOpenChange={(open) => {
@@ -350,38 +341,21 @@ export default function Sidebar({ tripId, activeTab, onTabChange }: SidebarProps
         activity={selectedActivity ? activityEdit : newActivity}
         onActivityChange={selectedActivity ? setActivityEdit : setNewActivity}
         onSubmit={(activity) => {
-          if (selectedActivity) {
-            handleEditActivity(selectedActivity, activity);
-          } else {
-            handleAddActivity(activity);
-          }
+          if (selectedActivity) handleActivityEdit(selectedActivity, activity);
+          else handleActivityAdd(activity);
         }}
-        onDelete={(id) => {
-          handleActivityDelete(id);
-        }}
+        onDelete={(id) => handleActivityDelete(id)}
         eventId={tripId || ""}
         tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
         tripId={tripId || ""}
         activityId={selectedActivity}
       />
 
-      <TripDateEditDialog
-        isOpen={tripDatesOpen}
-        onOpenChange={setTripDatesOpen}
-        arrivalDate={newArrival}
-        departureDate={newDeparture}
-        onArrivalChange={setNewArrival}
-        onDepartureChange={setNewDeparture}
-        onSave={handleSaveDates}
-      />
-
       <TravelerDialog
         open={travelerOpen}
         onOpenChange={(open) => {
           setTravelerOpen(open);
-          if (!open) {
-            setSelectedTraveler(null);
-          }
+          if (!open) setSelectedTraveler(null);
         }}
         tripId={tripId}
         traveler={selectedTraveler}

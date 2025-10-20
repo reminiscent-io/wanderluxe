@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
@@ -8,7 +7,6 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import ImageSection from '@/components/trip/create/ImageSection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
 import { useQueryClient } from '@tanstack/react-query';
 
 interface HeroSectionProps {
@@ -26,6 +24,46 @@ interface HeroSectionProps {
 interface DateRangeDisplayProps {
   isLoading: boolean;
   formattedDateRange: string | null;
+}
+
+/** 
+ * Reads the current header height if the header is `position: fixed`.
+ * Works on mobile/desktop and updates on resize.
+ * Expects the header to have [data-app-nav].
+ */
+function useNavOffset() {
+  const [offset, setOffset] = React.useState(0);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const nav = document.querySelector('[data-app-nav]') as HTMLElement | null;
+
+    const compute = () => {
+      if (!nav) return setOffset(0);
+      const style = window.getComputedStyle(nav);
+      const isFixed = style.position === 'fixed';
+      setOffset(isFixed ? nav.getBoundingClientRect().height : 0);
+    };
+
+    // compute once on mount
+    compute();
+
+    // update on resize and on nav size changes
+    const ro = nav ? new ResizeObserver(compute) : null;
+    if (ro && nav) ro.observe(nav);
+
+    window.addEventListener('resize', compute);
+    window.addEventListener('orientationchange', compute);
+
+    return () => {
+      if (ro && nav) ro.disconnect();
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('orientationchange', compute);
+    };
+  }, []);
+
+  return offset;
 }
 
 const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
@@ -61,6 +99,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const [imagePosition, setImagePosition] = useState<string>("center 50%");
 
+  // NEW: ensure hero starts below the fixed header
+  const navOffset = useNavOffset();
+
   const handleImageChange = async (newImageUrl: string) => {
     try {
       const { error } = await supabase
@@ -69,10 +110,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         .eq('trip_id', tripId);
 
       if (error) throw error;
-      
-      // Invalidate the trip query to refresh the data
+
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      
       setIsDialogOpen(false);
       toast.success('Cover image updated successfully');
     } catch (error) {
@@ -83,16 +122,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const handlePositionChange = async (newPosition: string) => {
     setImagePosition(newPosition);
-    
-    // Save to localStorage for immediate persistence
     localStorage.setItem(`trip_image_position_${tripId}`, newPosition);
-    
-    // Note: Database storage for image position will be added in future version
   };
 
   const handleTitleSubmit = async () => {
     if (editedTitle.trim() === '') return;
-    
+
     try {
       const { error } = await supabase
         .from('trips')
@@ -100,10 +135,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         .eq('trip_id', tripId);
 
       if (error) throw error;
-      
-      // Invalidate the trip query to refresh the data
+
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      
+
       setIsEditing(false);
       toast.success('Destination updated successfully');
     } catch (error) {
@@ -120,6 +154,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setEditedTitle(title);
     }
   };
+
   // Keep track of the last valid title for smooth transitions
   const [lastValidTitle, setLastValidTitle] = React.useState(title);
   const [lastValidDates, setLastValidDates] = React.useState({
@@ -127,14 +162,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     departureDate
   });
 
-  // Update last valid title when a new valid title is received
   React.useEffect(() => {
     if (title && title.trim() !== '') {
       setLastValidTitle(title);
     }
   }, [title]);
 
-  // Update last valid dates when new valid dates are received
   React.useEffect(() => {
     if (arrivalDate && departureDate) {
       setLastValidDates({
@@ -146,22 +179,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Load image position from localStorage when component mounts
   React.useEffect(() => {
-    // Try to load from localStorage first
     const savedPosition = localStorage.getItem(`trip_image_position_${tripId}`);
     if (savedPosition) {
       setImagePosition(savedPosition);
     }
-    
-    // Note: Database fetch for image position will be added in future version
   }, [tripId]);
 
-  // Compute formatted date range using the last valid dates
   const formattedDateRange = React.useMemo(() => {
     const safeArrival = lastValidDates.arrivalDate;
     const safeDeparture = lastValidDates.departureDate;
 
     if (!safeArrival || !safeDeparture) {
-      console.log('Missing or invalid date information for formatting', { arrivalDate: safeArrival, departureDate: safeDeparture });
       return null;
     }
 
@@ -170,23 +198,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       const end = parseISO(safeDeparture);
 
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        console.log('Invalid date objects after parsing');
         return null;
       }
 
       const formattedStart = format(start, 'LLL d, yyyy');
       const formattedEnd = format(end, 'LLL d, yyyy');
       return `${formattedStart} - ${formattedEnd}`;
-    } catch (error) {
-      console.error('Error formatting dates:', error);
+    } catch {
       return null;
     }
   }, [lastValidDates]);
 
-
-
   return (
-    <div className="relative w-full mb-0">
+    <div
+      className="relative w-full mb-0"
+      // Apply offset only when header is fixed; hook handles that.
+      //style={{ marginTop: navOffset ? `${navOffset}px` : undefined }}
+    >
       <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden rounded-lg rounded-b-none group">
         {canEdit && (
           <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
@@ -206,13 +234,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         )}
 
-
         <Dialog 
           open={isDialogOpen} 
           onOpenChange={(open) => {
-            // When closing the dialog, ensure the position is saved
             if (!open && isDialogOpen) {
-              // Force a re-render by setting the state again
               setImagePosition(prev => prev);
             }
             setIsDialogOpen(open);
@@ -228,6 +253,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             />
           </DialogContent>
         </Dialog>
+
         {imageUrl ? (
           <div className="absolute inset-0 w-full h-full">
             <UnsplashImage
@@ -244,10 +270,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="h-full w-full bg-gray-200 animate-pulse"></div>
         )}
 
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
 
-        {/* Title and date overlay - centered */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-10 md:p-16 text-white z-10">
           {isLoading ? (
             <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
