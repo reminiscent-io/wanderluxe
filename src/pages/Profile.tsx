@@ -54,6 +54,13 @@ const Profile = () => {
   const [originalEmail, setOriginalEmail] = useState<string | null>(null);
   const [savingContact, setSavingContact] = useState(false);
 
+  // ---- Centralized, bounded email validation (anchored; no catastrophic backtracking) ----
+  const SAFE_EMAIL_MAX_LEN = 254;
+  const SAFE_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValidEmail = (s: string) =>
+    !!s && s.length <= SAFE_EMAIL_MAX_LEN && SAFE_EMAIL_RE.test(s);
+  // ----------------------------------------------------------------------------------------
+
   useEffect(() => {
     if (session?.user) {
       fetchProfile();
@@ -350,8 +357,9 @@ const Profile = () => {
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
                 placeholder="email@example.com"
+                maxLength={SAFE_EMAIL_MAX_LEN}
               />
-              {!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail || "") && editEmail && (
+              {!isValidEmail(editEmail || "") && editEmail && (
                 <p className="text-xs text-red-600">Enter a valid email</p>
               )}
             </div>
@@ -362,7 +370,7 @@ const Profile = () => {
             <Button
               className="bg-earth-600 text-white hover:bg-earth-700"
               onClick={saveContactEdits}
-              disabled={savingContact || (!!editEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail))}
+              disabled={savingContact || (!!editEmail && !isValidEmail(editEmail))}
             >
               {savingContact ? "Saving..." : "Save"}
             </Button>

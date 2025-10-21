@@ -70,44 +70,55 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
 
+  // --- ReDoS-safe numeric formatting/parsing (O(n), no regex backtracking) ---
+  const sanitizeNumeric = (s: string): string => {
+    let out = '';
+    let seenDot = false;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (ch >= '0' && ch <= '9') out += ch;
+      else if (ch === '.' && !seenDot) { out += '.'; seenDot = true; }
+    }
+    return out;
+  };
+
+  const insertThousands = (digits: string): string => {
+    const n = digits.length;
+    if (n <= 3) return digits;
+    let res = '';
+    let count = 0;
+    for (let i = n - 1; i >= 0; i--) {
+      res = digits[i] + res;
+      count++;
+      if (count === 3 && i !== 0) { res = ',' + res; count = 0; }
+    }
+    return res;
+  };
+
   // Format number with commas and handle decimal places (#,###.##)
   const formatNumber = (value: string): string => {
-    // Remove all non-numeric characters except decimal point
-    const cleanValue = value.replace(/[^\d.]/g, '');
-
-    // Handle empty or invalid input
+    const cleanValue = sanitizeNumeric(value);
     if (!cleanValue || cleanValue === '.') return '';
-
-    // Ensure only one decimal point
     const parts = cleanValue.split('.');
-    if (parts.length > 2) {
-      parts[1] = parts.slice(1).join('');
-      parts.length = 2;
-    }
-
-    // Limit to 2 decimal places
-    if (parts[1] && parts[1].length > 2) {
-      parts[1] = parts[1].substring(0, 2);
-    }
-
-    // Add commas to the integer part (handle empty integer part)
-    if (parts[0] && parts[0] !== '') {
-      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    }
-
-    // Return formatted number
-    if (parts.length === 2 && parts[1] !== undefined) {
-      return parts[0] + '.' + parts[1];
-    }
-
-    return parts[0] || '';
+    const intRaw = parts[0] || '';
+    // Merge extra dots into decimals, then cap to 2 places
+    let decRaw = parts.length > 1 ? parts.slice(1).join('') : '';
+    if (decRaw.length > 2) decRaw = decRaw.slice(0, 2);
+    const intFmt = intRaw ? insertThousands(intRaw) : '';
+    return decRaw !== '' ? `${intFmt}.${decRaw}` : intFmt;
   };
 
   const parseNumber = (formattedValue: string): number => {
-    const cleanValue = formattedValue.replace(/,/g, '');
-    const parsed = parseFloat(cleanValue);
+    // Linear-time comma/character filter
+    let out = '';
+    for (let i = 0; i < formattedValue.length; i++) {
+      const ch = formattedValue[i];
+      if ((ch >= '0' && ch <= '9') || ch === '.') out += ch;
+    }
+    const parsed = parseFloat(out);
     return isNaN(parsed) ? 0 : parsed;
   };
+  // --------------------------------------------------------------------------
 
   // Initialize budget input when trip data loads
   useEffect(() => {
@@ -180,7 +191,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
   const filteredExpenses = useMemo(() => {
     return convertedExpenses.filter(expense => {
       const matchesSearch = expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
-      
+
       // Handle category matching with proper mapping
       let matchesCategory = selectedCategory === 'all';
       if (!matchesCategory && expense.category) {
@@ -205,7 +216,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             matchesCategory = expenseCategory === selectedCategory.toLowerCase();
         }
       }
-      
+
       return matchesSearch && matchesCategory;
     });
   }, [convertedExpenses, searchQuery, selectedCategory]);
@@ -654,7 +665,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
               <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
                 <CardContent className="p-12 text-center">
                   <PieChart className="w-12 h-12 text-sand-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-earth-600 mb-2">Advanced Analytics</h3>
+                  <h3 className="text-lg font-semibold text-earth-600">Advanced Analytics</h3>
                   <p className="text-sand-600">
                     Detailed spending analytics and insights coming soon. This will include spending trends,
                     budget forecasting, and personalized recommendations.
