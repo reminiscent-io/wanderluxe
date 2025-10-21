@@ -329,7 +329,7 @@ const ShareTripDialog = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a contact" />
                 </SelectTrigger>
-                <SelectContent className="z-[70]">
+                <SelectContent className="z-[100]">
                   {contacts
                     .filter((c) => !!c.email)
                     .map((c) => (
