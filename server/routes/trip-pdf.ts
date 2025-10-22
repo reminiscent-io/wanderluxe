@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { supabase } from '../supabase';
+import { supabase } from '../../src/integrations/supabase/client';
 import { generateItineraryPDF, getPDFFilename } from '../../src/services/pdfService';
 
 import {
