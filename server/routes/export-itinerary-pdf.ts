@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { generateItineraryPDF, getPDFFilename } from '../../src/services/html-pdf-export';
-import { supabase } from '../../src/integrations/supabase/client';
+import { supabase } from '../supabase';
 
 const router = Router();
 
