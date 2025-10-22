@@ -3,6 +3,17 @@
 ## Overview
 WanderLuxe is a comprehensive web application for creating, managing, and sharing detailed travel itineraries. It aims to simplify travel planning with features for accommodation booking, activity planning, expense tracking, and AI-powered assistance. The platform offers personalized travel experiences, fosters collaboration, and streamlines the entire planning process.
 
+## Recent Changes
+
+### PDF Export Fix (October 22, 2025)
+- **Issue**: Export PDF functionality was returning HTTP 404 error
+- **Root Cause**: The `/api/export-itinerary-pdf` endpoint was only registered in an unused Bun server setup, not in the Express server that was actually running
+- **Solution**: 
+  - Created new Express route at `server/routes/export-itinerary-pdf.ts`
+  - Registered the route in the Express app via `server/routes/index.ts`
+  - Fixed database queries to properly fetch data according to schema relationships (separate queries for trips, trip_days, activities, accommodations, transportation, and reservations instead of nested queries)
+  - Route now correctly structures data for the PDF generation service
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
