@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { registerRoutes } from './routes';
+import exportItineraryPdf from './export-itinerary-pdf';
 
 const app = express();
 
@@ -33,6 +34,18 @@ const httpServer = createServer(app);
 // Start server
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+//Export
+bun.serve({
+  port: Number(process.env.PORT || 3000),
+  async fetch(req) {
+    const url = new URL(req.url);
+    if (url.pathname === '/api/export-itinerary-pdf') {
+      return exportItineraryPdf(req);
+    }
+    return new Response('OK');
+  },
 });
 
 export default httpServer;
