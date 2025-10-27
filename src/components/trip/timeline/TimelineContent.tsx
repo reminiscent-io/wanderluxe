@@ -101,19 +101,19 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   return (
     <>
       {/* Day Cards */}
-      <div className="space-y-3 md:space-y-4">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4 snap-y snap-proximity pb-20 md:pb-4">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
           
           return (
-            <CompactDayCard
-              key={day.day_id}
-              id={day.day_id}
-              tripId={day.trip_id}
-              date={day.date}
-              title={day.title}
-              activities={day.activities || []}
-              index={dayIndex}
+            <div key={day.day_id} className="snap-start">
+              <CompactDayCard
+                id={day.day_id}
+                tripId={day.trip_id}
+                date={day.date}
+                title={day.title}
+                activities={day.activities || []}
+                index={dayIndex}
               hotelStays={hotelStays.filter(stay => {
                 if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
                 
@@ -167,7 +167,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 setReservationOpen(true);  // Open the dialog when clicking a reservation
               }}
               canEdit={canEdit}
-            />
+              />
+            </div>
           );
         })}
       </div>
