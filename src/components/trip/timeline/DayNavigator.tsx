@@ -78,16 +78,18 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
   if (days.length === 0) return null;
   
   return (
-    <div 
-      className={cn(
-        "sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b transition-all duration-200",
-        isCompact ? "py-2" : "py-3",
-        className
-      )}
-    >
-      <div className="max-w-7xl mx-auto px-3 md:px-6">
+    <>
+      {/* Desktop sticky top navigation */}
+      <div 
+        className={cn(
+          "hidden md:block sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b transition-all duration-200",
+          isCompact ? "py-2" : "py-3",
+          className
+        )}
+      >
+        <div className="max-w-7xl mx-auto px-3 md:px-6">
         {/* Desktop View */}
-        <div className="hidden md:flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -162,78 +164,60 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
             </Button>
           </div>
         </div>
-        
-        {/* Mobile View - Compact */}
-        <div className="md:hidden flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 flex-1 overflow-x-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateDays('prev')}
-              disabled={currentDayInView === 0}
-              className="h-7 w-7 p-0 flex-shrink-0"
-            >
-              <ChevronLeft className="h-3 w-3" />
-            </Button>
-            
-            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-              {days.map((day, index) => {
-                const isActive = index === currentDayInView;
-                const isTodayFlag = isToday(parseISO(day.date));
-                
-                return (
-                  <Button
-                    key={day.day_id}
-                    variant={isActive ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => scrollToDay(index)}
-                    className={cn(
-                      "h-7 px-2 text-xs min-w-[45px] flex-shrink-0",
-                      isTodayFlag && !isActive && "ring-1 ring-blue-500"
-                    )}
-                  >
-                    D{index + 1}
-                  </Button>
-                );
-              })}
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateDays('next')}
-              disabled={currentDayInView === days.length - 1}
-              className="h-7 w-7 p-0 flex-shrink-0"
-            >
-              <ChevronRight className="h-3 w-3" />
-            </Button>
-          </div>
-          
-          <div className="flex gap-1">
-            {todayIndex >= 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={scrollToToday}
-                className="h-7 w-7 p-0"
-                title="Jump to Today"
-              >
-                <Calendar className="h-3 w-3" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={scrollToTop}
-              className="h-7 w-7 p-0"
-              title="Back to Overview"
-            >
-              <ChevronUp className="h-3 w-3" />
-            </Button>
-          </div>
         </div>
       </div>
-    </div>
+      
+      {/* Mobile View - Floating Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t shadow-lg pb-safe">
+        <div className="flex items-center justify-between gap-2 px-2 py-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigateDays('prev')}
+            disabled={currentDayInView === 0}
+            className="h-8 w-8 p-0 flex-shrink-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1">
+            {days.map((day, index) => {
+              const isActive = index === currentDayInView;
+              const isTodayFlag = isToday(parseISO(day.date));
+              const dayNum = format(parseISO(day.date), 'd');
+              
+              return (
+                <Button
+                  key={day.day_id}
+                  variant={isActive ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => scrollToDay(index)}
+                  className={cn(
+                    "h-12 px-3 min-w-[60px] flex-shrink-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg",
+                    isActive && "bg-earth-600 hover:bg-earth-700 shadow-md",
+                    isTodayFlag && !isActive && "ring-2 ring-emerald-500"
+                  )}
+                >
+                  <span className="text-[10px] leading-none opacity-90">{format(parseISO(day.date), 'MMM')}</span>
+                  <span className="text-base font-bold leading-none">{dayNum}</span>
+                  <span className="text-[9px] leading-none opacity-75 mt-0.5">Day {index + 1}</span>
+                </Button>
+              );
+            })}
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigateDays('next')}
+            disabled={currentDayInView === days.length - 1}
+            className="h-8 w-8 p-0 flex-shrink-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </>
   );
 };
 
