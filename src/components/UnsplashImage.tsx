@@ -25,7 +25,13 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
   const [isSupabaseImage, setIsSupabaseImage] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadImage = async () => {
+      // Reset to src immediately to prevent showing stale images
+      setImageUrl(src);
+      setIsSupabaseImage(false);
+      
       // Check if this is a Supabase storage URL
       if (src.includes('supabase.co/storage') && src.includes('trip-images')) {
         setIsSupabaseImage(true);
@@ -39,9 +45,8 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
                 .from('trip-images')
                 .createSignedUrl(pathMatch[1], 31536000); // 1 year
               
-              if (!error && signedUrl) {
+              if (!error && signedUrl && isMounted) {
                 setImageUrl(signedUrl);
-                return;
               }
             } catch (err) {
               console.error('Error getting signed URL:', err);
@@ -49,10 +54,13 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
           }
         }
       }
-      setImageUrl(src);
     };
 
     loadImage();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [src]);
   
   return (
