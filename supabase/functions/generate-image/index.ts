@@ -90,14 +90,23 @@ serve(async (req)=>{
       console.error('Unsplash API error response:', data);
       throw new Error(`Unsplash API error: ${data.errors?.join(', ') || 'Unknown error'}`);
     }
-    // Format response with multiple images
-    const images = data.results.map((photo)=>({
+    // Format response with multiple images using raw URLs with custom parameters
+    const images = data.results.map((photo)=>{
+      // Use raw URL with custom parameters for better quality and control
+      const imageUrl = new URL(photo.urls.raw);
+      imageUrl.searchParams.set('auto', 'format');
+      imageUrl.searchParams.set('fit', 'crop');
+      imageUrl.searchParams.set('w', '1920');
+      imageUrl.searchParams.set('q', '80');
+      
+      return {
         id: photo.id,
-        url: photo.urls.regular,
+        url: imageUrl.toString(),
         description: photo.description || photo.alt_description,
         photographer: photo.user.name,
         downloadLocation: photo.links.download_location
-      }));
+      };
+    });
     console.log('Processed images:', images);
     return new Response(JSON.stringify({
       images
