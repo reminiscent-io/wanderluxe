@@ -95,25 +95,33 @@ const ImageSection: React.FC<ImageSectionProps> = ({
           {results.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {results.map((img) => (
-                <button
+                <div
                   key={img.id}
-                  className="relative rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-earth-500"
+                  role="button"
+                  tabIndex={0}
+                  className="relative rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-earth-500 cursor-pointer"
                   onClick={() => selectUnsplash(img.url)}
-                  type="button"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      selectUnsplash(img.url);
+                    }
+                  }}
+                  aria-label={`Select ${img.description || 'Unsplash image'}`}
                 >
                   <UnsplashImage
                     src={img.url}
                     alt={img.description || "Unsplash image"}
                     className="h-36 w-full object-cover"
-                    showAttribution={true}
+                    showAttribution={false}
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                  <div className="absolute bottom-2 right-2">
-                    <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none" />
+                  <div className="absolute bottom-2 right-2 pointer-events-none">
+                    <span className="inline-block px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                       Use
-                    </Button>
+                    </span>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}
