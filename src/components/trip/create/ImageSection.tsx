@@ -49,6 +49,8 @@ const ImageSection: React.FC<ImageSectionProps> = ({
       if (error) throw error;
 
       if (data?.images?.length) {
+        console.log('Received Unsplash images:', data.images);
+        console.log('First image URL:', data.images[0]?.url);
         setResults(data.images);
       } else {
         toast.error('No images found. Try a different search.');
