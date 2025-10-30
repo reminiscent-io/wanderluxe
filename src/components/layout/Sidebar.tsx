@@ -341,8 +341,8 @@ export default function Sidebar({ tripId }: SidebarProps) {
         activity={selectedActivity ? activityEdit : newActivity}
         onActivityChange={selectedActivity ? setActivityEdit : setNewActivity}
         onSubmit={(activity) => {
-          if (selectedActivity) handleActivityEdit(selectedActivity, activity);
-          else handleActivityAdd(activity);
+          if (selectedActivity) handleEditActivity(selectedActivity, activity);
+          else handleAddActivity(activity);
         }}
         onDelete={(id) => handleActivityDelete(id)}
         eventId={tripId || ""}
