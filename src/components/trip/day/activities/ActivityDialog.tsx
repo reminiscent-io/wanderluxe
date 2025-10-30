@@ -169,10 +169,8 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
   /**
    * Save handler
-   * - EDIT: always persist here (recompute day_id from selected date), even if legacy `onSubmit` exists.
-   * - ADD:
-   *    - Chat path (no onSubmit): persist here.
-   *    - Legacy path (onSubmit provided): delegate to parent, unchanged.
+   * - When onSubmit is provided (sidebar/timeline path): delegate ALL persistence to parent
+   * - When NO onSubmit (chat path): handle persistence here directly
    */
   const handleSubmit = async (activityData?: ActivityFormData) => {
     const dataToSave = activityData || finalActivity;
@@ -189,71 +187,65 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         throw new Error("Please choose a valid date");
       }
 
-      // Find the corresponding day_id for the selected date
-      const { data: tripDay, error: tripDayError } = await supabase
-        .from("trip_days")
-        .select("day_id")
-        .eq("trip_id", tripId)
-        .eq("date", selectedDate)
-        .single();
+      // Ensure normalized date is in dataToSave for parent handlers
+      const normalizedData = { ...dataToSave, date: selectedDate };
 
-      if (tripDayError || !tripDay) {
-        throw new Error(
-          "Could not find trip day for selected date. Please select a valid date."
-        );
-      }
-
-      // Convert cost from string to number
-      const costNum =
-        dataToSave.cost && dataToSave.cost.trim() !== ""
-          ? parseFloat(dataToSave.cost)
-          : null;
-
-      // DB payload
-      const dbData = {
-        day_id: tripDay.day_id,
-        title: dataToSave.title.trim(),
-        description: dataToSave.description?.trim() || null,
-        start_time: dataToSave.start_time || null,
-        end_time: dataToSave.end_time || null,
-        cost: costNum,
-        currency: dataToSave.currency || "USD",
-      };
-
-      if (isEditMode) {
-        // 🚑 Fix: always persist EDIT here so day_id updates correctly for DayCard (which filters by day_id)
-        const { error } = await supabase
-          .from("day_activities")
-          .update(dbData)
-          .eq("id", activityId!);
-        if (error) throw error;
-
-        toast.success("Activity updated");
-        // optional: let parent know, but persistence is already handled
-        if (onSubmit) {
-          try {
-            await onSubmit(dataToSave);
-          } catch {
-            /* parent callback is best-effort */
-          }
-        }
+      if (onSubmit) {
+        // Sidebar/timeline path: delegate to parent handler
+        // Parent handles DB persistence, traveler tags, and query invalidation
+        await onSubmit(normalizedData);
       } else {
-        if (!onSubmit) {
-          // Chat path: create here
+        // Chat path: handle persistence directly
+        // Find the corresponding day_id for the selected date
+        const { data: tripDay, error: tripDayError } = await supabase
+          .from("trip_days")
+          .select("day_id")
+          .eq("trip_id", tripId)
+          .eq("date", selectedDate)
+          .single();
+
+        if (tripDayError || !tripDay) {
+          throw new Error(
+            "Could not find trip day for selected date. Please select a valid date."
+          );
+        }
+
+        // Convert cost from string to number
+        const costNum =
+          dataToSave.cost && dataToSave.cost.trim() !== ""
+            ? parseFloat(dataToSave.cost)
+            : null;
+
+        // DB payload
+        const dbData = {
+          day_id: tripDay.day_id,
+          title: dataToSave.title.trim(),
+          description: dataToSave.description?.trim() || null,
+          start_time: dataToSave.start_time || null,
+          end_time: dataToSave.end_time || null,
+          cost: costNum,
+          currency: dataToSave.currency || "USD",
+        };
+
+        if (isEditMode) {
+          const { error } = await supabase
+            .from("day_activities")
+            .update(dbData)
+            .eq("id", activityId!);
+          if (error) throw error;
+          toast.success("Activity updated");
+        } else {
           const { error } = await supabase
             .from("day_activities")
             .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
           if (error) throw error;
           toast.success("Activity added");
-        } else {
-          // Legacy add path: delegate (unchanged behavior)
-          await onSubmit(dataToSave);
         }
-      }
 
-      // Invalidate queries to refresh the UI (DayCard uses ['activities', dayId])
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
-      queryClient.invalidateQueries({ queryKey: ["trip"] });
+        // Invalidate queries to refresh the UI (use trip-scoped keys for consistency)
+        queryClient.invalidateQueries({ queryKey: ["activities", tripId] });
+        queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+      }
 
       onOpenChange(false);
       onSuccess?.();

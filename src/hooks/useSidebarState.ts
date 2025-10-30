@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -190,6 +190,41 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     enabled: !!tripId,
   });
 
+  // Set up real-time subscription for activities at trip level
+  const channelRef = useRef<any>(null);
+  const handleActivityChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+  }, [queryClient, tripId]);
+
+  useEffect(() => {
+    if (!tripId) return;
+
+    const subscriptionKey = `sidebar-activities:${tripId}`;
+    const channel = supabase
+      .channel(subscriptionKey)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'day_activities',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleActivityChange
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [tripId, handleActivityChange]);
+
   // Fetch reservations (with trip_days date) for this trip
   const { data: reservations = [] } = useQuery({
     queryKey: ['reservations', tripId],
@@ -336,7 +371,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         .eq('trip_id', tripId);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       toast({ title: 'Success', description: 'Activity deleted' });
     } catch (err) {
       console.error('Error deleting activity:', err);
@@ -382,9 +417,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+      toast({ title: 'Success', description: 'Activity added' });
       setActivityOpen(false);
     } catch (err) {
       console.error('Error adding activity:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add activity' });
       throw err;
     }
   };
@@ -424,9 +461,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+      toast({ title: 'Success', description: 'Activity updated' });
       setSelectedActivity(null);
     } catch (err) {
       console.error('Error editing activity:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update activity' });
       throw err;
     }
   };
