@@ -11,6 +11,7 @@
     "preview": "vite preview --port 8080 --host"
   },
   "dependencies": {
+    "@anthropic-ai/claude-code": "^2.0.42",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -59,7 +60,7 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.5.2",
-    "esbuild": "^0.25.0",
+    "esbuild": "0.25.11",
     "express": "^5.1.0",
     "framer-motion": "^12.4.4",
     "handlebars": "^4.7.8",
@@ -71,7 +72,7 @@
     "next-themes": "^0.4.4",
     "pdfjs-dist": "^5.4.296",
     "pdfmake": "^0.2.20",
-    "puppeteer": "^24.9.0",
+    "puppeteer": "24.26.0",
     "react": "^19.0.0",
     "react-datepicker": "^8.2.1",
     "react-day-picker": "^9.5.1",
@@ -86,17 +87,17 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
-    "tar-fs": "^3.0.10",
+    "tar-fs": "3.1.1",
     "vaul": "^1.1.2",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
-    "@types/node": "^22.5.5",
+    "@types/node": "^22",
     "@types/pdfmake": "^0.2.11",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@vitejs/plugin-react-swc": "latest",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
@@ -107,7 +108,7 @@
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
-    "typescript-eslint": "^8.0.1",
+    "typescript-eslint": "^8",
     "vite": "^6.0.12"
   }
 }
