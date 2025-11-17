@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
 
-const SLIDE_MS = 4000; // time each image is shown
-const FADE_MS = 1200;  // crossfade duration
+const SLIDE_MS = 2500; // time each image is shown
+const FADE_MS = 2000;  // crossfade duration
 
 const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
