@@ -82,7 +82,7 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
       activeSubscriptions.delete(subscriptionKey);
       setIsSubscribed(false);
     };
-  }, [dayId, tripId, subscriptionKey, handleActivityChange]);
+  }, [dayId, tripId, handleActivityChange]);
 
   return { isSubscribed };
 }

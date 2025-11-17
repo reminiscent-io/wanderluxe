@@ -78,7 +78,7 @@ export function useAccommodationsRealtime(tripId: string | undefined) {
       activeSubscriptions.delete(subscriptionKey);
       setIsSubscribed(false);
     };
-  }, [tripId, subscriptionKey, handleAccommodationChange]);
+  }, [tripId, handleAccommodationChange]);
 
   return { isSubscribed };
 }

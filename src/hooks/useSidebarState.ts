@@ -190,40 +190,148 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     enabled: !!tripId,
   });
 
-  // Set up real-time subscription for activities at trip level
-  const channelRef = useRef<any>(null);
-  const handleActivityChange = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+  // Real-time subscriptions for sidebar data
+  // Note: We subscribe at trip level for accommodations, transportation, and reservations
+  // Activity subscriptions are handled by useActivitiesRealtime at the day level
+  const accommodationsChannelRef = useRef<any>(null);
+  const transportationChannelRef = useRef<any>(null);
+  const reservationsChannelRef = useRef<any>(null);
+
+  // Memoize invalidation callbacks
+  const handleAccommodationChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
     queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
   }, [queryClient, tripId]);
 
+  const handleTransportationChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
+  }, [queryClient, tripId]);
+
+  const handleReservationChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
+  }, [queryClient, tripId]);
+
+  // Accommodations real-time subscription
   useEffect(() => {
     if (!tripId) return;
 
-    const subscriptionKey = `sidebar-activities:${tripId}`;
     const channel = supabase
-      .channel(subscriptionKey)
+      .channel(`sidebar-accommodations:${tripId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'day_activities',
+          table: 'accommodations',
           filter: `trip_id=eq.${tripId}`,
         },
-        handleActivityChange
+        handleAccommodationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleAccommodationChange
       )
       .subscribe();
 
-    channelRef.current = channel;
+    accommodationsChannelRef.current = channel;
 
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+      if (accommodationsChannelRef.current) {
+        supabase.removeChannel(accommodationsChannelRef.current);
+        accommodationsChannelRef.current = null;
       }
     };
-  }, [tripId, handleActivityChange]);
+  }, [tripId, handleAccommodationChange]);
+
+  // Transportation real-time subscription
+  useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel(`sidebar-transportation:${tripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transportation',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleTransportationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transportation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleTransportationChange
+      )
+      .subscribe();
+
+    transportationChannelRef.current = channel;
+
+    return () => {
+      if (transportationChannelRef.current) {
+        supabase.removeChannel(transportationChannelRef.current);
+        transportationChannelRef.current = null;
+      }
+    };
+  }, [tripId, handleTransportationChange]);
+
+  // Reservations real-time subscription
+  useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel(`sidebar-reservations:${tripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleReservationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleReservationChange
+      )
+      .subscribe();
+
+    reservationsChannelRef.current = channel;
+
+    return () => {
+      if (reservationsChannelRef.current) {
+        supabase.removeChannel(reservationsChannelRef.current);
+        reservationsChannelRef.current = null;
+      }
+    };
+  }, [tripId, handleReservationChange]);
 
   // Fetch reservations (with trip_days date) for this trip
   const { data: reservations = [] } = useQuery({

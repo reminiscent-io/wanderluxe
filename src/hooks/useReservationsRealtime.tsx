@@ -90,7 +90,7 @@ export function useReservationsRealtime(dayId: string, tripId: string | undefine
       activeSubscriptions.delete(subscriptionKey);
       setIsSubscribed(false);
     };
-  }, [dayId, tripId, subscriptionKey, handleReservationChange]);
+  }, [dayId, tripId, handleReservationChange]);
 
   // Query for reservations
   const { 
