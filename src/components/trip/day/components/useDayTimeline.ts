@@ -11,6 +11,10 @@ import {
   extractIata,
   diffMinutes,
   humanizeMinutes,
+  getTimePeriod,
+  getPeriodLabel,
+  getPeriodOrder,
+  TimePeriod,
 } from './timeline-utils';
 
 type UseDayTimelineInput = {
