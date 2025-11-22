@@ -235,6 +235,49 @@ export function useDayTimeline({
     return result;
   }, [timelineItems, normalizedDay]);
 
+  // Group rows by time period
+  export interface TimelinePeriodGroup {
+    period: TimePeriod;
+    label: string;
+    rows: TimelineRenderRow[];
+  }
+
+  const periodGroups: TimelinePeriodGroup[] = useMemo(() => {
+    const groupMap = new Map<TimePeriod, TimelineRenderRow[]>();
+    const periodOrder = ['early-morning', 'morning', 'afternoon', 'evening', 'night', 'no-time'] as const;
+    
+    // Initialize all periods
+    periodOrder.forEach(period => {
+      groupMap.set(period as TimePeriod, []);
+    });
+
+    // Distribute rows to periods
+    rows.forEach(row => {
+      if (row.kind === 'hint') {
+        const lastPeriod = [...groupMap.keys()][groupMap.size - 2];
+        groupMap.get(lastPeriod as TimePeriod)?.push(row);
+      } else {
+        const period = getTimePeriod(row.item.time);
+        groupMap.get(period)?.push(row);
+      }
+    });
+
+    // Build result with only non-empty periods
+    const result: TimelinePeriodGroup[] = [];
+    periodOrder.forEach(period => {
+      const period_rows = groupMap.get(period as TimePeriod) || [];
+      if (period_rows.length > 0) {
+        result.push({
+          period: period as TimePeriod,
+          label: getPeriodLabel(period as TimePeriod),
+          rows: period_rows,
+        });
+      }
+    });
+
+    return result;
+  }, [rows]);
+
   // Summary & badges
   const activityCount = activities.length;
   const hotelCount = filteredHotelStays.length;
