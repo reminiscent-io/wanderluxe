@@ -33,6 +33,7 @@ type UseDayTimelineOutput = {
   allDayHotels: HotelStay[];
   timelineItems: TimelineItem[];
   rows: TimelineRenderRow[];        // items + subtle layover hints
+  periodGroups: TimelinePeriodGroup[]; // grouped by time period
   summary: string;
   isCheckInDay: boolean;
   isCheckOutDay: boolean;
@@ -242,12 +243,6 @@ export function useDayTimeline({
   }, [timelineItems, normalizedDay]);
 
   // Group rows by time period
-  export interface TimelinePeriodGroup {
-    period: TimePeriod;
-    label: string;
-    rows: TimelineRenderRow[];
-  }
-
   const periodGroups: TimelinePeriodGroup[] = useMemo(() => {
     const groupMap = new Map<TimePeriod, TimelineRenderRow[]>();
     const periodOrder = ['early-morning', 'morning', 'afternoon', 'evening', 'night', 'no-time'] as const;
@@ -312,6 +307,7 @@ export function useDayTimeline({
     allDayHotels,
     timelineItems,
     rows,
+    periodGroups,
     summary,
     isCheckInDay,
     isCheckOutDay,
