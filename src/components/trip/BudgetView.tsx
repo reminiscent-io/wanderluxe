@@ -387,84 +387,84 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
         >
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm text-sand-600">Total Budget</p>
+                  <div className="flex items-center gap-1 mb-2">
+                    <p className="text-xs text-sand-600 uppercase tracking-wide">Budget</p>
                     {!isEditingBudget && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsEditingBudget(true)}
-                        className="h-6 w-6 p-0 text-sand-500 hover:text-earth-600"
+                        className="h-5 w-5 p-0 text-sand-500 hover:text-earth-600"
                       >
                         <Edit3 className="w-3 h-3" />
                       </Button>
                     )}
                   </div>
                   {isEditingBudget ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Input
                         type="text"
                         value={budgetInput}
                         onChange={handleBudgetInputChange}
-                        className="h-8 text-lg font-bold border-earth-300 focus:border-earth-500"
-                        placeholder="e.g., 5,000.00"
+                        className="h-7 text-sm font-semibold border-earth-300 focus:border-earth-500"
+                        placeholder="e.g., 5,000"
                       />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={updateBudget}
-                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                        className="h-7 w-7 p-0 text-green-600 hover:text-green-700"
                       >
-                        <Check className="w-4 h-4" />
+                        <Check className="w-3 h-3" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={cancelBudgetEdit}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </Button>
                     </div>
                   ) : (
-                    <p className="text-2xl font-bold text-earth-600">
-                      {totalBudget > 0 ? formatCurrencyWithSymbol(totalBudget, selectedCurrency) : 'Set Budget'}
+                    <p className="text-lg font-bold text-earth-600">
+                      {totalBudget > 0 ? formatCurrencyWithSymbol(totalBudget, selectedCurrency) : 'Not set'}
                     </p>
                   )}
                 </div>
-                <DollarSign className="w-8 h-8 text-earth-500" />
+                <DollarSign className="w-6 h-6 text-earth-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Total Spent</p>
-                  <p className="text-2xl font-bold text-red-600">{formatCurrencyWithSymbol(totalSpent, selectedCurrency)}</p>
+          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-sand-600 uppercase tracking-wide mb-2">Spent</p>
+                  <p className="text-lg font-bold text-red-600">{formatCurrencyWithSymbol(totalSpent, selectedCurrency)}</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-red-500" />
+                <TrendingUp className="w-6 h-6 text-red-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Remaining</p>
-                  <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-sand-600 uppercase tracking-wide mb-2">Remaining</p>
+                  <p className={`text-lg font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrencyWithSymbol(remainingBudget, selectedCurrency)}
                   </p>
                 </div>
-                <PieChart className="w-8 h-8 text-green-500" />
+                <PieChart className="w-6 h-6 flex-shrink-0" style={{ color: remainingBudget >= 0 ? '#10b981' : '#ef4444' }} />
               </div>
             </CardContent>
           </Card>
