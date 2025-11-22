@@ -40,6 +40,12 @@ type UseDayTimelineOutput = {
   totalEvents: number;              // hints don’t count
 };
 
+export interface TimelinePeriodGroup {
+  period: TimePeriod;
+  label: string;
+  rows: TimelineRenderRow[];
+}
+
 export function useDayTimeline({
   dateISO,
   activities,
