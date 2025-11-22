@@ -107,6 +107,46 @@ export const humanizeMinutes = (mins: number) => {
   return `${m}m`;
 };
 
+// Categorize time into periods for grouping
+export type TimePeriod = 'early-morning' | 'morning' | 'afternoon' | 'evening' | 'night' | 'no-time';
+
+export const getTimePeriod = (time?: string): TimePeriod => {
+  if (!time) return 'no-time';
+  const hm = parseTimeToHM(time);
+  if (!hm) return 'no-time';
+  const hour = hm.h;
+  
+  if (hour >= 5 && hour < 9) return 'early-morning';
+  if (hour >= 9 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+};
+
+export const getPeriodLabel = (period: TimePeriod): string => {
+  const labels: Record<TimePeriod, string> = {
+    'early-morning': '🌅 Early Morning',
+    'morning': '☀️ Morning',
+    'afternoon': '🌤️ Afternoon',
+    'evening': '🌆 Evening',
+    'night': '🌙 Night',
+    'no-time': 'Unscheduled',
+  };
+  return labels[period];
+};
+
+export const getPeriodOrder = (period: TimePeriod): number => {
+  const order: Record<TimePeriod, number> = {
+    'early-morning': 0,
+    'morning': 1,
+    'afternoon': 2,
+    'evening': 3,
+    'night': 4,
+    'no-time': 5,
+  };
+  return order[period];
+};
+
 // icon per transport
 export const getTransportationIconComponent = (type: string): React.ComponentType<{ className?: string }> => {
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
