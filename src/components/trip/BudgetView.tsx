@@ -8,6 +8,9 @@ import { useExpenses } from './budget/hooks/useExpenses';
 import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
+import CategoryBreakdownChart from './budget/components/CategoryBreakdownChart';
+import BudgetHealthCard from './budget/components/BudgetHealthCard';
+import SpendingInsights from './budget/components/SpendingInsights';
 import { convertCurrency } from './budget/utils/currencyConverter';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
 import { useTripQuery } from '@/hooks/useTripQuery';
@@ -384,7 +387,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
         >
           <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-6">
@@ -465,6 +468,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
               </div>
             </CardContent>
           </Card>
+
+          {/* New Budget Health Card */}
+          <BudgetHealthCard
+            totalBudget={totalBudget}
+            totalSpent={totalSpent}
+            selectedCurrency={selectedCurrency}
+          />
         </motion.div>
 
         {/* Tabs Navigation */}
@@ -612,10 +622,17 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             </TabsContent>
 
             <TabsContent value="categories" className="space-y-6">
+              {/* Visual Chart */}
+              <CategoryBreakdownChart
+                expenses={convertedExpenses}
+                selectedCurrency={selectedCurrency}
+              />
+
+              {/* Detailed Breakdown */}
               <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-earth-600">Spending by Category</CardTitle>
-                  <CardDescription>Breakdown of your expenses by category</CardDescription>
+                  <CardTitle className="text-earth-600">Detailed Breakdown</CardTitle>
+                  <CardDescription>Spending details for each category</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -662,16 +679,22 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6">
-              <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-12 text-center">
-                  <PieChart className="w-12 h-12 text-sand-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-earth-600">Advanced Analytics</h3>
-                  <p className="text-sand-600">
-                    Detailed spending analytics and insights coming soon. This will include spending trends,
-                    budget forecasting, and personalized recommendations.
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Insights Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-earth-600 mb-4">Spending Insights</h3>
+                <SpendingInsights
+                  expenses={convertedExpenses}
+                  totalBudget={totalBudget}
+                  totalSpent={totalSpent}
+                  selectedCurrency={selectedCurrency}
+                />
+              </div>
+
+              {/* Charts Section */}
+              <CategoryBreakdownChart
+                expenses={convertedExpenses}
+                selectedCurrency={selectedCurrency}
+              />
             </TabsContent>
           </Tabs>
         </motion.div>
