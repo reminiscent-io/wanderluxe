@@ -253,12 +253,14 @@ export function useDayTimeline({
     });
 
     // Distribute rows to periods
+    let lastItemPeriod: TimePeriod = 'no-time';
     rows.forEach(row => {
       if (row.kind === 'hint') {
-        const lastPeriod = [...groupMap.keys()][groupMap.size - 2];
-        groupMap.get(lastPeriod as TimePeriod)?.push(row);
+        // Attach hint to the period of the last item
+        groupMap.get(lastItemPeriod)?.push(row);
       } else {
         const period = getTimePeriod(row.item.time);
+        lastItemPeriod = period;
         groupMap.get(period)?.push(row);
       }
     });
