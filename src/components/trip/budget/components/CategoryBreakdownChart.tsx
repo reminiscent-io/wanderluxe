@@ -87,28 +87,52 @@ const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({ expense
             <Legend 
               verticalAlign="bottom" 
               height={36}
-              formatter={(value, entry: any) => `${entry.payload.name}: ${formatCurrencyWithSymbol(entry.payload.value, selectedCurrency)}`}
+              formatter={(value, entry: any) => `${entry.payload.name}`}
+              wrapperStyle={{ paddingTop: '20px' }}
             />
           </PieChart>
         </ResponsiveContainer>
 
-        {/* Category List Below Chart */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-          {chartData.map((category) => {
-            const percentage = ((category.value / chartData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(1);
-            return (
-              <div key={category.originalName} className="flex items-start gap-3">
-                <div
-                  className="w-3 h-3 rounded-full mt-1 flex-shrink-0"
-                  style={{ backgroundColor: categoryColors[category.originalName] }}
-                />
-                <div>
-                  <p className="text-sm font-medium text-earth-600">{category.name}</p>
-                  <p className="text-xs text-sand-600">{percentage}%</p>
+        {/* Enhanced Category List Below Chart */}
+        <div className="mt-8">
+          <h4 className="text-sm font-semibold text-earth-600 mb-4">Category Breakdown</h4>
+          <div className="space-y-3">
+            {chartData.map((category) => {
+              const total = chartData.reduce((sum, item) => sum + item.value, 0);
+              const percentage = ((category.value / total) * 100).toFixed(1);
+              return (
+                <div key={category.originalName} className="flex items-center gap-4">
+                  {/* Color dot */}
+                  <div
+                    className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+                    style={{ backgroundColor: categoryColors[category.originalName] }}
+                  />
+                  
+                  {/* Category name and percentage */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium text-earth-700">{category.name}</p>
+                      <p className="text-sm font-semibold text-earth-600">{formatCurrencyWithSymbol(category.value, selectedCurrency)}</p>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    <div className="w-full bg-sand-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${percentage}%`,
+                          backgroundColor: categoryColors[category.originalName]
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Percentage label */}
+                    <p className="text-xs text-sand-600 mt-1">{percentage}% of total</p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>
