@@ -11,7 +11,6 @@ import AllDayHotelsSection from './components/AllDayHotelsSection';
 import TimelineRow from './components/TimelineRow';
 import LayoverHintRow from './components/LayoverHintRow';
 import TimePeriodHeader from './components/TimePeriodHeader';
-import DaySummaryCard from './components/DaySummaryCard';
 import { useDayTimeline } from './components/useDayTimeline';
 
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
@@ -170,13 +169,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                 {hasContent ? (
                   <div className="space-y-2 sm:space-y-3">
                     <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
-
-                    <DaySummaryCard 
-                      activities={activities}
-                      hotelStays={hotelStays}
-                      transportations={transportations}
-                      reservations={reservations}
-                    />
 
                     <div className="relative">
                       {periodGroups.map((group, groupIdx) => (
