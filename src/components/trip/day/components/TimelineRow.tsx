@@ -2,6 +2,7 @@ import React from 'react';
 import { DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
+import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import TravelerAvatars from '../../timeline/TravelerAvatars'; // adjust path if needed
 import { TimelineItem, TimelineType, getEventColors, formatTime12, getTransportationIconComponent } from './timeline-utils';
 
@@ -73,7 +74,7 @@ const TimelineRow: React.FC<Props> = ({
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <DollarSign className="h-3 w-3 text-earth-500" />
                 <span className="text-xs text-earth-600">
-                  {item.data.currency || 'USD'} {item.data.cost}
+                  {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
                 </span>
               </div>
             )}
