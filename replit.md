@@ -40,8 +40,12 @@ The schema is normalized PostgreSQL, including entities for `trips`, `trip_days`
 - **Luxury Date Pickers**: Integration of premium, responsive `LuxuryDateTimeRangePicker` for consistent and polished date selection across the application.
 - **Standardized Dialogs**: Uniform styling, responsive width settings, scroll functionality, and consistent interaction patterns across all dialog types.
 - **Timeline Redesign**: Streamlined, compact day cards replacing image-based designs, featuring a unified chronological timeline view of all timed events, quick-add buttons, and direct edit functionality.
+- **Time Period Grouping**: Daily activities grouped by time periods (Early Morning 🌅, Morning ☀️, Afternoon 🌤️, Evening 🌆, Night 🌙) with emoji headers for visual clarity.
+- **Daily Cost Summary**: Enhanced day cards with cost breakdown by category (Activities, Accommodations, Transportation, Dining) displayed as a quick-reference card.
+- **Smart Day Expansion**: Past days auto-collapse in timeline view while future and current days remain expanded, improving visual focus and reducing clutter.
 - **Mobile Responsiveness**: Designed for seamless experience across mobile, tablet, and desktop, including responsive date pickers, dialogs, and layout adjustments.
 - **Error Handling & Validation**: Robust form validation using Zod and React Hook Form, with double-click prevention on submissions.
+- **Currency Formatting**: Timeline costs display with currency symbols ($#,###) for clarity, matching international formatting standards.
 
 ### UI/UX Decisions
 - **Color Scheme**: Consistent sand/earth color palette across the application.
