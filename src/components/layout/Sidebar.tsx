@@ -342,9 +342,9 @@ export default function Sidebar({ tripId }: SidebarProps) {
         onActivityChange={selectedActivity ? setActivityEdit : setNewActivity}
         onSubmit={async (activity) => {
           if (selectedActivity) {
-            await handleEditActivity(selectedActivity, activity);
+            await handleActivityEdit(selectedActivity, activity);
           } else {
-            await handleAddActivity(activity);
+            await handleActivityAdd(activity);
           }
         }}
         onDelete={async (id) => await handleActivityDelete(id)}

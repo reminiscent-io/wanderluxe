@@ -3,14 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Trip } from '@/types/trip';
 import { useNavigate } from 'react-router-dom';
-import { offlineCacheService } from '@/services/offlineCacheService';
-import { useOnlineStatus } from './useOnlineStatus';
 
 export const useTripQuery = (tripId: string | undefined) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const previousTrip = queryClient.getQueryData<Trip>(['trip', tripId]);
-  const isOnline = useOnlineStatus();
 
   const { 
     data: trip, 
@@ -24,15 +21,7 @@ export const useTripQuery = (tripId: string | undefined) => {
         throw new Error('No trip ID provided');
       }
 
-      // If offline, try to get from cache first
-      if (!isOnline) {
-        const cachedTrip = await offlineCacheService.getCachedTrip(tripId);
-        if (cachedTrip) {
-          return cachedTrip;
-        }
-        // If no cache available while offline, throw error
-        throw new Error('Offline and no cached data available');
-      }
+
 
       const { data, error } = await supabase
         .from('trips')
@@ -58,11 +47,6 @@ export const useTripQuery = (tripId: string | undefined) => {
 
       if (error) {
         console.error('Error fetching trip:', error);
-        // Try to get from cache if fetch fails
-        const cachedTrip = await offlineCacheService.getCachedTrip(tripId);
-        if (cachedTrip) {
-          return cachedTrip;
-        }
         toast.error('Failed to load trip details');
         throw error;
       }
@@ -85,8 +69,6 @@ export const useTripQuery = (tripId: string | undefined) => {
           }
         }
 
-        // Cache the trip data for offline use
-        await offlineCacheService.cacheTrip(validatedData as Trip);
 
         return validatedData as Trip;
       }
