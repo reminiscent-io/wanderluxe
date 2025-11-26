@@ -102,14 +102,12 @@ export default function Sidebar({ tripId }: SidebarProps) {
           </Button>
           <Separator className="my-4" />
           {tripNavItems.map(item => (
-            <div 
-              key={item.title}
-              onClick={() => {
-                if (window.innerWidth < 768) setIsOpen(false);
-              }}
-            >
+            <div key={item.title}>
               <NavLink
                 to={`/trip/${tripId}/${item.href}`}
+                onClick={() => {
+                  if (window.innerWidth < 768) setIsOpen(false);
+                }}
                 className={({ isActive }) => cn(
                   "w-full justify-start text-left flex items-center px-4 py-2 rounded-md transition-colors",
                   isActive
