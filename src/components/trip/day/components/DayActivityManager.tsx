@@ -24,7 +24,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
     try {
       if (!activity.title.trim()) {
         toast.error('Activity title is required');
-        return Promise.reject(new Error('Activity title is required'));
+        throw new Error('Activity title is required');
       }
       const costAsNumber = activity.cost && activity.cost.trim() !== '' 
         ? parseFloat(activity.cost) 
@@ -55,10 +55,9 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
       toast.success('Activity added successfully');
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       queryClient.invalidateQueries({ queryKey: ['activities', id] });
-      return Promise.resolve();
     } catch (error) {
       console.error('Error adding activity:', error);
-      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+      throw error instanceof Error ? error : new Error(String(error));
     }
   };
 
@@ -67,7 +66,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
     try {
       if (!updatedActivity.title.trim()) {
         toast.error('Activity title is required');
-        return Promise.reject(new Error('Activity title is required'));
+        throw new Error('Activity title is required');
       }
       const costAsNumber = updatedActivity.cost && updatedActivity.cost.trim() !== ''
         ? parseFloat(updatedActivity.cost)
@@ -92,11 +91,10 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
       toast.success('Activity updated successfully');
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       queryClient.invalidateQueries({ queryKey: ['activities', id] });
-      return Promise.resolve();
     } catch (error) {
       console.error('Error editing activity:', error);
       toast.error('Failed to update activity');
-      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+      throw error instanceof Error ? error : new Error(String(error));
     }
   };
 
@@ -110,11 +108,10 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
       toast.success('Activity deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       queryClient.invalidateQueries({ queryKey: ['activities', id] });
-      return Promise.resolve();
     } catch (error) {
       console.error('Error deleting activity:', error);
       toast.error('Failed to delete activity');
-      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+      throw error instanceof Error ? error : new Error(String(error));
     }
   };
 
