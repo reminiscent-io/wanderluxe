@@ -1,0 +1,62 @@
+{
+  "name": "WanderLuxe",
+  "short_name": "WanderLuxe",
+  "description": "Travel planning made easy with luxury experiences",
+  "start_url": "/",
+  "display": "standalone",
+  "scope": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "512x512",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/x-icon",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "540x720",
+      "type": "image/x-icon",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "1280x720",
+      "type": "image/x-icon",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create Trip",
+      "short_name": "Create",
+      "description": "Start planning a new trip",
+      "url": "/create-trip",
+      "icons": [{ "src": "/favicon.ico", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Trips",
+      "short_name": "Trips",
+      "description": "View your trips",
+      "url": "/my-trips",
+      "icons": [{ "src": "/favicon.ico", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["travel", "productivity"]
+}

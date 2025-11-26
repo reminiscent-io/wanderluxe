@@ -138,7 +138,9 @@ const ShareTripDialog = ({
   // Build suggestions from previous + contacts
   const mergedSuggestions = useMemo(() => {
     const fromContacts = contacts.map((c) => c.email).filter(Boolean) as string[];
-    return Array.from(new Set([...previousEmails, ...fromContacts])).sort();
+    return Array.from(new Set([...previousEmails, ...fromContacts])).sort((a, b) =>
+      a.localeCompare(b)
+    );
   }, [previousEmails, contacts]);
 
   useEffect(() => setEmailSuggestions(mergedSuggestions), [mergedSuggestions]);
