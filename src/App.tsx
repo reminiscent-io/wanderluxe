@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import Index from "./pages/Index";
 import CreateTrip from "./pages/CreateTrip";
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <PWAInstallPrompt />
             <BrowserRouter>
               <AppLayout>
                 <Routes>
