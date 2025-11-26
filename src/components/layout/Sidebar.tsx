@@ -102,7 +102,12 @@ export default function Sidebar({ tripId }: SidebarProps) {
           </Button>
           <Separator className="my-4" />
           {tripNavItems.map(item => (
-            <div key={item.title}>
+            <div 
+              key={item.title}
+              onClick={() => {
+                if (window.innerWidth < 768) setIsOpen(false);
+              }}
+            >
               <NavLink
                 to={`/trip/${tripId}/${item.href}`}
                 className={({ isActive }) => cn(
