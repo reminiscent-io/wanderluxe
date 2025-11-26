@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(bun run type-check:*)",
+      "Bash(bun run lint:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

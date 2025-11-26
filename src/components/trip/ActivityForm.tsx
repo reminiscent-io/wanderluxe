@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
-import { CURRENCIES, CURRENCY_NAMES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
+import { CURRENCIES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
 import { Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +23,8 @@ interface ActivityFormProps {
   tripId: string;
   activityId?: string | null; // Add activity ID for edit mode
 }
+
+const NOON = '12:00'; // used to open time picker at noon
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
   activity,
@@ -51,9 +53,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         })
         .catch(console.error);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activityId, tripId]);
 
-  // New local state for time values
+  // Local UI state for time values
   const [startTime, setStartTime] = useState(activity.start_time || "");
   const [endTime, setEndTime] = useState(activity.end_time || "");
 
@@ -62,8 +65,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     if (!tripDates) return [];
 
     const dates = [];
-
-    // Parse dates safely without timezone issues
     const [startYear, startMonth, startDay] = tripDates.arrival_date.split('-').map(Number);
     const [endYear, endMonth, endDay] = tripDates.departure_date.split('-').map(Number);
 
@@ -76,7 +77,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       const day = String(d.getDate()).padStart(2, '0');
       const dateString = `${year}-${month}-${day}`;
 
-      // Safe date formatting without timezone shifts
       const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
       const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -93,9 +93,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     if (preselectedDate && !activity.date) {
       onActivityChange({ ...activity, date: preselectedDate });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preselectedDate, activity.date]);
 
-  // Update local state when activity prop changes
+  // Update local state when activity prop changes (e.g., editing existing)
   useEffect(() => {
     if (activity.start_time) setStartTime(activity.start_time);
     if (activity.end_time) setEndTime(activity.end_time);
@@ -106,6 +107,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     if (activity.start_time !== startTime) {
       onActivityChange({ ...activity, start_time: startTime });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startTime]);
 
   // Sync local endTime with parent activity
@@ -113,6 +115,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     if (activity.end_time !== endTime) {
       onActivityChange({ ...activity, end_time: endTime });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endTime]);
 
   const validateForm = () => {
@@ -150,14 +153,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Remove travelers from form data as it's handled separately
       const { travelers, ...activityData } = activity;
 
       const result = await onSubmit(activityData);
 
-      // Save traveler tags if we have travelers selected
       if (travelers && travelers.length > 0) {
-        // For edit mode, we might have an existing activity ID, or we get it from the result
         const activityId = (activity as any).id || (result as any)?.id;
         if (activityId) {
           await setDayActivityTravelers(tripId, activityId, travelers);
@@ -223,7 +223,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             </SelectTrigger>
             <SelectContent className="z-[999]">
               {tripDateOptions.map((option) => {
-                // Parse date safely without timezone issues for better formatting
                 const [year, month, day] = option.value.split('-').map(Number);
                 const safeDate = new Date(year, month - 1, day);
                 return (
@@ -250,6 +249,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
+            onFocus={() => {
+              // If empty, prefill noon so the picker opens at 12:00
+              if (!startTime) setStartTime(NOON);
+            }}
             step="300" // 5-minute increments (300 seconds)
             className="w-full p-2 border rounded-md"
           />
@@ -265,6 +268,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
+            onFocus={() => {
+              if (!endTime) setEndTime(NOON);
+            }}
             step="300" // 5-minute increments
             className="w-full p-2 border rounded-md"
           />
@@ -283,11 +289,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <input
             id="cost"
             type="text"
-            value={activity.cost !== undefined && activity.cost !== null && activity.cost !== '' ? new Intl.NumberFormat('en-US').format(Number(activity.cost)) : ''}
+            value={
+              activity.cost !== undefined && activity.cost !== null && activity.cost !== ''
+                ? new Intl.NumberFormat('en-US').format(Number(activity.cost))
+                : ''
+            }
             onChange={(e) => handleCostChange(e.target.value)}
-            onBlur={(e) => {
-              // The field value is already set by onChange, this ensures visual formatting
-            }}
             placeholder="0"
             className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.cost ? 'border-red-500' : 'border-gray-300'}`}
           />

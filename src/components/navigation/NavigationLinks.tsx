@@ -6,14 +6,16 @@ const NavigationLinks = () => {
   const navigate = useNavigate();
 
   const handleNavigation = (path: string) => {
-    if (path === "My Trips") {
+    if (path === "Explore") {
+      navigate("/explore");
+    } else if (path === "My Trips") {
       navigate("/my-trips");
     }
   };
 
   return (
     <motion.div className="hidden space-x-8 md:flex">
-      {["My Trips"].map(item => (
+      {["Explore", "My Trips"].map(item => (
         <motion.button
           key={item}
           onClick={() => handleNavigation(item)}

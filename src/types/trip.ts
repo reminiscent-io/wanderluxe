@@ -7,7 +7,7 @@ export interface ActivityFormData {
   date?: string;
   start_time?: string;
   end_time?: string;
-  cost?: string;
+  cost?: string | null;
   currency: Currency;
   travelers?: string[];
 }
@@ -182,5 +182,6 @@ export interface Trip {
   hidden: boolean;
   arrival_date: string;
   departure_date: string;
+  budget: number | null;
   accommodations?: Accommodation[];
 }

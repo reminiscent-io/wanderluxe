@@ -1,15 +1,27 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getConnectedContacts, pickBestName, initialsFor } from "@/services/contactsService";
+
+type ContactItem = {
+  key: string;
+  email?: string | null;
+  profile_full_name?: string | null;
+  share_first_name?: string | null;
+  share_last_name?: string | null;
+  directions: ("incoming" | "outgoing")[];
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -23,15 +35,36 @@ const Profile = () => {
       toast.error("Failed to sign out");
     }
   };
+
   const { session } = useAuth();
   const [fullName, setFullName] = useState('');
   const [initials, setInitials] = useState('');
   const [homeLocation, setHomeLocation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Connected people state
+  const [contacts, setContacts] = useState<ContactItem[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+
+  // Edit dialog state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editFirst, setEditFirst] = useState("");
+  const [editLast, setEditLast] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [originalEmail, setOriginalEmail] = useState<string | null>(null);
+  const [savingContact, setSavingContact] = useState(false);
+
+  // ---- Centralized, bounded email validation (anchored; no catastrophic backtracking) ----
+  const SAFE_EMAIL_MAX_LEN = 254;
+  const SAFE_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValidEmail = (s: string) =>
+    !!s && s.length <= SAFE_EMAIL_MAX_LEN && SAFE_EMAIL_RE.test(s);
+  // ----------------------------------------------------------------------------------------
+
   useEffect(() => {
     if (session?.user) {
       fetchProfile();
+      fetchContacts();
     }
   }, [session]);
 
@@ -52,6 +85,26 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  const fetchContacts = async () => {
+    try {
+      setLoadingContacts(true);
+      const list = await getConnectedContacts();
+      // Sort by First Name (derived from pickBestName)
+      const withSort = [...list].sort((a: ContactItem, b: ContactItem) => {
+        const aName = (pickBestName(a) || "").trim();
+        const bName = (pickBestName(b) || "").trim();
+        const aFirst = aName.split(/\s+/)[0]?.toLowerCase() || "";
+        const bFirst = bName.split(/\s+/)[0]?.toLowerCase() || "";
+        return aFirst.localeCompare(bFirst);
+      });
+      setContacts(withSort);
+    } catch (e) {
+      console.error("Error fetching contacts", e);
+    } finally {
+      setLoadingContacts(false);
     }
   };
 
@@ -83,6 +136,68 @@ const Profile = () => {
       toast.error('Failed to update profile');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ------------------- Edit Contact Dialog logic -------------------
+
+  // Open dialog with prefilled values from a contact card
+  const openEditDialog = (c: ContactItem) => {
+    const name = (pickBestName(c) || "").trim();
+    const [first = "", ...rest] = name.split(/\s+/);
+    const last = rest.join(" ");
+    // Prefer explicit share_* when available
+    const preFirst = (c.share_first_name?.trim() || first).trim();
+    const preLast = (c.share_last_name?.trim() || last).trim();
+    const preEmail = (c.email || "").trim();
+
+    setEditFirst(preFirst);
+    setEditLast(preLast);
+    setEditEmail(preEmail);
+    setOriginalEmail(preEmail || null);
+    setEditOpen(true);
+  };
+
+  // Save: update your outgoing trip_shares rows for this contact
+  // We update by originalEmail; if email changed, we migrate those rows to new email
+  const saveContactEdits = async () => {
+    try {
+      setSavingContact(true);
+
+      // Guard: need something to target. If no email at all, we can't tie to shares.
+      if (!originalEmail && !editEmail) {
+        toast.error("Please provide an email to save this contact.");
+        setSavingContact(false);
+        return;
+      }
+
+      // Update all trip_shares rows you own that point to this email.
+      // RLS will ensure you can only edit rows of trips you own.
+      if (originalEmail) {
+        const { error: updErr } = await supabase
+          .from("trip_shares" as any)
+          .update({
+            first_name: editFirst || null,
+            last_name: editLast || null,
+            shared_with_email: editEmail || null,
+          })
+          .eq("shared_with_email", originalEmail);
+
+        if (updErr) throw updErr;
+      } else {
+        // No originalEmail, but user provided a new email -> write any rows with null/empty email + names?
+        // We can't guess which rows belong to this person; just create an alias row by email via a no-op upsert in your own shares if needed.
+        // Skipping DB write here; still allow saving as an "alias" for future. Consider persisting to a contacts_overrides table if you have one.
+      }
+
+      toast.success("Contact updated");
+      setEditOpen(false);
+      await fetchContacts();
+    } catch (e: any) {
+      console.error("Failed to update contact", e);
+      toast.error("Failed to update contact");
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -143,7 +258,7 @@ const Profile = () => {
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
-              
+
               <Button 
                 onClick={handleSignOut}
                 variant="outline" 
@@ -154,8 +269,114 @@ const Profile = () => {
               </Button>
             </div>
           </div>
+
+          {/* Connected People */}
+          <div className="mt-8 bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-medium">Connected people</h2>
+              <Badge variant="secondary">
+                {loadingContacts ? "Loading..." : `${contacts.length} ${contacts.length === 1 ? "person" : "people"}`}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Anyone you’ve shared a trip with, and anyone who has shared a trip with you.
+            </p>
+            <Separator className="mb-4" />
+            {contacts.length === 0 && !loadingContacts ? (
+              <p className="text-sm text-muted-foreground">No connections yet.</p>
+            ) : (
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {contacts.map((c) => {
+                  const name = pickBestName(c);
+                  const hint =
+                    c.email ? c.email :
+                    c.directions.includes("incoming") ? "Shared with you" :
+                    "Shared by you";
+                  const dir =
+                    c.directions.includes("incoming") && c.directions.includes("outgoing")
+                      ? "Both ways"
+                      : c.directions.includes("outgoing")
+                      ? "Outgoing"
+                      : "Incoming";
+                  return (
+                    <li
+                      key={c.key}
+                      className="flex items-center gap-3 rounded-md border p-3 hover:bg-sand-50 cursor-pointer"
+                      onClick={() => openEditDialog(c)}
+                    >
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback>{initialsFor(c)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium truncate">{name}</span>
+                          <Badge variant="outline" className="text-[10px]">{dir}</Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{hint}</div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit contact</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="c-first">First name</Label>
+              <Input
+                id="c-first"
+                value={editFirst}
+                onChange={(e) => setEditFirst(e.target.value)}
+                placeholder="First name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="c-last">Last name</Label>
+              <Input
+                id="c-last"
+                value={editLast}
+                onChange={(e) => setEditLast(e.target.value)}
+                placeholder="Last name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="c-email">Email</Label>
+              <Input
+                id="c-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="email@example.com"
+                maxLength={SAFE_EMAIL_MAX_LEN}
+              />
+              {!isValidEmail(editEmail || "") && editEmail && (
+                <p className="text-xs text-red-600">Enter a valid email</p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-earth-600 text-white hover:bg-earth-700"
+              onClick={saveContactEdits}
+              disabled={savingContact || (!!editEmail && !isValidEmail(editEmail))}
+            >
+              {savingContact ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

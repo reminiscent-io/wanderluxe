@@ -18,18 +18,20 @@ interface TimelineContentProps {
   onDayDelete: (id: string) => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  canEdit?: boolean;
 }
 
 const TimelineContent: React.FC<TimelineContentProps> = ({
   days = [],
   dayIndexMap,
   hotelStays,
-  onDayDelete,
   tripArrivalDate,
-  tripDepartureDate
+  tripDepartureDate,
+  canEdit = true
 }) => {
   const queryClient = useQueryClient();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [preselectedDate, setPreselectedDate] = useState<string | undefined>(undefined);
   const [accommodationOpen, setAccommodationOpen] = useState(false);
   const [transportationOpen, setTransportationOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
@@ -99,19 +101,19 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   return (
     <>
       {/* Day Cards */}
-      <div className="space-y-3 md:space-y-4">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4 snap-y snap-proximity pb-20 md:pb-4">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
           
           return (
-            <CompactDayCard
-              key={day.day_id}
-              id={day.day_id}
-              tripId={day.trip_id}
-              date={day.date}
-              title={day.title}
-              activities={day.activities || []}
-              index={dayIndex}
+            <div key={day.day_id} className="snap-start">
+              <CompactDayCard
+                id={day.day_id}
+                tripId={day.trip_id}
+                date={day.date}
+                title={day.title}
+                activities={day.activities || []}
+                index={dayIndex}
               hotelStays={hotelStays.filter(stay => {
                 if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
                 
@@ -123,6 +125,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               })}
               onActivityAdd={() => {
                 setSelectedDayId(day.day_id);
+                setPreselectedDate(day.date.split('T')[0]);
                 setActivityOpen(true);
               }}
               onHotelAdd={() => {
@@ -163,7 +166,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 setEditingReservation(reservation);
                 setReservationOpen(true);  // Open the dialog when clicking a reservation
               }}
-            />
+              canEdit={canEdit}
+              />
+            </div>
           );
         })}
       </div>
@@ -209,10 +214,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   currency: 'USD',
                 });
                 setSelectedDayId(null);
+                setPreselectedDate(undefined);
               }
             }}
             activity={editingActivity ? activityEdit : newActivity}
             onActivityChange={editingActivity ? setActivityEdit : setNewActivity}
+            preselectedDate={!editingActivity ? preselectedDate : undefined}
             onSubmit={async (activity) => {
               if (editingActivity?.id) {
                 // Edit mode
@@ -304,6 +311,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 }
               }
               setSelectedDayId(null);
+              setPreselectedDate(undefined);
             }}
             onDelete={async (id) => {
               try {

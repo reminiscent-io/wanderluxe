@@ -115,14 +115,17 @@ const MyTrips = () => {
       const { error } = await supabase
         .from('trips')
         .update({ hidden: true })
-        .eq('trip_id', tripId)
-        .select();
+        .eq('trip_id', tripId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error hiding trip:', error);
+        throw error;
+      }
 
       toast.success('Trip hidden successfully');
-      queryClient.invalidateQueries({ queryKey: ['my-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['my-trips', showHidden] });
     } catch (error) {
+      console.error('Failed to hide trip:', error);
       toast.error('Failed to hide trip');
     }
   };
@@ -248,7 +251,7 @@ const MyTrips = () => {
           className="mb-12"
         >
           {/* Enhanced Hero Section */}
-          <div className="relative bg-gradient-to-br from-sand-100 via-sand-50 to-earth-100 rounded-2xl p-8 md:p-12 shadow-xl overflow-hidden border border-sand-200">
+          <div className="relative bg-gradient-to-br from-sand-100 via-sand-50 to-earth-100 rounded-2xl p-6 md:p-10 shadow-xl overflow-hidden border border-sand-200">
             {/* Subtle Background Pattern */}
             <div className="absolute inset-0 opacity-5">
               <div className="absolute inset-0" style={{
@@ -264,7 +267,7 @@ const MyTrips = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
                   >
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-4 text-earth-900">
+                    <h1 className="text-3xl md:text-6xl lg:text-6xl font-black leading-tight mb-4 text-earth-900">
                       My Travel Journey
                     </h1>
                     <p className="text-earth-700 text-xl md:text-2xl font-medium mb-8 leading-relaxed">

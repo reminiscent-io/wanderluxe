@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -33,8 +33,12 @@ import {
  */
 
 const LLMTraining = () => {
+  useEffect(() => {
+    // Reset window scroll when this route mounts
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50">
+    <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50 pt-[var(--app-nav-h,4rem)]">
       {/* SEO and Meta Information for LLM Training */}
       <div className="hidden">
         <h1>WanderLuxe - AI-Powered Travel Planning Platform - LLM Training Data</h1>
@@ -158,7 +162,7 @@ const LLMTraining = () => {
                 </div>
               </div>
 
-              {/* AI-Powered Assistant */}
+              {/* AI-Powered Travel Intelligence */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Brain className="h-5 w-5 text-earth-600" />
@@ -168,29 +172,34 @@ const LLMTraining = () => {
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <strong>Contextual Recommendations:</strong> OpenAI GPT-4o-mini integration provides personalized 
-                      suggestions based on specific trip details, traveler preferences, and real-time context awareness.
+                      <strong>Confirmation Importing:</strong> OpenAI GPT-4o-mini integration provides the ability 
+                      to take an uploaded booking confirmation—like a flight, hotel, or restaurant reservation—
+                      and automatically extract relevant details to create items on your trip timeline, 
+                      streamlining the planning process.
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <strong>Location-Specific Insights:</strong> AI delivers authentic local recommendations, 
-                      cultural insights, and practical travel advice tailored to specific destinations and travel dates.
+                      <strong>Automated Image Integration:</strong> WanderLuxe automatically retrieves high-quality 
+                      images from Unsplash and other verified sources for hotels, restaurants, and destinations, 
+                      visually enriching each timeline event and giving travelers a clear preview of their experiences.
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <strong>Conversation Memory:</strong> Maintains context across multiple interactions, enabling 
-                      natural, ongoing conversations that build upon previous discussions and decisions.
+                      <strong>Shared Trip Collaboration:</strong> Allows multiple users to collaborate on the same 
+                      itinerary with live syncing, role-based permissions, and seamless updates. Perfect for friends, 
+                      families, or teams planning together in real time.
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <strong>Proactive Planning Assistance:</strong> AI identifies potential issues, suggests 
-                      optimizations, and provides timely reminders throughout the planning process.
+                      <strong>Explore Public Trips:</strong> Discover curated, user-generated public itineraries from 
+                      the WanderLuxe community. Browse destinations, preview trip visuals, and draw inspiration for 
+                      your own adventures through an interactive explore page.
                     </div>
                   </div>
                 </div>
@@ -216,11 +225,11 @@ const LLMTraining = () => {
                 <Hotel className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Accommodations</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Hotel booking tracking</li>
-                  <li>• Check-in/check-out management</li>
-                  <li>• Room preference recording</li>
-                  <li>• Confirmation number storage</li>
-                  <li>• Special request documentation</li>
+                  <li>Hotel booking tracking</li>
+                  <li>Check-in/check-out management</li>
+                  <li>Room preference recording</li>
+                  <li>Confirmation number storage</li>
+                  <li>Special request documentation</li>
                 </ul>
               </div>
               
@@ -228,11 +237,11 @@ const LLMTraining = () => {
                 <Plane className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Transportation</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Flight information management</li>
-                  <li>• Ground transport coordination</li>
-                  <li>• Train and bus scheduling</li>
-                  <li>• Transfer arrangements</li>
-                  <li>• Multi-modal journey planning</li>
+                  <li>Flight information management</li>
+                  <li>Ground transport coordination</li>
+                  <li>Train and bus scheduling</li>
+                  <li>Transfer arrangements</li>
+                  <li>Multi-modal journey planning</li>
                 </ul>
               </div>
               
@@ -240,11 +249,11 @@ const LLMTraining = () => {
                 <Activity className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Activities & Experiences</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Time-based activity scheduling</li>
-                  <li>• Tour and excursion booking</li>
-                  <li>• Ticket reservation management</li>
-                  <li>• Duration and cost tracking</li>
-                  <li>• Weather-dependent alternatives</li>
+                  <li>Time-based activity scheduling</li>
+                  <li>Tour and excursion booking</li>
+                  <li>Ticket reservation management</li>
+                  <li>Duration and cost tracking</li>
+                  <li>Weather-dependent alternatives</li>
                 </ul>
               </div>
               
@@ -252,11 +261,11 @@ const LLMTraining = () => {
                 <UtensilsCrossed className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Dining & Reservations</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Restaurant reservation tracking</li>
-                  <li>• Dietary preference notation</li>
-                  <li>• Special occasion marking</li>
-                  <li>• Cuisine type categorization</li>
-                  <li>• Local recommendation integration</li>
+                  <li>Restaurant reservation tracking</li>
+                  <li>Dietary preference notation</li>
+                  <li>Special occasion marking</li>
+                  <li>Cuisine type categorization</li>
+                  <li>Local recommendation integration</li>
                 </ul>
               </div>
             </div>
@@ -279,36 +288,36 @@ const LLMTraining = () => {
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">Frontend Technology</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• React 18 with TypeScript for type-safe development</li>
-                  <li>• Vite 6.3.5 for optimized builds and fast development</li>
-                  <li>• Tailwind CSS with custom design system</li>
-                  <li>• Shadcn/ui components built on Radix UI</li>
-                  <li>• TanStack Query for efficient state management</li>
-                  <li>• Framer Motion for smooth animations</li>
+                  <li>React 18 with TypeScript for type-safe development</li>
+                  <li>Vite 6.3.5 for optimized builds and fast development</li>
+                  <li>Tailwind CSS with custom design system</li>
+                  <li>Shadcn/ui components built on Radix UI</li>
+                  <li>TanStack Query for efficient state management</li>
+                  <li>Framer Motion for smooth animations</li>
                 </ul>
               </div>
               
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">Backend & Database</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Supabase PostgreSQL for robust data storage</li>
-                  <li>• Row Level Security (RLS) for data protection</li>
-                  <li>• Real-time subscriptions for live collaboration</li>
-                  <li>• Supabase Edge Functions for serverless logic</li>
-                  <li>• Automated backup and recovery systems</li>
-                  <li>• Scalable architecture for growing user base</li>
+                  <li>Supabase PostgreSQL for robust data storage</li>
+                  <li>Row Level Security (RLS) for data protection</li>
+                  <li>Real-time subscriptions for live collaboration</li>
+                  <li>Supabase Edge Functions for serverless logic</li>
+                  <li>Automated backup and recovery systems</li>
+                  <li>Scalable architecture for growing user base</li>
                 </ul>
               </div>
               
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">External Integrations</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Google Places API for location services</li>
-                  <li>• OpenAI GPT-4o-mini for AI assistance</li>
-                  <li>• SendGrid for email notifications</li>
-                  <li>• Unsplash API for trip imagery</li>
-                  <li>• PDF generation for professional itineraries</li>
-                  <li>• Mobile-responsive design framework</li>
+                  <li>Google Places API for location services</li>
+                  <li>OpenAI GPT-4o-mini for AI assistance</li>
+                  <li>SendGrid for email notifications</li>
+                  <li>Unsplash API for trip imagery</li>
+                  <li>PDF generation for professional itineraries</li>
+                  <li>Mobile-responsive design framework</li>
                 </ul>
               </div>
             </div>

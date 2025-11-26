@@ -62,7 +62,7 @@ const mapActivityToExpense = async (act: DayActivity): Promise<ExpenseItem> => {
     description: act.title,
     cost: act.cost,
     currency: act.currency,
-    is_paid: act.is_paid || false,
+    is_paid: false, // activities don't have is_paid field
     created_at: act.created_at,
     activity_id: act.id,
     date
@@ -72,14 +72,14 @@ const mapActivityToExpense = async (act: DayActivity): Promise<ExpenseItem> => {
 const mapAccommodationToExpense = async (acc: Accommodation): Promise<ExpenseItem> => ({
   id: acc.stay_id,
   trip_id: acc.trip_id,
-  category: 'Accommodations',
+  category: 'accommodation', // Fixed: use lowercase singular to match UI
   description: acc.title,
   cost: acc.cost,
   currency: acc.currency,
-  is_paid: acc.is_paid || false,
+  is_paid: acc.is_paid || false, // accommodations have is_paid field
   created_at: acc.created_at,
   accommodation_id: acc.stay_id,
-  date: acc.hotel_checkin_date
+  date: acc.hotel_checkin_date || acc.created_at
 });
 
 const mapTransportationToExpense = async (trans: Transportation): Promise<ExpenseItem> => ({
@@ -89,10 +89,10 @@ const mapTransportationToExpense = async (trans: Transportation): Promise<Expens
   description: trans.type,
   cost: trans.cost,
   currency: trans.currency,
-  is_paid: trans.is_paid || false,
+  is_paid: false, // transportation doesn't have is_paid field
   created_at: trans.created_at,
   transportation_id: trans.id,
-  date: trans.start_date
+  date: trans.start_date || trans.created_at
 });
 
 const mapRestaurantToExpense = async (rest: RestaurantReservation): Promise<ExpenseItem> => {
@@ -104,7 +104,7 @@ const mapRestaurantToExpense = async (rest: RestaurantReservation): Promise<Expe
     description: rest.restaurant_name,
     cost: rest.cost,
     currency: rest.currency,
-    is_paid: rest.is_paid || false,
+    is_paid: false, // reservations don't have is_paid field
     created_at: rest.created_at,
     date
   };
@@ -117,9 +117,9 @@ const mapOtherExpenseToExpense = async (expense: OtherExpense): Promise<ExpenseI
   description: expense.description,
   cost: expense.cost,
   currency: expense.currency,
-  is_paid: expense.is_paid || false,
+  is_paid: false, // other_expenses don't have is_paid field
   created_at: expense.created_at,
-  date: expense.date
+  date: expense.expense_date || expense.created_at // Fixed: use expense_date not date
 });
 
 export const useExpenses = (tripId: string) => {

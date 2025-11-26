@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const timer = setTimeout(() => {
       if (!session) {
         setIsAuthenticated(false);
-        navigate("/auth");
+        navigate("/auth", { replace: true }); // Replace history entry to prevent back navigation loop
       }
     }, 1000); // 1 second grace period
 

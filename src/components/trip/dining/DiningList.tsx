@@ -205,46 +205,24 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
 
         {/* add / edit */}
         <RestaurantReservationDialog
-          isOpen={isDialogOpen}
+          open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          onSubmit={handleSave}
-          isSubmitting={isSubmitting}
-          editingReservation={
+          tripId={tripId}
+          initialData={
             editingId
               ? (() => {
                   const foundReservation = reservations.find((r) => r.id === editingId);
-                  // We need to add a placeholder reservation_date that will be resolved in the form
-                  // The form will need to look up the actual date from day_id
                   return foundReservation ? { ...foundReservation } : null;
                 })()
               : { day_id: dayId, trip_id: tripId, order_index: reservations.length }
           }
-          title={editingId ? 'Edit Reservation' : 'Add Reservation'}
-          onDelete={editingId ? async () => {
-            try {
-              await supabase
-                .from('reservations')
-                .delete()
-                .eq('id', editingId)
-                .eq('trip_id', tripId)
-                .throwOnError();
-
-              toast.success('Reservation deleted');
-              await qc.invalidateQueries({
-                queryKey: reservationsKey(tripId, dayId),
-              });
-              await qc.invalidateQueries({
-                queryKey: ['reservations', tripId],
-              });
-              await qc.invalidateQueries({ queryKey: ['trip'] });
-              setIsDialogOpen(false);
-              setEditingId(null);
-            } catch (err) {
-              console.error(err);
-              toast.error('Failed to delete reservation');
-            }
-          } : undefined}
-          tripId={tripId}
+          onSuccess={() => {
+            qc.invalidateQueries({ queryKey: reservationsKey(tripId, dayId) });
+            qc.invalidateQueries({ queryKey: ['reservations', tripId] });
+            qc.invalidateQueries({ queryKey: ['trip'] });
+            setIsDialogOpen(false);
+            setEditingId(null);
+          }}
           tripArrivalDate={tripArrivalDate}
           tripDepartureDate={tripDepartureDate}
         />

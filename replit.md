@@ -1,124 +1,10 @@
 # WanderLuxe - Travel Planning Application
 
 ## Overview
-WanderLuxe is a comprehensive travel planning web application built to enable users to create, manage, and share detailed travel itineraries. It includes features for accommodation booking, activity planning, expense tracking, and AI-powered travel assistance. The vision is to offer a seamless and intelligent platform for personalized travel experiences, simplifying the planning process and fostering collaboration among travelers.
+WanderLuxe is a comprehensive web application for creating, managing, and sharing detailed travel itineraries. It aims to simplify travel planning with features for accommodation booking, activity planning, expense tracking, and AI-powered assistance. The platform offers personalized travel experiences, fosters collaboration, and streamlines the entire planning process.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-
-## Recent Changes
-
-**August 26, 2025** - Consolidated Activity Dialog Components for Reduced Code Duplication
-- Merged separate AddActivityDialog and EditActivityDialog components into single ActivityDialog
-- Updated TimelineContent to use consolidated dialog with proper add/edit mode handling
-- Enhanced ActivityDialogs wrapper component to use unified dialog for both operations
-- Improved code maintainability by reducing duplication while preserving full functionality
-- Added tripId prop to ActivityDialogs component for proper form initialization
-- Fixed type errors and ensured seamless add/edit transitions in timeline views
-
-**August 24, 2025** - Upgraded Create Trip Calendar to Luxury Date Picker
-- Migrated create trip form from basic DateTimeRangeField to premium LuxuryDateTimeRangePicker
-- Ensures consistent luxury date selection experience across the entire application
-- Create trip calendar now matches the polished UX of accommodations and other forms
-- Enhanced mobile responsiveness with full-screen modal and elegant desktop popover
-- Improved accessibility with better keyboard navigation and touch interactions
-- Updated data structure handling for seamless form state management
-
-**August 21, 2025** - Fixed Multi-Day Transportation Timeline Display
-- Fixed transportation timeline bug where multi-day journeys showed start time on all days
-- Start day now correctly shows departure time and location
-- End day now correctly shows arrival time and location
-- Middle days (for 3+ day journeys) show "In Transit" status
-- Single-day transportation continues to work as before with full journey details
-- Enhanced timeline logic in CompactDayCard component for better multi-day event handling
-
-**January 16, 2025** - Implemented Luxury Date-Time Range Picker for Premium UX
-- Created premium LuxuryDateTimeRangePicker component with mobile-first modal design
-- Implemented responsive behavior: full-screen modal on mobile, elegant popover on desktop
-- Added luxury sand/earth tone styling with refined typography and spacing
-- Enhanced mobile UX with centered modal, backdrop overlay, and touch-friendly interactions
-- Integrated proper React Hook Form compatibility using Controller pattern
-- Fixed date-time selection issues with improved click handling and accessibility
-- Added dual-month calendar view for desktop, single month for mobile optimization
-- Implemented professional action buttons (Clear, Cancel, Apply) with consistent styling
-- Enhanced time inputs with better visual hierarchy and focus management
-- Replaced problematic DateTimeRangeField with production-ready luxury solution
-- Updated AccommodationForm to use new picker, maintaining form state synchronization
-
-**January 16, 2025** - Enhanced Activity Dialog Date Selection + Fixed Dining Edit Issue + Immediate Timeline Updates
-- Fixed missing date selection functionality in activity editing from compact day cards
-- Added tripDates prop to EditActivityDialog and AddActivityDialog in TimelineContent
-- Enhanced date selection now works consistently from both side panel and compact day cards
-- Fixed current date passing to activity edit form from timeline (shows correct day when editing)
-- Added immediate timeline updates after activity changes with comprehensive query invalidation
-- Timeline now refreshes instantly when activities are added, edited, or deleted from compact day cards
-- Upgraded activity form date selection to match dining reservation sophistication
-- Replaced basic HTML select with shadcn Select component for better UX
-- Added full date formatting showing "Wednesday, January 16, 2025" instead of abbreviated formats
-- Enhanced currency selection with consistent styling and improved dropdown behavior
-- Improved z-index handling and visual consistency across all form dialogs
-- Resolved critical bug where existing dining reservation data wasn't populating correctly in edit forms
-- Added database lookup to convert day_id back to reservation_date when editing reservations
-- Implemented useEffect hook in RestaurantReservationForm to fetch date from trip_days table
-- Fixed form initialization to properly handle reservation data without reservation_date field
-- Enhanced data flow between DiningList and RestaurantReservationForm components
-
-**January 15, 2025** - Enhanced Trip Sharing UX and Mobile Keyboard Stability
-- Moved Share button from hero section to timeline toolbar, positioned left of Export PDF button
-- Created EmailCombobox component combining manual typing with dropdown suggestions
-- Added getPreviouslySharedEmails service to fetch user's sharing history from trip_shares table
-- Implemented smart filtering to exclude emails already shared with current trip
-- Enhanced ShareTripDialog with previous email suggestions for improved user experience
-- Maintained ability to manually type email addresses alongside dropdown functionality
-- Fixed dropdown visibility with z-index adjustments (z-[9999]) and modal={false} configuration
-- Resolved mobile keyboard resizing issues by updating viewport meta tag and CSS stable height properties
-- Fixed TypeScript and CSS syntax errors for production readiness
-**January 14, 2025** - Standardized Dialog Components for Consistent UX
-- Unified styling across all four dialog types (accommodations, transportation, activities, dining)
-- Implemented consistent responsive width settings (w-[95vw] max-w-[95vw] sm:max-w-[600px])
-- Added clean scroll functionality without visible scrollbar using overflow-y-auto with scrollbar-none CSS utility
-- Applied onPointerDownOutside prevention for all dialogs to maintain Google Places dropdown functionality
-- Fixed dialog header positioning with flex-shrink-0 for stable scrolling experience
-- Resolved type mismatches between database and form data (cost field conversion)
-- Fixed transportation form date loading in edit mode - now properly uses trip dates as fallback when transportation record lacks complete date information
-- Added DialogDescription components to all dialogs for better accessibility compliance
-- Fixed transportation dialog width overflow issues with proper flex constraints and min-width settings
-- Enhanced transportation times loading - now handles null end_date while preserving time values
-- Applied mobile-responsive padding and width constraints to all dialog components (p-4 sm:p-6)
-- Added proper input width constraints with max-w-full and truncate for date/time fields
-- Fixed location search input overflow with proper flex container constraints
-- Cleaned up all debugging console.log statements for production readiness
-- Standardized dialog content structure across all form types for consistent mobile behavior
-- Redesigned DateTimeRangeField to stack date and time vertically on mobile, preventing horizontal overflow
-- Enhanced date/time picker button with proper flex column layout and text truncation
-
-**January 14, 2025** - Completed Real-time Updates for CompactDayCard
-- Implemented comprehensive real-time subscriptions for all data types (activities, accommodations, transportation, dining)
-- Added proper query invalidation for immediate UI updates without page refreshes
-- Cleaned up console logging for production-ready experience
-- Removed obsolete DayCard.tsx file - fully migrated to CompactDayCard component
-- All CRUD operations now trigger live updates across all connected clients
-
-**January 14, 2025** - Redesigned Timeline Day Cards for improved usability
-- Replaced hero image-based day cards with compact, streamlined design
-- Implemented unified timeline view showing all timed events in chronological order
-- Removed empty accordion sections, showing one-line summaries instead
-- Combined all timed items (activities, hotels, transportation, dining) into single ordered list
-- Improved mobile responsiveness with compact navigation controls
-- Simplified day card interaction with quick-add buttons for each entry type
-- Made all timeline items clickable to open their respective edit dialogs
-- Added proper edit functionality for activities, accommodations, transportation, and dining reservations
-- Removed sticky Day Navigator based on user feedback for cleaner interface
-- Made Add buttons more compact to fit all 4 on one line for mobile devices
-- Set all day cards to be expanded by default for immediate timeline visibility
-- Added "All Day" section showing accommodations for days between check-in and check-out
-
-**January 13, 2025** - Integrated authentic Fora Travel advisor profile
-- Updated BookingView component to replace placeholder text with Kevin Lowe's professional Fora Travel advisor profile
-- Added authentic profile data including photo, expertise areas, travel style, and contact information
-- Implemented proper Fora Travel branding and compliance with advisor title requirements
-- Added direct link to Fora Travel profile page for professional booking assistance
-- Enhanced UI with value proposition section explaining benefits of booking with a Fora Travel advisor
 
 ## System Architecture
 
@@ -146,35 +32,38 @@ The schema is normalized PostgreSQL, including entities for `trips`, `trip_days`
 - **Activity Planning**: Time-based scheduling for activities, accommodations, transportation, and dining.
 - **AI Integration**: Conversational AI assistant, content generation (descriptions, recommendations), and cover image generation.
 - **Sharing & Collaboration**: Permission-based sharing with real-time updates and email notifications.
+- **Budgeting**: Comprehensive expense tracking, categorization, and visualization with interactive elements and filtering.
 
-### Data Flows
-- **Authentication**: JWT-based session management with Row Level Security (RLS).
-- **Trip Creation**: Form-driven creation, integrating Google Places API for location data, and optional AI image generation.
-- **Sharing**: Permission record creation, email notifications via SendGrid Edge Function, and RLS enforcement.
-- **Real-time Updates**: Supabase subscriptions broadcast database changes to connected clients, enabling live collaboration.
+### System Design Choices
+- **Real-time Updates**: Comprehensive real-time subscriptions for all data types (activities, accommodations, transportation, dining) with query invalidation for immediate UI updates.
+- **Unified Dialogs**: Consolidated component architecture for adding/editing various trip elements (activities, accommodations, etc.) to reduce code duplication and ensure consistent UX.
+- **Luxury Date Pickers**: Integration of premium, responsive `LuxuryDateTimeRangePicker` for consistent and polished date selection across the application.
+- **Standardized Dialogs**: Uniform styling, responsive width settings, scroll functionality, and consistent interaction patterns across all dialog types.
+- **Timeline Redesign**: Streamlined, compact day cards replacing image-based designs, featuring a unified chronological timeline view of all timed events, quick-add buttons, and direct edit functionality.
+- **Time Period Grouping**: Daily activities grouped by time periods (Early Morning 🌅, Morning ☀️, Afternoon 🌤️, Evening 🌆, Night 🌙) with emoji headers for visual clarity.
+- **Daily Cost Summary**: Enhanced day cards with cost breakdown by category (Activities, Accommodations, Transportation, Dining) displayed as a quick-reference card.
+- **Smart Day Expansion**: Past days auto-collapse in timeline view while future and current days remain expanded, improving visual focus and reducing clutter.
+- **Mobile Responsiveness**: Designed for seamless experience across mobile, tablet, and desktop, including responsive date pickers, dialogs, and layout adjustments.
+- **Error Handling & Validation**: Robust form validation using Zod and React Hook Form, with double-click prevention on submissions.
+- **Currency Formatting**: Timeline costs display with currency symbols ($#,###) for clarity, matching international formatting standards.
 
 ### UI/UX Decisions
 - **Color Scheme**: Consistent sand/earth color palette across the application.
-- **Navigation**: Fixed, collapsible left-hand sidebar for trip-specific navigation on desktop, with a mobile sheet drawer. Includes primary and secondary sidebar panels for detailed component management.
-- **Component Design**: Emphasis on consistent interaction patterns, such as clickable list items to open edit dialogs, and uniform delete functionality with trash icons within dialogs.
-- **Date Pickers**: Calendar components are centrally positioned in dialogs and themed with the application's color scheme.
+- **Navigation**: Fixed, collapsible left-hand sidebar for trip-specific navigation on desktop, with a mobile sheet drawer. Includes primary and secondary sidebar panels.
+- **Component Design**: Emphasis on consistent interaction patterns, such as clickable list items to open edit dialogs, and uniform delete functionality.
+- **Date Pickers**: Calendar components are centrally positioned in dialogs and themed.
 - **Form Validation**: Robust validation and double-click prevention for form submissions.
+- **Budget Page Design**: Sophisticated interface matching "My Trips" aesthetics, with gradient background, tabbed navigation (Overview, Expenses, Categories, Analytics), interactive expense cards with animations, category-based color coding, search/filter, currency selector, progress visualizations, and skeleton/empty states.
 
 ## External Dependencies
 
 ### Core Services
 - **Supabase**: Database, authentication, real-time capabilities, storage, edge functions.
-- **Google Places API**: Location search and geocoding (accessed securely via a proxy edge function).
+- **Google Places API**: Location search and geocoding (accessed via proxy).
 - **OpenAI API**: AI chat assistant and content generation.
-- **Perplexity AI**: Used for enhanced search and travel recommendations.
+- **Perplexity AI**: Enhanced search and travel recommendations.
 - **SendGrid**: Email notifications.
 - **Unsplash API**: Stock photography for trip imagery.
-
-### Development Tools
-- **Bun**: JavaScript runtime and package manager.
-- **ESLint**: Code linting.
-- **TypeScript**: Static type checking.
-- **Tailwind CSS**: Utility-first CSS framework.
 
 ### UI Components & Utilities
 - **Radix UI**: Accessible component primitives.

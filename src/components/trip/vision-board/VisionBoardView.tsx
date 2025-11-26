@@ -22,21 +22,24 @@ import { Button } from '@/components/ui/button';
 
 interface VisionBoardProps {
   tripId: string;
+  canEdit?: boolean;
 }
 
 interface VisionBoardItem {
   id: string;
-  category: string;
+  trip_id: string;
+  category?: string;
   title: string;
-  description?: string;
-  image_url?: string;
-  source_url?: string;
+  description: string;
+  image_url: string;
+  link_url: string;
+  created_at: string;
   order_index: number;
 }
 
 const CATEGORIES = ['Accommodations', 'Activities', 'Transportation', 'Restaurants'];
 
-const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
+const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId, canEdit = true }) => {
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = React.useState(false);
   const queryClient = useQueryClient();
@@ -134,20 +137,22 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId }) => {
     <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Vision Board</h2>
-        <Button onClick={() => {
-          setIsAddingItem(true);
-          // Track add item button click
-          if (user && window.gtag) {
-            window.gtag('event', 'vision_board_add_item_click', {
-              event_category: 'engagement',
-              event_label: tripId,
-              user_id: user.id
-            });
-          }
-        }}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Item
-        </Button>
+        {canEdit && (
+          <Button onClick={() => {
+            setIsAddingItem(true);
+            // Track add item button click
+            if (user && window.gtag) {
+              window.gtag('event', 'vision_board_add_item_click', {
+                event_category: 'engagement',
+                event_label: tripId,
+                user_id: user.id
+              });
+            }
+          }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Item
+          </Button>
+        )}
       </div>
 
       <DndContext 

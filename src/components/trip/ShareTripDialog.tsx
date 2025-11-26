@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -18,9 +17,24 @@ import {
   getPreviouslySharedEmails,
 } from "@/services/tripSharingService";
 import { supabase } from "@/integrations/supabase/client";
-import { TripShare, PermissionLevel } from "@/integrations/supabase/trip_shares_types";
+import {
+  TripShare,
+  PermissionLevel,
+} from "@/integrations/supabase/trip_shares_types";
 import { EmailCombobox } from "@/components/ui/email-combobox";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  getConnectedContacts,
+  contactsByEmail,
+  pickBestName,
+} from "@/services/contactsService";
 
 interface ShareTripDialogProps {
   tripId: string;
@@ -29,7 +43,8 @@ interface ShareTripDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
 const ShareTripDialog = ({
   tripId,
@@ -38,138 +53,225 @@ const ShareTripDialog = ({
   onOpenChange,
 }: ShareTripDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dialogOpen = open !== undefined ? open : isOpen;
-  const setDialogOpen = onOpenChange || setIsOpen;
+  const dialogOpen = open ?? isOpen;
+  const setDialogOpen = onOpenChange ?? setIsOpen;
 
   const [emails, setEmails] = useState<string[]>([""]);
-  const [permissionLevel, setPermissionLevel] = useState<PermissionLevel>("edit");
+  const [permissionLevel, setPermissionLevel] =
+    useState<PermissionLevel>("edit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [existingShares, setExistingShares] = useState<TripShare[]>([]);
-  const [currentUser, setCurrentUser] = useState<{ fullName: string | null; email: string | null; }>({
+  const [currentUser, setCurrentUser] = useState<{
+    fullName: string | null;
+    email: string | null;
+  }>({
     fullName: null,
     email: null,
   });
-  const [previousEmails, setPreviousEmails] = useState<string[]>([]);
 
+  // contacts + suggestions
+  const [previousEmails, setPreviousEmails] = useState<string[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [contactsMap, setContactsMap] = useState<Record<string, any>>({});
+  const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
+
+  // Get the signed-in user (trip owner in this dialog’s context):contentReference[oaicite:2]{index=2}
   useEffect(() => {
-    const getUserInfo = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
+    let active = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (!data?.user || !active) return;
+
         const { data: profileData } = await supabase
           .from("profiles")
           .select("full_name")
           .eq("id", data.user.id)
           .single();
 
+        if (!active) return;
         setCurrentUser({
-          fullName: profileData?.full_name || null,
-          email: data.user.email || null,
+          fullName: profileData?.full_name ?? null,
+          email: data.user.email ?? null,
         });
+      } catch (err) {
+        console.error("Error fetching user info:", err);
       }
+    })();
+    return () => {
+      active = false;
     };
-    getUserInfo();
   }, []);
 
+  // Load shares/contacts when dialog opens:contentReference[oaicite:3]{index=3}
   useEffect(() => {
-    if (dialogOpen) {
-      fetchExistingShares();
-      fetchPreviousEmails();
-    }
-  }, [dialogOpen]);
+    if (!dialogOpen) return;
+    let active = true;
 
-  const fetchPreviousEmails = async () => {
-    try {
-      const res = await getPreviouslySharedEmails(tripId);
-      setPreviousEmails(res);
-    } catch (error) {
-      console.error("Error fetching previous emails:", error);
-    }
-  };
+    (async () => {
+      try {
+        setIsLoading(true);
+        const [shares, prevEmails, list] = await Promise.all([
+          getTripShares(tripId),
+          getPreviouslySharedEmails(tripId),
+          getConnectedContacts(),
+        ]);
+        if (!active) return;
+        setExistingShares(shares);
+        setPreviousEmails(prevEmails);
+        setContacts(list);
+        setContactsMap(contactsByEmail(list));
+      } catch (e) {
+        console.error("Error initializing share data", e);
+        toast.error("Could not load share data.");
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [dialogOpen, tripId]);
+
+  // Build suggestions from previous + contacts
+  const mergedSuggestions = useMemo(() => {
+    const fromContacts = contacts.map((c) => c.email).filter(Boolean) as string[];
+    return Array.from(new Set([...previousEmails, ...fromContacts])).sort();
+  }, [previousEmails, contacts]);
+
+  useEffect(() => setEmailSuggestions(mergedSuggestions), [mergedSuggestions]);
+
+  // ❗️Filter out owner from the shares list (don’t show yourself):contentReference[oaicite:4]{index=4}
+  const filteredShares = useMemo(() => {
+    const me = currentUser.email?.toLowerCase() ?? "";
+    return existingShares.filter(
+      (s) =>
+        !!s.shared_with_email &&
+        s.shared_with_email.toLowerCase() !== me
+    );
+  }, [existingShares, currentUser.email]);
 
   const fetchExistingShares = async () => {
-    setIsLoading(true);
     try {
       const shares = await getTripShares(tripId);
       setExistingShares(shares);
-    } catch (error) {
-      console.error("Error fetching existing shares:", error);
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      console.error("Fetch existing shares failed:", err);
     }
   };
 
   const handleEmailChange = (index: number, value: string) => {
-    const next = [...emails];
-    next[index] = value;
-    setEmails(next);
+    setEmails((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
   };
-
   const addEmailField = () => setEmails((prev) => [...prev, ""]);
+  const removeEmailField = (index: number) =>
+    setEmails((prev) => (prev.length === 1 ? [""] : prev.filter((_, i) => i !== index)));
 
-  const removeEmailField = (index: number) => {
-    if (emails.length === 1) {
-      setEmails([""]);
-    } else {
-      const next = [...emails];
-      next.splice(index, 1);
-      setEmails(next);
-    }
+  const handlePickContact = (email: string) => {
+    if (!email) return;
+    setEmails((prev) => {
+      if (prev.includes(email)) return prev;
+      const next = [...prev];
+      const emptyIdx = next.findIndex((e) => !e.trim());
+      if (emptyIdx >= 0) next[emptyIdx] = email;
+      else next.push(email);
+      return next;
+    });
   };
 
   const nonEmptyEmails = useMemo(
-    () => emails.map((e) => e.trim()).filter((e) => e !== ""),
+    () => emails.map((e) => e.trim()).filter(Boolean),
     [emails]
   );
 
+  const prefillNameForEmail = useCallback(
+    async (email: string) => {
+      const known = contactsMap[email.toLowerCase()];
+      if (!known) return;
+
+      const [first, ...rest] = (known.profile_full_name || "").split(" ");
+      const last = rest.join(" ") || null;
+
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        if (!auth?.user?.id) return;
+        await supabase
+          .from("trip_shares")
+          .upsert(
+            {
+              trip_id: tripId,
+              shared_by_user_id: auth.user.id,
+              shared_with_email: email.trim(),
+              first_name: known.share_first_name ?? first ?? null,
+              last_name: known.share_last_name ?? last,
+              permission_level: permissionLevel,
+            },
+            { onConflict: "trip_id,shared_with_email" }
+          );
+      } catch {
+        // soft-fail: prefill is non-blocking
+      }
+    },
+    [contactsMap, permissionLevel, tripId]
+  );
+
   const handleShareSingle = async (email: string) => {
-    if (!isValidEmail(email)) {
-      toast.error("Please enter a valid email address");
+    const trimmed = email.trim();
+    if (!isValidEmail(trimmed)) {
+      toast.error("Invalid email address");
       return;
     }
+    setIsSubmitting(true);
     try {
-      const ok = await shareTrip(tripId, email, tripDestination, permissionLevel);
+      await prefillNameForEmail(trimmed);
+      const ok = await shareTrip(tripId, trimmed, tripDestination, permissionLevel);
       if (ok) {
-        fetchExistingShares();
-        fetchPreviousEmails();
-        setEmails((prev) => prev.map((e) => (e === email ? "" : e)));
+        toast.success(`Shared trip with ${trimmed}`);
+        await fetchExistingShares();
+        setEmails((prev) => prev.map((e) => (e === trimmed ? "" : e)));
       }
     } catch (err) {
-      console.error("Error sharing single email:", err);
-      toast.error("Failed to share. Please try again.");
+      console.error("Share failed:", err);
+      toast.error("Failed to share trip");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSaveAll = async () => {
-    if (nonEmptyEmails.length === 0) {
-      toast.error("Please enter at least one email address");
+    if (!nonEmptyEmails.length) {
+      toast.error("Please enter at least one email");
       return;
     }
-    for (const e of nonEmptyEmails) {
-      if (!isValidEmail(e)) {
-        toast.error(`Invalid email format: ${e}`);
-        return;
-      }
+    const invalid = nonEmptyEmails.find((e) => !isValidEmail(e));
+    if (invalid) {
+      toast.error(`Invalid email: ${invalid}`);
+      return;
     }
-
     setIsSubmitting(true);
     try {
-      let successCount = 0;
+      let count = 0;
       for (const email of nonEmptyEmails) {
+        await prefillNameForEmail(email);
         const ok = await shareTrip(tripId, email, tripDestination, permissionLevel);
-        if (ok) successCount++;
+        if (ok) count++;
       }
-      if (successCount > 0) {
+      if (count) {
         toast.success(
-          `Trip shared with ${successCount} ${successCount === 1 ? "person" : "people"}`
+          `Trip shared with ${count} ${count === 1 ? "person" : "people"}`
         );
         setEmails([""]);
         fetchExistingShares();
-        fetchPreviousEmails();
       }
     } catch (err) {
-      console.error("Error sharing trip:", err);
-      toast.error("Failed to share the trip. Please try again.");
+      console.error("Share all failed:", err);
+      toast.error("Something went wrong while sharing");
     } finally {
       setIsSubmitting(false);
     }
@@ -181,35 +283,28 @@ const ShareTripDialog = ({
       if (ok) fetchExistingShares();
     } catch (err) {
       console.error("Error removing share:", err);
+      toast.error("Failed to remove share");
     }
   };
 
-  const handleSetPermission = async (shareId: string, target: PermissionLevel) => {
+  const handleSetPermission = async (
+    shareId: string,
+    target: PermissionLevel
+  ) => {
+    // optimistic update:contentReference[oaicite:5]{index=5}
+    setExistingShares((prev) =>
+      prev.map((s) => (s.id === shareId ? { ...s, permission_level: target } : s))
+    );
     try {
-      // Optimistic
-      setExistingShares((prev) =>
-        prev.map((s) => (s.id === shareId ? { ...s, permission_level: target } : s))
-      );
       const ok = await updateTripSharePermission(shareId, target);
-      if (!ok) {
-        // Revert (default fallback to 'edit' if missing)
-        setExistingShares((prev) =>
-          prev.map((s) =>
-            s.id === shareId ? { ...s, permission_level: (s.permission_level || "edit") as PermissionLevel } : s
-          )
-        );
-      }
+      if (!ok) throw new Error("Permission update failed");
     } catch (err) {
       console.error("Error updating permission:", err);
-      setExistingShares((prev) =>
-        prev.map((s) =>
-          s.id === shareId ? { ...s, permission_level: (s.permission_level || "edit") as PermissionLevel } : s
-        )
-      );
+      toast.error("Failed to update permission");
+      fetchExistingShares(); // rollback
     }
   };
 
-  // Shared button styles for dark selection
   const baseBtn = "h-8 px-3";
   const baseBtnSmall = "h-7 px-2";
   const selected = "bg-earth-600 text-white hover:bg-earth-700";
@@ -219,64 +314,69 @@ const ShareTripDialog = ({
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent
         className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90vh] flex flex-col p-4 sm:p-6"
-        style={{ maxHeight: "90vh", height: "auto" } as React.CSSProperties}
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
-          
         </DialogHeader>
 
-        <div
-          className="flex-1 overflow-y-auto scrollbar-none"
-          style={{ maxHeight: "calc(90vh - 200px)" }}
-        >
-          <div className="space-y-4 pr-2">
-            {/* Email inputs */}
+        <div className="flex-1 overflow-y-auto scrollbar-none space-y-4">
+          {/* Contacts quick picker */}
+          {contacts.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium">Email addresses</p>
-
-              {emails.map((email, index) => {
-                const valid = isValidEmail(email);
-                return (
-                  <div key={index} className="flex items-center gap-1 sm:gap-2">
-                    <div className="relative flex-1 min-w-0">
-                      <EmailCombobox
-                        value={email}
-                        onChange={(value) => handleEmailChange(index, value)}
-                        suggestions={previousEmails}
-                        placeholder="email@example.com"
-                      />
-                    </div>
-
-                    {/* Inline Share button */}
-                    <Button
-                      type="button"
-                      size="sm"
-                      className={cn("h-8 px-2 sm:px-3 flex-shrink-0", selected)}
-                      onClick={() => handleShareSingle(email)}
-                      disabled={!valid || isSubmitting}
-                    >
-                      <Share2 className="h-3 w-3 mr-1" />
-                      <span className="hidden sm:inline">Share Trip</span>
-                      <span className="sm:hidden">Share</span>
-                    </Button>
-
-                    {/* Remove field */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeEmailField(index)}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                    >
-                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  </div>
-                );
-              })}
+              <p className="text-sm font-medium">Pick from your contacts</p>
+              <Select onValueChange={handlePickContact}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a contact" />
+                </SelectTrigger>
+                <SelectContent className="z-[100]">
+                  {contacts
+                    .filter((c) => !!c.email)
+                    .map((c) => (
+                      <SelectItem key={c.email} value={c.email!}>
+                        {pickBestName(c)} — {c.email}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
+          )}
 
+          {/* Email inputs */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Email addresses</p>
+            {emails.map((email, index) => {
+              const valid = isValidEmail(email);
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <EmailCombobox
+                    value={email}
+                    onChange={(value) => handleEmailChange(index, value)}
+                    suggestions={emailSuggestions}
+                    placeholder="email@example.com"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className={cn("flex-shrink-0", selected)}
+                    onClick={() => handleShareSingle(email)}
+                    disabled={!valid || isSubmitting}
+                  >
+                    <Share2 className="h-3 w-3 mr-1" />
+                    Share
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeEmailField(index)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
             <Button
               type="button"
               variant="outline"
@@ -287,111 +387,109 @@ const ShareTripDialog = ({
               <PlusCircle className="h-4 w-4" />
               Add Another
             </Button>
+          </div>
 
-            {/* New invite permission — two-button dark selection */}
-            <div className="space-y-3 border-t pt-4 mt-4">
-              <p className="text-sm font-medium">Permission for new invites</p>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setPermissionLevel("read")}
-                  className={cn(baseBtn, permissionLevel === "read" ? selected : unselected)}
-                  variant="outline"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  View
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setPermissionLevel("edit")}
-                  className={cn(baseBtn, permissionLevel === "edit" ? selected : unselected)}
-                  variant="outline"
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
+          {/* New invite permission */}
+          <div className="space-y-3 border-t pt-4 mt-4">
+            <p className="text-sm font-medium">Permission for new invites</p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setPermissionLevel("read")}
+                className={cn(baseBtn, permissionLevel === "read" ? selected : unselected)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                View
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setPermissionLevel("edit")}
+                className={cn(baseBtn, permissionLevel === "edit" ? selected : unselected)}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+            </div>
+          </div>
+
+          {/* Existing shares (owner excluded) */}
+          {filteredShares.length > 0 && (
+            <div className="space-y-2 border-t pt-4 mt-4">
+              <p className="text-sm font-medium">Currently shared with</p>
+              <div className="space-y-2">
+                {filteredShares.map((share) => {
+                  const current = (share.permission_level || "edit") as PermissionLevel;
+                  return (
+                    <div
+                      key={share.id}
+                      className="flex items-center gap-2 rounded-md border p-2"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm truncate">
+                          {share.shared_with_email}
+                        </span>
+                      </div>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleSetPermission(share.id, "read")}
+                        className={cn(baseBtnSmall, current === "read" ? selected : unselected)}
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleSetPermission(share.id, "edit")}
+                        className={cn(baseBtnSmall, current === "edit" ? selected : unselected)}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveShare(share.id)}
+                        className="h-7 w-7 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
+          )}
 
-            {/* Existing shares — per-row two-button dark selection */}
-            {existingShares.length > 0 && (
-              <div className="space-y-2 border-t pt-4 mt-6">
-                <p className="text-sm font-medium">Currently shared with</p>
-
-                <div className="space-y-2">
-                  {existingShares.map((share) => {
-                    const current = (share.permission_level || "edit") as PermissionLevel;
-                    return (
-                      <div
-                        key={share.id}
-                        className="flex items-center gap-2 rounded-md border p-2"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm truncate">{share.shared_with_email}</span>
-                        </div>
-
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleSetPermission(share.id, "read")}
-                          className={cn(baseBtnSmall, current === "read" ? selected : unselected)}
-                          variant="outline"
-                        >
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
-
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleSetPermission(share.id, "edit")}
-                          className={cn(baseBtnSmall, current === "edit" ? selected : unselected)}
-                          variant="outline"
-                        >
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveShare(share.id)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    );
-                  })}
+          {/* Owner chip (show email, not in list) */}
+          <div className="border-t pt-4 mt-2">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">Trip owner:</p>
+              <div className="flex items-center gap-2 rounded-md border p-2">
+                <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
+                  {currentUser.fullName
+                    ? currentUser.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : currentUser.email?.[0]?.toUpperCase() ?? "U"}
                 </div>
-              </div>
-            )}
-
-            {/* Owner chip */}
-            <div className="border-t pt-4 mt-2">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">Trip owner:</p>
-                <div className="flex items-center gap-2 rounded-md border p-2">
-                  <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
-                    {currentUser.fullName
-                      ? currentUser.fullName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()
-                          .substring(0, 2)
-                      : currentUser.email
-                      ? currentUser.email[0].toUpperCase()
-                      : "U"}
-                  </div>
-                  <span className="text-sm">
-                    {currentUser.fullName || currentUser.email || "You"}
-                  </span>
-                </div>
+                <span className="text-sm">
+                  {currentUser.fullName || currentUser.email || "You"}
+                  {currentUser.fullName && currentUser.email ? (
+                    <span className="text-muted-foreground"> ({currentUser.email})</span>
+                  ) : null}
+                </span>
               </div>
             </div>
           </div>
@@ -404,7 +502,7 @@ const ShareTripDialog = ({
           </Button>
           <Button
             onClick={handleSaveAll}
-            disabled={isSubmitting || isLoading || nonEmptyEmails.length === 0}
+            disabled={isSubmitting || isLoading || !nonEmptyEmails.length}
             className="bg-earth-600 hover:bg-earth-700 text-white"
           >
             <Share2 className="h-4 w-4 mr-2" />

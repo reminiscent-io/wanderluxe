@@ -58,10 +58,6 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   return (
     <FormProvider {...form}>
       <div className="space-y-4">
-        <Label className="text-sm font-medium text-gray-700">
-          When are you planning to travel? 
-        </Label>
-
         <LuxuryDateTimeRangePicker
           name="travelDates"
           label="Travel Dates"

@@ -10,6 +10,7 @@ import { Tables } from "@/integrations/supabase/types";
 import AccommodationForm from "./AccommodationForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Accommodation = Tables<"accommodations">;
 
@@ -28,6 +29,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   initialData,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
@@ -92,6 +94,11 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         if (error) throw error;
         toast.success("Accommodation added successfully");
       }
+      
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['accommodations'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -108,6 +115,11 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           .delete()
           .eq("stay_id", initialData.stay_id);
         if (error) throw error;
+        
+        // Invalidate queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ['accommodations'] });
+        queryClient.invalidateQueries({ queryKey: ['trip'] });
+        
         toast.success("Accommodation deleted successfully");
         onSuccess();
         onOpenChange(false);
@@ -128,11 +140,6 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           <DialogTitle>
             {initialData ? "Edit Accommodation" : "Add Accommodation"}
           </DialogTitle>
-          <DialogDescription>
-            {initialData
-              ? "Update your accommodation details."
-              : "Enter the details for your accommodation."}
-          </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none px-1">
           <AccommodationForm

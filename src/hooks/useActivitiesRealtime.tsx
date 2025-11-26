@@ -17,9 +17,13 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
     queryClient.invalidateQueries({
       queryKey: ['trip', tripId],
     });
-    // Also invalidate day-specific queries if they exist
+    // Invalidate day-specific queries
     queryClient.invalidateQueries({
       queryKey: ['activities', dayId],
+    });
+    // Invalidate trip-level activities queries (for sidebar)
+    queryClient.invalidateQueries({
+      queryKey: ['activities', tripId],
     });
     // Invalidate TravelerAvatars queries
     queryClient.invalidateQueries({
@@ -78,7 +82,7 @@ export function useActivitiesRealtime(dayId: string, tripId: string | undefined)
       activeSubscriptions.delete(subscriptionKey);
       setIsSubscribed(false);
     };
-  }, [dayId, tripId, subscriptionKey, handleActivityChange]);
+  }, [dayId, tripId, handleActivityChange]);
 
   return { isSubscribed };
 }

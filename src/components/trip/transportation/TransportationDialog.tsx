@@ -10,6 +10,7 @@ import { Tables } from '@/integrations/supabase/types';
 import TransportationForm from './TransportationForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 type TransportationType = Tables<'transportation'>;
 
@@ -17,9 +18,9 @@ interface TransportationDialogProps {
   tripId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: TransportationType | null;
-  /** Now expects the saved record */
-  onSuccess: (updated: TransportationType) => void;
+  initialData?: Partial<TransportationType> | null;
+  /** Now expects the saved record (optional to support different use cases) */
+  onSuccess: (updated?: TransportationType) => void;
   buttonClassName?: string;
 }
 
@@ -31,6 +32,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   onSuccess,
   buttonClassName = "bg-earth-500 hover:bg-earth-600 text-white font-semibold",
 }) => {
+  const queryClient = useQueryClient();
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
@@ -95,6 +97,10 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         toast.success('Transportation added successfully');
       }
 
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['transportation'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      
       onSuccess(savedRecord);
       onOpenChange(false);
       return savedRecord; // Return the saved record so TransportationForm can use the ID for traveler saving
@@ -117,8 +123,12 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         .delete()
         .eq('id', initialData.id);
       if (error) throw error;
+      
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['transportation'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      
       toast.success('Transportation deleted successfully');
-      // Close dialog after deletion
       onOpenChange(false);
     } catch (err) {
       console.error('Error deleting transportation:', err);
@@ -133,11 +143,6 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           <DialogTitle>
             {initialData ? 'Edit Transportation' : 'Add Transportation'}
           </DialogTitle>
-          <DialogDescription>
-            {initialData
-              ? 'Update your transportation details.'
-              : 'Enter the details for your transportation.'}
-          </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none px-1">
           <TransportationForm

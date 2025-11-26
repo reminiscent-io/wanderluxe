@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -190,6 +190,149 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     enabled: !!tripId,
   });
 
+  // Real-time subscriptions for sidebar data
+  // Note: We subscribe at trip level for accommodations, transportation, and reservations
+  // Activity subscriptions are handled by useActivitiesRealtime at the day level
+  const accommodationsChannelRef = useRef<any>(null);
+  const transportationChannelRef = useRef<any>(null);
+  const reservationsChannelRef = useRef<any>(null);
+
+  // Memoize invalidation callbacks
+  const handleAccommodationChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
+  }, [queryClient, tripId]);
+
+  const handleTransportationChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
+  }, [queryClient, tripId]);
+
+  const handleReservationChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
+  }, [queryClient, tripId]);
+
+  // Accommodations real-time subscription
+  useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel(`sidebar-accommodations:${tripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodations',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleAccommodationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accommodation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleAccommodationChange
+      )
+      .subscribe();
+
+    accommodationsChannelRef.current = channel;
+
+    return () => {
+      if (accommodationsChannelRef.current) {
+        supabase.removeChannel(accommodationsChannelRef.current);
+        accommodationsChannelRef.current = null;
+      }
+    };
+  }, [tripId, handleAccommodationChange]);
+
+  // Transportation real-time subscription
+  useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel(`sidebar-transportation:${tripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transportation',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleTransportationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transportation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleTransportationChange
+      )
+      .subscribe();
+
+    transportationChannelRef.current = channel;
+
+    return () => {
+      if (transportationChannelRef.current) {
+        supabase.removeChannel(transportationChannelRef.current);
+        transportationChannelRef.current = null;
+      }
+    };
+  }, [tripId, handleTransportationChange]);
+
+  // Reservations real-time subscription
+  useEffect(() => {
+    if (!tripId) return;
+
+    const channel = supabase
+      .channel(`sidebar-reservations:${tripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleReservationChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservation_travelers',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        handleReservationChange
+      )
+      .subscribe();
+
+    reservationsChannelRef.current = channel;
+
+    return () => {
+      if (reservationsChannelRef.current) {
+        supabase.removeChannel(reservationsChannelRef.current);
+        reservationsChannelRef.current = null;
+      }
+    };
+  }, [tripId, handleReservationChange]);
+
   // Fetch reservations (with trip_days date) for this trip
   const { data: reservations = [] } = useQuery({
     queryKey: ['reservations', tripId],
@@ -336,7 +479,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         .eq('trip_id', tripId);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       toast({ title: 'Success', description: 'Activity deleted' });
     } catch (err) {
       console.error('Error deleting activity:', err);
@@ -382,9 +525,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+      toast({ title: 'Success', description: 'Activity added' });
       setActivityOpen(false);
     } catch (err) {
       console.error('Error adding activity:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add activity' });
       throw err;
     }
   };
@@ -424,9 +569,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+      toast({ title: 'Success', description: 'Activity updated' });
       setSelectedActivity(null);
     } catch (err) {
       console.error('Error editing activity:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update activity' });
       throw err;
     }
   };

@@ -16,7 +16,7 @@ const NavigationAuth = () => {
             onClick={() => navigate("/create-trip")}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
+            className="hidden md:inline-block rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors bg-earth-500 text-white hover:bg-earth-600"
           >
             Create Trip
           </motion.button>

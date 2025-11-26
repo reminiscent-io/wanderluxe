@@ -1,10 +1,17 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Transportation } from '@/types/trip';
 
+// Global set to track active subscriptions and prevent duplicates
+const activeSubscriptions = new Set<string>();
+
 export function useTransportationEvents(tripId: string) {
   const queryClient = useQueryClient();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const channelRef = useRef<any>(null);
+
+  const subscriptionKey = `transportation:${tripId}`;
 
   const { data: transportationData, isLoading } = useQuery({
     queryKey: ['transportation', tripId],
@@ -35,12 +42,37 @@ export function useTransportationEvents(tripId: string) {
     await queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
   }, [queryClient, tripId]);
 
+  // Memoize the invalidation callback to prevent unnecessary re-subscriptions
+  const handleTransportationChange = useCallback((payload: any) => {
+    queryClient.invalidateQueries({
+      queryKey: ['transportation', tripId],
+    });
+    // Also invalidate trip queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip', tripId],
+    });
+    // Invalidate TravelerAvatars queries
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:list', tripId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['trip-travelers:assigned', tripId],
+    });
+  }, [queryClient, tripId]);
+
   // Real-time subscription for transportation changes
   useEffect(() => {
     if (!tripId) return;
 
+    // Check if subscription already exists for this trip
+    if (activeSubscriptions.has(subscriptionKey)) {
+      return;
+    }
+
+    activeSubscriptions.add(subscriptionKey);
+
     const channel = supabase
-      .channel(`transportation:${tripId}`)
+      .channel(subscriptionKey)
       .on(
         'postgres_changes',
         {
@@ -49,22 +81,7 @@ export function useTransportationEvents(tripId: string) {
           table: 'transportation',
           filter: `trip_id=eq.${tripId}`,
         },
-        (payload) => {
-          queryClient.invalidateQueries({
-            queryKey: ['transportation', tripId],
-          });
-          // Also invalidate trip queries
-          queryClient.invalidateQueries({
-            queryKey: ['trip', tripId],
-          });
-          // Invalidate TravelerAvatars queries
-          queryClient.invalidateQueries({
-            queryKey: ['trip-travelers:list', tripId],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['trip-travelers:assigned', tripId],
-          });
-        }
+        handleTransportationChange
       )
       .on(
         'postgres_changes',
@@ -74,29 +91,23 @@ export function useTransportationEvents(tripId: string) {
           table: 'transportation_travelers',
           filter: `trip_id=eq.${tripId}`,
         },
-        (payload) => {
-          queryClient.invalidateQueries({
-            queryKey: ['transportation', tripId],
-          });
-          // Also invalidate trip queries
-          queryClient.invalidateQueries({
-            queryKey: ['trip', tripId],
-          });
-          // Invalidate TravelerAvatars queries
-          queryClient.invalidateQueries({
-            queryKey: ['trip-travelers:list', tripId],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['trip-travelers:assigned', tripId],
-          });
-        }
+        handleTransportationChange
       )
-      .subscribe();
+      .subscribe((status) => {
+        setIsSubscribed(status === 'SUBSCRIBED');
+      });
+
+    channelRef.current = channel;
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      activeSubscriptions.delete(subscriptionKey);
+      setIsSubscribed(false);
     };
-  }, [tripId]);
-  
-  return { transportations, transportationData, isLoading, refreshTransportation };
+  }, [tripId, handleTransportationChange]);
+
+  return { transportations, transportationData, isLoading, refreshTransportation, isSubscribed };
 }

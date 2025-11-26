@@ -1,4 +1,5 @@
 // src/components/trip/accommodation/AccommodationPanel.tsx
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import {
@@ -9,6 +10,174 @@ import {
 import Header from "../_shared/Header";
 import { parse, format } from "date-fns";
 
+import {
+  loadGoogleMapsAPI,
+  getPlaceDetails,
+  getPhotoUrl,
+  type PlacePhotoMeta,
+} from "@/utils/googleMapsLoader";
+import {
+  getCachedPlacePhotos,
+  setCachedPlacePhotos,
+  clearExpiredPlacePhotoCache,
+} from "@/utils/placePhotoCache";
+
+/* --------------------------- photo helpers --------------------------- */
+const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
+  const viaProxy = getPhotoUrl?.(p, maxWidth);
+  if (viaProxy) return viaProxy;
+  if (p?.url) return p.url;
+
+  const nextKey =
+    typeof process !== "undefined"
+      ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
+      : undefined;
+  // @ts-ignore SSR-safe check for Vite env
+  const viteKey: string | undefined =
+    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) || undefined;
+  const key = nextKey || viteKey;
+
+  if (key && p?.photo_reference) {
+    const params = new URLSearchParams({
+      maxwidth: String(maxWidth),
+      photo_reference: p.photo_reference,
+      key,
+    });
+    return `https://maps.googleapis.com/maps/api/place/photo?${params.toString()}`;
+  }
+  return null;
+};
+
+/* Optional: warm image HTTP cache for first few images/sizes */
+function warmImageCache(photos: PlacePhotoMeta[]) {
+  const sample = photos.slice(0, 3);
+  const widths = [320, 480, 640];
+  for (const ph of sample) {
+    for (const w of widths) {
+      const url = resolvePhotoUrl(ph, w);
+      if (!url) continue;
+      const img = new Image();
+      img.decoding = "async";
+      img.loading = "eager";
+      img.src = url;
+    }
+  }
+}
+
+/* -------------------------- lazy photo strip ------------------------- */
+function PhotoStrip({ placeId, title }: { placeId?: string | null; title: string }) {
+  const [photos, setPhotos] = useState<PlacePhotoMeta[]>([]);
+  const [triggered, setTriggered] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    loadGoogleMapsAPI().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!placeId || triggered) return;
+    const el = ref.current;
+    if (!el) return;
+
+    const load = () => {
+      setTriggered(true);
+
+      // 1) Try cache first
+      const cached = getCachedPlacePhotos(placeId);
+      if (cached?.length) {
+        setPhotos(cached);
+        // Warm HTTP cache in the background for instant re-renders
+        warmImageCache(cached);
+        return;
+      }
+
+      // 2) Fetch details (once) and store
+      getPlaceDetails(placeId)
+        .then((res) => {
+          const ph = res?.photos ?? [];
+          setPhotos(ph);
+          setCachedPlacePhotos(placeId, ph);
+          warmImageCache(ph);
+        })
+        .catch(() => setPhotos([]));
+    };
+
+    if ("IntersectionObserver" in window) {
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              load();
+              obs.disconnect();
+            }
+          });
+        },
+        { rootMargin: "120px" }
+      );
+      obs.observe(el);
+      return () => obs.disconnect();
+    } else {
+      load();
+    }
+  }, [placeId, triggered]);
+
+  return (
+    <div ref={ref}>
+      {placeId && photos.length > 0 && (
+        <div className="mt-2 -mx-1 overflow-x-auto">
+          <div className="flex gap-2 px-1 py-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {photos.slice(0, 10).map((p, i) => {
+              const url320  = resolvePhotoUrl(p, 320);
+              const url480  = resolvePhotoUrl(p, 480);
+              const url640  = resolvePhotoUrl(p, 640);
+              const url896  = resolvePhotoUrl(p, 896);
+              const src = url480 || url640 || url896 || url320;
+              if (!src) return null;
+
+              const srcSet = [
+                url320 && `${url320} 320w`,
+                url480 && `${url480} 480w`,
+                url640 && `${url640} 640w`,
+                url896 && `${url896} 896w`,
+              ].filter(Boolean).join(", ");
+
+              const sizes = "(min-width: 768px) 384px, (min-width: 640px) 320px, 240px";
+              const attribution = p.html_attributions?.[0];
+
+              return (
+                <div key={`${p.photo_reference || p.url || i}`} className="relative flex-none snap-start">
+                  <img
+                    src={src}
+                    srcSet={srcSet}
+                    sizes={sizes}
+                    alt={`${title || "Hotel"} photo ${i + 1}`}
+                    className="
+                      h-28 w-44
+                      sm:h-32 sm:w-56
+                      md:h-32 md:w-64
+                      rounded-md object-cover border border-sand-200
+                    "
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                  />
+                  {attribution && (
+                    <div
+                      className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
+                      dangerouslySetInnerHTML={{ __html: attribution }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------- types -------------------------------- */
 interface Props {
   accommodations: Array<{
     stay_id: string | number;
@@ -19,6 +188,7 @@ interface Props {
     checkout_time?: string | null;
     cost?: number | null;
     currency?: string | null;
+    hotel_place_id?: string | null; // when present, enables photo strip
   }>;
   onAdd: () => void;
   onEdit: (a: any) => void;
@@ -35,6 +205,11 @@ export default function AccommodationPanel({
   onClose,
   onBack,
 }: Props) {
+  // Housekeeping: sweep expired entries occasionally
+  useEffect(() => {
+    clearExpiredPlacePhotoCache();
+  }, []);
+
   // Group by check-in date
   const grouped = accommodations.reduce<Record<string, typeof accommodations>>(
     (acc, a) => {
@@ -78,7 +253,6 @@ export default function AccommodationPanel({
                   a.checkout_time
                 )}`;
               } else {
-                // parse the checkout date as local
                 const endDateObj = parse(od, "yyyy-MM-dd", new Date());
                 const endLabel = format(endDateObj, "EEE, MMM d");
                 timeDisplay = `${formatTime(a.checkin_time)} → ${endLabel} ${formatTime(
@@ -87,22 +261,27 @@ export default function AccommodationPanel({
               }
 
               return (
-                <button
+                <div
                   key={a.stay_id}
-                  onClick={() => onEdit(a)}
                   className="ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors hover:bg-sand-100"
                 >
-                  <h4 className="mb-1 text-sm font-medium">{a.hotel}</h4>
-                  <p className="text-xs text-sand-600">
-                    {timeDisplay}
-                    {a.cost != null && (
-                      <>
-                        <br />
-                        {(a.currency || "USD")} {a.cost.toLocaleString()}
-                      </>
-                    )}
-                  </p>
-                </button>
+                  {/* Clickable header block */}
+                  <button onClick={() => onEdit(a)} className="w-full text-left">
+                    <h4 className="mb-1 text-sm font-medium">{a.hotel}</h4>
+                    <p className="text-xs text-sand-600">
+                      {timeDisplay}
+                      {a.cost != null && (
+                        <>
+                          <br />
+                          {(a.currency || "USD")} {a.cost.toLocaleString()}
+                        </>
+                      )}
+                    </p>
+                  </button>
+
+                  {/* Non-clickable scroller below the header */}
+                  <PhotoStrip placeId={a.hotel_place_id} title={a.hotel} />
+                </div>
               );
             })}
         </div>

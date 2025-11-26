@@ -52,10 +52,10 @@ const Auth = () => {
         // Don't try to manually create a profile from the client side
         toast({
           title: "Success!",
-          description: "Account created successfully. Check your email for verification.",
+          description:
+            "Account created successfully. Check your email for verification.",
         });
       }
-
 
       navigate("/my-trips");
     } catch (error: any) {
@@ -116,9 +116,7 @@ const Auth = () => {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat"
-      >
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat">
         <div className="absolute inset-0 bg-black/30" />
       </div>
       <motion.div
@@ -128,7 +126,9 @@ const Auth = () => {
       >
         <Card className="relative bg-white/80 backdrop-blur-md border-0">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Welcome to WanderLuxe</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Welcome to WanderLuxe
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -158,6 +158,16 @@ const Auth = () => {
                   required
                   className="bg-white/50"
                 />
+              {/* Forgot password link (add near the password input) */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => navigate("/auth/forgot-password")}
+                  className="text-sm text-earth-600 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
               </div>
               {isSignUp && (
                 <div className="space-y-2">
@@ -173,6 +183,8 @@ const Auth = () => {
                   />
                 </div>
               )}
+
+              {/* ORDER: Sign In/Up button, Google button, then "OR SIGN UP FOR FREE" text */}
               <div className="space-y-4">
                 <Button
                   type="submit"
@@ -181,37 +193,7 @@ const Auth = () => {
                 >
                   {isSignUp ? "Sign Up" : "Sign In"}
                 </Button>
-                {isSignUp ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setIsSignUp(false)}
-                    disabled={loading}
-                  >
-                    Back to Sign In
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setIsSignUp(true)}
-                    disabled={loading}
-                  >
-                    Sign Up
-                  </Button>
-                )}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white/50 px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div>
+
                 <Button
                   type="button"
                   variant="outline"
@@ -239,8 +221,30 @@ const Auth = () => {
                   </svg>
                   Google
                 </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp((v) => !v)}
+                  className="w-full text-center text-xs uppercase tracking-wide font-bold text-earth-600 hover:underline"
+                  aria-label={isSignUp ? "Or Sign In" : "Or Sign Up for Free"}
+                >
+                  {isSignUp ? "OR SIGN IN" : "OR SIGN UP FOR FREE"}
+                </button>
               </div>
             </form>
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-center text-muted-foreground mb-3">
+                Not ready to sign up?
+              </p>
+              <Button
+                type="button"
+                className="w-full bg-earth-600 text-white hover:bg-earth-500"
+                onClick={() => navigate("/explore")}
+              >
+                Explore Public Trips
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>

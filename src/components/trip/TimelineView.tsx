@@ -19,12 +19,13 @@ interface TimelineViewProps {
     departure_date: string | null;
   };
   tripDestination?: string;
+  canEdit?: boolean;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination, canEdit = true }) => {
   // Keep the session alive while working on the timeline
   useSessionKeepAlive(10 * 60 * 1000); // 10 minutes - increased to prevent frequent refreshes
-  
+
   useEffect(() => {
     // Track timeline view
     window.gtag('event', 'view_timeline', {
@@ -145,9 +146,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         .from('trip_days')
         .delete()
         .eq('day_id', dayId);
-      
+
       if (error) throw error;
-      
+
       toast.success('Day deleted successfully');
       refreshDays();
     } catch (error) {
@@ -200,14 +201,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Share</span>
           </Button>
-          <ExportPdfButton 
-            tripId={tripId} 
+          <ExportPdfButton
+            tripId={tripId}
             className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
           />
         </div>
       </div>
-      
-      <ShareTripDialog 
+
+      <ShareTripDialog
         tripId={tripId}
         tripDestination={tripDestination || 'Trip'}
         open={isShareDialogOpen}
@@ -220,6 +221,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         onDayDelete={handleDayDelete}
         tripArrivalDate={localTripDates.arrival_date || undefined}
         tripDepartureDate={localTripDates.departure_date || undefined}
+        canEdit={canEdit}
       />
     </div>
   );

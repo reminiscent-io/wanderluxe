@@ -43,9 +43,10 @@ const CreateTrip = () => {
   
  
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-xl bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-2xl font-semibold text-center mb-8">Create New Trip</h1>
+    <div className="min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-xl bg-gradient-to-br from-sand-100 via-sand-50 to-earth-100 rounded-2xl shadow-xl p-8 border border-sand-200">
+        <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-earth-900">Plan Your Next Adventure</h1>
+        <p className="text-earth-600 text-center mb-8">Where will your journey take you?</p>
         <CreateTripForm
           destination={destination}
           setDestination={setDestination}

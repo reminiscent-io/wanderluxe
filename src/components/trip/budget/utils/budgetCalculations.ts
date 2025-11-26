@@ -4,14 +4,22 @@ import { ExpenseItem } from '@/types/trip';
 export function formatCurrencyWithSymbol(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] || currency;
 
+  // Format number with commas and proper decimal places
+  const formatNumber = (num: number, decimals: number = 2): string => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(num);
+  };
+
   if (currency === 'JPY') {
-    return `${symbol}${Math.round(amount)}`;
+    return `${symbol}${formatNumber(Math.round(amount), 0)}`;
   }
 
   if (symbol === currency) {
-    return `${amount.toFixed(2)} ${currency}`;
+    return `${formatNumber(amount)} ${currency}`;
   } else {
-    return `${symbol}${amount.toFixed(2)}`;
+    return `${symbol}${formatNumber(amount)}`;
   }
 }
 

@@ -88,7 +88,7 @@ export default function TransportationForm({
       
       form.setValue("travel_range", {
         start: tripArrivalDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
-        end: tripDepartureDate ? parse(tripDepartureDate, "yyyy-MM-dd", new Date()) : null,
+        end: tripDepartureDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
         startTime: "",
         endTime: "",
       });
@@ -165,7 +165,7 @@ export default function TransportationForm({
   /* ----------------------------------- JSX ----------------------------------- */
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 w-full max-w-full">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 w-full max-w-full">
         <TransportationFormFields
           form={form}
           tripArrivalDate={tripArrivalDate}

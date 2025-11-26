@@ -1,18 +1,22 @@
-modules = ["bun", "nodejs-20", "postgresql-16", "web"]
+modules = ["bun", "postgresql-16", "web", "nodejs-22"]
 run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"
-packages = ["supabase-cli"]
+packages = ["supabase-cli", "nodejs_22"]
 
 [deployment]
-run = ["sh", "-c", "bun run preview"]
+run = ["sh", "-c", "npm run preview"]
 deploymentTarget = "cloudrun"
-build = ["sh", "-c", "bun run build"]
+build = ["sh", "-c", "npm run build"]
 
 [[ports]]
 localPort = 3000
 externalPort = 3001
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
 
 [[ports]]
 localPort = 8080
@@ -25,6 +29,14 @@ externalPort = 8081
 [[ports]]
 localPort = 8082
 externalPort = 3000
+
+[[ports]]
+localPort = 40981
+externalPort = 3003
+
+[[ports]]
+localPort = 44549
+externalPort = 3002
 
 [objectStorage]
 defaultBucketID = "replit-objstore-852a1cd5-5447-4cfc-b160-424e3a606d77"
@@ -39,7 +51,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bun run dev"
+args = "npm run dev"
 
 [agent]
 integrations = ["javascript_openai==1.0.0"]
