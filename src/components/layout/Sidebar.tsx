@@ -338,20 +338,32 @@ export default function Sidebar({ tripId }: SidebarProps) {
             });
           }
         }}
-        activity={selectedActivity ? activityEdit : newActivity}
-        onActivityChange={selectedActivity ? setActivityEdit : setNewActivity}
-        onSubmit={async (activity) => {
-          if (selectedActivity) {
-            await handleActivityEdit(selectedActivity, activity);
-          } else {
-            await handleActivityAdd(activity);
-          }
-        }}
-        onDelete={async (id) => await handleActivityDelete(id)}
-        eventId={tripId || ""}
+        initialData={selectedActivity ? activityEdit : newActivity}
         tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
         tripId={tripId || ""}
         activityId={selectedActivity}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+          queryClient.invalidateQueries({ queryKey: ["activities"] });
+          setActivityOpen(false);
+          setSelectedActivity(null);
+          setActivityEdit({
+            title: '',
+            description: '',
+            start_time: '',
+            end_time: '',
+            cost: '',
+            currency: 'USD',
+          });
+          setNewActivity({
+            title: '',
+            description: '',
+            start_time: '',
+            end_time: '',
+            cost: '',
+            currency: 'USD',
+          });
+        }}
       />
 
       <TravelerDialog
