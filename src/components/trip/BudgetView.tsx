@@ -8,6 +8,9 @@ import { useExpenses } from './budget/hooks/useExpenses';
 import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
+import CategoryBreakdownChart from './budget/components/CategoryBreakdownChart';
+import BudgetHealthCard from './budget/components/BudgetHealthCard';
+import SpendingInsights from './budget/components/SpendingInsights';
 import { convertCurrency } from './budget/utils/currencyConverter';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
 import { useTripQuery } from '@/hooks/useTripQuery';
@@ -384,87 +387,94 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
         >
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm text-sand-600">Total Budget</p>
+                  <div className="flex items-center gap-1 mb-2">
+                    <p className="text-xs text-sand-600 uppercase tracking-wide">Budget</p>
                     {!isEditingBudget && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsEditingBudget(true)}
-                        className="h-6 w-6 p-0 text-sand-500 hover:text-earth-600"
+                        className="h-5 w-5 p-0 text-sand-500 hover:text-earth-600"
                       >
                         <Edit3 className="w-3 h-3" />
                       </Button>
                     )}
                   </div>
                   {isEditingBudget ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Input
                         type="text"
                         value={budgetInput}
                         onChange={handleBudgetInputChange}
-                        className="h-8 text-lg font-bold border-earth-300 focus:border-earth-500"
-                        placeholder="e.g., 5,000.00"
+                        className="h-7 text-sm font-semibold border-earth-300 focus:border-earth-500"
+                        placeholder="e.g., 5,000"
                       />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={updateBudget}
-                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                        className="h-7 w-7 p-0 text-green-600 hover:text-green-700"
                       >
-                        <Check className="w-4 h-4" />
+                        <Check className="w-3 h-3" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={cancelBudgetEdit}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </Button>
                     </div>
                   ) : (
-                    <p className="text-2xl font-bold text-earth-600">
-                      {totalBudget > 0 ? formatCurrencyWithSymbol(totalBudget, selectedCurrency) : 'Set Budget'}
+                    <p className="text-lg font-bold text-earth-600">
+                      {totalBudget > 0 ? formatCurrencyWithSymbol(totalBudget, selectedCurrency) : 'Not set'}
                     </p>
                   )}
                 </div>
-                <DollarSign className="w-8 h-8 text-earth-500" />
+                <DollarSign className="w-6 h-6 text-earth-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Total Spent</p>
-                  <p className="text-2xl font-bold text-red-600">{formatCurrencyWithSymbol(totalSpent, selectedCurrency)}</p>
+          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-sand-600 uppercase tracking-wide mb-2">Spent</p>
+                  <p className="text-lg font-bold text-red-600">{formatCurrencyWithSymbol(totalSpent, selectedCurrency)}</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-red-500" />
+                <TrendingUp className="w-6 h-6 text-red-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Remaining</p>
-                  <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-sand-600 uppercase tracking-wide mb-2">Remaining</p>
+                  <p className={`text-lg font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrencyWithSymbol(remainingBudget, selectedCurrency)}
                   </p>
                 </div>
-                <PieChart className="w-8 h-8 text-green-500" />
+                <PieChart className="w-6 h-6 flex-shrink-0" style={{ color: remainingBudget >= 0 ? '#10b981' : '#ef4444' }} />
               </div>
             </CardContent>
           </Card>
+
+          {/* New Budget Health Card */}
+          <BudgetHealthCard
+            totalBudget={totalBudget}
+            totalSpent={totalSpent}
+            selectedCurrency={selectedCurrency}
+          />
         </motion.div>
 
         {/* Tabs Navigation */}
@@ -612,10 +622,17 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             </TabsContent>
 
             <TabsContent value="categories" className="space-y-6">
+              {/* Visual Chart */}
+              <CategoryBreakdownChart
+                expenses={convertedExpenses}
+                selectedCurrency={selectedCurrency}
+              />
+
+              {/* Detailed Breakdown */}
               <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-earth-600">Spending by Category</CardTitle>
-                  <CardDescription>Breakdown of your expenses by category</CardDescription>
+                  <CardTitle className="text-earth-600">Detailed Breakdown</CardTitle>
+                  <CardDescription>Spending details for each category</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -662,16 +679,22 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6">
-              <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-12 text-center">
-                  <PieChart className="w-12 h-12 text-sand-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-earth-600">Advanced Analytics</h3>
-                  <p className="text-sand-600">
-                    Detailed spending analytics and insights coming soon. This will include spending trends,
-                    budget forecasting, and personalized recommendations.
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Insights Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-earth-600 mb-4">Spending Insights</h3>
+                <SpendingInsights
+                  expenses={convertedExpenses}
+                  totalBudget={totalBudget}
+                  totalSpent={totalSpent}
+                  selectedCurrency={selectedCurrency}
+                />
+              </div>
+
+              {/* Charts Section */}
+              <CategoryBreakdownChart
+                expenses={convertedExpenses}
+                selectedCurrency={selectedCurrency}
+              />
             </TabsContent>
           </Tabs>
         </motion.div>

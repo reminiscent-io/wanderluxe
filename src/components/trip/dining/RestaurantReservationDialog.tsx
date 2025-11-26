@@ -120,11 +120,11 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="overflow-visible">
+        <DialogHeader className="flex-shrink-0 z-40">
           <DialogTitle>{title || (finalInitialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1 overflow-visible">
           <RestaurantReservationForm
             onSubmit={handleSubmit}
             isSubmitting={legacyIsSubmitting ?? isSubmitting}

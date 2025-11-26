@@ -11,6 +11,10 @@ import {
   extractIata,
   diffMinutes,
   humanizeMinutes,
+  getTimePeriod,
+  getPeriodLabel,
+  getPeriodOrder,
+  TimePeriod,
 } from './timeline-utils';
 
 type UseDayTimelineInput = {
@@ -29,12 +33,19 @@ type UseDayTimelineOutput = {
   allDayHotels: HotelStay[];
   timelineItems: TimelineItem[];
   rows: TimelineRenderRow[];        // items + subtle layover hints
+  periodGroups: TimelinePeriodGroup[]; // grouped by time period
   summary: string;
   isCheckInDay: boolean;
   isCheckOutDay: boolean;
   isTravelDay: boolean;
   totalEvents: number;              // hints don’t count
 };
+
+export interface TimelinePeriodGroup {
+  period: TimePeriod;
+  label: string;
+  rows: TimelineRenderRow[];
+}
 
 export function useDayTimeline({
   dateISO,
@@ -231,6 +242,45 @@ export function useDayTimeline({
     return result;
   }, [timelineItems, normalizedDay]);
 
+  // Group rows by time period
+  const periodGroups: TimelinePeriodGroup[] = useMemo(() => {
+    const groupMap = new Map<TimePeriod, TimelineRenderRow[]>();
+    const periodOrder = ['early-morning', 'morning', 'afternoon', 'evening', 'night', 'no-time'] as const;
+    
+    // Initialize all periods
+    periodOrder.forEach(period => {
+      groupMap.set(period as TimePeriod, []);
+    });
+
+    // Distribute rows to periods
+    let lastItemPeriod: TimePeriod = 'no-time';
+    rows.forEach(row => {
+      if (row.kind === 'hint') {
+        // Attach hint to the period of the last item
+        groupMap.get(lastItemPeriod)?.push(row);
+      } else {
+        const period = getTimePeriod(row.item.time);
+        lastItemPeriod = period;
+        groupMap.get(period)?.push(row);
+      }
+    });
+
+    // Build result with only non-empty periods
+    const result: TimelinePeriodGroup[] = [];
+    periodOrder.forEach(period => {
+      const period_rows = groupMap.get(period as TimePeriod) || [];
+      if (period_rows.length > 0) {
+        result.push({
+          period: period as TimePeriod,
+          label: getPeriodLabel(period as TimePeriod),
+          rows: period_rows,
+        });
+      }
+    });
+
+    return result;
+  }, [rows]);
+
   // Summary & badges
   const activityCount = activities.length;
   const hotelCount = filteredHotelStays.length;
@@ -259,6 +309,7 @@ export function useDayTimeline({
     allDayHotels,
     timelineItems,
     rows,
+    periodGroups,
     summary,
     isCheckInDay,
     isCheckOutDay,

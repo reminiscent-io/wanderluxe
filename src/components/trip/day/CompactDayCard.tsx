@@ -10,6 +10,7 @@ import DayHeader from './components/DayHeader';
 import AllDayHotelsSection from './components/AllDayHotelsSection';
 import TimelineRow from './components/TimelineRow';
 import LayoverHintRow from './components/LayoverHintRow';
+import TimePeriodHeader from './components/TimePeriodHeader';
 import { useDayTimeline } from './components/useDayTimeline';
 
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
@@ -46,7 +47,14 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   onActivityClick, onHotelClick, onTransportationClick, onReservationClick,
   canEdit = true,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  // Check if day is in the past for auto-collapse
+  const dayDate = new Date(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dayDate.setHours(0, 0, 0, 0);
+  const isPastDay = dayDate < today;
+  
+  const [isExpanded, setIsExpanded] = useState(!isPastDay);
 
   // live subscriptions
   const { reservations = [] } = useReservationsRealtime(id, tripId);
@@ -96,6 +104,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     isTodayFlag,
     allDayHotels,
     rows,
+    periodGroups,
     summary,
     isCheckInDay,
     isCheckOutDay,
@@ -162,23 +171,28 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
 
                     <div className="relative">
-                      {rows.map((row, i) =>
-                        row.kind === 'item' ? (
-                          <TimelineRow
-                            key={row.item.id}
-                            item={row.item}
-                            idx={i}
-                            isLast={i >= rows.length - 1}
-                            tripId={tripId}
-                            onActivityClick={onActivityClick}
-                            onHotelClick={onHotelClick}
-                            onTransportationClick={onTransportationClick}
-                            onReservationClick={onReservationClick}
-                          />
-                        ) : (
-                          <LayoverHintRow key={row.id} text={row.text} />
-                        )
-                      )}
+                      {periodGroups.map((group, groupIdx) => (
+                        <div key={group.period}>
+                          <TimePeriodHeader label={group.label} isFirst={groupIdx === 0} />
+                          {group.rows.map((row, i) =>
+                            row.kind === 'item' ? (
+                              <TimelineRow
+                                key={row.item.id}
+                                item={row.item}
+                                idx={i}
+                                isLast={i >= group.rows.length - 1}
+                                tripId={tripId}
+                                onActivityClick={onActivityClick}
+                                onHotelClick={onHotelClick}
+                                onTransportationClick={onTransportationClick}
+                                onReservationClick={onReservationClick}
+                              />
+                            ) : (
+                              <LayoverHintRow key={row.id} text={row.text} />
+                            )
+                          )}
+                        </div>
+                      ))}
                     </div>
 
                     {canEdit && (

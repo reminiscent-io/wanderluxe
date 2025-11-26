@@ -400,17 +400,17 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="reservation_date"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="relative z-50">
                 <FormLabel>
                   Reservation Date <span className="text-red-500">*</span>
                 </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="relative z-50">
                       <SelectValue placeholder="Select a date" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="z-[999]">
+                  <SelectContent className="z-[9999] min-w-[200px] max-h-[300px]">
                     {tripDates.map((date) => {
                       const [year, month, day] = date.split('-').map(Number);
                       const safeDate = new Date(year, month - 1, day);
@@ -441,7 +441,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     value={field.value || ''}
                     onChange={field.onChange}
                     step="300"
-                    className="w-full bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
+                    className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500 max-w-[150px] sm:max-w-full"
                   />
                 </FormControl>
                 <FormMessage />
