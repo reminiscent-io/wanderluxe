@@ -40,6 +40,7 @@ export function usePWAInstall() {
 
   const handleInstall = async () => {
     if (deferredPrompt) {
+      // Native browser install prompt (Chrome/Android)
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       
@@ -47,10 +48,20 @@ export function usePWAInstall() {
         setDeferredPrompt(null);
       }
     } else {
-      alert('To install WanderLuxe as an app:\n\n1. Tap the menu icon (⋮) in your browser\n2. Select "Add to Home Screen" or "Install app"');
+      // Fallback: Show native browser share sheet to access "Add to Home Screen"
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'WanderLuxe',
+            text: 'Add WanderLuxe to your home screen for offline access',
+            url: window.location.href,
+          });
+        } catch (err) {
+          // User cancelled
+        }
+      }
     }
   };
 
-  // Always show button on mobile
   return { canInstall: isMobile, handleInstall };
 }
