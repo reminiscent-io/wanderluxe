@@ -3,8 +3,9 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  MessageCircle, BarChart2, Package, Settings, ArrowLeft, Users
+  MessageCircle, BarChart2, Package, Settings, ArrowLeft, Users, Download
 } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export default function Sidebar({ tripId }: SidebarProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
+  const { canInstall, handleInstall } = usePWAInstall();
 
   const {
     isOpen, setIsOpen,
@@ -169,7 +171,22 @@ export default function Sidebar({ tripId }: SidebarProps) {
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-sand-200">
+      <div className="p-4 border-t border-sand-200 space-y-3">
+        {/* Mobile-only PWA Install Button - Shows only on mobile when in trip */}
+        {tripId && canInstall && (
+          <div className="md:hidden">
+            <Button
+              onClick={handleInstall}
+              className="w-full justify-start bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200"
+              variant="outline"
+              size="sm"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Add to Home Screen for offline use
+            </Button>
+          </div>
+        )}
+        
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
