@@ -11,17 +11,21 @@ export function usePWAInstall() {
 
   useEffect(() => {
     const handler = (e: Event) => {
+      console.log('beforeinstallprompt event fired!');
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setCanInstall(true);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
+    console.log('PWA install listener registered');
+    
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   useEffect(() => {
     const handleAppInstalled = () => {
+      console.log('App installed!');
       setCanInstall(false);
       setDeferredPrompt(null);
     };
@@ -31,14 +35,21 @@ export function usePWAInstall() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      console.log('No deferred prompt available');
+      return;
+    }
 
+    console.log('Install clicked, showing install dialog...');
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
+      console.log('Install accepted');
       setDeferredPrompt(null);
       setCanInstall(false);
+    } else {
+      console.log('Install dismissed');
     }
   };
 
