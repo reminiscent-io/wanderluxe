@@ -59,6 +59,9 @@ export function usePWAInstall() {
         } catch (err) {
           // User cancelled
         }
+      } else {
+        // For browsers that don't support share API
+        alert('To install WanderLuxe:\n\n1. Tap the Share button\n2. Scroll and tap "Add to Home Screen"');
       }
     }
   };
