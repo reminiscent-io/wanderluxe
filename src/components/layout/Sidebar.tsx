@@ -3,8 +3,9 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  MessageCircle, BarChart2, Package, Settings, ArrowLeft, Users
+  MessageCircle, BarChart2, Package, Settings, ArrowLeft, Users, Download
 } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export default function Sidebar({ tripId }: SidebarProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
+  const { canInstall, handleInstall } = usePWAInstall();
 
   const {
     isOpen, setIsOpen,
@@ -105,6 +107,9 @@ export default function Sidebar({ tripId }: SidebarProps) {
             <div key={item.title}>
               <NavLink
                 to={`/trip/${tripId}/${item.href}`}
+                onClick={() => {
+                  if (window.innerWidth < 768) setIsOpen(false);
+                }}
                 className={({ isActive }) => cn(
                   "w-full justify-start text-left flex items-center px-4 py-2 rounded-md transition-colors",
                   isActive
@@ -166,7 +171,22 @@ export default function Sidebar({ tripId }: SidebarProps) {
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-sand-200">
+      <div className="p-4 border-t border-sand-200 space-y-3">
+        {/* Mobile-only PWA Install Button - Shows only on mobile when in trip */}
+        {tripId && canInstall && (
+          <div className="md:hidden">
+            <Button
+              onClick={handleInstall}
+              className="w-full justify-start bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200"
+              variant="outline"
+              size="sm"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Add to Home Screen
+            </Button>
+          </div>
+        )}
+        
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -338,20 +358,32 @@ export default function Sidebar({ tripId }: SidebarProps) {
             });
           }
         }}
-        activity={selectedActivity ? activityEdit : newActivity}
-        onActivityChange={selectedActivity ? setActivityEdit : setNewActivity}
-        onSubmit={async (activity) => {
-          if (selectedActivity) {
-            await handleEditActivity(selectedActivity, activity);
-          } else {
-            await handleAddActivity(activity);
-          }
-        }}
-        onDelete={async (id) => await handleActivityDelete(id)}
-        eventId={tripId || ""}
+        initialData={selectedActivity ? activityEdit : newActivity}
         tripDates={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date } : undefined}
         tripId={tripId || ""}
         activityId={selectedActivity}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+          queryClient.invalidateQueries({ queryKey: ["activities"] });
+          setActivityOpen(false);
+          setSelectedActivity(null);
+          setActivityEdit({
+            title: '',
+            description: '',
+            start_time: '',
+            end_time: '',
+            cost: '',
+            currency: 'USD',
+          });
+          setNewActivity({
+            title: '',
+            description: '',
+            start_time: '',
+            end_time: '',
+            cost: '',
+            currency: 'USD',
+          });
+        }}
       />
 
       <TravelerDialog

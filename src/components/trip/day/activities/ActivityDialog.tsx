@@ -160,9 +160,9 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     }
   }, [initialData]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (activityId && onDelete) {
-      onDelete(activityId);
+      await onDelete(activityId);
       onOpenChange(false);
     }
   };

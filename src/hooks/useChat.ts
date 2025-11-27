@@ -116,7 +116,9 @@ export function useChat(tripId: string) {
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [tripId, qc]);
 
   /* 3 · helper to optimistically add a message ------------------------------ */
