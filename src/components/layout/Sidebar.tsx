@@ -182,7 +182,7 @@ export default function Sidebar({ tripId }: SidebarProps) {
               size="sm"
             >
               <Download className="mr-2 h-4 w-4" />
-              Add to Home Screen for offline use
+              Add to Home Screen
             </Button>
           </div>
         )}
