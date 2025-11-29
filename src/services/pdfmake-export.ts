@@ -247,7 +247,7 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
     const items: Item[] = [];
 
     /* accommodation ----------------------------------------------------- */
-    if ((o as any).sections?.accommodation) {
+    {
       (stays ?? []).forEach(s => {
         if (!s.hotel_checkin_date || !s.hotel_checkout_date) return;
 
@@ -276,7 +276,7 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
     }
 
     /* transportation ---------------------------------------------------- */
-    if ((o as any).sections?.transportation) {
+    {
       (trans ?? []).forEach(t => {
         if (!isSameDay(t.start_date, day.date)) return;
 
@@ -303,7 +303,7 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
     }
 
     /* activities -------------------------------------------------------- */
-    if ((o as any).sections?.activities) {
+    {
       (acts ?? []).filter((a: any) => a.day_id === day.day_id).forEach(a => {
         const t = fmtTime(a.start_time);
         items.push({
@@ -318,7 +318,7 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
     }
 
     /* dining ------------------------------------------------------------ */
-    if ((o as any).sections?.dining) {
+    {
       (dine ?? []).forEach(r => {
         const match = (r.day_id && r.day_id === day.day_id) ||
                       (r.reservation_time && isSameDay(r.reservation_time, day.date));

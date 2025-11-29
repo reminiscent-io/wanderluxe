@@ -9,9 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
-import { FileDown, Loader2, Image, DollarSign, FileText, Layout } from 'lucide-react';
+import { FileDown, Loader2, Image, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PdfExportDialogProps {
@@ -23,14 +21,6 @@ interface PdfExportDialogProps {
 export interface PdfExportOptions {
   showImages: boolean;
   showCosts: boolean;
-  detailLevel: 'full' | 'summary' | 'minimal';
-  layout: 'timeline' | 'daily' | 'list';
-  sections: {
-    transportation: boolean;
-    accommodation: boolean;
-    activities: boolean;
-    dining: boolean;
-  };
 }
 
 const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
@@ -43,14 +33,6 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
   const [options, setOptions] = useState<PdfExportOptions>({
     showImages: true,
     showCosts: true,
-    detailLevel: 'full',
-    layout: 'timeline',
-    sections: {
-      transportation: true,
-      accommodation: true,
-      activities: true,
-      dining: true,
-    },
   });
 
   const handleExport = async () => {
@@ -67,16 +49,6 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
     }
   };
 
-  const updateSection = (section: keyof PdfExportOptions['sections'], value: boolean) => {
-    setOptions(prev => ({
-      ...prev,
-      sections: {
-        ...prev.sections,
-        [section]: value,
-      },
-    }));
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -90,186 +62,53 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileDown className="h-5 w-5" />
-            Customize PDF Export
+            Export Itinerary
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6 py-2">
-          {/* Visual Options */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Image className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm font-medium">Visual Elements</Label>
-            </div>
-            
-            <div className="space-y-3 pl-6">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show-images" className="text-sm">
-                  Include images and photos
-                </Label>
-                <Switch
-                  id="show-images"
-                  checked={options.showImages}
-                  onCheckedChange={(checked) =>
-                    setOptions(prev => ({ ...prev, showImages: checked }))
-                  }
-                  className="data-[state=checked]:bg-sand-500"
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show-costs" className="text-sm">
-                  Show costs and pricing
-                </Label>
-                <Switch
-                  id="show-costs"
-                  checked={options.showCosts}
-                  onCheckedChange={(checked) =>
-                    setOptions(prev => ({ ...prev, showCosts: checked }))
-                  }
-                  className="data-[state=checked]:bg-sand-500"
-                />
+        <div className="space-y-6 py-4">
+          {/* Pictures Option */}
+          <div className="flex items-center justify-between p-4 bg-sand-50 rounded-lg border border-sand-200">
+            <div className="flex items-center gap-3">
+              <Image className="h-5 w-5 text-earth-600" />
+              <div>
+                <Label className="text-sm font-medium">Include Pictures</Label>
+                <p className="text-xs text-sand-600">Add photos to your itinerary</p>
               </div>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Detail Level */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm font-medium">Detail Level</Label>
-            </div>
-            
-            <RadioGroup
-              value={options.detailLevel}
-              onValueChange={(value) =>
-                setOptions(prev => ({ ...prev, detailLevel: value as PdfExportOptions['detailLevel'] }))
+            <Switch
+              checked={options.showImages}
+              onCheckedChange={(checked) =>
+                setOptions(prev => ({ ...prev, showImages: checked }))
               }
-              className="pl-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="full" id="detail-full" />
-                <Label htmlFor="detail-full" className="text-sm">
-                  Full Details - Complete descriptions and information
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="summary" id="detail-summary" />
-                <Label htmlFor="detail-summary" className="text-sm">
-                  Summary - Key details only
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="minimal" id="detail-minimal" />
-                <Label htmlFor="detail-minimal" className="text-sm">
-                  Minimal - Essential information only
-                </Label>
-              </div>
-            </RadioGroup>
+              className="data-[state=checked]:bg-earth-500"
+            />
           </div>
 
-          <Separator />
-
-          {/* Layout Style */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Layout className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm font-medium">Layout Style</Label>
+          {/* Prices Option */}
+          <div className="flex items-center justify-between p-4 bg-sand-50 rounded-lg border border-sand-200">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-5 w-5 text-earth-600" />
+              <div>
+                <Label className="text-sm font-medium">Include Prices</Label>
+                <p className="text-xs text-sand-600">Show costs and expenses</p>
+              </div>
             </div>
-            
-            <RadioGroup
-              value={options.layout}
-              onValueChange={(value) =>
-                setOptions(prev => ({ ...prev, layout: value as PdfExportOptions['layout'] }))
+            <Switch
+              checked={options.showCosts}
+              onCheckedChange={(checked) =>
+                setOptions(prev => ({ ...prev, showCosts: checked }))
               }
-              className="pl-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="timeline" id="layout-timeline" />
-                <Label htmlFor="layout-timeline" className="text-sm">
-                  Timeline - Visual timeline with time markers
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="daily" id="layout-daily" />
-                <Label htmlFor="layout-daily" className="text-sm">
-                  Daily Summary - Compact day-by-day cards
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="list" id="layout-list" />
-                <Label htmlFor="layout-list" className="text-sm">
-                  Simple List - Clean chronological list
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <Separator />
-
-          {/* Sections to Include */}
-          <div className="space-y-4">
-            <Label className="text-sm font-medium">Sections to Include</Label>
-            
-            <div className="space-y-3 pl-6">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="section-accommodation" className="text-sm">
-                  Hotels & Accommodation
-                </Label>
-                <Switch
-                  id="section-accommodation"
-                  checked={options.sections.accommodation}
-                  onCheckedChange={(checked) => updateSection('accommodation', checked)}
-                  className="data-[state=checked]:bg-sand-500"
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="section-transportation" className="text-sm">
-                  Transportation & Flights
-                </Label>
-                <Switch
-                  id="section-transportation"
-                  checked={options.sections.transportation}
-                  onCheckedChange={(checked) => updateSection('transportation', checked)}
-                  className="data-[state=checked]:bg-sand-500"
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="section-activities" className="text-sm">
-                  Activities & Events
-                </Label>
-                <Switch
-                  id="section-activities"
-                  checked={options.sections.activities}
-                  onCheckedChange={(checked) => updateSection('activities', checked)}
-                  className="data-[state=checked]:bg-sand-500"
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="section-dining" className="text-sm">
-                  Dining & Restaurants
-                </Label>
-                <Switch
-                  id="section-dining"
-                  checked={options.sections.dining}
-                  onCheckedChange={(checked) => updateSection('dining', checked)}
-                  className="data-[state=checked]:bg-sand-500"
-                />
-              </div>
-            </div>
+              className="data-[state=checked]:bg-earth-500"
+            />
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
           <Button 
             variant="outline" 
             onClick={() => setIsOpen(false)}
