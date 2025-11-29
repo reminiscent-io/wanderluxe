@@ -196,6 +196,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const accommodationsChannelRef = useRef<any>(null);
   const transportationChannelRef = useRef<any>(null);
   const reservationsChannelRef = useRef<any>(null);
+  const subscriptionInitializedRef = useRef(false);
 
   // Memoize invalidation callbacks
   const handleAccommodationChange = useCallback(() => {
@@ -221,7 +222,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Accommodations real-time subscription
   useEffect(() => {
-    if (!tripId) return;
+    if (!tripId || subscriptionInitializedRef.current) return;
 
     const channel = supabase
       .channel(`sidebar-accommodations:${tripId}`)
@@ -248,18 +249,20 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       .subscribe();
 
     accommodationsChannelRef.current = channel;
+    subscriptionInitializedRef.current = true;
 
     return () => {
       if (accommodationsChannelRef.current) {
         supabase.removeChannel(accommodationsChannelRef.current);
         accommodationsChannelRef.current = null;
       }
+      subscriptionInitializedRef.current = false;
     };
   }, [tripId, handleAccommodationChange]);
 
   // Transportation real-time subscription
   useEffect(() => {
-    if (!tripId) return;
+    if (!tripId || subscriptionInitializedRef.current) return;
 
     const channel = supabase
       .channel(`sidebar-transportation:${tripId}`)
@@ -297,7 +300,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Reservations real-time subscription
   useEffect(() => {
-    if (!tripId) return;
+    if (!tripId || subscriptionInitializedRef.current) return;
 
     const channel = supabase
       .channel(`sidebar-reservations:${tripId}`)
