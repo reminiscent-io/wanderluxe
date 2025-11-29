@@ -477,15 +477,23 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
   const fileName = `${sanitizeFilename(trip.destination)}-itinerary.pdf`;
   const pdf = pdfMake.createPdf(doc);
 
-  if (strategy === 'download' || (strategy === 'auto' && !isProbablyMobile())) {
+  // On mobile, always download (window.open is blocked)
+  // On desktop, download by default
+  if (strategy === 'download' || strategy === 'auto') {
     pdf.download(fileName);
     return;
   }
 
-  if (strategy === 'open' || strategy === 'auto') {
-    // Opening in a new tab is friendlier on mobile
-    pdf.open();
-    return;
+  if (strategy === 'open') {
+    // Only use open for explicit open strategy on desktop
+    if (!isProbablyMobile()) {
+      pdf.open();
+      return;
+    } else {
+      // Fallback to download on mobile if open was explicitly requested
+      pdf.download(fileName);
+      return;
+    }
   }
 
   if (strategy === 'blob') {
@@ -493,8 +501,19 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     pdf.getBlob((blob: Blob) => {
       const url = URL.createObjectURL(blob);
       // The caller can read the blob URL via a custom event or you could expose another API to return it.
-      // We just open it here for convenience.
-      window.open(url, '_blank');
+      // We just download it here for convenience.
+      if (!isProbablyMobile()) {
+        window.open(url, '_blank');
+      } else {
+        // Mobile: create a temporary link and click it to download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
     });
   }
 }
