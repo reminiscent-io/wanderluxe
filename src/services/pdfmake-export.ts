@@ -442,7 +442,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     content.push(renderTable(d.items, o, timeWidth));
   });
 
-  const doc: pdfMake.TDocumentDefinitions = {
+  const doc: any = {
     pageSize,
     pageMargins,
     defaultStyle: { fontSize: baseFontSize, lineHeight: 1.25 },
