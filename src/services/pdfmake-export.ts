@@ -358,18 +358,18 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
     const icon = ICON[it.type] || '';
     const stack: any[] = [{ text: `${icon} ${it.title}`, style: 'itemTitle' }];
 
-    if ((o as any).detailLevel !== 'minimal' && it.details) {
+    if (it.details) {
       stack.push({ text: it.details, style: 'itemDetail' });
     }
 
-    if (((o as any).detailLevel !== 'minimal' && it.location) || ((o as any).showCosts && it.cost)) {
-      const meta: string[] = [];
-      if ((o as any).detailLevel !== 'minimal' && it.location) meta.push(it.location);
-      if ((o as any).showCosts && it.cost) meta.push(`Cost: ${it.cost}`);
+    const meta: string[] = [];
+    if (it.location) meta.push(it.location);
+    if (o.showCosts && it.cost) meta.push(`Cost: ${it.cost}`);
+    if (meta.length > 0) {
       stack.push({ text: meta.join('   •   '), style: 'itemMeta' });
     }
 
-    if (it.thumb && (o as any).showImages) {
+    if (it.thumb && o.showImages) {
       stack.push({ image: it.thumb, width: 64, margin: [0, 4, 0, 0] });
     }
 
@@ -421,7 +421,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
 
   // Cover image (data URL, possibly downscaled)
   let coverDataUrl = '';
-  if ((o as any).showImages && trip.cover_image_url) {
+  if (o.showImages && trip.cover_image_url) {
     coverDataUrl = await toDataURI(trip.cover_image_url, imageWidth);
   }
 
