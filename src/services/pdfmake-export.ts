@@ -3,6 +3,7 @@
     - Preserves per-day build from Supabase
     - Transport shows start–end times
     - Safe, linear-time parsing (no ReDoS)
+    - Enhanced with accommodation summary, travel day markers, activity density
     ---------------------------------------------------------------------- */
 
 import pdfMake from 'pdfmake/build/pdfmake';
@@ -53,7 +54,21 @@ type Item = {
   sortKey:   number;  // minutes from midnight (start time) for sorting
 };
 
-type Day = { date: string; title?: string; items: Item[] };
+type Day = { date: string; title?: string; items: Item[]; activityCount?: number; hasTransport?: boolean };
+
+type AccommodationSummary = {
+  hotel: string;
+  checkIn: string;
+  checkOut: string;
+  address?: string;
+};
+
+type TransportSegment = {
+  from: string;
+  to: string;
+  date: string;
+  type: string;
+};
 
 /* =========================================================================
    Mobile/Desktop & Page helpers
@@ -156,6 +171,12 @@ function sanitizeFilename(input?: string | null): string {
   return out || 'itinerary';
 }
 
+function getDensityIndicator(count: number): string {
+  if (count >= 5) return '🔴 Busy';
+  if (count >= 3) return '🟡 Moderate';
+  return '🟢 Light';
+}
+
 /* =========================================================================
    Image helpers with caching & optional downscale (better for mobile)
    ========================================================================= */
@@ -226,7 +247,7 @@ async function drawToCanvas(blob: Blob, targetWidth: number): Promise<string | n
    Data build (Supabase)
    ========================================================================= */
 
-async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
+async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: Day[]; stays: AccommodationSummary[]; transports: TransportSegment[] }> {
   const [
     { data: days, error: daysErr },
     { data: stays },
@@ -243,7 +264,25 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
 
   if (daysErr) throw daysErr;
 
-  return (days ?? []).map(day => {
+  // Build accommodation summary
+  const staysSummary: AccommodationSummary[] = (stays ?? []).map(s => ({
+    hotel: s.hotel || 'Hotel',
+    checkIn: fmtShort(s.hotel_checkin_date),
+    checkOut: fmtShort(s.hotel_checkout_date),
+    address: s.hotel_address,
+  }));
+
+  // Build transport segments
+  const transportSegments: TransportSegment[] = (trans ?? [])
+    .filter((t: any) => t.departure_location && t.arrival_location)
+    .map(t => ({
+      from: t.departure_location,
+      to: t.arrival_location,
+      date: fmtShort(t.start_date),
+      type: t.type === 'flight' ? 'Flight' : t.type ? (t.type.charAt(0).toUpperCase() + t.type.slice(1)) : 'Transport',
+    }));
+
+  const processedDays = (days ?? []).map(day => {
     const items: Item[] = [];
 
     /* accommodation ----------------------------------------------------- */
@@ -270,15 +309,17 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
           location: s.hotel_address || undefined,
           cost: s.cost != null ? `${s.currency} ${s.cost}` : undefined,
           thumb: ((o as any).showImages && s.image_url) ? s.image_url : undefined,
-          sortKey: minsFromTime(t || '8:00 am'), // 8:00 am just to keep mid-early
+          sortKey: minsFromTime(t || '8:00 am'),
         });
       });
     }
 
     /* transportation ---------------------------------------------------- */
+    let hasTransport = false;
     {
       (trans ?? []).forEach(t => {
         if (!isSameDay(t.start_date, day.date)) return;
+        hasTransport = true;
 
         const title = t.type === 'flight'
           ? `Flight${t.provider ? `: ${t.provider}` : ''}`
@@ -341,8 +382,18 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<Day[]> {
       });
     }
 
-    return { ...day, items: items.sort((a, b) => a.sortKey - b.sortKey) };
+    // Count only activities and dining for density (not accommodation/transport)
+    const activityCount = items.filter(i => i.type === 'activity' || i.type === 'dining').length;
+
+    return { 
+      ...day, 
+      items: items.sort((a, b) => a.sortKey - b.sortKey),
+      activityCount,
+      hasTransport,
+    };
   });
+
+  return { days: processedDays, stays: staysSummary, transports: transportSegments };
 }
 
 /* =========================================================================
@@ -386,6 +437,76 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
 }
 
 /* =========================================================================
+   Summary sections
+   ========================================================================= */
+
+function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize: number): any[] {
+  if (!stays.length) return [];
+
+  const content: any[] = [
+    { text: '🏨 WHERE YOU\'RE STAYING', style: 'summaryTitle', margin: [0, 0, 0, 8] },
+  ];
+
+  const table = {
+    table: {
+      widths: ['*', '*', '*'],
+      body: [
+        [
+          { text: 'Hotel', style: 'summaryHeader' },
+          { text: 'Check In', style: 'summaryHeader' },
+          { text: 'Check Out', style: 'summaryHeader' },
+        ],
+        ...stays.map(s => [
+          { text: s.hotel, style: 'summaryCell' },
+          { text: s.checkIn, style: 'summaryCell' },
+          { text: s.checkOut, style: 'summaryCell' },
+        ]),
+      ],
+    },
+    layout: 'lightHorizontalLines' as const,
+  };
+
+  content.push(table);
+  return content;
+}
+
+function renderTransportSummary(transports: TransportSegment[]): any[] {
+  if (!transports.length) return [];
+
+  const content: any[] = [
+    { text: '✈️ TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] },
+  ];
+
+  transports.forEach((t, idx) => {
+    content.push({
+      text: `${t.type}: ${t.from} → ${t.to} (${t.date})`,
+      style: 'summaryItem',
+      margin: [0, idx === 0 ? 0 : 4, 0, 4],
+    });
+  });
+
+  return content;
+}
+
+function renderDailySummary(days: Day[]): any[] {
+  const content: any[] = [
+    { text: '📅 DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] },
+  ];
+
+  days.forEach((d, idx) => {
+    const density = getDensityIndicator(d.activityCount || 0);
+    const travelTag = d.hasTransport ? ' ✈️ Travel Day' : '';
+    content.push({
+      text: `${fmtShort(d.date)}: ${density}${travelTag}`,
+      style: 'summaryItem',
+      margin: [0, idx === 0 ? 0 : 4, 0, 4],
+    });
+  });
+
+  return content;
+}
+
+/* =========================================================================
    Export (mobile/desktop aware)
    ========================================================================= */
 
@@ -417,7 +538,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     ? (sameDay ? fmtDate(trip.arrival_date) : `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`)
     : '';
 
-  const days = await buildDays(tripId, o);
+  const { days, stays, transports } = await buildDays(tripId, o);
 
   // Cover image (data URL, possibly downscaled)
   let coverDataUrl = '';
@@ -427,18 +548,36 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
 
   // Build document definition
   const content: any[] = [];
+  
+  // Cover section
   if (coverDataUrl) content.push({ image: coverDataUrl, width: imageWidth, margin: [0, 0, 0, 12] });
   content.push({ text: `${trip.destination || 'Trip'} Itinerary`, style: 'heroTitle' });
   if (dateRange) content.push({ text: dateRange, style: 'heroSub', margin: [0, 0, 0, 16] });
 
+  // Summary page
+  content.push({ pageBreak: 'after' });
+  content.push({ text: 'Trip Summary', style: 'summaryPageTitle', margin: [0, 0, 0, 12] });
+  content.push(...renderAccommodationSummary(stays, baseFontSize));
+  content.push(...renderTransportSummary(transports));
+  content.push(...renderDailySummary(days));
+
+  // Daily itineraries with markers
   days.forEach((d, idx) => {
+    content.push({ pageBreak: 'before' });
+    
+    // Day header with density and travel day marker
+    const density = getDensityIndicator(d.activityCount || 0);
+    const travelMarker = d.hasTransport ? ' ✈️ TRAVEL DAY' : '';
+    const dayHeaderText = d.title?.trim() 
+      ? `${d.title} – ${fmtDate(d.date)} ${density}${travelMarker}`
+      : `${fmtDate(d.date)} ${density}${travelMarker}`;
+    
     content.push({
-      text: d.title?.trim() ? `${d.title} – ${fmtDate(d.date)}` : fmtDate(d.date),
+      text: dayHeaderText,
       style: 'dayHeader',
-      margin: [0, idx === 0 ? 8 : 16, 0, 6],
-      // Gently page-break before each new day (except the first) to keep things readable on mobile
-      pageBreak: idx === 0 ? undefined : 'before',
+      margin: [0, 8, 0, 6],
     });
+    
     content.push(renderTable(d.items, o, timeWidth));
   });
 
@@ -464,6 +603,11 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     styles: {
       heroTitle: { fontSize: heroTitle, bold: true },
       heroSub:   { fontSize: baseFontSize + 1.5, color: '#6b6b6b' },
+      summaryPageTitle: { fontSize: dayHeader, bold: true, color: '#333', margin: [0, 0, 0, 12] },
+      summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: '#333' },
+      summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: '#8b7355', alignment: 'center' },
+      summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
+      summaryItem: { fontSize: baseFontSize - 0.5, color: '#333' },
       dayHeader: { fontSize: dayHeader, bold: true, color: '#333' },
       timeCell:  { fontSize: baseFontSize - 1, color: '#6b6b6b' },
       itemTitle: { bold: true },
