@@ -1,0 +1,36 @@
+This is a fantastic start! You have successfully moved from a "list" to a "card" architecture. The structure is there: you have the time on the left, the rail in the middle, and the cards on the right.
+However, it currently feels a bit "rigid" and segmented. The vertical line is broken, and the content inside the cards is a bit cramped.
+Here is the specific 3-phase plan to give your AI editor to polish this into a professional UI.
+Phase 1: Fix the "Broken" Timeline Rail
+Currently, the blue line breaks between events. We need it to look like one continuous journey.
+Prompt for your AI:
+> "Refine the timeline visualization on the left.
+>  * Continuous Line: currently, the blue vertical line breaks between cards. Please change the CSS so the vertical line is continuous and connects all the way from the first event of the day to the last, without gaps.
+>  * The Nodes: The dots on the timeline (the nodes) look a bit flat. Change them to be white circles with a 3px colored border (matching the event color). This makes them look like 'stops' on a subway line rather than just dots.
+>  * Alignment: Ensure the dot is perfectly vertically centered relative to the event card to its right."
+> 
+Phase 2: "Breathing Room" (Spacing & Typography)
+The text inside the white cards is hugging the icons too tightly, and the hierarchy is a bit flat.
+Prompt for your AI:
+> "Polish the spacing and typography inside the event cards:
+>  * Internal Padding: Add more padding inside the white cards. Specifically, add 16px of space between the colored icon box and the text next to it.
+>  * Text Hierarchy: The main title (e.g., 'Flight Arrival') is a bit too large. Reduce the font size slightly but keep it Bold. Make the sub-text (e.g., 'Stopping in ATL...') smaller and a lighter grey color to create contrast.
+>  * Icon Box: The blue/yellow squares holding the icons are a bit tight. Increase their size to 48x48px and ensure the white icon inside is centered."
+> 
+Phase 3: The "Social" Layer (Missing Feature)
+You mentioned this is for group travel, but the 'Face Pile' (avatars) we discussed didn't make it into this version. This is a critical visual hook.
+Prompt for your AI:
+> "I need to add the user avatars back in.
+>  * Top Right Positioning: Create a container in the top-right corner of each event card.
+>  * Avatar Stack: Insert 2-3 small circular user avatars (placeholders are fine for now). They should overlap slightly (negative margin).
+>  * Visual Balance: Ensure these avatars don't overlap with the text. If the text is too long, it should wrap before hitting the avatars."
+> 
+Visual Reference for the "Continuous Line"
+To help you visualize Phase 1, look closely at your first screenshot. See how the blue line stops, then there is white space, then it starts again?
+The goal: The line should act like a "track" that sits behind everything.
+The technical hint (if the AI gets stuck): Tell the AI to "Use an absolute positioned line on the parent container relative to the day, rather than drawing a border on each individual child element."
+One Quick "Quick Win"
+In your second screenshot, the Price (€10,810) and "View Details" are on the same line, but the spacing is a bit arbitrary.
+Add this specific instruction:
+> "For the card footer, use flexbox with justify-content: space-between. This will push the Price to the far left and 'View Details' to the far right, making it look much cleaner."
+> 
