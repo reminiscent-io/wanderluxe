@@ -170,10 +170,9 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                   <div className="space-y-2 sm:space-y-3">
                     <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
 
-                    <div className="relative">
+                    <div className="relative space-y-3">
                       {periodGroups.map((group, groupIdx) => (
-                        <div key={group.period}>
-                          <TimePeriodHeader label={group.label} isFirst={groupIdx === 0} />
+                        <div key={group.period} className="space-y-3">
                           {group.rows.map((row, i) =>
                             row.kind === 'item' ? (
                               <TimelineRow

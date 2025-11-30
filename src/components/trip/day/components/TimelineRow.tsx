@@ -49,7 +49,7 @@ const TimelineRow: React.FC<Props> = ({
 
       {/* Card */}
       <div
-        className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-2 sm:p-3 -m-1 transition-all duration-200 hover:shadow-sm"
+        className="flex-1 min-w-0 bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
         onClick={handleItemClick}
       >
         <div className="flex items-start gap-2 sm:gap-3">
