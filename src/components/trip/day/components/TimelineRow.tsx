@@ -71,12 +71,12 @@ const TimelineRow: React.FC<Props> = ({
 
         {/* Main Content: Icon + Title/Subtitle */}
         <div className="flex items-start gap-3">
-          {/* Icon Container: 48x48px rounded square with event-type background */}
-          <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
+          {/* Icon Container: Compact rounded square with event-type background */}
+          <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
             {item.type === 'transportation' && item.data?.type ? (
-              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-5 w-5' })
+              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-4 w-4' })
             ) : (
-              item.icon || <div className="h-5 w-5" />
+              item.icon || <div className="h-4 w-4" />
             )}
           </div>
 
