@@ -91,21 +91,21 @@ const TimelineRow: React.FC<Props> = ({
 
           {/* Text Content: Title + Subtitle */}
           <div className="flex-1 min-w-0">
-            {/* Event Title - Bold */}
-            <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors line-clamp-2">
+            {/* Event Title - Bold, slightly reduced size */}
+            <div className="text-sm font-bold text-earth-900 hover:text-earth-950 transition-colors line-clamp-2">
               {item.title}
             </div>
 
-            {/* Subtitle/Details - Smaller, Lighter Grey */}
+            {/* Subtitle/Details - Smaller, Much Lighter Grey for contrast */}
             {item.description && (
-              <div className="text-xs text-earth-600 mt-0.5 line-clamp-2">
+              <div className="text-xs text-earth-500 mt-1 line-clamp-2">
                 {item.description}
               </div>
             )}
 
             {/* End Time */}
             {item.endTime && (
-              <div className="text-xs text-earth-500 mt-1">until {formatTime12(item.endTime)}</div>
+              <div className="text-xs text-earth-400 mt-1">until {formatTime12(item.endTime)}</div>
             )}
           </div>
         </div>
