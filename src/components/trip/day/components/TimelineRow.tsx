@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import TravelerAvatars from '../../timeline/TravelerAvatars'; // adjust path if needed
-import { TimelineItem, TimelineType, getEventColors, formatTime12, getTransportationIconComponent } from './timeline-utils';
+import { TimelineItem, TimelineType, getEventColors, formatTime12, formatTime12Stacked, getTransportationIconComponent } from './timeline-utils';
 
 type Props = {
   item: TimelineItem;
@@ -30,24 +30,31 @@ const TimelineRow: React.FC<Props> = ({
     if (item.type === 'dining' && onReservationClick && item.data) return onReservationClick(item.data);
   };
 
-  return (
-    <div className="flex gap-2 sm:gap-3 md:gap-4 pb-3 sm:pb-4 last:pb-0">
-      {/* Time */}
-      <div className="w-12 sm:w-16 md:w-20 lg:w-24 flex-shrink-0 text-right">
-        <span className="text-xs sm:text-sm font-semibold text-earth-700">
-          {item.time ? formatTime12(item.time) : '—'}
-        </span>
-      </div>
+  const timeData = formatTime12Stacked(item.time);
 
-      {/* Rail */}
-      <div className="relative flex flex-col items-center">
-        <div className={cn("w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 mt-0.5 border-2 border-white shadow-sm", colors.node)} />
-        {!isLast && (
-          <div className={cn("absolute top-3 sm:top-4 w-0.5 h-full rounded-full", colors.line)} />
+  return (
+    <div className="grid grid-cols-[60px_40px_1fr] gap-0 pb-3 sm:pb-4 last:pb-0">
+      {/* Column 1: Time */}
+      <div className="flex-shrink-0 pr-2 text-right">
+        <div className="font-bold text-earth-900 text-sm">
+          {timeData.time || '—'}
+        </div>
+        {timeData.meridiem && (
+          <div className="font-bold text-earth-700 text-xs">
+            {timeData.meridiem}
+          </div>
         )}
       </div>
 
-      {/* Card */}
+      {/* Column 2: Timeline Rail */}
+      <div className="relative flex flex-col items-center">
+        {/* Continuous blue line */}
+        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-blue-500 -translate-x-1/2" />
+        {/* Colored dot aligned with card center */}
+        <div className={cn("relative w-4 h-4 rounded-full flex-shrink-0 mt-2 border-2 border-white shadow-md z-10", colors.node)} />
+      </div>
+
+      {/* Column 3: Event Card */}
       <div
         className="flex-1 min-w-0 bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
         onClick={handleItemClick}

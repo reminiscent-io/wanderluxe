@@ -35,6 +35,16 @@ export const formatTime12 = (time?: string) => {
   return `${displayHour}:${minutes} ${ampm}`;
 };
 
+// time -> { time: "h:mm", meridiem: "AM/PM" } for stacked display
+export const formatTime12Stacked = (time?: string) => {
+  if (!time) return { time: '', meridiem: '' };
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  return { time: `${displayHour}:${minutes}`, meridiem: ampm };
+};
+
 // normalize "YYYY-MM-DD" from many date string shapes
 export const getNormalizedDay = (date: string) => {
   if (!date) return '';
