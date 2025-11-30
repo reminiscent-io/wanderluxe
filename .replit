@@ -1,14 +1,14 @@
 modules = ["bun", "postgresql-16", "web", "nodejs-22"]
-run = "npm run dev"
+run = "bun run dev"
 
 [nix]
 channel = "stable-24_05"
 packages = ["supabase-cli", "nodejs_22"]
 
 [deployment]
-run = ["sh", "-c", "npm run preview"]
+run = ["sh", "-c", "bun run preview"]
 deploymentTarget = "cloudrun"
-build = ["sh", "-c", "npm run build"]
+build = ["sh", "-c", "bun run build"]
 
 [[ports]]
 localPort = 3000
@@ -51,7 +51,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "bun run dev"
 
 [[workflows.workflow]]
 name = "Bun Run"

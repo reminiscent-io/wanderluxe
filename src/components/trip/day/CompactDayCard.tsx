@@ -165,7 +165,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="border-t border-sand-200 overflow-hidden"
             >
-              <div className="p-3 sm:p-4 md:p-6">
+              <div className="bg-gray-100 p-3 sm:p-4 md:p-6">
                 {hasContent ? (
                   <div className="space-y-2 sm:space-y-3">
                     <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
