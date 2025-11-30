@@ -70,7 +70,7 @@ const TimelineRow: React.FC<Props> = ({
         </div>
 
         {/* Main Content: Icon + Title/Subtitle */}
-        <div className="flex items-start gap-3 pr-24">
+        <div className="flex items-start gap-3">
           {/* Icon Container: 48x48px rounded square with event-type background */}
           <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
             {item.type === 'transportation' && item.data?.type ? (
