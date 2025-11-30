@@ -98,18 +98,55 @@ const TimelineRow: React.FC<Props> = ({
             {item.endTime && (
               <div className="text-xs text-earth-500 mt-1">until {formatTime12(item.endTime)}</div>
             )}
-
-            {/* Cost */}
-            {item.data?.cost && (
-              <div className="flex items-center gap-1 mt-1.5">
-                <DollarSign className="h-3 w-3 text-earth-500" />
-                <span className="text-xs text-earth-600">
-                  {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
-                </span>
-              </div>
-            )}
           </div>
         </div>
+
+        {/* Footer Section - Divider + Price + Action Link */}
+        {(item.data?.cost || item.data?.hotel_website || item.data?.hotel_url) && (
+          <>
+            {/* Horizontal Divider */}
+            <div className="border-t border-gray-200 mt-3 pt-3" />
+
+            {/* Footer Row */}
+            <div className="flex items-center justify-between">
+              {/* Price on the left - Green and Bold */}
+              {item.data?.cost ? (
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-4 w-4 text-emerald-600" />
+                  <span className="font-bold text-emerald-600">
+                    {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
+                  </span>
+                </div>
+              ) : (
+                <div />
+              )}
+
+              {/* Action Link on the right - Blue */}
+              {item.data?.hotel_website && (
+                <a
+                  href={item.data.hotel_website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                >
+                  View Details
+                </a>
+              )}
+              {item.data?.hotel_url && !item.data?.hotel_website && (
+                <a
+                  href={item.data.hotel_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                >
+                  View Booking
+                </a>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
