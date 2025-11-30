@@ -56,43 +56,58 @@ const TimelineRow: React.FC<Props> = ({
 
       {/* Column 3: Event Card */}
       <div
-        className="flex-1 min-w-0 bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
+        className="relative flex-1 min-w-0 bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
         onClick={handleItemClick}
       >
-        <div className="flex items-start gap-2 sm:gap-3">
-          <span className={cn("mt-0.5 flex-shrink-0", colors.icon)}>
+        {/* Top-right: Avatar Stack (Face Pile) */}
+        <div className="absolute top-4 right-4">
+          <TravelerAvatars
+            tripId={tripId}
+            eventType={item.type === 'hotel' ? 'accommodation' : item.type}
+            eventId={item.type === 'hotel' ? item.data.stay_id : item.id}
+            maxShow={3}
+          />
+        </div>
+
+        {/* Main Content: Icon + Title/Subtitle */}
+        <div className="flex items-start gap-3 pr-24">
+          {/* Icon Container: 48x48px rounded square with event-type background */}
+          <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
             {item.type === 'transportation' && item.data?.type ? (
-              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-3 w-3 sm:h-3.5 sm:w-3.5' })
+              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-5 w-5' })
             ) : (
-              item.icon || <div className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              item.icon || <div className="h-5 w-5" />
             )}
-          </span>
+          </div>
+
+          {/* Text Content: Title + Subtitle */}
           <div className="flex-1 min-w-0">
-            <div className="text-sm sm:text-base font-semibold text-earth-800 hover:text-earth-900 transition-colors line-clamp-2">
+            {/* Event Title - Bold */}
+            <div className="text-sm font-semibold text-earth-800 hover:text-earth-900 transition-colors line-clamp-2">
               {item.title}
             </div>
-            {item.endTime && (
-              <div className="text-xs sm:text-sm text-earth-500 mt-1">until {formatTime12(item.endTime)}</div>
-            )}
+
+            {/* Subtitle/Details - Smaller, Lighter Grey */}
             {item.description && (
-              <div className="text-xs text-earth-600 mt-1 line-clamp-3">{item.description}</div>
+              <div className="text-xs text-earth-600 mt-0.5 line-clamp-2">
+                {item.description}
+              </div>
             )}
+
+            {/* End Time */}
+            {item.endTime && (
+              <div className="text-xs text-earth-500 mt-1">until {formatTime12(item.endTime)}</div>
+            )}
+
+            {/* Cost */}
             {item.data?.cost && (
-              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
+              <div className="flex items-center gap-1 mt-1.5">
                 <DollarSign className="h-3 w-3 text-earth-500" />
                 <span className="text-xs text-earth-600">
                   {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
                 </span>
               </div>
             )}
-          </div>
-          <div className="flex-shrink-0 ml-1 sm:ml-2">
-            <TravelerAvatars
-              tripId={tripId}
-              eventType={item.type === 'hotel' ? 'accommodation' : item.type}
-              eventId={item.type === 'hotel' ? item.data.stay_id : item.id}
-              maxShow={2}
-            />
           </div>
         </div>
       </div>
