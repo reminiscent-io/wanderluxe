@@ -12,7 +12,10 @@
       "Bash(bun run preview:*)",
       "Bash(curl:*)",
       "Bash(bun run dev)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(bun run build:*)",
+      "Bash(npm ls:*)",
+      "Bash(bun install)"
     ],
     "deny": [],
     "ask": []

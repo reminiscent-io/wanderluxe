@@ -53,14 +53,5 @@ mode = "sequential"
 task = "shell.exec"
 args = "bun run dev"
 
-[[workflows.workflow]]
-name = "Bun Run"
-mode = "sequential"
-author = 39001524
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bun run dev"
-
 [agent]
 integrations = ["javascript_openai==1.0.0"]
