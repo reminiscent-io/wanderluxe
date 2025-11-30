@@ -228,8 +228,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 setIsDialogOpen(true);
               }}
             >
-              <PencilIcon className="h-4 w-4 mr-2" />
-              Edit Cover
+              <PencilIcon className="h-4 w-4" />
             </Button>
           </div>
         )}
