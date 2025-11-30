@@ -11,7 +11,8 @@
       "Bash(pkill:*)",
       "Bash(bun run preview:*)",
       "Bash(curl:*)",
-      "Bash(bun run dev)"
+      "Bash(bun run dev)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []
