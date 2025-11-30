@@ -46,12 +46,21 @@ const TimelineRow: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Column 2: Timeline Rail */}
+      {/* Column 2: Timeline Rail - Node Only (line handled by parent) */}
       <div className="relative flex flex-col items-center">
-        {/* Continuous blue line */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-blue-500 -translate-x-1/2" />
-        {/* Colored dot aligned with card center */}
-        <div className={cn("relative w-4 h-4 rounded-full flex-shrink-0 mt-2 border-2 border-white shadow-md z-10", colors.node)} />
+        {/* White circle with colored border (3px) aligned with card center */}
+        <div 
+          className="relative w-5 h-5 rounded-full flex-shrink-0 mt-2 bg-white shadow-md z-10"
+          style={{
+            borderWidth: '3px',
+            borderStyle: 'solid',
+            borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' : 
+                        colors.node === 'bg-sky-500' ? '#0ea5e9' :
+                        colors.node === 'bg-emerald-500' ? '#10b981' :
+                        colors.node === 'bg-rose-500' ? '#f43f5e' :
+                        '#94a3b8'
+          }}
+        />
       </div>
 
       {/* Column 3: Event Card */}
@@ -70,13 +79,13 @@ const TimelineRow: React.FC<Props> = ({
         </div>
 
         {/* Main Content: Icon + Title/Subtitle */}
-        <div className="flex items-start gap-3">
-          {/* Icon Container: Compact rounded square with event-type background */}
-          <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
+        <div className="flex items-start gap-4">
+          {/* Icon Container: 48x48px rounded square with event-type background */}
+          <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
             {item.type === 'transportation' && item.data?.type ? (
-              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-4 w-4' })
+              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-5 w-5' })
             ) : (
-              item.icon || <div className="h-4 w-4" />
+              item.icon || <div className="h-5 w-5" />
             )}
           </div>
 
@@ -107,7 +116,7 @@ const TimelineRow: React.FC<Props> = ({
             {/* Horizontal Divider */}
             <div className="border-t border-gray-200 mt-3 pt-3" />
 
-            {/* Footer Row */}
+            {/* Footer Row - Flexbox with space-between */}
             <div className="flex items-center justify-between">
               {/* Price on the left - Green and Bold */}
               {item.data?.cost ? (

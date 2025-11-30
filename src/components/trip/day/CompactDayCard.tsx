@@ -171,8 +171,10 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
 
                     <div className="relative space-y-3">
+                      {/* Continuous timeline line */}
+                      <div className="absolute left-[80px] top-4 bottom-0 w-1 bg-gray-300 -translate-x-1/2" />
                       {periodGroups.map((group, groupIdx) => (
-                        <div key={group.period} className="space-y-3">
+                        <div key={group.period} className="space-y-3 relative z-10">
                           {group.rows.map((row, i) =>
                             row.kind === 'item' ? (
                               <TimelineRow
