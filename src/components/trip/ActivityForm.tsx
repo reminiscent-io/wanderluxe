@@ -5,6 +5,7 @@ import { ActivityFormData } from '@/types/trip';
 import { CURRENCIES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
 import { Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import TravelersTagMultiSelect from './travelers/TravelersTagMultiSelect';
@@ -244,7 +245,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <label htmlFor="start-time" className="block text-sm font-medium text-gray-700">
             Start Time
           </label>
-          <input
+          <Input
             id="start-time"
             type="time"
             value={startTime}
@@ -254,7 +255,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               if (!startTime) setStartTime(NOON);
             }}
             step="300" // 5-minute increments (300 seconds)
-            className="w-full p-2 border rounded-md"
+            className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
           />
         </div>
 
@@ -263,7 +264,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <label htmlFor="end-time" className="block text-sm font-medium text-gray-700">
             End Time
           </label>
-          <input
+          <Input
             id="end-time"
             type="time"
             value={endTime}
@@ -272,7 +273,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               if (!endTime) setEndTime(NOON);
             }}
             step="300" // 5-minute increments
-            className="w-full p-2 border rounded-md"
+            className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
           />
         </div>
         {errors.time && (
