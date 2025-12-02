@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
-import { TimelineItem, TimelineType, getEventColors, formatTime12Stacked, getEventIconComponent } from './timeline-utils';
+import { TimelineItem, TimelineType, getEventColors, formatTime12Stacked, formatTime12, getEventIconComponent } from './timeline-utils';
 import TimelineRow from './TimelineRow';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -41,74 +41,70 @@ const GroupedEventCard: React.FC<Props> = ({
 
   return (
     <div className="pb-3 sm:pb-4">
-      {/* Mobile Layout: Time above card */}
+      {/* Mobile Layout */}
       <div className="sm:hidden">
-        {/* Time */}
-        <div className="flex items-baseline gap-1 mb-2 ml-[60px]">
-          <span className="text-xs font-semibold text-earth-700">
-            {timeData.time || '—'}
-          </span>
-          {timeData.meridiem && (
-            <span className="text-[10px] font-semibold text-earth-600">
-              {timeData.meridiem}
-            </span>
-          )}
-        </div>
-
         {/* Node and Grouped Event Card */}
-        <div className="grid grid-cols-[40px_1fr] gap-0">
-          {/* Timeline Rail - Node Only */}
+        <div className="grid grid-cols-[24px_1fr] gap-2">
+          {/* Timeline Rail - Small Subtle Dot */}
           <div className="relative flex flex-col items-center">
             <div
-              className="relative w-5 h-5 rounded-full flex-shrink-0 mt-2 bg-white shadow-md z-10"
+              className="relative w-2 h-2 rounded-full flex-shrink-0 mt-2 bg-white z-10"
               style={{
-                borderWidth: '3px',
+                borderWidth: '2px',
                 borderStyle: 'solid',
                 borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' :
                             colors.node === 'bg-sky-500' ? '#0ea5e9' :
                             colors.node === 'bg-emerald-500' ? '#10b981' :
                             colors.node === 'bg-rose-500' ? '#f43f5e' :
-                            '#94a3b8'
+                            '#d1d5db',
+                opacity: 0.6
               }}
             />
           </div>
 
           {/* Grouped Event Card */}
           <div className="relative flex-1 min-w-0">
-        <div
-          className="bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {/* Main Content: Icon + Title */}
-          <div className="flex items-start gap-3 sm:gap-4">
-            {/* Icon Container: Responsive size */}
-            <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
-              {React.createElement(IconComponent, { className: 'h-4 w-4 sm:h-5 sm:w-5' })}
-            </div>
+            <div
+              className="bg-white rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-gray-100"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {/* Main Content: Icon + Title */}
+              <div className="flex items-start gap-3">
+                {/* Icon - Outline, no background */}
+                <div className={cn("flex-shrink-0 mt-0.5", colors.node.replace('bg-', 'text-'))}>
+                  {React.createElement(IconComponent, { className: 'h-5 w-5', strokeWidth: 1.5 })}
+                </div>
 
-            {/* Text Content */}
-            <div className="flex-1 min-w-0">
-              {/* Group Title - Bold */}
-              <div className="text-sm font-bold text-earth-900 hover:text-earth-950 transition-colors">
-                {title}
+                {/* Text Content */}
+                <div className="flex-1 min-w-0">
+                  {/* Group Title with inline time */}
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-earth-900 hover:text-earth-950 transition-colors">
+                      {title}
+                    </span>
+                    {firstItem?.time && (
+                      <span className="text-xs font-medium text-earth-500 whitespace-nowrap">
+                        ⏰ {formatTime12(firstItem.time)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Count and Time Range */}
+                  <div className="text-xs text-earth-500 mt-1">
+                    {items.length} {groupType === 'transportation' ? 'flights' : 'events'} • {timeRange}
+                  </div>
+                </div>
+
+                {/* Expand/Collapse Icon */}
+                <div className="flex-shrink-0 ml-2">
+                  {isExpanded ? (
+                    <ChevronDown className="h-5 w-5 text-earth-400" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-earth-400" />
+                  )}
+                </div>
               </div>
-
-              {/* Count and Time Range */}
-              <div className="text-xs text-earth-500 mt-1">
-                {items.length} {groupType === 'transportation' ? 'flights' : 'events'} • {timeRange}
-              </div>
             </div>
-
-            {/* Expand/Collapse Icon */}
-            <div className="flex-shrink-0 ml-2">
-              {isExpanded ? (
-                <ChevronDown className="h-5 w-5 text-earth-400" />
-              ) : (
-                <ChevronRight className="h-5 w-5 text-earth-400" />
-              )}
-            </div>
-          </div>
-        </div>
 
             {/* Expanded Individual Events */}
             <AnimatePresence>
