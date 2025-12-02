@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
@@ -132,9 +132,10 @@ const TimelineRow: React.FC<Props> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
                     >
-                      View Details
+                      Hotel Website
+                      <ExternalLink className="h-3 w-3" strokeWidth={2} />
                     </a>
                   )}
                   {item.data?.hotel_url && !item.data?.hotel_website && (
@@ -143,9 +144,10 @@ const TimelineRow: React.FC<Props> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
                     >
-                      View Booking
+                      Hotel Website
+                      <ExternalLink className="h-3 w-3" strokeWidth={2} />
                     </a>
                   )}
                 </div>
@@ -255,9 +257,10 @@ const TimelineRow: React.FC<Props> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
                   >
-                    View Details
+                    Hotel Website
+                    <ExternalLink className="h-3 w-3" strokeWidth={2} />
                   </a>
                 )}
                 {item.data?.hotel_url && !item.data?.hotel_website && (
@@ -266,9 +269,10 @@ const TimelineRow: React.FC<Props> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
                   >
-                    View Booking
+                    Hotel Website
+                    <ExternalLink className="h-3 w-3" strokeWidth={2} />
                   </a>
                 )}
               </div>
