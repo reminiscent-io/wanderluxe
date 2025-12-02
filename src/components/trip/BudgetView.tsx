@@ -565,52 +565,68 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
                 </div>
               </div>
 
-              {/* Expenses Grid or Table */}
-              <div className="space-y-4">
+              {/* Expenses Table */}
+              <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
                 {!expenses?.items ? (
-                  <div className="grid grid-cols-1 gap-4">
-                    {[1, 2, 3].map((i) => (
-                      <Card key={i} className="p-4">
-                        <div className="animate-pulse flex space-x-4">
-                          <div className="rounded-full bg-sand-200 h-10 w-10"></div>
-                          <div className="flex-1 space-y-2 py-1">
-                            <div className="h-4 bg-sand-200 rounded w-3/4"></div>
-                            <div className="h-3 bg-sand-200 rounded w-1/2"></div>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
+                  <CardContent className="p-8 text-center">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-10 bg-sand-200 rounded"></div>
+                      <div className="h-10 bg-sand-200 rounded"></div>
+                      <div className="h-10 bg-sand-200 rounded"></div>
+                    </div>
+                  </CardContent>
                 ) : filteredExpenses.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredExpenses.map((expense) => (
-                      <ExpenseCard key={expense.id} expense={expense} />
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b border-sand-200 bg-sand-50/50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-earth-600">Description</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-earth-600">Category</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-earth-600">Date</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-earth-600">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredExpenses.map((expense, idx) => (
+                          <tr key={expense.id} className={`border-b border-sand-100 hover:bg-sand-50/50 transition-colors ${idx === filteredExpenses.length - 1 ? 'border-b-0' : ''}`}>
+                            <td className="px-4 py-3 text-sm text-earth-700">{expense.description}</td>
+                            <td className="px-4 py-3">
+                              <Badge className={`${getCategoryColor(expense.category)} flex items-center gap-1 w-fit`}>
+                                {getCategoryIcon(expense.category)}
+                                <span className="text-xs">{expense.category || 'Other'}</span>
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-sand-600">{expense.date}</td>
+                            <td className="px-4 py-3 text-right text-sm font-semibold text-earth-600">
+                              {formatCurrencyWithSymbol(expense.convertedCost, selectedCurrency)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
-                  <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                    <CardContent className="p-12 text-center">
-                      <ShoppingBag className="w-12 h-12 text-sand-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-earth-600 mb-2">No expenses found</h3>
-                      <p className="text-sand-600 mb-4">
-                        {searchQuery || selectedCategory !== 'all' 
-                          ? 'Try adjusting your search or filter criteria.'
-                          : 'Start by adding your first expense to track your spending.'
-                        }
-                      </p>
-                      {canEdit && (
-                        <Button 
-                          onClick={() => setIsAddingExpense(true)}
-                          className="bg-earth-500 hover:bg-earth-600 text-sand-50"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Your First Expense
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <CardContent className="p-12 text-center">
+                    <ShoppingBag className="w-12 h-12 text-sand-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-earth-600 mb-2">No expenses found</h3>
+                    <p className="text-sand-600 mb-4">
+                      {searchQuery || selectedCategory !== 'all' 
+                        ? 'Try adjusting your search or filter criteria.'
+                        : 'Start by adding your first expense to track your spending.'
+                      }
+                    </p>
+                    {canEdit && (
+                      <Button 
+                        onClick={() => setIsAddingExpense(true)}
+                        className="bg-earth-500 hover:bg-earth-600 text-sand-50"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Your First Expense
+                      </Button>
+                    )}
+                  </CardContent>
                 )}
-              </div>
+              </Card>
             </TabsContent>
 
             <TabsContent value="categories" className="space-y-6">
