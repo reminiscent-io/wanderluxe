@@ -119,12 +119,9 @@ const TimelineRow: React.FC<Props> = ({
             <div className="flex items-center justify-between">
               {/* Price on the left - Green and Bold */}
               {item.data?.cost ? (
-                <div className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4 text-emerald-600" />
-                  <span className="font-bold text-emerald-600">
-                    {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-emerald-600">
+                  {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
+                </span>
               ) : (
                 <div />
               )}
