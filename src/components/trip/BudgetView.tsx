@@ -9,7 +9,6 @@ import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
 import CategoryBreakdownChart from './budget/components/CategoryBreakdownChart';
-import BudgetHealthCard from './budget/components/BudgetHealthCard';
 import SpendingInsights from './budget/components/SpendingInsights';
 import { convertCurrency } from './budget/utils/currencyConverter';
 import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
@@ -468,13 +467,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
               </div>
             </CardContent>
           </Card>
-
-          {/* New Budget Health Card */}
-          <BudgetHealthCard
-            totalBudget={totalBudget}
-            totalSpent={totalSpent}
-            selectedCurrency={selectedCurrency}
-          />
         </motion.div>
 
         {/* Tabs Navigation */}
