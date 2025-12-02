@@ -10,33 +10,33 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
+      "src": "/icon-144x144.png",
+      "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
+      "src": "/icon-384x384.png",
+      "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
+      "src": "/icon-144x144.png",
+      "sizes": "144x144",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "screenshots": [
     {
-      "src": "/icon-512x512.png",
+      "src": "/icon-384x384.png",
       "sizes": "540x720",
       "type": "image/png",
       "form_factor": "narrow"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icon-384x384.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide"
@@ -48,14 +48,14 @@
       "short_name": "Create",
       "description": "Start planning a new trip",
       "url": "/create-trip",
-      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/icon-144x144.png", "sizes": "144x144", "type": "image/png" }]
     },
     {
       "name": "My Trips",
       "short_name": "Trips",
       "description": "View your trips",
       "url": "/my-trips",
-      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/icon-144x144.png", "sizes": "144x144", "type": "image/png" }]
     }
   ],
   "categories": ["travel", "productivity"]
