@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import DayHeader from './components/DayHeader';
 import AllDayHotelsSection from './components/AllDayHotelsSection';
 import TimelineRow from './components/TimelineRow';
+import GroupedEventCard from './components/GroupedEventCard';
 import LayoverHintRow from './components/LayoverHintRow';
 import TimePeriodHeader from './components/TimePeriodHeader';
 import { useDayTimeline } from './components/useDayTimeline';
@@ -182,6 +183,19 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                 item={row.item}
                                 idx={i}
                                 isLast={i >= group.rows.length - 1}
+                                tripId={tripId}
+                                onActivityClick={onActivityClick}
+                                onHotelClick={onHotelClick}
+                                onTransportationClick={onTransportationClick}
+                                onReservationClick={onReservationClick}
+                              />
+                            ) : row.kind === 'grouped' ? (
+                              <GroupedEventCard
+                                key={row.id}
+                                items={row.items}
+                                groupType={row.groupType}
+                                title={row.title}
+                                timeRange={row.timeRange}
                                 tripId={tripId}
                                 onActivityClick={onActivityClick}
                                 onHotelClick={onHotelClick}

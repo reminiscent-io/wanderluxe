@@ -15,6 +15,9 @@ import {
   getPeriodLabel,
   getPeriodOrder,
   TimePeriod,
+  groupSimilarEvents,
+  generateGroupTitle,
+  generateGroupTimeRange,
 } from './timeline-utils';
 
 type UseDayTimelineInput = {
@@ -207,38 +210,63 @@ export function useDayTimeline({
     return items;
   }, [activities, filteredHotelStays, filteredTransportations, reservations, normalizedDay]);
 
-  // Compute rows with subtle layover hints
+  // Compute rows with grouping and subtle layover hints
   const rows: TimelineRenderRow[] = useMemo(() => {
     const result: TimelineRenderRow[] = [];
-    for (let i = 0; i < timelineItems.length; i++) {
-      const curr = timelineItems[i];
-      result.push({ kind: 'item', item: curr });
 
-      const next = timelineItems[i + 1];
-      if (!next) continue;
+    // First, group similar events
+    const eventGroups = groupSimilarEvents(timelineItems, normalizedDay);
 
-      const currIsFlight = curr.type === 'transportation' && curr.data?.type === 'flight';
-      const nextIsFlight = next.type === 'transportation' && next.data?.type === 'flight';
-      if (!currIsFlight || !nextIsFlight) continue;
+    for (let groupIdx = 0; groupIdx < eventGroups.length; groupIdx++) {
+      const group = eventGroups[groupIdx];
 
-      const currArrive = curr.data.__arrive_time_on_this_day;
-      const nextDepart = next.data.__depart_time_on_this_day;
-      if (!currArrive || !nextDepart) continue;
+      // If group has multiple items (2+), create a grouped row
+      if (group.length >= 2) {
+        const groupTitle = generateGroupTitle(group);
+        const timeRange = generateGroupTimeRange(group);
+        result.push({
+          kind: 'grouped',
+          id: `group-${group[0].id}`,
+          items: group,
+          groupType: group[0].type,
+          title: groupTitle,
+          timeRange,
+        });
+      } else {
+        // Single item, add as regular item
+        const curr = group[0];
+        result.push({ kind: 'item', item: curr });
 
-      const currArriveAirport = extractIata(curr.data?.arrival_location);
-      const nextDepartAirport = extractIata(next.data?.departure_location);
-      if (!currArriveAirport || currArriveAirport !== nextDepartAirport) continue;
+        // Check for layover hint with next item
+        const nextGroup = eventGroups[groupIdx + 1];
+        if (!nextGroup || nextGroup.length === 0) continue;
 
-      const arriveAt = combineDateAndTime(normalizedDay, currArrive);
-      const departAt = combineDateAndTime(normalizedDay, nextDepart);
-      if (!arriveAt || !departAt) continue;
+        const next = nextGroup[0];
 
-      const mins = diffMinutes(arriveAt, departAt);
-      if (!(mins > 0)) continue;
+        const currIsFlight = curr.type === 'transportation' && curr.data?.type === 'flight';
+        const nextIsFlight = next.type === 'transportation' && next.data?.type === 'flight';
+        if (!currIsFlight || !nextIsFlight) continue;
 
-      const text = `Layover • ${humanizeMinutes(mins)}`;
-      result.push({ kind: 'hint', id: `layover-${curr.id}-${next.id}`, text });
+        const currArrive = curr.data.__arrive_time_on_this_day;
+        const nextDepart = next.data.__depart_time_on_this_day;
+        if (!currArrive || !nextDepart) continue;
+
+        const currArriveAirport = extractIata(curr.data?.arrival_location);
+        const nextDepartAirport = extractIata(next.data?.departure_location);
+        if (!currArriveAirport || currArriveAirport !== nextDepartAirport) continue;
+
+        const arriveAt = combineDateAndTime(normalizedDay, currArrive);
+        const departAt = combineDateAndTime(normalizedDay, nextDepart);
+        if (!arriveAt || !departAt) continue;
+
+        const mins = diffMinutes(arriveAt, departAt);
+        if (!(mins > 0)) continue;
+
+        const text = `Layover • ${humanizeMinutes(mins)}`;
+        result.push({ kind: 'hint', id: `layover-${curr.id}-${next.id}`, text });
+      }
     }
+
     return result;
   }, [timelineItems, normalizedDay]);
 
@@ -246,7 +274,7 @@ export function useDayTimeline({
   const periodGroups: TimelinePeriodGroup[] = useMemo(() => {
     const groupMap = new Map<TimePeriod, TimelineRenderRow[]>();
     const periodOrder = ['early-morning', 'morning', 'afternoon', 'evening', 'night', 'no-time'] as const;
-    
+
     // Initialize all periods
     periodOrder.forEach(period => {
       groupMap.set(period as TimePeriod, []);
@@ -258,6 +286,12 @@ export function useDayTimeline({
       if (row.kind === 'hint') {
         // Attach hint to the period of the last item
         groupMap.get(lastItemPeriod)?.push(row);
+      } else if (row.kind === 'grouped') {
+        // For grouped items, use the time of the first item
+        const firstTime = row.items[0]?.time;
+        const period = getTimePeriod(firstTime);
+        lastItemPeriod = period;
+        groupMap.get(period)?.push(row);
       } else {
         const period = getTimePeriod(row.item.time);
         lastItemPeriod = period;

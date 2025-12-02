@@ -21,6 +21,7 @@ export interface TimelineItem {
 
 export type TimelineRenderRow =
   | { kind: 'item'; item: TimelineItem }
+  | { kind: 'grouped'; id: string; items: TimelineItem[]; groupType: TimelineType; title: string; timeRange: string }
   | { kind: 'hint'; id: string; text: string };
 
 /** ------------------------------- Utilities ------------------------------- */
@@ -184,4 +185,141 @@ export const getEventColors = (type: TimelineType) => {
     default:
       return { node: 'bg-earth-400', line: 'bg-earth-200', icon: 'text-earth-600' };
   }
+};
+
+// Group similar events that occur within a timeframe
+export const groupSimilarEvents = (items: TimelineItem[], dateISO: string): TimelineItem[][] => {
+  if (items.length === 0) return [];
+
+  const groups: TimelineItem[][] = [];
+  let currentGroup: TimelineItem[] = [items[0]];
+
+  for (let i = 1; i < items.length; i++) {
+    const prev = items[i - 1];
+    const curr = items[i];
+
+    // Check if events should be grouped
+    const shouldGroup = shouldGroupEvents(prev, curr, dateISO);
+
+    if (shouldGroup) {
+      currentGroup.push(curr);
+    } else {
+      // Save current group and start new one
+      groups.push([...currentGroup]);
+      currentGroup = [curr];
+    }
+  }
+
+  // Don't forget the last group
+  groups.push(currentGroup);
+
+  return groups;
+};
+
+// Determine if two consecutive events should be grouped together
+const shouldGroupEvents = (prev: TimelineItem, curr: TimelineItem, dateISO: string): boolean => {
+  // Must be same type
+  if (prev.type !== curr.type) return false;
+
+  // Both must have times
+  if (!prev.time || !curr.time) return false;
+
+  // Check time proximity (within 4 hours)
+  const prevTime = combineDateAndTime(dateISO, prev.time);
+  const currTime = combineDateAndTime(dateISO, curr.time);
+
+  if (!prevTime || !currTime) return false;
+
+  const timeDiffMinutes = diffMinutes(prevTime, currTime);
+  const TIME_WINDOW_MINUTES = 4 * 60; // 4 hours
+
+  if (timeDiffMinutes > TIME_WINDOW_MINUTES) return false;
+
+  // For transportation events, check if same type and similar location pattern
+  if (prev.type === 'transportation' && curr.type === 'transportation') {
+    const prevData = prev.data;
+    const currData = curr.data;
+
+    // Same transportation type (e.g., both flights)
+    if (prevData?.type !== currData?.type) return false;
+
+    // Check if arrivals at same location or departures from same location
+    const prevArrival = extractIata(prevData?.arrival_location);
+    const currArrival = extractIata(currData?.arrival_location);
+    const prevDeparture = extractIata(prevData?.departure_location);
+    const currDeparture = extractIata(currData?.departure_location);
+
+    // Group if arriving at same place or departing from same place
+    return (prevArrival && prevArrival === currArrival) ||
+           (prevDeparture && prevDeparture === currDeparture);
+  }
+
+  // For activities and dining, just group by type and time
+  return true;
+};
+
+// Generate a group title for a set of grouped events
+export const generateGroupTitle = (items: TimelineItem[]): string => {
+  if (items.length === 0) return '';
+
+  const type = items[0].type;
+  const count = items.length;
+
+  if (type === 'transportation') {
+    const transportType = items[0].data?.type;
+    const typeLabel =
+      transportType === 'flight' ? 'Flights' :
+      transportType === 'train' ? 'Trains' :
+      transportType === 'car' ? 'Car Services' :
+      transportType === 'bus' ? 'Buses' : 'Transports';
+
+    // Try to get common location
+    const firstArrival = extractIata(items[0].data?.arrival_location);
+    const allSameArrival = items.every(item =>
+      extractIata(item.data?.arrival_location) === firstArrival
+    );
+
+    if (allSameArrival && firstArrival) {
+      return `Group Arrivals: ${firstArrival}`;
+    }
+
+    const firstDeparture = extractIata(items[0].data?.departure_location);
+    const allSameDeparture = items.every(item =>
+      extractIata(item.data?.departure_location) === firstDeparture
+    );
+
+    if (allSameDeparture && firstDeparture) {
+      return `Group Departures: ${firstDeparture}`;
+    }
+
+    return `${count} ${typeLabel}`;
+  }
+
+  if (type === 'activity') {
+    return `${count} Activities`;
+  }
+
+  if (type === 'dining') {
+    return `${count} Dining Reservations`;
+  }
+
+  if (type === 'hotel') {
+    return `${count} Hotel Events`;
+  }
+
+  return `${count} Events`;
+};
+
+// Generate time range for grouped events
+export const generateGroupTimeRange = (items: TimelineItem[]): string => {
+  if (items.length === 0) return '';
+
+  const times = items.map(item => item.time).filter(Boolean) as string[];
+  if (times.length === 0) return '';
+
+  const firstTime = formatTime12(times[0]);
+  const lastTime = formatTime12(times[times.length - 1]);
+
+  if (firstTime === lastTime) return firstTime;
+  return `${firstTime} - ${lastTime}`;
 };
