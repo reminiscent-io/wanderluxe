@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
-import { TimelineItem, TimelineType, getEventColors, formatTime12Stacked, getTransportationIconComponent } from './timeline-utils';
+import { TimelineItem, TimelineType, getEventColors, formatTime12Stacked, getEventIconComponent } from './timeline-utils';
 import TimelineRow from './TimelineRow';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -36,10 +36,8 @@ const GroupedEventCard: React.FC<Props> = ({
   const firstItem = items[0];
   const timeData = formatTime12Stacked(firstItem?.time);
 
-  // Get icon component for transportation
-  const IconComponent = groupType === 'transportation' && firstItem?.data?.type
-    ? getTransportationIconComponent(firstItem.data.type)
-    : null;
+  // Get icon component based on event type
+  const IconComponent = getEventIconComponent(groupType, firstItem?.data?.type);
 
   return (
     <div className="grid grid-cols-[60px_40px_1fr] gap-0 pb-3 sm:pb-4">
@@ -78,14 +76,10 @@ const GroupedEventCard: React.FC<Props> = ({
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {/* Main Content: Icon + Title */}
-          <div className="flex items-start gap-4">
-            {/* Icon Container */}
-            <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
-              {IconComponent ? (
-                React.createElement(IconComponent, { className: 'h-5 w-5' })
-              ) : (
-                <div className="h-5 w-5" />
-              )}
+          <div className="flex items-start gap-3 sm:gap-4">
+            {/* Icon Container: Responsive size */}
+            <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
+              {React.createElement(IconComponent, { className: 'h-4 w-4 sm:h-5 sm:w-5' })}
             </div>
 
             {/* Text Content */}

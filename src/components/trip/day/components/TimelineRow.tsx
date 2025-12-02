@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import TravelerAvatars from '../../timeline/TravelerAvatars'; // adjust path if needed
-import { TimelineItem, TimelineType, getEventColors, formatTime12, formatTime12Stacked, getTransportationIconComponent } from './timeline-utils';
+import { TimelineItem, TimelineType, getEventColors, formatTime12, formatTime12Stacked, getEventIconComponent } from './timeline-utils';
 
 type Props = {
   item: TimelineItem;
@@ -79,13 +79,12 @@ const TimelineRow: React.FC<Props> = ({
         </div>
 
         {/* Main Content: Icon + Title/Subtitle */}
-        <div className="flex items-start gap-4">
-          {/* Icon Container: 48x48px rounded square with event-type background */}
-          <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
-            {item.type === 'transportation' && item.data?.type ? (
-              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-5 w-5' })
-            ) : (
-              item.icon || <div className="h-5 w-5" />
+        <div className="flex items-start gap-3 sm:gap-4">
+          {/* Icon Container: Responsive size with event-type background */}
+          <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
+            {React.createElement(
+              getEventIconComponent(item.type as TimelineType, item.data?.type),
+              { className: 'h-4 w-4 sm:h-5 sm:w-5' }
             )}
           </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plane, Train, Car, Bus, Ship } from 'lucide-react';
+import { Plane, Train, Car, Bus, Ship, Hotel, Utensils, Star } from 'lucide-react';
 
 /** ----------------------------- Types & shapes ---------------------------- */
 
@@ -169,6 +169,22 @@ export const getTransportationIconComponent = (type: string): React.ComponentTyp
     rental_car: Car
   };
   return iconMap[type] || Bus;
+};
+
+// icon per event type
+export const getEventIconComponent = (eventType: TimelineType, transportType?: string): React.ComponentType<{ className?: string }> => {
+  switch (eventType) {
+    case 'transportation':
+      return transportType ? getTransportationIconComponent(transportType) : Plane;
+    case 'hotel':
+      return Hotel;
+    case 'dining':
+      return Utensils;
+    case 'activity':
+      return Star;
+    default:
+      return Star;
+  }
 };
 
 // color scheme per event type
