@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview --port 8080 --host"
+    "preview": "vite preview --port 8080 --host 0.0.0.0"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.0.42",

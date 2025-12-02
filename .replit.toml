@@ -29,5 +29,5 @@ run = ["sh", "-c", "node server/index.js"]
 deploymentTarget = "cloudrun"
 
 [[ports]]
-localPort = 3000
+localPort = 8080
 externalPort = 80
