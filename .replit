@@ -54,4 +54,4 @@ task = "shell.exec"
 args = "bun run dev"
 
 [agent]
-integrations = ["javascript_openai==1.0.0"]
+integrations = ["javascript_openai:1.0.0"]
