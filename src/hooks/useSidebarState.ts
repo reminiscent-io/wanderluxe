@@ -420,7 +420,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         .eq('trip_id', tripId);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['transportation'] });
+      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
       toast({ title: 'Success', description: 'Transportation deleted' });
     } catch (err) {
       console.error('Error deleting transportation:', err);

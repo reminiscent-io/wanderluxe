@@ -98,8 +98,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
       }
 
       // Invalidate queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['transportation'] });
-      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       
       onSuccess(savedRecord);
       onOpenChange(false);
@@ -125,8 +125,8 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
       if (error) throw error;
       
       // Invalidate queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['transportation'] });
-      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       
       toast.success('Transportation deleted successfully');
       onOpenChange(false);
