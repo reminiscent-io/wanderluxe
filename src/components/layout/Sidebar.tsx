@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const tripNavItems = [
   { title: "Timeline", icon: Calendar, href: "timeline" },
-  { title: "Import", icon: Sparkles, href: "chat" },
+  { title: "Import to Timeline", icon: Sparkles, href: "chat" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
 ];
