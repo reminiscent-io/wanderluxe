@@ -187,7 +187,7 @@ serve(async (req)=>{
   } catch (error) {
     console.error("Google Places proxy error:", error);
     return new Response(JSON.stringify({
-      error: String(error?.message || error)
+      error: "An internal server error occurred."
     }), {
       headers: {
         ...corsHeaders,
