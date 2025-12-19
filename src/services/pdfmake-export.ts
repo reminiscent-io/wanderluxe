@@ -30,14 +30,14 @@ type ExportStrategy = 'auto' | 'open' | 'download' | 'blob';
 type PagePreset     = 'auto' | 'mobile' | 'desktop';
 
 const ICON: Record<string, string> = {
-  transportation: '✈️',
-  flight:         '✈️',
-  accommodation:  '🏨',
-  hotel:          '🏨',
-  dining:         '🍽️',
-  restaurant:     '🍽️',
-  activity:       '🎯',
-  activities:     '🎯',
+  transportation: '✈',
+  flight:         '✈',
+  accommodation:  '■',
+  hotel:          '■',
+  dining:         '●',
+  restaurant:     '●',
+  activity:       '◆',
+  activities:     '◆',
 };
 
 // Fixed-width, anchored time matcher: "8:05 am" (linear; no catastrophic backtracking)
@@ -61,6 +61,8 @@ type AccommodationSummary = {
   checkIn: string;
   checkOut: string;
   address?: string;
+  checkInDate: string;
+  checkOutDate: string;
 };
 
 type TransportSegment = {
@@ -91,16 +93,19 @@ function pagePresetSettings(preset: PagePreset) {
   // Compact for mobile, comfortable for desktop
   const isMobile = preset === 'mobile' || (preset === 'auto' && isProbablyMobile());
   return {
+    isMobile,
     pageSize: defaultPageSize(),                         // 'LETTER' or 'A4'
-    pageMargins: isMobile ? ([24, 24, 24, 28] as [number, number, number, number]) 
-                          : ([30, 30, 30, 36] as [number, number, number, number]),
-    baseFontSize: isMobile ? 9 : 10,
+    pageMargins: isMobile ? ([20, 20, 20, 24] as [number, number, number, number])
+                          : ([24, 24, 24, 30] as [number, number, number, number]),
+    baseFontSize: isMobile ? 8 : 9,
     headerFont: isMobile ? 8 : 9,
     footerFont: isMobile ? 7.5 : 8,
     heroTitle:  isMobile ? 16 : 18,
-    dayHeader:  isMobile ? 13 : 14,
+    dayHeader:  isMobile ? 12 : 14,
+    compactDayHeader: isMobile ? 11 : 12,
     timeWidth:  isMobile ? 52 : 60,
     imageWidth: isMobile ? 480 : 540,
+    coverImageHeight: isMobile ? 200 : 250,
   };
 }
 
@@ -171,10 +176,14 @@ function sanitizeFilename(input?: string | null): string {
   return out || 'itinerary';
 }
 
-function getDensityIndicator(count: number): string {
-  if (count >= 5) return '🔴 Busy';
-  if (count >= 3) return '🟡 Moderate';
-  return '🟢 Light';
+function getDensityIndicator(count: number): any {
+  if (count >= 5) {
+    return { text: ' Busy ', fontSize: 10, bold: true, color: '#FFFFFF', background: '#DC2626', margin: [0, 0, 4, 0] };
+  }
+  if (count >= 3) {
+    return { text: ' Moderate ', fontSize: 10, bold: true, color: '#000000', background: '#FBBF24', margin: [0, 0, 4, 0] };
+  }
+  return { text: ' Light ', fontSize: 10, bold: true, color: '#FFFFFF', background: '#10B981', margin: [0, 0, 4, 0] };
 }
 
 /* =========================================================================
@@ -264,13 +273,24 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
 
   if (daysErr) throw daysErr;
 
-  // Build accommodation summary
-  const staysSummary: AccommodationSummary[] = (stays ?? []).map(s => ({
-    hotel: s.hotel || 'Hotel',
-    checkIn: fmtShort(s.hotel_checkin_date),
-    checkOut: fmtShort(s.hotel_checkout_date),
-    address: s.hotel_address,
-  }));
+  // Build accommodation summary and sort by check-in date descending, then check-out descending
+  const staysSummary: AccommodationSummary[] = (stays ?? [])
+    .map(s => ({
+      hotel: s.hotel || 'Hotel',
+      checkIn: fmtShort(s.hotel_checkin_date),
+      checkOut: fmtShort(s.hotel_checkout_date),
+      address: s.hotel_address,
+      checkInDate: s.hotel_checkin_date,
+      checkOutDate: s.hotel_checkout_date,
+    }))
+    .sort((a, b) => {
+      // Sort by check-in date ascending (oldest first)
+      const checkInCompare = new Date(a.checkInDate).getTime() - new Date(b.checkInDate).getTime();
+      if (checkInCompare !== 0) return checkInCompare;
+
+      // If check-in dates are equal, sort by check-out date ascending
+      return new Date(a.checkOutDate).getTime() - new Date(b.checkOutDate).getTime();
+    });
 
   // Build transport segments
   const transportSegments: TransportSegment[] = (trans ?? [])
@@ -300,10 +320,13 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
         const isOut = isSameDay(day.date, s.hotel_checkout_date);
         const when  = isIn ? s.checkin_time : isOut ? s.checkout_time : null;
 
+        // Only show check-in/check-out, skip repeated "Stay" entries
+        if (!isIn && !isOut) return;
+
         const t = fmtTime(when);
         items.push({
           type: 'accommodation',
-          title: `${isIn ? 'Check-in' : isOut ? 'Check-out' : 'Stay'}: ${s.hotel}`,
+          title: `${isIn ? 'Check-in' : 'Check-out'}: ${s.hotel}`,
           time: t || 'All-day',
           details: s.hotel_details || undefined,
           location: s.hotel_address || undefined,
@@ -405,34 +428,68 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
     return { text: 'No activities scheduled', style: 'itemMeta', margin: [0, 0, 0, 6] };
   }
 
+  // Color coding by activity type
+  const typeColors: Record<string, string> = {
+    transportation: '#3B82F6', // blue
+    flight: '#3B82F6',
+    dining: '#F97316', // orange
+    restaurant: '#F97316',
+    activity: '#10B981', // green
+    activities: '#10B981',
+    accommodation: '#6B7280', // gray
+    hotel: '#6B7280',
+  };
+
   const body = items.map(it => {
     const icon = ICON[it.type] || '';
-    const stack: any[] = [{ text: `${icon} ${it.title}`, style: 'itemTitle' }];
+    const typeColor = typeColors[it.type] || '#333';
 
-    if (it.details) {
-      stack.push({ text: it.details, style: 'itemDetail' });
+    // Build title with color coding
+    const titleSection: any[] = [];
+
+    // Cost in top-right if present
+    if (o.showCosts && it.cost) {
+      titleSection.push({
+        columns: [
+          { text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor, width: '*' },
+          { text: it.cost, style: 'itemCost', alignment: 'right', width: 'auto' }
+        ]
+      });
+    } else {
+      titleSection.push({ text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor });
     }
 
-    const meta: string[] = [];
-    if (it.location) meta.push(it.location);
-    if (o.showCosts && it.cost) meta.push(`Cost: ${it.cost}`);
-    if (meta.length > 0) {
-      stack.push({ text: meta.join('   •   '), style: 'itemMeta' });
+    const stack: any[] = titleSection;
+
+    // Combine details and location into single compact line
+    const combinedDetails: string[] = [];
+    if (it.details) combinedDetails.push(it.details);
+    if (it.location) combinedDetails.push(it.location);
+
+    if (combinedDetails.length > 0) {
+      stack.push({ text: combinedDetails.join(' • '), style: 'itemDetail', margin: [0, 3, 0, 0] });
     }
 
     if (it.thumb && o.showImages) {
-      stack.push({ image: it.thumb, width: 64, margin: [0, 4, 0, 0] });
+      stack.push({ image: it.thumb, width: 32, margin: [0, 4, 0, 0] });
     }
 
     return [
-      { text: it.time, style: 'timeCell', alignment: 'right' },
-      { stack },
+      { text: it.time, style: 'timeCell', alignment: 'right', margin: [0, 4, 4, 4] },
+      { stack, fillColor: '#F9FAFB', margin: [4, 4, 4, 4] },
     ];
   });
 
   return {
     table: { widths: [timeWidth, '*'], body },
-    layout: 'noBorders' as const,
+    layout: {
+      hLineWidth: () => 0,
+      vLineWidth: () => 0,
+      paddingLeft: () => 0,
+      paddingRight: () => 0,
+      paddingTop: () => 6,
+      paddingBottom: () => 6,
+    },
   };
 }
 
@@ -497,10 +554,293 @@ function renderDailySummary(days: Day[]): any[] {
     const density = getDensityIndicator(d.activityCount || 0);
     const travelTag = d.hasTransport ? ' ✈️ Travel Day' : '';
     content.push({
-      text: `${fmtShort(d.date)}: ${density}${travelTag}`,
-      style: 'summaryItem',
+      columns: [
+        { text: `${fmtShort(d.date)}:`, style: 'summaryItem', width: 'auto' },
+        { ...density, width: 'auto' },
+        { text: travelTag, style: 'summaryItem', width: '*' }
+      ],
       margin: [0, idx === 0 ? 0 : 4, 0, 4],
     });
+  });
+
+  return content;
+}
+
+/* =========================================================================
+   New Helper Functions for Compact Layout
+   ========================================================================= */
+
+/**
+ * Calculate how many days should fit on current page based on activity density
+ * Returns number of days that can fit (2-4 days per page)
+ */
+function calculatePageFit(days: Day[], startIdx: number): number {
+  if (startIdx >= days.length) return 0;
+
+  const MAX_ITEMS_PER_PAGE = 20; // Approximate threshold
+  const MIN_DAYS_PER_PAGE = 2;
+  const MAX_DAYS_PER_PAGE = 4;
+
+  let totalItems = 0;
+  let daysCount = 0;
+
+  for (let i = startIdx; i < days.length && daysCount < MAX_DAYS_PER_PAGE; i++) {
+    const dayItems = days[i].items.length;
+
+    // If adding this day would exceed threshold and we already have min days, stop
+    if (totalItems + dayItems > MAX_ITEMS_PER_PAGE && daysCount >= MIN_DAYS_PER_PAGE) {
+      break;
+    }
+
+    totalItems += dayItems;
+    daysCount++;
+  }
+
+  return Math.max(MIN_DAYS_PER_PAGE, daysCount);
+}
+
+/**
+ * Render compact day header with inline travel marker
+ */
+function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number): any {
+  const travelMarker = d.hasTransport ? ' ✈️ TRAVEL DAY' : '';
+  const dayText = d.title?.trim()
+    ? `${fmtShort(d.date)} • ${d.title}${travelMarker}`
+    : `${fmtShort(d.date)}${travelMarker}`;
+
+  return {
+    text: dayText,
+    fontSize,
+    bold: true,
+    color: '#000000',
+    margin: [0, isFirstOnPage ? 0 : 8, 0, 4] as [number, number, number, number],
+  };
+}
+
+/**
+ * Render combined cover page with 2-column layout
+ */
+function renderCombinedCoverPage(
+  trip: any,
+  dateRange: string,
+  stays: AccommodationSummary[],
+  transports: TransportSegment[],
+  days: Day[],
+  coverDataUrl: string,
+  imageHeight: number,
+  baseFontSize: number
+): any[] {
+  const content: any[] = [];
+
+  // Cover image at 40% page height
+  if (coverDataUrl) {
+    content.push({
+      image: coverDataUrl,
+      width: 480,
+      height: imageHeight,
+      margin: [0, 0, 0, 16] as [number, number, number, number]
+    });
+  }
+
+  // Hero title and dates
+  content.push({
+    text: `${trip.destination || 'Trip'} Itinerary`,
+    fontSize: 18,
+    bold: true,
+    margin: [0, 0, 0, 4] as [number, number, number, number]
+  });
+
+  if (dateRange) {
+    content.push({
+      text: dateRange,
+      fontSize: baseFontSize + 1.5,
+      color: '#6b6b6b',
+      margin: [0, 0, 0, 12] as [number, number, number, number]
+    });
+  }
+
+  // Calculate stats
+  const totalFlights = transports.filter(t => t.type.toLowerCase().includes('flight')).length;
+  const totalActivities = days.reduce((sum, d) => sum + (d.activityCount || 0), 0);
+  const busyDays = days.filter(d => (d.activityCount || 0) >= 4).length;
+  const moderateDays = days.filter(d => (d.activityCount || 0) >= 2 && (d.activityCount || 0) < 4).length;
+  const lightDays = days.filter(d => (d.activityCount || 0) < 2).length;
+
+  // 2-column layout
+  const leftColumn: any[] = [];
+  const rightColumn: any[] = [];
+
+  // LEFT COLUMN: Trip details + Accommodation summary
+  leftColumn.push({
+    text: 'Trip Details',
+    fontSize: baseFontSize + 1,
+    bold: true,
+    margin: [0, 0, 0, 6] as [number, number, number, number]
+  });
+
+  leftColumn.push({
+    text: `Duration: ${days.length} days`,
+    fontSize: baseFontSize - 0.5,
+    margin: [0, 0, 0, 2] as [number, number, number, number]
+  });
+
+  // Accommodation summary table
+  if (stays.length > 0) {
+    leftColumn.push({
+      text: 'Accommodations',
+      fontSize: baseFontSize + 1,
+      bold: true,
+      margin: [0, 8, 0, 4] as [number, number, number, number]
+    });
+
+    const staysTableBody = [
+      [
+        { text: 'Hotel', bold: true, fontSize: baseFontSize - 1 },
+        { text: 'Check In', bold: true, fontSize: baseFontSize - 1 },
+        { text: 'Check Out', bold: true, fontSize: baseFontSize - 1 }
+      ],
+      ...stays.map(s => [
+        { text: s.hotel, fontSize: baseFontSize - 1 },
+        { text: s.checkIn, fontSize: baseFontSize - 1 },
+        { text: s.checkOut, fontSize: baseFontSize - 1 }
+      ])
+    ];
+
+    leftColumn.push({
+      table: {
+        widths: ['*', 'auto', 'auto'],
+        body: staysTableBody
+      },
+      layout: 'lightHorizontalLines',
+      fontSize: baseFontSize - 1,
+      margin: [0, 0, 0, 0] as [number, number, number, number]
+    });
+  }
+
+  // RIGHT COLUMN: Stats
+  rightColumn.push({
+    text: 'Quick Stats',
+    fontSize: baseFontSize + 1,
+    bold: true,
+    margin: [0, 0, 0, 6] as [number, number, number, number]
+  });
+
+  rightColumn.push({
+    text: `✈️ ${totalFlights} flight${totalFlights !== 1 ? 's' : ''}`,
+    fontSize: baseFontSize - 0.5,
+    margin: [0, 0, 0, 2] as [number, number, number, number]
+  });
+
+  rightColumn.push({
+    text: `🎯 ${totalActivities} activit${totalActivities !== 1 ? 'ies' : 'y'}`,
+    fontSize: baseFontSize - 0.5,
+    margin: [0, 0, 0, 6] as [number, number, number, number]
+  });
+
+  rightColumn.push({
+    text: 'Activity Level',
+    fontSize: baseFontSize,
+    bold: true,
+    margin: [0, 4, 0, 4] as [number, number, number, number]
+  });
+
+  if (busyDays > 0) {
+    rightColumn.push({
+      text: `• Busy (4+ activities): ${busyDays} day${busyDays !== 1 ? 's' : ''}`,
+      fontSize: baseFontSize - 1,
+      color: '#DC2626',
+      margin: [0, 0, 0, 2] as [number, number, number, number]
+    });
+  }
+
+  if (moderateDays > 0) {
+    rightColumn.push({
+      text: `• Moderate (2-3 activities): ${moderateDays} day${moderateDays !== 1 ? 's' : ''}`,
+      fontSize: baseFontSize - 1,
+      color: '#F59E0B',
+      margin: [0, 0, 0, 2] as [number, number, number, number]
+    });
+  }
+
+  if (lightDays > 0) {
+    rightColumn.push({
+      text: `• Light (0-1 activities): ${lightDays} day${lightDays !== 1 ? 's' : ''}`,
+      fontSize: baseFontSize - 1,
+      color: '#10B981',
+      margin: [0, 0, 0, 2] as [number, number, number, number]
+    });
+  }
+
+  // Add columns to content
+  content.push({
+    columns: [
+      { stack: leftColumn, width: '*' },
+      { stack: rightColumn, width: '*' }
+    ],
+    columnGap: 20,
+    margin: [0, 0, 0, 0] as [number, number, number, number]
+  });
+
+  // Page break after cover
+  content.push({ text: '', pageBreak: 'after' });
+
+  return content;
+}
+
+/**
+ * Render reference section with full accommodation and restaurant details
+ */
+function renderReferenceSection(
+  stays: AccommodationSummary[],
+  baseFontSize: number
+): any[] {
+  const content: any[] = [];
+
+  // Page break before reference section
+  content.push({ text: '', pageBreak: 'before' });
+
+  content.push({
+    text: 'Reference Information',
+    fontSize: baseFontSize + 4,
+    bold: true,
+    margin: [0, 0, 0, 12] as [number, number, number, number]
+  });
+
+  // Accommodation details
+  if (stays.length > 0) {
+    content.push({
+      text: 'Accommodation Details',
+      fontSize: baseFontSize + 2,
+      bold: true,
+      margin: [0, 8, 0, 8] as [number, number, number, number]
+    });
+
+    stays.forEach((stay, idx) => {
+      content.push({
+        stack: [
+          { text: stay.hotel, fontSize: baseFontSize + 1, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] },
+          { text: `Check-in: ${stay.checkIn}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
+          { text: `Check-out: ${stay.checkOut}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
+          ...(stay.address ? [{ text: stay.address, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] }] : [])
+        ],
+        margin: [0, 0, 0, idx < stays.length - 1 ? 12 : 0] as [number, number, number, number]
+      });
+    });
+  }
+
+  // Emergency contacts placeholder
+  content.push({
+    text: 'Emergency Contacts',
+    fontSize: baseFontSize + 2,
+    bold: true,
+    margin: [0, 16, 0, 8] as [number, number, number, number]
+  });
+
+  content.push({
+    text: 'Keep this section handy for important contacts and local emergency numbers.',
+    fontSize: baseFontSize - 0.5,
+    color: '#6B7280',
+    italics: true
   });
 
   return content;
@@ -517,6 +857,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
 
     const preset: PagePreset = ((o as any)?.pagePreset as PagePreset) || 'auto';
     const {
+      isMobile,
       pageSize,
       pageMargins,
       baseFontSize,
@@ -524,8 +865,10 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       footerFont,
       heroTitle,
       dayHeader,
+      compactDayHeader,
       timeWidth,
       imageWidth,
+      coverImageHeight,
     } = pagePresetSettings(preset);
 
     console.log('[PDF Export] Fetching trip data...');
@@ -563,37 +906,50 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     // Build document definition
     const content: any[] = [];
 
-    // Cover section
-    if (coverDataUrl) content.push({ image: coverDataUrl, width: imageWidth, margin: [0, 0, 0, 12] });
-    content.push({ text: `${trip.destination || 'Trip'} Itinerary`, style: 'heroTitle' });
-    if (dateRange) content.push({ text: dateRange, style: 'heroSub', margin: [0, 0, 0, 16] });
+    // Combined cover page with 2-column layout
+    content.push(...renderCombinedCoverPage(
+      trip,
+      dateRange,
+      stays,
+      transports,
+      days,
+      coverDataUrl,
+      coverImageHeight,
+      baseFontSize
+    ));
 
-    // Summary page
-    content.push({ text: '', pageBreak: 'after' });
-    content.push({ text: 'Trip Summary', style: 'summaryPageTitle', margin: [0, 0, 0, 12] });
-    content.push(...renderAccommodationSummary(stays, baseFontSize));
-    content.push(...renderTransportSummary(transports));
-    content.push(...renderDailySummary(days));
+    // Daily itineraries with dynamic multi-day layout
+    let currentDayIdx = 0;
+    let pageStartIdx = 0;
 
-    // Daily itineraries with markers
-    days.forEach((d, idx) => {
-      content.push({ text: '', pageBreak: 'before' });
+    while (currentDayIdx < days.length) {
+      const daysOnPage = calculatePageFit(days, currentDayIdx);
+      const isFirstPage = pageStartIdx === 0;
 
-      // Day header with density and travel day marker
-      const density = getDensityIndicator(d.activityCount || 0);
-      const travelMarker = d.hasTransport ? ' ✈️ TRAVEL DAY' : '';
-      const dayHeaderText = d.title?.trim()
-        ? `${d.title} – ${fmtDate(d.date)} ${density}${travelMarker}`
-        : `${fmtDate(d.date)} ${density}${travelMarker}`;
+      // Add page break before each page (except first)
+      if (!isFirstPage) {
+        content.push({ text: '', pageBreak: 'before' });
+      }
 
-      content.push({
-        text: dayHeaderText,
-        style: 'dayHeader',
-        margin: [0, 8, 0, 6],
-      });
+      // Render days for this page
+      for (let i = 0; i < daysOnPage && currentDayIdx < days.length; i++) {
+        const d = days[currentDayIdx];
+        const isFirstOnPage = i === 0;
 
-      content.push(renderTable(d.items, o, timeWidth));
-    });
+        // Compact day header
+        content.push(renderCompactDayHeader(d, isFirstOnPage, compactDayHeader));
+
+        // Day items table
+        content.push(renderTable(d.items, o, timeWidth));
+
+        currentDayIdx++;
+      }
+
+      pageStartIdx++;
+    }
+
+    // Add reference section with full details
+    content.push(...renderReferenceSection(stays, baseFontSize));
 
     const doc: any = {
       pageSize,
@@ -622,11 +978,12 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: '#8b7355', alignment: 'center' },
         summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
         summaryItem: { fontSize: baseFontSize - 0.5, color: '#333' },
-        dayHeader: { fontSize: dayHeader, bold: true, color: '#333' },
-        timeCell:  { fontSize: baseFontSize - 1, color: '#6b6b6b' },
-        itemTitle: { bold: true },
-        itemDetail:{ fontSize: baseFontSize },
-        itemMeta:  { italics: true, color: '#6b6b6b' },
+        dayHeader: { fontSize: isMobile ? 18 : 24, bold: true, color: '#000000' },
+        timeCell:  { fontSize: isMobile ? 9 : 10, bold: true, color: '#4B5563' },
+        itemTitle: { fontSize: isMobile ? 10 : 11, bold: true },
+        itemDetail:{ fontSize: isMobile ? 9 : 10, color: '#374151' },
+        itemMeta:  { fontSize: isMobile ? 8 : 9, italics: true, color: '#6B7280' },
+        itemCost:  { fontSize: isMobile ? 10 : 11, bold: true, color: '#059669' },
       },
     };
 
