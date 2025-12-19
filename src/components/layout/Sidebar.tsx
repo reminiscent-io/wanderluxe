@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  MessageCircle, BarChart2, Package, Settings, ArrowLeft, Users, Download
+  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const tripNavItems = [
   { title: "Timeline", icon: Calendar, href: "timeline" },
-  { title: "Import", icon: MessageCircle, href: "chat" },
+  { title: "Import to Timeline", icon: Sparkles, href: "chat" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
 ];

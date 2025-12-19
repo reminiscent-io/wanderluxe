@@ -1,10 +1,10 @@
 import React from 'react';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import TravelerAvatars from '../../timeline/TravelerAvatars'; // adjust path if needed
-import { TimelineItem, TimelineType, getEventColors, formatTime12, getTransportationIconComponent } from './timeline-utils';
+import { TimelineItem, TimelineType, getEventColors, formatTime12, formatTime12Stacked, getEventIconComponent } from './timeline-utils';
 
 type Props = {
   item: TimelineItem;
@@ -30,63 +30,254 @@ const TimelineRow: React.FC<Props> = ({
     if (item.type === 'dining' && onReservationClick && item.data) return onReservationClick(item.data);
   };
 
+  const timeData = formatTime12Stacked(item.time);
+
   return (
-    <div className="flex gap-2 sm:gap-3 md:gap-4 pb-3 sm:pb-4 last:pb-0">
-      {/* Time */}
-      <div className="w-12 sm:w-16 md:w-20 lg:w-24 flex-shrink-0 text-right">
-        <span className="text-xs sm:text-sm font-semibold text-earth-700">
-          {item.time ? formatTime12(item.time) : '—'}
-        </span>
-      </div>
+    <div className="pb-3 sm:pb-4 last:pb-0">
+      {/* Mobile Layout */}
+      <div className="sm:hidden">
+        {/* Node and Event Card */}
+        <div className="grid grid-cols-[24px_1fr] gap-2">
+          {/* Timeline Rail - Small Subtle Dot */}
+          <div className="relative flex flex-col items-center">
+            <div
+              className="relative w-2 h-2 rounded-full flex-shrink-0 mt-2 bg-white z-10"
+              style={{
+                borderWidth: '2px',
+                borderStyle: 'solid',
+                borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' :
+                            colors.node === 'bg-sky-500' ? '#0ea5e9' :
+                            colors.node === 'bg-emerald-500' ? '#10b981' :
+                            colors.node === 'bg-rose-500' ? '#f43f5e' :
+                            '#d1d5db',
+                opacity: 0.6
+              }}
+            />
+          </div>
 
-      {/* Rail */}
-      <div className="relative flex flex-col items-center">
-        <div className={cn("w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 mt-0.5 border-2 border-white shadow-sm", colors.node)} />
-        {!isLast && (
-          <div className={cn("absolute top-3 sm:top-4 w-0.5 h-full rounded-full", colors.line)} />
-        )}
-      </div>
-
-      {/* Card */}
-      <div
-        className="flex-1 min-w-0 cursor-pointer hover:bg-sand-50 rounded-lg p-2 sm:p-3 -m-1 transition-all duration-200 hover:shadow-sm"
-        onClick={handleItemClick}
-      >
-        <div className="flex items-start gap-2 sm:gap-3">
-          <span className={cn("mt-0.5 flex-shrink-0", colors.icon)}>
-            {item.type === 'transportation' && item.data?.type ? (
-              React.createElement(getTransportationIconComponent(item.data.type), { className: 'h-3 w-3 sm:h-3.5 sm:w-3.5' })
-            ) : (
-              item.icon || <div className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-            )}
-          </span>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm sm:text-base font-semibold text-earth-800 hover:text-earth-900 transition-colors line-clamp-2">
-              {item.title}
+          {/* Event Card */}
+          <div
+            className="relative flex-1 min-w-0 bg-white rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-gray-100"
+            onClick={handleItemClick}
+          >
+            {/* Top-right: Avatar Stack (Face Pile) */}
+            <div className="absolute top-3 right-3">
+              <TravelerAvatars
+                tripId={tripId}
+                eventType={item.type === 'hotel' ? 'accommodation' : item.type}
+                eventId={item.type === 'hotel' ? item.data.stay_id : item.id}
+                maxShow={3}
+              />
             </div>
-            {item.endTime && (
-              <div className="text-xs sm:text-sm text-earth-500 mt-1">until {formatTime12(item.endTime)}</div>
-            )}
-            {item.description && (
-              <div className="text-xs text-earth-600 mt-1 line-clamp-3">{item.description}</div>
-            )}
-            {item.data?.cost && (
-              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
-                <DollarSign className="h-3 w-3 text-earth-500" />
-                <span className="text-xs text-earth-600">
-                  {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
-                </span>
+
+            {/* Main Content: Icon + Title/Subtitle */}
+            <div className="flex items-start gap-3">
+              {/* Icon - Outline, no background */}
+              <div className={cn("flex-shrink-0 mt-0.5", colors.node.replace('bg-', 'text-'))}>
+                {React.createElement(
+                  getEventIconComponent(item.type as TimelineType, item.data?.type),
+                  { className: 'h-5 w-5', strokeWidth: 1.5 }
+                )}
               </div>
+
+              {/* Text Content: Title + Time + Subtitle */}
+              <div className="flex-1 min-w-0 pr-8">
+                {/* Event Title with inline time */}
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-earth-900 hover:text-earth-950 transition-colors">
+                    {item.title}
+                  </span>
+                  {item.time && (
+                    <span className="text-xs font-medium text-earth-500 whitespace-nowrap">
+                      ⏰ {formatTime12(item.time)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Subtitle/Details */}
+                {item.description && (
+                  <div className="text-xs text-earth-500 mt-1 line-clamp-2">
+                    {item.description}
+                  </div>
+                )}
+
+                {/* End Time */}
+                {item.endTime && (
+                  <div className="text-xs text-earth-400 mt-1">until {formatTime12(item.endTime)}</div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Section - Divider + Price + Action Link */}
+            {(item.data?.cost || item.data?.hotel_website || item.data?.hotel_url) && (
+              <>
+                {/* Horizontal Divider */}
+                <div className="border-t border-gray-200 mt-3 pt-3" />
+
+                {/* Footer Row - Flexbox with space-between */}
+                <div className="flex items-center justify-between">
+                  {/* Price on the left - Green and Bold */}
+                  {item.data?.cost ? (
+                    <span className="text-xs font-semibold text-emerald-600">
+                      {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
+                    </span>
+                  ) : (
+                    <div />
+                  )}
+
+                  {/* Action Link on the right - Blue */}
+                  {item.data?.hotel_website && (
+                    <a
+                      href={item.data.hotel_website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
+                    >
+                      Hotel Website
+                      <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                    </a>
+                  )}
+                  {item.data?.hotel_url && !item.data?.hotel_website && (
+                    <a
+                      href={item.data.hotel_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
+                    >
+                      Hotel Website
+                      <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                    </a>
+                  )}
+                </div>
+              </>
             )}
           </div>
-          <div className="flex-shrink-0 ml-1 sm:ml-2">
+        </div>
+      </div>
+
+      {/* Desktop Layout: Time on left (original layout) */}
+      <div className="hidden sm:grid sm:grid-cols-[60px_40px_1fr] gap-0">
+        {/* Column 1: Time */}
+        <div className="flex-shrink-0 pr-2 text-right">
+          <div className="font-bold text-earth-900 text-sm">
+            {timeData.time || '—'}
+          </div>
+          {timeData.meridiem && (
+            <div className="font-bold text-earth-700 text-xs">
+              {timeData.meridiem}
+            </div>
+          )}
+        </div>
+
+        {/* Column 2: Timeline Rail - Node Only */}
+        <div className="relative flex flex-col items-center">
+          <div
+            className="relative w-5 h-5 rounded-full flex-shrink-0 mt-2 bg-white shadow-md z-10"
+            style={{
+              borderWidth: '3px',
+              borderStyle: 'solid',
+              borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' :
+                          colors.node === 'bg-sky-500' ? '#0ea5e9' :
+                          colors.node === 'bg-emerald-500' ? '#10b981' :
+                          colors.node === 'bg-rose-500' ? '#f43f5e' :
+                          '#94a3b8'
+            }}
+          />
+        </div>
+
+        {/* Column 3: Event Card */}
+        <div
+          className="relative flex-1 min-w-0 bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
+          onClick={handleItemClick}
+        >
+          {/* Top-right: Avatar Stack (Face Pile) */}
+          <div className="absolute top-4 right-4">
             <TravelerAvatars
               tripId={tripId}
               eventType={item.type === 'hotel' ? 'accommodation' : item.type}
               eventId={item.type === 'hotel' ? item.data.stay_id : item.id}
-              maxShow={2}
+              maxShow={3}
             />
           </div>
+
+          {/* Main Content: Icon + Title/Subtitle */}
+          <div className="flex items-start gap-3 sm:gap-4">
+            {/* Icon Container: Responsive size with event-type background */}
+            <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
+              {React.createElement(
+                getEventIconComponent(item.type as TimelineType, item.data?.type),
+                { className: 'h-4 w-4 sm:h-5 sm:w-5' }
+              )}
+            </div>
+
+            {/* Text Content: Title + Subtitle */}
+            <div className="flex-1 min-w-0">
+              {/* Event Title - Bold, slightly reduced size */}
+              <div className="text-sm font-bold text-earth-900 hover:text-earth-950 transition-colors line-clamp-2">
+                {item.title}
+              </div>
+
+              {/* Subtitle/Details - Smaller, Much Lighter Grey for contrast */}
+              {item.description && (
+                <div className="text-xs text-earth-500 mt-1 line-clamp-2">
+                  {item.description}
+                </div>
+              )}
+
+              {/* End Time */}
+              {item.endTime && (
+                <div className="text-xs text-earth-400 mt-1">until {formatTime12(item.endTime)}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Section - Divider + Price + Action Link */}
+          {(item.data?.cost || item.data?.hotel_website || item.data?.hotel_url) && (
+            <>
+              {/* Horizontal Divider */}
+              <div className="border-t border-gray-200 mt-3 pt-3" />
+
+              {/* Footer Row - Flexbox with space-between */}
+              <div className="flex items-center justify-between">
+                {/* Price on the left - Green and Bold */}
+                {item.data?.cost ? (
+                  <span className="text-xs font-semibold text-emerald-600">
+                    {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
+                  </span>
+                ) : (
+                  <div />
+                )}
+
+                {/* Action Link on the right - Blue */}
+                {item.data?.hotel_website && (
+                  <a
+                    href={item.data.hotel_website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
+                  >
+                    Hotel Website
+                    <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                  </a>
+                )}
+                {item.data?.hotel_url && !item.data?.hotel_website && (
+                  <a
+                    href={item.data.hotel_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
+                  >
+                    Hotel Website
+                    <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                  </a>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

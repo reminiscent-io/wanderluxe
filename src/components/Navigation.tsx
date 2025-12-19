@@ -1,5 +1,4 @@
 
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavigationLogo from "./navigation/NavigationLogo";
@@ -26,10 +25,7 @@ const Navigation = ({ mobileMenuTrigger }: NavigationProps) => {
   };
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6 }}
+    <nav
       className={`fixed right-0 top-0 z-50 bg-white/80 backdrop-blur-lg ${
         isTripPage ? 'left-0 md:left-[280px]' : 'left-0'
       }`}
@@ -77,7 +73,7 @@ const Navigation = ({ mobileMenuTrigger }: NavigationProps) => {
         <NavigationLinks />
         <NavigationAuth />
       </div>
-    </motion.nav>
+    </nav>
   );
 };
 

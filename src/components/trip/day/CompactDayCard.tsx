@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import DayHeader from './components/DayHeader';
 import AllDayHotelsSection from './components/AllDayHotelsSection';
 import TimelineRow from './components/TimelineRow';
+import GroupedEventCard from './components/GroupedEventCard';
 import LayoverHintRow from './components/LayoverHintRow';
 import TimePeriodHeader from './components/TimePeriodHeader';
 import { useDayTimeline } from './components/useDayTimeline';
@@ -53,8 +54,11 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   today.setHours(0, 0, 0, 0);
   dayDate.setHours(0, 0, 0, 0);
   const isPastDay = dayDate < today;
-  
+
   const [isExpanded, setIsExpanded] = useState(!isPastDay);
+
+  // Track which periods are expanded (all expanded by default)
+  const [expandedPeriods, setExpandedPeriods] = useState<Set<string>>(new Set());
 
   // live subscriptions
   const { reservations = [] } = useReservationsRealtime(id, tripId);
@@ -126,6 +130,24 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
 
   const hasContent = rows.length > 0 || allDayHotels.length > 0;
 
+  // Toggle period expansion
+  const togglePeriod = (period: string) => {
+    setExpandedPeriods(prev => {
+      const next = new Set(prev);
+      if (next.has(period)) {
+        next.delete(period);
+      } else {
+        next.add(period);
+      }
+      return next;
+    });
+  };
+
+  // Check if period is expanded (default to expanded)
+  const isPeriodExpanded = (period: string) => {
+    return !expandedPeriods.has(period);
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} 
@@ -165,34 +187,75 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="border-t border-sand-200 overflow-hidden"
             >
-              <div className="p-3 sm:p-4 md:p-6">
+              <div className="bg-gray-100 px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-6">
                 {hasContent ? (
                   <div className="space-y-2 sm:space-y-3">
                     <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
 
-                    <div className="relative">
-                      {periodGroups.map((group, groupIdx) => (
-                        <div key={group.period}>
-                          <TimePeriodHeader label={group.label} isFirst={groupIdx === 0} />
-                          {group.rows.map((row, i) =>
-                            row.kind === 'item' ? (
-                              <TimelineRow
-                                key={row.item.id}
-                                item={row.item}
-                                idx={i}
-                                isLast={i >= group.rows.length - 1}
-                                tripId={tripId}
-                                onActivityClick={onActivityClick}
-                                onHotelClick={onHotelClick}
-                                onTransportationClick={onTransportationClick}
-                                onReservationClick={onReservationClick}
-                              />
-                            ) : (
-                              <LayoverHintRow key={row.id} text={row.text} />
-                            )
-                          )}
-                        </div>
-                      ))}
+                    <div className="relative space-y-3">
+                      {/* Continuous timeline line - responsive positioning */}
+                      <div className="absolute left-[12px] sm:left-[80px] top-4 bottom-0 w-px bg-gray-200 -translate-x-1/2" />
+                      {periodGroups.map((group, groupIdx) => {
+                        const isExpanded = isPeriodExpanded(group.period);
+                        const eventCount = group.rows.filter(row => row.kind !== 'hint').length;
+
+                        return (
+                          <div key={group.period} className="relative z-10">
+                            {/* Period Header */}
+                            <TimePeriodHeader
+                              label={group.label}
+                              isFirst={groupIdx === 0}
+                              isExpanded={isExpanded}
+                              onToggle={() => togglePeriod(group.period)}
+                              eventCount={eventCount}
+                            />
+
+                            {/* Period Events */}
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                  className="overflow-hidden space-y-3"
+                                >
+                                  {group.rows.map((row, i) =>
+                                    row.kind === 'item' ? (
+                                      <TimelineRow
+                                        key={row.item.id}
+                                        item={row.item}
+                                        idx={i}
+                                        isLast={i >= group.rows.length - 1}
+                                        tripId={tripId}
+                                        onActivityClick={onActivityClick}
+                                        onHotelClick={onHotelClick}
+                                        onTransportationClick={onTransportationClick}
+                                        onReservationClick={onReservationClick}
+                                      />
+                                    ) : row.kind === 'grouped' ? (
+                                      <GroupedEventCard
+                                        key={row.id}
+                                        items={row.items}
+                                        groupType={row.groupType}
+                                        title={row.title}
+                                        timeRange={row.timeRange}
+                                        tripId={tripId}
+                                        onActivityClick={onActivityClick}
+                                        onHotelClick={onHotelClick}
+                                        onTransportationClick={onTransportationClick}
+                                        onReservationClick={onReservationClick}
+                                      />
+                                    ) : (
+                                      <LayoverHintRow key={row.id} text={row.text} />
+                                    )
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {canEdit && (

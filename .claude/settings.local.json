@@ -4,7 +4,18 @@
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(bun run type-check:*)",
-      "Bash(bun run lint:*)"
+      "Bash(bun run lint:*)",
+      "Bash(lsof:*)",
+      "Bash(netstat:*)",
+      "Bash(ss:*)",
+      "Bash(pkill:*)",
+      "Bash(bun run preview:*)",
+      "Bash(curl:*)",
+      "Bash(bun run dev)",
+      "Bash(xargs:*)",
+      "Bash(bun run build:*)",
+      "Bash(npm ls:*)",
+      "Bash(bun install)"
     ],
     "deny": [],
     "ask": []
