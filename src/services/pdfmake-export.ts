@@ -511,153 +511,267 @@ function renderDailySummary(days: Day[]): any[] {
    ========================================================================= */
 
 export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): Promise<void> {
-  const preset: PagePreset = ((o as any)?.pagePreset as PagePreset) || 'auto';
-  const {
-    pageSize,
-    pageMargins,
-    baseFontSize,
-    headerFont,
-    footerFont,
-    heroTitle,
-    dayHeader,
-    timeWidth,
-    imageWidth,
-  } = pagePresetSettings(preset);
+  try {
+    console.log('[PDF Export] Starting export for trip:', tripId);
+    console.log('[PDF Export] Options:', o);
 
-  // Fetch minimal trip info
-  const { data: trip, error } = await supabase
-    .from(TABLES.trip)
-    .select('destination,arrival_date,departure_date,cover_image_url')
-    .eq('trip_id', tripId).single();
-  if (error || !trip) throw (error ?? new Error('Trip not found'));
+    const preset: PagePreset = ((o as any)?.pagePreset as PagePreset) || 'auto';
+    const {
+      pageSize,
+      pageMargins,
+      baseFontSize,
+      headerFont,
+      footerFont,
+      heroTitle,
+      dayHeader,
+      timeWidth,
+      imageWidth,
+    } = pagePresetSettings(preset);
 
-  const sameDay   = trip.arrival_date && trip.departure_date
-    ? isSameDay(parseISO(trip.arrival_date), parseISO(trip.departure_date)) : false;
-
-  const dateRange = (trip.arrival_date && trip.departure_date)
-    ? (sameDay ? fmtDate(trip.arrival_date) : `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`)
-    : '';
-
-  const { days, stays, transports } = await buildDays(tripId, o);
-
-  // Cover image (data URL, possibly downscaled)
-  let coverDataUrl = '';
-  if (o.showImages && trip.cover_image_url) {
-    coverDataUrl = await toDataURI(trip.cover_image_url, imageWidth);
-  }
-
-  // Build document definition
-  const content: any[] = [];
-  
-  // Cover section
-  if (coverDataUrl) content.push({ image: coverDataUrl, width: imageWidth, margin: [0, 0, 0, 12] });
-  content.push({ text: `${trip.destination || 'Trip'} Itinerary`, style: 'heroTitle' });
-  if (dateRange) content.push({ text: dateRange, style: 'heroSub', margin: [0, 0, 0, 16] });
-
-  // Summary page
-  content.push({ pageBreak: 'after' });
-  content.push({ text: 'Trip Summary', style: 'summaryPageTitle', margin: [0, 0, 0, 12] });
-  content.push(...renderAccommodationSummary(stays, baseFontSize));
-  content.push(...renderTransportSummary(transports));
-  content.push(...renderDailySummary(days));
-
-  // Daily itineraries with markers
-  days.forEach((d, idx) => {
-    content.push({ pageBreak: 'before' });
-    
-    // Day header with density and travel day marker
-    const density = getDensityIndicator(d.activityCount || 0);
-    const travelMarker = d.hasTransport ? ' ✈️ TRAVEL DAY' : '';
-    const dayHeaderText = d.title?.trim() 
-      ? `${d.title} – ${fmtDate(d.date)} ${density}${travelMarker}`
-      : `${fmtDate(d.date)} ${density}${travelMarker}`;
-    
-    content.push({
-      text: dayHeaderText,
-      style: 'dayHeader',
-      margin: [0, 8, 0, 6],
-    });
-    
-    content.push(renderTable(d.items, o, timeWidth));
-  });
-
-  const doc: any = {
-    pageSize,
-    pageMargins,
-    defaultStyle: { fontSize: baseFontSize, lineHeight: 1.25 },
-    header: () => ({
-      text: [trip.destination, dateRange ? ` • ${dateRange}` : ''].join(''),
-      alignment: 'center',
-      fontSize: headerFont,
-      margin: [0, 10, 0, 0],
-      color: '#666',
-    }),
-    footer: (p, c) => ({
-      text: `Page ${p} of ${c} • exported ${fnsFormat(new Date(), 'PP p')}`,
-      alignment: 'center',
-      fontSize: footerFont,
-      margin: [0, 0, 0, 10],
-      color: '#999',
-    }),
-    content,
-    styles: {
-      heroTitle: { fontSize: heroTitle, bold: true },
-      heroSub:   { fontSize: baseFontSize + 1.5, color: '#6b6b6b' },
-      summaryPageTitle: { fontSize: dayHeader, bold: true, color: '#333', margin: [0, 0, 0, 12] },
-      summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: '#333' },
-      summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: '#8b7355', alignment: 'center' },
-      summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
-      summaryItem: { fontSize: baseFontSize - 0.5, color: '#333' },
-      dayHeader: { fontSize: dayHeader, bold: true, color: '#333' },
-      timeCell:  { fontSize: baseFontSize - 1, color: '#6b6b6b' },
-      itemTitle: { bold: true },
-      itemDetail:{ fontSize: baseFontSize },
-      itemMeta:  { italics: true, color: '#6b6b6b' },
-    },
-  };
-
-  // Delivery strategy
-  const strategy = resolveStrategy(o);
-  const fileName = `${sanitizeFilename(trip.destination)}-itinerary.pdf`;
-  const pdf = pdfMake.createPdf(doc);
-
-  // On mobile, always download (window.open is blocked)
-  // On desktop, download by default
-  if (strategy === 'download' || strategy === 'auto') {
-    pdf.download(fileName);
-    return;
-  }
-
-  if (strategy === 'open') {
-    // Only use open for explicit open strategy on desktop
-    if (!isProbablyMobile()) {
-      pdf.open();
-      return;
-    } else {
-      // Fallback to download on mobile if open was explicitly requested
-      pdf.download(fileName);
-      return;
+    console.log('[PDF Export] Fetching trip data...');
+    // Fetch minimal trip info
+    const { data: trip, error } = await supabase
+      .from(TABLES.trip)
+      .select('destination,arrival_date,departure_date,cover_image_url')
+      .eq('trip_id', tripId).single();
+    if (error || !trip) {
+      console.error('[PDF Export] Trip fetch failed:', error);
+      throw (error ?? new Error('Trip not found'));
     }
-  }
+    console.log('[PDF Export] Trip data fetched:', trip.destination);
 
-  if (strategy === 'blob') {
-    // If caller wants to handle sharing UI themselves
-    pdf.getBlob((blob: Blob) => {
-      const url = URL.createObjectURL(blob);
-      // The caller can read the blob URL via a custom event or you could expose another API to return it.
-      // We just download it here for convenience.
-      if (!isProbablyMobile()) {
-        window.open(url, '_blank');
-      } else {
-        // Mobile: create a temporary link and click it to download
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+    const sameDay   = trip.arrival_date && trip.departure_date
+      ? isSameDay(parseISO(trip.arrival_date), parseISO(trip.departure_date)) : false;
+
+    const dateRange = (trip.arrival_date && trip.departure_date)
+      ? (sameDay ? fmtDate(trip.arrival_date) : `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`)
+      : '';
+
+    console.log('[PDF Export] Building days data...');
+    const { days, stays, transports } = await buildDays(tripId, o);
+    console.log('[PDF Export] Days built:', days.length, 'days');
+
+    // Cover image (data URL, possibly downscaled)
+    let coverDataUrl = '';
+    if (o.showImages && trip.cover_image_url) {
+      console.log('[PDF Export] Loading cover image...');
+      coverDataUrl = await toDataURI(trip.cover_image_url, imageWidth);
+      console.log('[PDF Export] Cover image loaded');
+    }
+
+    console.log('[PDF Export] Building document definition...');
+    // Build document definition
+    const content: any[] = [];
+
+    // Cover section
+    if (coverDataUrl) content.push({ image: coverDataUrl, width: imageWidth, margin: [0, 0, 0, 12] });
+    content.push({ text: `${trip.destination || 'Trip'} Itinerary`, style: 'heroTitle' });
+    if (dateRange) content.push({ text: dateRange, style: 'heroSub', margin: [0, 0, 0, 16] });
+
+    // Summary page
+    content.push({ text: '', pageBreak: 'after' });
+    content.push({ text: 'Trip Summary', style: 'summaryPageTitle', margin: [0, 0, 0, 12] });
+    content.push(...renderAccommodationSummary(stays, baseFontSize));
+    content.push(...renderTransportSummary(transports));
+    content.push(...renderDailySummary(days));
+
+    // Daily itineraries with markers
+    days.forEach((d, idx) => {
+      content.push({ text: '', pageBreak: 'before' });
+
+      // Day header with density and travel day marker
+      const density = getDensityIndicator(d.activityCount || 0);
+      const travelMarker = d.hasTransport ? ' ✈️ TRAVEL DAY' : '';
+      const dayHeaderText = d.title?.trim()
+        ? `${d.title} – ${fmtDate(d.date)} ${density}${travelMarker}`
+        : `${fmtDate(d.date)} ${density}${travelMarker}`;
+
+      content.push({
+        text: dayHeaderText,
+        style: 'dayHeader',
+        margin: [0, 8, 0, 6],
+      });
+
+      content.push(renderTable(d.items, o, timeWidth));
+    });
+
+    const doc: any = {
+      pageSize,
+      pageMargins,
+      defaultStyle: { fontSize: baseFontSize, lineHeight: 1.25 },
+      header: () => ({
+        text: [trip.destination, dateRange ? ` • ${dateRange}` : ''].join(''),
+        alignment: 'center',
+        fontSize: headerFont,
+        margin: [0, 10, 0, 0],
+        color: '#666',
+      }),
+      footer: (p, c) => ({
+        text: `Page ${p} of ${c} • exported ${fnsFormat(new Date(), 'PP p')}`,
+        alignment: 'center',
+        fontSize: footerFont,
+        margin: [0, 0, 0, 10],
+        color: '#999',
+      }),
+      content,
+      styles: {
+        heroTitle: { fontSize: heroTitle, bold: true },
+        heroSub:   { fontSize: baseFontSize + 1.5, color: '#6b6b6b' },
+        summaryPageTitle: { fontSize: dayHeader, bold: true, color: '#333', margin: [0, 0, 0, 12] },
+        summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: '#333' },
+        summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: '#8b7355', alignment: 'center' },
+        summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
+        summaryItem: { fontSize: baseFontSize - 0.5, color: '#333' },
+        dayHeader: { fontSize: dayHeader, bold: true, color: '#333' },
+        timeCell:  { fontSize: baseFontSize - 1, color: '#6b6b6b' },
+        itemTitle: { bold: true },
+        itemDetail:{ fontSize: baseFontSize },
+        itemMeta:  { italics: true, color: '#6b6b6b' },
+      },
+    };
+
+    // Delivery strategy
+    const strategy = resolveStrategy(o);
+    const fileName = `${sanitizeFilename(trip.destination)}-itinerary.pdf`;
+    console.log('[PDF Export] Creating PDF with strategy:', strategy);
+    console.log('[PDF Export] Document content items:', content.length);
+    const pdf = pdfMake.createPdf(doc);
+    console.log('[PDF Export] PDF object created, generating blob...');
+
+    // Wrap all download strategies in Promises for proper error handling
+    return new Promise<void>((resolve, reject) => {
+      try {
+        // On mobile, always download (window.open is blocked)
+        // On desktop, download by default
+        if (strategy === 'download' || strategy === 'auto') {
+          console.log('[PDF Export] Using download/auto strategy');
+          // Use getBlob for better error handling
+          pdf.getBlob((blob: Blob) => {
+            console.log('[PDF Export] Blob received, size:', blob?.size);
+            try {
+              if (!blob) {
+                console.error('[PDF Export] Blob is null or undefined');
+                reject(new Error('Failed to generate PDF blob'));
+                return;
+              }
+
+              // Create a download link
+              const url = URL.createObjectURL(blob);
+              console.log('[PDF Export] Blob URL created:', url);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              console.log('[PDF Export] Download triggered for:', fileName);
+              document.body.removeChild(link);
+
+              // Clean up after a short delay
+              setTimeout(() => {
+                URL.revokeObjectURL(url);
+                console.log('[PDF Export] Success! PDF downloaded');
+                resolve();
+              }, 100);
+            } catch (err) {
+              console.error('[PDF Export] Error in blob callback:', err);
+              reject(err);
+            }
+          });
+          return;
+        }
+
+        if (strategy === 'open') {
+          // Only use open for explicit open strategy on desktop
+          if (!isProbablyMobile()) {
+            pdf.getBlob((blob: Blob) => {
+              try {
+                if (!blob) {
+                  reject(new Error('Failed to generate PDF blob'));
+                  return;
+                }
+
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                setTimeout(() => {
+                  URL.revokeObjectURL(url);
+                  resolve();
+                }, 1000);
+              } catch (err) {
+                reject(err);
+              }
+            });
+          } else {
+            // Fallback to download on mobile if open was explicitly requested
+            pdf.getBlob((blob: Blob) => {
+              try {
+                if (!blob) {
+                  reject(new Error('Failed to generate PDF blob'));
+                  return;
+                }
+
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => {
+                  URL.revokeObjectURL(url);
+                  resolve();
+                }, 100);
+              } catch (err) {
+                reject(err);
+              }
+            });
+          }
+          return;
+        }
+
+        if (strategy === 'blob') {
+          // If caller wants to handle sharing UI themselves
+          pdf.getBlob((blob: Blob) => {
+            try {
+              if (!blob) {
+                reject(new Error('Failed to generate PDF blob'));
+                return;
+              }
+
+              const url = URL.createObjectURL(blob);
+              // The caller can read the blob URL via a custom event or you could expose another API to return it.
+              // We just download it here for convenience.
+              if (!isProbablyMobile()) {
+                window.open(url, '_blank');
+              } else {
+                // Mobile: create a temporary link and click it to download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }
+              setTimeout(() => {
+                URL.revokeObjectURL(url);
+                resolve();
+              }, 100);
+            } catch (err) {
+              reject(err);
+            }
+          });
+          return;
+        }
+
+        // If no strategy matched, reject
+        console.error('[PDF Export] No valid strategy matched:', strategy);
+        reject(new Error('Invalid PDF export strategy'));
+      } catch (err) {
+        console.error('[PDF Export] Error in Promise wrapper:', err);
+        reject(err);
       }
     });
+  } catch (error) {
+    console.error('[PDF Export] Top-level error:', error);
+    throw error;
   }
 }

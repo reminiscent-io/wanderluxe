@@ -125,18 +125,18 @@ const Auth = () => {
         className="w-full max-w-md"
       >
         <Card className="relative bg-white/80 backdrop-blur-md border-0">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">
+          <CardHeader className="pb-6">
+            <CardTitle className="text-[28px] text-center text-[#2C2C2C]">
               Welcome to WanderLuxe
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-8 pb-8">
             <form
               onSubmit={isSignUp ? handleEmailSignUp : handleEmailSignIn}
-              className="space-y-4"
+              className="space-y-5"
             >
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-[14px] text-[#4B5563] mb-2">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -144,11 +144,12 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white/50"
+                  autoComplete="email"
+                  className="bg-white border border-[#D1D5DB] rounded-lg h-12 px-4 placeholder:text-[#9CA3AF] focus-visible:border-[#3B82F6] focus-visible:border-2 focus-visible:ring-[3px] focus-visible:ring-[rgba(59,130,246,0.1)]"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-[14px] text-[#4B5563] mb-2">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -156,22 +157,24 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-white/50"
+                  autoComplete="current-password"
+                  className="bg-white border border-[#D1D5DB] rounded-lg h-12 px-4 placeholder:text-[#9CA3AF] focus-visible:border-[#3B82F6] focus-visible:border-2 focus-visible:ring-[3px] focus-visible:ring-[rgba(59,130,246,0.1)]"
                 />
-              {/* Forgot password link (add near the password input) */}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => navigate("/auth/forgot-password")}
-                  className="text-sm text-earth-600 hover:underline"
-                >
-                  Forgot password?
-                </button>
-              </div>
+              {!isSignUp && (
+                <div className="flex justify-start mt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/auth/forgot-password")}
+                    className="text-[14px] text-[#6B7280] hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
               </div>
               {isSignUp && (
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Label htmlFor="confirmPassword" className="text-[14px] text-[#4B5563] mb-2">Confirm Password</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -179,16 +182,17 @@ const Auth = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="bg-white/50"
+                    autoComplete="new-password"
+                    className="bg-white border border-[#D1D5DB] rounded-lg h-12 px-4 placeholder:text-[#9CA3AF] focus-visible:border-[#3B82F6] focus-visible:border-2 focus-visible:ring-[3px] focus-visible:ring-[rgba(59,130,246,0.1)]"
                   />
                 </div>
               )}
 
               {/* ORDER: Sign In/Up button, Google button, then "OR SIGN UP FOR FREE" text */}
-              <div className="space-y-4">
+              <div className="space-y-4 mt-6">
                 <Button
                   type="submit"
-                  className="w-full bg-[#888888] hover:bg-[#666666] text-white"
+                  className="w-full h-12 bg-[#888888] hover:bg-[#999999] active:bg-[#777777] text-white transition-colors"
                   disabled={loading}
                 >
                   {isSignUp ? "Sign Up" : "Sign In"}
@@ -197,7 +201,7 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-12 bg-white border-[1.5px] border-[#D1D5DB] text-[#374151] hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-colors"
                   onClick={handleGoogleSignIn}
                   disabled={loading}
                 >
@@ -225,7 +229,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setIsSignUp((v) => !v)}
-                  className="w-full text-center text-xs uppercase tracking-wide font-bold text-earth-600 hover:underline"
+                  className="w-full text-center text-[15px] uppercase tracking-wide font-bold text-[#6B7280] hover:underline mt-6"
                   aria-label={isSignUp ? "Or Sign In" : "Or Sign Up for Free"}
                 >
                   {isSignUp ? "OR SIGN IN" : "OR SIGN UP FOR FREE"}
@@ -233,17 +237,19 @@ const Auth = () => {
               </div>
             </form>
 
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-sm text-center text-muted-foreground mb-3">
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-[14px] text-center text-[#6B7280] mb-3">
                 Not ready to sign up?
               </p>
-              <Button
-                type="button"
-                className="w-full bg-earth-600 text-white hover:bg-earth-500"
-                onClick={() => navigate("/explore")}
-              >
-                Explore Public Trips
-              </Button>
+              <div className="text-center">
+                <button
+                  type="button"
+                  className="text-[15px] font-semibold text-[#8B6B47] hover:underline transition-all"
+                  onClick={() => navigate("/explore")}
+                >
+                  Explore Public Trips
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>
