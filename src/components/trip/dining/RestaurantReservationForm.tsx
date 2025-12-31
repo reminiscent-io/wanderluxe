@@ -72,7 +72,7 @@ const formSchema = z.object({
   address: z.string().optional().nullable(),
   phone_number: z.string().optional().nullable(),
   website: z.string().optional().nullable(),
-  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional()),
+  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional().nullable()),
   notes: z.string().optional(),
   cost: z.preprocess(toNullableNumber, z.number().optional()),
   currency: z.string().optional().nullable(),
@@ -463,8 +463,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     type="number"
                     value={field.value ?? ''}
                     onChange={(e) => {
-                      const v = e.target.valueAsNumber;
-                      field.onChange(Number.isNaN(v) ? undefined : v);
+                      const v = e.target.value;
+                      if (v === "") {
+                        field.onChange(null);
+                      } else {
+                        const num = parseInt(v, 10);
+                        field.onChange(isNaN(num) ? null : num);
+                      }
                     }}
                     placeholder="e.g., 2"
                     className="bg-white"
