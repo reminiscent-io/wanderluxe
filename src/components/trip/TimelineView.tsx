@@ -3,6 +3,7 @@ import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
+import TripSummaryPanel from './timeline/TripSummaryPanel';
 import ExportPdfButton from './ExportPdfButton';
 import ShareTripDialog from './ShareTripDialog';
 import { Button } from '@/components/ui/button';
@@ -183,46 +184,54 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
 
   return (
-    <div className="relative space-y-8 max-w-5xl mx-auto px-1 md:px-6">
+    <div className="relative md:flex md:gap-0">
       {isRefreshing && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
       )}
 
+      {/* Summary Panel - Desktop only, left side, 1/3 width */}
+      <TripSummaryPanel
+        accommodations={processedHotelStays}
+        transportation={transportationData || []}
+      />
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-earth-500">Trip Timeline</h2>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsShareDialogOpen(true)}
-            className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
-          >
-            <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Share</span>
-          </Button>
-          <ExportPdfButton
-            tripId={tripId}
-            className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
-          />
+      {/* Timeline Content - Right side, 2/3 width on desktop, full width on mobile */}
+      <div className="w-full md:w-2/3 px-1 md:px-6 space-y-8">
+        <div className="flex justify-between items-center mb-6 pt-4 md:pt-0">
+          <h2 className="text-2xl font-bold text-earth-500">Trip Timeline</h2>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsShareDialogOpen(true)}
+              className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
+            >
+              <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Share</span>
+            </Button>
+            <ExportPdfButton
+              tripId={tripId}
+              className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
+            />
+          </div>
         </div>
-      </div>
 
-      <ShareTripDialog
-        tripId={tripId}
-        tripDestination={tripDestination || 'Trip'}
-        open={isShareDialogOpen}
-        onOpenChange={setIsShareDialogOpen}
-      />
-      <TimelineContent
-        days={days}
-        dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
-        hotelStays={processedHotelStays}
-        onDayDelete={handleDayDelete}
-        tripArrivalDate={localTripDates.arrival_date || undefined}
-        tripDepartureDate={localTripDates.departure_date || undefined}
-        canEdit={canEdit}
-      />
+        <ShareTripDialog
+          tripId={tripId}
+          tripDestination={tripDestination || 'Trip'}
+          open={isShareDialogOpen}
+          onOpenChange={setIsShareDialogOpen}
+        />
+        <TimelineContent
+          days={days}
+          dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
+          hotelStays={processedHotelStays}
+          onDayDelete={handleDayDelete}
+          tripArrivalDate={localTripDates.arrival_date || undefined}
+          tripDepartureDate={localTripDates.departure_date || undefined}
+          canEdit={canEdit}
+        />
+      </div>
     </div>
   );
 };
