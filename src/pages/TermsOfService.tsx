@@ -17,7 +17,7 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">1. Overview of Services</h2>
               <p>
-                Welcome to <strong>WanderLuxe</strong> (the "Site"), owned and operated by <strong>Reminiscent Technologies LLC</strong> ("we," "us," or "our"). By accessing or using the Site, you agree to be bound by these Terms of Service ("Terms"). If you do not agree, please do not use the Site.
+                Welcome to <strong>WanderLuxe</strong> (the "Site"), owned and operated by <strong>Wanderluxe Travel LLC</strong> ("we," "us," or "our"). By accessing or using the Site, you agree to be bound by these Terms of Service ("Terms"). If you do not agree, please do not use the Site.
               </p>
               <p>
                 WanderLuxe provides travel-related services, content, and features including trip planning tools, travel itineraries, AI-powered travel assistance, and integration with third‑party services. We use <strong>Supabase</strong> for authentication and data storage, and offer <strong>Google Sign‑In</strong> as an option. Additional third‑party APIs (such as weather data, location services, and AI services) may also be used.
@@ -88,10 +88,10 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">6. Intellectual Property</h2>
               <p>
-                All content on the Site, excluding user‑submitted content, is owned by or licensed to Reminiscent Technologies LLC. You may not reproduce, distribute, or create derivative works without our explicit permission.
+                All content on the Site, excluding user‑submitted content, is owned by or licensed to Wanderluxe Travel LLC. You may not reproduce, distribute, or create derivative works without our explicit permission.
               </p>
               <p>
-                “WanderLuxe” and associated logos are trademarks of Reminiscent Technologies LLC.
+                “WanderLuxe” and associated logos are trademarks of Wanderluxe Travel LLC.
               </p>
             </div>
             <div className="pb-6 border-b">
@@ -103,13 +103,13 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">8. Limitation of Liability</h2>
               <p>
-                To the fullest extent permitted by law, Reminiscent Technologies LLC shall not be liable for any direct, indirect, incidental, or consequential damages arising out of your use of the Site. Our total liability is limited to any fees paid by you in the six months preceding the claim, if any.
+                To the fullest extent permitted by law, Wanderluxe Travel LLC shall not be liable for any direct, indirect, incidental, or consequential damages arising out of your use of the Site. Our total liability is limited to any fees paid by you in the six months preceding the claim, if any.
               </p>
             </div>
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">9. Indemnification</h2>
               <p>
-                You agree to indemnify and hold harmless Reminiscent Technologies LLC and its affiliates from any claims, damages, or expenses arising from your use of the Site or breach of these Terms.
+                You agree to indemnify and hold harmless Wanderluxe Travel LLC and its affiliates from any claims, damages, or expenses arising from your use of the Site or breach of these Terms.
               </p>
             </div>
             <div className="pb-6 border-b">
