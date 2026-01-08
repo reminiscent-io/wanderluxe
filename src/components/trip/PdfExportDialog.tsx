@@ -36,15 +36,19 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
   });
 
   const handleExport = async () => {
+    console.log('[PdfExportDialog] Starting export with options:', options);
     setIsLoading(true);
     try {
+      console.log('[PdfExportDialog] Calling onExport...');
       await onExport(options);
+      console.log('[PdfExportDialog] Export completed successfully');
       setIsOpen(false);
       toast.success('PDF exported successfully');
     } catch (error) {
-      console.error('Export failed:', error);
-      toast.error('Failed to export PDF');
+      console.error('[PdfExportDialog] Export failed:', error);
+      toast.error(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
+      console.log('[PdfExportDialog] Resetting loading state');
       setIsLoading(false);
     }
   };

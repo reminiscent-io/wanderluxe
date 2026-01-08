@@ -15,7 +15,7 @@ const PrivacyPolicy: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">1. Introduction</h2>
               <p>
-                Welcome to <strong>WanderLuxe</strong>, operated by <strong>Reminiscent Technologies LLC</strong>. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website.
+                Welcome to <strong>WanderLuxe</strong>, operated by <strong>Wanderluxe Travel LLC</strong>. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website.
               </p>
             </div>
             <div className="pb-6 border-b">

@@ -112,6 +112,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         required
         defaultMonth={tripArrivalDate ? new Date(tripArrivalDate) : undefined}
         control={control}
+        timeStep={60} // 1-minute increments for precise flight/train times
       />
 
       {/* Provider & Confirmation Number */}

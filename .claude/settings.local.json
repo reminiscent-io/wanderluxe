@@ -15,7 +15,8 @@
       "Bash(xargs:*)",
       "Bash(bun run build:*)",
       "Bash(npm ls:*)",
-      "Bash(bun install)"
+      "Bash(bun install)",
+      "Bash(timeout 30 bun run dev:*)"
     ],
     "deny": [],
     "ask": []

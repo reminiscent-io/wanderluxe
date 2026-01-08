@@ -29,6 +29,7 @@ interface Props {
   control?: RHFControl<any>;
   hideTimeInputs?: boolean;
   placeholder?: string;
+  timeStep?: number; // Step in seconds (e.g., 60 for 1 min, 300 for 5 min)
 }
 
 const prettyTime = (t?: string) => {
@@ -52,6 +53,7 @@ export default function LuxuryDateTimeRangePicker({
   control: externalControl,
   hideTimeInputs = false,
   placeholder = "Select date range",
+  timeStep = 300, // Default to 5 minutes
 }: Props) {
   const ctx = useFormContext();
   const control = ctx?.control ?? externalControl;
@@ -203,6 +205,7 @@ export default function LuxuryDateTimeRangePicker({
                             type="time"
                             value={value.startTime ?? ""}
                             onChange={(e) => update({ startTime: e.target.value })}
+                            step={timeStep}
                             className="w-full bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                             data-keep-open
                           />
@@ -215,6 +218,7 @@ export default function LuxuryDateTimeRangePicker({
                             type="time"
                             value={value.endTime ?? ""}
                             onChange={(e) => update({ endTime: e.target.value })}
+                            step={timeStep}
                             className="w-full bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                             data-keep-open
                           />

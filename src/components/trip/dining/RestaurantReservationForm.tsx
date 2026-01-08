@@ -72,7 +72,7 @@ const formSchema = z.object({
   address: z.string().optional().nullable(),
   phone_number: z.string().optional().nullable(),
   website: z.string().optional().nullable(),
-  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional()),
+  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional().nullable()),
   notes: z.string().optional(),
   cost: z.preprocess(toNullableNumber, z.number().optional()),
   currency: z.string().optional().nullable(),
@@ -451,7 +451,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         </div>
 
         {/* Number of People, Cost & Currency */}
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_1.5fr] gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.5fr] gap-3">
           <FormField
             control={form.control}
             name="number_of_people"
@@ -463,8 +463,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     type="number"
                     value={field.value ?? ''}
                     onChange={(e) => {
-                      const v = e.target.valueAsNumber;
-                      field.onChange(Number.isNaN(v) ? undefined : v);
+                      const v = e.target.value;
+                      if (v === "") {
+                        field.onChange(null);
+                      } else {
+                        const num = parseInt(v, 10);
+                        field.onChange(isNaN(num) ? null : num);
+                      }
                     }}
                     placeholder="e.g., 2"
                     className="bg-white"
@@ -475,49 +480,52 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cost</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
-                    onChange={(e) => {
-                      const numericValue = Number(e.target.value.replace(/,/g, ''));
-                      field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
-                    }}
-                    onBlur={(e) => {
-                      handleCostBlur(e.target.value);
-                    }}
-                    placeholder="0"
-                    className="bg-white"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex flex-col space-y-2">
+            <FormLabel>Cost & Currency</FormLabel>
+            <div className="flex gap-2">
+              <FormField
+                control={form.control}
+                name="cost"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Input
+                        type="text"
+                        value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
+                        onChange={(e) => {
+                          const numericValue = Number(e.target.value.replace(/,/g, ''));
+                          field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
+                        }}
+                        onBlur={(e) => {
+                          handleCostBlur(e.target.value);
+                        }}
+                        placeholder="0"
+                        className="bg-white"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="currency"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Currency</FormLabel>
-                <FormControl>
-                  <CurrencySelector
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    className="bg-white"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem className="w-[100px] sm:w-[120px]">
+                    <FormControl>
+                      <CurrencySelector
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        className="bg-white"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Notes */}
