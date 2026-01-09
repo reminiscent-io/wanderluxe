@@ -259,7 +259,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     </div>
 
                     {canEdit && (
-                      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 pt-3 sm:pt-4 border-t border-sand-200">
+                      <div className="hidden md:grid grid-cols-4 gap-1.5 sm:gap-2 pt-3 sm:pt-4 border-t border-sand-200">
                         <Button
                           variant="outline"
                           size="sm"
@@ -302,7 +302,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       <h3 className="text-lg font-semibold text-earth-800 mb-2">No plans yet</h3>
                       <p className="text-sm text-earth-600 mb-6">{canEdit ? 'Start planning your day by adding activities, hotels, or transportation' : 'This day has no activities planned'}</p>
                       {canEdit && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="hidden md:grid grid-cols-2 gap-3">
                           <Button
                             variant="outline"
                             size="sm"
