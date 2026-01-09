@@ -270,6 +270,10 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
       <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetContent side="left" className="p-0 w-[280px]">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetDescription>Access trip timeline, budget, and settings</SheetDescription>
+            </SheetHeader>
             {sidebarContent}
           </SheetContent>
         </Sheet>
