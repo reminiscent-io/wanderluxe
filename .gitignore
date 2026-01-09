@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Environment variables (CRITICAL - never commit!)
+.env
+.env.local
+.env.*.local
+
 # Cache directories that should not be watched
 .cache
 .bun
