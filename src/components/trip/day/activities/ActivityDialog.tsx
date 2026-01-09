@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import ActivityForm from "../../ActivityForm";
 import { ActivityFormData } from "@/types/trip";

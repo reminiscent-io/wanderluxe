@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import RestaurantReservationForm from './RestaurantReservationForm';
 import { supabase } from '@/integrations/supabase/client';

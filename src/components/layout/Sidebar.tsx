@@ -7,7 +7,7 @@ import {
   Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
