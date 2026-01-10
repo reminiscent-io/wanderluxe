@@ -30,6 +30,7 @@ export interface SidebarHandle {
   openActivityDialog: () => void;
   openReservationDialog: () => void;
   openSidebarSheet: () => void;
+  openTravelerDialog: () => void;
 }
 
 export const tripNavItems = [
@@ -71,6 +72,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     openActivityDialog: () => sidebar.setActivityOpen(true),
     openReservationDialog: () => sidebar.setReservationOpen(true),
     openSidebarSheet: () => sidebar.setIsOpen(true),
+    openTravelerDialog: () => sidebar.setTravelerOpen(true),
   }));
 
   const {

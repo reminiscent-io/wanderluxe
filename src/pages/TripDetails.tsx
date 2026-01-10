@@ -193,6 +193,7 @@ const TripDetails = () => {
         tripId={tripId}
         onQuickAddClick={() => setQuickAddOpen(true)}
         onDetailsClick={() => sidebarRef.current?.openSidebarSheet()}
+        onPeopleClick={() => sidebarRef.current?.openTravelerDialog()}
       />
 
       {/* Quick Add Sheet */}
