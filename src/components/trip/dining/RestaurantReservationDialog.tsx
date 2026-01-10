@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import RestaurantReservationForm from './RestaurantReservationForm';
 import { supabase } from '@/integrations/supabase/client';
@@ -123,6 +124,9 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
       <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="overflow-visible">
         <DialogHeader className="flex-shrink-0 z-40">
           <DialogTitle>{title || (finalInitialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {finalInitialData?.id ? 'Update your restaurant booking details' : 'Add a new dining reservation'}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none px-1 overflow-visible">
           <RestaurantReservationForm

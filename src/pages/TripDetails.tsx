@@ -1,7 +1,9 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import HeroSection from "../components/trip/HeroSection";
-import Sidebar from "@/components/layout/Sidebar";
+import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
+import BottomNavigation from "@/components/layout/BottomNavigation";
+import QuickAddSheet from "@/components/layout/QuickAddSheet";
 import { useTripQuery } from '@/hooks/useTripQuery';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
@@ -44,6 +46,34 @@ const TripDetails = () => {
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
   useTripSubscription(tripId);
 
+  // Quick add sheet state
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+
+  // Ref to access Sidebar methods
+  const sidebarRef = useRef<SidebarHandle>(null);
+
+  const handleQuickAddAction = (action: "accommodation" | "transportation" | "activity" | "dining" | "import") => {
+    // Open the appropriate dialog or navigate based on the action
+    switch (action) {
+      case "accommodation":
+        sidebarRef.current?.openAccommodationDialog();
+        break;
+      case "transportation":
+        sidebarRef.current?.openTransportationDialog();
+        break;
+      case "activity":
+        sidebarRef.current?.openActivityDialog();
+        break;
+      case "dining":
+        sidebarRef.current?.openReservationDialog();
+        break;
+      case "import":
+        // Navigate to chat view for AI import/scan
+        navigate(`/trip/${tripId}/chat`);
+        break;
+    }
+  };
+
   if (tripLoading && !previousTrip) return <TripDetailsSkeleton />;
   if (permissionsLoading) return <TripDetailsSkeleton />;
   if (tripError) return <TripDetailsError />;
@@ -84,7 +114,7 @@ const TripDetails = () => {
     navigate(`/trip/${tripId}/${tab}`);
   };
 
-  const sidebar = <Sidebar tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
+  const sidebar = <Sidebar ref={sidebarRef} tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
   return (
     // Offset the page content by the fixed navbar height so the hero touches the bottom of the nav
@@ -108,7 +138,7 @@ const TripDetails = () => {
           </div>
 
           <div className="relative flex-1 bg-sand-50/95 w-full z-10">
-            <div className="max-w-none mx-auto px-4 py-8">
+            <div className="max-w-none mx-auto px-4 py-8 pb-24 md:pb-8">
               {!canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                   <div className="flex items-center">
@@ -157,6 +187,21 @@ const TripDetails = () => {
           </div>
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNavigation
+        tripId={tripId}
+        onQuickAddClick={() => setQuickAddOpen(true)}
+        onDetailsClick={() => sidebarRef.current?.openSidebarSheet()}
+        onPeopleClick={() => sidebarRef.current?.openTravelersPanel()}
+      />
+
+      {/* Quick Add Sheet */}
+      <QuickAddSheet
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        onSelectAction={handleQuickAddAction}
+      />
     </div>
   );
 };

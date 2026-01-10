@@ -1,3 +1,5 @@
+// Validate environment variables first (fails fast if missing)
+import './config/env';
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

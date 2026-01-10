@@ -1,3 +1,4 @@
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import {
   Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +23,16 @@ import TravelerDialog from "../trip/travelers/TravelerDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
 import { supabase } from "@/integrations/supabase/client";
+
+export interface SidebarHandle {
+  openAccommodationDialog: () => void;
+  openTransportationDialog: () => void;
+  openActivityDialog: () => void;
+  openReservationDialog: () => void;
+  openSidebarSheet: () => void;
+  openTravelerDialog: () => void;
+  openTravelersPanel: () => void;
+}
 
 export const tripNavItems = [
   { title: "Timeline", icon: Calendar, href: "timeline" },
@@ -49,11 +60,22 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
 }
 
-export default function Sidebar({ tripId }: SidebarProps) {
+const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
+
+  // Expose methods to parent via ref
+  React.useImperativeHandle(ref, () => ({
+    openAccommodationDialog: () => sidebar.setAccommodationOpen(true),
+    openTransportationDialog: () => sidebar.setTransportationOpen(true),
+    openActivityDialog: () => sidebar.setActivityOpen(true),
+    openReservationDialog: () => sidebar.setReservationOpen(true),
+    openSidebarSheet: () => sidebar.setIsOpen(true),
+    openTravelerDialog: () => sidebar.setTravelerOpen(true),
+    openTravelersPanel: () => sidebar.handleSubitemClick('travelers'),
+  }));
 
   const {
     isOpen, setIsOpen,
@@ -247,20 +269,15 @@ export default function Sidebar({ tripId }: SidebarProps) {
         onEditDates={handleEditDates}
       />
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - Hidden, using bottom navigation instead */}
+      {/* Keeping Sheet component for potential future use but not showing trigger */}
       <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="fixed left-4 z-50 bg-white shadow-md"
-              style={{ top: "calc(var(--app-nav-h, 56px) + 0.5rem)" }}
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
           <SheetContent side="left" className="p-0 w-[280px]">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetDescription>Access trip timeline, budget, and settings</SheetDescription>
+            </SheetHeader>
             {sidebarContent}
           </SheetContent>
         </Sheet>
@@ -397,4 +414,8 @@ export default function Sidebar({ tripId }: SidebarProps) {
       />
     </>
   );
-}
+});
+
+Sidebar.displayName = 'Sidebar';
+
+export default Sidebar;

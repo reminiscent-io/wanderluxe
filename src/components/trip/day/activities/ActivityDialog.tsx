@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import ActivityForm from "../../ActivityForm";
 import { ActivityFormData } from "@/types/trip";
@@ -267,6 +268,9 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
       >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {isEditMode ? "Update details for this activity" : "Enter details for a new activity or tour"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto scrollbar-none">

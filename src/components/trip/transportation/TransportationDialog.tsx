@@ -143,6 +143,9 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           <DialogTitle>
             {initialData ? 'Edit Transportation' : 'Add Transportation'}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {initialData ? 'Update your travel details' : 'Add a new flight, train, or car journey'}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto scrollbar-none px-1">
           <TransportationForm
