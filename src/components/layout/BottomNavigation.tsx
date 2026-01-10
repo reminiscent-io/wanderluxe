@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Calendar, BarChart2, User, Plus, LayoutList } from "lucide-react";
+import { Calendar, BarChart2, Users, Plus, LayoutList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -7,9 +7,10 @@ interface BottomNavigationProps {
   tripId: string | undefined;
   onQuickAddClick: () => void;
   onDetailsClick: () => void;
+  onPeopleClick: () => void;
 }
 
-const BottomNavigation = ({ tripId, onQuickAddClick, onDetailsClick }: BottomNavigationProps) => {
+const BottomNavigation = ({ tripId, onQuickAddClick, onDetailsClick, onPeopleClick }: BottomNavigationProps) => {
   const timelineItem = {
     title: "Timeline",
     icon: Calendar,
@@ -20,12 +21,6 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onDetailsClick }: BottomNav
     title: "Budget",
     icon: BarChart2,
     href: tripId ? `/trip/${tripId}/budget` : "/trips",
-  };
-
-  const profileItem = {
-    title: "Profile",
-    icon: User,
-    href: "/profile",
   };
 
   return (
@@ -102,30 +97,14 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onDetailsClick }: BottomNav
           }}
         </NavLink>
 
-        {/* Fifth item: Profile */}
-        <NavLink
-          to={profileItem.href}
-          className={({ isActive }) =>
-            cn(
-              "flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors",
-              isActive
-                ? "text-earth-700"
-                : "text-sand-600 hover:text-earth-600"
-            )
-          }
+        {/* Fifth item: People */}
+        <button
+          onClick={onPeopleClick}
+          className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"
         >
-          {({ isActive }) => {
-            const Icon = profileItem.icon;
-            return (
-              <>
-                <Icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
-                <span className={cn("text-[10px]", isActive && "font-semibold")}>
-                  {profileItem.title}
-                </span>
-              </>
-            );
-          }}
-        </NavLink>
+          <Users className="h-5 w-5" />
+          <span className="text-[10px]">People</span>
+        </button>
       </div>
     </nav>
   );
