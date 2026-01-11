@@ -318,7 +318,15 @@ const MyTrips = () => {
                   </div>
                   
                   {totalCurrentTrips > 0 && (
-                    <div className="bg-emerald-100 backdrop-blur-sm rounded-xl p-5 border border-emerald-300 shadow-sm">
+                    <div 
+                      className="bg-emerald-100 backdrop-blur-sm rounded-xl p-5 border border-emerald-300 shadow-sm cursor-pointer hover:bg-emerald-200 transition-colors"
+                      onClick={() => {
+                        const currentTrip = currentMyTrips[0] || currentSharedTrips[0];
+                        if (currentTrip) {
+                          navigate(`/trip/${currentTrip.trip_id}`);
+                        }
+                      }}
+                    >
                       <div className="text-3xl font-black text-emerald-800">{totalCurrentTrips}</div>
                       <div className="text-emerald-700 text-sm font-semibold">Active Now</div>
                     </div>
