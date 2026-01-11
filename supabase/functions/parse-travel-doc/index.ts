@@ -68,20 +68,19 @@ const toDataUrl = async (file)=>{
   const sys = [
     "You extract structured JSON from travel booking images. Output JSON only, no prose.",
     "",
-    "DATE RULES (apply deterministically):",
-    `- Treat TODAY (UTC) as ${todayIso}.`,
-    `- If a date on the document lacks a visible 4-digit year, you MUST infer the year using ONLY {${INFER_YEARS.join(", ")}}.`,
-    "- Prefer a year that makes the day-of-week match the text (e.g., “Tuesday the 23rd”) when month & day are known; if multiple match, pick the earliest on/after TODAY. If none are on/after TODAY, pick the earliest in the set.",
-    "- Otherwise (no day-of-week clue), choose the nearest date in the FUTURE relative to TODAY using that month/day.",
-    "- If a 4-digit year is explicitly present on the document, use it verbatim (even if outside that set).",
-    "- All dates must be ISO `YYYY-MM-DD`; times must be `HH:mm` (24h). Use null for unknown.",
+    "DATE EXTRACTION:",
+    "- Extract dates and times exactly as shown on the document.",
+    "- Use ISO format: YYYY-MM-DD for dates, HH:mm (24-hour) for times.",
+    "- If a 4-digit year is visible, include it in the date.",
+    "- If NO year is visible, output the date without a year (e.g., month and day only), or use null if uncertain.",
+    "- Extract any visible day-of-week information (e.g., 'Monday', 'Tue').",
     "",
-    "TRACE META:",
-    "- Also include `__meta.date_hints`: an array of objects with keys:",
-    "  { field: string, source_text: string|null, year_was_explicit: boolean, dow: string|null, month: string|null, day: number|null }",
-    "- Provide one entry per date field you output so the server can verify your inferences."
+    "GENERAL RULES:",
+    "- Return null for any field not clearly visible on the document.",
+    "- Do not infer, assume, or calculate dates - extract only what you see.",
+    "- Be precise with confirmation numbers, addresses, phone numbers, and costs."
   ].join("\n");
-  // Per-type shapes with __meta block appended
+  // Per-type extraction schemas
   const map = {
     accommodation: `Extract hotel booking details. Return ONLY JSON:
 {
@@ -96,13 +95,7 @@ const toDataUrl = async (file)=>{
   "confirmation_number": string|null,
   "provider": string|null,
   "cost": number|null,
-  "currency": string|null,
-  "__meta": {
-    "date_hints": [
-      { "field": "check_in_date", "source_text": string|null, "year_was_explicit": boolean, "dow": string|null, "month": string|null, "day": number|null },
-      { "field": "check_out_date", "source_text": string|null, "year_was_explicit": boolean, "dow": string|null, "month": string|null, "day": number|null }
-    ]
-  }
+  "currency": string|null
 }`,
     transportation: `Extract transport details. Return ONLY JSON:
 {
@@ -116,13 +109,7 @@ const toDataUrl = async (file)=>{
   "arrival_time": "HH:mm"|null,
   "confirmation_number": string|null,
   "cost": number|null,
-  "currency": string|null,
-  "__meta": {
-    "date_hints": [
-      { "field": "departure_date", "source_text": string|null, "year_was_explicit": boolean, "dow": string|null, "month": string|null, "day": number|null },
-      { "field": "arrival_date", "source_text": string|null, "year_was_explicit": boolean, "dow": string|null, "month": string|null, "day": number|null }
-    ]
-  }
+  "currency": string|null
 }`,
     activity: `Extract activity ticket details. Return ONLY JSON:
 {
@@ -135,12 +122,7 @@ const toDataUrl = async (file)=>{
   "confirmation_number": string|null,
   "notes": string|null,
   "cost": number|null,
-  "currency": string|null,
-  "__meta": {
-    "date_hints": [
-      { "field": "date", "source_text": string|null, "year_was_explicit": boolean, "dow": string|null, "month": string|null, "day": number|null }
-    ]
-  }
+  "currency": string|null
 }`,
     reservation: `Extract restaurant reservation details. Return ONLY JSON:
 {
@@ -154,12 +136,7 @@ const toDataUrl = async (file)=>{
   "confirmation_number": string|null,
   "notes": string|null,
   "cost": number|null,
-  "currency": string|null,
-  "__meta": {
-    "date_hints": [
-      { "field": "date", "source_text": string|null, "year_was_explicit": boolean, "dow": string|null, "month": string|null, "day": number|null }
-    ]
-  }
+  "currency": string|null
 }`
   };
   return {
@@ -343,9 +320,9 @@ const pickNearestFuture = (month, day, now)=>{
   return ordered.sort((a, b)=>+a - +b)[0] ?? null;
 };
 /**
- * Adjusts dates according to business rules **only when the year was not explicit**.
- * Uses model-provided hints if present; otherwise relies on the model having already
- * applied the rules in its own output.
+ * Adjusts dates according to business rules.
+ * Since the AI extracts dates as-is without inference, we apply year correction
+ * server-side to ensure dates fall within the expected range (2025-2027+).
  */ const DATE_FIELDS_BY_TYPE = {
   accommodation: [
     "check_in_date",
@@ -363,46 +340,27 @@ const pickNearestFuture = (month, day, now)=>{
   ]
 };
 const applyDateAssumptions = (itemType, fields)=>{
-  const hints = fields?.__meta?.date_hints ?? [];
-  const hintMap = new Map();
-  for (const h of hints){
-    if (h && typeof h.field === "string") hintMap.set(h.field, h);
-  }
   const targets = DATE_FIELDS_BY_TYPE[itemType] ?? [];
+
+  // Correct any dates with years outside our expected range
   for (const key of targets){
     const current = typeof fields[key] === "string" ? fields[key] : null;
     const parsed = parseIso(current);
-    const hint = hintMap.get(key);
-    // Only act when the year wasn't explicit (or we can safely infer)
-    const yearExplicit = hint?.year_was_explicit === true;
-    // If we have no ISO date at all, try to build one from hint month/day.
-    if (!parsed && hint && !yearExplicit) {
-      const m = parseMonthMaybe(hint.month);
-      const d = parseDayMaybe(hint.day);
-      if (m && d) {
-        const wantDow = parseDowMaybe(hint.dow);
-        let picked = null;
-        if (wantDow != null) picked = pickFutureByDow(m, d, wantDow, TODAY_UTC);
-        if (!picked) picked = pickNearestFuture(m, d, TODAY_UTC);
-        if (picked) fields[key] = iso(picked.getUTCFullYear(), m, d);
-      }
-      continue;
-    }
-    // If a valid ISO date is present but the model "guessed" an old year (common: 2023/2024),
-    // and the year wasn't explicit, re-infer using our rules.
-    if (parsed && !yearExplicit) {
+
+    if (parsed) {
       const { y, m, d } = parsed;
-      const wantDow = hint ? parseDowMaybe(hint.dow) : null;
-      // If year is before our allowed window, or if caller wants strict future, fix it.
+      // If year is outside our allowed window (e.g., old documents with 2023/2024),
+      // re-infer using nearest future date logic
       if (!INFER_YEARS.includes(y)) {
-        let picked = null;
-        if (wantDow != null) picked = pickFutureByDow(m, d, wantDow, TODAY_UTC);
-        if (!picked) picked = pickNearestFuture(m, d, TODAY_UTC);
-        if (picked) fields[key] = iso(picked.getUTCFullYear(), m, d);
+        const picked = pickNearestFuture(m, d, TODAY_UTC);
+        if (picked) {
+          fields[key] = iso(picked.getUTCFullYear(), m, d);
+        }
       }
     }
   }
-  // Optional: basic coherence for accommodation check-in/out (ensure check_out >= check_in if both inferred)
+
+  // Ensure accommodation checkout >= check-in
   if (itemType === "accommodation" && typeof fields["check_in_date"] === "string" && typeof fields["check_out_date"] === "string") {
     const ci = parseIso(fields["check_in_date"]);
     const co = parseIso(fields["check_out_date"]);
@@ -410,17 +368,10 @@ const applyDateAssumptions = (itemType, fields)=>{
       const ciDt = toUTC(ci.y, ci.m, ci.d);
       const coDt = toUTC(co.y, co.m, co.d);
       if (coDt < ciDt) {
-        // push checkout to the nearest valid future date with same month/day as hinted (if any),
-        // otherwise, minimally adjust to ciDt+1 day.
-        const hint = (fields?.__meta?.date_hints || []).find((h)=>h.field === "check_out_date");
-        if (hint) {
-          const hm = parseMonthMaybe(hint.month) ?? co.m;
-          const hd = parseDayMaybe(hint.day) ?? co.d;
-          const wantDow = parseDowMaybe(hint.dow);
-          let picked = null;
-          if (wantDow != null) picked = pickFutureByDow(hm, hd, wantDow, ciDt);
-          if (!picked) picked = pickNearestFuture(hm, hd, ciDt);
-          if (picked) fields["check_out_date"] = iso(picked.getUTCFullYear(), hm, hd);
+        // If checkout is before check-in, push it to next occurrence of that month/day after check-in
+        const picked = pickNearestFuture(co.m, co.d, ciDt);
+        if (picked) {
+          fields["check_out_date"] = iso(picked.getUTCFullYear(), co.m, co.d);
         } else {
           // Fallback: next day
           const next = new Date(ciDt.getTime() + 24 * 60 * 60 * 1000);
@@ -429,6 +380,7 @@ const applyDateAssumptions = (itemType, fields)=>{
       }
     }
   }
+
   return fields;
 };
 // ----------------- Handler -----------------
@@ -499,7 +451,7 @@ serve(async (req)=>{
         type: "json_object"
       },
       temperature: 0,
-      max_tokens: 800
+      max_tokens: 1200
     };
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
