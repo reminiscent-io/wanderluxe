@@ -224,16 +224,32 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               if (editingActivity?.id) {
                 // Edit mode
                 try {
+                  const updateData: Record<string, any> = {
+                    title: activityEdit.title,
+                    description: activityEdit.description || null,
+                    start_time: activityEdit.start_time || null,
+                    end_time: activityEdit.end_time || null,
+                    cost: activityEdit.cost ? parseFloat(activityEdit.cost) : null,
+                    currency: activityEdit.currency || null,
+                  };
+
+                  // If date was changed, find the new day_id and update it
+                  if (activity?.date) {
+                    const { data: tripDay, error: dayError } = await supabase
+                      .from('trip_days')
+                      .select('day_id')
+                      .eq('trip_id', sortedDays[0].trip_id)
+                      .eq('date', activity.date)
+                      .single();
+
+                    if (!dayError && tripDay) {
+                      updateData.day_id = tripDay.day_id;
+                    }
+                  }
+
                   const { error } = await supabase
                     .from('day_activities')
-                    .update({
-                      title: activityEdit.title,
-                      description: activityEdit.description || null,
-                      start_time: activityEdit.start_time || null,
-                      end_time: activityEdit.end_time || null,
-                      cost: activityEdit.cost ? parseFloat(activityEdit.cost) : null,
-                      currency: activityEdit.currency || null,
-                    })
+                    .update(updateData)
                     .eq('id', editingActivity.id);
                   
                   if (error) throw error;

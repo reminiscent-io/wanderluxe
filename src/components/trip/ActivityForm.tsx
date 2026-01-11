@@ -159,13 +159,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       const result = await onSubmit(activityData);
 
       if (travelers && travelers.length > 0) {
-        const activityId = (activity as any).id || (result as any)?.id;
-        if (activityId) {
-          await setDayActivityTravelers(tripId, activityId, travelers);
+        const actId = (activity as any).id || (result as any)?.id;
+        if (actId) {
+          await setDayActivityTravelers(tripId, actId, travelers);
         }
       }
 
-      toast.success('Activity saved successfully');
       onCancel();
     } catch (error) {
       toast.error('Failed to save activity');

@@ -72,14 +72,31 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         ? parseFloat(updatedActivity.cost)
         : null;
 
-      const updatedData = {
+      const updatedData: Record<string, any> = {
         title: updatedActivity.title.trim(),
         description: updatedActivity.description?.trim() || null,
-        start_time: updatedActivity.start_time.trim() || null,
-        end_time: updatedActivity.end_time.trim() || null,
+        start_time: updatedActivity.start_time?.trim() || null,
+        end_time: updatedActivity.end_time?.trim() || null,
         cost: costAsNumber,
         currency: updatedActivity.currency || 'USD',
       };
+
+      // If date was changed, find the new day_id and update it
+      if (updatedActivity.date) {
+        const { data: tripDay, error: dayError } = await supabase
+          .from('trip_days')
+          .select('day_id')
+          .eq('trip_id', tripId)
+          .eq('date', updatedActivity.date)
+          .single();
+
+        if (dayError || !tripDay) {
+          toast.error('Could not find trip day for selected date');
+          throw new Error('Could not find trip day for selected date');
+        }
+
+        updatedData.day_id = tripDay.day_id;
+      }
 
       const { error } = await supabase
         .from('day_activities')
