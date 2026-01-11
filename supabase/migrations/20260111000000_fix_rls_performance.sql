@@ -264,6 +264,7 @@ CREATE POLICY "other_expenses_delete_policy" ON other_expenses
 -- =============================================================================
 
 -- Drop existing accommodation_travelers policies
+DROP POLICY IF EXISTS "acctrav_read" ON accommodation_travelers;
 DROP POLICY IF EXISTS "acctrav_d" ON accommodation_travelers;
 DROP POLICY IF EXISTS "acctrav_i" ON accommodation_travelers;
 DROP POLICY IF EXISTS "acctrav_u" ON accommodation_travelers;
@@ -329,6 +330,7 @@ CREATE POLICY "accommodation_travelers_delete_policy" ON accommodation_travelers
 -- =============================================================================
 
 -- Drop existing day_activity_travelers policies
+DROP POLICY IF EXISTS "acttrav_read" ON day_activity_travelers;
 DROP POLICY IF EXISTS "acttrav_d" ON day_activity_travelers;
 DROP POLICY IF EXISTS "acttrav_i" ON day_activity_travelers;
 DROP POLICY IF EXISTS "acttrav_u" ON day_activity_travelers;
@@ -394,6 +396,7 @@ CREATE POLICY "day_activity_travelers_delete_policy" ON day_activity_travelers
 -- =============================================================================
 
 -- Drop existing reservation_travelers policies
+DROP POLICY IF EXISTS "rsvtrav_read" ON reservation_travelers;
 DROP POLICY IF EXISTS "rsvtrav_d" ON reservation_travelers;
 DROP POLICY IF EXISTS "rsvtrav_i" ON reservation_travelers;
 DROP POLICY IF EXISTS "rsvtrav_u" ON reservation_travelers;
@@ -459,6 +462,7 @@ CREATE POLICY "reservation_travelers_delete_policy" ON reservation_travelers
 -- =============================================================================
 
 -- Drop existing transportation_travelers policies
+DROP POLICY IF EXISTS "tptrav_read" ON transportation_travelers;
 DROP POLICY IF EXISTS "tptrav_d" ON transportation_travelers;
 DROP POLICY IF EXISTS "tptrav_i" ON transportation_travelers;
 DROP POLICY IF EXISTS "tptrav_u" ON transportation_travelers;
@@ -566,6 +570,7 @@ CREATE POLICY "trip_shares_delete_policy" ON trip_shares
 -- =============================================================================
 
 -- Drop existing trip_days policies
+DROP POLICY IF EXISTS "trip_days_select_combined" ON trip_days;
 DROP POLICY IF EXISTS "Allow delete trip days with edit permission" ON trip_days;
 DROP POLICY IF EXISTS "Allow insert trip days with edit permission" ON trip_days;
 DROP POLICY IF EXISTS "Allow update trip days with edit permission" ON trip_days;
