@@ -3,6 +3,9 @@
 -- 1. Auth RLS Initialization Plan: Replace auth.uid() with (select auth.uid())
 -- 2. Multiple Permissive Policies: Consolidate duplicate policies
 -- 3. Duplicate Indexes: Drop redundant indexes
+--
+-- IMPORTANT FIX:
+-- Your trips table primary key is trip_id (NOT id), so this migration uses trips.trip_id everywhere.
 
 -- =============================================================================
 -- STEP 1: Drop duplicate indexes
@@ -60,7 +63,7 @@ CREATE POLICY "trips_select_policy" ON trips
   FOR SELECT
   USING (
     user_id = (select auth.uid())
-    OR id IN (
+    OR trip_id IN (
       SELECT trip_id FROM trip_shares
       WHERE shared_with_user_id = (select auth.uid())
     )
@@ -74,7 +77,7 @@ CREATE POLICY "trips_update_policy" ON trips
   FOR UPDATE
   USING (
     user_id = (select auth.uid())
-    OR id IN (
+    OR trip_id IN (
       SELECT trip_id FROM trip_shares
       WHERE shared_with_user_id = (select auth.uid())
       AND permission_level = 'edit'
@@ -111,9 +114,9 @@ CREATE POLICY "transportation_select_policy" ON transportation
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -124,9 +127,9 @@ CREATE POLICY "transportation_insert_policy" ON transportation
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -138,9 +141,9 @@ CREATE POLICY "transportation_update_policy" ON transportation
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -152,9 +155,9 @@ CREATE POLICY "transportation_delete_policy" ON transportation
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -175,9 +178,9 @@ CREATE POLICY "expenses_insert_policy" ON expenses
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -205,9 +208,9 @@ CREATE POLICY "other_expenses_select_policy" ON other_expenses
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -218,9 +221,9 @@ CREATE POLICY "other_expenses_insert_policy" ON other_expenses
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -232,9 +235,9 @@ CREATE POLICY "other_expenses_update_policy" ON other_expenses
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -246,9 +249,9 @@ CREATE POLICY "other_expenses_delete_policy" ON other_expenses
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -270,9 +273,9 @@ CREATE POLICY "accommodation_travelers_select_policy" ON accommodation_travelers
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -283,9 +286,9 @@ CREATE POLICY "accommodation_travelers_insert_policy" ON accommodation_travelers
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -297,9 +300,9 @@ CREATE POLICY "accommodation_travelers_update_policy" ON accommodation_travelers
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -311,9 +314,9 @@ CREATE POLICY "accommodation_travelers_delete_policy" ON accommodation_travelers
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -335,9 +338,9 @@ CREATE POLICY "day_activity_travelers_select_policy" ON day_activity_travelers
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -348,9 +351,9 @@ CREATE POLICY "day_activity_travelers_insert_policy" ON day_activity_travelers
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -362,9 +365,9 @@ CREATE POLICY "day_activity_travelers_update_policy" ON day_activity_travelers
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -376,9 +379,9 @@ CREATE POLICY "day_activity_travelers_delete_policy" ON day_activity_travelers
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -400,9 +403,9 @@ CREATE POLICY "reservation_travelers_select_policy" ON reservation_travelers
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -413,9 +416,9 @@ CREATE POLICY "reservation_travelers_insert_policy" ON reservation_travelers
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -427,9 +430,9 @@ CREATE POLICY "reservation_travelers_update_policy" ON reservation_travelers
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -441,9 +444,9 @@ CREATE POLICY "reservation_travelers_delete_policy" ON reservation_travelers
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -465,9 +468,9 @@ CREATE POLICY "transportation_travelers_select_policy" ON transportation_travele
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -478,9 +481,9 @@ CREATE POLICY "transportation_travelers_insert_policy" ON transportation_travele
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -492,9 +495,9 @@ CREATE POLICY "transportation_travelers_update_policy" ON transportation_travele
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -506,9 +509,9 @@ CREATE POLICY "transportation_travelers_delete_policy" ON transportation_travele
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -529,7 +532,7 @@ CREATE POLICY "trip_shares_select_policy" ON trip_shares
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips WHERE user_id = (select auth.uid())
+      SELECT trip_id FROM trips WHERE user_id = (select auth.uid())
     )
     OR shared_with_user_id = (select auth.uid())
   );
@@ -538,7 +541,7 @@ CREATE POLICY "trip_shares_insert_policy" ON trip_shares
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips WHERE user_id = (select auth.uid())
+      SELECT trip_id FROM trips WHERE user_id = (select auth.uid())
     )
   );
 
@@ -546,7 +549,7 @@ CREATE POLICY "trip_shares_update_policy" ON trip_shares
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips WHERE user_id = (select auth.uid())
+      SELECT trip_id FROM trips WHERE user_id = (select auth.uid())
     )
   );
 
@@ -554,7 +557,7 @@ CREATE POLICY "trip_shares_delete_policy" ON trip_shares
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips WHERE user_id = (select auth.uid())
+      SELECT trip_id FROM trips WHERE user_id = (select auth.uid())
     )
   );
 
@@ -575,9 +578,9 @@ CREATE POLICY "trip_days_select_policy" ON trip_days
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -588,9 +591,9 @@ CREATE POLICY "trip_days_insert_policy" ON trip_days
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -602,9 +605,9 @@ CREATE POLICY "trip_days_update_policy" ON trip_days
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -616,9 +619,9 @@ CREATE POLICY "trip_days_delete_policy" ON trip_days
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -645,9 +648,9 @@ CREATE POLICY "vision_board_items_select_policy" ON vision_board_items
   FOR SELECT
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
       )
@@ -658,9 +661,9 @@ CREATE POLICY "vision_board_items_insert_policy" ON vision_board_items
   FOR INSERT
   WITH CHECK (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -672,9 +675,9 @@ CREATE POLICY "vision_board_items_update_policy" ON vision_board_items
   FOR UPDATE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
@@ -686,9 +689,9 @@ CREATE POLICY "vision_board_items_delete_policy" ON vision_board_items
   FOR DELETE
   USING (
     trip_id IN (
-      SELECT id FROM trips
+      SELECT trip_id FROM trips
       WHERE user_id = (select auth.uid())
-      OR id IN (
+      OR trip_id IN (
         SELECT trip_id FROM trip_shares
         WHERE shared_with_user_id = (select auth.uid())
         AND permission_level = 'edit'
