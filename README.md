@@ -35,8 +35,8 @@ Say goodbye to scattered confirmations and spreadsheet chaos:
 - **🎭 Activities** — Schedule experiences with time blocks and cost tracking
 - **🍽️ Dining** — Never miss a reservation with integrated restaurant management
 
-### 🤖 **Your AI Travel Concierge**
-Meet your personal travel assistant, powered by OpenAI GPT-4o-mini. Ask about hidden gems in Barcelona, the best time to visit the Louvre, or where locals eat in Tokyo. Our AI remembers your conversation, understands your trip context, and delivers recommendations that feel authentically local—not algorithmically generic.
+### 🤖 **Your AI Assistant**
+Powered by OpenAI GPT-4o-mini, the AI assistant translates confirmation screenshots and PDFs into evnts - reducing time to input new items.
 
 ### 👥 **Real-Time Collaboration**
 Travel planning is better together. Share trips with travel companions, assign permissions (view or edit), and watch updates sync live across all devices. No more "Did you see my email?" moments—everyone stays in the loop, in real-time.
