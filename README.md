@@ -1,202 +1,365 @@
-# WanderLuxe - AI-Powered Travel Planning Platform
+<div align="center">
 
-A comprehensive travel planning web application that transforms trip preparation into an engaging, personalized experience with intelligent insights and dynamic user interactions.
+# ✈️ WanderLuxe
 
-## ✨ Features
+### *Where Wanderlust Meets Luxury*
 
-### 🗺️ Trip Planning & Management
-- **Interactive Trip Creation**: Create detailed itineraries with destination search via Google Places API
-- **Day-by-Day Timeline**: Visual trip timeline with drag-and-drop functionality
-- **Smart Date Management**: Flexible arrival/departure date editing with automatic day generation
-- **Real-time Collaboration**: Share trips with read/edit permissions and live updates
+**The intelligent travel companion that transforms complex itineraries into seamless journeys.**
 
-### 🏨 Comprehensive Booking Management
-- **Accommodations**: Hotel booking tracking with check-in/check-out management
-- **Transportation**: Flight, train, and ground transport organization with location search
-- **Activities**: Time-based activity scheduling with cost tracking
-- **Dining Reservations**: Restaurant booking management with Google Places integration
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)](https://react.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?logo=supabase&logoColor=white)](https://supabase.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-### 🤖 AI-Powered Assistant
-- **Intelligent Chat**: OpenAI GPT-4o-mini powered travel assistant with trip context
-- **Location-Specific Recommendations**: AI delivers authentic local insights and suggestions
-- **Conversation Memory**: Smart context retention for natural, ongoing conversations
+[Demo](#) • [Documentation](#) • [Report Bug](#) • [Request Feature](#)
 
-### 📋 Advanced Features
-- **PDF Export**: Professional itinerary generation with all trip details
-- **Budget Tracking**: Comprehensive expense management across all trip components
-- **Responsive Sidebar**: Fixed navigation with expandable sections and secondary panels
-- **Real-time Updates**: Live synchronization across all users and devices
+</div>
 
-## 🏗️ Architecture
+---
 
-### Frontend Stack
-- **React 18** with TypeScript for type-safe development
-- **Vite 6.3.5** for optimized builds and fast development
-- **Tailwind CSS** with custom sand/earth color palette
-- **Shadcn/ui** components built on Radix UI primitives
-- **TanStack Query** for efficient server state management
-- **React Router** for client-side navigation
+## 🌍 About WanderLuxe
 
-### Backend & Database
-- **Supabase** for PostgreSQL database, authentication, and real-time features
-- **Row Level Security (RLS)** for data access control
-- **Supabase Edge Functions** for serverless API logic
-- **Real-time Subscriptions** for live collaboration
+Planning extraordinary travel experiences shouldn't feel like work. WanderLuxe reimagines trip planning as a collaborative, intelligent, and effortless experience—where AI-powered insights meet real-time collaboration, and every detail finds its perfect place.
 
-### External Integrations
-- **Google Places API** for location search and validation
-- **OpenAI GPT-4o-mini** for AI chat assistance
-- **SendGrid** for email notifications
-- **Unsplash API** for trip imagery
+Born from the intersection of wanderlust and technology, WanderLuxe combines the sophistication of luxury travel planning with the power of modern web technologies. Whether you're orchestrating a multi-city European adventure or a relaxing coastal retreat, WanderLuxe keeps every booking, recommendation, and moment beautifully organized.
 
-## 🚀 Getting Started
+## ✨ What Makes WanderLuxe Special
+
+### 🗺️ **Intelligent Trip Orchestration**
+Design your journey with precision and ease. Our interactive timeline lets you visualize your entire trip at a glance, with drag-and-drop simplicity and automatic day generation as your plans evolve. Every destination, powered by Google Places, becomes a canvas for your adventure.
+
+### 🏨 **All-in-One Booking Management**
+Say goodbye to scattered confirmations and spreadsheet chaos:
+- **🏨 Accommodations** — Track every hotel, Airbnb, or resort with check-in/check-out precision
+- **✈️ Transportation** — Organize flights, trains, transfers, and car rentals in one place
+- **🎭 Activities** — Schedule experiences with time blocks and cost tracking
+- **🍽️ Dining** — Never miss a reservation with integrated restaurant management
+
+### 🤖 **Your AI Travel Concierge**
+Meet your personal travel assistant, powered by OpenAI GPT-4o-mini. Ask about hidden gems in Barcelona, the best time to visit the Louvre, or where locals eat in Tokyo. Our AI remembers your conversation, understands your trip context, and delivers recommendations that feel authentically local—not algorithmically generic.
+
+### 👥 **Real-Time Collaboration**
+Travel planning is better together. Share trips with travel companions, assign permissions (view or edit), and watch updates sync live across all devices. No more "Did you see my email?" moments—everyone stays in the loop, in real-time.
+
+### 📄 **Professional PDF Exports**
+Transform your itinerary into a beautifully formatted, print-ready PDF with one click. Perfect for offline access, sharing with travel companions, or keeping as a memento of journeys past.
+
+### 💰 **Smart Budget Tracking**
+Keep your finances as organized as your itinerary. Track expenses across accommodations, transportation, activities, and dining with multi-currency support and automatic exchange rate updates.
+
+## 🏗️ Built With Excellence
+
+WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secure, and delightful experience:
+
+<table>
+<tr>
+<td width="50%">
+
+### Frontend
+- ⚛️ **React 19** + **TypeScript** — Type-safe, component-driven UI
+- ⚡ **Vite 6** — Lightning-fast builds and HMR
+- 🎨 **Tailwind CSS** — Custom sand/earth luxury palette
+- 🧩 **Shadcn/ui** + **Radix UI** — Accessible, composable components
+- 🔄 **TanStack Query** — Intelligent server state management
+
+</td>
+<td width="50%">
+
+### Backend & Infrastructure
+- 🗄️ **Supabase** — PostgreSQL database + Auth + Realtime
+- 🔒 **Row Level Security** — Database-level access control
+- ⚡ **Edge Functions** — Serverless Deno runtime
+- 🔌 **WebSocket Subscriptions** — Live collaboration magic
+- 📧 **SendGrid** — Transactional emails
+
+</td>
+</tr>
+</table>
+
+### 🌐 External APIs
+**Google Places** • **OpenAI GPT-4o-mini** • **Unsplash** • **Exchange Rates**
+
+---
+
+## 💎 Technical Highlights
+
+### Real-Time Magic ✨
+Live collaboration powered by Supabase's WebSocket subscriptions. When one user adds an activity, everyone sees it instantly—no polling, no delays.
+
+### Type Safety First 🛡️
+End-to-end TypeScript with auto-generated types from the database schema. If it compiles, it (probably) works.
+
+### Optimistic Updates ⚡
+React Query's optimistic updates make the UI feel instant. Mutations update the cache immediately, then reconcile with the server in the background.
+
+### Smart State Management 🧠
+- **Server State**: TanStack Query handles caching, refetching, and background sync
+- **UI State**: Local React hooks keep components lean and focused
+- **Global Auth**: React Context with automatic token refresh
+
+### PDF Generation 📄
+18,000+ lines of pure client-side PDF generation using `pdfmake`. No server-side rendering, no external services—just beautiful, exportable itineraries.
+
+### Database Security 🔐
+Row Level Security (RLS) policies enforce access control at the PostgreSQL level. Users physically cannot query data they don't own—even with direct database access.
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ or Bun runtime
-- PostgreSQL database (via Supabase)
-- Required API keys (see Environment Variables)
+- **Bun** or **Node.js 18+** — Modern JavaScript runtime
+- **Supabase Account** — For database and authentication
+- **API Keys** — Google Places, OpenAI, SendGrid (see below)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/your-username/wanderluxe.git
 cd wanderluxe
 
-# Install dependencies
+# Install dependencies (using Bun for blazing speed ⚡)
 bun install
 
-# Set up environment variables (see below)
+# Set up environment variables
 cp .env.example .env
+# Edit .env with your API keys (see configuration below)
 
-# Start development server
+# Apply database migrations
+bun run db:push
+
+# Launch development server
 bun run dev
 ```
 
-### Environment Variables
+Visit **http://localhost:5173** and start planning your next adventure! 🌴
 
-Create a `.env` file with the following variables:
+### ⚙️ Configuration
+
+Create a `.env` file in the project root:
 
 ```env
-# Supabase Configuration
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Supabase (Required)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 
-# Google Maps API
-VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+# Google Places (Required for location search)
+VITE_GOOGLE_MAPS_API_KEY=your-google-api-key
 
-# OpenAI API
-OPENAI_API_KEY=your_openai_api_key
+# OpenAI (Required for AI assistant)
+OPENAI_API_KEY=sk-your-openai-api-key
 
-# SendGrid (for email notifications)
-SENDGRID_API_KEY=your_sendgrid_api_key
+# SendGrid (Required for email notifications)
+SENDGRID_API_KEY=SG.your-sendgrid-api-key
 
-# Unsplash API (optional, for trip images)
-VITE_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
+# Unsplash (Optional - for trip imagery)
+VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key
 ```
+
+<details>
+<summary><b>🔑 How to get API keys</b></summary>
+
+- **Supabase**: Sign up at [supabase.com](https://supabase.com) and create a new project
+- **Google Places**: Enable Places API in [Google Cloud Console](https://console.cloud.google.com)
+- **OpenAI**: Get your API key from [platform.openai.com](https://platform.openai.com)
+- **SendGrid**: Create a free account at [sendgrid.com](https://sendgrid.com)
+- **Unsplash**: Register as a developer at [unsplash.com/developers](https://unsplash.com/developers)
+
+</details>
 
 ## 📁 Project Structure
 
 ```
-├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── trip/           # Trip-specific components
-│   │   ├── ui/             # Shadcn UI components
-│   │   └── layout/         # Layout components
-│   ├── hooks/              # Custom React hooks
-│   ├── pages/              # Route components
-│   ├── services/           # API and business logic
-│   ├── utils/              # Utility functions
-│   └── types/              # TypeScript type definitions
-├── server/                 # Express server routes
-├── supabase/              # Database migrations and functions
-└── migrations/            # SQL migration files
+wanderluxe/
+├── 📱 src/
+│   ├── components/
+│   │   ├── trip/              # 14 trip feature modules
+│   │   │   ├── accommodation/ # Hotel & lodging management
+│   │   │   ├── budget/        # Expense tracking & currencies
+│   │   │   ├── chat/          # AI assistant interface
+│   │   │   ├── timeline/      # Visual itinerary display
+│   │   │   ├── transportation/# Flights, trains, car rentals
+│   │   │   └── ...           # Activities, dining, vision board, etc.
+│   │   ├── layout/           # AppLayout, Sidebar, Navigation
+│   │   └── ui/               # 40+ Shadcn/ui components
+│   ├── pages/                # Route components (MyTrips, TripDetails, etc.)
+│   ├── hooks/                # Custom hooks (useSidebarState, useTripQuery, etc.)
+│   ├── services/             # Business logic (PDF export, travelers, etc.)
+│   ├── contexts/             # React Context (AuthContext)
+│   ├── integrations/supabase/# Supabase client & auto-generated types
+│   └── types/                # TypeScript definitions
+├── ⚙️ server/
+│   ├── index.ts             # Express server
+│   └── routes/              # API endpoints (PDF, notifications, etc.)
+├── 🗄️ supabase/
+│   ├── functions/           # Edge Functions (Deno runtime)
+│   │   ├── send-share-notification/
+│   │   ├── google-places-proxy/
+│   │   ├── parse-travel-doc/# AI-powered document parsing
+│   │   └── ...
+│   ├── migrations/          # SQL schema migrations
+│   └── config.toml         # Supabase configuration
+└── 📦 Other
+    ├── .env                # Environment variables
+    ├── vite.config.ts      # Vite configuration
+    ├── tailwind.config.ts  # Design system configuration
+    └── CLAUDE.md           # AI assistant instructions
 ```
 
-## 🎨 Design System
+## 📸 See It In Action
 
-WanderLuxe uses a custom design system built on Tailwind CSS:
+<div align="center">
 
-- **Colors**: Sand and earth tones for a luxury travel aesthetic
-- **Typography**: Clean, readable fonts with proper hierarchy
-- **Components**: Consistent spacing, shadows, and interactions
-- **Responsive**: Mobile-first design with desktop enhancements
+<!-- Add your screenshots here -->
+<img src="docs/screenshots/dashboard.png" alt="WanderLuxe Dashboard" width="800" />
+<p><em>Trip dashboard with real-time collaboration</em></p>
 
-## 🔒 Security Features
+<img src="docs/screenshots/timeline.png" alt="Timeline View" width="800" />
+<p><em>Day-by-day timeline with drag-and-drop scheduling</em></p>
 
-- **Authentication**: Supabase Auth with Google OAuth support
-- **Authorization**: Row Level Security policies for data access
-- **Input Validation**: Zod schemas for form validation
-- **CORS Configuration**: Secure API access controls
+<img src="docs/screenshots/ai-chat.png" alt="AI Assistant" width="800" />
+<p><em>AI-powered travel assistant with contextual recommendations</em></p>
 
-## 🧪 Development
+</div>
 
-### Available Scripts
+> 💡 **Coming soon:** Interactive demo and video walkthrough
+
+## 🎨 Design Philosophy
+
+WanderLuxe's aesthetic embodies **understated luxury** and **effortless sophistication**:
+
+- 🎨 **Color Palette** — Sand & earth tones (#FAF9F7 → #5C544A) evoke premium travel
+- ✍️ **Typography** — Clean, readable hierarchy with proper whitespace
+- 🧩 **Components** — Consistent spacing, subtle shadows, smooth interactions
+- 📱 **Responsive** — Mobile-first design that scales beautifully to desktop
+- ✨ **Animations** — Delicate fade-in/slide-up transitions for polish
+
+## 🔒 Security & Privacy
+
+WanderLuxe is built with security at its core:
+
+- 🔐 **Row Level Security (RLS)** — PostgreSQL policies enforce access control at the database level
+- 🔑 **Supabase Auth** — Secure authentication with Google OAuth and auto-refresh tokens
+- 🛡️ **Input Validation** — Zod schemas validate all user input on frontend and backend
+- 🚫 **CORS Protection** — Strict API access controls prevent unauthorized requests
+- 🔒 **Session Management** — Automatic session refresh with tab visibility detection
+- 👥 **Permission System** — Granular view/edit permissions for shared trips
+
+*Your travel data stays yours—accessible only to you and those you explicitly invite.*
+
+## 🧪 Development Scripts
 
 ```bash
-# Development server
-bun run dev
+# 🚀 Development
+bun run dev              # Start dev server (http://localhost:5173)
+bun run type-check       # TypeScript type checking
+bun run lint             # ESLint code quality checks
 
-# Type checking
-bun run type-check
+# 🏗️ Building
+bun run build            # Production build
+bun run build:dev        # Development build
+bun run preview          # Preview production build (port 8080)
 
-# Linting
-bun run lint
-
-# Build for production
-bun run build
-
-# Preview production build
-bun run preview
+# 🗄️ Database
+bun run db:push          # Apply Supabase migrations
+bun run db:reset         # Reset database (⚠️ development only)
 ```
 
-### Database Management
+## 📱 User Experience Highlights
 
-```bash
-# Apply database migrations
-bun run db:push
+<table>
+<tr>
+<td width="50%">
 
-# Reset database (development only)
-bun run db:reset
-```
+### 🖥️ Desktop Experience
+- **Fixed Sidebar** — Persistent navigation with expandable trip sections
+- **Secondary Panels** — Deep-dive into accommodations, activities, dining
+- **Timeline View** — Visual day-by-day itinerary at a glance
+- **Multi-Panel Layout** — Work on multiple trip aspects simultaneously
 
-## 📱 User Interface
+</td>
+<td width="50%">
 
-### Desktop Experience
-- **Fixed Sidebar Navigation**: Persistent trip management interface
-- **Secondary Panels**: Expandable sections for detailed component management
-- **Timeline View**: Comprehensive day-by-day itinerary display
-- **AI Chat**: Contextual travel assistant integration
+### 📱 Mobile Experience
+- **Touch-Optimized** — Large tap targets, swipe gestures
+- **Bottom Sheets** — Native-feeling mobile interactions
+- **Adaptive Layout** — Content reflows beautifully on all screens
+- **Offline-Ready PDFs** — Take your itinerary anywhere
 
-### Mobile Experience
-- **Responsive Design**: Optimized layouts for all screen sizes
-- **Touch Interactions**: Swipe navigation and tap interactions
-- **Mobile Sidebar**: Sheet drawer for navigation on smaller screens
+</td>
+</tr>
+</table>
 
 ## 🚀 Deployment
 
-The application is optimized for deployment on modern cloud platforms:
+WanderLuxe is production-ready and optimized for modern hosting platforms:
 
-1. **Build the application**: `bun run build`
-2. **Set environment variables** in your deployment platform
-3. **Deploy** to your preferred hosting service (Vercel, Netlify, etc.)
+### Recommended Platforms
+- **Vercel** ⚡ (Recommended) — Zero-config deployment with automatic previews
+- **Netlify** 🌐 — Simple deployment with built-in forms and redirects
+- **Railway** 🚂 — Full-stack deployment including database
+- **Fly.io** 🪰 — Global edge deployment
+
+### Deployment Steps
+```bash
+# 1. Build the production bundle
+bun run build
+
+# 2. Set environment variables in your platform
+# (Same variables as .env file)
+
+# 3. Deploy! 🎉
+# Most platforms auto-detect Vite and deploy seamlessly
+```
+
+**Note:** Supabase Edge Functions deploy automatically from your Supabase dashboard.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
-5. Submit a pull request
+We welcome contributions from developers who share our passion for elegant travel technology!
 
-## 📝 License
+### How to Contribute
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** with clear messages: `git commit -m 'Add amazing feature'`
+4. **Push** to your branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
 
-## 🆘 Support
+### Development Guidelines
+- Follow existing code style and patterns
+- Write meaningful commit messages
+- Add TypeScript types for new features
+- Test your changes thoroughly
+- Update documentation as needed
 
-For support, please contact the development team or create an issue in the repository.
+**Found a bug?** Open an issue with reproduction steps.
+**Have an idea?** Start a discussion in GitHub Discussions.
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+You're free to use, modify, and distribute this software with attribution.
+
+## 💬 Support & Community
+
+- 🐛 **Bug Reports** — [Open an issue](https://github.com/your-username/wanderluxe/issues)
+- 💡 **Feature Requests** — [Start a discussion](https://github.com/your-username/wanderluxe/discussions)
+- 📧 **Contact** — Reach out to the maintainers
+- 🌟 **Star** this repo if WanderLuxe helps you plan better trips!
 
 ---
 
-**WanderLuxe** - Transforming travel planning through intelligent design and AI-powered insights.
+<div align="center">
+
+### ✨ *"The world is a book, and those who do not travel read only one page."* — St. Augustine
+
+**WanderLuxe** — Where every journey begins with intention and ends with inspiration.
+
+Made with ☕ and ✈️ by travelers, for travelers.
+
+[Back to Top ↑](#-wanderluxe)
+
+</div>
