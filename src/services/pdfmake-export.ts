@@ -4,6 +4,12 @@
     - Transport shows start–end times
     - Safe, linear-time parsing (no ReDoS)
     - Enhanced with accommodation summary, travel day markers, activity density
+    - Improvements:
+      * Correct date-fns isSameDay usage (string -> Date)
+      * Reliable thumbnail rendering (remote URL -> dataURL)
+      * Page-width-aware cover sizing (no hard-coded 480)
+      * Zebra rows + subtle separators + dontBreakRows for better readability
+      * Compact day header divider line
     ---------------------------------------------------------------------- */
 
 import pdfMake from 'pdfmake/build/pdfmake';
@@ -18,43 +24,49 @@ import type { PdfExportOptions } from '@/components/trip/PdfExportDialog';
    ========================================================================= */
 
 const TABLES = {
-  trip:       'trips',
-  days:       'trip_days',
-  stays:      'accommodations',
-  transport:  'transportation',
+  trip: 'trips',
+  days: 'trip_days',
+  stays: 'accommodations',
+  transport: 'transportation',
   activities: 'day_activities',
-  dining:     'reservations',
+  dining: 'reservations',
 } as const;
 
 type ExportStrategy = 'auto' | 'open' | 'download' | 'blob';
-type PagePreset     = 'auto' | 'mobile' | 'desktop';
+type PagePreset = 'auto' | 'mobile' | 'desktop';
 
 const ICON: Record<string, string> = {
   transportation: '✈',
-  flight:         '✈',
-  accommodation:  '■',
-  hotel:          '■',
-  dining:         '●',
-  restaurant:     '●',
-  activity:       '◆',
-  activities:     '◆',
+  flight: '✈',
+  accommodation: '■',
+  hotel: '■',
+  dining: '●',
+  restaurant: '●',
+  activity: '◆',
+  activities: '◆',
 };
 
 // Fixed-width, anchored time matcher: "8:05 am" (linear; no catastrophic backtracking)
 const TIME_RE = /^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])m\s*$/i;
 
 type Item = {
-  type: 'accommodation'|'transportation'|'activity'|'dining';
+  type: 'accommodation' | 'transportation' | 'activity' | 'dining';
   title: string;
-  time: string;       // may be "08:00 AM – 11:45 AM"
-  details?:  string;
+  time: string; // may be "08:00 AM – 11:45 AM"
+  details?: string;
   location?: string;
-  cost?:     string;
-  thumb?:    string;
-  sortKey:   number;  // minutes from midnight (start time) for sorting
+  cost?: string;
+  thumb?: string; // dataURL after conversion (not remote URL)
+  sortKey: number; // minutes from midnight (start time) for sorting
 };
 
-type Day = { date: string; title?: string; items: Item[]; activityCount?: number; hasTransport?: boolean };
+type Day = {
+  date: string;
+  title?: string;
+  items: Item[];
+  activityCount?: number;
+  hasTransport?: boolean;
+};
 
 type AccommodationSummary = {
   hotel: string;
@@ -94,17 +106,18 @@ function pagePresetSettings(preset: PagePreset) {
   const isMobile = preset === 'mobile' || (preset === 'auto' && isProbablyMobile());
   return {
     isMobile,
-    pageSize: defaultPageSize(),                         // 'LETTER' or 'A4'
-    pageMargins: isMobile ? ([20, 20, 20, 24] as [number, number, number, number])
-                          : ([24, 24, 24, 30] as [number, number, number, number]),
+    pageSize: defaultPageSize(), // 'LETTER' or 'A4'
+    pageMargins: isMobile
+      ? ([20, 20, 20, 24] as [number, number, number, number])
+      : ([24, 24, 24, 30] as [number, number, number, number]),
     baseFontSize: isMobile ? 8 : 9,
     headerFont: isMobile ? 8 : 9,
     footerFont: isMobile ? 7.5 : 8,
-    heroTitle:  isMobile ? 16 : 18,
-    dayHeader:  isMobile ? 12 : 14,
+    heroTitle: isMobile ? 16 : 18,
+    dayHeader: isMobile ? 12 : 14,
     compactDayHeader: isMobile ? 11 : 12,
-    timeWidth:  isMobile ? 52 : 60,
-    imageWidth: isMobile ? 480 : 540,
+    timeWidth: isMobile ? 52 : 60,
+    imageWidth: isMobile ? 480 : 540, // used for downscale target; actual render uses page width
     coverImageHeight: isMobile ? 200 : 250,
   };
 }
@@ -115,11 +128,21 @@ function resolveStrategy(opts: PdfExportOptions): ExportStrategy {
   return 'auto';
 }
 
+function innerPageWidth(pageSize: 'A4' | 'LETTER', margins: [number, number, number, number]) {
+  // pdfmake page sizes in points
+  const widths: Record<string, number> = { A4: 595.28, LETTER: 612 };
+  const total = widths[pageSize] ?? widths.LETTER;
+  return total - margins[0] - margins[2];
+}
+
 /* =========================================================================
    Safe formatting & parsing (ReDoS-free)
    ========================================================================= */
 
-const fmtDate  = (d: string, pat = 'EEEE, MMMM d, yyyy') => fnsFormat(parseISO(d), pat);
+const asDate = (d: string) => parseISO(d);
+const sameDay = (a: string, b: string) => isSameDay(asDate(a), asDate(b));
+
+const fmtDate = (d: string, pat = 'EEEE, MMMM d, yyyy') => fnsFormat(parseISO(d), pat);
 const fmtShort = (d: string) => fnsFormat(parseISO(d), 'MMM d');
 
 function fmtTime(t?: string | null) {
@@ -133,7 +156,8 @@ function fmtTime(t?: string | null) {
     const h = parseInt(parts[0] ?? '0', 10);
     const m = parseInt(parts[1] ?? '0', 10);
     if (isNaN(h) || isNaN(m)) return '';
-    const d = new Date(); d.setHours(h, m, 0, 0);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
     return fnsFormat(d, 'h:mm a');
   } catch {
     return '';
@@ -147,7 +171,7 @@ function minsFromTime(s: string): number {
   const hh = parseInt(m[1], 10) % 12;
   const mm = m[2] ? parseInt(m[2], 10) : 0;
   const mer = (m[3] || 'a').toLowerCase();
-  return (mer === 'p' ? (hh + 12) : hh) * 60 + mm;
+  return (mer === 'p' ? hh + 12 : hh) * 60 + mm;
 }
 
 function sanitizeFilename(input?: string | null): string {
@@ -205,7 +229,7 @@ async function toDataURI(url: string, targetWidth: number): Promise<string> {
 
       // Try to downscale to targetWidth if we can draw to canvas safely
       const dataUrl = await drawToCanvas(blob, targetWidth);
-      return dataUrl ?? await blobToDataURL(blob); // fallback: raw to data URL
+      return dataUrl ?? (await blobToDataURL(blob)); // fallback: raw to data URL
     } catch {
       // If anything fails (CORS/opaque responses), skip the image
       return '';
@@ -236,11 +260,12 @@ async function drawToCanvas(blob: Blob, targetWidth: number): Promise<string | n
         const w = Math.max(1, Math.round((img.width || targetWidth) * scale));
         const h = Math.max(1, Math.round((img.height || targetWidth) * scale));
         const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
+        canvas.width = w;
+        canvas.height = h;
         const ctx = canvas.getContext('2d');
         if (!ctx) return resolve(null);
         ctx.drawImage(img, 0, 0, w, h);
-        // Use JPEG to keep size small; quality default is fine across browsers
+        // Use JPEG to keep size small
         const data = canvas.toDataURL('image/jpeg', 0.85);
         resolve(data);
       } catch {
@@ -256,7 +281,10 @@ async function drawToCanvas(blob: Blob, targetWidth: number): Promise<string | n
    Data build (Supabase)
    ========================================================================= */
 
-async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: Day[]; stays: AccommodationSummary[]; transports: TransportSegment[] }> {
+async function buildDays(
+  tripId: string,
+  o: PdfExportOptions
+): Promise<{ days: Day[]; stays: AccommodationSummary[]; transports: TransportSegment[] }> {
   const [
     { data: days, error: daysErr },
     { data: stays },
@@ -264,18 +292,18 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
     { data: acts },
     { data: dine },
   ] = await Promise.all([
-    supabase.from(TABLES.days)      .select('day_id,date,title').eq('trip_id', tripId).order('date'),
-    supabase.from(TABLES.stays)     .select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.transport) .select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.days).select('day_id,date,title').eq('trip_id', tripId).order('date'),
+    supabase.from(TABLES.stays).select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.transport).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.activities).select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.dining)    .select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.dining).select('*').eq('trip_id', tripId),
   ]);
 
   if (daysErr) throw daysErr;
 
-  // Build accommodation summary and sort by check-in date descending, then check-out descending
+  // Build accommodation summary and sort by check-in date ascending
   const staysSummary: AccommodationSummary[] = (stays ?? [])
-    .map(s => ({
+    .map((s: any) => ({
       hotel: s.hotel || 'Hotel',
       checkIn: fmtShort(s.hotel_checkin_date),
       checkOut: fmtShort(s.hotel_checkout_date),
@@ -284,41 +312,40 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
       checkOutDate: s.hotel_checkout_date,
     }))
     .sort((a, b) => {
-      // Sort by check-in date ascending (oldest first)
       const checkInCompare = new Date(a.checkInDate).getTime() - new Date(b.checkInDate).getTime();
       if (checkInCompare !== 0) return checkInCompare;
-
-      // If check-in dates are equal, sort by check-out date ascending
       return new Date(a.checkOutDate).getTime() - new Date(b.checkOutDate).getTime();
     });
 
   // Build transport segments
   const transportSegments: TransportSegment[] = (trans ?? [])
     .filter((t: any) => t.departure_location && t.arrival_location)
-    .map(t => ({
+    .map((t: any) => ({
       from: t.departure_location,
       to: t.arrival_location,
       date: fmtShort(t.start_date),
-      type: t.type === 'flight' ? 'Flight' : t.type ? (t.type.charAt(0).toUpperCase() + t.type.slice(1)) : 'Transport',
+      type: t.type === 'flight' ? 'Flight' : t.type ? t.type.charAt(0).toUpperCase() + t.type.slice(1) : 'Transport',
     }));
 
-  const processedDays = (days ?? []).map(day => {
+  const processedDays: Day[] = (days ?? []).map((day: any) => {
     const items: Item[] = [];
 
     /* accommodation ----------------------------------------------------- */
     {
-      (stays ?? []).forEach(s => {
+      (stays ?? []).forEach((s: any) => {
         if (!s.hotel_checkin_date || !s.hotel_checkout_date) return;
 
+        const dayISO = day.date;
         const inRange =
-          isSameDay(day.date, s.hotel_checkin_date) ||
-          isSameDay(day.date, s.hotel_checkout_date) ||
-          (parseISO(day.date) >= parseISO(s.hotel_checkin_date) && parseISO(day.date) <= parseISO(s.hotel_checkout_date));
+          sameDay(dayISO, s.hotel_checkin_date) ||
+          sameDay(dayISO, s.hotel_checkout_date) ||
+          (parseISO(dayISO) >= parseISO(s.hotel_checkin_date) && parseISO(dayISO) <= parseISO(s.hotel_checkout_date));
+
         if (!inRange) return;
 
-        const isIn  = isSameDay(day.date, s.hotel_checkin_date);
-        const isOut = isSameDay(day.date, s.hotel_checkout_date);
-        const when  = isIn ? s.checkin_time : isOut ? s.checkout_time : null;
+        const isIn = sameDay(dayISO, s.hotel_checkin_date);
+        const isOut = sameDay(dayISO, s.hotel_checkout_date);
+        const when = isIn ? s.checkin_time : isOut ? s.checkout_time : null;
 
         // Only show check-in/check-out, skip repeated "Stay" entries
         if (!isIn && !isOut) return;
@@ -331,7 +358,7 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
           details: s.hotel_details || undefined,
           location: s.hotel_address || undefined,
           cost: s.cost != null ? `${s.currency} ${s.cost}` : undefined,
-          thumb: ((o as any).showImages && s.image_url) ? s.image_url : undefined,
+          thumb: (o.showImages && s.image_url) ? String(s.image_url) : undefined, // will be converted to dataURL later
           sortKey: minsFromTime(t || '8:00 am'),
         });
       });
@@ -340,26 +367,32 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
     /* transportation ---------------------------------------------------- */
     let hasTransport = false;
     {
-      (trans ?? []).forEach(t => {
-        if (!isSameDay(t.start_date, day.date)) return;
+      (trans ?? []).forEach((t: any) => {
+        if (!t.start_date) return;
+        if (!sameDay(String(t.start_date), String(day.date))) return;
+
         hasTransport = true;
 
-        const title = t.type === 'flight'
-          ? `Flight${t.provider ? `: ${t.provider}` : ''}`
-          : t.type ? (t.type.charAt(0).toUpperCase() + t.type.slice(1)) : 'Transport';
+        const title =
+          t.type === 'flight'
+            ? `Flight${t.provider ? `: ${t.provider}` : ''}`
+            : t.type
+              ? t.type.charAt(0).toUpperCase() + t.type.slice(1)
+              : 'Transport';
 
         const startStr = fmtTime(t.start_time);
-        const endStr   = fmtTime(t.end_time);
-        const timeStr  = startStr && endStr ? `${startStr} – ${endStr}` : (startStr || endStr || 'All-day');
+        const endStr = fmtTime(t.end_time);
+        const timeStr = startStr && endStr ? `${startStr} – ${endStr}` : (startStr || endStr || 'All-day');
 
         items.push({
           type: 'transportation',
           title,
           time: timeStr,
           details: t.details || undefined,
-          location: t.departure_location && t.arrival_location
-            ? `From: ${t.departure_location} → ${t.arrival_location}`
-            : t.departure_location || undefined,
+          location:
+            t.departure_location && t.arrival_location
+              ? `From: ${t.departure_location} → ${t.arrival_location}`
+              : t.departure_location || undefined,
           cost: t.cost != null ? `${t.currency} ${t.cost}` : undefined,
           sortKey: minsFromTime(startStr || '8:00 am'),
         });
@@ -368,24 +401,33 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
 
     /* activities -------------------------------------------------------- */
     {
-      (acts ?? []).filter((a: any) => a.day_id === day.day_id).forEach(a => {
-        const t = fmtTime(a.start_time);
-        items.push({
-          type: 'activity',
-          title: a.title || 'Activity',
-          time: t || 'All-day',
-          details: a.description || undefined,
-          cost: a.cost != null ? `${a.currency} ${a.cost}` : undefined,
-          sortKey: minsFromTime(t || '8:00 am'),
+      (acts ?? [])
+        .filter((a: any) => a.day_id === day.day_id)
+        .forEach((a: any) => {
+          const t = fmtTime(a.start_time);
+          items.push({
+            type: 'activity',
+            title: a.title || 'Activity',
+            time: t || 'All-day',
+            details: a.description || undefined,
+            cost: a.cost != null ? `${a.currency} ${a.cost}` : undefined,
+            sortKey: minsFromTime(t || '8:00 am'),
+          });
         });
-      });
     }
 
     /* dining ------------------------------------------------------------ */
     {
-      (dine ?? []).forEach(r => {
-        const match = (r.day_id && r.day_id === day.day_id) ||
-                      (r.reservation_time && isSameDay(r.reservation_time, day.date));
+      (dine ?? []).forEach((r: any) => {
+        // reservation_time may be ISO datetime; compare by date component
+        const reservationDate = typeof r.reservation_time === 'string' && r.reservation_time.includes('T')
+          ? r.reservation_time.split('T')[0]
+          : (typeof r.reservation_time === 'string' ? r.reservation_time : '');
+
+        const match =
+          (r.day_id && r.day_id === day.day_id) ||
+          (reservationDate && sameDay(reservationDate, String(day.date)));
+
         if (!match) return;
 
         const meta: string[] = [];
@@ -406,15 +448,39 @@ async function buildDays(tripId: string, o: PdfExportOptions): Promise<{ days: D
     }
 
     // Count only activities and dining for density (not accommodation/transport)
-    const activityCount = items.filter(i => i.type === 'activity' || i.type === 'dining').length;
+    const activityCount = items.filter((i) => i.type === 'activity' || i.type === 'dining').length;
 
-    return { 
-      ...day, 
+    return {
+      ...day,
       items: items.sort((a, b) => a.sortKey - b.sortKey),
       activityCount,
       hasTransport,
     };
   });
+
+  // Convert item thumbs to data URLs so pdfMake can render them reliably
+  if ((o as any).showImages) {
+    const jobs: Promise<void>[] = [];
+    for (const d of processedDays) {
+      for (const it of d.items) {
+        if (!it.thumb) continue;
+        const url = it.thumb;
+        jobs.push(
+          toDataURI(url, 96).then((dataUrl) => {
+            it.thumb = dataUrl || '';
+          })
+        );
+      }
+    }
+    await Promise.all(jobs);
+
+    // remove empties
+    for (const d of processedDays) {
+      d.items.forEach((it) => {
+        if (!it.thumb) delete it.thumb;
+      });
+    }
+  }
 
   return { days: processedDays, stays: staysSummary, transports: transportSegments };
 }
@@ -440,55 +506,52 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
     hotel: '#6B7280',
   };
 
-  const body = items.map(it => {
+  const body = items.map((it, idx) => {
     const icon = ICON[it.type] || '';
     const typeColor = typeColors[it.type] || '#333';
+    const zebra = idx % 2 === 0 ? '#FFFFFF' : '#F9FAFB';
 
-    // Build title with color coding
-    const titleSection: any[] = [];
+    const titleLine =
+      (o.showCosts && it.cost)
+        ? {
+            columns: [
+              { text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor, width: '*' },
+              { text: it.cost, style: 'itemCost', alignment: 'right', width: 'auto' },
+            ],
+            columnGap: 8,
+          }
+        : { text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor };
 
-    // Cost in top-right if present
-    if (o.showCosts && it.cost) {
-      titleSection.push({
-        columns: [
-          { text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor, width: '*' },
-          { text: it.cost, style: 'itemCost', alignment: 'right', width: 'auto' }
-        ]
-      });
-    } else {
-      titleSection.push({ text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor });
-    }
-
-    const stack: any[] = titleSection;
-
-    // Combine details and location into single compact line
     const combinedDetails: string[] = [];
     if (it.details) combinedDetails.push(it.details);
     if (it.location) combinedDetails.push(it.location);
 
-    if (combinedDetails.length > 0) {
+    const stack: any[] = [titleLine];
+
+    if (combinedDetails.length) {
       stack.push({ text: combinedDetails.join(' • '), style: 'itemDetail', margin: [0, 3, 0, 0] });
     }
 
     if (it.thumb && o.showImages) {
-      stack.push({ image: it.thumb, width: 32, margin: [0, 4, 0, 0] });
+      stack.push({ image: it.thumb, width: 28, height: 28, margin: [0, 6, 0, 0] });
     }
 
     return [
-      { text: it.time, style: 'timeCell', alignment: 'right', margin: [0, 4, 4, 4] },
-      { stack, fillColor: '#F9FAFB', margin: [4, 4, 4, 4] },
+      { text: it.time, style: 'timeCell', alignment: 'right', margin: [0, 5, 6, 5], fillColor: zebra },
+      { stack, fillColor: zebra, margin: [6, 5, 6, 5] },
     ];
   });
 
   return {
-    table: { widths: [timeWidth, '*'], body },
+    table: { widths: [timeWidth, '*'], body, dontBreakRows: true },
     layout: {
-      hLineWidth: () => 0,
+      hLineWidth: (i: number) => (i === 0 || i === body.length ? 0 : 0.5),
       vLineWidth: () => 0,
+      hLineColor: () => '#E5E7EB',
       paddingLeft: () => 0,
       paddingRight: () => 0,
-      paddingTop: () => 6,
-      paddingBottom: () => 6,
+      paddingTop: () => 4,
+      paddingBottom: () => 4,
     },
   };
 }
@@ -500,9 +563,7 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
 function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize: number): any[] {
   if (!stays.length) return [];
 
-  const content: any[] = [
-    { text: '🏨 WHERE YOU\'RE STAYING', style: 'summaryTitle', margin: [0, 0, 0, 8] },
-  ];
+  const content: any[] = [{ text: "🏨 WHERE YOU'RE STAYING", style: 'summaryTitle', margin: [0, 0, 0, 8] }];
 
   const table = {
     table: {
@@ -513,7 +574,7 @@ function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize:
           { text: 'Check In', style: 'summaryHeader' },
           { text: 'Check Out', style: 'summaryHeader' },
         ],
-        ...stays.map(s => [
+        ...stays.map((s) => [
           { text: s.hotel, style: 'summaryCell' },
           { text: s.checkIn, style: 'summaryCell' },
           { text: s.checkOut, style: 'summaryCell' },
@@ -530,9 +591,7 @@ function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize:
 function renderTransportSummary(transports: TransportSegment[]): any[] {
   if (!transports.length) return [];
 
-  const content: any[] = [
-    { text: '✈️ TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] },
-  ];
+  const content: any[] = [{ text: '✈️ TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
 
   transports.forEach((t, idx) => {
     content.push({
@@ -546,9 +605,7 @@ function renderTransportSummary(transports: TransportSegment[]): any[] {
 }
 
 function renderDailySummary(days: Day[]): any[] {
-  const content: any[] = [
-    { text: '📅 DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] },
-  ];
+  const content: any[] = [{ text: '📅 DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
 
   days.forEach((d, idx) => {
     const density = getDensityIndicator(d.activityCount || 0);
@@ -557,7 +614,7 @@ function renderDailySummary(days: Day[]): any[] {
       columns: [
         { text: `${fmtShort(d.date)}:`, style: 'summaryItem', width: 'auto' },
         { ...density, width: 'auto' },
-        { text: travelTag, style: 'summaryItem', width: '*' }
+        { text: travelTag, style: 'summaryItem', width: '*' },
       ],
       margin: [0, idx === 0 ? 0 : 4, 0, 4],
     });
@@ -600,20 +657,38 @@ function calculatePageFit(days: Day[], startIdx: number): number {
 }
 
 /**
- * Render compact day header with inline travel marker
+ * Render compact day header with inline travel marker + divider line
  */
-function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number): any {
+function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number, contentWidth: number): any {
   const travelMarker = d.hasTransport ? ' ✈️ TRAVEL DAY' : '';
   const dayText = d.title?.trim()
     ? `${fmtShort(d.date)} • ${d.title}${travelMarker}`
     : `${fmtShort(d.date)}${travelMarker}`;
 
   return {
-    text: dayText,
-    fontSize,
-    bold: true,
-    color: '#000000',
-    margin: [0, isFirstOnPage ? 0 : 8, 0, 4] as [number, number, number, number],
+    stack: [
+      {
+        text: dayText,
+        fontSize,
+        bold: true,
+        color: '#111827',
+        margin: [0, isFirstOnPage ? 0 : 10, 0, 2] as [number, number, number, number],
+      },
+      {
+        canvas: [
+          {
+            type: 'line',
+            x1: 0,
+            y1: 0,
+            x2: Math.max(100, Math.round(contentWidth)),
+            y2: 0,
+            lineWidth: 0.5,
+            lineColor: '#E5E7EB',
+          },
+        ],
+        margin: [0, 0, 0, 6] as [number, number, number, number],
+      },
+    ],
   };
 }
 
@@ -627,18 +702,19 @@ function renderCombinedCoverPage(
   transports: TransportSegment[],
   days: Day[],
   coverDataUrl: string,
+  contentWidth: number,
   imageHeight: number,
   baseFontSize: number
 ): any[] {
   const content: any[] = [];
 
-  // Cover image at 40% page height
+  // Cover image
   if (coverDataUrl) {
     content.push({
       image: coverDataUrl,
-      width: 480,
+      width: Math.max(200, Math.round(contentWidth)),
       height: imageHeight,
-      margin: [0, 0, 0, 16] as [number, number, number, number]
+      margin: [0, 0, 0, 16] as [number, number, number, number],
     });
   }
 
@@ -647,7 +723,7 @@ function renderCombinedCoverPage(
     text: `${trip.destination || 'Trip'} Itinerary`,
     fontSize: 18,
     bold: true,
-    margin: [0, 0, 0, 4] as [number, number, number, number]
+    margin: [0, 0, 0, 4] as [number, number, number, number],
   });
 
   if (dateRange) {
@@ -655,16 +731,16 @@ function renderCombinedCoverPage(
       text: dateRange,
       fontSize: baseFontSize + 1.5,
       color: '#6b6b6b',
-      margin: [0, 0, 0, 12] as [number, number, number, number]
+      margin: [0, 0, 0, 12] as [number, number, number, number],
     });
   }
 
   // Calculate stats
-  const totalFlights = transports.filter(t => t.type.toLowerCase().includes('flight')).length;
+  const totalFlights = transports.filter((t) => t.type.toLowerCase().includes('flight')).length;
   const totalActivities = days.reduce((sum, d) => sum + (d.activityCount || 0), 0);
-  const busyDays = days.filter(d => (d.activityCount || 0) >= 4).length;
-  const moderateDays = days.filter(d => (d.activityCount || 0) >= 2 && (d.activityCount || 0) < 4).length;
-  const lightDays = days.filter(d => (d.activityCount || 0) < 2).length;
+  const busyDays = days.filter((d) => (d.activityCount || 0) >= 4).length;
+  const moderateDays = days.filter((d) => (d.activityCount || 0) >= 2 && (d.activityCount || 0) < 4).length;
+  const lightDays = days.filter((d) => (d.activityCount || 0) < 2).length;
 
   // 2-column layout
   const leftColumn: any[] = [];
@@ -675,13 +751,13 @@ function renderCombinedCoverPage(
     text: 'Trip Details',
     fontSize: baseFontSize + 1,
     bold: true,
-    margin: [0, 0, 0, 6] as [number, number, number, number]
+    margin: [0, 0, 0, 6] as [number, number, number, number],
   });
 
   leftColumn.push({
     text: `Duration: ${days.length} days`,
     fontSize: baseFontSize - 0.5,
-    margin: [0, 0, 0, 2] as [number, number, number, number]
+    margin: [0, 0, 0, 2] as [number, number, number, number],
   });
 
   // Accommodation summary table
@@ -690,30 +766,31 @@ function renderCombinedCoverPage(
       text: 'Accommodations',
       fontSize: baseFontSize + 1,
       bold: true,
-      margin: [0, 8, 0, 4] as [number, number, number, number]
+      margin: [0, 8, 0, 4] as [number, number, number, number],
     });
 
     const staysTableBody = [
       [
         { text: 'Hotel', bold: true, fontSize: baseFontSize - 1 },
         { text: 'Check In', bold: true, fontSize: baseFontSize - 1 },
-        { text: 'Check Out', bold: true, fontSize: baseFontSize - 1 }
+        { text: 'Check Out', bold: true, fontSize: baseFontSize - 1 },
       ],
-      ...stays.map(s => [
+      ...stays.map((s) => [
         { text: s.hotel, fontSize: baseFontSize - 1 },
         { text: s.checkIn, fontSize: baseFontSize - 1 },
-        { text: s.checkOut, fontSize: baseFontSize - 1 }
-      ])
+        { text: s.checkOut, fontSize: baseFontSize - 1 },
+      ]),
     ];
 
     leftColumn.push({
       table: {
         widths: ['*', 'auto', 'auto'],
-        body: staysTableBody
+        body: staysTableBody,
+        dontBreakRows: true,
       },
       layout: 'lightHorizontalLines',
       fontSize: baseFontSize - 1,
-      margin: [0, 0, 0, 0] as [number, number, number, number]
+      margin: [0, 0, 0, 0] as [number, number, number, number],
     });
   }
 
@@ -722,26 +799,26 @@ function renderCombinedCoverPage(
     text: 'Quick Stats',
     fontSize: baseFontSize + 1,
     bold: true,
-    margin: [0, 0, 0, 6] as [number, number, number, number]
+    margin: [0, 0, 0, 6] as [number, number, number, number],
   });
 
   rightColumn.push({
     text: `✈️ ${totalFlights} flight${totalFlights !== 1 ? 's' : ''}`,
     fontSize: baseFontSize - 0.5,
-    margin: [0, 0, 0, 2] as [number, number, number, number]
+    margin: [0, 0, 0, 2] as [number, number, number, number],
   });
 
   rightColumn.push({
     text: `🎯 ${totalActivities} activit${totalActivities !== 1 ? 'ies' : 'y'}`,
     fontSize: baseFontSize - 0.5,
-    margin: [0, 0, 0, 6] as [number, number, number, number]
+    margin: [0, 0, 0, 6] as [number, number, number, number],
   });
 
   rightColumn.push({
     text: 'Activity Level',
     fontSize: baseFontSize,
     bold: true,
-    margin: [0, 4, 0, 4] as [number, number, number, number]
+    margin: [0, 4, 0, 4] as [number, number, number, number],
   });
 
   if (busyDays > 0) {
@@ -749,7 +826,7 @@ function renderCombinedCoverPage(
       text: `• Busy (4+ activities): ${busyDays} day${busyDays !== 1 ? 's' : ''}`,
       fontSize: baseFontSize - 1,
       color: '#DC2626',
-      margin: [0, 0, 0, 2] as [number, number, number, number]
+      margin: [0, 0, 0, 2] as [number, number, number, number],
     });
   }
 
@@ -758,7 +835,7 @@ function renderCombinedCoverPage(
       text: `• Moderate (2-3 activities): ${moderateDays} day${moderateDays !== 1 ? 's' : ''}`,
       fontSize: baseFontSize - 1,
       color: '#F59E0B',
-      margin: [0, 0, 0, 2] as [number, number, number, number]
+      margin: [0, 0, 0, 2] as [number, number, number, number],
     });
   }
 
@@ -767,18 +844,15 @@ function renderCombinedCoverPage(
       text: `• Light (0-1 activities): ${lightDays} day${lightDays !== 1 ? 's' : ''}`,
       fontSize: baseFontSize - 1,
       color: '#10B981',
-      margin: [0, 0, 0, 2] as [number, number, number, number]
+      margin: [0, 0, 0, 2] as [number, number, number, number],
     });
   }
 
   // Add columns to content
   content.push({
-    columns: [
-      { stack: leftColumn, width: '*' },
-      { stack: rightColumn, width: '*' }
-    ],
+    columns: [{ stack: leftColumn, width: '*' }, { stack: rightColumn, width: '*' }],
     columnGap: 20,
-    margin: [0, 0, 0, 0] as [number, number, number, number]
+    margin: [0, 0, 0, 0] as [number, number, number, number],
   });
 
   // Page break after cover
@@ -790,10 +864,7 @@ function renderCombinedCoverPage(
 /**
  * Render reference section with full accommodation and restaurant details
  */
-function renderReferenceSection(
-  stays: AccommodationSummary[],
-  baseFontSize: number
-): any[] {
+function renderReferenceSection(stays: AccommodationSummary[], baseFontSize: number): any[] {
   const content: any[] = [];
 
   // Page break before reference section
@@ -803,7 +874,7 @@ function renderReferenceSection(
     text: 'Reference Information',
     fontSize: baseFontSize + 4,
     bold: true,
-    margin: [0, 0, 0, 12] as [number, number, number, number]
+    margin: [0, 0, 0, 12] as [number, number, number, number],
   });
 
   // Accommodation details
@@ -812,7 +883,7 @@ function renderReferenceSection(
       text: 'Accommodation Details',
       fontSize: baseFontSize + 2,
       bold: true,
-      margin: [0, 8, 0, 8] as [number, number, number, number]
+      margin: [0, 8, 0, 8] as [number, number, number, number],
     });
 
     stays.forEach((stay, idx) => {
@@ -821,9 +892,9 @@ function renderReferenceSection(
           { text: stay.hotel, fontSize: baseFontSize + 1, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] },
           { text: `Check-in: ${stay.checkIn}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
           { text: `Check-out: ${stay.checkOut}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
-          ...(stay.address ? [{ text: stay.address, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] }] : [])
+          ...(stay.address ? [{ text: stay.address, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] }] : []),
         ],
-        margin: [0, 0, 0, idx < stays.length - 1 ? 12 : 0] as [number, number, number, number]
+        margin: [0, 0, 0, idx < stays.length - 1 ? 12 : 0] as [number, number, number, number],
       });
     });
   }
@@ -833,14 +904,14 @@ function renderReferenceSection(
     text: 'Emergency Contacts',
     fontSize: baseFontSize + 2,
     bold: true,
-    margin: [0, 16, 0, 8] as [number, number, number, number]
+    margin: [0, 16, 0, 8] as [number, number, number, number],
   });
 
   content.push({
     text: 'Keep this section handy for important contacts and local emergency numbers.',
     fontSize: baseFontSize - 0.5,
     color: '#6B7280',
-    italics: true
+    italics: true,
   });
 
   return content;
@@ -871,24 +942,33 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       coverImageHeight,
     } = pagePresetSettings(preset);
 
+    const contentWidth = innerPageWidth(pageSize, pageMargins);
+
     console.log('[PDF Export] Fetching trip data...');
     // Fetch minimal trip info
     const { data: trip, error } = await supabase
       .from(TABLES.trip)
       .select('destination,arrival_date,departure_date,cover_image_url')
-      .eq('trip_id', tripId).single();
+      .eq('trip_id', tripId)
+      .single();
+
     if (error || !trip) {
       console.error('[PDF Export] Trip fetch failed:', error);
-      throw (error ?? new Error('Trip not found'));
+      throw error ?? new Error('Trip not found');
     }
     console.log('[PDF Export] Trip data fetched:', trip.destination);
 
-    const sameDay   = trip.arrival_date && trip.departure_date
-      ? isSameDay(parseISO(trip.arrival_date), parseISO(trip.departure_date)) : false;
+    const sameTripDay =
+      trip.arrival_date && trip.departure_date
+        ? isSameDay(parseISO(trip.arrival_date), parseISO(trip.departure_date))
+        : false;
 
-    const dateRange = (trip.arrival_date && trip.departure_date)
-      ? (sameDay ? fmtDate(trip.arrival_date) : `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`)
-      : '';
+    const dateRange =
+      trip.arrival_date && trip.departure_date
+        ? sameTripDay
+          ? fmtDate(trip.arrival_date)
+          : `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`
+        : '';
 
     console.log('[PDF Export] Building days data...');
     const { days, stays, transports } = await buildDays(tripId, o);
@@ -898,7 +978,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     let coverDataUrl = '';
     if (o.showImages && trip.cover_image_url) {
       console.log('[PDF Export] Loading cover image...');
-      coverDataUrl = await toDataURI(trip.cover_image_url, imageWidth);
+      coverDataUrl = await toDataURI(trip.cover_image_url, Math.round(contentWidth));
       console.log('[PDF Export] Cover image loaded');
     }
 
@@ -907,16 +987,19 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     const content: any[] = [];
 
     // Combined cover page with 2-column layout
-    content.push(...renderCombinedCoverPage(
-      trip,
-      dateRange,
-      stays,
-      transports,
-      days,
-      coverDataUrl,
-      coverImageHeight,
-      baseFontSize
-    ));
+    content.push(
+      ...renderCombinedCoverPage(
+        trip,
+        dateRange,
+        stays,
+        transports,
+        days,
+        coverDataUrl,
+        contentWidth,
+        coverImageHeight,
+        baseFontSize
+      )
+    );
 
     // Daily itineraries with dynamic multi-day layout
     let currentDayIdx = 0;
@@ -936,8 +1019,8 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         const d = days[currentDayIdx];
         const isFirstOnPage = i === 0;
 
-        // Compact day header
-        content.push(renderCompactDayHeader(d, isFirstOnPage, compactDayHeader));
+        // Compact day header with divider
+        content.push(renderCompactDayHeader(d, isFirstOnPage, compactDayHeader, contentWidth));
 
         // Day items table
         content.push(renderTable(d.items, o, timeWidth));
@@ -962,7 +1045,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         margin: [0, 10, 0, 0],
         color: '#666',
       }),
-      footer: (p, c) => ({
+      footer: (p: number, c: number) => ({
         text: `Page ${p} of ${c} • exported ${fnsFormat(new Date(), 'PP p')}`,
         alignment: 'center',
         fontSize: footerFont,
@@ -972,18 +1055,20 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       content,
       styles: {
         heroTitle: { fontSize: heroTitle, bold: true },
-        heroSub:   { fontSize: baseFontSize + 1.5, color: '#6b6b6b' },
+        heroSub: { fontSize: baseFontSize + 1.5, color: '#6b6b6b' },
         summaryPageTitle: { fontSize: dayHeader, bold: true, color: '#333', margin: [0, 0, 0, 12] },
         summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: '#333' },
         summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: '#8b7355', alignment: 'center' },
         summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
         summaryItem: { fontSize: baseFontSize - 0.5, color: '#333' },
         dayHeader: { fontSize: isMobile ? 18 : 24, bold: true, color: '#000000' },
-        timeCell:  { fontSize: isMobile ? 9 : 10, bold: true, color: '#4B5563' },
-        itemTitle: { fontSize: isMobile ? 10 : 11, bold: true },
-        itemDetail:{ fontSize: isMobile ? 9 : 10, color: '#374151' },
-        itemMeta:  { fontSize: isMobile ? 8 : 9, italics: true, color: '#6B7280' },
-        itemCost:  { fontSize: isMobile ? 10 : 11, bold: true, color: '#059669' },
+
+        // Typography tweaks (cleaner + less heavy)
+        timeCell: { fontSize: isMobile ? 8.5 : 9, bold: true, color: '#4B5563' },
+        itemTitle: { fontSize: isMobile ? 10 : 10.5, bold: true },
+        itemDetail: { fontSize: isMobile ? 9 : 9.5, color: '#374151' },
+        itemMeta: { fontSize: isMobile ? 8 : 9, italics: true, color: '#6B7280' },
+        itemCost: { fontSize: isMobile ? 10 : 11, bold: true, color: '#059669' },
       },
     };
 
@@ -1002,7 +1087,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         // On desktop, download by default
         if (strategy === 'download' || strategy === 'auto') {
           console.log('[PDF Export] Using download/auto strategy');
-          // Use getBlob for better error handling
           pdf.getBlob((blob: Blob) => {
             console.log('[PDF Export] Blob received, size:', blob?.size);
             try {
@@ -1012,7 +1096,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
                 return;
               }
 
-              // Create a download link
               const url = URL.createObjectURL(blob);
               console.log('[PDF Export] Blob URL created:', url);
               const link = document.createElement('a');
@@ -1023,7 +1106,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
               console.log('[PDF Export] Download triggered for:', fileName);
               document.body.removeChild(link);
 
-              // Clean up after a short delay
               setTimeout(() => {
                 URL.revokeObjectURL(url);
                 console.log('[PDF Export] Success! PDF downloaded');
@@ -1038,7 +1120,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         }
 
         if (strategy === 'open') {
-          // Only use open for explicit open strategy on desktop
           if (!isProbablyMobile()) {
             pdf.getBlob((blob: Blob) => {
               try {
@@ -1086,7 +1167,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         }
 
         if (strategy === 'blob') {
-          // If caller wants to handle sharing UI themselves
           pdf.getBlob((blob: Blob) => {
             try {
               if (!blob) {
@@ -1095,12 +1175,9 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
               }
 
               const url = URL.createObjectURL(blob);
-              // The caller can read the blob URL via a custom event or you could expose another API to return it.
-              // We just download it here for convenience.
               if (!isProbablyMobile()) {
                 window.open(url, '_blank');
               } else {
-                // Mobile: create a temporary link and click it to download
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = fileName;
@@ -1119,7 +1196,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
           return;
         }
 
-        // If no strategy matched, reject
         console.error('[PDF Export] No valid strategy matched:', strategy);
         reject(new Error('Invalid PDF export strategy'));
       } catch (err) {
