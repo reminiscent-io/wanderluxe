@@ -26,14 +26,10 @@ const indexPath = path.join(distPath, 'index.html');
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
-  
+
   // Handle SPA routing - serve index.html for all non-API routes
-  app.get('*', (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/api')) {
-      return next();
-    }
-    
+  // Use regex pattern compatible with Express 5.x
+  app.get(/^(?!\/api).*$/, (req, res) => {
     // Check if index.html exists before serving
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
@@ -43,10 +39,7 @@ if (fs.existsSync(distPath)) {
   });
 } else if (process.env.NODE_ENV === 'production') {
   // In production without dist folder, return helpful message
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      return next();
-    }
+  app.get(/^(?!\/api).*$/, (req, res) => {
     res.status(503).send('Application build not found. Please run "npm run build" first.');
   });
 }

@@ -33,6 +33,14 @@ export default defineConfig(({ mode }) => ({
       ],
     },
     cors: true,
+    // Proxy API requests to the Express backend server
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      }
+    },
   },
   build: {
     rollupOptions: {

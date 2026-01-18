@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "NODE_ENV=development bun run server/index.ts",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview --port 8080 --host 0.0.0.0",
+    "start": "NODE_ENV=production bun run server/index.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
