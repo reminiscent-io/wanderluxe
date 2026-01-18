@@ -52,7 +52,10 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
   };
 
   return (
-    <div className="hidden md:block md:w-1/3 md:sticky md:top-0 md:h-screen md:overflow-y-auto bg-sand-50 border-r border-sand-200 p-4">
+    <div
+      className="hidden md:block md:w-1/3 md:sticky md:top-0 md:overflow-y-auto bg-sand-50 border-r border-sand-200 p-4"
+      style={{ height: "calc(var(--app-height, 1vh) * 100)" }}
+    >
       <div className="space-y-6">
         {/* Accommodations Section */}
         {sortedAccommodations.length > 0 && (
