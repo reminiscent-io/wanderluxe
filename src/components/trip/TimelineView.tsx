@@ -3,7 +3,6 @@ import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
-import TripSummaryPanel from './timeline/TripSummaryPanel';
 import ExportPdfButton from './ExportPdfButton';
 import ShareTripDialog from './ShareTripDialog';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
+import { AIAssistantPanel } from './ai-assistant';
 
 interface TimelineViewProps {
   tripId: string;
@@ -184,19 +184,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
 
   return (
-    <div className="relative md:flex md:gap-0">
+    <div className="relative md:flex md:gap-4">
       {isRefreshing && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
       )}
 
-      {/* Summary Panel - Desktop only, left side, 1/3 width */}
-      <TripSummaryPanel
-        accommodations={processedHotelStays}
-        transportation={transportationData || []}
-      />
-
-      {/* Timeline Content - Right side, 2/3 width on desktop, full width on mobile */}
-      <div className="w-full md:w-2/3 px-1 md:px-6 space-y-8">
+      {/* Timeline Content - Left side, 65-70% width on desktop, full width on mobile */}
+      <div className="w-full md:w-[65%] lg:w-[70%] px-1 md:px-4 space-y-8">
         <div className="flex justify-between items-center mb-6 pt-4 md:pt-0">
           <h2 className="text-2xl font-bold text-earth-500">Trip Timeline</h2>
           <div className="flex gap-2">
@@ -231,6 +225,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           tripDepartureDate={localTripDates.departure_date || undefined}
           canEdit={canEdit}
         />
+      </div>
+
+      {/* AI Assistant Panel - Desktop only, right side, 30-35% width, sticky */}
+      <div className="hidden md:block md:w-[35%] lg:w-[30%] md:pr-4">
+        <div className="sticky top-20 h-[calc(100vh-6rem)]">
+          <AIAssistantPanel tripId={tripId} />
+        </div>
       </div>
     </div>
   );

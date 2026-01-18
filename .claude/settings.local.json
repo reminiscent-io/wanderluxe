@@ -18,7 +18,8 @@
       "Bash(bun install)",
       "Bash(timeout 30 bun run dev:*)",
       "Bash(timeout 60 bun run build:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

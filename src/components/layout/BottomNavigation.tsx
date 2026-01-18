@@ -1,16 +1,16 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Calendar, BarChart2, Users, Plus, LayoutList } from "lucide-react";
+import { Calendar, BarChart2, Users, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface BottomNavigationProps {
   tripId: string | undefined;
   onQuickAddClick: () => void;
-  onDetailsClick: () => void;
+  onAIClick: () => void;
   onPeopleClick: () => void;
 }
 
-const BottomNavigation = ({ tripId, onQuickAddClick, onDetailsClick, onPeopleClick }: BottomNavigationProps) => {
+const BottomNavigation = ({ tripId, onQuickAddClick, onAIClick, onPeopleClick }: BottomNavigationProps) => {
   const timelineItem = {
     title: "Timeline",
     icon: Calendar,
@@ -51,13 +51,13 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onDetailsClick, onPeopleCli
           }}
         </NavLink>
 
-        {/* Second item: Details (opens sidebar) */}
+        {/* Second item: AI Assistant (opens drawer) */}
         <button
-          onClick={onDetailsClick}
+          onClick={onAIClick}
           className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"
         >
-          <LayoutList className="h-5 w-5" />
-          <span className="text-[10px]">Details</span>
+          <Sparkles className="h-5 w-5" />
+          <span className="text-[10px]">AI</span>
         </button>
 
         {/* Center FAB */}
