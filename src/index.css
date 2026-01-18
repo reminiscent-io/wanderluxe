@@ -17,14 +17,18 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   /* Prevent dialog from shrinking when mobile keyboard appears */
+  /* Updated to use safe viewport height for iOS compatibility */
   .keyboard-stable {
     height: 100vh !important;
+    height: calc(var(--app-height, 1vh) * 100) !important;
     min-height: 100vh !important;
+    min-height: calc(var(--app-height, 1vh) * 100) !important;
     max-height: 100vh !important;
+    max-height: calc(var(--app-height, 1vh) * 100) !important;
   }
-  
+
   /* Line clamping for better mobile readability */
   .line-clamp-1 {
     display: -webkit-box;
@@ -50,7 +54,7 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   /* Tailwind styles for Google Maps autocomplete */
   .pac-container {
     @apply z-[10000] rounded-md border border-gray-300 shadow-lg mt-1 bg-white;
@@ -65,7 +69,7 @@
   .pac-item-selected {
     @apply bg-gray-200;
   }
-  
+
   /* Override react-day-picker default blue styles with sand theme */
   .rdp-day_selected {
     @apply bg-sand-500 text-sand-50 !important;
@@ -85,17 +89,55 @@
 }
 
 @layer base {
+  /* iOS Safe Area Support */
+  /* Set up CSS custom properties for safe viewport heights */
+  :root {
+    /* Safe area insets for iOS notch/Dynamic Island */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+
+    /* Dynamic viewport height - updates as browser chrome shows/hides */
+    /* Fallback chain: dvh → svh → fallback to 1vh */
+    --app-height: 1dvh;
+
+    /* Safe viewport height accounting for iOS safe areas */
+    /* On iOS, this ensures content doesn't clip behind notch/status bar */
+    --safe-vh: calc(1dvh - (var(--sat) + var(--sab)) / 100);
+  }
+
+  /* Fallback for browsers without dvh support */
+  @supports not (height: 1dvh) {
+    :root {
+      /* Use svh (small viewport height) as fallback */
+      --app-height: 1svh;
+    }
+  }
+
+  /* Fallback for browsers without svh support either */
+  @supports not (height: 1svh) {
+    :root {
+      /* Use traditional vh with -webkit-fill-available as ultimate fallback */
+      --app-height: 1vh;
+    }
+  }
+
   /* Prevent mobile keyboard from resizing viewport */
   html {
+    /* Use multiple fallbacks for maximum browser support */
     height: 100vh;
     height: -webkit-fill-available;
+    height: calc(var(--app-height, 1vh) * 100);
   }
-  
+
   body {
-    height: 100vh;
-    height: -webkit-fill-available;
+    /* Use the safe viewport height */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: calc(var(--app-height, 1vh) * 100);
   }
-  
+
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;

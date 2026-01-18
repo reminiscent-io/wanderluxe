@@ -165,7 +165,12 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           onClick={onClose}
         />
         {/* secondary sidebar */}
-        <div className="hidden md:block fixed left-[280px] top-16 h-[calc(100vh-4rem)] w-[320px] z-40 overflow-y-auto border-r border-sand-200 bg-white">
+        <div
+          className="hidden md:block fixed left-[280px] top-16 w-[320px] z-40 overflow-y-auto border-r border-sand-200 bg-white"
+          style={{
+            height: "calc(calc(var(--app-height, 1vh) * 100) - 4rem)"
+          }}
+        >
           {panel}
         </div>
       </>

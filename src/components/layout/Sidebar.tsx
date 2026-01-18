@@ -239,7 +239,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
           className="fixed left-0 w-[280px] bg-white border-r border-sand-200 z-30"
           style={{
             top: "var(--app-nav-h, 64px)",
-            height: "calc(100vh - var(--app-nav-h, 64px))",
+            height: "calc(calc(var(--app-height, 1vh) * 100) - var(--app-nav-h, 64px))",
           }}
         >
           {sidebarContent}

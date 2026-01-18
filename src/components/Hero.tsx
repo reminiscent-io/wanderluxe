@@ -77,9 +77,16 @@ const Hero = () => {
   const currentSrc = images[index];
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div
+      className="relative w-full overflow-hidden"
+      style={{ height: "calc(var(--app-height, 1vh) * 100)" }}
+    >
       {/* Background stack with elegant crossfade + Ken Burns */}
-      <div ref={parallaxRef} className="absolute inset-0 min-h-[100vh]">
+      <div
+        ref={parallaxRef}
+        className="absolute inset-0"
+        style={{ minHeight: "calc(var(--app-height, 1vh) * 100)" }}
+      >
         <AnimatePresence>
           <motion.div
             key={currentSrc}
@@ -107,7 +114,8 @@ const Hero = () => {
             >
               <UnsplashImage
                 src={currentSrc}
-                className="w-full h-full object-cover min-h-[100vh] pointer-events-none select-none"
+                className="w-full h-full object-cover pointer-events-none select-none"
+                style={{ minHeight: "calc(var(--app-height, 1vh) * 100)" }}
                 objectPosition="center center"
                 alt="Travel background"
                 showAttribution={false}
