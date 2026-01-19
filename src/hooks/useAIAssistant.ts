@@ -91,13 +91,24 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
 
   // Send message with streaming
   const sendMessage = useCallback(async (content: string): Promise<void> => {
-    if (!content.trim() || isStreaming) return;
+    // Validate input before proceeding
+    const trimmedContent = (content || '').trim();
+    if (!trimmedContent || isStreaming) return;
 
     setError(null);
     setIsStreaming(true);
     setStreamingContent('');
 
-    const token = await getAuthToken();
+    let token: string | null = null;
+    try {
+      token = await getAuthToken();
+    } catch (authError) {
+      console.error('Auth error:', authError);
+      setError('Unable to authenticate. Please try again.');
+      setIsStreaming(false);
+      return;
+    }
+
     if (!token) {
       setError('Please sign in to use the assistant');
       setIsStreaming(false);
@@ -109,7 +120,7 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
       id: `temp-${Date.now()}`,
       thread_id: messagesData?.thread_id || '',
       role: 'user',
-      content: content.trim(),
+      content: trimmedContent,
       metadata: {},
       created_at: new Date().toISOString()
     };
@@ -126,6 +137,17 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
     abortControllerRef.current = new AbortController();
     let fullContent = '';
 
+    // Helper to remove the optimistic message on error
+    const removeOptimisticMessage = () => {
+      queryClient.setQueryData(
+        ['ai-assistant-messages', tripId],
+        (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
+          messages: (old?.messages || []).filter(m => m.id !== optimisticUserMessage.id),
+          thread_id: old?.thread_id || null
+        })
+      );
+    };
+
     try {
       await fetchEventSource(`${API_BASE}/api/trips/${tripId}/assistant`, {
         method: 'POST',
@@ -134,60 +156,73 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          message: content.trim(),
+          message: trimmedContent,
           thread_id: messagesData?.thread_id
         }),
         signal: abortControllerRef.current.signal,
 
         onopen: async (response) => {
           if (!response.ok) {
-            const errorData = await response.json();
+            let errorData;
+            try {
+              errorData = await response.json();
+            } catch {
+              errorData = { message: `Server error: ${response.status}` };
+            }
             throw errorData;
           }
         },
 
         onmessage: (event) => {
-          if (event.event === 'message') {
-            const data = JSON.parse(event.data) as SSEMessageEvent;
-            fullContent += data.content;
-            setStreamingContent(fullContent);
-          } else if (event.event === 'done') {
-            const data = JSON.parse(event.data) as SSEDoneEvent;
+          try {
+            if (event.event === 'message') {
+              const data = JSON.parse(event.data) as SSEMessageEvent;
+              fullContent += data.content;
+              setStreamingContent(fullContent);
+            } else if (event.event === 'done') {
+              const data = JSON.parse(event.data) as SSEDoneEvent;
 
-            // Add the complete assistant message to the cache
-            const assistantMessage: AIChatMessage = {
-              id: data.message_id,
-              thread_id: data.thread_id,
-              role: 'assistant',
-              content: fullContent,
-              metadata: {},
-              created_at: new Date().toISOString()
-            };
+              // Add the complete assistant message to the cache
+              const assistantMessage: AIChatMessage = {
+                id: data.message_id,
+                thread_id: data.thread_id,
+                role: 'assistant',
+                content: fullContent,
+                metadata: {},
+                created_at: new Date().toISOString()
+              };
 
-            queryClient.setQueryData(
-              ['ai-assistant-messages', tripId],
-              (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
-                messages: [...(old?.messages || []), assistantMessage],
-                thread_id: data.thread_id
-              })
-            );
+              queryClient.setQueryData(
+                ['ai-assistant-messages', tripId],
+                (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
+                  messages: [...(old?.messages || []), assistantMessage],
+                  thread_id: data.thread_id
+                })
+              );
 
-            setStreamingContent('');
-            setIsStreaming(false);
+              setStreamingContent('');
+              setIsStreaming(false);
 
-            // Refresh usage after successful message
-            refetchUsage();
-          } else if (event.event === 'error') {
-            const data = JSON.parse(event.data) as SSEErrorEvent;
-            throw data.error;
+              // Refresh usage after successful message
+              refetchUsage();
+            } else if (event.event === 'error') {
+              const data = JSON.parse(event.data) as SSEErrorEvent;
+              throw data.error;
+            }
+          } catch (parseError) {
+            console.error('Error parsing SSE message:', parseError);
+            // Don't throw - continue trying to process other messages
           }
         },
 
         onerror: (err) => {
+          // Don't throw on network errors - handle them gracefully
+          console.error('SSE connection error:', err);
           throw err;
         }
       });
     } catch (err) {
+      console.error('Send message error:', err);
       const errorResponse = err as StreamingErrorResponse;
 
       if (errorResponse?.code === 'DAILY_LIMIT_REACHED') {
@@ -199,27 +234,22 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
         };
         onLimitReached?.(usageInfo);
         setError('You have reached your daily message limit');
-
-        // Remove optimistic user message
-        queryClient.setQueryData(
-          ['ai-assistant-messages', tripId],
-          (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
-            messages: (old?.messages || []).filter(m => m.id !== optimisticUserMessage.id),
-            thread_id: old?.thread_id || null
-          })
-        );
+        removeOptimisticMessage();
       } else if (err instanceof Error && err.name === 'AbortError') {
-        // User cancelled, don't show error
+        // User cancelled, don't show error but still clean up streaming state
+        setStreamingContent('');
+        setIsStreaming(false);
+        return;
+      } else if (err instanceof TypeError && err.message.includes('Load failed')) {
+        // Network error - common on mobile or poor connections
+        setError('Connection error. Please check your internet and try again.');
+        removeOptimisticMessage();
       } else {
-        setError(errorResponse?.message || 'Failed to send message');
-        // Remove optimistic user message on error
-        queryClient.setQueryData(
-          ['ai-assistant-messages', tripId],
-          (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
-            messages: (old?.messages || []).filter(m => m.id !== optimisticUserMessage.id),
-            thread_id: old?.thread_id || null
-          })
-        );
+        // Generic error handling
+        const errorMessage = errorResponse?.message || 
+          (err instanceof Error ? err.message : 'Failed to send message. Please try again.');
+        setError(errorMessage);
+        removeOptimisticMessage();
       }
 
       setStreamingContent('');

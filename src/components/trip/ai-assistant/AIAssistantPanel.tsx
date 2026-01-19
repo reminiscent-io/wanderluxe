@@ -48,12 +48,20 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     onLimitReached: handleLimitReached
   });
 
-  const handleSend = useCallback((message: string) => {
-    sendMessage(message);
+  const handleSend = useCallback(async (message: string) => {
+    try {
+      await sendMessage(message);
+    } catch (err) {
+      console.error('Unexpected error in handleSend:', err);
+    }
   }, [sendMessage]);
 
-  const handlePromptSelect = useCallback((prompt: string) => {
-    sendMessage(prompt);
+  const handlePromptSelect = useCallback(async (prompt: string) => {
+    try {
+      await sendMessage(prompt);
+    } catch (err) {
+      console.error('Unexpected error in handlePromptSelect:', err);
+    }
   }, [sendMessage]);
 
   const isDisabled = isStreaming || (usage && usage.tier === 'free' && usage.used >= usage.limit);
@@ -161,6 +169,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
             <ChatInput
               onSend={handleSend}
               disabled={isDisabled}
+              isSending={isStreaming}
               placeholder={
                 isDisabled && usage?.used === usage?.limit
                   ? "Daily limit reached. Upgrade for unlimited messages."
