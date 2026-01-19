@@ -45,19 +45,47 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage }
         toast.error("Please sign in to upgrade");
         return;
       }
+
       const resp = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await resp.json();
+
+      if (!resp.ok) {
+        let errorMessage = `Checkout failed (${resp.status})`;
+        try {
+          const errorData = await resp.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // Response wasn't JSON, use status-based message
+        }
+        console.error('Checkout API error:', resp.status, errorMessage);
+        toast.error(errorMessage);
+        return;
+      }
+
+      let data;
+      try {
+        data = await resp.json();
+      } catch {
+        console.error('Failed to parse checkout response');
+        toast.error("Invalid response from server");
+        return;
+      }
+
       if (data.url) {
         window.location.href = data.url;
       } else {
-        toast.error("Failed to start checkout");
+        toast.error(data.error || "Failed to start checkout");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Checkout error:', e);
-      toast.error("Failed to start checkout");
+      // Handle network errors specifically
+      if (e instanceof TypeError && (e.message.includes('Load failed') || e.message.includes('Failed to fetch'))) {
+        toast.error("Connection error - please check your internet and try again");
+      } else {
+        toast.error(e?.message || "Failed to start checkout");
+      }
     } finally {
       setIsLoading(false);
     }

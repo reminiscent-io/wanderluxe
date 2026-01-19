@@ -1,69 +1,112 @@
 import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const router = Router();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+// Lazy initialization of Stripe and Supabase clients
+let stripe: Stripe | null = null;
+let supabase: SupabaseClient | null = null;
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function getStripe(): Stripe {
+  if (!stripe) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    stripe = new Stripe(secretKey);
+  }
+  return stripe;
+}
+
+function getSupabase(): SupabaseClient {
+  if (!supabase) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase configuration is missing');
+    }
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+  }
+  return supabase;
+}
 
 const PRO_PRICE_AMOUNT = 399;
 const PRO_PRICE_CURRENCY = 'usd';
 
 async function getOrCreateStripeCustomer(userId: string, email: string): Promise<string> {
-  const { data: profile } = await supabase
+  const sb = getSupabase();
+  const stripeClient = getStripe();
+
+  const { data: profile, error: profileError } = await sb
     .from('profiles')
     .select('stripe_customer_id')
     .eq('id', userId)
     .single();
 
+  if (profileError) {
+    console.error('Error fetching profile for Stripe customer:', profileError);
+    throw new Error('Failed to fetch user profile');
+  }
+
   if (profile?.stripe_customer_id) {
     return profile.stripe_customer_id;
   }
 
-  const customer = await stripe.customers.create({
+  const customer = await stripeClient.customers.create({
     email,
     metadata: { supabase_user_id: userId },
   });
 
-  await supabase
+  const { error: updateError } = await sb
     .from('profiles')
     .update({ stripe_customer_id: customer.id })
     .eq('id', userId);
+
+  if (updateError) {
+    console.error('Error updating profile with Stripe customer ID:', updateError);
+    // Don't throw - customer was created, just log the error
+  }
 
   return customer.id;
 }
 
 router.post('/api/stripe/create-checkout', async (req: Request, res: Response) => {
   try {
+    // Check for required environment variables
     if (!process.env.STRIPE_SECRET_KEY) {
       console.error('STRIPE_SECRET_KEY is not configured');
-      return res.status(500).json({ error: 'Stripe is not configured' });
+      return res.status(500).json({ error: 'Stripe is not configured. Please contact support.' });
+    }
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Supabase environment variables are not configured');
+      return res.status(500).json({ error: 'Server configuration error. Please contact support.' });
     }
 
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Please sign in to upgrade' });
     }
 
     const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const sb = getSupabase();
+    const { data: { user }, error: authError } = await sb.auth.getUser(token);
 
     if (authError || !user) {
       console.error('Auth error:', authError);
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Session expired. Please sign in again.' });
     }
 
     const customerId = await getOrCreateStripeCustomer(user.id, user.email || '');
     console.log('Created/retrieved customer:', customerId);
 
-    const successUrl = `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/profile?upgraded=true`;
-    const cancelUrl = `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/profile?cancelled=true`;
+    const origin = req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000';
+    const successUrl = `${origin}/profile?upgraded=true`;
+    const cancelUrl = `${origin}/profile?cancelled=true`;
 
-    const session = await stripe.checkout.sessions.create({
+    const stripeClient = getStripe();
+    const session = await stripeClient.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       mode: 'subscription',
@@ -95,10 +138,22 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
       },
     });
 
+    if (!session.url) {
+      console.error('Stripe checkout session created without URL:', session.id);
+      return res.status(500).json({ error: 'Failed to create checkout URL' });
+    }
+
     console.log('Checkout session created:', session.id);
     return res.json({ url: session.url });
   } catch (error: any) {
     console.error('Error creating checkout session:', error?.message || error);
+    // Provide user-friendly error messages for common Stripe errors
+    if (error?.type === 'StripeAuthenticationError') {
+      return res.status(500).json({ error: 'Payment system configuration error. Please contact support.' });
+    }
+    if (error?.type === 'StripeConnectionError') {
+      return res.status(503).json({ error: 'Unable to connect to payment service. Please try again.' });
+    }
     return res.status(500).json({ error: error?.message || 'Failed to create checkout session' });
   }
 });
@@ -115,7 +170,8 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    const stripeClient = getStripe();
+    event = stripeClient.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });
@@ -124,13 +180,16 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
   console.log(`Received Stripe event: ${event.type}`);
 
   try {
+    const sb = getSupabase();
+    const stripeClient = getStripe();
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.supabase_user_id;
 
         if (userId && session.subscription) {
-          await supabase
+          await sb
             .from('profiles')
             .update({
               subscription_tier: 'pro',
@@ -151,7 +210,7 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
 
         if (!userId && subscription.customer) {
           const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
-          const { data: profile } = await supabase
+          const { data: profile } = await sb
             .from('profiles')
             .select('id')
             .eq('stripe_customer_id', customerId)
@@ -162,7 +221,7 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
         if (userId) {
           const isActive = subscription.status === 'active' || subscription.status === 'trialing';
 
-          await supabase
+          await sb
             .from('profiles')
             .update({
               subscription_tier: isActive ? 'pro' : 'free',
@@ -182,7 +241,7 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
 
         if (!userId && subscription.customer) {
           const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
-          const { data: profile } = await supabase
+          const { data: profile } = await sb
             .from('profiles')
             .select('id')
             .eq('stripe_customer_id', customerId)
@@ -191,7 +250,7 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
         }
 
         if (userId) {
-          await supabase
+          await sb
             .from('profiles')
             .update({
               subscription_tier: 'free',
@@ -210,11 +269,11 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = (invoice as any).subscription;
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+          const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
           const userId = subscription.metadata?.supabase_user_id;
 
           if (userId) {
-            await supabase
+            await sb
               .from('profiles')
               .update({
                 subscription_tier: 'pro',
@@ -233,7 +292,7 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = (invoice as any).subscription;
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+          const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
           const userId = subscription.metadata?.supabase_user_id;
 
           if (userId) {
@@ -255,17 +314,18 @@ router.post('/api/stripe/create-portal', async (req: Request, res: Response) => 
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Please sign in to manage subscription' });
     }
 
     const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const sb = getSupabase();
+    const { data: { user }, error: authError } = await sb.auth.getUser(token);
 
     if (authError || !user) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Session expired. Please sign in again.' });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile } = await sb
       .from('profiles')
       .select('stripe_customer_id')
       .eq('id', user.id)
@@ -277,14 +337,18 @@ router.post('/api/stripe/create-portal', async (req: Request, res: Response) => 
 
     const returnUrl = `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/profile`;
 
-    const portalSession = await stripe.billingPortal.sessions.create({
+    const stripeClient = getStripe();
+    const portalSession = await stripeClient.billingPortal.sessions.create({
       customer: profile.stripe_customer_id,
       return_url: returnUrl,
     });
 
     return res.json({ url: portalSession.url });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating portal session:', error);
+    if (error?.type === 'StripeAuthenticationError') {
+      return res.status(500).json({ error: 'Payment system configuration error. Please contact support.' });
+    }
     return res.status(500).json({ error: 'Failed to create portal session' });
   }
 });
