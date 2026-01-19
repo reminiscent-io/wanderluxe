@@ -618,20 +618,23 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
 
     res.end();
   } catch (error) {
-    console.error('Chat error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Chat error:', errorMessage);
+    if (errorStack) console.error('Stack:', errorStack);
 
     // If headers not sent, send JSON error
     if (!res.headersSent) {
       return res.status(500).json({
         code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred'
+        message: errorMessage || 'An unexpected error occurred'
       });
     }
 
     // If streaming, send SSE error
     sendSSE(res, 'error', {
       code: 'INTERNAL_ERROR',
-      message: 'An unexpected error occurred'
+      message: errorMessage || 'An unexpected error occurred'
     });
     res.end();
   }
