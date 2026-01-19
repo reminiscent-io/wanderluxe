@@ -205,7 +205,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               )}
 
               {/* Messages area - scrollable */}
-              <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
                 <ChatMessageList
                   messages={messages}
                   isLoading={isLoading}
