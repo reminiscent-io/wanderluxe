@@ -298,8 +298,8 @@ async function checkAndIncrementUsage(
 
   if (error || !data || data.length === 0) {
     console.error('Error checking usage:', error);
-    // Default to allowing if we can't check
-    return { allowed: true, used: 0, limit: 10 };
+    // Deny on error to enforce limits
+    return { allowed: false, used: 0, limit: 10 };
   }
 
   return {
@@ -417,8 +417,7 @@ router.post('/api/ai-imports/usage', async (req: Request, res: Response) => {
 
     if (error || !data || data.length === 0) {
       console.error('Error incrementing import usage:', error);
-      // Default to allowing if we can't check
-      return res.json({ allowed: true, used: 0, limit: 5 });
+      return res.status(500).json({ error: 'Failed to check usage limits' });
     }
 
     if (!data[0].allowed) {

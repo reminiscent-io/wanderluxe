@@ -349,10 +349,37 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const handleExtract = async () => {
     if (!itemType) return toast.info("Choose what to create first.");
     if (!file) return toast.info("Upload or paste an image/PDF.");
-    if (!previewReady) return toast.error("Preview isn’t ready yet. If you uploaded a PDF, we’re rendering the first page.");
+    if (!previewReady) return toast.error("Preview isn't ready yet. If you uploaded a PDF, we're rendering the first page.");
+
+    // Check if user has remaining imports (skip for pro users)
+    if (importUsage && importUsage.tier !== 'pro' && importUsage.limit !== -1) {
+      if (importUsage.used >= importUsage.limit) {
+        toast.error(`You've reached your daily limit of ${importUsage.limit} imports. Upgrade to Pro for unlimited imports!`);
+        return;
+      }
+    }
 
     const data = await extract(file, itemType as TravelItemType);
     if (!data) return;
+
+    // Increment usage only after successful extraction
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (token) {
+        const usageResp = await fetch('/api/ai-imports/usage', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (usageResp.ok) {
+          const usageData = await usageResp.json();
+          setImportUsage(prev => prev ? { ...prev, used: usageData.used } : null);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to update import usage:', e);
+    }
 
     switch (data.itemType) {
       case "accommodation": setOpenAcc(true); break;
@@ -494,6 +521,42 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
               <div className="text-sm">
                 Missing required: <span className="font-medium">{missing.join(", ")}</span>. You can fill these in the form.
               </div>
+            </div>
+          )}
+
+          {/* Import usage meter */}
+          {importUsage && (
+            <div className="mt-4 px-3 py-2 bg-sand-50 border border-sand-200 rounded-md">
+              {importUsage.tier === 'pro' || importUsage.limit === -1 ? (
+                <div className="flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs font-medium text-amber-700">Pro - Unlimited imports</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Zap className={cn('w-3.5 h-3.5', importUsage.used >= importUsage.limit * 0.8 ? 'text-amber-500' : 'text-sand-400')} />
+                      <span className={cn(
+                        'text-xs font-medium',
+                        importUsage.used >= importUsage.limit ? 'text-red-600' : importUsage.used >= importUsage.limit * 0.8 ? 'text-amber-600' : 'text-earth-600'
+                      )}>
+                        {importUsage.used}/{importUsage.limit} imports today
+                      </span>
+                    </div>
+                    <span className="text-xs text-sand-400">Resets at midnight</span>
+                  </div>
+                  <div className="h-1.5 bg-sand-200 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-300',
+                        importUsage.used >= importUsage.limit ? 'bg-red-500' : importUsage.used >= importUsage.limit * 0.8 ? 'bg-amber-500' : 'bg-earth-500'
+                      )}
+                      style={{ width: `${Math.min((importUsage.used / importUsage.limit) * 100, 100)}%` }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </CardContent>
