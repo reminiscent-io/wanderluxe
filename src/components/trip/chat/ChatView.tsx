@@ -7,7 +7,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, ClipboardPaste, FileImage, FileText, Loader2, X, AlertTriangle } from "lucide-react";
+import { Upload, ClipboardPaste, FileImage, FileText, Loader2, X, AlertTriangle, Zap, Crown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import * as z from "zod";
 
 import TransportationDialog from "@/components/trip/transportation/TransportationDialog";
@@ -132,6 +133,13 @@ const mapToReservation = (f: Record<string, any>, tripId: string) => ({
   trip_id: tripId,
 });
 
+interface ImportUsage {
+  used: number;
+  limit: number;
+  tier: 'free' | 'pro';
+  resetAt: string;
+}
+
 export default function ChatView({ tripId, canEdit = true }: Props) {
   // Step + file
   const [itemType, setItemType] = useState<TravelItemType | "">("");
@@ -147,6 +155,9 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const [processing, setProcessing] = useState(false);
   const [edgeData, setEdgeData] = useState<EdgePayload | null>(null);
 
+  // Import usage tracking
+  const [importUsage, setImportUsage] = useState<ImportUsage | null>(null);
+
   // Dialogs
   const [openAcc, setOpenAcc] = useState(false);
   const [openTp, setOpenTp] = useState(false);
@@ -154,6 +165,28 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   const [openRes, setOpenRes] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch import usage on mount
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const token = session?.session?.access_token;
+        if (!token) return;
+
+        const resp = await fetch('/api/ai-imports/usage', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          setImportUsage(data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch import usage:', e);
+      }
+    };
+    fetchUsage();
+  }, []);
 
   // ---------- helpers ----------
   const validateFile = useCallback((f: File) => {

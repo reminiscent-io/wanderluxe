@@ -299,7 +299,7 @@ async function checkAndIncrementUsage(
   if (error || !data || data.length === 0) {
     console.error('Error checking usage:', error);
     // Default to allowing if we can't check
-    return { allowed: true, used: 0, limit: 15 };
+    return { allowed: true, used: 0, limit: 10 };
   }
 
   return {
@@ -352,6 +352,96 @@ router.get('/api/trips/:tripId/assistant/usage', async (req: Request, res: Respo
     });
   } catch (error) {
     console.error('Error getting usage:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get AI import usage stats
+router.get('/api/ai-imports/usage', async (req: Request, res: Response) => {
+  try {
+    const userId = await getUserIdFromToken(req.headers.authorization || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase.rpc('get_ai_import_usage', {
+      check_user_id: userId,
+      check_date: today
+    });
+
+    if (error || !data || data.length === 0) {
+      // Return default if function doesn't exist yet or error
+      return res.json({
+        used: 0,
+        limit: 5,
+        tier: 'free',
+        resetAt: new Date(new Date().setUTCDate(new Date().getUTCDate() + 1)).toISOString()
+      });
+    }
+
+    // Calculate reset time (midnight UTC)
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+
+    return res.json({
+      used: data[0].current_count,
+      limit: data[0].daily_limit,
+      tier: data[0].subscription_tier,
+      resetAt: tomorrow.toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting import usage:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Increment AI import usage (called before extraction)
+router.post('/api/ai-imports/usage', async (req: Request, res: Response) => {
+  try {
+    const userId = await getUserIdFromToken(req.headers.authorization || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase.rpc('increment_ai_import_usage', {
+      check_user_id: userId,
+      check_date: today
+    });
+
+    if (error || !data || data.length === 0) {
+      console.error('Error incrementing import usage:', error);
+      // Default to allowing if we can't check
+      return res.json({ allowed: true, used: 0, limit: 5 });
+    }
+
+    if (!data[0].allowed) {
+      const tomorrow = new Date();
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      tomorrow.setUTCHours(0, 0, 0, 0);
+
+      return res.status(429).json({
+        code: 'DAILY_LIMIT_REACHED',
+        message: 'You have reached your daily import limit',
+        limit: data[0].daily_limit,
+        used: data[0].current_count,
+        resetAt: tomorrow.toISOString()
+      });
+    }
+
+    return res.json({
+      allowed: data[0].allowed,
+      used: data[0].current_count,
+      limit: data[0].daily_limit
+    });
+  } catch (error) {
+    console.error('Error incrementing import usage:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
