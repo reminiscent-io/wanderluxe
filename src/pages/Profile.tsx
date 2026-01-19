@@ -315,7 +315,7 @@ const Profile = () => {
                     onClick={() => toast.info("Pro subscriptions coming soon!")}
                   >
                     <Crown className="h-4 w-4 mr-2" />
-                    Upgrade to Pro - $9.99/month
+                    Upgrade to Pro - $3.99/month
                   </Button>
                 </div>
               </>
