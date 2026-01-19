@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,10 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Check, Clock } from 'lucide-react';
+import { Sparkles, Check, Clock, Loader2 } from 'lucide-react';
 import type { AIUsageInfo } from '@/types/ai-assistant';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface PaywallModalProps {
   open: boolean;
@@ -18,7 +20,8 @@ interface PaywallModalProps {
 }
 
 const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage }) => {
-  // Calculate reset time
+  const [isLoading, setIsLoading] = useState(false);
+
   const getResetTime = () => {
     if (!usage?.resetAt) return '';
     try {
@@ -33,12 +36,31 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage }
     }
   };
 
-  const handleUpgrade = () => {
-    // For now, just close the modal. In production, this would open the upgrade flow
-    // Could redirect to a Stripe checkout or upgrade page
-    console.log('Upgrade clicked - implement payment flow');
-    // window.open('/upgrade', '_blank');
-    onOpenChange(false);
+  const handleUpgrade = async () => {
+    try {
+      setIsLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        toast.error("Please sign in to upgrade");
+        return;
+      }
+      const resp = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await resp.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error("Failed to start checkout");
+      }
+    } catch (e) {
+      console.error('Checkout error:', e);
+      toast.error("Failed to start checkout");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,7 +72,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage }
           </div>
           <DialogTitle className="text-xl">You've reached today's limit</DialogTitle>
           <DialogDescription className="text-sand-600">
-            Free accounts include 15 Trip Assistant messages per day.
+            Free accounts include 10 Trip Assistant messages per day.
             Upgrade to Pro for unlimited access across all your trips.
           </DialogDescription>
         </DialogHeader>
@@ -98,8 +120,10 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage }
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
             onClick={handleUpgrade}
+            disabled={isLoading}
             className="w-full bg-earth-500 hover:bg-earth-600 text-white"
           >
+            {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Upgrade to Pro
           </Button>
           <Button

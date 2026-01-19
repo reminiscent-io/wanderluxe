@@ -312,7 +312,29 @@ const Profile = () => {
                   </ul>
                   <Button 
                     className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-                    onClick={() => toast.info("Pro subscriptions coming soon!")}
+                    onClick={async () => {
+                      try {
+                        const { data: sessionData } = await supabase.auth.getSession();
+                        const token = sessionData?.session?.access_token;
+                        if (!token) {
+                          toast.error("Please sign in to upgrade");
+                          return;
+                        }
+                        const resp = await fetch('/api/stripe/create-checkout', {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        const data = await resp.json();
+                        if (data.url) {
+                          window.location.href = data.url;
+                        } else {
+                          toast.error("Failed to start checkout");
+                        }
+                      } catch (e) {
+                        console.error('Checkout error:', e);
+                        toast.error("Failed to start checkout");
+                      }
+                    }}
                   >
                     <Crown className="h-4 w-4 mr-2" />
                     Upgrade to Pro - $3.99/month

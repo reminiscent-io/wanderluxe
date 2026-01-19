@@ -7,11 +7,12 @@ import { registerRoutes } from './routes';
 
 const app = express();
 
-// Middleware
 app.use(cors());
+
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 
-// Register API routes
 registerRoutes(app);
 
 // Simple health check route
