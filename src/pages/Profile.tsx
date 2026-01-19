@@ -310,7 +310,7 @@ const Profile = () => {
                       Export trips to PDF
                     </li>
                   </ul>
-                  <Button 
+                  <Button
                     className="w-full bg-amber-500 hover:bg-amber-600 text-white"
                     onClick={async () => {
                       try {
@@ -325,12 +325,25 @@ const Profile = () => {
                           headers: { Authorization: `Bearer ${token}` }
                         });
                         if (!resp.ok) {
-                          const errorText = await resp.text();
-                          console.error('Checkout API error:', resp.status, errorText);
-                          toast.error(`Checkout failed: ${resp.status}`);
+                          let errorMessage = `Checkout failed (${resp.status})`;
+                          try {
+                            const errorData = await resp.json();
+                            errorMessage = errorData.error || errorMessage;
+                          } catch {
+                            // Response wasn't JSON
+                          }
+                          console.error('Checkout API error:', resp.status, errorMessage);
+                          toast.error(errorMessage);
                           return;
                         }
-                        const data = await resp.json();
+                        let data;
+                        try {
+                          data = await resp.json();
+                        } catch {
+                          console.error('Failed to parse checkout response');
+                          toast.error("Invalid response from server");
+                          return;
+                        }
                         if (data.url) {
                           window.location.href = data.url;
                         } else {
@@ -338,7 +351,11 @@ const Profile = () => {
                         }
                       } catch (e: any) {
                         console.error('Checkout error:', e?.message || e);
-                        toast.error("Network error - please try again");
+                        if (e instanceof TypeError && (e.message.includes('Load failed') || e.message.includes('Failed to fetch'))) {
+                          toast.error("Connection error - please check your internet and try again");
+                        } else {
+                          toast.error(e?.message || "Network error - please try again");
+                        }
                       }
                     }}
                   >
