@@ -12,7 +12,8 @@ import type {
   StreamingErrorResponse
 } from '@/types/ai-assistant';
 
-const API_BASE = '';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const EDGE_FUNCTION_BASE = `${SUPABASE_URL}/functions/v1/ai-chat`;
 
 interface UseAIAssistantOptions {
   tripId: string;
@@ -45,7 +46,7 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
         return { messages: [], thread_id: null };
       }
 
-      const response = await fetch(`${API_BASE}/api/trips/${tripId}/assistant/messages`, {
+      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/messages`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -73,7 +74,7 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
         return { used: 0, limit: 15, tier: 'free', resetAt: '' };
       }
 
-      const response = await fetch(`${API_BASE}/api/trips/${tripId}/assistant/usage`, {
+      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/usage`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -149,7 +150,7 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
     };
 
     try {
-      await fetchEventSource(`${API_BASE}/api/trips/${tripId}/assistant`, {
+      await fetchEventSource(`${EDGE_FUNCTION_BASE}/${tripId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -263,7 +264,7 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/trips/${tripId}/assistant/messages`, {
+      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/messages`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
