@@ -39,6 +39,11 @@ async function getOrCreateStripeCustomer(userId: string, email: string): Promise
 
 router.post('/api/stripe/create-checkout', async (req: Request, res: Response) => {
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('STRIPE_SECRET_KEY is not configured');
+      return res.status(500).json({ error: 'Stripe is not configured' });
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -48,10 +53,12 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('Auth error:', authError);
       return res.status(401).json({ error: 'Invalid token' });
     }
 
     const customerId = await getOrCreateStripeCustomer(user.id, user.email || '');
+    console.log('Created/retrieved customer:', customerId);
 
     const successUrl = `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/profile?upgraded=true`;
     const cancelUrl = `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/profile?cancelled=true`;
@@ -88,10 +95,11 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
       },
     });
 
+    console.log('Checkout session created:', session.id);
     return res.json({ url: session.url });
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    return res.status(500).json({ error: 'Failed to create checkout session' });
+  } catch (error: any) {
+    console.error('Error creating checkout session:', error?.message || error);
+    return res.status(500).json({ error: error?.message || 'Failed to create checkout session' });
   }
 });
 

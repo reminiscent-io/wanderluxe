@@ -324,15 +324,21 @@ const Profile = () => {
                           method: 'POST',
                           headers: { Authorization: `Bearer ${token}` }
                         });
+                        if (!resp.ok) {
+                          const errorText = await resp.text();
+                          console.error('Checkout API error:', resp.status, errorText);
+                          toast.error(`Checkout failed: ${resp.status}`);
+                          return;
+                        }
                         const data = await resp.json();
                         if (data.url) {
                           window.location.href = data.url;
                         } else {
-                          toast.error("Failed to start checkout");
+                          toast.error(data.error || "Failed to start checkout");
                         }
-                      } catch (e) {
-                        console.error('Checkout error:', e);
-                        toast.error("Failed to start checkout");
+                      } catch (e: any) {
+                        console.error('Checkout error:', e?.message || e);
+                        toast.error("Network error - please try again");
                       }
                     }}
                   >
