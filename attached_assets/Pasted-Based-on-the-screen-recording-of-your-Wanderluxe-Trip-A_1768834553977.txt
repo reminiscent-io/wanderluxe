@@ -1,0 +1,26 @@
+Based on the screen recording of your Wanderluxe Trip Assistant, there are several critical functional bugs and UX friction points that are likely preventing users from successfully interacting with the AI.
+Here is a detailed breakdown of what is happening in the video and recommendations for how to fix them.
+🛠️ Functionality Issues (The "Bugs")
+These are the technical failures where the app is not performing its intended task.
+ * Premature Validation Error: As soon as the "Trip Assistant" opens (at the 0:03 mark), a red error message appears: "The string did not match the expected pattern." * The Cause: This usually happens when a Regex (Regular Expression) or validation logic is running on an empty input field. It's treating "nothing" as an invalid format before the user has even started typing.
+ * Message Submission Failure: After the user types "Where should I go" and hits send, the message simply disappears. It is never rendered in a chat bubble, and the AI does not trigger a response.
+ * Unintended UI Reset/Crash: At the 0:14 mark, instead of showing a loading state, the assistant UI resets back to the "Quick prompts" screen for a split second and then closes entirely. This suggests the submission logic is hitting a fatal error that crashes the component or triggers a "close on error" state.
+🎨 UX & UI Issues
+These issues make the experience feel clunky or confusing, even if the "code" was technically working.
+ * Keyboard Obstruction: When the keyboard opens, it completely covers the "Quick prompts" and the "Trip Assistant" header. Users lose the context of the suggestions they were just looking at.
+ * Lack of Loading States: Between hitting "send" and the UI closing, there is no visual feedback (like a spinning wheel or "Assistant is thinking...") to tell the user that their request was received.
+ * Abrupt Dismissal: The bottom sheet closes itself without warning. In a chat interface, the UI should almost never close automatically unless the user explicitly dismisses it or a task is confirmed finished.
+ * Missing Chat History: There is no "thread" visible. Each time the assistant opens, it feels like starting from zero rather than a continuous conversation about the trip.
+🚀 Recommendations & Fixes
+1. Fix the Validation Logic
+ * Update the Trigger: Ensure the "string pattern" check only runs onBlur (when the user clicks away) or onSubmit, but never when the field is empty or just focused.
+ * Handle Empty States: Add a condition to your validation: if (input.length > 0) { runValidation() }.
+2. Improve the Layout (Keyboard Handling)
+ * Use "Avoid Keyboard" Views: If you are using React Native, use KeyboardAvoidingView. For web, ensure the bottom sheet height is calculated using svh (small viewport height) or has a flexible container that pushes the input field above the keyboard.
+ * Pin the Input: Keep the input field anchored to the top of the keyboard so it’s always visible.
+3. Implement a "Thinking" State
+ * Immediate Feedback: When the user hits send, immediately clear the input and render their message in a chat bubble.
+ * Visual Indicator: Show a typing animation (three dots) or a progress bar while the API call is being made to the LLM.
+4. Debug the Submission Crash
+ * Check the API Call: Review your console logs or network tab. It's likely that the "send" button is triggering a function that contains a null pointer or an undefined variable, causing the "Trip Assistant" component to unmount/crash.
+Would you like me to look at the specific code snippet for your input validation or the submission handler to see if I can spot the error?
