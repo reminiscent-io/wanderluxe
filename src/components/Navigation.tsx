@@ -29,6 +29,7 @@ const Navigation = ({ mobileMenuTrigger }: NavigationProps) => {
       className={`fixed right-0 top-0 z-50 bg-white/80 backdrop-blur-lg ${
         isTripPage ? 'left-0 md:left-[280px]' : 'left-0'
       }`}
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       <div className="mx-auto flex max-w-none items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4 lg:px-8">
         <div className="flex items-center gap-4">
