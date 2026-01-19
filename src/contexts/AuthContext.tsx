@@ -6,24 +6,27 @@ import { supabase } from "@/integrations/supabase/client";
 interface AuthContextType {
   session: Session | null;
   user: User | null;
+  subscriptionTier: string;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
+  subscriptionTier: 'free',
   signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
 
   useEffect(() => {
     const ensureProfile = async (userId: string) => {
       const { data: profile } = await supabase
         .from('profiles')
-        .select()
+        .select('id, subscription_tier')
         .eq('id', userId)
         .single();
 
@@ -42,6 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (profileError) {
           console.error('Error creating profile:', profileError);
         }
+      } else {
+        setSubscriptionTier(profile.subscription_tier || 'free');
       }
     };
 
@@ -130,9 +135,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     () => ({
       session,
       user,
+      subscriptionTier,
       signOut,
     }),
-    [session, user] // signOut is stable and doesn't need to be a dependency
+    [session, user, subscriptionTier] // signOut is stable and doesn't need to be a dependency
   );
 
   return (

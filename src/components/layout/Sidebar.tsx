@@ -61,7 +61,7 @@ interface SidebarProps {
 }
 
 const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) => {
-  const { user } = useAuth();
+  const { user, subscriptionTier } = useAuth();
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
@@ -217,9 +217,19 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sand-700 truncate">
-              {user?.user_metadata?.full_name || user?.email}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-sand-700 truncate">
+                {user?.user_metadata?.full_name || user?.email}
+              </p>
+              <span className={cn(
+                "px-1.5 py-0.5 text-[10px] font-medium rounded-full shrink-0",
+                subscriptionTier === 'pro'
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-sand-100 text-sand-500"
+              )}>
+                {subscriptionTier === 'pro' ? 'Pro' : 'Free'}
+              </span>
+            </div>
           </div>
           <NavLink to="/profile">
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
