@@ -21,8 +21,23 @@ Preferred communication style: Simple, everyday language.
 - **Database**: PostgreSQL via Supabase
 - **Authentication**: Supabase Auth (supports Google OAuth)
 - **Real-time**: Supabase real-time subscriptions
-- **API**: Supabase Edge Functions (serverless logic)
+- **API**: Express server with custom routes (`server/index.ts`)
+- **Payments**: Stripe integration for Pro subscriptions
 - **File Storage**: Supabase Storage
+
+### Development Setup
+- **Combined Server**: Run `./start-dev.sh` or `bun run server/dev-server.ts` to start both Express backend and Vite frontend in a single process on port 5000
+- **Separate Servers**: Alternatively, run `bun run server/index.ts` (port 5000) and `vite` (port 8080) - Vite proxies `/api/*` requests to the backend
+- **Production**: Run `bun run start` to serve the built frontend and API from port 5000
+
+### API Endpoints (Express Server)
+- `/api/health` - Health check
+- `/api/stripe/create-checkout` - Create Stripe checkout session (requires auth)
+- `/api/stripe/webhook` - Stripe webhook handler
+- `/api/stripe/create-portal` - Create Stripe billing portal session (requires auth)
+- `/api/ai-chat` - AI assistant chat endpoint
+- `/api/share-notification` - Email notifications for trip sharing
+- `/api/trip-pdf` - Generate trip PDF exports
 
 ### Database Design
 The schema is normalized PostgreSQL, including entities for `trips`, `trip_days`, `day_activities`, `accommodations`, `transportation`, `reservations`, `trip_shares`, and `profiles`.
