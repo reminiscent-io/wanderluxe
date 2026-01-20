@@ -1,5 +1,5 @@
 
-import { format, parse, addDays, isAfter } from 'date-fns';
+import { format, parse, addDays, isAfter, differenceInDays } from 'date-fns';
 
 // Format a date string to display format (e.g., "Jan 1, 2024")
 export const formatDate = (dateString?: string | null): string => {
