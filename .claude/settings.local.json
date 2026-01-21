@@ -26,7 +26,15 @@
       "Bash(GIT_EDITOR=: git rebase --continue)",
       "Bash(GIT_TRACE=1 git rebase:*)",
       "Bash(git checkout:*)",
-      "Bash(git update-index:*)"
+      "Bash(git update-index:*)",
+      "Bash(claude mcp --help:*)",
+      "Bash(for file in /home/runner/workspace/src/hooks/*.ts)",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(while read f)",
+      "Bash(do name=\"$f%.*\" grep -rq \"from.*$name\\\\|import.*$name\" /home/runner/workspace/src --include=\"*.tsx\" --include=\"*.ts\")",
+      "Bash(do grep -q \"^export\" \"$f\")"
     ],
     "deny": [],
     "ask": []
