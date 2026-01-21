@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, Crown, Check } from "lucide-react";
+import { Crown, Check, Camera, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getConnectedContacts, pickBestName, initialsFor } from "@/services/contactsService";
 
@@ -36,15 +37,18 @@ const Profile = () => {
     }
   };
 
-  const { session, subscriptionTier } = useAuth();
+  const { session, subscriptionTier, refreshProfile } = useAuth();
   const [fullName, setFullName] = useState('');
-  const [initials, setInitials] = useState('');
   const [homeLocation, setHomeLocation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Connected people state
   const [contacts, setContacts] = useState<ContactItem[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactsCollapsed, setContactsCollapsed] = useState(false);
 
   // Edit dialog state
   const [editOpen, setEditOpen] = useState(false);
@@ -80,8 +84,8 @@ const Profile = () => {
 
       if (data) {
         setFullName(data.full_name || '');
-        setInitials(data.initials || '');
         setHomeLocation(data.home_location || '');
+        setAvatarUrl(data.avatar_url || null);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -108,9 +112,67 @@ const Profile = () => {
     }
   };
 
-  const handleInitialsChange = (value: string) => {
-    // Limit to 2 characters and convert to uppercase
-    setInitials(value.slice(0, 2).toUpperCase());
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const uploadAvatar = async (file: File) => {
+    if (!session?.user) return;
+
+    try {
+      setUploadingAvatar(true);
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${session.user.id}/avatar.${fileExt}`;
+
+      // Delete existing avatar first
+      await supabase.storage.from('avatars').remove([filePath]);
+
+      // Upload new avatar
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', session.user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      // Refresh the auth context so nav/sidebar update immediately
+      await refreshProfile();
+      toast.success('Avatar updated successfully');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error('File must be an image');
+        return;
+      }
+      uploadAvatar(file);
+    }
   };
 
   const handleSave = async () => {
@@ -122,7 +184,6 @@ const Profile = () => {
         .from('profiles')
         .update({
           full_name: fullName,
-          initials: initials,
           home_location: homeLocation,
           updated_at: new Date().toISOString(),
         })
@@ -130,6 +191,8 @@ const Profile = () => {
 
       if (error) throw error;
 
+      // Refresh the auth context so nav/sidebar update immediately
+      await refreshProfile();
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -203,231 +266,272 @@ const Profile = () => {
 
   if (!session?.user) return null;
 
+  const userInitials = fullName
+    ? fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : session.user.email?.substring(0, 2).toUpperCase();
+
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex flex-col items-center gap-6 mb-8">
-            <Avatar className="h-24 w-24 border-2 border-earth-500 hover:border-white">
-              <AvatarFallback className="text-3xl bg-sand-50 text-earth-500 hover:bg-earth-400 hover:text-white">
-                {initials || session.user.email?.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <h1 className="text-2xl font-thin">{session.user.email}</h1>
-          </div>
-
-          <div className="space-y-6 bg-white p-6 rounded-lg shadow">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
+        <div className="max-w-5xl mx-auto">
+          {/* Header Section */}
+          <div className="flex flex-col items-center gap-3 mb-8">
+            <div className="relative group">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="initials">Initials (2 characters)</Label>
-              <Input
-                id="initials"
-                value={initials}
-                onChange={(e) => handleInitialsChange(e.target.value)}
-                placeholder="AB"
-                maxLength={2}
-                className="uppercase"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="homeLocation">Home Location</Label>
-              <Input
-                id="homeLocation"
-                value={homeLocation}
-                onChange={(e) => setHomeLocation(e.target.value)}
-                placeholder="Enter your home location"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <Button 
-                onClick={handleSave} 
-                disabled={isLoading}
-                className="w-full bg-earth-400 text-white hover:bg-earth-600"
+              <Avatar
+                className="h-24 w-24 border-2 border-earth-500 cursor-pointer transition-all group-hover:border-earth-600"
+                onClick={handleAvatarClick}
               >
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </Button>
-
-              <Button 
-                onClick={handleSignOut}
-                variant="outline" 
-                className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile" />}
+                <AvatarFallback className="text-3xl bg-sand-50 text-earth-500 group-hover:bg-earth-400 group-hover:text-white transition-colors">
+                  {uploadingAvatar ? '...' : userInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div
+                className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                onClick={handleAvatarClick}
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
+                <Camera className="h-8 w-8 text-white" />
+              </div>
             </div>
+            <h1 className="text-2xl font-thin text-center">{session.user.email}</h1>
           </div>
 
-          {/* Subscription Card */}
-          <div className="mt-8 bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`p-2 rounded-full ${subscriptionTier === 'pro' ? 'bg-amber-100' : 'bg-sand-100'}`}>
-                <Crown className={`h-5 w-5 ${subscriptionTier === 'pro' ? 'text-amber-600' : 'text-sand-500'}`} />
-              </div>
-              <div>
-                <h2 className="text-lg font-medium">Subscription</h2>
-                <p className="text-sm text-muted-foreground">
-                  {subscriptionTier === 'pro' ? 'You have Pro access' : 'You are on the Free plan'}
-                </p>
-              </div>
-              <Badge className={`ml-auto ${subscriptionTier === 'pro' ? 'bg-amber-100 text-amber-700' : 'bg-sand-100 text-sand-600'}`}>
-                {subscriptionTier === 'pro' ? 'Pro' : 'Free'}
-              </Badge>
-            </div>
-            
-            {subscriptionTier !== 'pro' && (
-              <>
-                <Separator className="my-4" />
-                <div className="space-y-4">
-                  <h3 className="font-medium">Upgrade to Pro</h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      Unlimited AI assistant messages
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      Priority support
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      Advanced trip features
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      Export trips to PDF
-                    </li>
-                  </ul>
-                  <Button
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-                    onClick={async () => {
-                      try {
-                        const { data: sessionData } = await supabase.auth.getSession();
-                        const token = sessionData?.session?.access_token;
-                        if (!token) {
-                          toast.error("Please sign in to upgrade");
-                          return;
-                        }
-                        const resp = await fetch('/api/stripe/create-checkout', {
-                          method: 'POST',
-                          headers: { Authorization: `Bearer ${token}` }
-                        });
-                        if (!resp.ok) {
-                          let errorMessage = `Checkout failed (${resp.status})`;
-                          try {
-                            const errorData = await resp.json();
-                            errorMessage = errorData.error || errorMessage;
-                          } catch {
-                            // Response wasn't JSON
-                          }
-                          console.error('Checkout API error:', resp.status, errorMessage);
-                          toast.error(errorMessage);
-                          return;
-                        }
-                        let data;
-                        try {
-                          data = await resp.json();
-                        } catch {
-                          console.error('Failed to parse checkout response');
-                          toast.error("Invalid response from server");
-                          return;
-                        }
-                        if (data.url) {
-                          window.location.href = data.url;
-                        } else {
-                          toast.error(data.error || "Failed to start checkout");
-                        }
-                      } catch (e: any) {
-                        console.error('Checkout error:', e?.message || e);
-                        if (e instanceof TypeError && (e.message.includes('Load failed') || e.message.includes('Failed to fetch'))) {
-                          toast.error("Connection error - please check your internet and try again");
-                        } else {
-                          toast.error(e?.message || "Network error - please try again");
-                        }
-                      }
-                    }}
-                  >
-                    <Crown className="h-4 w-4 mr-2" />
-                    Upgrade to Pro - $3.99/month
-                  </Button>
-                </div>
-              </>
-            )}
-            
-            {subscriptionTier === 'pro' && (
-              <>
-                <Separator className="my-4" />
-                <p className="text-sm text-muted-foreground">
-                  Thank you for being a Pro member! You have access to all premium features.
-                </p>
-              </>
-            )}
-          </div>
+          {/* Two-Column Layout (Desktop) / Stack (Mobile) */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Left Column - Profile Information */}
+            <div className="space-y-6">
+              {/* Profile Fields Card */}
+              <div className="bg-white p-6 rounded-lg shadow space-y-6">
+                <div>
+                  <h2 className="text-lg font-medium mb-4">Profile Information</h2>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
 
-          {/* Connected People */}
-          <div className="mt-8 bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-medium">Connected people</h2>
-              <Badge variant="secondary">
-                {loadingContacts ? "Loading..." : `${contacts.length} ${contacts.length === 1 ? "person" : "people"}`}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Anyone you’ve shared a trip with, and anyone who has shared a trip with you.
-            </p>
-            <Separator className="mb-4" />
-            {contacts.length === 0 && !loadingContacts ? (
-              <p className="text-sm text-muted-foreground">No connections yet.</p>
-            ) : (
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {contacts.map((c) => {
-                  const name = pickBestName(c);
-                  const hint =
-                    c.email ? c.email :
-                    c.directions.includes("incoming") ? "Shared with you" :
-                    "Shared by you";
-                  const dir =
-                    c.directions.includes("incoming") && c.directions.includes("outgoing")
-                      ? "Both ways"
-                      : c.directions.includes("outgoing")
-                      ? "Outgoing"
-                      : "Incoming";
-                  return (
-                    <li
-                      key={c.key}
-                      className="flex items-center gap-3 rounded-md border p-3 hover:bg-sand-50 cursor-pointer"
-                      onClick={() => openEditDialog(c)}
+                    <div className="space-y-2">
+                      <Label htmlFor="homeLocation">Home Location</Label>
+                      <Input
+                        id="homeLocation"
+                        value={homeLocation}
+                        onChange={(e) => setHomeLocation(e.target.value)}
+                        placeholder="Enter your home location"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="w-full"
                     >
-                      <Avatar className="h-9 w-9">
-                        <AvatarFallback>{initialsFor(c)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">{name}</span>
-                          <Badge variant="outline" className="text-[10px]">{dir}</Badge>
+                      {isLoading ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Subscription & Connected People */}
+            <div className="space-y-6">
+              {/* Subscription Card */}
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`p-2 rounded-full ${subscriptionTier === 'pro' ? 'bg-amber-100' : 'bg-sand-100'}`}>
+                    <Crown className={`h-5 w-5 ${subscriptionTier === 'pro' ? 'text-amber-600' : 'text-sand-500'}`} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-medium">Subscription</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {subscriptionTier === 'pro' ? 'You have Pro access' : 'You are on the Free plan'}
+                    </p>
+                  </div>
+                  <Badge className={`ml-auto ${subscriptionTier === 'pro' ? 'bg-amber-100 text-amber-700' : 'bg-sand-100 text-sand-600'}`}>
+                    {subscriptionTier === 'pro' ? 'Pro' : 'Free'}
+                  </Badge>
+                </div>
+
+                {subscriptionTier !== 'pro' && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="space-y-4">
+                      <h3 className="font-medium">Upgrade to Pro</h3>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          Unlimited AI assistant messages
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          Priority support
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          Advanced trip features
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          Export trips to PDF
+                        </li>
+                      </ul>
+                      <Button
+                        className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                        onClick={async () => {
+                          try {
+                            const { data: sessionData } = await supabase.auth.getSession();
+                            const token = sessionData?.session?.access_token;
+                            if (!token) {
+                              toast.error("Please sign in to upgrade");
+                              return;
+                            }
+                            const resp = await fetch('/api/stripe/create-checkout', {
+                              method: 'POST',
+                              headers: { Authorization: `Bearer ${token}` }
+                            });
+                            if (!resp.ok) {
+                              let errorMessage = `Checkout failed (${resp.status})`;
+                              try {
+                                const errorData = await resp.json();
+                                errorMessage = errorData.error || errorMessage;
+                              } catch {
+                                // Response wasn't JSON
+                              }
+                              console.error('Checkout API error:', resp.status, errorMessage);
+                              toast.error(errorMessage);
+                              return;
+                            }
+                            let data;
+                            try {
+                              data = await resp.json();
+                            } catch {
+                              console.error('Failed to parse checkout response');
+                              toast.error("Invalid response from server");
+                              return;
+                            }
+                            if (data.url) {
+                              window.location.href = data.url;
+                            } else {
+                              toast.error(data.error || "Failed to start checkout");
+                            }
+                          } catch (e: any) {
+                            console.error('Checkout error:', e?.message || e);
+                            if (e instanceof TypeError && (e.message.includes('Load failed') || e.message.includes('Failed to fetch'))) {
+                              toast.error("Connection error - please check your internet and try again");
+                            } else {
+                              toast.error(e?.message || "Network error - please try again");
+                            }
+                          }
+                        }}
+                      >
+                        <Crown className="h-4 w-4 mr-2" />
+                        Upgrade to Pro - $3.99/month
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {subscriptionTier === 'pro' && (
+                  <>
+                    <Separator className="my-4" />
+                    <p className="text-sm text-muted-foreground">
+                      Thank you for being a Pro member! You have access to all premium features.
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* Connected People */}
+              <div className="bg-white rounded-lg shadow">
+                <Collapsible open={!contactsCollapsed} onOpenChange={(open) => setContactsCollapsed(!open)}>
+                  <div className="p-6 pb-4">
+                    <CollapsibleTrigger asChild>
+                      <button className="flex items-center justify-between w-full group">
+                        <div className="flex items-center gap-3">
+                          <h2 className="text-lg font-medium">Connected people</h2>
+                          <Badge variant="secondary">
+                            {loadingContacts ? "Loading..." : `${contacts.length}`}
+                          </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">{hint}</div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                        <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${contactsCollapsed ? 'rotate-180' : ''}`} />
+                      </button>
+                    </CollapsibleTrigger>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Anyone you've shared a trip with, and anyone who has shared a trip with you.
+                    </p>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="px-6 pb-6">
+                      <Separator className="mb-4" />
+                      {contacts.length === 0 && !loadingContacts ? (
+                        <p className="text-sm text-muted-foreground">No connections yet.</p>
+                      ) : (
+                        <ul className="grid grid-cols-1 gap-3">
+                          {contacts.map((c) => {
+                            const name = pickBestName(c);
+                            const hint =
+                              c.email ? c.email :
+                              c.directions.includes("incoming") ? "Shared with you" :
+                              "Shared by you";
+                            const dir =
+                              c.directions.includes("incoming") && c.directions.includes("outgoing")
+                                ? "Both ways"
+                                : c.directions.includes("outgoing")
+                                ? "Outgoing"
+                                : "Incoming";
+                            return (
+                              <li
+                                key={c.key}
+                                className="flex items-center gap-4 rounded-md border p-4 hover:bg-sand-50 cursor-pointer transition-colors"
+                                onClick={() => openEditDialog(c)}
+                              >
+                                <Avatar className="h-10 w-10 flex-shrink-0">
+                                  <AvatarFallback className="text-sm">{initialsFor(c)}</AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium truncate">{name}</span>
+                                    <Badge variant="outline" className="text-[10px] flex-shrink-0">{dir}</Badge>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground truncate">{hint}</div>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            </div>
+          </div>
+
+          {/* Sign Out Link */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={handleSignOut}
+              className="text-sm text-muted-foreground hover:text-destructive transition-colors"
+            >
+              Sign out
+            </button>
           </div>
         </div>
       </div>
+
 
       {/* Edit Contact Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

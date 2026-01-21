@@ -7,26 +7,48 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   subscriptionTier: string;
+  avatarUrl: string | null;
+  fullName: string | null;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   subscriptionTier: 'free',
+  avatarUrl: null,
+  fullName: null,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
+
+  const fetchProfile = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, subscription_tier, avatar_url, full_name')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      setSubscriptionTier(profile.subscription_tier || 'free');
+      setAvatarUrl(profile.avatar_url);
+      setFullName(profile.full_name);
+    }
+  };
 
   useEffect(() => {
     const ensureProfile = async (userId: string) => {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, subscription_tier')
+        .select('id, subscription_tier, avatar_url, full_name')
         .eq('id', userId)
         .single();
 
@@ -47,6 +69,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } else {
         setSubscriptionTier(profile.subscription_tier || 'free');
+        setAvatarUrl(profile.avatar_url);
+        setFullName(profile.full_name);
       }
     };
 
@@ -130,15 +154,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const refreshProfile = async () => {
+    if (user?.id) {
+      await fetchProfile(user.id);
+    }
+  };
+
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(
     () => ({
       session,
       user,
       subscriptionTier,
+      avatarUrl,
+      fullName,
       signOut,
+      refreshProfile,
     }),
-    [session, user, subscriptionTier] // signOut is stable and doesn't need to be a dependency
+    [session, user, subscriptionTier, avatarUrl, fullName] // signOut/refreshProfile are stable
   );
 
   return (

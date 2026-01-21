@@ -61,7 +61,7 @@ interface SidebarProps {
 }
 
 const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) => {
-  const { user, subscriptionTier } = useAuth();
+  const { user, subscriptionTier, avatarUrl, fullName } = useAuth();
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
@@ -211,15 +211,17 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.user_metadata?.avatar_url} />
+            <AvatarImage src={avatarUrl || user?.user_metadata?.avatar_url} />
             <AvatarFallback className="bg-earth-100 text-earth-600">
-              {user?.email?.charAt(0).toUpperCase()}
+              {fullName
+                ? fullName.split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+                : user?.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium text-sand-700 truncate">
-                {user?.user_metadata?.full_name || user?.email}
+                {fullName || user?.user_metadata?.full_name || user?.email}
               </p>
               <span className={cn(
                 "px-1.5 py-0.5 text-[10px] font-medium rounded-full shrink-0",

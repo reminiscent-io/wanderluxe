@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Copy, Check, User, Sparkles } from 'lucide-react';
+import { Copy, Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AIChatMessage } from '@/types/ai-assistant';
@@ -13,7 +15,19 @@ interface ChatMessageProps {
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isStreaming = false }) => {
   const [copied, setCopied] = useState(false);
+  const { avatarUrl, fullName, session } = useAuth();
   const isUser = message.role === 'user';
+
+  const getUserInitials = () => {
+    if (fullName) {
+      const parts = fullName.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return fullName.substring(0, 2).toUpperCase();
+    }
+    return (session?.user?.email || 'U').substring(0, 2).toUpperCase();
+  };
 
   const handleCopy = async () => {
     try {
@@ -42,18 +56,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isStreaming = false 
       )}
     >
       {/* Avatar */}
-      <div
-        className={cn(
-          'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-          isUser ? 'bg-earth-500' : 'bg-sand-100'
-        )}
-      >
-        {isUser ? (
-          <User className="w-4 h-4 text-white" />
-        ) : (
+      {isUser ? (
+        <Avatar className="flex-shrink-0 w-8 h-8">
+          <AvatarImage src={avatarUrl || undefined} alt={fullName || 'You'} />
+          <AvatarFallback className="bg-earth-500 text-white text-xs">
+            {getUserInitials()}
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-sand-100">
           <Sparkles className="w-4 h-4 text-earth-600" />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Message content */}
       <div

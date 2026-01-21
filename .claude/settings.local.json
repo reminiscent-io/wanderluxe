@@ -34,7 +34,8 @@
       "Bash(done)",
       "Bash(while read f)",
       "Bash(do name=\"$f%.*\" grep -rq \"from.*$name\\\\|import.*$name\" /home/runner/workspace/src --include=\"*.tsx\" --include=\"*.ts\")",
-      "Bash(do grep -q \"^export\" \"$f\")"
+      "Bash(do grep -q \"^export\" \"$f\")",
+      "Bash(timeout 30 tail:*)"
     ],
     "deny": [],
     "ask": []
