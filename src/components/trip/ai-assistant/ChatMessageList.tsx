@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import ChatMessage from './ChatMessage';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, ChevronUp } from 'lucide-react';
 import type { AIChatMessage } from '@/types/ai-assistant';
 
 interface ChatMessageListProps {
@@ -8,19 +8,56 @@ interface ChatMessageListProps {
   isLoading: boolean;
   isStreaming: boolean;
   streamingContent: string;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   isLoading,
   isStreaming,
-  streamingContent
+  streamingContent,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const prevScrollHeightRef = useRef<number>(0);
+  const hasInitialScrolled = useRef<boolean>(false);
+
+  // Scroll to bottom on initial load
+  useEffect(() => {
+    if (messages.length > 0 && !hasInitialScrolled.current && scrollRef.current) {
+      // Use instant scroll for initial load
+      scrollRef.current.scrollIntoView({ behavior: 'instant' });
+      hasInitialScrolled.current = true;
+    }
+  }, [messages]);
+
+  // Reset initial scroll flag when messages are cleared
+  useEffect(() => {
+    if (messages.length === 0) {
+      hasInitialScrolled.current = false;
+    }
+  }, [messages.length]);
+
+  // Preserve scroll position after loading more messages
+  useEffect(() => {
+    if (containerRef.current && prevScrollHeightRef.current > 0 && !isLoadingMore) {
+      const newScrollHeight = containerRef.current.scrollHeight;
+      const scrollDiff = newScrollHeight - prevScrollHeightRef.current;
+      containerRef.current.scrollTop = scrollDiff;
+      prevScrollHeightRef.current = 0;
+    }
+  }, [messages, isLoadingMore]);
 
   // Auto-scroll to bottom when new messages arrive or streaming content updates
   useEffect(() => {
+    // Skip if this is the initial load (handled by separate effect)
+    if (!hasInitialScrolled.current) return;
+
     if (scrollRef.current && containerRef.current) {
       const container = containerRef.current;
       const isNearBottom =
@@ -32,6 +69,18 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       }
     }
   }, [messages, streamingContent, isStreaming]);
+
+  // Handle scroll to detect when user scrolls to top
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current || !hasMore || isLoadingMore || !onLoadMore) return;
+
+    const container = containerRef.current;
+    // Trigger load more when scrolled within 50px of top
+    if (container.scrollTop < 50) {
+      prevScrollHeightRef.current = container.scrollHeight;
+      onLoadMore();
+    }
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   if (isLoading) {
     return (
@@ -78,8 +127,26 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   return (
     <div
       ref={containerRef}
+      onScroll={handleScroll}
       className="flex-1 overflow-y-auto overscroll-contain px-4 py-2 space-y-1"
     >
+      {/* Load more indicator at top */}
+      {hasMore && (
+        <div className="flex justify-center py-2">
+          {isLoadingMore ? (
+            <div className="flex items-center gap-2 text-sand-400 text-xs">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Loading older messages...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 text-sand-400 text-xs">
+              <ChevronUp className="w-3 h-3" />
+              <span>Scroll up for more</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {messages.map((message) => (
         <ChatMessage key={message.id} message={message} />
       ))}

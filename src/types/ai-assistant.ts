@@ -100,11 +100,14 @@ export interface UseAIAssistantReturn {
   error: string | null;
   usage: AIUsageInfo | null;
   threadId: string | null;
+  hasMore: boolean;
+  isLoadingMore: boolean;
 
   // Actions
   sendMessage: (content: string) => Promise<void>;
   clearThread: () => Promise<void>;
   refreshUsage: () => Promise<void>;
+  loadMoreMessages: () => Promise<void>;
 }
 
 // Prompt chip type

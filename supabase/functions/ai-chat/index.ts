@@ -67,9 +67,28 @@ Deno.serve(async (req: Request) => {
 
   if (action === 'messages' && req.method === 'GET') {
     const { data: thread } = await supabase.from('ai_chat_threads').select('id').eq('trip_id', tripId).eq('user_id', userId).single();
-    if (!thread) return new Response(JSON.stringify({ messages: [], thread_id: null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    const { data: messages } = await supabase.from('ai_chat_messages').select('id, role, content, metadata, created_at').eq('thread_id', thread.id).order('created_at', { ascending: true });
-    return new Response(JSON.stringify({ messages: messages || [], thread_id: thread.id }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!thread) return new Response(JSON.stringify({ messages: [], thread_id: null, hasMore: false }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    // Pagination: limit and offset (offset is from the end, newest messages first)
+    const limit = parseInt(url.searchParams.get('limit') || '5');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+
+    // Get total count first
+    const { count: totalCount } = await supabase.from('ai_chat_messages').select('id', { count: 'exact', head: true }).eq('thread_id', thread.id);
+
+    // Fetch messages with pagination (newest first for offset calculation, then reverse for display)
+    const { data: messages } = await supabase
+      .from('ai_chat_messages')
+      .select('id, role, content, metadata, created_at')
+      .eq('thread_id', thread.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    // Reverse to get chronological order for display
+    const orderedMessages = (messages || []).reverse();
+    const hasMore = offset + limit < (totalCount || 0);
+
+    return new Response(JSON.stringify({ messages: orderedMessages, thread_id: thread.id, hasMore, totalCount }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   if (action === 'messages' && req.method === 'DELETE') {
@@ -110,7 +129,19 @@ Deno.serve(async (req: Request) => {
     const { data: days } = await supabase.from('trip_days').select('date, title, day_activities(title, start_time)').eq('trip_id', tripId).order('date');
     const { data: msgs } = await supabase.from('ai_chat_messages').select('role, content').eq('thread_id', threadId).order('created_at', { ascending: false }).limit(10);
 
-    const systemPrompt = `You are a travel assistant for a trip to ${trip?.destination || 'unknown'}. Dates: ${trip?.arrival_date} to ${trip?.departure_date}. Be helpful and concise.`;
+    const destination = trip?.destination || 'unknown';
+    const systemPrompt = `You are a helpful travel assistant for a trip to ${destination} from ${trip?.arrival_date} to ${trip?.departure_date}.
+
+Guidelines:
+- Be concise and helpful
+- Use markdown formatting for readability
+- When recommending hotels, restaurants, or attractions, make the name a clickable link
+- IMPORTANT: Only use these URL formats (never use IP addresses or made-up URLs):
+  - Google Maps: https://www.google.com/maps/search/PLACE+NAME+${destination.replace(/\s+/g, '+')}
+  - Google Search: https://www.google.com/search?q=PLACE+NAME+${destination.replace(/\s+/g, '+')}
+- Replace PLACE+NAME with the actual place name using + for spaces
+- Format: **[Place Name](google maps or search url)** - Brief description
+- Example: **[The Ritz-Carlton](https://www.google.com/maps/search/The+Ritz-Carlton+${destination.replace(/\s+/g, '+')})** - Luxury hotel with excellent service`;
     const openaiMsgs = [{ role: 'system', content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
 
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {

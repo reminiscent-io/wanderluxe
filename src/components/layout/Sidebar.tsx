@@ -66,6 +66,17 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
 
+  // Listen for custom event from Navigation hamburger menu
+  React.useEffect(() => {
+    const handleOpenSidebar = () => {
+      sidebar.setIsOpen(true);
+    };
+    window.addEventListener('wanderluxe:open-sidebar', handleOpenSidebar);
+    return () => {
+      window.removeEventListener('wanderluxe:open-sidebar', handleOpenSidebar);
+    };
+  }, [sidebar]);
+
   // Expose methods to parent via ref
   React.useImperativeHandle(ref, () => ({
     openAccommodationDialog: () => sidebar.setAccommodationOpen(true),

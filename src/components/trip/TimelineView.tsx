@@ -189,8 +189,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
       )}
 
-      {/* Timeline Content - Left side, 65-70% width on desktop, full width on mobile */}
-      <div className="w-full md:w-[65%] lg:w-[70%] px-1 md:px-4 space-y-8">
+      {/* Timeline Content - Left side, 60% width on desktop, full width on mobile */}
+      <div className="w-full md:w-[60%] px-1 md:px-4 space-y-8">
         <div className="flex justify-between items-center mb-6 pt-4 md:pt-0">
           <h2 className="text-2xl font-bold text-earth-500">Trip Timeline</h2>
           <div className="flex gap-2">
@@ -227,8 +227,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         />
       </div>
 
-      {/* AI Assistant Panel - Desktop only, right side, 30-35% width, sticky */}
-      <div className="hidden md:block md:w-[35%] lg:w-[30%] md:pr-4">
+      {/* AI Assistant Panel - Desktop only, right side, 40% width, sticky */}
+      <div className="hidden md:block md:w-[40%] md:pr-4">
         <div className="sticky top-20 h-[calc(100vh-6rem)]">
           <AIAssistantPanel tripId={tripId} />
         </div>

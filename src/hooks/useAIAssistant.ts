@@ -20,11 +20,15 @@ interface UseAIAssistantOptions {
   onLimitReached?: (usage: AIUsageInfo) => void;
 }
 
+const PAGE_SIZE = 5;
+
 export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions): UseAIAssistantReturn {
   const queryClient = useQueryClient();
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Helper to get auth token
@@ -33,20 +37,20 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
     return data.session?.access_token || null;
   }, []);
 
-  // Fetch messages
+  // Fetch messages (initial load - last PAGE_SIZE messages)
   const {
     data: messagesData,
     isLoading: isLoadingMessages,
     refetch: refetchMessages
   } = useQuery({
     queryKey: ['ai-assistant-messages', tripId],
-    queryFn: async (): Promise<{ messages: AIChatMessage[]; thread_id: string | null }> => {
+    queryFn: async (): Promise<{ messages: AIChatMessage[]; thread_id: string | null; hasMore: boolean }> => {
       const token = await getAuthToken();
       if (!token) {
-        return { messages: [], thread_id: null };
+        return { messages: [], thread_id: null, hasMore: false };
       }
 
-      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/messages`, {
+      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/messages?limit=${PAGE_SIZE}&offset=0`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -56,11 +60,57 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
         throw new Error('Failed to load messages');
       }
 
-      return response.json();
+      const data = await response.json();
+      setHasMore(data.hasMore || false);
+      return data;
     },
     enabled: !!tripId,
     staleTime: 30000 // 30 seconds
   });
+
+  // Load more (older) messages
+  const loadMoreMessages = useCallback(async (): Promise<void> => {
+    if (isLoadingMore || !hasMore) return;
+
+    const token = await getAuthToken();
+    if (!token) return;
+
+    setIsLoadingMore(true);
+    try {
+      const currentMessages = messagesData?.messages || [];
+      const offset = currentMessages.length;
+
+      const response = await fetch(
+        `${EDGE_FUNCTION_BASE}/${tripId}/messages?limit=${PAGE_SIZE}&offset=${offset}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load more messages');
+      }
+
+      const data = await response.json();
+      setHasMore(data.hasMore || false);
+
+      // Prepend older messages to the beginning
+      queryClient.setQueryData(
+        ['ai-assistant-messages', tripId],
+        (old: { messages: AIChatMessage[]; thread_id: string | null; hasMore: boolean } | undefined) => ({
+          messages: [...(data.messages || []), ...(old?.messages || [])],
+          thread_id: old?.thread_id || data.thread_id,
+          hasMore: data.hasMore
+        })
+      );
+    } catch (err) {
+      console.error('Error loading more messages:', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [tripId, hasMore, isLoadingMore, getAuthToken, messagesData?.messages, queryClient]);
 
   // Fetch usage
   const {
@@ -308,8 +358,11 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
     error,
     usage: usageData || null,
     threadId: messagesData?.thread_id || null,
+    hasMore,
+    isLoadingMore,
     sendMessage,
     clearThread,
-    refreshUsage
+    refreshUsage,
+    loadMoreMessages
   };
 }

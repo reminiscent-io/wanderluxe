@@ -1,4 +1,7 @@
 import React, { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import NavigationLogo from "./NavigationLogo";
 import NavigationLinks from "./NavigationLinks";
 import NavigationAuth from "./NavigationAuth";
@@ -10,6 +13,13 @@ import NavigationAuth from "./NavigationAuth";
  */
 const Navigation: React.FC = () => {
   const headerRef = useRef<HTMLElement | null>(null);
+  const location = useLocation();
+  const isTripPage = location.pathname.startsWith('/trip/');
+
+  const handleOpenSidebar = () => {
+    // Dispatch custom event that Sidebar listens for
+    window.dispatchEvent(new CustomEvent('wanderluxe:open-sidebar'));
+  };
 
   useEffect(() => {
     const updateVar = () => {
@@ -45,7 +55,21 @@ const Navigation: React.FC = () => {
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       <div className="mx-auto h-14 md:h-16 px-3 md:px-6 flex items-center justify-between">
-        <NavigationLogo />
+        <div className="flex items-center gap-2">
+          {/* Mobile hamburger menu for trip pages */}
+          {isTripPage && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-9 w-9"
+              onClick={handleOpenSidebar}
+              aria-label="Open sidebar menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <NavigationLogo />
+        </div>
         <NavigationLinks />
         <NavigationAuth />
       </div>

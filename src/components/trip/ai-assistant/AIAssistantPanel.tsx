@@ -41,8 +41,11 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     streamingContent,
     error,
     usage,
+    hasMore,
+    isLoadingMore,
     sendMessage,
-    clearThread
+    clearThread,
+    loadMoreMessages
   } = useAIAssistant({
     tripId,
     onLimitReached: handleLimitReached
@@ -150,6 +153,9 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               isLoading={isLoading}
               isStreaming={isStreaming}
               streamingContent={streamingContent}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMoreMessages}
             />
 
             {/* Error display */}

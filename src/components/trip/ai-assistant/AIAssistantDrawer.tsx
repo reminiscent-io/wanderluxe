@@ -91,8 +91,11 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     streamingContent,
     error,
     usage,
+    hasMore,
+    isLoadingMore,
     sendMessage,
-    clearThread
+    clearThread,
+    loadMoreMessages
   } = useAIAssistant({
     tripId,
     onLimitReached: handleLimitReached
@@ -205,12 +208,15 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               )}
 
               {/* Messages area - scrollable */}
-              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
+              <div className="flex-1 min-h-0 overflow-hidden">
                 <ChatMessageList
                   messages={messages}
                   isLoading={isLoading}
                   isStreaming={isStreaming}
                   streamingContent={streamingContent}
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  onLoadMore={loadMoreMessages}
                 />
               </div>
 

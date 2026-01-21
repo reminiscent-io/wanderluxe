@@ -183,5 +183,6 @@ export interface Trip {
   arrival_date: string;
   departure_date: string;
   budget: number | null;
+  is_public?: boolean;
   accommodations?: Accommodation[];
 }

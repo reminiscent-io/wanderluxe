@@ -769,6 +769,7 @@ export type Database = {
           arrival_date: string
           departure_date: string
           budget: number | null
+          is_public: boolean
         }
         Insert: {
           trip_id?: string
@@ -782,6 +783,7 @@ export type Database = {
           arrival_date: string
           departure_date: string
           budget?: number | null
+          is_public?: boolean
         }
         Update: {
           trip_id?: string
@@ -795,6 +797,7 @@ export type Database = {
           arrival_date?: string
           departure_date?: string
           budget?: number | null
+          is_public?: boolean
         }
         Relationships: []
       }

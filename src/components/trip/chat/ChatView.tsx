@@ -411,7 +411,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
 
   // ---------- UI ----------
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <Card className="mt-1 bg-white">
         <CardHeader>
           <CardTitle className="text-earth-600">Upload a booking confirmation</CardTitle>
