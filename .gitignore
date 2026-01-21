@@ -17,6 +17,9 @@ dist-ssr
 .env.local
 .env.*.local
 
+# MCP configuration (may contain project-specific settings)
+.mcp.json
+
 # Cache directories that should not be watched
 .cache
 .bun
