@@ -166,9 +166,10 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
         />
         {/* secondary sidebar */}
         <div
-          className="hidden md:block fixed left-[280px] top-16 w-[320px] z-40 overflow-y-auto border-r border-sand-200 bg-white"
+          className="hidden md:block fixed left-[280px] w-[320px] z-40 overflow-y-auto border-r border-sand-200 bg-white"
           style={{
-            height: "calc(calc(var(--app-height, 1vh) * 100) - 4rem)"
+            top: "calc(4rem + env(safe-area-inset-top, 0px))",
+            height: "calc(calc(var(--app-height, 1vh) * 100) - 4rem - env(safe-area-inset-top, 0px))"
           }}
         >
           {panel}
