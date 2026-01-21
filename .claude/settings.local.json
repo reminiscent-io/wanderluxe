@@ -36,7 +36,8 @@
       "Bash(do name=\"$f%.*\" grep -rq \"from.*$name\\\\|import.*$name\" /home/runner/workspace/src --include=\"*.tsx\" --include=\"*.ts\")",
       "Bash(do grep -q \"^export\" \"$f\")",
       "Bash(timeout 30 tail:*)",
-      "Bash(claude doctor:*)"
+      "Bash(claude doctor:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
