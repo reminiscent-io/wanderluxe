@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download
+  BarChart2, Package, Settings, ArrowLeft, Users, Download
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -36,7 +36,6 @@ export interface SidebarHandle {
 
 export const tripNavItems = [
   { title: "Timeline", icon: Calendar, href: "timeline" },
-  { title: "Import to Timeline", icon: Sparkles, href: "chat" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
 ];
