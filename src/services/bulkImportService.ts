@@ -142,12 +142,13 @@ async function importActivity(
     const { error } = await supabase
       .from('day_activities')
       .insert({
+        trip_id: tripId,
         day_id: dayId,
         title: (fields.name as string) || 'Activity',
         description: (fields.notes as string) || null,
         start_time: toDbTime(fields.start_time as string),
         end_time: toDbTime(fields.end_time as string),
-        cost: typeof fields.cost === 'number' ? String(fields.cost) : null,
+        cost: typeof fields.cost === 'number' ? fields.cost : null,
         currency: (fields.currency as string) || 'USD',
         order_index: nextIndex,
         created_at: new Date().toISOString()
