@@ -39,7 +39,8 @@
       "Bash(claude doctor:*)",
       "Bash(find:*)",
       "Bash(npx eslint:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(gh pr create:*)"
     ],
     "deny": [],
     "ask": []
