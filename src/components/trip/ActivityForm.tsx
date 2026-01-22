@@ -25,7 +25,45 @@ interface ActivityFormProps {
   activityId?: string | null; // Add activity ID for edit mode
 }
 
-const NOON = '12:00'; // used to open time picker at noon
+const DEFAULT_START_TIME = '08:00'; // Default to 8:00 AM for activities
+
+// Duration presets in minutes
+const DURATION_PRESETS = [
+  { label: '30m', minutes: 30 },
+  { label: '1h', minutes: 60 },
+  { label: '2h', minutes: 120 },
+  { label: '3h', minutes: 180 },
+  { label: 'Half day', minutes: 240 },
+  { label: 'Full day', minutes: 480 },
+] as const;
+
+// Helper to add minutes to a time string (HH:MM format)
+const addMinutesToTime = (time: string, minutes: number): string => {
+  const [hours, mins] = time.split(':').map(Number);
+  const totalMinutes = hours * 60 + mins + minutes;
+  const newHours = Math.floor(totalMinutes / 60) % 24;
+  const newMins = totalMinutes % 60;
+  return `${String(newHours).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
+};
+
+// Helper to calculate duration in minutes between two times
+const calculateDuration = (start: string, end: string): number | null => {
+  if (!start || !end) return null;
+  const [startH, startM] = start.split(':').map(Number);
+  const [endH, endM] = end.split(':').map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+  return endMinutes >= startMinutes ? endMinutes - startMinutes : null;
+};
+
+// Helper to format duration for display
+const formatDuration = (minutes: number): string => {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+};
 
 const ActivityForm: React.FC<ActivityFormProps> = ({
   activity,
@@ -42,6 +80,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [useCustomEndTime, setUseCustomEndTime] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
 
   // Load existing travelers for edit mode
   useEffect(() => {
@@ -101,6 +141,19 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   useEffect(() => {
     if (activity.start_time) setStartTime(activity.start_time);
     if (activity.end_time) setEndTime(activity.end_time);
+
+    // Determine if existing activity uses a preset duration or custom end time
+    if (activity.start_time && activity.end_time) {
+      const duration = calculateDuration(activity.start_time, activity.end_time);
+      const matchingPreset = DURATION_PRESETS.find(p => p.minutes === duration);
+      if (matchingPreset) {
+        setSelectedDuration(matchingPreset.minutes);
+        setUseCustomEndTime(false);
+      } else if (duration !== null) {
+        setSelectedDuration(null);
+        setUseCustomEndTime(true);
+      }
+    }
   }, [activity.start_time, activity.end_time]);
 
   // Sync local startTime with parent activity
@@ -237,46 +290,109 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         </div>
       )}
 
-      {/* Time Fields */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Start Time */}
-        <div>
-          <label htmlFor="start-time" className="block text-sm font-medium text-gray-700">
-            Start Time
+      {/* Time Fields - Compact Design */}
+      <div className="space-y-3">
+        {/* Start Time - Compact */}
+        <div className="flex items-center gap-3">
+          <label htmlFor="start-time" className="text-sm font-medium text-gray-700 w-16 shrink-0">
+            Start
           </label>
           <Input
             id="start-time"
             type="time"
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            onFocus={() => {
-              // If empty, prefill noon so the picker opens at 12:00
-              if (!startTime) setStartTime(NOON);
+            onChange={(e) => {
+              setStartTime(e.target.value);
+              // Auto-update end time if duration is selected
+              if (selectedDuration && e.target.value) {
+                setEndTime(addMinutesToTime(e.target.value, selectedDuration));
+              }
             }}
-            step="300" // 5-minute increments (300 seconds)
-            className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
+            onFocus={() => {
+              if (!startTime) setStartTime(DEFAULT_START_TIME);
+            }}
+            step="300"
+            className="w-28 bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500 text-center"
           />
+          {startTime && endTime && !useCustomEndTime && (
+            <span className="text-sm text-sand-600">
+              {formatDuration(calculateDuration(startTime, endTime) || 0)}
+            </span>
+          )}
         </div>
 
-        {/* End Time */}
-        <div>
-          <label htmlFor="end-time" className="block text-sm font-medium text-gray-700">
-            End Time
-          </label>
-          <Input
-            id="end-time"
-            type="time"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            onFocus={() => {
-              if (!endTime) setEndTime(NOON);
-            }}
-            step="300" // 5-minute increments
-            className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
-          />
+        {/* Duration Presets */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">Duration</label>
+          <div className="flex flex-wrap gap-2">
+            {DURATION_PRESETS.map((preset) => (
+              <button
+                key={preset.minutes}
+                type="button"
+                onClick={() => {
+                  setSelectedDuration(preset.minutes);
+                  setUseCustomEndTime(false);
+                  const start = startTime || DEFAULT_START_TIME;
+                  if (!startTime) setStartTime(start);
+                  setEndTime(addMinutesToTime(start, preset.minutes));
+                }}
+                className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                  selectedDuration === preset.minutes && !useCustomEndTime
+                    ? 'bg-sand-500 text-white border-sand-500'
+                    : 'bg-white text-sand-700 border-sand-300 hover:border-sand-400 hover:bg-sand-50'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setUseCustomEndTime(true);
+                setSelectedDuration(null);
+              }}
+              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                useCustomEndTime
+                  ? 'bg-sand-500 text-white border-sand-500'
+                  : 'bg-white text-sand-700 border-sand-300 hover:border-sand-400 hover:bg-sand-50'
+              }`}
+            >
+              Custom
+            </button>
+          </div>
         </div>
+
+        {/* Custom End Time - Only shown when custom is selected */}
+        {useCustomEndTime && (
+          <div className="flex items-center gap-3">
+            <label htmlFor="end-time" className="text-sm font-medium text-gray-700 w-16 shrink-0">
+              End
+            </label>
+            <Input
+              id="end-time"
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              onFocus={() => {
+                if (!endTime) {
+                  // Default to 1 hour after start time, or 9:00 AM
+                  const start = startTime || DEFAULT_START_TIME;
+                  setEndTime(addMinutesToTime(start, 60));
+                }
+              }}
+              step="300"
+              className="w-28 bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500 text-center"
+            />
+            {startTime && endTime && (
+              <span className="text-sm text-sand-600">
+                {formatDuration(calculateDuration(startTime, endTime) || 0)}
+              </span>
+            )}
+          </div>
+        )}
+
         {errors.time && (
-          <p className="col-span-2 text-xs text-red-500">{errors.time}</p>
+          <p className="text-xs text-red-500">{errors.time}</p>
         )}
       </div>
 
