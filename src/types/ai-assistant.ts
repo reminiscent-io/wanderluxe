@@ -2,6 +2,48 @@
 
 export type MessageRole = 'user' | 'assistant' | 'system';
 export type SubscriptionTier = 'free' | 'pro';
+export type TravelItemType = 'accommodation' | 'transportation' | 'activity' | 'reservation';
+export type ExtractedItemStatus = 'pending' | 'created' | 'skipped';
+
+// File attachment for chat
+export interface ChatFileAttachment {
+  file: File;
+  previewUrl: string;
+  isConverted: boolean; // true if PDF was converted to image
+  convertedFile?: File; // The converted PNG file if PDF
+}
+
+// Extracted item from document parsing
+export interface ExtractedItem {
+  id: string;
+  itemType: TravelItemType;
+  fields: Record<string, unknown>;
+  missingRequired: string[];
+  confidence: number;
+  status: ExtractedItemStatus;
+}
+
+// Multi-item extraction response from edge function
+export interface MultiItemExtractionResponse {
+  items: ExtractedItem[];
+  meta: {
+    model: string;
+    pagesUsed: number;
+    totalItemsDetected: number;
+    originalFileName: string;
+  };
+}
+
+// Single-item extraction response (backwards compatible)
+export interface SingleItemExtractionResponse {
+  itemType: TravelItemType;
+  fields: Record<string, unknown>;
+  missingRequired: string[];
+  meta: {
+    model: string;
+    pagesUsed: number;
+  };
+}
 
 export interface AIChatThread {
   id: string;
@@ -19,6 +61,17 @@ export interface AIChatMessage {
   content: string;
   metadata: MessageMetadata;
   created_at: string;
+
+  // For extraction results in chat
+  extractedItems?: ExtractedItem[];
+  extractionMeta?: {
+    model: string;
+    pagesUsed: number;
+    originalFileName: string;
+  };
+  // For user messages with file attachments
+  attachmentPreviewUrl?: string;
+  attachmentFileName?: string;
 }
 
 export interface MessageMetadata {

@@ -37,7 +37,8 @@
       "Bash(do grep -q \"^export\" \"$f\")",
       "Bash(timeout 30 tail:*)",
       "Bash(claude doctor:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []

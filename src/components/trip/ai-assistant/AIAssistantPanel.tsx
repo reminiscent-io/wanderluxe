@@ -1,13 +1,20 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Sparkles, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { useDocumentExtraction } from '@/hooks/useDocumentExtraction';
+import { bulkImportItems } from '@/services/bulkImportService';
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
 import PromptChips from './PromptChips';
 import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
-import type { AIUsageInfo } from '@/types/ai-assistant';
+import ExtractionResultMessage from './ExtractionResultMessage';
+import ItemStepperDialog from './ItemStepperDialog';
+import ImportConfirmationDialog from './ImportConfirmationDialog';
+import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem } from '@/types/ai-assistant';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,9 +32,17 @@ interface AIAssistantPanelProps {
 }
 
 const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
+  const queryClient = useQueryClient();
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallUsage, setPaywallUsage] = useState<AIUsageInfo | undefined>();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Extraction state
+  const [extractionMessages, setExtractionMessages] = useState<AIChatMessage[]>([]);
+  const [showStepperDialog, setShowStepperDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [itemsToProcess, setItemsToProcess] = useState<ExtractedItem[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleLimitReached = useCallback((usage: AIUsageInfo) => {
     setPaywallUsage(usage);
@@ -35,7 +50,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
   }, []);
 
   const {
-    messages,
+    messages: chatMessages,
     isLoading,
     isStreaming,
     streamingContent,
@@ -51,13 +66,70 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     onLimitReached: handleLimitReached
   });
 
-  const handleSend = useCallback(async (message: string) => {
+  const {
+    isExtracting,
+    extractDocument,
+    updateItemStatus,
+    clearExtraction
+  } = useDocumentExtraction();
+
+  // Combine chat messages with extraction messages
+  const allMessages = useMemo(() => {
+    return [...chatMessages, ...extractionMessages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }, [chatMessages, extractionMessages]);
+
+  // Handle sending message with optional file attachment
+  const handleSend = useCallback(async (message: string, attachment?: ChatFileAttachment) => {
     try {
-      await sendMessage(message);
+      if (attachment) {
+        // Create user message with attachment
+        const userMessage: AIChatMessage = {
+          id: `user-extract-${Date.now()}`,
+          thread_id: '',
+          role: 'user',
+          content: message || 'Please extract items from this document',
+          metadata: {},
+          created_at: new Date().toISOString(),
+          attachmentPreviewUrl: attachment.previewUrl,
+          attachmentFileName: attachment.file.name
+        };
+
+        setExtractionMessages(prev => [...prev, userMessage]);
+
+        // Extract document
+        const items = await extractDocument(attachment);
+
+        if (items) {
+          // Create assistant message with extracted items
+          const assistantMessage: AIChatMessage = {
+            id: `assistant-extract-${Date.now()}`,
+            thread_id: '',
+            role: 'assistant',
+            content: items.length > 0
+              ? `I found ${items.length} item${items.length !== 1 ? 's' : ''} in your document.`
+              : "I couldn't find any bookable items in this document.",
+            metadata: {},
+            created_at: new Date().toISOString(),
+            extractedItems: items,
+            extractionMeta: {
+              model: 'gpt-4o-mini',
+              pagesUsed: 1,
+              originalFileName: attachment.file.name
+            }
+          };
+
+          setExtractionMessages(prev => [...prev, assistantMessage]);
+        }
+      } else if (message.trim()) {
+        // Regular text message
+        await sendMessage(message);
+      }
     } catch (err) {
       console.error('Unexpected error in handleSend:', err);
     }
-  }, [sendMessage]);
+  }, [sendMessage, extractDocument]);
 
   const handlePromptSelect = useCallback(async (prompt: string) => {
     try {
@@ -67,7 +139,105 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     }
   }, [sendMessage]);
 
-  const isDisabled = isStreaming || (usage && usage.tier === 'free' && usage.used >= usage.limit);
+  // Handle import all items
+  const handleImportAll = useCallback(async (items: ExtractedItem[]) => {
+    setItemsToProcess(items);
+    setShowConfirmDialog(true);
+  }, []);
+
+  // Confirm bulk import
+  const handleConfirmImport = useCallback(async () => {
+    setIsImporting(true);
+    try {
+      const result = await bulkImportItems(tripId, itemsToProcess);
+
+      if (result.successCount > 0) {
+        toast.success(`Added ${result.successCount} item${result.successCount !== 1 ? 's' : ''} to your trip`);
+
+        // Update the extraction messages to mark items as created
+        setExtractionMessages(prev =>
+          prev.map(msg => {
+            if (msg.extractedItems) {
+              return {
+                ...msg,
+                extractedItems: msg.extractedItems.map(item =>
+                  itemsToProcess.some(i => i.id === item.id)
+                    ? { ...item, status: 'created' as const }
+                    : item
+                )
+              };
+            }
+            return msg;
+          })
+        );
+
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+      }
+
+      if (result.failedCount > 0) {
+        toast.error(`Failed to import ${result.failedCount} item${result.failedCount !== 1 ? 's' : ''}`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to import items');
+    } finally {
+      setIsImporting(false);
+      setShowConfirmDialog(false);
+      setItemsToProcess([]);
+    }
+  }, [tripId, itemsToProcess, queryClient]);
+
+  // Handle review & edit flow
+  const handleReviewEdit = useCallback((items: ExtractedItem[]) => {
+    setItemsToProcess(items);
+    setShowStepperDialog(true);
+  }, []);
+
+  // Handle individual item processed in stepper
+  const handleItemProcessed = useCallback((itemId: string, status: 'created' | 'skipped') => {
+    // Update item status in extraction messages
+    setExtractionMessages(prev =>
+      prev.map(msg => {
+        if (msg.extractedItems) {
+          return {
+            ...msg,
+            extractedItems: msg.extractedItems.map(item =>
+              item.id === itemId ? { ...item, status } : item
+            )
+          };
+        }
+        return msg;
+      })
+    );
+
+    // If created, invalidate queries
+    if (status === 'created') {
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+    }
+  }, [tripId, queryClient]);
+
+  // Handle stepper complete
+  const handleStepperComplete = useCallback(() => {
+    setItemsToProcess([]);
+    toast.success('All items have been processed');
+  }, []);
+
+  // Handle clear chat - also clear extraction messages
+  const handleClearChat = useCallback(() => {
+    clearThread();
+    setExtractionMessages([]);
+    clearExtraction();
+  }, [clearThread, clearExtraction]);
+
+  const isDisabled = isStreaming || isExtracting || (usage && usage.tier === 'free' && usage.used >= usage.limit);
 
   return (
     <>
@@ -80,13 +250,13 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
             </div>
             <div>
               <h3 className="font-semibold text-earth-700 text-sm">Trip Assistant</h3>
-              <p className="text-xs text-sand-500">AI-powered travel help</p>
+              <p className="text-xs text-sand-500">AI-powered travel help & import</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
             {/* Clear chat button */}
-            {messages.length > 0 && (
+            {allMessages.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -109,7 +279,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={clearThread}
+                      onClick={handleClearChat}
                       className="bg-red-500 hover:bg-red-600"
                     >
                       Clear
@@ -140,7 +310,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
         {!isCollapsed && (
           <>
             {/* Prompt chips - show when no messages */}
-            {messages.length === 0 && !isLoading && (
+            {allMessages.length === 0 && !isLoading && (
               <PromptChips
                 onSelect={handlePromptSelect}
                 disabled={isDisabled}
@@ -149,13 +319,17 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
 
             {/* Messages area */}
             <ChatMessageList
-              messages={messages}
-              isLoading={isLoading}
+              messages={allMessages}
+              isLoading={isLoading || isExtracting}
               isStreaming={isStreaming}
               streamingContent={streamingContent}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={loadMoreMessages}
+              tripId={tripId}
+              onImportAll={handleImportAll}
+              onReviewEdit={handleReviewEdit}
+              isImporting={isImporting}
             />
 
             {/* Error display */}
@@ -175,11 +349,11 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
             <ChatInput
               onSend={handleSend}
               disabled={isDisabled}
-              isSending={isStreaming}
+              isSending={isStreaming || isExtracting}
               placeholder={
                 isDisabled && usage?.used === usage?.limit
                   ? "Daily limit reached. Upgrade for unlimited messages."
-                  : "Ask about your trip..."
+                  : "Ask about your trip or attach a booking..."
               }
             />
           </>
@@ -191,6 +365,25 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
         open={showPaywall}
         onOpenChange={setShowPaywall}
         usage={paywallUsage || usage || undefined}
+      />
+
+      {/* Import confirmation dialog */}
+      <ImportConfirmationDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        items={itemsToProcess}
+        onConfirm={handleConfirmImport}
+        isImporting={isImporting}
+      />
+
+      {/* Item stepper dialog for review & edit */}
+      <ItemStepperDialog
+        open={showStepperDialog}
+        onOpenChange={setShowStepperDialog}
+        items={itemsToProcess}
+        tripId={tripId}
+        onItemProcessed={handleItemProcessed}
+        onComplete={handleStepperComplete}
       />
     </>
   );
