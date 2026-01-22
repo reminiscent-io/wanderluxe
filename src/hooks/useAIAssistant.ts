@@ -9,20 +9,30 @@ import type {
   SSEMessageEvent,
   SSEDoneEvent,
   SSEErrorEvent,
-  StreamingErrorResponse
+  StreamingErrorResponse,
+  ExtractedItem
 } from '@/types/ai-assistant';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const EDGE_FUNCTION_BASE = `${SUPABASE_URL}/functions/v1/ai-chat`;
 
+interface SSEExtractedItemsEvent {
+  items: ExtractedItem[];
+  meta: {
+    model: string;
+    source: string;
+  };
+}
+
 interface UseAIAssistantOptions {
   tripId: string;
   onLimitReached?: (usage: AIUsageInfo) => void;
+  onItemsExtracted?: (items: ExtractedItem[]) => void;
 }
 
 const PAGE_SIZE = 5;
 
-export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions): UseAIAssistantReturn {
+export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: UseAIAssistantOptions): UseAIAssistantReturn {
   const queryClient = useQueryClient();
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
@@ -256,6 +266,12 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
 
               // Refresh usage after successful message
               refetchUsage();
+            } else if (event.event === 'extracted_items') {
+              // AI detected item creation intent and extracted structured data
+              const data = JSON.parse(event.data) as SSEExtractedItemsEvent;
+              if (data.items && data.items.length > 0 && onItemsExtracted) {
+                onItemsExtracted(data.items);
+              }
             } else if (event.event === 'error') {
               const data = JSON.parse(event.data) as SSEErrorEvent;
               throw data.error;
@@ -306,7 +322,7 @@ export function useAIAssistant({ tripId, onLimitReached }: UseAIAssistantOptions
       setStreamingContent('');
       setIsStreaming(false);
     }
-  }, [tripId, isStreaming, getAuthToken, messagesData?.thread_id, queryClient, onLimitReached, refetchUsage]);
+  }, [tripId, isStreaming, getAuthToken, messagesData?.thread_id, queryClient, onLimitReached, onItemsExtracted, refetchUsage]);
 
   // Clear thread/conversation
   const clearThread = useCallback(async (): Promise<void> => {

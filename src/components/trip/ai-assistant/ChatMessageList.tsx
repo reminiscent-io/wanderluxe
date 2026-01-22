@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import ChatMessage from './ChatMessage';
 import { Loader2, Sparkles, ChevronUp } from 'lucide-react';
-import type { AIChatMessage } from '@/types/ai-assistant';
+import type { AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
 
 interface ChatMessageListProps {
   messages: AIChatMessage[];
@@ -11,6 +11,11 @@ interface ChatMessageListProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  // For extraction handling
+  tripId?: string;
+  onImportAll?: (items: ExtractedItem[]) => Promise<void>;
+  onReviewEdit?: (items: ExtractedItem[]) => void;
+  isImporting?: boolean;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -20,7 +25,11 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   streamingContent,
   hasMore = false,
   isLoadingMore = false,
-  onLoadMore
+  onLoadMore,
+  tripId,
+  onImportAll,
+  onReviewEdit,
+  isImporting = false
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -148,7 +157,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       )}
 
       {messages.map((message) => (
-        <ChatMessage key={message.id} message={message} />
+        <ChatMessage
+          key={message.id}
+          message={message}
+          onImportAll={onImportAll}
+          onReviewEdit={onReviewEdit}
+          isImporting={isImporting}
+        />
       ))}
 
       {/* Show streaming message */}

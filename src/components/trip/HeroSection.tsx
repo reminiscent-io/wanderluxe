@@ -242,7 +242,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             setIsDialogOpen(open);
           }}
         >
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
             <DialogTitle>Edit Cover Image</DialogTitle>
             <ImageSection
               coverImageUrl={imageUrl}

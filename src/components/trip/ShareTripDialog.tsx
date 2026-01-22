@@ -315,7 +315,7 @@ const ShareTripDialog = ({
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90vh] flex flex-col p-4 sm:p-6"
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90dvh] flex flex-col p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="flex-shrink-0">

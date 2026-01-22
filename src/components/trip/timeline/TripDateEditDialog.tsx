@@ -57,7 +57,7 @@ export default function TripDateEditDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[450px] max-h-[90vh] z-[300] p-4 sm:p-6">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[450px] max-h-[90dvh] z-[300] p-4 sm:p-6">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Trip Dates</DialogTitle>
           <DialogDescription>

@@ -229,7 +229,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
       {/* AI Assistant Panel - Desktop only, right side, 40% width, sticky */}
       <div className="hidden md:block md:w-[40%] md:pr-4">
-        <div className="sticky top-20 h-[calc(100vh-6rem)]">
+        <div className="sticky top-20 h-[calc(100dvh-6rem)]">
           <AIAssistantPanel tripId={tripId} />
         </div>
       </div>

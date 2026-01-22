@@ -1,6 +1,7 @@
 // supabase/functions/parse-travel-doc/index.ts
 // Deno Edge Function: OCR + structured extraction via OpenAI (gpt-4o-mini by default).
-// Returns a canonical response: { itemType, fields, missingRequired, meta }.
+// Returns a canonical response: { itemType, fields, missingRequired, meta } for single-item mode
+// OR { items: [...], meta } for multi-item mode (when itemType is not specified).
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.3";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
@@ -9,6 +10,7 @@ const ALLOW_ORIGIN = Deno.env.get("ALLOW_ORIGIN") ?? "*"; // set to your app URL
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
+const MAX_ITEMS = 10; // Maximum items to extract in multi-item mode
 // --- Date inference configuration ---
 /**
  * Business rule:
@@ -143,6 +145,124 @@ const toDataUrl = async (file)=>{
     system: sys,
     user: map[type]
   };
+};
+
+// ----------------- Multi-item extraction prompt -----------------
+/**
+ * Prompt for auto-detecting and extracting ALL items from a travel document.
+ * Returns an array of items with their types.
+ */
+const multiItemPrompt = ()=>{
+  const sys = [
+    "You extract structured JSON from travel booking images. Output JSON only, no prose.",
+    "",
+    "DATE EXTRACTION:",
+    "- Extract dates and times exactly as shown on the document.",
+    "- Use ISO format: YYYY-MM-DD for dates, HH:mm (24-hour) for times.",
+    "- If a 4-digit year is visible, include it in the date.",
+    "- If NO year is visible, output the date without a year (e.g., month and day only), or use null if uncertain.",
+    "",
+    "GENERAL RULES:",
+    "- Return null for any field not clearly visible on the document.",
+    "- Do not infer, assume, or calculate dates - extract only what you see.",
+    "- Be precise with confirmation numbers, addresses, phone numbers, and costs.",
+    "- Each flight leg (outbound vs return) should be a SEPARATE item.",
+    "- Multi-night hotel stays should be ONE item (not per-night).",
+    `- Maximum ${MAX_ITEMS} items per document.`
+  ].join("\n");
+
+  const user = `Analyze this travel document and extract ALL distinct bookable items.
+
+For each item found, determine its type and extract the appropriate fields:
+
+TRANSPORTATION (flights, trains, ferries, shuttles, car rentals, car services):
+{
+  "itemType": "transportation",
+  "fields": {
+    "type": "flight"|"train"|"shuttle"|"car_service"|"ferry"|"rental_car"|"other",
+    "carrier": string|null,
+    "departure_location": string|null,
+    "arrival_location": string|null,
+    "departure_date": "YYYY-MM-DD"|null,
+    "departure_time": "HH:mm"|null,
+    "arrival_date": "YYYY-MM-DD"|null,
+    "arrival_time": "HH:mm"|null,
+    "confirmation_number": string|null,
+    "cost": number|null,
+    "currency": string|null
+  },
+  "confidence": 0.0-1.0
+}
+
+ACCOMMODATION (hotels, vacation rentals, hostels):
+{
+  "itemType": "accommodation",
+  "fields": {
+    "name": string|null,
+    "address": string|null,
+    "phone": string|null,
+    "website": string|null,
+    "check_in_date": "YYYY-MM-DD"|null,
+    "check_in_time": "HH:mm"|null,
+    "check_out_date": "YYYY-MM-DD"|null,
+    "check_out_time": "HH:mm"|null,
+    "confirmation_number": string|null,
+    "provider": string|null,
+    "cost": number|null,
+    "currency": string|null
+  },
+  "confidence": 0.0-1.0
+}
+
+ACTIVITY (tours, tickets, attractions, events):
+{
+  "itemType": "activity",
+  "fields": {
+    "name": string|null,
+    "date": "YYYY-MM-DD"|null,
+    "start_time": "HH:mm"|null,
+    "end_time": "HH:mm"|null,
+    "location": string|null,
+    "provider": string|null,
+    "confirmation_number": string|null,
+    "notes": string|null,
+    "cost": number|null,
+    "currency": string|null
+  },
+  "confidence": 0.0-1.0
+}
+
+RESERVATION (restaurants, dining):
+{
+  "itemType": "reservation",
+  "fields": {
+    "restaurant_name": string|null,
+    "date": "YYYY-MM-DD"|null,
+    "time": "HH:mm"|null,
+    "party_size": number|null,
+    "address": string|null,
+    "phone": string|null,
+    "website": string|null,
+    "confirmation_number": string|null,
+    "notes": string|null,
+    "cost": number|null,
+    "currency": string|null
+  },
+  "confidence": 0.0-1.0
+}
+
+Return JSON in this exact format:
+{
+  "items": [
+    { "itemType": "...", "fields": {...}, "confidence": 0.95 },
+    ...
+  ],
+  "totalDetected": number
+}
+
+If no items are found, return: { "items": [], "totalDetected": 0 }`;
+
+  return { system: sys, user };
 };
 // ----------------- Required-by-type -----------------
 const requiredByType = {
@@ -406,24 +526,114 @@ serve(async (req)=>{
     // ---- Parse form-data ----
     const ctype = req.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
-      return err("Send multipart/form-data with fields: itemType, file");
+      return err("Send multipart/form-data with fields: file (required), itemType (optional)");
     }
     const form = await req.formData();
     const file = form.get("file");
-    const itemType = String(form.get("itemType") ?? "");
-    if (!file || !itemType) return err("Missing file or itemType");
+    const itemType = String(form.get("itemType") ?? "").toLowerCase();
+    const isMultiItemMode = !itemType || itemType === "auto";
+
+    if (!file) return err("Missing file");
     if (!("type" in file)) return err("Missing file content-type");
     if (![
       "image/",
       "application/pdf"
     ].some((p)=>file.type.startsWith(p))) {
-      return err("Unsupported file type");
+      return err("Unsupported file type. Please upload an image or PDF.");
     }
     if (file.size > MAX_FILE_BYTES) return err("File too large (max 15 MB)");
-    // ---- Build prompt ----
-    const { system, user } = promptFor(itemType);
+
     const dataUrl = await toDataUrl(file);
-    // ---- Call OpenAI ----
+
+    // ============ MULTI-ITEM MODE ============
+    if (isMultiItemMode) {
+      const { system, user } = multiItemPrompt();
+
+      const payload = {
+        model: MODEL,
+        messages: [
+          { role: "system", content: system },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: user },
+              { type: "image_url", image_url: { url: dataUrl } }
+            ]
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0,
+        max_tokens: 4000 // Larger for multi-item
+      };
+
+      const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${OPENAI_API_KEY}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!aiRes.ok) {
+        const txt = await aiRes.text();
+        console.error("OpenAI error:", aiRes.status, txt);
+        return err("OpenAI request failed", 502);
+      }
+
+      const json = await aiRes.json();
+      const raw = json?.choices?.[0]?.message?.content?.trim();
+      if (!raw) return err("No content generated", 500);
+
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        return err("Model returned non-JSON output", 500);
+      }
+
+      // Process each extracted item
+      const rawItems = Array.isArray(parsed.items) ? parsed.items : [];
+      const processedItems = rawItems.slice(0, MAX_ITEMS).map((item, idx) => {
+        const type = item.itemType;
+        const fields = item.fields || {};
+        const confidence = typeof item.confidence === "number" ? item.confidence : 0.5;
+
+        // Apply date assumptions and normalize
+        const withAssumptions = applyDateAssumptions(type, fields);
+        const normalized = normalizeFields(type, withAssumptions);
+        const required = requiredByType[type] || [];
+        const missingRequired = required.filter((k)=>!normalized[k]);
+
+        return {
+          id: `item-${idx}-${Date.now()}`,
+          itemType: type,
+          fields: normalized,
+          missingRequired,
+          confidence,
+          status: "pending" as const
+        };
+      });
+
+      return ok({
+        items: processedItems,
+        meta: {
+          model: MODEL,
+          pagesUsed: file.type === "application/pdf" ? 1 : 1,
+          totalItemsDetected: parsed.totalDetected || processedItems.length,
+          originalFileName: file.name || "document"
+        }
+      });
+    }
+
+    // ============ SINGLE-ITEM MODE (backwards compatible) ============
+    const validTypes = ["accommodation", "transportation", "activity", "reservation"];
+    if (!validTypes.includes(itemType)) {
+      return err(`Invalid itemType. Must be one of: ${validTypes.join(", ")} or 'auto' for multi-item mode`);
+    }
+
+    const { system, user } = promptFor(itemType);
+
     const payload = {
       model: MODEL,
       messages: [
