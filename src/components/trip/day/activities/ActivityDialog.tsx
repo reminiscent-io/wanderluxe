@@ -263,7 +263,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto scrollbar-none p-4 sm:p-6"
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90dvh] overflow-y-auto scrollbar-none p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="flex-shrink-0">
