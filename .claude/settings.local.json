@@ -42,7 +42,8 @@
       "Bash(npx tsc:*)",
       "Bash(git commit:*)",
       "Bash(bun run:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(env)"
     ],
     "deny": [],
     "ask": []
