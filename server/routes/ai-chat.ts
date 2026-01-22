@@ -99,7 +99,33 @@ Guidelines:
 - Use bullet points and clear formatting for readability
 - Ask clarifying questions when helpful to provide better recommendations
 - Be concise but thorough
-- If asked about something outside your knowledge, suggest reliable local resources`;
+- If asked about something outside your knowledge, suggest reliable local resources
+
+CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:
+You have the ability to add items directly to the user's trip itinerary. This is a core feature.
+When the user asks you to ADD, CREATE, BOOK, SCHEDULE, or PUT something on their trip/itinerary/calendar (examples: "add a dinner reservation", "put that on my itinerary", "schedule a tour for Tuesday", "add the Eiffel Tower visit", "book that hotel", "yes add it", "add that"), you MUST:
+
+1. Confirm what you're adding in a brief, friendly response
+2. ALWAYS include the JSON block below - this is what actually creates the item
+
+YOU MUST output this JSON block at the END of your response:
+\`\`\`create_items
+[{"itemType": "reservation", "fields": {"restaurant_name": "...", ...}}]
+\`\`\`
+
+Item types and their fields:
+- reservation (restaurants/dining): {"restaurant_name", "date" (YYYY-MM-DD), "time" (HH:mm), "party_size", "address", "phone", "notes"}
+- accommodation (hotels/stays): {"name", "address", "check_in_date" (YYYY-MM-DD), "check_out_date", "check_in_time" (HH:mm), "check_out_time", "confirmation_number", "cost", "currency"}
+- transportation (flights/trains/cars): {"type" (flight/train/shuttle/car_service/ferry/rental_car), "carrier", "departure_location", "arrival_location", "departure_date" (YYYY-MM-DD), "departure_time" (HH:mm), "arrival_date", "arrival_time", "confirmation_number", "cost", "currency"}
+- activity (tours/attractions/events): {"name", "date" (YYYY-MM-DD), "start_time" (HH:mm), "end_time", "location", "notes", "cost", "currency"}
+
+Date calculation rules:
+- Trip dates are ${arrival_date} to ${departure_date}
+- If user says "Friday", "Tuesday", etc., calculate the actual YYYY-MM-DD date within the trip
+- If user says "day 1", "day 3", etc., calculate from ${arrival_date}
+- Only include fields you have information for; use null for unknown fields
+
+IMPORTANT: Never say "I can't add items" or "I don't have the ability to modify your itinerary". You DO have this ability through the JSON block. Always use it when the user wants to add something.`;
 }
 
 // Get user ID from Supabase JWT
@@ -312,6 +338,72 @@ async function checkAndIncrementUsage(
 // Send SSE event helper
 function sendSSE(res: Response, event: string, data: unknown) {
   res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+// Parse create_items block from AI response
+interface ExtractedItem {
+  id: string;
+  itemType: 'accommodation' | 'transportation' | 'activity' | 'reservation';
+  fields: Record<string, unknown>;
+  missingRequired: string[];
+  confidence: number;
+  status: 'pending';
+}
+
+interface ParsedResponse {
+  cleanContent: string;
+  extractedItems: ExtractedItem[];
+}
+
+function parseCreateItemsBlock(response: string): ParsedResponse {
+  // Look for the create_items code block
+  const createItemsRegex = /```create_items\s*([\s\S]*?)```/;
+  const match = response.match(createItemsRegex);
+
+  if (!match) {
+    return { cleanContent: response, extractedItems: [] };
+  }
+
+  // Extract and parse the JSON
+  const jsonStr = match[1].trim();
+  let items: ExtractedItem[] = [];
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    const rawItems = Array.isArray(parsed) ? parsed : [parsed];
+
+    items = rawItems.map((item, idx) => {
+      const itemType = item.itemType || 'activity';
+      const fields = item.fields || item;
+
+      // Determine missing required fields
+      const requiredByType: Record<string, string[]> = {
+        accommodation: ['name', 'check_in_date', 'check_out_date'],
+        transportation: ['type', 'departure_location', 'arrival_location', 'departure_date'],
+        activity: ['name', 'date'],
+        reservation: ['restaurant_name', 'date', 'time']
+      };
+
+      const required = requiredByType[itemType] || [];
+      const missingRequired = required.filter(k => !fields[k]);
+
+      return {
+        id: `ai-item-${idx}-${Date.now()}`,
+        itemType,
+        fields,
+        missingRequired,
+        confidence: 0.85, // AI-generated items have slightly lower default confidence
+        status: 'pending' as const
+      };
+    });
+  } catch (e) {
+    console.error('Failed to parse create_items JSON:', e);
+  }
+
+  // Remove the create_items block from the response
+  const cleanContent = response.replace(createItemsRegex, '').trim();
+
+  return { cleanContent, extractedItems: items };
 }
 
 // Health check endpoint
@@ -693,11 +785,26 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
       console.error('Stream error:', streamError);
     }
 
-    // Save assistant response
-    const assistantMessageId = await saveMessage(supabase, threadId, 'assistant', fullResponse, {
+    // Parse response for create_items block
+    const { cleanContent, extractedItems } = parseCreateItemsBlock(fullResponse);
+
+    // Save assistant response (with clean content, without the JSON block)
+    const assistantMessageId = await saveMessage(supabase, threadId, 'assistant', cleanContent, {
       model: MODEL,
-      tokens: { completion: fullResponse.length } // Approximate
+      tokens: { completion: fullResponse.length }, // Approximate
+      hasExtractedItems: extractedItems.length > 0
     });
+
+    // Send extracted items event if any were found
+    if (extractedItems.length > 0) {
+      sendSSE(res, 'extracted_items', {
+        items: extractedItems,
+        meta: {
+          model: MODEL,
+          source: 'conversation'
+        }
+      });
+    }
 
     // Send done event
     sendSSE(res, 'done', {

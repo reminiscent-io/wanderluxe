@@ -49,6 +49,29 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     setShowPaywall(true);
   }, []);
 
+  // Handle items extracted from conversation (when AI detects "add X to my trip")
+  const handleConversationItemsExtracted = useCallback((items: ExtractedItem[]) => {
+    // Create an assistant message with the extracted items
+    const extractionMessage: AIChatMessage = {
+      id: `assistant-conv-extract-${Date.now()}`,
+      thread_id: '',
+      role: 'assistant',
+      content: items.length === 1
+        ? "I've prepared this item for you to add to your trip:"
+        : `I've prepared ${items.length} items for you to add to your trip:`,
+      metadata: {},
+      created_at: new Date().toISOString(),
+      extractedItems: items,
+      extractionMeta: {
+        model: 'gpt-4o-mini',
+        pagesUsed: 0,
+        originalFileName: 'conversation'
+      }
+    };
+
+    setExtractionMessages(prev => [...prev, extractionMessage]);
+  }, []);
+
   const {
     messages: chatMessages,
     isLoading,
@@ -63,7 +86,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     loadMoreMessages
   } = useAIAssistant({
     tripId,
-    onLimitReached: handleLimitReached
+    onLimitReached: handleLimitReached,
+    onItemsExtracted: handleConversationItemsExtracted
   });
 
   const {

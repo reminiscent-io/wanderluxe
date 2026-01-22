@@ -38,7 +38,8 @@
       "Bash(timeout 30 tail:*)",
       "Bash(claude doctor:*)",
       "Bash(find:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
