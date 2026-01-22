@@ -21,7 +21,7 @@ function getStripe(): Stripe {
 
 function getSupabase(): SupabaseClient {
   if (!supabase) {
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Supabase configuration is missing');
@@ -79,7 +79,8 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
       return res.status(500).json({ error: 'Stripe is not configured. Please contact support.' });
     }
 
-    if (!process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Supabase environment variables are not configured');
       return res.status(500).json({ error: 'Server configuration error. Please contact support.' });
     }
