@@ -41,7 +41,8 @@
       "Bash(npx eslint:*)",
       "Bash(npx tsc:*)",
       "Bash(git commit:*)",
-      "Bash(bun run:*)"
+      "Bash(bun run:*)",
+      "Bash(npx supabase:*)"
     ],
     "deny": [],
     "ask": []

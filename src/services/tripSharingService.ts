@@ -221,7 +221,7 @@ export const getSharedTrips = async () => {
         *,
         trips (*)
       `)
-      .eq('shared_with_email', user.email)
+      .eq('shared_with_email', user.email?.toLowerCase())
       .order('created_at', { ascending: false });
 
     if (error) {
