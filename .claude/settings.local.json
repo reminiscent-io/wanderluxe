@@ -40,7 +40,8 @@
       "Bash(find:*)",
       "Bash(npx eslint:*)",
       "Bash(npx tsc:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(bun run:*)"
     ],
     "deny": [],
     "ask": []
