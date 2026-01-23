@@ -73,15 +73,26 @@ async function getOrCreateStripeCustomer(userId: string, email: string): Promise
 
 router.post('/api/stripe/create-checkout', async (req: Request, res: Response) => {
   try {
-    // Check for required environment variables
-    if (!process.env.STRIPE_SECRET_KEY) {
+    // Check for required environment variables with detailed logging
+    const hasStripeKey = !!process.env.STRIPE_SECRET_KEY;
+    const hasSupabaseUrl = !!(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+    const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    console.log('Checkout environment check:', {
+      hasStripeKey,
+      hasSupabaseUrl,
+      hasServiceRoleKey,
+      stripeKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7) || 'missing', // Shows sk_live_ or sk_test_
+    });
+
+    if (!hasStripeKey) {
       console.error('STRIPE_SECRET_KEY is not configured');
       return res.status(500).json({ error: 'Stripe is not configured. Please contact support.' });
     }
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    if (!supabaseUrl || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Supabase environment variables are not configured');
+    if (!hasSupabaseUrl || !hasServiceRoleKey) {
+      console.error('Supabase environment variables are not configured:', { hasSupabaseUrl, hasServiceRoleKey });
       return res.status(500).json({ error: 'Server configuration error. Please contact support.' });
     }
 
@@ -99,15 +110,24 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
       return res.status(401).json({ error: 'Session expired. Please sign in again.' });
     }
 
-    const customerId = await getOrCreateStripeCustomer(user.id, user.email || '');
-    console.log('Created/retrieved customer:', customerId);
+    let customerId: string;
+    try {
+      customerId = await getOrCreateStripeCustomer(user.id, user.email || '');
+      console.log('Created/retrieved customer:', customerId);
+    } catch (customerError: any) {
+      console.error('Failed to create/retrieve Stripe customer:', customerError?.message || customerError);
+      return res.status(500).json({ error: 'Failed to set up payment. Please try again.' });
+    }
 
     const origin = req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000';
     const successUrl = `${origin}/profile?upgraded=true`;
     const cancelUrl = `${origin}/profile?cancelled=true`;
+    console.log('Creating checkout session with URLs:', { origin, successUrl, cancelUrl });
 
     const stripeClient = getStripe();
-    const session = await stripeClient.checkout.sessions.create({
+    let session;
+    try {
+      session = await stripeClient.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       mode: 'subscription',
@@ -138,6 +158,25 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
         },
       },
     });
+    } catch (sessionError: any) {
+      console.error('Failed to create Stripe checkout session:', {
+        message: sessionError?.message,
+        type: sessionError?.type,
+        code: sessionError?.code,
+        statusCode: sessionError?.statusCode,
+      });
+      // Provide user-friendly error messages for common Stripe errors
+      if (sessionError?.type === 'StripeAuthenticationError') {
+        return res.status(500).json({ error: 'Payment system configuration error. Please contact support.' });
+      }
+      if (sessionError?.type === 'StripeConnectionError') {
+        return res.status(503).json({ error: 'Unable to connect to payment service. Please try again.' });
+      }
+      if (sessionError?.type === 'StripeInvalidRequestError') {
+        return res.status(500).json({ error: 'Payment configuration error. Please contact support.' });
+      }
+      return res.status(500).json({ error: 'Failed to create checkout session. Please try again.' });
+    }
 
     if (!session.url) {
       console.error('Stripe checkout session created without URL:', session.id);
@@ -147,15 +186,8 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
     console.log('Checkout session created:', session.id);
     return res.json({ url: session.url });
   } catch (error: any) {
-    console.error('Error creating checkout session:', error?.message || error);
-    // Provide user-friendly error messages for common Stripe errors
-    if (error?.type === 'StripeAuthenticationError') {
-      return res.status(500).json({ error: 'Payment system configuration error. Please contact support.' });
-    }
-    if (error?.type === 'StripeConnectionError') {
-      return res.status(503).json({ error: 'Unable to connect to payment service. Please try again.' });
-    }
-    return res.status(500).json({ error: error?.message || 'Failed to create checkout session' });
+    console.error('Unexpected error in checkout endpoint:', error?.message || error);
+    return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
   }
 });
 
