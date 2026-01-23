@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { createServer } from 'http';
+import rateLimit from 'express-rate-limit';
 import { registerRoutes } from './routes';
 
 const app = express();
@@ -12,6 +13,18 @@ app.use(cors());
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
+
+// Rate limiting to prevent DoS attacks
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests, please try again later.',
+});
+
+// Apply rate limiting to all routes
+app.use(generalLimiter);
 
 registerRoutes(app);
 
