@@ -3,13 +3,13 @@ import { supabase } from '../../src/integrations/supabase/client';
 import { generateItineraryPDF, getPDFFilename } from '../../src/services/pdfService';
 
 import {
-  ItineraryData,
   TripDay,
   DayActivity,
   HotelStay,
   Transportation,
   RestaurantReservation,
 } from '../../src/types/trip';
+import { ItineraryData } from '../../src/types/itinerary';
 
 const router = Router();
 
