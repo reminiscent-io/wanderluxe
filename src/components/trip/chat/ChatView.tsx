@@ -166,6 +166,14 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Validate that a URL is a safe blob URL (prevents XSS via URL injection)
+  const isSafeBlobUrl = (url: string | null): url is string => {
+    if (!url) return false;
+    // Blob URLs created by URL.createObjectURL() always start with "blob:"
+    // and are safe to use in img src attributes
+    return url.startsWith('blob:');
+  };
+
   // Fetch import usage on mount
   useEffect(() => {
     const fetchUsage = async () => {
@@ -460,7 +468,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
               </p>
 
               {/* Live preview (image or first page of PDF) */}
-              {previewUrl ? (
+              {isSafeBlobUrl(previewUrl) ? (
                 <div className="mt-3 relative">
                   <img
                     src={previewUrl}
