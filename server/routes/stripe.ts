@@ -415,25 +415,39 @@ router.get('/api/stripe/subscription', async (req: Request, res: Response) => {
     const stripeClient = getStripe();
     const subscription = await stripeClient.subscriptions.retrieve(profile.stripe_subscription_id);
 
-    // Log all available keys to debug
-    console.log('Subscription keys:', Object.keys(subscription));
-    console.log('Full subscription:', JSON.stringify(subscription, null, 2));
+    // Get the billing cycle anchor (when billing started)
+    const billingAnchor = (subscription as any).billing_cycle_anchor || subscription.created;
+    const startDate = (subscription as any).start_date || subscription.created;
 
-    // Try different possible field names
-    const periodEnd = (subscription as any).current_period_end
-      || (subscription as any).currentPeriodEnd
-      || (subscription as any).billing_cycle_anchor;
-    const periodStart = (subscription as any).current_period_start
-      || (subscription as any).currentPeriodStart
-      || subscription.created;
+    // Calculate next renewal date based on billing anchor
+    // For monthly subscriptions, find the next monthly anniversary
+    const now = Math.floor(Date.now() / 1000);
+    let nextRenewal = billingAnchor;
 
-    console.log('Resolved period values:', { periodStart, periodEnd });
+    // Add months until we're in the future
+    while (nextRenewal <= now) {
+      // Add approximately one month (30.44 days average)
+      const anchorDate = new Date(nextRenewal * 1000);
+      anchorDate.setMonth(anchorDate.getMonth() + 1);
+      nextRenewal = Math.floor(anchorDate.getTime() / 1000);
+    }
+
+    // If subscription has a cancel_at date, use that instead
+    const cancelAt = (subscription as any).cancel_at;
+
+    console.log('Subscription billing info:', {
+      billingAnchor,
+      startDate,
+      nextRenewal,
+      cancelAt,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    });
 
     return res.json({
       subscription: {
         status: subscription.status,
-        currentPeriodStart: periodStart,
-        currentPeriodEnd: periodEnd,
+        currentPeriodStart: startDate,
+        currentPeriodEnd: cancelAt || nextRenewal,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
         canceledAt: subscription.canceled_at,
         created: subscription.created,
