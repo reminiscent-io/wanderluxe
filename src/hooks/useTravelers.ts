@@ -11,6 +11,7 @@ export interface Traveler {
   permission_level?: "edit" | "read";
   created_at: string;
   is_owner?: boolean;
+  avatar_url?: string | null;
 }
 
 export function useTravelers(tripId: string) {
@@ -41,6 +42,7 @@ export function useTravelers(tripId: string) {
         permission_level: (traveler as any).permission_level || 'read',
         created_at: traveler.created_at,
         is_owner: traveler.is_owner || false,
+        avatar_url: (traveler as any).avatar_url || null,
       } as Traveler));
     },
     enabled: !!tripId,

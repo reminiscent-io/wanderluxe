@@ -6,6 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   getAccommodationTravelerIds,
   getTransportationTravelerIds,
@@ -22,6 +23,7 @@ interface Traveler {
   last_name?: string | null;
   shared_with_email?: string | null;
   is_owner?: boolean | null;
+  avatar_url?: string | null;
 }
 
 interface TravelerAvatarsProps {
@@ -126,13 +128,22 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
           return (
             <Tooltip key={t.id}>
               <TooltipTrigger asChild>
-                <div
-                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full
-                    text-xs font-medium text-white ring-2 ring-white
-                    ${t.is_owner ? "bg-earth-600" : "bg-sand-500"} hover:z-10`}
+                <Avatar
+                  className={`h-6 w-6 ring-2 ring-white hover:z-10 ${
+                    t.is_owner ? "bg-earth-600" : "bg-sand-500"
+                  }`}
                 >
-                  {initials}
-                </div>
+                  {t.avatar_url && (
+                    <AvatarImage src={t.avatar_url} alt={displayName} />
+                  )}
+                  <AvatarFallback
+                    className={`text-xs font-medium text-white ${
+                      t.is_owner ? "bg-earth-600" : "bg-sand-500"
+                    }`}
+                  >
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-sm">

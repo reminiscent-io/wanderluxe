@@ -42,6 +42,14 @@ export async function addOwnerToTripShares(tripId: string, userId: string) {
   }
 }
 
+// Add cache-busting to avatar URLs to ensure fresh images are loaded
+const addCacheBusting = (url: string | null): string | null => {
+  if (!url) return null;
+  // If URL already has a query parameter, don't add another
+  if (url.includes('?')) return url;
+  return `${url}?t=${Date.now()}`;
+};
+
 export async function listTravelers(tripId: string) {
   try {
     // Pull ALL travelers (including owner row) with permission_level
@@ -60,13 +68,35 @@ export async function listTravelers(tripId: string) {
 
     const shares = sharesData ?? [];
 
-    // Mark owner by user_id equality and normalize permission
+    // Get unique user IDs that have profiles (for avatar lookup)
+    const userIds = shares
+      .map((s: any) => s.shared_with_user_id)
+      .filter((id: string | null): id is string => !!id);
+
+    // Fetch avatar URLs for users who have profiles
+    let avatarMap: Record<string, string | null> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, avatar_url')
+        .in('id', userIds);
+
+      if (profiles) {
+        avatarMap = profiles.reduce((acc: Record<string, string | null>, p: any) => {
+          acc[p.id] = addCacheBusting(p.avatar_url);
+          return acc;
+        }, {});
+      }
+    }
+
+    // Mark owner by user_id equality, normalize permission, and attach avatar_url
     const travelers = shares.map((share: any) => ({
       ...share,
       permission_level: normalizePerm(share.permission_level),
       is_owner: share.shared_by_user_id && share.shared_with_user_id
         ? share.shared_by_user_id === share.shared_with_user_id
         : false,
+      avatar_url: share.shared_with_user_id ? avatarMap[share.shared_with_user_id] ?? null : null,
     }));
 
     return { data: travelers, error: null };

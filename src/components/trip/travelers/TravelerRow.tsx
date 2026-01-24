@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Share2, Shield } from "lucide-react";
 import { Traveler } from "@/hooks/useTravelers";
@@ -49,6 +49,9 @@ export default function TravelerRow({ traveler, onEdit }: TravelerRowProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           <Avatar className="h-8 w-8">
+            {traveler.avatar_url && (
+              <AvatarImage src={traveler.avatar_url} alt={getFullName()} />
+            )}
             <AvatarFallback
               className={cn(
                 "text-xs",
