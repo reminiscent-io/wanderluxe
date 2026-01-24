@@ -30,6 +30,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
 
+  // Add cache-busting to avatar URLs to ensure fresh images are loaded
+  const addCacheBusting = (url: string | null): string | null => {
+    if (!url) return null;
+    // If URL already has a query parameter, don't add another
+    if (url.includes('?')) return url;
+    return `${url}?t=${Date.now()}`;
+  };
+
   const fetchProfile = async (userId: string) => {
     const { data: profile } = await supabase
       .from('profiles')
@@ -39,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (profile) {
       setSubscriptionTier(profile.subscription_tier || 'free');
-      setAvatarUrl(profile.avatar_url);
+      setAvatarUrl(addCacheBusting(profile.avatar_url));
       setFullName(profile.full_name);
     }
   };
@@ -69,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } else {
         setSubscriptionTier(profile.subscription_tier || 'free');
-        setAvatarUrl(profile.avatar_url);
+        setAvatarUrl(addCacheBusting(profile.avatar_url));
         setFullName(profile.full_name);
       }
     };

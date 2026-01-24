@@ -184,6 +184,14 @@ const Profile = () => {
     });
   };
 
+  // Add cache-busting to avatar URLs to ensure fresh images are loaded
+  const addCacheBusting = (url: string | null): string | null => {
+    if (!url) return null;
+    // If URL already has a query parameter, don't add another
+    if (url.includes('?')) return url;
+    return `${url}?t=${Date.now()}`;
+  };
+
   const fetchProfile = async () => {
     try {
       const { data, error } = await supabase
@@ -197,7 +205,7 @@ const Profile = () => {
       if (data) {
         setFullName(data.full_name || '');
         setHomeLocation(data.home_location || '');
-        setAvatarUrl(data.avatar_url || null);
+        setAvatarUrl(addCacheBusting(data.avatar_url));
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -247,20 +255,23 @@ const Profile = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with cache-busting timestamp
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      // Add cache-busting parameter to force browsers to fetch new image
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+
       // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: cacheBustedUrl })
         .eq('id', session.user.id);
 
       if (updateError) throw updateError;
 
-      setAvatarUrl(publicUrl);
+      setAvatarUrl(cacheBustedUrl);
       // Refresh the auth context so nav/sidebar update immediately
       await refreshProfile();
       toast.success('Avatar updated successfully');
