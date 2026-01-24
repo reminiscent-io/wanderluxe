@@ -6,7 +6,7 @@ channel = "stable-24_05"
 packages = ["supabase-cli", "nodejs_22", "imagemagick"]
 
 [deployment]
-run = ["sh", "-c", "bun run preview"]
+run = ["sh", "-c", "bun run start"]
 deploymentTarget = "cloudrun"
 build = ["sh", "-c", "bun run build"]
 
