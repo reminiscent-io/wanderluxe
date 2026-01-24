@@ -140,14 +140,14 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
       </div>
 
       {/* Cost & Currency */}
-      <div className="space-y-1">
-        <Label>Cost & Currency</Label>
-        <div className="grid grid-cols-2 gap-3 w-full">
+      <div className="space-y-2">
+        <Label>Cost</Label>
+        <div className="flex gap-3">
           <Controller
             control={control}
             name="cost"
             render={({ field }) => (
-              <div>
+              <div className="flex-1">
                 <Input
                   type="text"
                   value={cost !== undefined && cost !== null ? new Intl.NumberFormat('en-US').format(cost) : ''}
@@ -168,10 +168,10 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
             control={control}
             name="currency"
             render={({ field }) => (
-              <div>
+              <div className="w-[110px] shrink-0">
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Select currency" />
+                    <SelectValue placeholder="USD" />
                   </SelectTrigger>
                   <SelectContent className="z-[300] bg-sand-50 max-h-48 overflow-y-auto">
                     {CURRENCIES.map((c) => (

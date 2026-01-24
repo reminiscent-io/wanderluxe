@@ -371,46 +371,47 @@ export default function AccommodationForm({
         />
 
         {/* Cost & Currency */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cost</FormLabel>
-                <input
-                  type="text"
-                  value={
-                    field.value !== undefined && field.value !== null
-                      ? new Intl.NumberFormat("en-US").format(field.value)
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const numericValue = Number(e.target.value.replace(/,/g, ""));
-                    field.onChange(Number.isNaN(numericValue) ? null : numericValue);
-                  }}
-                  placeholder="0"
-                  className="w-full rounded-md border p-2"
-                />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="currency"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Currency</FormLabel>
-                <select {...field} className="w-full rounded-md border p-2">
-                  {CURRENCY_OPTIONS.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </FormItem>
-            )}
-          />
+        <div className="space-y-2">
+          <FormLabel>Cost</FormLabel>
+          <div className="flex gap-3">
+            <FormField
+              control={form.control}
+              name="cost"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <input
+                    type="text"
+                    value={
+                      field.value !== undefined && field.value !== null
+                        ? new Intl.NumberFormat("en-US").format(field.value)
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const numericValue = Number(e.target.value.replace(/,/g, ""));
+                      field.onChange(Number.isNaN(numericValue) ? null : numericValue);
+                    }}
+                    placeholder="0"
+                    className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
+                  />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem className="w-[110px] shrink-0">
+                  <select {...field} className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500">
+                    {CURRENCY_OPTIONS.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.value}
+                      </option>
+                    ))}
+                  </select>
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         {/* Additional Details */}
@@ -441,7 +442,7 @@ export default function AccommodationForm({
         />
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-4">
+        <div className="flex justify-between items-center pt-6 mt-2 border-t border-sand-200">
           <div>
             {initialData && onDelete && (
               <Button
@@ -449,17 +450,27 @@ export default function AccommodationForm({
                 variant="ghost"
                 disabled={saving}
                 onClick={onDelete}
-                className="text-red-500 hover:bg-red-50 hover:text-red-700 w-8 h-8 p-0"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 w-9 h-9 p-0 border border-red-200 rounded-lg transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" disabled={saving} onClick={onCancel}>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={saving}
+              onClick={onCancel}
+              className="px-5 py-2 text-sm font-medium text-sand-600 hover:text-sand-700 hover:bg-sand-50"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="bg-sand-600 hover:bg-sand-700 text-white" disabled={saving}>
+            <Button
+              type="submit"
+              className="px-6 py-2 text-sm font-semibold text-white bg-earth-600 hover:bg-earth-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={saving}
+            >
               {saving ? "Saving..." : initialData ? "Update Stay" : "Add Stay"}
             </Button>
           </div>

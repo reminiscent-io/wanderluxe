@@ -172,42 +172,41 @@ export default function TransportationForm({
           tripId={tripId}
         />
 
-        <div className="flex items-center justify-between pt-4">
-          {initialData && onDelete && (
+        <div className="flex items-center justify-between pt-6 mt-2 border-t border-sand-200">
+          <div>
+            {initialData && onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onDelete}
+                disabled={saving}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 w-9 h-9 p-0 border border-red-200 rounded-lg transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          <div className="flex gap-3">
             <Button
               type="button"
               variant="ghost"
-              onClick={onDelete}
-              disabled={saving}
-              className="text-red-600 hover:bg-red-50 hover:text-red-700 w-8 h-8 p-0"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-
-          <div className="flex space-x-2">
-            <Button
-              type="button"
-              variant="outline"
               onClick={onCancel}
               disabled={saving}
+              className="px-5 py-2 text-sm font-medium text-sand-600 hover:text-sand-700 hover:bg-sand-50"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={saving}
-              className={`bg-earth-400 text-white font-semibold hover:bg-earth-600 ${
-                buttonClassName ?? ""
-              }`}
+              className="px-6 py-2 text-sm font-semibold text-white bg-earth-600 hover:bg-earth-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving…
+                  Saving...
                 </>
-              ) : initialData ? (
-                "Save"
               ) : (
                 "Save"
               )}
