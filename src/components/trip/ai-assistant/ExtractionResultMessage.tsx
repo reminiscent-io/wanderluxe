@@ -82,15 +82,15 @@ const ExtractionResultMessage: React.FC<ExtractionResultMessageProps> = ({
   }
 
   return (
-    <div className="rounded-2xl bg-sand-50 border border-sand-200 rounded-tl-sm overflow-hidden">
+    <div className="rounded-2xl bg-sand-50 border border-sand-200 rounded-tl-sm overflow-hidden max-w-full">
       {/* Header */}
       <div className="px-4 py-3 border-b border-sand-200 bg-white">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <div className="flex-shrink-0 w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-earth-700">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <p className="text-sm font-medium text-earth-700 truncate">
               {allProcessed
                 ? `Added ${createdItems.length} item${createdItems.length !== 1 ? 's' : ''} to your trip`
                 : `Found ${items.length} item${items.length !== 1 ? 's' : ''} in your document`}

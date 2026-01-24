@@ -132,7 +132,7 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
   return (
     <div
       className={cn(
-        'rounded-lg border transition-all',
+        'rounded-lg border transition-all overflow-hidden',
         isProcessed ? 'opacity-60' : '',
         item.status === 'created' ? 'bg-green-50 border-green-200' :
         item.status === 'skipped' ? 'bg-sand-50 border-sand-200' :
@@ -140,7 +140,7 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
         compact ? 'p-2' : 'p-3'
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 min-w-0">
         {/* Icon */}
         <div className={cn(
           'flex-shrink-0 rounded-md p-1.5',
@@ -151,7 +151,7 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1.5">
             <span className={cn('text-xs font-medium', config.color)}>
               {config.label}

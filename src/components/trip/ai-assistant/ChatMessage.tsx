@@ -111,7 +111,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         {isUser ? (
           <div
             className={cn(
-              'rounded-2xl px-4 py-2.5 text-sm',
+              'rounded-2xl px-4 py-2.5 text-sm overflow-hidden',
               'bg-earth-500 text-white rounded-tr-sm'
             )}
           >
@@ -119,22 +119,24 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         ) : hasExtractedItems ? (
           // Extraction result message
-          <ExtractionResultMessage
-            items={message.extractedItems!}
-            fileName={message.extractionMeta?.originalFileName}
-            onImportAll={onImportAll || (async () => {})}
-            onReviewEdit={onReviewEdit || (() => {})}
-            isImporting={isImporting}
-          />
+          <div className="w-full overflow-hidden">
+            <ExtractionResultMessage
+              items={message.extractedItems!}
+              fileName={message.extractionMeta?.originalFileName}
+              onImportAll={onImportAll || (async () => {})}
+              onReviewEdit={onReviewEdit || (() => {})}
+              isImporting={isImporting}
+            />
+          </div>
         ) : (
           // Regular assistant message
           <div
             className={cn(
-              'rounded-2xl px-4 py-2.5 text-sm',
+              'rounded-2xl px-4 py-2.5 text-sm overflow-hidden',
               'bg-sand-50 text-earth-700 border border-sand-200 rounded-tl-sm'
             )}
           >
-            <div className="prose prose-sm prose-earth max-w-none break-words">
+            <div className="prose prose-sm prose-earth max-w-full break-words overflow-wrap-anywhere">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -142,7 +144,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                   a: ({ ...props }) => (
                     <a
                       {...props}
-                      className="text-earth-600 underline hover:text-earth-800"
+                      className="text-earth-600 underline hover:text-earth-800 break-all"
                       target="_blank"
                       rel="noopener noreferrer"
                     />
@@ -152,7 +154,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     const isInline = !className;
                     return isInline ? (
                       <code
-                        className="bg-sand-100 px-1 py-0.5 rounded text-earth-700 text-xs"
+                        className="bg-sand-100 px-1 py-0.5 rounded text-earth-700 text-xs break-all"
                         {...props}
                       >
                         {children}
@@ -163,6 +165,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                       </code>
                     );
                   },
+                  // Customize pre blocks (code blocks)
+                  pre: ({ ...props }) => (
+                    <pre className="overflow-x-auto max-w-full" {...props} />
+                  ),
                   // Customize lists
                   ul: ({ ...props }) => (
                     <ul className="list-disc pl-4 space-y-1" {...props} />
@@ -173,6 +179,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                   // Customize paragraphs
                   p: ({ ...props }) => (
                     <p className="mb-2 last:mb-0" {...props} />
+                  ),
+                  // Customize tables
+                  table: ({ ...props }) => (
+                    <div className="overflow-x-auto max-w-full">
+                      <table className="min-w-0" {...props} />
+                    </div>
                   )
                 }}
               >
