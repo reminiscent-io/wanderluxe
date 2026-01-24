@@ -301,6 +301,12 @@ const Profile = () => {
                 <Camera className="h-8 w-8 text-white" />
               </div>
             </div>
+            <button
+              onClick={handleAvatarClick}
+              className="text-xs text-muted-foreground hover:text-earth-600 transition-colors cursor-pointer"
+            >
+              Upload image
+            </button>
             <h1 className="text-2xl font-thin text-center">{session.user.email}</h1>
           </div>
 
