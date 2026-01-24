@@ -49,24 +49,28 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
 
     // Create the share record only if it doesn't exist
     if (shareCreated) {
+      // Extract first name from email (before the @) as a placeholder
+      // The recipient can update their name later
+      const emailPrefix = email.split('@')[0] || 'Guest';
+      // Capitalize first letter
+      const firstName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+
       const shareData: any = {
         trip_id: tripId,
         shared_by_user_id: user.id,
-        shared_with_email: email.toLowerCase().trim()
+        shared_with_email: email.toLowerCase().trim(),
+        first_name: firstName,
+        last_name: null,
+        is_owner: false,
+        permission_level: permissionLevel
       };
-
-      // Only add permission_level if it's supported (after migration)
-      try {
-        shareData.permission_level = permissionLevel;
-      } catch (e) {
-        // Column doesn't exist yet, will default to 'edit' after migration
-      }
 
       const { error: shareError } = await supabase
         .from('trip_shares' as any)
         .insert(shareData);
 
       if (shareError) {
+        console.error('Error creating trip share:', shareError);
         toast.error('Failed to share the trip. Please try again.');
         return false;
       }
@@ -214,30 +218,54 @@ export const getSharedTrips = async () => {
       return { data: [], error: new Error('Not authenticated') };
     }
 
+    const userEmail = user.email?.toLowerCase();
+    if (!userEmail) {
+      console.error('User has no email address');
+      return { data: [], error: new Error('No email address found') };
+    }
+
+    console.log('Fetching shared trips for email:', userEmail);
+
     // Get all trips shared with the user's email
+    // Use ilike for case-insensitive matching to be extra safe
     const { data, error } = await supabase
       .from('trip_shares' as any)
       .select(`
         *,
         trips (*)
       `)
-      .eq('shared_with_email', user.email?.toLowerCase())
+      .ilike('shared_with_email', userEmail)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching shared trips:', error);
+      // Log more details for debugging
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       return { data: [], error };
     }
 
+    console.log('Found shared trips:', data?.length || 0);
+
+    // Filter out shares where the user is the owner (shared_by_user_id === current user)
+    // These are the owner's own "share" records, not trips shared WITH them
+    const filteredData = (data || []).filter((share: any) =>
+      share.shared_by_user_id !== user.id
+    );
+
     // Get owner information for each shared trip
-    const processedData = await Promise.all((data || []).map(async (share: any) => {
+    const processedData = await Promise.all(filteredData.map(async (share: any) => {
       // Fetch the owner's profile information
       const { data: ownerData } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('id', share.shared_by_user_id)
         .single();
-        
+
       return {
         ...share,
         trips: share.trips || null,
