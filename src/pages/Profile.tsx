@@ -173,8 +173,11 @@ const Profile = () => {
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+  const formatDate = (timestamp: number | null | undefined) => {
+    if (!timestamp) return 'Not available';
+    const date = new Date(timestamp * 1000);
+    if (isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric'
