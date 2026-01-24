@@ -296,7 +296,10 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
       {/* Keeping Sheet component for potential future use but not showing trigger */}
       <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetContent side="left" className="p-0 w-[280px]">
+          <SheetContent
+            side="left"
+            className="w-[280px] px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+          >
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
               <SheetDescription>Access trip timeline, budget, and settings</SheetDescription>

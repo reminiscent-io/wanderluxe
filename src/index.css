@@ -3,6 +3,32 @@
 @tailwind utilities;
 
 @layer utilities {
+  /* iOS Safe Area Utilities for PWA/Home Screen apps */
+  .safe-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .safe-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-pl {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .safe-pr {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .safe-p {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .safe-mt {
+    margin-top: env(safe-area-inset-top, 0px);
+  }
+  .safe-mb {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

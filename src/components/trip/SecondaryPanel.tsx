@@ -183,9 +183,9 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="left"
-        className="p-0 w-full flex flex-col h-full"
+        className="w-full flex flex-col h-full px-0 pt-[env(safe-area-inset-top)] pb-0"
       >
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
           {panel}
         </div>
       </SheetContent>
