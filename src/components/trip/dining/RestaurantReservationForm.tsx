@@ -450,81 +450,80 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        {/* Number of People, Cost & Currency */}
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2.5fr] gap-3">
-          <FormField
-            control={form.control}
-            name="number_of_people"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel># of People</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    value={field.value ?? ''}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "") {
-                        field.onChange(null);
-                      } else {
-                        const num = parseInt(v, 10);
-                        field.onChange(isNaN(num) ? null : num);
-                      }
-                    }}
-                    placeholder="e.g., 2"
-                    className="bg-white"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Number of People */}
+        <FormField
+          control={form.control}
+          name="number_of_people"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Party Size</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  value={field.value ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "") {
+                      field.onChange(null);
+                    } else {
+                      const num = parseInt(v, 10);
+                      field.onChange(isNaN(num) ? null : num);
+                    }
+                  }}
+                  placeholder="e.g., 2"
+                  className="bg-white w-24"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <div className="flex flex-col space-y-2">
-            <FormLabel>Cost & Currency</FormLabel>
-            <div className="flex gap-2">
-              <FormField
-                control={form.control}
-                name="cost"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormControl>
-                      <Input
-                        type="text"
-                        value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
-                        onChange={(e) => {
-                          const numericValue = Number(e.target.value.replace(/,/g, ''));
-                          field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
-                        }}
-                        onBlur={(e) => {
-                          handleCostBlur(e.target.value);
-                        }}
-                        placeholder="0"
-                        className="bg-white"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        {/* Cost & Currency */}
+        <div className="space-y-2">
+          <FormLabel>Cost</FormLabel>
+          <div className="flex gap-3">
+            <FormField
+              control={form.control}
+              name="cost"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input
+                      type="text"
+                      value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
+                      onChange={(e) => {
+                        const numericValue = Number(e.target.value.replace(/,/g, ''));
+                        field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
+                      }}
+                      onBlur={(e) => {
+                        handleCostBlur(e.target.value);
+                      }}
+                      placeholder="0"
+                      className="bg-white"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem className="w-[100px] sm:w-[120px]">
-                    <FormControl>
-                      <CurrencySelector
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        className="bg-white"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem className="w-[110px] shrink-0">
+                  <FormControl>
+                    <CurrencySelector
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="bg-white"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
 
@@ -562,7 +561,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         />
 
         {/* Buttons */}
-        <div className="flex justify-between items-center pt-4">
+        <div className="flex justify-between items-center pt-6 mt-2 border-t border-sand-200">
           <div>
             {defaultValues?.id && onDelete && (
               <Button
@@ -570,26 +569,26 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 variant="ghost"
                 onClick={onDelete}
                 disabled={isSubmitting}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 w-8 h-8 p-0"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 w-9 h-9 p-0 border border-red-200 rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button
               type="button"
               variant="ghost"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="text-gray-600 hover:text-gray-700"
+              className="px-5 py-2 text-sm font-medium text-sand-600 hover:text-sand-700 hover:bg-sand-50"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-sand-500 hover:bg-sand-600 text-white disabled:opacity-50"
+              className="px-6 py-2 text-sm font-semibold text-white bg-earth-600 hover:bg-earth-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

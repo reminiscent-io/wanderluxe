@@ -397,44 +397,43 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* Cost and Currency */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="cost" className="block text-sm font-medium text-gray-700">
-            Cost
-          </label>
-          <input
-            id="cost"
-            type="text"
-            value={
-              activity.cost !== undefined && activity.cost !== null && activity.cost !== ''
-                ? new Intl.NumberFormat('en-US').format(Number(activity.cost))
-                : ''
-            }
-            onChange={(e) => handleCostChange(e.target.value)}
-            placeholder="0"
-            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.cost ? 'border-red-500' : 'border-gray-300'}`}
-          />
-          {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
-        </div>
-        <div>
-          <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
-            Currency
-          </label>
-          <Select onValueChange={(value) => onActivityChange({ ...activity, currency: value as Currency })} value={activity.currency || ''}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent className="z-[999] max-h-48 overflow-y-auto">
-              {CURRENCIES.map((currency) => (
-                <SelectItem key={currency} value={currency}>
-                  <span className="font-medium">{currency}</span>
-                  <span className="ml-1 text-sand-600 text-sm">
-                    {CURRENCY_SYMBOLS[currency]}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="space-y-2">
+        <label htmlFor="cost" className="block text-sm font-medium text-gray-700">
+          Cost
+        </label>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <input
+              id="cost"
+              type="text"
+              value={
+                activity.cost !== undefined && activity.cost !== null && activity.cost !== ''
+                  ? new Intl.NumberFormat('en-US').format(Number(activity.cost))
+                  : ''
+              }
+              onChange={(e) => handleCostChange(e.target.value)}
+              placeholder="0"
+              className={`block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 bg-white ${errors.cost ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
+          </div>
+          <div className="w-[110px] shrink-0">
+            <Select onValueChange={(value) => onActivityChange({ ...activity, currency: value as Currency })} value={activity.currency || ''}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="USD" />
+              </SelectTrigger>
+              <SelectContent className="z-[999] max-h-48 overflow-y-auto">
+                {CURRENCIES.map((currency) => (
+                  <SelectItem key={currency} value={currency}>
+                    <span className="font-medium">{currency}</span>
+                    <span className="ml-1 text-sand-600 text-sm">
+                      {CURRENCY_SYMBOLS[currency]}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -453,36 +452,36 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* Buttons */}
-      <div className="flex justify-between items-center pt-4">
+      <div className="flex justify-between items-center pt-6 mt-2 border-t border-sand-200">
         <div>
           {onDelete && (
             <button
               type="button"
               onClick={onDelete}
               disabled={isSubmitting}
-              className="flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent border-0 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              className="flex items-center justify-center w-9 h-9 text-red-500 hover:text-red-600 hover:bg-red-50 bg-transparent border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             type="button"
             onClick={onCancel}
             variant="ghost"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500"
+            className="px-5 py-2 text-sm font-medium text-sand-600 hover:text-sand-700 hover:bg-sand-50"
             disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <button
+          <Button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-sand-500 hover:bg-sand-600 border-2 border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sand-500 disabled:opacity-50"
+            className="px-6 py-2 text-sm font-semibold text-white bg-earth-600 hover:bg-earth-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isSubmitting || !activity.title.trim()}
           >
             {isSubmitting ? 'Saving...' : submitLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </form>
