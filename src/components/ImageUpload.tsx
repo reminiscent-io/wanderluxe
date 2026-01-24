@@ -112,8 +112,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   const handleRemove = () => {
     setPreview('');
-    onChange('');
-    onRemove?.();
+    // If onRemove is provided, let parent handle the removal logic
+    // Otherwise fall back to calling onChange with empty string
+    if (onRemove) {
+      onRemove();
+    } else {
+      onChange('');
+    }
   };
 
   // --- position helpers ---

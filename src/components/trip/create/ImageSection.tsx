@@ -34,6 +34,14 @@ const ImageSection: React.FC<ImageSectionProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<UnsplashHit[]>([]);
 
+  // Local state to allow removing image without auto-saving
+  const [localImageUrl, setLocalImageUrl] = useState(coverImageUrl);
+
+  // Sync local state when prop changes (e.g., dialog reopens)
+  React.useEffect(() => {
+    setLocalImageUrl(coverImageUrl);
+  }, [coverImageUrl]);
+
   const searchUnsplash = async () => {
     if (!keywords.trim()) {
       toast.error("Enter a destination or vibe (e.g., 'Santorini sunset')");
@@ -62,8 +70,26 @@ const ImageSection: React.FC<ImageSectionProps> = ({
   };
 
   const selectUnsplash = (url: string) => {
+    setLocalImageUrl(url);
     onImageChange(url);
     toast.success('Cover image selected');
+  };
+
+  // Handle image removal - only update local state, don't save empty URL
+  const handleLocalRemove = () => {
+    setLocalImageUrl('');
+    // Switch to upload tab so user can pick a new image
+    // (Unsplash tab with hideUploader=true won't show anything when empty)
+    setTab('upload');
+  };
+
+  // Handle new image from upload - this should save
+  const handleUploadChange = (url: string) => {
+    if (url) {
+      setLocalImageUrl(url);
+      onImageChange(url);
+    }
+    // If url is empty (from remove), don't call onImageChange - let handleLocalRemove handle it
   };
 
   return (
@@ -117,11 +143,12 @@ const ImageSection: React.FC<ImageSectionProps> = ({
           )}
 
           {/* When an Unsplash image is selected, show preview + position only */}
-          {coverImageUrl && (
+          {localImageUrl && (
             <div className="pt-1">
               <ImageUpload
-                value={coverImageUrl}
-                onChange={onImageChange}
+                value={localImageUrl}
+                onChange={handleUploadChange}
+                onRemove={handleLocalRemove}
                 objectPosition={objectPosition}
                 onPositionChange={onPositionChange}
                 hideUploader={true}
@@ -133,8 +160,9 @@ const ImageSection: React.FC<ImageSectionProps> = ({
         {/* Upload */}
         <TabsContent value="upload">
           <ImageUpload
-            value={coverImageUrl}
-            onChange={onImageChange}
+            value={localImageUrl}
+            onChange={handleUploadChange}
+            onRemove={handleLocalRemove}
             objectPosition={objectPosition}
             onPositionChange={onPositionChange}
             hideUploader={false}
