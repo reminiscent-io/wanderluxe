@@ -386,4 +386,140 @@ router.post('/api/stripe/create-portal', async (req: Request, res: Response) => 
   }
 });
 
+// Get subscription details
+router.get('/api/stripe/subscription', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Please sign in' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const sb = getSupabase();
+    const { data: { user }, error: authError } = await sb.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Session expired' });
+    }
+
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('stripe_subscription_id, subscription_tier')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.stripe_subscription_id) {
+      return res.json({ subscription: null });
+    }
+
+    const stripeClient = getStripe();
+    const subscription = await stripeClient.subscriptions.retrieve(profile.stripe_subscription_id);
+
+    return res.json({
+      subscription: {
+        status: subscription.status,
+        currentPeriodStart: subscription.current_period_start,
+        currentPeriodEnd: subscription.current_period_end,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        canceledAt: subscription.canceled_at,
+        created: subscription.created,
+      }
+    });
+  } catch (error: any) {
+    console.error('Error fetching subscription:', error);
+    return res.status(500).json({ error: 'Failed to fetch subscription details' });
+  }
+});
+
+// Cancel subscription at period end
+router.post('/api/stripe/cancel-subscription', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Please sign in' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const sb = getSupabase();
+    const { data: { user }, error: authError } = await sb.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Session expired' });
+    }
+
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('stripe_subscription_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.stripe_subscription_id) {
+      return res.status(400).json({ error: 'No active subscription found' });
+    }
+
+    const stripeClient = getStripe();
+
+    // Cancel at period end (user keeps access until billing period ends)
+    const subscription = await stripeClient.subscriptions.update(profile.stripe_subscription_id, {
+      cancel_at_period_end: true,
+    });
+
+    console.log(`User ${user.id} requested subscription cancellation - will end at period end`);
+
+    return res.json({
+      success: true,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      currentPeriodEnd: subscription.current_period_end,
+    });
+  } catch (error: any) {
+    console.error('Error cancelling subscription:', error);
+    return res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
+
+// Reactivate subscription (undo cancellation)
+router.post('/api/stripe/reactivate-subscription', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Please sign in' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const sb = getSupabase();
+    const { data: { user }, error: authError } = await sb.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Session expired' });
+    }
+
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('stripe_subscription_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.stripe_subscription_id) {
+      return res.status(400).json({ error: 'No subscription found' });
+    }
+
+    const stripeClient = getStripe();
+
+    // Remove cancellation
+    const subscription = await stripeClient.subscriptions.update(profile.stripe_subscription_id, {
+      cancel_at_period_end: false,
+    });
+
+    console.log(`User ${user.id} reactivated subscription`);
+
+    return res.json({
+      success: true,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    });
+  } catch (error: any) {
+    console.error('Error reactivating subscription:', error);
+    return res.status(500).json({ error: 'Failed to reactivate subscription' });
+  }
+});
+
 export default router;

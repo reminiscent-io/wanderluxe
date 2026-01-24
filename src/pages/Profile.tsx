@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Crown, Check, Camera, ChevronDown } from "lucide-react";
+import { Crown, Check, Camera, ChevronDown, Calendar, AlertCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { getConnectedContacts, pickBestName, initialsFor } from "@/services/contactsService";
 
@@ -50,6 +51,18 @@ const Profile = () => {
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [contactsCollapsed, setContactsCollapsed] = useState(false);
 
+  // Subscription details state
+  const [subscriptionDetails, setSubscriptionDetails] = useState<{
+    status: string;
+    currentPeriodStart: number;
+    currentPeriodEnd: number;
+    cancelAtPeriodEnd: boolean;
+    canceledAt: number | null;
+    created: number;
+  } | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
+
   // Edit dialog state
   const [editOpen, setEditOpen] = useState(false);
   const [editFirst, setEditFirst] = useState("");
@@ -71,6 +84,102 @@ const Profile = () => {
       fetchContacts();
     }
   }, [session]);
+
+  useEffect(() => {
+    if (subscriptionTier === 'pro') {
+      fetchSubscriptionDetails();
+    }
+  }, [subscriptionTier]);
+
+  const fetchSubscriptionDetails = async () => {
+    try {
+      setLoadingSubscription(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return;
+
+      const resp = await fetch('/api/stripe/subscription', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        setSubscriptionDetails(data.subscription);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription details:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      setCancellingSubscription(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        toast.error("Please sign in");
+        return;
+      }
+
+      const resp = await fetch('/api/stripe/cancel-subscription', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (resp.ok) {
+        toast.success("Subscription cancelled. You'll have access until the end of your billing period.");
+        await fetchSubscriptionDetails();
+      } else {
+        const data = await resp.json();
+        toast.error(data.error || "Failed to cancel subscription");
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      toast.error("Failed to cancel subscription");
+    } finally {
+      setCancellingSubscription(false);
+    }
+  };
+
+  const handleReactivateSubscription = async () => {
+    try {
+      setCancellingSubscription(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        toast.error("Please sign in");
+        return;
+      }
+
+      const resp = await fetch('/api/stripe/reactivate-subscription', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (resp.ok) {
+        toast.success("Subscription reactivated!");
+        await fetchSubscriptionDetails();
+      } else {
+        const data = await resp.json();
+        toast.error(data.error || "Failed to reactivate subscription");
+      }
+    } catch (error) {
+      console.error('Error reactivating subscription:', error);
+      toast.error("Failed to reactivate subscription");
+    } finally {
+      setCancellingSubscription(false);
+    }
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
   const fetchProfile = async () => {
     try {
@@ -453,9 +562,90 @@ const Profile = () => {
                 {subscriptionTier === 'pro' && (
                   <>
                     <Separator className="my-4" />
-                    <p className="text-sm text-muted-foreground">
-                      Thank you for being a Pro member! You have access to all premium features.
-                    </p>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Thank you for being a Pro member! You have access to all premium features.
+                      </p>
+
+                      {loadingSubscription ? (
+                        <p className="text-sm text-muted-foreground">Loading subscription details...</p>
+                      ) : subscriptionDetails ? (
+                        <div className="space-y-3">
+                          {/* Subscription dates */}
+                          <div className="bg-sand-50 rounded-lg p-4 space-y-2">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Member since:</span>
+                              <span className="font-medium">{formatDate(subscriptionDetails.created)}</span>
+                            </div>
+                            {subscriptionDetails.cancelAtPeriodEnd ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <AlertCircle className="h-4 w-4 text-amber-500" />
+                                <span className="text-amber-600">Access ends:</span>
+                                <span className="font-medium text-amber-600">{formatDate(subscriptionDetails.currentPeriodEnd)}</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Renews:</span>
+                                <span className="font-medium">{formatDate(subscriptionDetails.currentPeriodEnd)}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Cancellation pending notice */}
+                          {subscriptionDetails.cancelAtPeriodEnd && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                              <p className="text-sm text-amber-800">
+                                Your subscription is set to cancel. You'll continue to have Pro access until {formatDate(subscriptionDetails.currentPeriodEnd)}.
+                              </p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-3 border-amber-300 text-amber-700 hover:bg-amber-100"
+                                onClick={handleReactivateSubscription}
+                                disabled={cancellingSubscription}
+                              >
+                                {cancellingSubscription ? 'Processing...' : 'Keep my subscription'}
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* Cancel button */}
+                          {!subscriptionDetails.cancelAtPeriodEnd && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  Cancel subscription
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Cancel your Pro subscription?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    You'll continue to have access to all Pro features until {formatDate(subscriptionDetails.currentPeriodEnd)}. After that, you'll be switched to the free plan.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Keep subscription</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleCancelSubscription}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    disabled={cancellingSubscription}
+                                  >
+                                    {cancellingSubscription ? 'Cancelling...' : 'Yes, cancel'}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
                   </>
                 )}
               </div>
