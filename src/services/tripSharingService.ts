@@ -77,7 +77,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
     }
 
     // Send email notification
-    const notificationSent = await sendShareNotification(email, user.email || 'A WanderLuxe user', tripDestination);
+    const notificationSent = await sendShareNotification(email, user.email || 'A WanderLuxe user', tripDestination, tripId);
     
     // Even if notification fails, the trip is still shared in the database
     if (!notificationSent) {
@@ -100,13 +100,14 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
 export const sendShareNotification = async (
   toEmail: string,
   fromEmail: string,
-  tripDestination: string
+  tripDestination: string,
+  tripId: string
 ): Promise<boolean> => {
   try {
     // Get the Supabase URL and anon key from environment
     const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
     const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl) {
       toast.error('Configuration error. Please contact support.');
       return false;
@@ -122,7 +123,8 @@ export const sendShareNotification = async (
       body: JSON.stringify({
         toEmail,
         fromEmail,
-        tripDestination
+        tripDestination,
+        tripId
       })
     });
 

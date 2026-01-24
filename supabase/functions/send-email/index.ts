@@ -42,9 +42,14 @@ Deno.serve(async (req)=>{
     const fromEmail = (body.fromEmail ?? "").trim();
     const tripDestination = (body.tripDestination ?? "").trim();
     const tripName = (body.tripName ?? tripDestination).trim();
+    const tripId = (body.tripId ?? "").trim();
     if (!isEmail(toEmail) || !isEmail(fromEmail) || !tripDestination) {
       throw new Error("Missing or invalid fields: toEmail, fromEmail, or tripDestination");
     }
+    // Build the view URL - include tripId if provided for direct navigation
+    const viewUrl = tripId
+      ? `${DEFAULT_VIEW_URL}/trips/${tripId}`
+      : DEFAULT_VIEW_URL;
     // Brand palette approximations for emails
     const colors = {
       sand50: "#f8f5f0",
@@ -104,7 +109,7 @@ a { color: ${colors.earth600}; }
                     <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:8px auto 24px auto;">
                       <tr>
                         <td align="center" bgcolor="${colors.earth600}" style="border-radius:6px;">
-                          <a href="${DEFAULT_VIEW_URL}" target="_blank"
+                          <a href="${viewUrl}" target="_blank"
                              class="cta"
                              style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;display:inline-block;padding:12px 22px;text-decoration:none;color:#ffffff;background:${colors.earth600};border-radius:6px;font-weight:600;">
                              View Shared Trip
@@ -114,8 +119,8 @@ a { color: ${colors.earth600}; }
                     </table>
                     <hr class="divider" style="border:none;border-top:1px solid ${colors.sand200};margin:8px 0 16px 0;">
                     <p class="muted" style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.6;color:#6b655f;">
-                      If the button doesn’t work, copy and paste this link:<br>
-                      <a href="${DEFAULT_VIEW_URL}" target="_blank">${DEFAULT_VIEW_URL}</a>
+                      If the button doesn't work, copy and paste this link:<br>
+                      <a href="${viewUrl}" target="_blank">${viewUrl}</a>
                     </p>
                   </td>
                 </tr>
@@ -138,9 +143,9 @@ a { color: ${colors.earth600}; }
       ``,
       `${fromEmail} shared a trip with you on WanderLuxe: "${tripName}" (${tripDestination}).`,
       ``,
-      `To view this trip, sign in to your WanderLuxe account. If you don’t have one, create it using ${toEmail} and it will appear in "Shared With Me".`,
+      `To view this trip, sign in to your WanderLuxe account. If you don't have one, create it using ${toEmail} and it will appear in "Shared With Me".`,
       ``,
-      `Open: ${DEFAULT_VIEW_URL}`,
+      `Open: ${viewUrl}`,
       ``,
       `Happy travels,`,
       `The WanderLuxe Team`
