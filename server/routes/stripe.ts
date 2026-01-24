@@ -415,20 +415,25 @@ router.get('/api/stripe/subscription', async (req: Request, res: Response) => {
     const stripeClient = getStripe();
     const subscription = await stripeClient.subscriptions.retrieve(profile.stripe_subscription_id);
 
-    console.log('Subscription details:', {
-      id: subscription.id,
-      status: subscription.status,
-      current_period_start: subscription.current_period_start,
-      current_period_end: subscription.current_period_end,
-      cancel_at_period_end: subscription.cancel_at_period_end,
-      created: subscription.created,
-    });
+    // Log all available keys to debug
+    console.log('Subscription keys:', Object.keys(subscription));
+    console.log('Full subscription:', JSON.stringify(subscription, null, 2));
+
+    // Try different possible field names
+    const periodEnd = (subscription as any).current_period_end
+      || (subscription as any).currentPeriodEnd
+      || (subscription as any).billing_cycle_anchor;
+    const periodStart = (subscription as any).current_period_start
+      || (subscription as any).currentPeriodStart
+      || subscription.created;
+
+    console.log('Resolved period values:', { periodStart, periodEnd });
 
     return res.json({
       subscription: {
         status: subscription.status,
-        currentPeriodStart: subscription.current_period_start,
-        currentPeriodEnd: subscription.current_period_end,
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
         canceledAt: subscription.canceled_at,
         created: subscription.created,
