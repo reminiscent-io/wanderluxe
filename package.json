@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"NODE_ENV=development bun run server/index.ts\"",
+    "dev:frontend": "vite",
     "dev:server": "NODE_ENV=development bun run server/index.ts",
     "build": "vite build",
     "build:dev": "vite build --mode development",
@@ -18,7 +19,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^2.1.17",
+    "@anthropic-ai/claude-code": "^2.1.19",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -53,8 +54,8 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sendgrid/mail": "^8.1.6",
-    "@supabase/supabase-js": "^2.91.0",
-    "@tanstack/react-query": "^5.90.19",
+    "@supabase/supabase-js": "^2.91.1",
+    "@tanstack/react-query": "^5.90.20",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/google.maps": "^3.58.1",
