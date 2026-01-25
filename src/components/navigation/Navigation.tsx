@@ -24,15 +24,26 @@ const Navigation: React.FC = () => {
   useEffect(() => {
     const updateVar = () => {
       if (headerRef.current) {
+        // Use getBoundingClientRect for more accurate measurement that includes transforms
+        const rect = headerRef.current.getBoundingClientRect();
         document.documentElement.style.setProperty(
           "--app-nav-h",
-          `${headerRef.current.offsetHeight}px`
+          `${rect.height}px`
         );
       }
     };
 
-    // Initial set + react to size changes
-    updateVar();
+    // Initial set after a small delay to ensure safe-area CSS is computed
+    // This is especially important for PWA standalone mode on iOS
+    const initialTimeout = setTimeout(() => {
+      updateVar();
+      // Double-check after animation frames for PWA standalone mode
+      requestAnimationFrame(() => {
+        updateVar();
+        requestAnimationFrame(updateVar);
+      });
+    }, 50);
+
     const ro = new ResizeObserver(updateVar);
     if (headerRef.current) ro.observe(headerRef.current);
 
@@ -40,6 +51,7 @@ const Navigation: React.FC = () => {
     window.addEventListener("orientationchange", updateVar);
 
     return () => {
+      clearTimeout(initialTimeout);
       ro.disconnect();
       window.removeEventListener("resize", updateVar);
       window.removeEventListener("orientationchange", updateVar);
