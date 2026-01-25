@@ -259,19 +259,18 @@ const TripCard = ({
                 {!isExample && !isShared && onHide && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full h-8 w-8"
                         onClick={(e) => {
-                          e.preventDefault();
                           e.stopPropagation();
                         }}
                       >
                         <EyeOff className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Hide Trip</AlertDialogTitle>
                         <AlertDialogDescription>

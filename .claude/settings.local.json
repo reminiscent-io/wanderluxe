@@ -43,7 +43,8 @@
       "Bash(git commit:*)",
       "Bash(bun run:*)",
       "Bash(npx supabase:*)",
-      "Bash(env)"
+      "Bash(env)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

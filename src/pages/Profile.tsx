@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Crown, Check, Camera, ChevronDown, Calendar, AlertCircle } from "lucide-react";
+import { Crown, Check, Camera, Calendar, AlertCircle, ChevronRight } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { getConnectedContacts, pickBestName, initialsFor } from "@/services/contactsService";
 
@@ -49,7 +50,6 @@ const Profile = () => {
   // Connected people state
   const [contacts, setContacts] = useState<ContactItem[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
-  const [contactsCollapsed, setContactsCollapsed] = useState(false);
 
   // Subscription details state
   const [subscriptionDetails, setSubscriptionDetails] = useState<{
@@ -397,88 +397,95 @@ const Profile = () => {
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-8">
-        <div className="max-w-5xl mx-auto">
-          {/* Header Section */}
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <div className="relative group">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <Avatar
-                className="h-24 w-24 border-2 border-earth-500 cursor-pointer transition-all group-hover:border-earth-600"
-                onClick={handleAvatarClick}
-              >
-                {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile" />}
-                <AvatarFallback className="text-3xl bg-sand-50 text-earth-500 group-hover:bg-earth-400 group-hover:text-white transition-colors">
-                  {uploadingAvatar ? '...' : userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div
-                className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                onClick={handleAvatarClick}
-              >
-                <Camera className="h-8 w-8 text-white" />
-              </div>
-            </div>
-            <button
-              onClick={handleAvatarClick}
-              className="text-xs text-muted-foreground hover:text-earth-600 transition-colors cursor-pointer"
-            >
-              Upload image
-            </button>
-            <h1 className="text-2xl font-thin text-center">{session.user.email}</h1>
-          </div>
-
-          {/* Two-Column Layout (Desktop) / Stack (Mobile) */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Left Column - Profile Information */}
-            <div className="space-y-6">
-              {/* Profile Fields Card */}
-              <div className="bg-white p-6 rounded-lg shadow space-y-6">
-                <div>
-                  <h2 className="text-lg font-medium mb-4">Profile Information</h2>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <Input
-                        id="fullName"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Enter your full name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="homeLocation">Home Location</Label>
-                      <Input
-                        id="homeLocation"
-                        value={homeLocation}
-                        onChange={(e) => setHomeLocation(e.target.value)}
-                        placeholder="Enter your home location"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleSave}
-                      disabled={isLoading}
-                      variant="outline"
-                      className="w-full"
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Identity Header Card */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              {/* Avatar Section */}
+              <div className="flex flex-col items-center gap-3 md:w-auto w-full">
+                <div className="relative group">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  {!avatarUrl ? (
+                    <button
+                      onClick={handleAvatarClick}
+                      disabled={uploadingAvatar}
+                      className="h-30 w-30 sm:h-35 sm:w-35 rounded-full border-2 border-dashed border-earth-300 hover:border-earth-500 transition-all flex flex-col items-center justify-center gap-2 bg-sand-50 hover:bg-sand-100 cursor-pointer disabled:opacity-50"
+                      style={{ width: '120px', height: '120px' }}
                     >
-                      {isLoading ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </div>
+                      {uploadingAvatar ? (
+                        <div className="text-sm text-muted-foreground">Uploading...</div>
+                      ) : (
+                        <>
+                          <Camera className="h-8 w-8 text-earth-400" />
+                          <span className="text-xs text-earth-600">Upload Photo</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <Avatar
+                      className="cursor-pointer transition-all group-hover:opacity-90"
+                      style={{ width: '120px', height: '120px' }}
+                      onClick={handleAvatarClick}
+                    >
+                      <AvatarImage src={avatarUrl} alt="Profile" />
+                      <AvatarFallback className="text-3xl bg-sand-50 text-earth-500">
+                        {uploadingAvatar ? '...' : userInitials}
+                      </AvatarFallback>
+                      <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="h-8 w-8 text-white" />
+                      </div>
+                    </Avatar>
+                  )}
+                </div>
+                <div className="text-center text-sm text-muted-foreground">
+                  {session.user.email}
+                </div>
+              </div>
+
+              {/* Profile Information Fields */}
+              <div className="flex-1 w-full space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="homeLocation">Home Location</Label>
+                  <Input
+                    id="homeLocation"
+                    value={homeLocation}
+                    onChange={(e) => setHomeLocation(e.target.value)}
+                    placeholder="Enter your home location"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSave}
+                    disabled={isLoading}
+                    className="bg-earth-600 hover:bg-earth-700 text-white"
+                  >
+                    {isLoading ? 'Saving...' : 'Save Changes'}
+                  </Button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Right Column - Subscription & Connected People */}
-            <div className="space-y-6">
-              {/* Subscription Card */}
-              <div className="bg-white p-6 rounded-lg shadow">
+          {/* Subscription Card */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`p-2 rounded-full ${subscriptionTier === 'pro' ? 'bg-amber-100' : 'bg-sand-100'}`}>
                     <Crown className={`h-5 w-5 ${subscriptionTier === 'pro' ? 'text-amber-600' : 'text-sand-500'}`} />
@@ -663,70 +670,97 @@ const Profile = () => {
                   </>
                 )}
               </div>
+            </div>
+          </div>
 
-              {/* Connected People */}
-              <div className="bg-white rounded-lg shadow">
-                <Collapsible open={!contactsCollapsed} onOpenChange={(open) => setContactsCollapsed(!open)}>
-                  <div className="p-6 pb-4">
-                    <CollapsibleTrigger asChild>
-                      <button className="flex items-center justify-between w-full group">
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-lg font-medium">Connected people</h2>
-                          <Badge variant="secondary">
-                            {loadingContacts ? "Loading..." : `${contacts.length}`}
-                          </Badge>
-                        </div>
-                        <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${contactsCollapsed ? 'rotate-180' : ''}`} />
-                      </button>
-                    </CollapsibleTrigger>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Anyone you've shared a trip with, and anyone who has shared a trip with you.
-                    </p>
-                  </div>
-                  <CollapsibleContent>
-                    <div className="px-6 pb-6">
-                      <Separator className="mb-4" />
-                      {contacts.length === 0 && !loadingContacts ? (
-                        <p className="text-sm text-muted-foreground">No connections yet.</p>
-                      ) : (
-                        <ul className="grid grid-cols-1 gap-3">
-                          {contacts.map((c) => {
-                            const name = pickBestName(c);
-                            const hint =
-                              c.email ? c.email :
-                              c.directions.includes("incoming") ? "Shared with you" :
-                              "Shared by you";
-                            const dir =
-                              c.directions.includes("incoming") && c.directions.includes("outgoing")
-                                ? "Both ways"
-                                : c.directions.includes("outgoing")
-                                ? "Outgoing"
-                                : "Incoming";
-                            return (
-                              <li
-                                key={c.key}
-                                className="flex items-center gap-4 rounded-md border p-4 hover:bg-sand-50 cursor-pointer transition-colors"
-                                onClick={() => openEditDialog(c)}
-                              >
-                                <Avatar className="h-10 w-10 flex-shrink-0">
-                                  <AvatarFallback className="text-sm">{initialsFor(c)}</AvatarFallback>
-                                </Avatar>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium truncate">{name}</span>
-                                    <Badge variant="outline" className="text-[10px] flex-shrink-0">{dir}</Badge>
-                                  </div>
-                                  <div className="text-xs text-muted-foreground truncate">{hint}</div>
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+          {/* Connected People Table */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-medium">Connected People</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Anyone you've shared a trip with, and anyone who has shared a trip with you.
+                  </p>
+                </div>
+                <Badge variant="secondary" className="text-sm">
+                  {loadingContacts ? "..." : contacts.length}
+                </Badge>
               </div>
+
+              <Separator className="mb-4" />
+
+              {loadingContacts ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                      </div>
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                  ))}
+                </div>
+              ) : contacts.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-sm text-muted-foreground">No connections yet.</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Share a trip to start connecting with other travelers.
+                  </p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableBody>
+                      {contacts.map((c) => {
+                        const name = pickBestName(c);
+                        const hint = c.email ? c.email : c.directions.includes("incoming") ? "Shared with you" : "Shared by you";
+                        const statusText = c.directions.includes("incoming") && c.directions.includes("outgoing") ? "Connected" : c.directions.includes("outgoing") ? "Outgoing Request" : "Incoming Request";
+                        const statusVariant = c.directions.includes("incoming") && c.directions.includes("outgoing") ? "default" : "secondary";
+
+                        return (
+                          <TableRow
+                            key={c.key}
+                            className="cursor-pointer hover:bg-sand-50 transition-colors"
+                            onClick={() => openEditDialog(c)}
+                          >
+                            <TableCell className="w-12 py-4">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-xs bg-earth-100 text-earth-700">
+                                  {initialsFor(c)}
+                                </AvatarFallback>
+                              </Avatar>
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-medium text-sm">{name}</span>
+                                <span className="text-xs text-muted-foreground truncate max-w-xs">{hint}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-4 text-right">
+                              <Badge
+                                variant={statusVariant}
+                                className={
+                                  statusVariant === "default"
+                                    ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                    : "bg-sand-100 text-sand-700 hover:bg-sand-100"
+                                }
+                              >
+                                {statusText}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="w-12 py-4 text-right">
+                              <ChevronRight className="h-4 w-4 text-muted-foreground inline-block" />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
           </div>
 
@@ -741,7 +775,6 @@ const Profile = () => {
           </div>
         </div>
       </div>
-
 
       {/* Edit Contact Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
