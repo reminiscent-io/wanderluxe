@@ -10,6 +10,7 @@ interface PrimaryDestinationInputProps {
   placeId: string;
   onChange: (destination: string, placeId: string) => void;
   className?: string;
+  inputClassName?: string;
   placeholder?: string;
   autoFocus?: boolean;
   showLabel?: boolean;
@@ -20,6 +21,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   placeId,
   onChange,
   className,
+  inputClassName,
   placeholder = "Search for a city or place...",
   autoFocus,
   showLabel = true
@@ -162,7 +164,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onFocus={() => inputValue.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
-          className={`${className} relative z-50 pr-16`}
+          className={`${className} ${inputClassName} relative z-50 pr-16`}
           placeholder={placeholder}
           autoComplete="off"
         />

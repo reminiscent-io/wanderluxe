@@ -358,6 +358,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   onChange={handlePrimaryDestinationChange}
                   showLabel={false}
                   placeholder="Search for a city..."
+                  inputClassName="bg-white text-earth-900 placeholder:text-earth-400"
                   autoFocus
                 />
                 <div className="flex justify-end gap-2 mt-2">
