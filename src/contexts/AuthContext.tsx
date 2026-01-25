@@ -42,22 +42,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const fetchProfile = async (userId: string) => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, subscription_tier, avatar_url, full_name, last_login_at')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, subscription_tier, avatar_url, full_name, last_login_at')
+        .eq('id', userId)
+        .single();
 
-    if (profile) {
-      // Get OAuth metadata for fallbacks (fetch fresh, don't use stale state)
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const oauthAvatar = authUser?.user_metadata?.avatar_url;
-      const oauthName = authUser?.user_metadata?.full_name;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
 
-      setSubscriptionTier(profile.subscription_tier || 'free');
-      setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
-      setFullName(profile.full_name || oauthName || null);
-      setLastLoginAt(profile.last_login_at);
+      if (profile) {
+        // Get OAuth metadata for fallbacks (fetch fresh, don't use stale state)
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const oauthAvatar = authUser?.user_metadata?.avatar_url;
+        const oauthName = authUser?.user_metadata?.full_name;
+
+        setSubscriptionTier(profile.subscription_tier || 'free');
+        setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
+        setFullName(profile.full_name || oauthName || null);
+        setLastLoginAt(profile.last_login_at);
+      }
+    } catch (err) {
+      console.error('Error in fetchProfile:', err);
     }
   };
 
@@ -202,8 +211,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const refreshProfile = async () => {
-    if (user?.id) {
-      await fetchProfile(user.id);
+    // Get user ID directly from auth to avoid stale closure issues
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser?.id) {
+      await fetchProfile(currentUser.id);
     }
   };
 
