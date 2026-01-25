@@ -195,6 +195,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <div className="absolute top-2 right-2 flex gap-2">
               {!hideUploader && (
                 <Button
+                  type="button"
                   variant="secondary"
                   size="icon"
                   className="bg-black/40 text-white hover:bg-black/60"
@@ -205,6 +206,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 </Button>
               )}
               <Button
+                type="button"
                 variant="destructive"
                 size="icon"
                 className="bg-black/40 hover:bg-black/60"
@@ -226,10 +228,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Vertical position</span>
                 <div className="flex gap-1">
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => nudge('up')}>
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => nudge('up')}>
                     <ArrowUp className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => nudge('down')}>
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => nudge('down')}>
                     <ArrowDown className="h-3.5 w-3.5" />
                   </Button>
                 </div>
