@@ -9,6 +9,7 @@ interface AuthContextType {
   subscriptionTier: string;
   avatarUrl: string | null;
   fullName: string | null;
+  lastLoginAt: string | null;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   subscriptionTier: 'free',
   avatarUrl: null,
   fullName: null,
+  lastLoginAt: null,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
+  const [lastLoginAt, setLastLoginAt] = useState<string | null>(null);
 
   // Add cache-busting to avatar URLs to ensure fresh images are loaded
   const addCacheBusting = (url: string | null): string | null => {
@@ -41,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, subscription_tier, avatar_url, full_name')
+      .select('id, subscription_tier, avatar_url, full_name, last_login_at')
       .eq('id', userId)
       .single();
 
@@ -49,14 +52,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSubscriptionTier(profile.subscription_tier || 'free');
       setAvatarUrl(addCacheBusting(profile.avatar_url));
       setFullName(profile.full_name);
+      setLastLoginAt(profile.last_login_at);
+    }
+  };
+
+  const updateLastLogin = async (userId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ last_login_at: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating last login:', error);
     }
   };
 
   useEffect(() => {
-    const ensureProfile = async (userId: string) => {
+    const ensureProfile = async (userId: string, isNewLogin: boolean = false) => {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, subscription_tier, avatar_url, full_name')
+        .select('id, subscription_tier, avatar_url, full_name, last_login_at')
         .eq('id', userId)
         .single();
 
@@ -67,6 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             {
               id: userId,
               created_at: new Date().toISOString(),
+              last_login_at: new Date().toISOString(),
               full_name: null,
               avatar_url: null
             }
@@ -79,6 +95,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSubscriptionTier(profile.subscription_tier || 'free');
         setAvatarUrl(addCacheBusting(profile.avatar_url));
         setFullName(profile.full_name);
+        setLastLoginAt(profile.last_login_at);
+
+        // Update last login timestamp on new sign in
+        if (isNewLogin) {
+          await updateLastLogin(userId);
+        }
       }
     };
 
@@ -87,18 +109,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        ensureProfile(session.user.id);
+        ensureProfile(session.user.id, false);
       }
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        ensureProfile(session.user.id);
+        // Only update last login on actual sign in events
+        const isNewLogin = event === 'SIGNED_IN';
+        ensureProfile(session.user.id, isNewLogin);
       }
     });
 
@@ -176,10 +200,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       subscriptionTier,
       avatarUrl,
       fullName,
+      lastLoginAt,
       signOut,
       refreshProfile,
     }),
-    [session, user, subscriptionTier, avatarUrl, fullName] // signOut/refreshProfile are stable
+    [session, user, subscriptionTier, avatarUrl, fullName, lastLoginAt] // signOut/refreshProfile are stable
   );
 
   return (

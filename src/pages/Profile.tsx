@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Crown, Check, Camera, Calendar, AlertCircle, ChevronRight } from "lucide-react";
+import { Crown, Check, Camera, Calendar, AlertCircle, ChevronRight, Clock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +45,8 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [lastLoginAt, setLastLoginAt] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Connected people state
@@ -184,6 +186,35 @@ const Profile = () => {
     });
   };
 
+  const formatIsoDate = (isoString: string | null | undefined) => {
+    if (!isoString) return 'Not available';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatRelativeTime = (isoString: string | null | undefined) => {
+    if (!isoString) return 'Never';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return 'Never';
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    return formatIsoDate(isoString);
+  };
+
   // Add cache-busting to avatar URLs to ensure fresh images are loaded
   const addCacheBusting = (url: string | null): string | null => {
     if (!url) return null;
@@ -206,6 +237,8 @@ const Profile = () => {
         setFullName(data.full_name || '');
         setHomeLocation(data.home_location || '');
         setAvatarUrl(addCacheBusting(data.avatar_url));
+        setLastLoginAt(data.last_login_at);
+        setCreatedAt(data.created_at);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -445,6 +478,16 @@ const Profile = () => {
                 </div>
                 <div className="text-center text-sm text-muted-foreground">
                   {session.user.email}
+                </div>
+                <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    <span>Member since {formatIsoDate(createdAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>Last login: {formatRelativeTime(lastLoginAt)}</span>
+                  </div>
                 </div>
               </div>
 
