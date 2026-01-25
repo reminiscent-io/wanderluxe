@@ -67,7 +67,7 @@ export function ActiveTripCard({
           </Badge>
 
           {/* Weather Info */}
-          {weather && !weatherLoading && (
+          {weather?.current && !weatherLoading && (
             <motion.div
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -75,10 +75,10 @@ export function ActiveTripCard({
               className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white"
             >
               <div className="flex items-center gap-2">
-                <span className="text-lg">{getWeatherEmoji(weather.icon)}</span>
+                <span className="text-lg">{getWeatherEmoji(weather.current.icon)}</span>
                 <div className="text-right">
-                  <div className="font-bold text-lg leading-none">{weather.temp}°C</div>
-                  <div className="text-xs opacity-80">{weather.localTime}</div>
+                  <div className="font-bold text-lg leading-none">{weather.current.temp}°F</div>
+                  <div className="text-xs opacity-80">{weather.current.localTime}</div>
                 </div>
               </div>
             </motion.div>

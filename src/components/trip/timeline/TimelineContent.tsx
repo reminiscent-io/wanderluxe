@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { setDayActivityTravelers } from '@/services/travelers';
+import { WeatherData, getWeatherForDate } from '@/hooks/useWeather';
 
 interface TimelineContentProps {
   days?: TripDay[];
@@ -19,6 +20,7 @@ interface TimelineContentProps {
   tripArrivalDate?: string;
   tripDepartureDate?: string;
   canEdit?: boolean;
+  weather?: WeatherData;
 }
 
 const TimelineContent: React.FC<TimelineContentProps> = ({
@@ -27,7 +29,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   hotelStays,
   tripArrivalDate,
   tripDepartureDate,
-  canEdit = true
+  canEdit = true,
+  weather
 }) => {
   const queryClient = useQueryClient();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
@@ -104,7 +107,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       <div className="space-y-2 sm:space-y-3 md:space-y-4 snap-y snap-proximity pb-20 md:pb-4 -mx-1 md:-mx-6 px-1 md:px-6 py-4 md:py-6 rounded-lg">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
-          
+          const dayDate = day.date.split('T')[0]; // Normalize to YYYY-MM-DD
+          const dayWeather = getWeatherForDate(weather, dayDate);
+
           return (
             <div key={day.day_id} className="snap-start">
               <CompactDayCard
@@ -114,6 +119,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 title={day.title}
                 activities={day.activities || []}
                 index={dayIndex}
+                weather={dayWeather}
               hotelStays={hotelStays.filter(stay => {
                 if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
                 

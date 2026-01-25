@@ -12,6 +12,7 @@ import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 import { AIAssistantPanel } from './ai-assistant';
+import { useWeather } from '@/hooks/useWeather';
 
 interface TimelineViewProps {
   tripId: string;
@@ -48,6 +49,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
+  // Fetch weather for the trip destination (only for current/upcoming trips)
+  const { data: weather } = useWeather(tripDestination);
 
   const [localTripDates, setLocalTripDates] = useState<{
     arrival_date: string | null;
@@ -224,6 +228,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           tripArrivalDate={localTripDates.arrival_date || undefined}
           tripDepartureDate={localTripDates.departure_date || undefined}
           canEdit={canEdit}
+          weather={weather}
         />
       </div>
 
