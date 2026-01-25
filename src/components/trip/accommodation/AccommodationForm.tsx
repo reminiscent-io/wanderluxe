@@ -74,6 +74,7 @@ interface Props {
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
   tripId: string;
+  destination?: string; // Trip destination to bias search results
 }
 
 /* -------------------------------------------------------------------------- */
@@ -125,6 +126,7 @@ export default function AccommodationForm({
   tripArrivalDate,
   tripDepartureDate,
   tripId,
+  destination,
 }: Props) {
   /* ----------------------------- RHF init ----------------------------- */
   const form = useForm<z.infer<typeof schema>>({
@@ -267,6 +269,7 @@ export default function AccommodationForm({
               </FormLabel>
               <HotelSearchInput
                 value={field.value}
+                locationContext={destination}
                 onChange={(val, d: any) => {
                   field.onChange(val);
                   // Basic details from picker (if present)

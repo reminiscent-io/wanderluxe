@@ -38,6 +38,7 @@ interface DiningListProps {
   className?: string;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  destination?: string;
 }
 
 /**
@@ -48,7 +49,7 @@ interface DiningListProps {
  */
 const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
   (
-    { reservations, formatTime, dayId, tripId, className = '', tripArrivalDate, tripDepartureDate },
+    { reservations, formatTime, dayId, tripId, className = '', tripArrivalDate, tripDepartureDate, destination },
     ref
   ): JSX.Element => {
     const qc = useQueryClient();
@@ -225,6 +226,7 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
           }}
           tripArrivalDate={tripArrivalDate}
           tripDepartureDate={tripDepartureDate}
+          destination={destination}
         />
 
         {/* delete confirm */}

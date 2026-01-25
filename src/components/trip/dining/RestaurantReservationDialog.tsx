@@ -22,6 +22,7 @@ interface RestaurantReservationDialogProps {
   onSuccess?: () => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  destination?: string;        // Trip destination to bias search results
   // Legacy props from Sidebar
   title?: string;
   isSubmitting?: boolean;
@@ -39,6 +40,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   onSuccess,
   tripArrivalDate,
   tripDepartureDate,
+  destination,
   title,
   isSubmitting: legacyIsSubmitting,
   onSubmit: legacyOnSubmit,
@@ -138,6 +140,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             tripId={tripId}
             tripArrivalDate={tripArrivalDate}
             tripDepartureDate={tripDepartureDate}
+            destination={destination}
           />
         </div>
       </DialogContent>

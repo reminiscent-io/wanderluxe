@@ -10,6 +10,7 @@ interface GooglePlacesAutocompleteProps {
   className?: string;
   placeholder?: string;
   autoFocus?: boolean;
+  locationContext?: string; // e.g., "Paris, France" to bias search results
 }
 
 const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
@@ -17,7 +18,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   onChange,
   className,
   placeholder = "Search for hotels...",
-  autoFocus
+  autoFocus,
+  locationContext
 }) => {
   const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +29,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isSelectingRef = useRef(false); // Track if user is selecting from dropdown
 
   // Update dropdown position when showing suggestions
   useEffect(() => {
@@ -60,7 +63,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 
     setIsLoading(true);
     try {
-      const results = await searchPlaces(query, 'lodging');
+      const results = await searchPlaces(query, 'lodging', locationContext);
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
       setSelectedIndex(-1);
@@ -71,7 +74,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locationContext]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -128,13 +131,17 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   };
 
   const handleBlur = (e: React.FocusEvent) => {
+    // Don't close if user is actively selecting from dropdown
+    if (isSelectingRef.current) {
+      return;
+    }
     // Longer timeout for mobile devices where touch events take longer to process
     setTimeout(() => {
-      if (!dropdownRef.current?.contains(document.activeElement)) {
+      if (!isSelectingRef.current && !dropdownRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
         setSelectedIndex(-1);
       }
-    }, 300);
+    }, 200);
   };
 
   useEffect(() => {
@@ -154,8 +161,21 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
         width: dropdownPosition.width,
         zIndex: 9999
       }}
-      onMouseDown={(e) => e.preventDefault()}
-      onTouchStart={(e) => e.stopPropagation()}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        isSelectingRef.current = true;
+      }}
+      onMouseUp={() => {
+        setTimeout(() => { isSelectingRef.current = false; }, 100);
+      }}
+      onTouchStart={(e) => {
+        e.stopPropagation();
+        isSelectingRef.current = true;
+      }}
+      onTouchEnd={() => {
+        setTimeout(() => { isSelectingRef.current = false; }, 100);
+      }}
     >
       {suggestions.map((suggestion, index) => (
         <button
@@ -165,10 +185,6 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
             index === selectedIndex ? 'bg-sand-100' : ''
           }`}
           onClick={() => handleSuggestionSelect(suggestion)}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            handleSuggestionSelect(suggestion);
-          }}
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <div className="font-medium text-sm">

@@ -15,10 +15,15 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   onValueChange,
   className
 }) => {
+  // Show symbol for selected value, or "$" as default placeholder
+  const displayValue = value
+    ? `${value} ${CURRENCY_SYMBOLS[value as keyof typeof CURRENCY_SYMBOLS] || ''}`
+    : undefined;
+
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={`w-[180px] rounded-lg px-3 py-2 text-sm bg-sand-50 border border-gray-200 ${className}`}>
-        <SelectValue placeholder="Currency" />
+      <SelectTrigger className={`w-auto min-w-[80px] rounded-lg px-3 py-2 text-sm bg-sand-50 border border-gray-200 ${className}`}>
+        <SelectValue placeholder="$">{displayValue}</SelectValue>
       </SelectTrigger>
       <SelectContent className="z-[9999]">
         {CURRENCIES.map(currency => (

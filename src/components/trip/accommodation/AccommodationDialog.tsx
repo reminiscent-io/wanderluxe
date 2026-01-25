@@ -20,6 +20,7 @@ interface AccommodationDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: Accommodation;
   onSuccess: () => void;
+  destination?: string; // Trip destination to bias search results
 }
 
 const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
@@ -28,6 +29,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   onOpenChange,
   initialData,
   onSuccess,
+  destination,
 }) => {
   const queryClient = useQueryClient();
   const [tripDates, setTripDates] = useState<{
@@ -153,6 +155,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
             tripDepartureDate={tripDates.departure_date}
             onDelete={handleDelete}
             tripId={tripId}
+            destination={destination}
           />
         </div>
       </DialogContent>

@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
 import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
+import CurrencySelector from '../budget/CurrencySelector';
 
 import {
   loadGoogleMapsAPI,
@@ -91,6 +92,7 @@ interface RestaurantReservationFormProps {
   tripId: string;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  destination?: string; // Trip destination to bias search results
 }
 
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
@@ -102,6 +104,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   tripId,
   tripArrivalDate,
   tripDepartureDate,
+  destination,
 }) => {
   const { toast } = useToast();
 
@@ -296,6 +299,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <RestaurantSearchInput
                 autoFocus
                 value={field.value}
+                locationContext={destination}
                 onChange={(name, details) => {
                   field.onChange(name);
                   if (details) {
@@ -449,13 +453,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        {/* Party Size & Cost - Single Row */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Party Size, Cost & Currency - Single Row */}
+        <div className="flex gap-3 items-end">
           <FormField
             control={form.control}
             name="number_of_people"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-20">
                 <FormLabel>Party Size</FormLabel>
                 <FormControl>
                   <Input
@@ -483,25 +487,39 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="cost"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex-1">
                 <FormLabel>Cost</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sand-500">$</span>
-                    <Input
-                      type="text"
-                      value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
-                      onChange={(e) => {
-                        const numericValue = Number(e.target.value.replace(/,/g, ''));
-                        field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
-                      }}
-                      onBlur={(e) => {
-                        handleCostBlur(e.target.value);
-                      }}
-                      placeholder="0"
-                      className="bg-white pl-7"
-                    />
-                  </div>
+                  <Input
+                    type="text"
+                    value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
+                    onChange={(e) => {
+                      const numericValue = Number(e.target.value.replace(/,/g, ''));
+                      field.onChange(Number.isNaN(numericValue) ? undefined : numericValue);
+                    }}
+                    onBlur={(e) => {
+                      handleCostBlur(e.target.value);
+                    }}
+                    placeholder="0"
+                    className="bg-white"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="currency"
+            render={({ field }) => (
+              <FormItem className="shrink-0">
+                <FormControl>
+                  <CurrencySelector
+                    value={field.value || 'USD'}
+                    onValueChange={field.onChange}
+                    className="bg-white"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

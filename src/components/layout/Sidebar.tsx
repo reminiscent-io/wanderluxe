@@ -315,6 +315,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         onOpenChange={setAccommodationOpen}
         initialData={selectedAccommodation}
         tripId={tripId || ""}
+        destination={trip?.destination}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
           queryClient.invalidateQueries({ queryKey: ["accommodations", tripId] });
@@ -354,6 +355,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         isSubmitting={false}
         tripArrivalDate={trip?.arrival_date}
         tripDepartureDate={trip?.departure_date}
+        destination={trip?.destination}
         onDelete={selectedReservation ? async () => {
           await handleReservationDelete(selectedReservation.id);
           setReservationOpen(false);
