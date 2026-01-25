@@ -21,7 +21,9 @@ export function ActiveTripCard({
   fullBleed = false,
   additionalTripsCount = 0
 }: ActiveTripCardProps) {
-  const { data: weather, isLoading: weatherLoading } = useWeather(trip.destination);
+  // Use primary_destination for weather if available, fallback to trip name
+  const weatherLocation = trip.primary_destination || trip.destination;
+  const { data: weather, isLoading: weatherLoading } = useWeather(weatherLocation);
 
   // Calculate trip progress
   const today = new Date();
@@ -106,9 +108,15 @@ export function ActiveTripCard({
             <h2 className="text-white text-3xl md:text-4xl font-black leading-tight mb-2 drop-shadow-lg">
               {trip.destination}
             </h2>
-            <div className="flex items-center gap-4 text-white/80 text-sm">
+            <div className="flex flex-col gap-1 text-white/80 text-sm">
+              {trip.primary_destination && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {trip.primary_destination}
+                </span>
+              )}
               <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
+                <Clock className="h-4 w-4" />
                 {format(arrival, 'MMM d')} - {format(departure, 'MMM d, yyyy')}
               </span>
             </div>

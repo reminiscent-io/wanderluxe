@@ -184,5 +184,7 @@ export interface Trip {
   departure_date: string;
   budget: number | null;
   is_public?: boolean;
+  primary_destination?: string | null;
+  primary_destination_place_id?: string | null;
   accommodations?: Accommodation[];
 }

@@ -142,7 +142,7 @@ Deno.serve(async (req: Request) => {
     await supabase.from('ai_chat_messages').insert({ thread_id: threadId, role: 'user', content: message.trim() });
 
     // Fetch trip details and related data for context
-    const { data: trip } = await supabase.from('trips').select('destination, arrival_date, departure_date').eq('trip_id', tripId).single();
+    const { data: trip } = await supabase.from('trips').select('destination, arrival_date, departure_date, primary_destination, primary_destination_place_id').eq('trip_id', tripId).single();
     const { data: days } = await supabase.from('trip_days').select('date, title, day_activities(title, start_time)').eq('trip_id', tripId).order('date');
     const { data: msgs } = await supabase.from('ai_chat_messages').select('role, content').eq('thread_id', threadId).order('created_at', { ascending: false }).limit(10);
 
@@ -172,11 +172,15 @@ Deno.serve(async (req: Request) => {
 
     // Determine the best location context
     const tripName = trip?.destination || 'this trip';
+    const primaryDestination = trip?.primary_destination;
     const inferredLocations = locationHints.length > 0 ? locationHints.slice(0, 3).join('; ') : null;
 
     // Build location description for the prompt
+    // Priority: primary_destination > inferred from bookings > trip name
     let locationContext: string;
-    if (inferredLocations) {
+    if (primaryDestination) {
+      locationContext = `The trip "${tripName}" is to ${primaryDestination}.`;
+    } else if (inferredLocations) {
       locationContext = `The trip is named "${tripName}". Based on booked accommodations, transportation, and reservations, the locations include: ${inferredLocations}.`;
     } else {
       locationContext = `The trip destination is: ${tripName}.`;
@@ -192,8 +196,8 @@ Deno.serve(async (req: Request) => {
       itineraryContext = `\n\nCurrent itinerary:\n${daysSummary}`;
     }
 
-    // Use a reasonable search location (first hotel address or trip name)
-    const searchLocation = (accommodations?.[0]?.hotel_address || transportation?.[0]?.arrival_location || tripName).replace(/\s+/g, '+');
+    // Use a reasonable search location (primary destination > first hotel address > trip name)
+    const searchLocation = (primaryDestination || accommodations?.[0]?.hotel_address || transportation?.[0]?.arrival_location || tripName).replace(/\s+/g, '+');
 
     const systemPrompt = `You are a helpful travel assistant. ${locationContext}
 Trip dates: ${trip?.arrival_date || 'TBD'} to ${trip?.departure_date || 'TBD'}.${itineraryContext}

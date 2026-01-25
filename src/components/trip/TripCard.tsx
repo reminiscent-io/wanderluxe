@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { EyeOff, Share2, Users, Calendar, MapPin, Clock } from 'lucide-react';
+import { EyeOff, Share2, Users, Calendar, MapPin } from 'lucide-react';
 import { format, getYear, parseISO, differenceInDays, isToday, isTomorrow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -163,6 +163,12 @@ const TripCard = ({
                 <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight mb-1 drop-shadow-lg">
                   {trip.destination}
                 </h3>
+                {trip.primary_destination && (
+                  <div className="flex items-center text-white/80 text-sm font-medium mb-1">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                    {trip.primary_destination}
+                  </div>
+                )}
                 <div className="flex items-center text-white/90 text-sm font-medium">
                   <Calendar className="h-4 w-4 mr-2" />
                   {formatDateRange(trip)}

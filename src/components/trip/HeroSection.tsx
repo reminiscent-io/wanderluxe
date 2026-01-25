@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import UnsplashImage from '@/components/UnsplashImage';
 import { Button } from '@/components/ui/button';
-import { PencilIcon } from 'lucide-react';
+import { PencilIcon, MapPin } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import ImageSection from '@/components/trip/create/ImageSection';
+import PrimaryDestinationInput from '@/components/trip/create/PrimaryDestinationInput';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,6 +20,8 @@ interface HeroSectionProps {
   unsplashUsername?: string;
   isLoading?: boolean;
   canEdit?: boolean;
+  primaryDestination?: string | null;
+  primaryDestinationPlaceId?: string | null;
 }
 
 interface DateRangeDisplayProps {
@@ -91,11 +94,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   unsplashUsername,
   isLoading = false,
   canEdit = true,
+  primaryDestination,
+  primaryDestinationPlaceId,
 }) => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
+  const [isEditingDestination, setIsEditingDestination] = useState(false);
+  const [editedPrimaryDestination, setEditedPrimaryDestination] = useState(primaryDestination || '');
+  const [editedPrimaryDestinationPlaceId, setEditedPrimaryDestinationPlaceId] = useState(primaryDestinationPlaceId || '');
 
   const [imagePosition, setImagePosition] = useState<string>("center 50%");
 
@@ -155,6 +163,33 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   };
 
+  const handlePrimaryDestinationChange = (destination: string, placeId: string) => {
+    setEditedPrimaryDestination(destination);
+    setEditedPrimaryDestinationPlaceId(placeId);
+  };
+
+  const handlePrimaryDestinationSubmit = async () => {
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .update({
+          primary_destination: editedPrimaryDestination || null,
+          primary_destination_place_id: editedPrimaryDestinationPlaceId || null
+        })
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+
+      setIsEditingDestination(false);
+      toast.success('Primary destination updated successfully');
+    } catch (error) {
+      console.error('Error updating primary destination:', error);
+      toast.error('Failed to update primary destination');
+    }
+  };
+
   // Keep track of the last valid title for smooth transitions
   const [lastValidTitle, setLastValidTitle] = React.useState(title);
   const [lastValidDates, setLastValidDates] = React.useState({
@@ -167,6 +202,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setLastValidTitle(title);
     }
   }, [title]);
+
+  // Sync primary destination state with props
+  React.useEffect(() => {
+    setEditedPrimaryDestination(primaryDestination || '');
+    setEditedPrimaryDestinationPlaceId(primaryDestinationPlaceId || '');
+  }, [primaryDestination, primaryDestinationPlaceId]);
 
   React.useEffect(() => {
     if (arrivalDate && departureDate) {
@@ -307,7 +348,72 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           )}
 
-          <DateRangeDisplay 
+          {/* Primary Destination Display/Edit */}
+          {isEditingDestination ? (
+            <div className="w-full max-w-md mb-4">
+              <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3">
+                <PrimaryDestinationInput
+                  value={editedPrimaryDestination}
+                  placeId={editedPrimaryDestinationPlaceId}
+                  onChange={handlePrimaryDestinationChange}
+                  showLabel={false}
+                  placeholder="Search for a city..."
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2 mt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/20"
+                    onClick={() => {
+                      setIsEditingDestination(false);
+                      setEditedPrimaryDestination(primaryDestination || '');
+                      setEditedPrimaryDestinationPlaceId(primaryDestinationPlaceId || '');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handlePrimaryDestinationSubmit}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : primaryDestination ? (
+            <div className="group/dest relative mb-2">
+              <p
+                className={`text-lg md:text-xl font-medium drop-shadow-md text-center flex items-center gap-2 justify-center ${canEdit ? 'cursor-pointer hover:text-white/80' : ''}`}
+                onClick={canEdit ? () => setIsEditingDestination(true) : undefined}
+              >
+                <MapPin className="h-4 w-4" />
+                {primaryDestination}
+              </p>
+              {canEdit && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute -right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/dest:opacity-100 transition-opacity h-6 w-6 p-0"
+                  onClick={() => setIsEditingDestination(true)}
+                >
+                  <PencilIcon className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          ) : canEdit && !isLoading ? (
+            <button
+              className="text-sm text-white/70 hover:text-white mb-2 flex items-center gap-1 transition-colors"
+              onClick={() => setIsEditingDestination(true)}
+            >
+              <MapPin className="h-3 w-3" />
+              Add primary destination
+            </button>
+          ) : null}
+
+          <DateRangeDisplay
             isLoading={isLoading}
             formattedDateRange={formattedDateRange}
           />

@@ -138,6 +138,8 @@ const TripDetails = () => {
               departureDate={displayData.departure_date}
               isLoading={tripLoading && !previousTrip}
               canEdit={canEdit}
+              primaryDestination={displayData.primary_destination}
+              primaryDestinationPlaceId={displayData.primary_destination_place_id}
             />
           </div>
 
@@ -178,6 +180,7 @@ const TripDetails = () => {
                       departure_date: displayData?.departure_date && displayData.departure_date.trim() !== '' ? displayData.departure_date : null
                     }}
                     tripDestination={displayData.destination}
+                    primaryDestination={displayData.primary_destination}
                     canEdit={canEdit}
                   />
                 </ErrorBoundary>
