@@ -90,14 +90,15 @@ export function NextTripBoardingPass({
         }}
       />
 
-      {/* Decorative tear line */}
-      <div className="absolute left-0 right-0 top-[60%] md:top-auto md:left-[70%] md:right-auto md:top-0 md:bottom-0 md:w-px flex md:flex-col items-center justify-center">
-        <div className="w-full h-px md:w-px md:h-full border-t md:border-l border-dashed border-amber-300" />
+      {/* Decorative tear line - desktop only (mobile has separator in image section) */}
+      <div className="hidden md:flex absolute md:left-[70%] md:top-0 md:bottom-0 md:w-px md:flex-col items-center justify-center">
+        <div className="w-px h-full border-l border-dashed border-amber-300" />
       </div>
 
-      <div className="relative p-5 md:p-6 flex flex-col md:flex-row md:items-stretch min-h-[320px] md:min-h-[280px]">
+      {/* Desktop layout with padding */}
+      <div className="relative p-5 md:p-6 flex flex-col md:flex-row md:items-stretch min-h-[280px]">
         {/* Main Content - Left Side */}
-        <div className="flex-1 md:pr-8 pb-6 md:pb-0">
+        <div className="flex-1 md:pr-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <Badge className="bg-amber-500/20 text-amber-800 font-semibold border border-amber-300">
@@ -172,11 +173,11 @@ export function NextTripBoardingPass({
           </Button>
         </div>
 
-        {/* Right Side - Trip Image / Barcode area */}
-        <div className="md:w-[30%] flex flex-col items-center justify-center pt-6 md:pt-0 md:pl-8 border-t md:border-t-0 border-dashed border-amber-300">
-          {/* Trip Cover Image (small) */}
+        {/* Right Side - Desktop only */}
+        <div className="hidden md:flex md:w-[30%] flex-col items-center justify-center md:pl-8">
+          {/* Trip Cover Image */}
           {trip.cover_image_url && (
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden shadow-lg mb-4 border-2 border-amber-200">
+            <div className="w-32 h-32 rounded-xl overflow-hidden shadow-lg mb-4 border-2 border-amber-200">
               <img
                 src={trip.cover_image_url}
                 alt={trip.destination}
@@ -200,6 +201,39 @@ export function NextTripBoardingPass({
           </div>
         </div>
       </div>
+
+      {/* Mobile full-width image section */}
+      {trip.cover_image_url && (
+        <div className="relative md:hidden">
+          {/* Dashed separator line */}
+          <div className="absolute top-0 left-0 right-0 border-t border-dashed border-amber-300" />
+
+          {/* Full-width image */}
+          <div className="h-48 w-full overflow-hidden">
+            <img
+              src={trip.cover_image_url}
+              alt={trip.destination}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Barcode overlay at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 flex flex-col items-center">
+            <div className="flex gap-0.5 h-10 items-end">
+              {Array.from({ length: 24 }, (_, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-white/80"
+                  style={{ height: `${Math.random() * 60 + 40}%` }}
+                />
+              ))}
+            </div>
+            <div className="text-xs font-mono text-white/80 mt-1">
+              {trip.trip_id.slice(0, 12).toUpperCase()}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
