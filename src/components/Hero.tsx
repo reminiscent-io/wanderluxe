@@ -141,7 +141,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex justify-center items-center w-full px-4"
+            className="flex flex-col justify-center items-center w-full px-4"
           >
             <motion.button
               initial={{ scale: 0.97 }}
@@ -159,8 +159,24 @@ const Hero = () => {
                 fallbackText="WanderLuxe"
               />
             </motion.button>
+
+            {/* Subtle click hint */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.7, 0.7, 0] }}
+              transition={{
+                duration: 4,
+                delay: 2,
+                times: [0, 0.1, 0.8, 1],
+                repeat: Infinity,
+                repeatDelay: 3
+              }}
+              className="mt-6 text-white/70 text-sm tracking-widest uppercase cursor-pointer"
+              onClick={() => navigate("/my-trips")}
+            >
+              Click to enter
+            </motion.p>
           </motion.div>
-          {/* Button hidden as requested */}
         </div>
       </motion.div>
     </div>
