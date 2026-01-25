@@ -162,12 +162,13 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   };
 
   const handleBlur = (e: React.FocusEvent) => {
+    // Longer timeout for mobile devices where touch events take longer to process
     setTimeout(() => {
       if (!dropdownRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
         setSelectedIndex(-1);
       }
-    }, 150);
+    }, 300);
   };
 
   useEffect(() => {
@@ -187,15 +188,21 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
         width: dropdownPosition.width,
         zIndex: 9999
       } : undefined}
+      onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking dropdown
+      onTouchStart={(e) => e.stopPropagation()} // Prevent touch events from closing dropdown
     >
       {suggestions.map((suggestion, index) => (
         <button
           key={suggestion.place_id}
           type="button"
-          className={`w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+          className={`w-full px-3 py-2 text-left hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 last:border-b-0 touch-manipulation ${
             index === selectedIndex ? 'bg-gray-100' : ''
           }`}
           onClick={() => handleSuggestionSelect(suggestion)}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleSuggestionSelect(suggestion);
+          }}
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <div className="flex items-center gap-2">
