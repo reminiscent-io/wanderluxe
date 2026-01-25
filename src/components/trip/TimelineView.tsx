@@ -13,6 +13,7 @@ import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 import { AIAssistantPanel } from './ai-assistant';
 import { useWeather } from '@/hooks/useWeather';
+import ViewingStatusAvatars from './timeline/ViewingStatusAvatars';
 
 interface TimelineViewProps {
   tripId: string;
@@ -198,7 +199,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
       {/* Timeline Content - Left side, 60% width on desktop, full width on mobile */}
       <div className="w-full md:w-[60%] px-1 md:px-4 space-y-8">
-        <div className="flex justify-between items-center mb-6 pt-4 md:pt-0">
+        <div className="flex justify-between items-center mb-2 pt-4 md:pt-0">
           <h2 className="text-2xl font-bold text-earth-500">Trip Timeline</h2>
           <div className="flex gap-2">
             <Button
@@ -215,6 +216,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
             />
           </div>
+        </div>
+
+        <div className="mb-4">
+          <ViewingStatusAvatars tripId={tripId} />
         </div>
 
         <ShareTripDialog
