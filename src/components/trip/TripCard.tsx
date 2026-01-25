@@ -10,6 +10,7 @@ import { Trip } from '@/types/trip';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from '@/integrations/supabase/client';
+import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
 
 interface TripCardProps {
   trip: Trip & { 
@@ -32,10 +33,24 @@ const TripCard = ({
 }: TripCardProps) => {
   const navigate = useNavigate();
   const [imageUrl, setImageUrl] = useState(trip.cover_image_url);
-  
+
   // Use either the isShared prop or check if the trip object has isShared property
   const tripIsShared = isShared || trip.isShared;
   const shareCount = trip.shareCount || 0;
+
+  // Check if trip starts within 5 days (forecast window)
+  const daysUntilTrip = trip.arrival_date
+    ? differenceInDays(parseISO(trip.arrival_date), new Date())
+    : null;
+  const showWeather = daysUntilTrip !== null && daysUntilTrip >= 0 && daysUntilTrip <= 5;
+
+  // Fetch weather for upcoming trips within forecast window
+  const weatherLocation = trip.primary_destination || trip.destination;
+  const { data: weather } = useWeather(showWeather && !isExample ? weatherLocation : undefined);
+
+  // Get forecast for arrival date
+  const arrivalDateStr = trip.arrival_date?.split('T')[0];
+  const arrivalForecast = arrivalDateStr ? getWeatherForDate(weather, arrivalDateStr) : undefined;
 
   useEffect(() => {
     const loadImage = async () => {
@@ -149,10 +164,26 @@ const TripCard = ({
           
           {/* Status Badge */}
           {tripStatus && (
-            <div className="absolute top-4 left-4">
+            <div className="absolute top-4 left-4 flex flex-wrap gap-2">
               <Badge className={`${tripStatus.color} text-white border-0 px-3 py-1 font-medium shadow-lg backdrop-blur-sm`}>
                 {tripStatus.label}
               </Badge>
+              {/* Weather Forecast Badge for upcoming trips */}
+              {arrivalForecast && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge className="bg-white/90 text-earth-800 border-0 px-2 py-1 font-medium shadow-lg backdrop-blur-sm">
+                        {getWeatherEmoji(arrivalForecast.icon)} {arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="capitalize">{arrivalForecast.description}</p>
+                      <p>Forecast for arrival day</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           )}
           

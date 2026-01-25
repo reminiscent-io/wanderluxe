@@ -243,7 +243,8 @@ const MyTrips = () => {
     if (currentMyTrips.length > 0 || currentSharedTrips.length > 0) {
       return 'on-trip';
     }
-    if (nextTrip && daysUntilNextTrip !== null && daysUntilNextTrip <= 14) {
+    // Show next upcoming trip regardless of how far away it is
+    if (nextTrip && daysUntilNextTrip !== null && daysUntilNextTrip >= 0) {
       return 'pre-trip';
     }
     return 'default';

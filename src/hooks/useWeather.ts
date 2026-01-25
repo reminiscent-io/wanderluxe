@@ -67,6 +67,19 @@ export function getWeatherForDate(weather: WeatherData | undefined, date: string
   return weather.daily.find(d => d.date === date);
 }
 
+// Check if a date is today (in local timezone)
+export function isToday(dateString: string): boolean {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  return dateString === todayStr;
+}
+
+// Get the current weather if the date is today
+export function getCurrentWeatherForToday(weather: WeatherData | undefined, date: string): WeatherData['current'] | undefined {
+  if (!weather?.current || !isToday(date)) return undefined;
+  return weather.current;
+}
+
 // Weather condition to icon mapping
 export function getWeatherIcon(condition: string): string {
   const icons: Record<string, string> = {

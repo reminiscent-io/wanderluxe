@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import { DailyForecast } from '@/hooks/useWeather';
+import { DailyForecast, WeatherData } from '@/hooks/useWeather';
 import DayWeatherBadge from '@/components/trip/timeline/DayWeatherBadge';
 
 type Props = {
@@ -19,6 +19,7 @@ type Props = {
   isExpanded: boolean;
   onToggle: () => void;
   weather?: DailyForecast;
+  currentWeather?: WeatherData['current'];
 };
 
 const DayHeader: React.FC<Props> = ({
@@ -34,6 +35,7 @@ const DayHeader: React.FC<Props> = ({
   isExpanded,
   onToggle,
   weather,
+  currentWeather,
 }) => {
   return (
     <motion.div 
@@ -53,8 +55,12 @@ const DayHeader: React.FC<Props> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              {weather && (
-                <DayWeatherBadge forecast={weather} />
+              {(weather || (isTodayFlag && currentWeather)) && (
+                <DayWeatherBadge
+                  forecast={weather}
+                  currentWeather={currentWeather}
+                  isToday={isTodayFlag}
+                />
               )}
               {isTodayFlag && (
                 <Badge className="bg-emerald-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">Today</Badge>

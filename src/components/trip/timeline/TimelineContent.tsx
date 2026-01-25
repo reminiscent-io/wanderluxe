@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { setDayActivityTravelers } from '@/services/travelers';
-import { WeatherData, getWeatherForDate } from '@/hooks/useWeather';
+import { WeatherData, getWeatherForDate, isToday } from '@/hooks/useWeather';
 
 interface TimelineContentProps {
   days?: TripDay[];
@@ -109,6 +109,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
           const dayDate = day.date.split('T')[0]; // Normalize to YYYY-MM-DD
           const dayWeather = getWeatherForDate(weather, dayDate);
+          const isTodayDay = isToday(dayDate);
 
           return (
             <div key={day.day_id} className="snap-start">
@@ -120,6 +121,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 activities={day.activities || []}
                 index={dayIndex}
                 weather={dayWeather}
+                currentWeather={isTodayDay ? weather?.current : undefined}
               hotelStays={hotelStays.filter(stay => {
                 if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
                 

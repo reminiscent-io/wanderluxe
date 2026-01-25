@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plane, Calendar, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Plane, Calendar, MapPin, Clock, ChevronRight, CloudSun } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
+import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
 
 interface NextTripBoardingPassProps {
   trip: Trip;
@@ -27,6 +28,14 @@ export function NextTripBoardingPass({
   className
 }: NextTripBoardingPassProps) {
   const [countdown, setCountdown] = useState<Countdown>({ days: daysUntil, hours: 0, minutes: 0 });
+
+  // Fetch weather for the destination (only useful if trip starts within 5 days)
+  const weatherLocation = trip.primary_destination || trip.destination;
+  const { data: weather } = useWeather(daysUntil <= 5 ? weatherLocation : undefined);
+
+  // Get the forecast for the arrival date
+  const arrivalDateStr = trip.arrival_date?.split('T')[0];
+  const arrivalForecast = arrivalDateStr ? getWeatherForDate(weather, arrivalDateStr) : undefined;
 
   // Live countdown timer
   useEffect(() => {
@@ -137,6 +146,16 @@ export function NextTripBoardingPass({
                   {format(departure, 'MMM d, yyyy')}
                 </div>
               </div>
+              {/* Weather Forecast for Arrival Day */}
+              {arrivalForecast && (
+                <div>
+                  <div className="text-xs text-amber-700 font-medium">FORECAST</div>
+                  <div className="text-sm font-bold text-earth-900 flex items-center gap-1">
+                    <span>{getWeatherEmoji(arrivalForecast.icon)}</span>
+                    <span>{arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°F</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

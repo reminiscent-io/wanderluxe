@@ -22,7 +22,7 @@ import { useActivitiesRealtime } from '@/hooks/useActivitiesRealtime';
 import { useAccommodationsRealtime } from '@/hooks/useAccommodationsRealtime';
 import { getNormalizedDay } from './components/timeline-utils';
 import { cn } from '@/lib/utils';
-import { DailyForecast } from '@/hooks/useWeather';
+import { DailyForecast, WeatherData } from '@/hooks/useWeather';
 
 export interface CompactDayCardProps {
   id: string;
@@ -42,6 +42,7 @@ export interface CompactDayCardProps {
   onReservationClick?: (reservation: RestaurantReservation) => void;
   canEdit?: boolean;
   weather?: DailyForecast;
+  currentWeather?: WeatherData['current'];
 }
 
 const CompactDayCard: React.FC<CompactDayCardProps> = ({
@@ -50,6 +51,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   onActivityClick, onHotelClick, onTransportationClick, onReservationClick,
   canEdit = true,
   weather,
+  currentWeather,
 }) => {
   // Check if day is in the past for auto-collapse
   const dayDate = new Date(date);
@@ -179,6 +181,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
           isExpanded={isExpanded}
           onToggle={() => setIsExpanded(!isExpanded)}
           weather={weather}
+          currentWeather={currentWeather}
         />
 
         {/* Body */}
