@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plane, Calendar, MapPin, Clock, ChevronRight, CloudSun } from 'lucide-react';
+import { Plane, Calendar, Clock, ChevronRight } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
@@ -13,6 +13,7 @@ interface NextTripBoardingPassProps {
   daysUntil: number;
   onViewTrip: () => void;
   className?: string;
+  fullBleed?: boolean;
 }
 
 interface Countdown {
@@ -25,7 +26,8 @@ export function NextTripBoardingPass({
   trip,
   daysUntil,
   onViewTrip,
-  className
+  className,
+  fullBleed = false
 }: NextTripBoardingPassProps) {
   const [countdown, setCountdown] = useState<Countdown>({ days: daysUntil, hours: 0, minutes: 0 });
 
@@ -67,102 +69,89 @@ export function NextTripBoardingPass({
   const arrival = parseISO(trip.arrival_date);
   const departure = parseISO(trip.departure_date);
   const defaultImage = 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f';
+  const coverImage = trip.cover_image_url || defaultImage;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
       className={cn(
         "relative overflow-hidden rounded-2xl shadow-xl cursor-pointer group",
+        fullBleed ? "h-[40vh] -mx-4 rounded-none md:rounded-2xl md:mx-0" : "h-[320px] md:h-[380px]",
         className
       )}
       onClick={onViewTrip}
     >
-      {/* Paper texture background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100" />
-
-      {/* Subtle pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}
-      />
-
-      {/* Decorative tear line - desktop only (mobile has separator in image section) */}
-      <div className="hidden md:flex absolute md:left-[70%] md:top-0 md:bottom-0 md:w-px md:flex-col items-center justify-center">
-        <div className="w-px h-full border-l border-dashed border-amber-300" />
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img
+          src={coverImage}
+          alt={trip.destination}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
       </div>
 
-      {/* Desktop layout with padding */}
-      <div className="relative p-5 md:p-6 flex flex-col md:flex-row md:items-stretch min-h-[280px]">
-        {/* Main Content - Left Side */}
-        <div className="flex-1 md:pr-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <Badge className="bg-amber-500/20 text-amber-800 font-semibold border border-amber-300">
-              <Plane className="h-3 w-3 mr-1" />
-              BOARDING PASS
-            </Badge>
-            <div className="text-xs text-amber-700 font-mono">
-              #{trip.trip_id.slice(0, 8).toUpperCase()}
-            </div>
-          </div>
+      {/* Content Overlay */}
+      <div className="relative h-full flex flex-col justify-between p-5 md:p-6">
+        {/* Top Section */}
+        <div className="flex items-start justify-between">
+          {/* Upcoming Badge */}
+          <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-semibold px-3 py-1 shadow-lg">
+            <Plane className="h-3 w-3 mr-1.5" />
+            UPCOMING
+          </Badge>
 
+          {/* Weather Forecast */}
+          {arrivalForecast && (
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{getWeatherEmoji(arrivalForecast.icon)}</span>
+                <div className="text-right">
+                  <div className="font-bold text-lg leading-none">
+                    {arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°F
+                  </div>
+                  <div className="text-xs opacity-80">forecast</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Bottom Section */}
+        <div className="space-y-4">
           {/* Countdown */}
-          <div className="mb-6">
-            <div className="text-xs text-amber-700 font-medium mb-1">DEPARTURE IN</div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl md:text-5xl font-black text-earth-900">
-                T-{countdown.days}
-              </span>
-              <span className="text-xl md:text-2xl font-bold text-earth-700">
-                d {countdown.hours}h {countdown.minutes}m
-              </span>
-            </div>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="bg-white/20 text-white backdrop-blur-sm px-3 py-1">
+              <Clock className="h-3 w-3 mr-1.5" />
+              T-{countdown.days}d {countdown.hours}h {countdown.minutes}m
+            </Badge>
           </div>
 
           {/* Destination */}
-          <div className="space-y-3">
-            <div>
-              <div className="text-xs text-amber-700 font-medium mb-1">DESTINATION</div>
-              <h2 className="text-2xl md:text-3xl font-black text-earth-900 leading-tight">
-                {trip.destination}
-              </h2>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <div>
-                <div className="text-xs text-amber-700 font-medium">DEPART</div>
-                <div className="text-sm font-bold text-earth-900 flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {format(arrival, 'MMM d, yyyy')}
-                </div>
-              </div>
-              <div>
-                <div className="text-xs text-amber-700 font-medium">RETURN</div>
-                <div className="text-sm font-bold text-earth-900 flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {format(departure, 'MMM d, yyyy')}
-                </div>
-              </div>
-              {/* Weather Forecast for Arrival Day */}
-              {arrivalForecast && (
-                <div>
-                  <div className="text-xs text-amber-700 font-medium">FORECAST</div>
-                  <div className="text-sm font-bold text-earth-900 flex items-center gap-1">
-                    <span>{getWeatherEmoji(arrivalForecast.icon)}</span>
-                    <span>{arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°F</span>
-                  </div>
-                </div>
-              )}
+          <div>
+            <h2 className="text-white text-3xl md:text-4xl font-black leading-tight mb-2 drop-shadow-lg">
+              {trip.destination}
+            </h2>
+            <div className="flex flex-col gap-1 text-white/80 text-sm">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                {format(arrival, 'MMM d')} - {format(departure, 'MMM d, yyyy')}
+              </span>
             </div>
           </div>
 
-          {/* CTA */}
+          {/* CTA Button */}
           <Button
-            className="mt-6 bg-earth-800 hover:bg-earth-900 text-white font-semibold"
+            size="lg"
+            className="w-full sm:w-auto bg-white text-earth-900 hover:bg-white/90 font-semibold shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
               onViewTrip();
@@ -172,68 +161,7 @@ export function NextTripBoardingPass({
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
-
-        {/* Right Side - Desktop only */}
-        <div className="hidden md:flex md:w-[30%] flex-col items-center justify-center md:pl-8">
-          {/* Trip Cover Image */}
-          {trip.cover_image_url && (
-            <div className="w-32 h-32 rounded-xl overflow-hidden shadow-lg mb-4 border-2 border-amber-200">
-              <img
-                src={trip.cover_image_url}
-                alt={trip.destination}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-
-          {/* Decorative barcode */}
-          <div className="flex gap-0.5 h-12 items-end">
-            {Array.from({ length: 20 }, (_, i) => (
-              <div
-                key={i}
-                className="w-1 bg-earth-800"
-                style={{ height: `${Math.random() * 60 + 40}%` }}
-              />
-            ))}
-          </div>
-          <div className="text-xs font-mono text-amber-700 mt-2">
-            {trip.trip_id.slice(0, 12).toUpperCase()}
-          </div>
-        </div>
       </div>
-
-      {/* Mobile full-width image section */}
-      {trip.cover_image_url && (
-        <div className="relative md:hidden">
-          {/* Dashed separator line */}
-          <div className="absolute top-0 left-0 right-0 border-t border-dashed border-amber-300" />
-
-          {/* Full-width image */}
-          <div className="h-48 w-full overflow-hidden">
-            <img
-              src={trip.cover_image_url}
-              alt={trip.destination}
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          {/* Barcode overlay at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 flex flex-col items-center">
-            <div className="flex gap-0.5 h-10 items-end">
-              {Array.from({ length: 24 }, (_, i) => (
-                <div
-                  key={i}
-                  className="w-1 bg-white/80"
-                  style={{ height: `${Math.random() * 60 + 40}%` }}
-                />
-              ))}
-            </div>
-            <div className="text-xs font-mono text-white/80 mt-1">
-              {trip.trip_id.slice(0, 12).toUpperCase()}
-            </div>
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }
