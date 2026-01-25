@@ -24,8 +24,13 @@ import { getSharedTrips } from '@/services/tripSharingService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Calendar, MapPin, Plane, Clock, Filter, Users, Share2 } from 'lucide-react';
+import { Search, Plus, Calendar, MapPin, Plane, Clock, Filter, Users, Share2, Globe, CheckCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
+
+// New hero and stats components
+import { ActiveTripCard, NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
+import { TravelStatsCard, MonthlyActivityChart } from '@/components/trip/stats';
+import { useTravelStats } from '@/hooks/useTravelStats';
 
 const MyTrips = () => {
   const navigate = useNavigate();
@@ -233,6 +238,34 @@ const MyTrips = () => {
     return differenceInDays(tripDateUTC, todayUTC);
   }, [nextTrip]);
 
+  // Determine hero state based on travel status
+  const heroState = useMemo(() => {
+    if (currentMyTrips.length > 0 || currentSharedTrips.length > 0) {
+      return 'on-trip';
+    }
+    // Show next upcoming trip regardless of how far away it is
+    if (nextTrip && daysUntilNextTrip !== null && daysUntilNextTrip >= 0) {
+      return 'pre-trip';
+    }
+    return 'default';
+  }, [currentMyTrips, currentSharedTrips, nextTrip, daysUntilNextTrip]);
+
+  // Calculate travel stats for the dashboard
+  const travelStats = useTravelStats([...(myTrips || []), ...sharedTrips]);
+
+  // Get the last completed trip for background image
+  const lastCompletedTrip = useMemo(() => {
+    return pastMyTrips[0] || pastSharedTrips[0] || null;
+  }, [pastMyTrips, pastSharedTrips]);
+
+  // Filter upcoming trips to avoid showing next trip twice when it's in hero
+  const filteredUpcomingMyTrips = useMemo(() => {
+    if (heroState === 'pre-trip' && nextTrip) {
+      return upcomingMyTrips.filter(trip => trip.trip_id !== nextTrip.trip_id);
+    }
+    return upcomingMyTrips;
+  }, [heroState, nextTrip, upcomingMyTrips]);
+
   // Calculate total trips stats
   const totalMyTrips = (myTrips || []).length;
   const totalSharedTrips = (sharedTrips || []).length;
@@ -243,101 +276,121 @@ const MyTrips = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50">
       <Navigation />
       <div className="container mx-auto px-4 pt-20 pb-8">
-        {/* Enhanced Header with Stats */}
-        <motion.div 
+        {/* Dynamic Travel Headquarters */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-12"
+          className="mb-8"
         >
-          {/* Enhanced Hero Section */}
-          <div className="relative bg-gradient-to-br from-sand-100 via-sand-50 to-earth-100 rounded-2xl p-6 md:p-10 shadow-xl overflow-hidden border border-sand-200">
-            {/* Subtle Background Pattern */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-              }} />
-            </div>
-            
-            <div className="relative">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div className="flex-1">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                  >
-                    <h1 className="text-3xl md:text-6xl lg:text-6xl font-black leading-tight mb-4 text-earth-900">
-                      My Travel Journey
-                    </h1>
-                    <p className="text-earth-700 text-xl md:text-2xl font-medium mb-8 leading-relaxed">
-                      {totalCurrentTrips > 0 ? `Currently exploring ${totalCurrentTrips} destination${totalCurrentTrips > 1 ? 's' : ''}` :
-                       totalUpcomingTrips > 0 ? `${totalUpcomingTrips} adventure${totalUpcomingTrips > 1 ? 's' : ''} awaiting` :
-                       'Ready to plan your next adventure'}
-                    </p>
-                  </motion.div>
-                  
-                  {/* Next Trip Preview */}
-                  {nextTrip && daysUntilNextTrip !== null && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4, duration: 0.5 }}
-                      className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm cursor-pointer hover:bg-white/80 transition-colors"
-                      onClick={() => navigate(`/trip/${nextTrip.trip_id}`)}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="bg-earth-600 rounded-full p-3">
-                          {daysUntilNextTrip === 0 ? <Plane className="h-6 w-6 text-white" /> : <Clock className="h-6 w-6 text-white" />}
-                        </div>
-                        <div>
-                          <p className="text-sm text-earth-600 font-semibold">
-                            {daysUntilNextTrip === 0 ? 'Departure Today!' :
-                             daysUntilNextTrip === 1 ? 'Departure Tomorrow!' :
-                             `Next Trip in ${daysUntilNextTrip} days`}
-                          </p>
-                          <p className="text-earth-900 font-bold text-xl">
-                            {nextTrip.destination}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
+          {/* Mobile: Full-bleed hero */}
+          <div className="md:hidden">
+            {heroState === 'on-trip' && (
+              <ActiveTripCard
+                trip={currentMyTrips[0] || currentSharedTrips[0]}
+                onViewItinerary={() => navigate(`/trip/${(currentMyTrips[0] || currentSharedTrips[0]).trip_id}`)}
+                fullBleed
+                additionalTripsCount={totalCurrentTrips - 1}
+              />
+            )}
+            {heroState === 'pre-trip' && nextTrip && (
+              <NextTripBoardingPass
+                trip={nextTrip}
+                daysUntil={daysUntilNextTrip!}
+                onViewTrip={() => navigate(`/trip/${nextTrip.trip_id}`)}
+                className="-mx-4 rounded-none"
+              />
+            )}
+            {heroState === 'default' && (
+              <DefaultHeroCard
+                onCreateTrip={() => navigate('/create-trip')}
+                lastTripImage={lastCompletedTrip?.cover_image_url}
+              />
+            )}
+
+            {/* Mobile: Swipeable Stats Row */}
+            <div className="-mx-4 px-4 overflow-x-auto mt-4">
+              <div className="flex gap-4 py-2 snap-x snap-mandatory
+                            [-ms-overflow-style:none] [scrollbar-width:none]
+                            [&::-webkit-scrollbar]:hidden">
+                <div className="min-w-[200px] snap-start shrink-0">
+                  <TravelStatsCard
+                    title="Days Traveling"
+                    value={travelStats.totalDaysTraveled}
+                    subtitle="Total days explored"
+                    icon={Globe}
+                    gradient="blue"
+                  />
                 </div>
-                
-                {/* Stats Cards */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
-                  className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:min-w-[200px]"
-                >
-                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm">
-                    <div className="text-3xl font-black text-earth-900">{totalMyTrips + totalSharedTrips}</div>
-                    <div className="text-earth-600 text-sm font-semibold">Total Trips</div>
-                  </div>
-                  
-                  {totalCurrentTrips > 0 && (
-                    <div 
-                      className="bg-emerald-100 backdrop-blur-sm rounded-xl p-5 border border-emerald-300 shadow-sm cursor-pointer hover:bg-emerald-200 transition-colors"
-                      onClick={() => {
-                        const currentTrip = currentMyTrips[0] || currentSharedTrips[0];
-                        if (currentTrip) {
-                          navigate(`/trip/${currentTrip.trip_id}`);
-                        }
-                      }}
-                    >
-                      <div className="text-3xl font-black text-emerald-800">{totalCurrentTrips}</div>
-                      <div className="text-emerald-700 text-sm font-semibold">Active Now</div>
-                    </div>
-                  )}
-                  
-                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-earth-200 shadow-sm">
-                    <div className="text-3xl font-black text-earth-900">{totalUpcomingTrips}</div>
-                    <div className="text-earth-600 text-sm font-semibold">Upcoming</div>
-                  </div>
-                </motion.div>
+                <div className="min-w-[200px] snap-start shrink-0">
+                  <TravelStatsCard
+                    title="Trip Progress"
+                    value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
+                    subtitle="Trips completed"
+                    icon={CheckCircle}
+                    gradient="green"
+                    chart="donut"
+                    chartData={travelStats.completionRate}
+                  />
+                </div>
+                <div className="min-w-[200px] snap-start shrink-0">
+                  <TravelStatsCard
+                    title="Destinations"
+                    value={travelStats.countriesVisited}
+                    subtitle="Places visited"
+                    icon={MapPin}
+                    gradient="purple"
+                  />
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Desktop: Grid Layout */}
+          <div className="hidden md:grid md:grid-cols-3 gap-6">
+            {/* PRIMARY ACTION AREA - Spans 2 columns */}
+            <div className="md:col-span-2">
+              {heroState === 'on-trip' && (
+                <ActiveTripCard
+                  trip={currentMyTrips[0] || currentSharedTrips[0]}
+                  onViewItinerary={() => navigate(`/trip/${(currentMyTrips[0] || currentSharedTrips[0]).trip_id}`)}
+                  additionalTripsCount={totalCurrentTrips - 1}
+                />
+              )}
+              {heroState === 'pre-trip' && nextTrip && (
+                <NextTripBoardingPass
+                  trip={nextTrip}
+                  daysUntil={daysUntilNextTrip!}
+                  onViewTrip={() => navigate(`/trip/${nextTrip.trip_id}`)}
+                />
+              )}
+              {heroState === 'default' && (
+                <DefaultHeroCard
+                  onCreateTrip={() => navigate('/create-trip')}
+                  lastTripImage={lastCompletedTrip?.cover_image_url}
+                />
+              )}
+            </div>
+
+            {/* STATS AREA - Spans 1 column */}
+            <div className="md:col-span-1 space-y-4">
+              <TravelStatsCard
+                title="Life on the Road"
+                value={travelStats.totalDaysTraveled}
+                subtitle="Days spent exploring"
+                icon={Globe}
+                gradient="blue"
+              />
+              <MonthlyActivityChart data={travelStats.monthlyActivity} />
+              <TravelStatsCard
+                title="Trip Progress"
+                value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
+                subtitle="Trips completed"
+                icon={CheckCircle}
+                gradient="green"
+                chart="donut"
+                chartData={travelStats.completionRate}
+              />
             </div>
           </div>
         </motion.div>
@@ -461,16 +514,16 @@ const MyTrips = () => {
                       <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
                         Upcoming Adventures
                         <Badge className="bg-blue-500 text-white text-sm px-3 py-1">
-                          {upcomingMyTrips.length}
+                          {filteredUpcomingMyTrips.length}
                         </Badge>
                       </h2>
                       <p className="text-earth-600 text-sm mt-1">Trips to look forward to</p>
                     </div>
                   </div>
 
-                  {upcomingMyTrips.length > 0 ? (
+                  {filteredUpcomingMyTrips.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {upcomingMyTrips.map((trip, index) => (
+                      {filteredUpcomingMyTrips.map((trip, index) => (
                         <motion.div
                           key={trip.trip_id}
                           initial={{ opacity: 0, y: 20 }}
@@ -570,7 +623,7 @@ const MyTrips = () => {
                 </motion.div>
 
                 {/* Enhanced Empty State for No Trips */}
-                {upcomingMyTrips.length === 0 && currentMyTrips.length === 0 && pastMyTrips.length === 0 && (
+                {filteredUpcomingMyTrips.length === 0 && currentMyTrips.length === 0 && pastMyTrips.length === 0 && heroState !== 'pre-trip' && (
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}

@@ -1,0 +1,164 @@
+import React from 'react';
+import { LucideIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+type GradientType = 'blue' | 'green' | 'purple' | 'sand' | 'amber';
+
+interface TravelStatsCardProps {
+  title: string;
+  value: number | string;
+  subtitle?: string;
+  icon: LucideIcon;
+  gradient: GradientType;
+  chart?: 'progress' | 'donut';
+  chartData?: { completed: number; total: number };
+  className?: string;
+  onClick?: () => void;
+}
+
+const gradientClasses: Record<GradientType, { bg: string; icon: string; iconBg: string; text: string }> = {
+  blue: {
+    bg: 'bg-gradient-to-br from-blue-500/10 to-blue-600/20 border-blue-200/50',
+    icon: 'text-blue-600',
+    iconBg: 'bg-blue-100',
+    text: 'text-blue-900'
+  },
+  green: {
+    bg: 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/20 border-emerald-200/50',
+    icon: 'text-emerald-600',
+    iconBg: 'bg-emerald-100',
+    text: 'text-emerald-900'
+  },
+  purple: {
+    bg: 'bg-gradient-to-br from-purple-500/10 to-purple-600/20 border-purple-200/50',
+    icon: 'text-purple-600',
+    iconBg: 'bg-purple-100',
+    text: 'text-purple-900'
+  },
+  sand: {
+    bg: 'bg-gradient-to-br from-sand-100 to-earth-100 border-sand-200/50',
+    icon: 'text-earth-600',
+    iconBg: 'bg-sand-200',
+    text: 'text-earth-900'
+  },
+  amber: {
+    bg: 'bg-gradient-to-br from-amber-500/10 to-amber-600/20 border-amber-200/50',
+    icon: 'text-amber-600',
+    iconBg: 'bg-amber-100',
+    text: 'text-amber-900'
+  }
+};
+
+export function TravelStatsCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  gradient,
+  chart,
+  chartData,
+  className,
+  onClick
+}: TravelStatsCardProps) {
+  const colors = gradientClasses[gradient];
+
+  const renderChart = () => {
+    if (!chart || !chartData) return null;
+
+    if (chart === 'donut') {
+      const percentage = chartData.total > 0
+        ? (chartData.completed / chartData.total) * 100
+        : 0;
+      const circumference = 2 * Math.PI * 20;
+      const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+      return (
+        <div className="relative w-14 h-14 flex-shrink-0">
+          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              className="text-gray-200"
+            />
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              className={colors.icon}
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+            />
+          </svg>
+          <div className={cn("absolute inset-0 flex items-center justify-center text-xs font-bold", colors.text)}>
+            {Math.round(percentage)}%
+          </div>
+        </div>
+      );
+    }
+
+    if (chart === 'progress') {
+      const percentage = chartData.total > 0
+        ? (chartData.completed / chartData.total) * 100
+        : 0;
+
+      return (
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className={cn("h-full rounded-full", gradient === 'blue' ? 'bg-blue-500' : gradient === 'green' ? 'bg-emerald-500' : gradient === 'purple' ? 'bg-purple-500' : 'bg-earth-500')}
+          />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "rounded-xl p-4 border backdrop-blur-sm",
+        colors.bg,
+        onClick && "cursor-pointer hover:scale-[1.02] transition-transform",
+        className
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <div className={cn("p-1.5 rounded-lg", colors.iconBg)}>
+              <Icon className={cn("h-4 w-4", colors.icon)} />
+            </div>
+            <span className="text-xs font-medium text-earth-600 truncate">{title}</span>
+          </div>
+          <div className={cn("text-3xl md:text-4xl font-black tracking-tight", colors.text)}>
+            {value}
+          </div>
+          {subtitle && (
+            <p className="text-xs text-earth-500 mt-0.5">{subtitle}</p>
+          )}
+          {chart === 'progress' && renderChart()}
+        </div>
+        {chart === 'donut' && renderChart()}
+      </div>
+    </motion.div>
+  );
+}
+
+export default TravelStatsCard;

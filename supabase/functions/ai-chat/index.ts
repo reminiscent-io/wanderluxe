@@ -48,10 +48,26 @@ Deno.serve(async (req: Request) => {
     });
   }
   const userId = userData.user.id;
+  const userEmail = userData.user.email?.toLowerCase();
 
+  // Check if user owns the trip
   const { data: ownedTrip } = await supabase.from('trips').select('trip_id').eq('trip_id', tripId).eq('user_id', userId).single();
-  const { data: sharedTrip } = await supabase.from('trip_shares').select('id').eq('trip_id', tripId).eq('shared_with_user_id', userId).single();
+
+  // Check if trip is shared with user by EMAIL (not user_id, which is NULL for email invites)
+  let sharedTrip = null;
+  if (!ownedTrip && userEmail) {
+    const { data } = await supabase.from('trip_shares').select('id').eq('trip_id', tripId).ilike('shared_with_email', userEmail).single();
+    sharedTrip = data;
+  }
+
+  // Check if trip is public
+  let isPublicTrip = false;
   if (!ownedTrip && !sharedTrip) {
+    const { data: publicTrip } = await supabase.from('trips').select('trip_id').eq('trip_id', tripId).eq('is_public', true).single();
+    isPublicTrip = !!publicTrip;
+  }
+
+  if (!ownedTrip && !sharedTrip && !isPublicTrip) {
     return new Response(JSON.stringify({ code: 'FORBIDDEN', message: 'Access denied' }), {
       status: 403,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -125,23 +141,77 @@ Deno.serve(async (req: Request) => {
 
     await supabase.from('ai_chat_messages').insert({ thread_id: threadId, role: 'user', content: message.trim() });
 
-    const { data: trip } = await supabase.from('trips').select('destination, arrival_date, departure_date').eq('trip_id', tripId).single();
+    // Fetch trip details and related data for context
+    const { data: trip } = await supabase.from('trips').select('destination, arrival_date, departure_date, primary_destination, primary_destination_place_id').eq('trip_id', tripId).single();
     const { data: days } = await supabase.from('trip_days').select('date, title, day_activities(title, start_time)').eq('trip_id', tripId).order('date');
     const { data: msgs } = await supabase.from('ai_chat_messages').select('role, content').eq('thread_id', threadId).order('created_at', { ascending: false }).limit(10);
 
-    const destination = trip?.destination || 'unknown';
-    const systemPrompt = `You are a helpful travel assistant for a trip to ${destination} from ${trip?.arrival_date} to ${trip?.departure_date}.
+    // Fetch accommodations, transportation, and reservations to infer actual location
+    const { data: accommodations } = await supabase.from('accommodations').select('hotel, hotel_address').eq('trip_id', tripId).limit(5);
+    const { data: transportation } = await supabase.from('transportation').select('arrival_location, departure_location').eq('trip_id', tripId).limit(5);
+    const { data: reservations } = await supabase.from('reservations').select('restaurant_name, address').eq('trip_id', tripId).limit(5);
+
+    // Build location context from multiple sources
+    const locationHints: string[] = [];
+
+    // Add hotel addresses (often the most reliable location indicator)
+    accommodations?.forEach((a: any) => {
+      if (a.hotel_address) locationHints.push(a.hotel_address);
+      else if (a.hotel) locationHints.push(a.hotel);
+    });
+
+    // Add transportation destinations
+    transportation?.forEach((t: any) => {
+      if (t.arrival_location) locationHints.push(t.arrival_location);
+    });
+
+    // Add restaurant addresses
+    reservations?.forEach((r: any) => {
+      if (r.address) locationHints.push(r.address);
+    });
+
+    // Determine the best location context
+    const tripName = trip?.destination || 'this trip';
+    const primaryDestination = trip?.primary_destination;
+    const inferredLocations = locationHints.length > 0 ? locationHints.slice(0, 3).join('; ') : null;
+
+    // Build location description for the prompt
+    // Priority: primary_destination > inferred from bookings > trip name
+    let locationContext: string;
+    if (primaryDestination) {
+      locationContext = `The trip "${tripName}" is to ${primaryDestination}.`;
+    } else if (inferredLocations) {
+      locationContext = `The trip is named "${tripName}". Based on booked accommodations, transportation, and reservations, the locations include: ${inferredLocations}.`;
+    } else {
+      locationContext = `The trip destination is: ${tripName}.`;
+    }
+
+    // Build itinerary summary if available
+    let itineraryContext = '';
+    if (days && days.length > 0) {
+      const daysSummary = days.slice(0, 5).map((d: any) => {
+        const activities = d.day_activities?.map((a: any) => a.title).join(', ') || 'no activities yet';
+        return `${d.date}: ${activities}`;
+      }).join('\n');
+      itineraryContext = `\n\nCurrent itinerary:\n${daysSummary}`;
+    }
+
+    // Use a reasonable search location (primary destination > first hotel address > trip name)
+    const searchLocation = (primaryDestination || accommodations?.[0]?.hotel_address || transportation?.[0]?.arrival_location || tripName).replace(/\s+/g, '+');
+
+    const systemPrompt = `You are a helpful travel assistant. ${locationContext}
+Trip dates: ${trip?.arrival_date || 'TBD'} to ${trip?.departure_date || 'TBD'}.${itineraryContext}
 
 Guidelines:
 - Be concise and helpful
 - Use markdown formatting for readability
 - When recommending hotels, restaurants, or attractions, make the name a clickable link
 - IMPORTANT: Only use these URL formats (never use IP addresses or made-up URLs):
-  - Google Maps: https://www.google.com/maps/search/PLACE+NAME+${destination.replace(/\s+/g, '+')}
-  - Google Search: https://www.google.com/search?q=PLACE+NAME+${destination.replace(/\s+/g, '+')}
+  - Google Maps: https://www.google.com/maps/search/PLACE+NAME+${searchLocation}
+  - Google Search: https://www.google.com/search?q=PLACE+NAME+${searchLocation}
 - Replace PLACE+NAME with the actual place name using + for spaces
 - Format: **[Place Name](google maps or search url)** - Brief description
-- Example: **[The Ritz-Carlton](https://www.google.com/maps/search/The+Ritz-Carlton+${destination.replace(/\s+/g, '+')})** - Luxury hotel with excellent service`;
+- Example: **[The Ritz-Carlton](https://www.google.com/maps/search/The+Ritz-Carlton+${searchLocation})** - Luxury hotel with excellent service`;
     const openaiMsgs = [{ role: 'system', content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
 
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {

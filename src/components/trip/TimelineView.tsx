@@ -12,6 +12,7 @@ import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 import { AIAssistantPanel } from './ai-assistant';
+import { useWeather } from '@/hooks/useWeather';
 
 interface TimelineViewProps {
   tripId: string;
@@ -20,10 +21,11 @@ interface TimelineViewProps {
     departure_date: string | null;
   };
   tripDestination?: string;
+  primaryDestination?: string | null;
   canEdit?: boolean;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination, canEdit = true }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination, primaryDestination, canEdit = true }) => {
   // Keep the session alive while working on the timeline
   useSessionKeepAlive(10 * 60 * 1000); // 10 minutes - increased to prevent frequent refreshes
 
@@ -48,6 +50,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
+  // Fetch weather for the trip destination (only for current/upcoming trips)
+  // Prefer primary_destination if available, fallback to trip name
+  const weatherLocation = primaryDestination || tripDestination;
+  const { data: weather } = useWeather(weatherLocation);
 
   const [localTripDates, setLocalTripDates] = useState<{
     arrival_date: string | null;
@@ -224,6 +231,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           tripArrivalDate={localTripDates.arrival_date || undefined}
           tripDepartureDate={localTripDates.departure_date || undefined}
           canEdit={canEdit}
+          weather={weather}
         />
       </div>
 

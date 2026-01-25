@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ImageSection from "./ImageSection";
 import TimingSection from "./TimingSection";
 import DestinationInput from "./DestinationInput";
+import PrimaryDestinationInput from "./PrimaryDestinationInput";
 import FormActions from "./FormActions";
 import { supabase } from '@/integrations/supabase/client';
 import { getDaysBetweenDates } from '../../../utils/dateUtils';
@@ -38,6 +39,13 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 }) => {
   const [imagePosition, setImagePosition] = useState<string>("center 50%");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [primaryDestination, setPrimaryDestination] = useState('');
+  const [primaryDestinationPlaceId, setPrimaryDestinationPlaceId] = useState('');
+
+  const handlePrimaryDestinationChange = (destination: string, placeId: string) => {
+    setPrimaryDestination(destination);
+    setPrimaryDestinationPlaceId(placeId);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +80,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           departure_date: endDate,
           cover_image_url: coverImageUrl,
           is_public: false,
+          primary_destination: primaryDestination || null,
+          primary_destination_place_id: primaryDestinationPlaceId || null,
         } as any])
         .select('trip_id')
         .single();
@@ -110,6 +120,12 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       }}
     >
       <DestinationInput destination={destination} setDestination={setDestination} />
+
+      <PrimaryDestinationInput
+        value={primaryDestination}
+        placeId={primaryDestinationPlaceId}
+        onChange={handlePrimaryDestinationChange}
+      />
 
       <TimingSection
         startDate={startDate}

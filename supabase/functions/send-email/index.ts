@@ -48,7 +48,7 @@ Deno.serve(async (req)=>{
     }
     // Build the view URL - include tripId if provided for direct navigation
     const viewUrl = tripId
-      ? `${DEFAULT_VIEW_URL}/trips/${tripId}`
+      ? `${DEFAULT_VIEW_URL}/trip/${tripId}`
       : DEFAULT_VIEW_URL;
     // Brand palette approximations for emails
     const colors = {
