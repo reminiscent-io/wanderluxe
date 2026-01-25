@@ -887,6 +887,44 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_view_status: {
+        Row: {
+          id: string
+          trip_id: string
+          user_id: string
+          last_viewed_at: string
+          currently_viewing: boolean
+          presence_updated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          user_id: string
+          last_viewed_at?: string
+          currently_viewing?: boolean
+          presence_updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          user_id?: string
+          last_viewed_at?: string
+          currently_viewing?: boolean
+          presence_updated_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_view_status_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
