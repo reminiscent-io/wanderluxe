@@ -131,6 +131,24 @@
     /* Safe viewport height accounting for iOS safe areas */
     /* On iOS, this ensures content doesn't clip behind notch/status bar */
     --safe-vh: calc(1dvh - (var(--sat) + var(--sab)) / 100);
+
+    /* Default nav height - will be updated by JavaScript */
+    --app-nav-h: 56px;
+  }
+
+  /* PWA standalone mode - ensure nav height variable includes safe area */
+  /* This acts as a fallback if JavaScript measurement happens before CSS is computed */
+  @media (display-mode: standalone) {
+    :root {
+      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
+    }
+  }
+
+  /* iOS specific: navigator.standalone detection via media query */
+  @media (display-mode: standalone), (display-mode: fullscreen) {
+    :root {
+      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
+    }
   }
 
   /* Fallback for browsers without dvh support */

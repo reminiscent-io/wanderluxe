@@ -36,6 +36,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [isSelecting, setIsSelecting] = useState(false); // Flag to prevent blur during selection
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   };
 
   const handleSuggestionSelect = async (suggestion: AutocompleteResult) => {
+    setIsSelecting(true); // Prevent blur from closing dropdown
     setIsLoading(true);
     try {
       const details = await getPlaceDetails(suggestion.place_id);
@@ -118,6 +120,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
       setSelectedIndex(-1);
     } finally {
       setIsLoading(false);
+      setIsSelecting(false);
     }
   };
 
@@ -164,11 +167,13 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   const handleBlur = (e: React.FocusEvent) => {
     // Longer timeout for mobile devices where touch events take longer to process
     setTimeout(() => {
+      // Don't close if we're in the middle of selecting a suggestion
+      if (isSelecting) return;
       if (!dropdownRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
         setSelectedIndex(-1);
       }
-    }, 300);
+    }, 350); // Slightly longer timeout for iOS
   };
 
   useEffect(() => {
@@ -186,28 +191,43 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
         top: dropdownPosition.top + 4, // 4px vertical offset
         left: dropdownPosition.left,
         width: dropdownPosition.width,
-        zIndex: 9999
+        zIndex: 99999, // Higher z-index to ensure it's above dialog overlay (250)
+        pointerEvents: 'auto'
       } : undefined}
       onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking dropdown
-      onTouchStart={(e) => e.stopPropagation()} // Prevent touch events from closing dropdown
+      onTouchStart={(e) => {
+        // Stop propagation but don't prevent default to allow touch events to work
+        e.stopPropagation();
+      }}
     >
       {suggestions.map((suggestion, index) => (
         <button
           key={suggestion.place_id}
           type="button"
-          className={`w-full px-3 py-2 text-left hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 last:border-b-0 touch-manipulation ${
+          className={`w-full px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 last:border-b-0 touch-manipulation select-none ${
             index === selectedIndex ? 'bg-gray-100' : ''
           }`}
-          onClick={() => handleSuggestionSelect(suggestion)}
-          onTouchEnd={(e) => {
+          onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             handleSuggestionSelect(suggestion);
+          }}
+          onTouchEnd={(e) => {
+            // Use a small delay to ensure the touch is registered properly
+            e.preventDefault();
+            e.stopPropagation();
+            // Set selecting flag immediately to prevent blur from closing dropdown
+            setIsSelecting(true);
+            // Slight delay for iOS touch event handling
+            setTimeout(() => {
+              handleSuggestionSelect(suggestion);
+            }, 10);
           }}
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="font-medium text-sm !text-gray-900 truncate">
                 {suggestion.structured_formatting.main_text}
               </div>
