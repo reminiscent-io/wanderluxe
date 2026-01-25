@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { searchPlaces, getPlaceDetails, type AutocompleteResult, type PlaceResult } from '@/utils/googleMapsLoader';
 import { ChevronDown, MapPin, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface PrimaryDestinationInputProps {
   value: string;
@@ -164,7 +165,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onFocus={() => inputValue.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
-          className={`${className} ${inputClassName} relative z-50 pr-16`}
+          className={cn("pr-16", className, inputClassName)}
           placeholder={placeholder}
           autoComplete="off"
         />

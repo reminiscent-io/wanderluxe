@@ -349,23 +349,28 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           )}
 
           {/* Primary Destination Display/Edit */}
-          {isEditingDestination ? (
-            <div className="w-full max-w-md mb-4">
-              <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3">
+          <Dialog open={isEditingDestination} onOpenChange={(open) => {
+            if (!open) {
+              setIsEditingDestination(false);
+              setEditedPrimaryDestination(primaryDestination || '');
+              setEditedPrimaryDestinationPlaceId(primaryDestinationPlaceId || '');
+            }
+          }}>
+            <DialogContent className="max-w-md">
+              <DialogTitle>Edit Primary Destination</DialogTitle>
+              <div className="pt-2">
                 <PrimaryDestinationInput
                   value={editedPrimaryDestination}
                   placeId={editedPrimaryDestinationPlaceId}
                   onChange={handlePrimaryDestinationChange}
                   showLabel={false}
                   placeholder="Search for a city..."
-                  inputClassName="bg-white text-earth-900 placeholder:text-earth-400"
                   autoFocus
                 />
-                <div className="flex justify-end gap-2 mt-2">
+                <div className="flex justify-end gap-2 mt-4">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white hover:bg-white/20"
                     onClick={() => {
                       setIsEditingDestination(false);
                       setEditedPrimaryDestination(primaryDestination || '');
@@ -375,16 +380,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     Cancel
                   </Button>
                   <Button
-                    variant="secondary"
                     size="sm"
+                    className="bg-earth-600 hover:bg-earth-700 text-white"
                     onClick={handlePrimaryDestinationSubmit}
                   >
                     Save
                   </Button>
                 </div>
               </div>
-            </div>
-          ) : primaryDestination ? (
+            </DialogContent>
+          </Dialog>
+
+          {primaryDestination ? (
             <div className="group/dest relative mb-2">
               <p
                 className={`text-lg md:text-xl font-medium drop-shadow-md text-center flex items-center gap-2 justify-center ${canEdit ? 'cursor-pointer hover:text-white/80' : ''}`}
