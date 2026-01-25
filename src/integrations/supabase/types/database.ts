@@ -406,6 +406,13 @@ export type Database = {
           created_at: string
           full_name: string | null
           home_location: string | null
+          updated_at: string | null
+          last_login_at: string | null
+          subscription_tier: string | null
+          ai_messages_limit: number | null
+          ai_imports_limit: number | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
         }
         Insert: {
           id: string
@@ -414,6 +421,13 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           home_location?: string | null
+          updated_at?: string | null
+          last_login_at?: string | null
+          subscription_tier?: string | null
+          ai_messages_limit?: number | null
+          ai_imports_limit?: number | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
         }
         Update: {
           id?: string
@@ -422,6 +436,13 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           home_location?: string | null
+          updated_at?: string | null
+          last_login_at?: string | null
+          subscription_tier?: string | null
+          ai_messages_limit?: number | null
+          ai_imports_limit?: number | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
         }
         Relationships: []
       }
@@ -841,6 +862,30 @@ export type Database = {
             referencedColumns: ["trip_id"]
           }
         ]
+      }
+      user_engagement_events: {
+        Row: {
+          id: string
+          user_id: string
+          event_type: string
+          event_data: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_type: string
+          event_data?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_type?: string
+          event_data?: Json
+          created_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
