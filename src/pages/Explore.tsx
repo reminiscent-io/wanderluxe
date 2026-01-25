@@ -4,11 +4,12 @@ import { motion } from 'framer-motion';
 import Navigation from "../components/Navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from '../components/trip/TripCard';
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Calendar, MapPin, Compass, Sparkles, ArrowRight } from 'lucide-react';
+import { Search, Calendar, MapPin, Compass, Sparkles, ArrowRight, Clock, Plane } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -178,21 +179,24 @@ const Explore = () => {
           </div>
         </motion.div>
 
+        {/* Search Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
           className="mb-8"
         >
-          <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              type="search"
-              placeholder="Search destinations..."
-              className="pl-10 pr-4 py-3 bg-white border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl shadow-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="search"
+                placeholder="Search destinations..."
+                className="pl-10 pr-4 py-3 bg-white border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
         </motion.div>
 
@@ -207,24 +211,31 @@ const Explore = () => {
           </div>
         ) : (
           <div className="space-y-12">
+            {/* Current Trips Section */}
             {currentTrips.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.5 }}
+                className="relative"
               >
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-emerald-100">
+                {/* Section Header */}
+                <div className="flex items-center gap-3 mb-8 pb-4 border-b border-emerald-100">
                   <div className="bg-emerald-100 rounded-xl p-3">
-                    <MapPin className="h-6 w-6 text-emerald-600" />
+                    <Plane className="h-6 w-6 text-emerald-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-earth-800">
+                    <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
                       Happening Now
+                      <Badge className="bg-emerald-500 text-white text-sm px-3 py-1">
+                        {currentTrips.length}
+                      </Badge>
                     </h2>
                     <p className="text-earth-600 text-sm mt-1">Active travel experiences</p>
                   </div>
                 </div>
 
+                {/* Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {currentTrips.map((trip) => (
                     <motion.div
@@ -249,24 +260,30 @@ const Explore = () => {
               </motion.div>
             )}
 
-            {upcomingTrips.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-              >
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-blue-100">
-                  <div className="bg-blue-100 rounded-xl p-3">
-                    <Calendar className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-earth-800">
-                      Upcoming Adventures
-                    </h2>
-                    <p className="text-earth-600 text-sm mt-1">Future travel inspiration</p>
-                  </div>
+            {/* Upcoming Trips Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="relative"
+            >
+              {/* Section Header */}
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-blue-100">
+                <div className="bg-blue-100 rounded-xl p-3">
+                  <Calendar className="h-6 w-6 text-blue-600" />
                 </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
+                    Upcoming Adventures
+                    <Badge className="bg-blue-500 text-white text-sm px-3 py-1">
+                      {upcomingTrips.length}
+                    </Badge>
+                  </h2>
+                  <p className="text-earth-600 text-sm mt-1">Future travel inspiration</p>
+                </div>
+              </div>
 
+              {upcomingTrips.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {upcomingTrips.map((trip, index) => (
                     <motion.div
@@ -288,27 +305,47 @@ const Explore = () => {
                     </motion.div>
                   ))}
                 </div>
-              </motion.div>
-            )}
+              ) : (
+                <Card className="p-12 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+                  <div className="max-w-md mx-auto">
+                    <div className="bg-blue-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
+                      <MapPin className="h-12 w-12 text-blue-600 mx-auto" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-earth-800 mb-3">
+                      No Upcoming Public Trips
+                    </h3>
+                    <p className="text-earth-600">
+                      Check back soon for more travel inspiration!
+                    </p>
+                  </div>
+                </Card>
+              )}
+            </motion.div>
 
-            {pastTrips.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                  <div className="bg-gray-100 rounded-xl p-3">
-                    <Compass className="h-6 w-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-earth-800">
-                      Past Adventures
-                    </h2>
-                    <p className="text-earth-600 text-sm mt-1">Travel memories and experiences</p>
-                  </div>
+            {/* Past Trips Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="relative"
+            >
+              {/* Section Header */}
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                <div className="bg-gray-100 rounded-xl p-3">
+                  <Clock className="h-6 w-6 text-gray-600" />
                 </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
+                    Travel Memories
+                    <Badge className="bg-gray-500 text-white text-sm px-3 py-1">
+                      {pastTrips.length}
+                    </Badge>
+                  </h2>
+                  <p className="text-earth-600 text-sm mt-1">Past adventures and experiences</p>
+                </div>
+              </div>
 
+              {pastTrips.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {pastTrips.map((trip, index) => (
                     <motion.div
@@ -330,40 +367,47 @@ const Explore = () => {
                     </motion.div>
                   ))}
                 </div>
-              </motion.div>
-            )}
-
-            {filteredTrips.length === 0 && !isLoading && (
-              <Card className="p-12 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-earth-100">
-                <div className="max-w-md mx-auto">
-                  <div className="bg-earth-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
-                    <Compass className="h-12 w-12 text-earth-600 mx-auto" />
+              ) : (
+                <Card className="p-8 text-center bg-gray-50 border-gray-100">
+                  <div className="max-w-sm mx-auto">
+                    <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
+                      <Clock className="h-10 w-10 text-gray-500 mx-auto" />
+                    </div>
+                    <p className="text-earth-500 text-lg">No past adventures yet</p>
+                    <p className="text-earth-400 text-sm mt-1">Past public trips will appear here</p>
                   </div>
-                  <h3 className="text-xl font-semibold text-earth-800 mb-3">
-                    No Public Trips Yet
-                  </h3>
-                  <p className="text-earth-600 mb-6">
-                    Check back soon for inspiring travel experiences!
-                  </p>
-                  {!session && (
-                    <Button 
-                      onClick={() => {
-                        if (window.gtag) {
-                          window.gtag('event', 'click', {
-                            event_category: 'Conversion',
-                            event_label: 'Create Your Own Trip - Empty State CTA',
-                            value: 1
-                          });
-                        }
-                        navigate('/auth');
-                      }} 
-                      className="bg-earth-600 hover:bg-earth-700 text-white px-8 py-3 rounded-xl font-medium"
+                </Card>
+              )}
+            </motion.div>
+
+            {/* Empty State - Only shows when searching with no results */}
+            {filteredTrips.length === 0 && searchQuery && !isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                <Card className="p-16 text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200 shadow-xl">
+                  <div className="max-w-lg mx-auto">
+                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-lg">
+                      <Compass className="h-16 w-16 text-white mx-auto" />
+                    </div>
+                    <h3 className="text-3xl font-bold text-earth-800 mb-4">
+                      No Trips Found
+                    </h3>
+                    <p className="text-earth-600 text-lg mb-8 leading-relaxed">
+                      We couldn't find any public trips matching "{searchQuery}". Try a different search term.
+                    </p>
+                    <Button
+                      onClick={() => setSearchQuery('')}
+                      variant="outline"
+                      className="px-8 py-3 rounded-xl font-medium"
                     >
-                      Create Your Own Trip
+                      Clear Search
                     </Button>
-                  )}
-                </div>
-              </Card>
+                  </div>
+                </Card>
+              </motion.div>
             )}
           </div>
         )}

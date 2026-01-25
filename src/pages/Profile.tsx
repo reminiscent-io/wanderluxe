@@ -486,25 +486,25 @@ const Profile = () => {
           {/* Subscription Card */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2 rounded-full ${subscriptionTier === 'pro' ? 'bg-amber-100' : 'bg-sand-100'}`}>
-                    <Crown className={`h-5 w-5 ${subscriptionTier === 'pro' ? 'text-amber-600' : 'text-sand-500'}`} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-medium">Subscription</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {subscriptionTier === 'pro' ? 'You have Pro access' : 'You are on the Free plan'}
-                    </p>
-                  </div>
-                  <Badge className={`ml-auto ${subscriptionTier === 'pro' ? 'bg-amber-100 text-amber-700' : 'bg-sand-100 text-sand-600'}`}>
-                    {subscriptionTier === 'pro' ? 'Pro' : 'Free'}
-                  </Badge>
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-2 rounded-full ${subscriptionTier === 'pro' ? 'bg-amber-100' : 'bg-sand-100'}`}>
+                  <Crown className={`h-5 w-5 ${subscriptionTier === 'pro' ? 'text-amber-600' : 'text-sand-500'}`} />
                 </div>
+                <div>
+                  <h2 className="text-lg font-medium">Subscription</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {subscriptionTier === 'pro' ? 'You have Pro access' : 'You are on the Free plan'}
+                  </p>
+                </div>
+                <Badge className={`ml-auto ${subscriptionTier === 'pro' ? 'bg-amber-100 text-amber-700' : 'bg-sand-100 text-sand-600'}`}>
+                  {subscriptionTier === 'pro' ? 'Pro' : 'Free'}
+                </Badge>
+              </div>
 
-                {subscriptionTier !== 'pro' && (
-                  <>
-                    <Separator className="my-4" />
-                    <div className="space-y-4">
+              {subscriptionTier !== 'pro' && (
+                <>
+                  <Separator className="my-4" />
+                  <div className="space-y-4">
                       <h3 className="font-medium">Upgrade to Pro</h3>
                       <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2">
@@ -577,13 +577,13 @@ const Profile = () => {
                         Upgrade to Pro - $3.99/month
                       </Button>
                     </div>
-                  </>
-                )}
+                </>
+              )}
 
-                {subscriptionTier === 'pro' && (
-                  <>
-                    <Separator className="my-4" />
-                    <div className="space-y-4">
+              {subscriptionTier === 'pro' && (
+                <>
+                  <Separator className="my-4" />
+                  <div className="space-y-4">
                       <p className="text-sm text-muted-foreground">
                         Thank you for being a Pro member! You have access to all premium features.
                       </p>
@@ -666,10 +666,9 @@ const Profile = () => {
                           )}
                         </div>
                       ) : null}
-                    </div>
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
