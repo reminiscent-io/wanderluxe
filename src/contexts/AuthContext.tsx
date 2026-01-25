@@ -49,11 +49,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .single();
 
     if (profile) {
+      // Get OAuth metadata for fallbacks (fetch fresh, don't use stale state)
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const oauthAvatar = authUser?.user_metadata?.avatar_url;
+      const oauthName = authUser?.user_metadata?.full_name;
+
       setSubscriptionTier(profile.subscription_tier || 'free');
-      // Use profile avatar_url, fall back to OAuth metadata avatar
-      const oauthAvatar = user?.user_metadata?.avatar_url;
       setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
-      setFullName(profile.full_name || user?.user_metadata?.full_name || null);
+      setFullName(profile.full_name || oauthName || null);
       setLastLoginAt(profile.last_login_at);
     }
   };
