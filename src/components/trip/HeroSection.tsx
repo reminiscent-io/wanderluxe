@@ -256,7 +256,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       // Apply offset only when header is fixed; hook handles that.
       //style={{ marginTop: navOffset ? `${navOffset}px` : undefined }}
     >
-      <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden group">
+      <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden group rounded-none">
         {canEdit && (
           <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
             <Button

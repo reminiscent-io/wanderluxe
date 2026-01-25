@@ -179,10 +179,10 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   const dropdownContent = showSuggestions && suggestions.length > 0 && (
     <div
       ref={dropdownRef}
-      className="bg-white border border-sand-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+      className="bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto text-gray-900"
       style={usePortal ? {
         position: 'fixed',
-        top: dropdownPosition.top,
+        top: dropdownPosition.top + 4, // 4px vertical offset
         left: dropdownPosition.left,
         width: dropdownPosition.width,
         zIndex: 9999
@@ -192,19 +192,19 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
         <button
           key={suggestion.place_id}
           type="button"
-          className={`w-full px-3 py-2 text-left hover:bg-sand-50 border-b border-sand-100 last:border-b-0 ${
-            index === selectedIndex ? 'bg-sand-100' : ''
+          className={`w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+            index === selectedIndex ? 'bg-gray-100' : ''
           }`}
           onClick={() => handleSuggestionSelect(suggestion)}
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-earth-500 flex-shrink-0" />
+            <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
             <div className="min-w-0">
-              <div className="font-medium text-sm truncate">
+              <div className="font-medium text-sm !text-gray-900 truncate">
                 {suggestion.structured_formatting.main_text}
               </div>
-              <div className="text-xs text-sand-600 truncate">
+              <div className="text-xs text-gray-500 truncate">
                 {suggestion.structured_formatting.secondary_text}
               </div>
             </div>
@@ -231,7 +231,11 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onFocus={() => inputValue.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
-          className={cn("pr-16", className, inputClassName)}
+          className={cn(
+            "pr-16 !bg-white !text-gray-900 placeholder:!text-gray-500",
+            className || "",
+            inputClassName || ""
+          )}
           placeholder={placeholder}
           autoComplete="off"
         />
@@ -257,7 +261,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
 
         {usePortal
           ? dropdownContent && createPortal(dropdownContent, document.body)
-          : <div className="absolute z-[9999] w-full mt-1">{dropdownContent}</div>
+          : <div className="absolute z-[9999] w-full mt-1.5">{dropdownContent}</div>
         }
       </div>
     </div>
