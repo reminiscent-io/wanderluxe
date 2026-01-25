@@ -50,8 +50,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (profile) {
       setSubscriptionTier(profile.subscription_tier || 'free');
-      setAvatarUrl(addCacheBusting(profile.avatar_url));
-      setFullName(profile.full_name);
+      // Use profile avatar_url, fall back to OAuth metadata avatar
+      const oauthAvatar = user?.user_metadata?.avatar_url;
+      setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
+      setFullName(profile.full_name || user?.user_metadata?.full_name || null);
       setLastLoginAt(profile.last_login_at);
     }
   };
@@ -96,9 +98,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error('Error creating profile:', profileError);
         }
       } else {
+        // Get OAuth metadata for fallbacks
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const oauthAvatar = authUser?.user_metadata?.avatar_url;
+        const oauthName = authUser?.user_metadata?.full_name;
+
         setSubscriptionTier(profile.subscription_tier || 'free');
-        setAvatarUrl(addCacheBusting(profile.avatar_url));
-        setFullName(profile.full_name);
+        // Use profile avatar_url, fall back to OAuth metadata avatar
+        setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
+        setFullName(profile.full_name || oauthName || null);
         setLastLoginAt(profile.last_login_at);
 
         // Update last login timestamp on new sign in, or if it's never been set

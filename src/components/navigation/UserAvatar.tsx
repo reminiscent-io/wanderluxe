@@ -6,10 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const UserAvatar = () => {
-  const { session, avatarUrl, fullName } = useAuth();
+  const { session, avatarUrl, fullName, user } = useAuth();
   const navigate = useNavigate();
 
   if (!session?.user) return null;
+
+  // Use avatarUrl from profile, fall back to OAuth metadata avatar
+  const displayAvatarUrl = avatarUrl || user?.user_metadata?.avatar_url;
 
   const getInitials = () => {
     if (fullName) {
@@ -30,7 +33,7 @@ const UserAvatar = () => {
       onClick={() => navigate('/profile')}
     >
       <Avatar className="border-2 border-earth-500">
-        <AvatarImage src={avatarUrl || undefined} alt={fullName || 'Profile'} />
+        <AvatarImage src={displayAvatarUrl || undefined} alt={fullName || 'Profile'} />
         <AvatarFallback className="bg-sand-50 text-earth-500">
           {getInitials()}
         </AvatarFallback>
