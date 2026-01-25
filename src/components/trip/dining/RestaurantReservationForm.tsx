@@ -15,7 +15,6 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
 import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
-import CurrencySelector from '../budget/CurrencySelector';
 
 import {
   loadGoogleMapsAPI,
@@ -450,45 +449,45 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        {/* Number of People */}
-        <FormField
-          control={form.control}
-          name="number_of_people"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Party Size</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  value={field.value ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "") {
-                      field.onChange(null);
-                    } else {
-                      const num = parseInt(v, 10);
-                      field.onChange(isNaN(num) ? null : num);
-                    }
-                  }}
-                  placeholder="e.g., 2"
-                  className="bg-white w-24"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Party Size & Cost - Single Row */}
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="number_of_people"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Party Size</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") {
+                        field.onChange(null);
+                      } else {
+                        const num = parseInt(v, 10);
+                        field.onChange(isNaN(num) ? null : num);
+                      }
+                    }}
+                    placeholder="2"
+                    className="bg-white"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Cost & Currency */}
-        <div className="space-y-2">
-          <FormLabel>Cost</FormLabel>
-          <div className="flex gap-3">
-            <FormField
-              control={form.control}
-              name="cost"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormControl>
+          <FormField
+            control={form.control}
+            name="cost"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cost</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sand-500">$</span>
                     <Input
                       type="text"
                       value={field.value !== undefined ? new Intl.NumberFormat('en-US').format(field.value) : ''}
@@ -500,31 +499,14 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                         handleCostBlur(e.target.value);
                       }}
                       placeholder="0"
-                      className="bg-white"
+                      className="bg-white pl-7"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="currency"
-              render={({ field }) => (
-                <FormItem className="w-[110px] shrink-0">
-                  <FormControl>
-                    <CurrencySelector
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      className="bg-white"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Notes */}
