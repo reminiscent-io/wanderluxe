@@ -413,6 +413,7 @@ export type Database = {
           ai_imports_limit: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          is_admin: boolean | null
         }
         Insert: {
           id: string
@@ -428,6 +429,7 @@ export type Database = {
           ai_imports_limit?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          is_admin?: boolean | null
         }
         Update: {
           id?: string
@@ -443,6 +445,7 @@ export type Database = {
           ai_imports_limit?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          is_admin?: boolean | null
         }
         Relationships: []
       }

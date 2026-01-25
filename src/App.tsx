@@ -25,6 +25,8 @@ import Budget from "./pages/Budget";
 import Settings from "./pages/Settings";
 import LLMTraining from "./pages/LLMTraining";
 import Explore from "./pages/Explore";
+import Admin from "./pages/Admin";
+import AdminRoute from "./components/AdminRoute";
 
 // Create queryClient outside component to avoid recreation on every render
 const queryClient = new QueryClient({
@@ -100,6 +102,14 @@ const App = () => {
                       <ProtectedRoute>
                         <Settings />
                       </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRoute>
+                        <Admin />
+                      </AdminRoute>
                     }
                   />
                   <Route path="*" element={<NotFound />} />

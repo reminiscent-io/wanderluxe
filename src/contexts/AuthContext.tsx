@@ -57,13 +57,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const updateLastLogin = async (userId: string) => {
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from('profiles')
-      .update({ last_login_at: new Date().toISOString() })
+      .update({ last_login_at: now })
       .eq('id', userId);
 
     if (error) {
       console.error('Error updating last login:', error);
+    } else {
+      // Update local state so UI reflects the change immediately
+      setLastLoginAt(now);
     }
   };
 
@@ -97,8 +101,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setFullName(profile.full_name);
         setLastLoginAt(profile.last_login_at);
 
-        // Update last login timestamp on new sign in
-        if (isNewLogin) {
+        // Update last login timestamp on new sign in, or if it's never been set
+        if (isNewLogin || !profile.last_login_at) {
           await updateLastLogin(userId);
         }
       }
