@@ -87,44 +87,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const ensureProfile = async (userId: string, isNewLogin: boolean = false) => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, subscription_tier, avatar_url, full_name, last_login_at')
-        .eq('id', userId)
-        .single();
-
-      if (!profile) {
-        const { error: profileError } = await supabase
+      try {
+        const { data: profile, error } = await supabase
           .from('profiles')
-          .insert([
-            {
-              id: userId,
-              created_at: new Date().toISOString(),
-              last_login_at: new Date().toISOString(),
-              full_name: null,
-              avatar_url: null
-            }
-          ]);
+          .select('id, subscription_tier, avatar_url, full_name, last_login_at')
+          .eq('id', userId)
+          .single();
 
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
+        if (error) {
+          console.error('Error fetching profile in ensureProfile:', error);
+          return;
         }
-      } else {
-        // Get OAuth metadata for fallbacks
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        const oauthAvatar = authUser?.user_metadata?.avatar_url;
-        const oauthName = authUser?.user_metadata?.full_name;
 
-        setSubscriptionTier(profile.subscription_tier || 'free');
-        // Use profile avatar_url, fall back to OAuth metadata avatar
-        setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
-        setFullName(profile.full_name || oauthName || null);
-        setLastLoginAt(profile.last_login_at);
+        if (!profile) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: userId,
+                created_at: new Date().toISOString(),
+                last_login_at: new Date().toISOString(),
+                full_name: null,
+                avatar_url: null
+              }
+            ]);
 
-        // Update last login timestamp on new sign in, or if it's never been set
-        if (isNewLogin || !profile.last_login_at) {
-          await updateLastLogin(userId);
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+        } else {
+          // Get OAuth metadata for fallbacks - wrapped in try/catch to not block profile data
+          let oauthAvatar: string | undefined;
+          let oauthName: string | undefined;
+          try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            oauthAvatar = authUser?.user_metadata?.avatar_url;
+            oauthName = authUser?.user_metadata?.full_name;
+          } catch (authErr) {
+            console.warn('Could not fetch OAuth metadata for fallbacks:', authErr);
+          }
+
+          setSubscriptionTier(profile.subscription_tier || 'free');
+          // Use profile avatar_url, fall back to OAuth metadata avatar
+          setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
+          setFullName(profile.full_name || oauthName || null);
+          setLastLoginAt(profile.last_login_at);
+
+          // Update last login timestamp on new sign in, or if it's never been set
+          if (isNewLogin || !profile.last_login_at) {
+            await updateLastLogin(userId);
+          }
         }
+      } catch (err) {
+        console.error('Error in ensureProfile:', err);
       }
     };
 
