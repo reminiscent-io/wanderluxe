@@ -44,7 +44,11 @@
       "Bash(bun run:*)",
       "Bash(npx supabase:*)",
       "Bash(env)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(ls:*)",
+      "Bash(export SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN)",
+      "Bash(printenv:*)",
+      "Bash(claude mcp add:*)"
     ],
     "deny": [],
     "ask": []

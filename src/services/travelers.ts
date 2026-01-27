@@ -73,31 +73,51 @@ export async function listTravelers(tripId: string) {
       .map((s: any) => s.shared_with_user_id)
       .filter((id: string | null): id is string => !!id);
 
-    // Fetch avatar URLs for users who have profiles
+    // Fetch avatar URLs and full names for users who have profiles
     let avatarMap: Record<string, string | null> = {};
+    let fullNameMap: Record<string, string | null> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, avatar_url')
+        .select('id, avatar_url, full_name')
         .in('id', userIds);
 
       if (profiles) {
-        avatarMap = profiles.reduce((acc: Record<string, string | null>, p: any) => {
-          acc[p.id] = addCacheBusting(p.avatar_url);
-          return acc;
-        }, {});
+        profiles.forEach((p: any) => {
+          avatarMap[p.id] = addCacheBusting(p.avatar_url);
+          fullNameMap[p.id] = p.full_name || null;
+        });
       }
     }
 
-    // Mark owner by user_id equality, normalize permission, and attach avatar_url
-    const travelers = shares.map((share: any) => ({
-      ...share,
-      permission_level: normalizePerm(share.permission_level),
-      is_owner: share.shared_by_user_id && share.shared_with_user_id
+    // Mark owner by user_id equality, normalize permission, attach avatar_url,
+    // and use profile full_name for owner to ensure we show current name
+    const travelers = shares.map((share: any) => {
+      const isOwner = share.shared_by_user_id && share.shared_with_user_id
         ? share.shared_by_user_id === share.shared_with_user_id
-        : false,
-      avatar_url: share.shared_with_user_id ? avatarMap[share.shared_with_user_id] ?? null : null,
-    }));
+        : false;
+
+      // For owners, use their current profile name instead of stored first_name/last_name
+      // This ensures we show their actual name, not the fallback "Trip Owner"
+      let firstName = share.first_name;
+      let lastName = share.last_name;
+
+      if (isOwner && share.shared_with_user_id && fullNameMap[share.shared_with_user_id]) {
+        const profileName = fullNameMap[share.shared_with_user_id];
+        const nameParts = profileName.trim().split(' ').filter(Boolean);
+        firstName = nameParts[0] || share.first_name;
+        lastName = nameParts.slice(1).join(' ') || share.last_name;
+      }
+
+      return {
+        ...share,
+        first_name: firstName,
+        last_name: lastName,
+        permission_level: normalizePerm(share.permission_level),
+        is_owner: isOwner,
+        avatar_url: share.shared_with_user_id ? avatarMap[share.shared_with_user_id] ?? null : null,
+      };
+    });
 
     return { data: travelers, error: null };
   } catch (err) {

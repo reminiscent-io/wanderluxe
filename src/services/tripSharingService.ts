@@ -268,10 +268,34 @@ export const getSharedTrips = async () => {
         .eq('id', share.shared_by_user_id)
         .single();
 
+      // Get owner's name: prefer profile full_name, then fall back to getting
+      // name from the owner's trip_shares record (where shared_by_user_id === shared_with_user_id)
+      let ownerName = ownerData?.full_name || '';
+
+      // If profile has no name, try to get the owner's name from their trip_shares record
+      if (!ownerName) {
+        const { data: ownerShare } = await supabase
+          .from('trip_shares' as any)
+          .select('first_name, last_name')
+          .eq('trip_id', share.trip_id)
+          .eq('shared_by_user_id', share.shared_by_user_id)
+          .eq('shared_with_user_id', share.shared_by_user_id)
+          .maybeSingle();
+
+        if (ownerShare) {
+          const firstName = ownerShare.first_name || '';
+          const lastName = ownerShare.last_name || '';
+          // Don't use "Trip Owner" fallback - only use real names
+          if (firstName && firstName !== 'Trip') {
+            ownerName = [firstName, lastName].filter(Boolean).join(' ');
+          }
+        }
+      }
+
       return {
         ...share,
         trips: share.trips || null,
-        owner_name: ownerData?.full_name || '',
+        owner_name: ownerName,
         owner_email: '' // Email not available in profiles table
       };
     })) as SharedTripWithDetails[];

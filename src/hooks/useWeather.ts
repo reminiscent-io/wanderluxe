@@ -23,6 +23,9 @@ export interface WeatherData {
   cachedAt: string;
 }
 
+// Weather-proxy edge function is deployed
+const WEATHER_FEATURE_ENABLED = true;
+
 export function useWeather(destination: string | undefined) {
   return useQuery<WeatherData>({
     queryKey: ['weather', destination],
@@ -54,7 +57,8 @@ export function useWeather(destination: string | undefined) {
 
       return response.json();
     },
-    enabled: !!destination,
+    // Disabled until weather-proxy edge function is deployed
+    enabled: WEATHER_FEATURE_ENABLED && !!destination,
     staleTime: 30 * 60 * 1000, // 30 min - data is cached server-side for 6 hours
     refetchInterval: 30 * 60 * 1000,
     retry: 1,
