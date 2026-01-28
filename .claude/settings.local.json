@@ -48,7 +48,8 @@
       "Bash(ls:*)",
       "Bash(export SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN)",
       "Bash(printenv:*)",
-      "Bash(claude mcp add:*)"
+      "Bash(claude mcp add:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
