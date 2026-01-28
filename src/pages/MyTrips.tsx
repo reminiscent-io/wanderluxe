@@ -21,11 +21,10 @@ import {
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 import { getSharedTrips } from '@/services/tripSharingService';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Calendar, MapPin, Plane, Clock, Filter, Users, Share2, Globe, CheckCircle } from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
+import { Search, Plus, Calendar, MapPin, Plane, Clock, Users, Share2, Globe, CheckCircle } from 'lucide-react';
+import { differenceInDays } from 'date-fns';
 
 // New hero and stats components
 import { ActiveTripCard, NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
@@ -48,7 +47,7 @@ const MyTrips = () => {
   }, [session, navigate]);
 
   const [showHidden, setShowHidden] = useState(false);
-  const [activeTab, setActiveTab] = useState("my-trips");
+  const [tripFilter, setTripFilter] = useState<'all' | 'mine' | 'shared'>('all');
 
   // Query for user's own trips with info on whether they're shared
   const { data: myTrips, isLoading: isLoadingMyTrips } = useQuery({
@@ -109,7 +108,9 @@ const MyTrips = () => {
       return {
         ...share.trips,
         isShared: true,
-        sharedById: share.shared_by_user_id
+        sharedById: share.shared_by_user_id,
+        owner_name: share.owner_name || null,
+        owner_email: share.owner_email || null
       };
     }
     return null;
@@ -176,44 +177,63 @@ const MyTrips = () => {
     return 'past';
   };
 
-  // Memoize filtered and categorized trips to prevent unnecessary re-renders
-  const { upcomingMyTrips, currentMyTrips, pastMyTrips } = useMemo(() => {
-    if (!myTrips || !Array.isArray(myTrips)) return { upcomingMyTrips: [], currentMyTrips: [], pastMyTrips: [] };
-    
-    const filtered = myTrips.filter(trip => 
-      trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+  // Combine and filter all trips based on search and filter selection
+  const { allTrips, upcomingTrips, currentTrips, pastTrips } = useMemo(() => {
+    // Normalize my trips with isShared = false
+    const normalizedMyTrips = (myTrips || [])
+      .filter(trip => trip && trip.destination)
+      .map(trip => ({ ...trip, isShared: false }));
+
+    // Normalize shared trips with isShared = true
+    const normalizedSharedTrips = (sharedTrips || [])
+      .filter(trip => trip && trip.destination)
+      .map(trip => ({ ...trip, isShared: true }));
+
+    // Combine all trips
+    let combined = [...normalizedMyTrips, ...normalizedSharedTrips];
+
+    // Apply filter
+    if (tripFilter === 'mine') {
+      combined = combined.filter(trip => !trip.isShared);
+    } else if (tripFilter === 'shared') {
+      combined = combined.filter(trip => trip.isShared);
+    }
+
+    // Apply search
+    const filtered = combined.filter(trip =>
+      trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const upcoming = filtered.filter(trip => getTripCategory(trip) === 'upcoming');
+    // Categorize by time
+    const upcoming = filtered
+      .filter(trip => getTripCategory(trip) === 'upcoming')
+      .sort((a, b) => new Date(a.arrival_date || '').getTime() - new Date(b.arrival_date || '').getTime());
     const current = filtered.filter(trip => getTripCategory(trip) === 'current');
-    const past = filtered.filter(trip => getTripCategory(trip) === 'past');
+    const past = filtered
+      .filter(trip => getTripCategory(trip) === 'past')
+      .sort((a, b) => new Date(b.departure_date || '').getTime() - new Date(a.departure_date || '').getTime());
 
     return {
-      upcomingMyTrips: upcoming,
-      currentMyTrips: current,
-      pastMyTrips: past
+      allTrips: filtered,
+      upcomingTrips: upcoming,
+      currentTrips: current,
+      pastTrips: past
     };
-  }, [myTrips, searchQuery]);
+  }, [myTrips, sharedTrips, searchQuery, tripFilter]);
 
-  const { upcomingSharedTrips, currentSharedTrips, pastSharedTrips } = useMemo(() => {
-    if (!sharedTrips || !Array.isArray(sharedTrips)) return { upcomingSharedTrips: [], currentSharedTrips: [], pastSharedTrips: [] };
-    
-    const filtered = sharedTrips
-      .filter(trip => trip && trip.destination) // Filter out any undefined trips
-      .filter(trip =>
-        trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
-    const upcoming = filtered.filter(trip => getTripCategory(trip) === 'upcoming');
-    const current = filtered.filter(trip => getTripCategory(trip) === 'current');
-    const past = filtered.filter(trip => getTripCategory(trip) === 'past');
-
-    return {
-      upcomingSharedTrips: upcoming,
-      currentSharedTrips: current,
-      pastSharedTrips: past
-    };
-  }, [sharedTrips, searchQuery]);
+  // Keep these for backward compatibility with hero logic
+  const upcomingMyTrips = useMemo(() =>
+    (myTrips || []).filter(trip => trip && getTripCategory(trip) === 'upcoming'),
+  [myTrips]);
+  const currentMyTrips = useMemo(() =>
+    (myTrips || []).filter(trip => trip && getTripCategory(trip) === 'current'),
+  [myTrips]);
+  const upcomingSharedTrips = useMemo(() =>
+    (sharedTrips || []).filter(trip => trip && getTripCategory(trip) === 'upcoming'),
+  [sharedTrips]);
+  const currentSharedTrips = useMemo(() =>
+    (sharedTrips || []).filter(trip => trip && getTripCategory(trip) === 'current'),
+  [sharedTrips]);
 
   if (!session) {
     return null; // Don't render anything while redirecting
@@ -255,16 +275,19 @@ const MyTrips = () => {
 
   // Get the last completed trip for background image
   const lastCompletedTrip = useMemo(() => {
-    return pastMyTrips[0] || pastSharedTrips[0] || null;
-  }, [pastMyTrips, pastSharedTrips]);
+    const allPast = [...(myTrips || []), ...(sharedTrips || [])]
+      .filter(trip => trip && getTripCategory(trip) === 'past')
+      .sort((a, b) => new Date(b.departure_date || '').getTime() - new Date(a.departure_date || '').getTime());
+    return allPast[0] || null;
+  }, [myTrips, sharedTrips]);
 
   // Filter upcoming trips to avoid showing next trip twice when it's in hero
-  const filteredUpcomingMyTrips = useMemo(() => {
+  const filteredUpcomingTrips = useMemo(() => {
     if (heroState === 'pre-trip' && nextTrip) {
-      return upcomingMyTrips.filter(trip => trip.trip_id !== nextTrip.trip_id);
+      return upcomingTrips.filter(trip => trip.trip_id !== nextTrip.trip_id);
     }
-    return upcomingMyTrips;
-  }, [heroState, nextTrip, upcomingMyTrips]);
+    return upcomingTrips;
+  }, [heroState, nextTrip, upcomingTrips]);
 
   // Calculate total trips stats
   const totalMyTrips = (myTrips || []).length;
@@ -427,222 +450,261 @@ const MyTrips = () => {
           </div>
         </motion.div>
         
-        <Tabs
-          defaultValue="my-trips"
-          className="mb-8"
-          value={activeTab}
-          onValueChange={setActiveTab}
-        >
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-            <TabsTrigger value="my-trips">My Trips</TabsTrigger>
-            <TabsTrigger value="shared-trips">Shared With Me</TabsTrigger>
-          </TabsList>
+        {/* Filter Chips */}
+        <div className="flex items-center gap-2 mb-8">
+          <span className="text-sm text-earth-600 mr-2">Show:</span>
+          <button
+            onClick={() => setTripFilter('all')}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              tripFilter === 'all'
+                ? 'bg-earth-600 text-white'
+                : 'bg-white text-earth-600 border border-earth-200 hover:bg-earth-50'
+            }`}
+          >
+            All Trips
+            <Badge className="ml-2 bg-white/20 text-inherit">
+              {totalMyTrips + totalSharedTrips}
+            </Badge>
+          </button>
+          <button
+            onClick={() => setTripFilter('mine')}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              tripFilter === 'mine'
+                ? 'bg-earth-600 text-white'
+                : 'bg-white text-earth-600 border border-earth-200 hover:bg-earth-50'
+            }`}
+          >
+            My Trips
+            <Badge className="ml-2 bg-white/20 text-inherit">
+              {totalMyTrips}
+            </Badge>
+          </button>
+          <button
+            onClick={() => setTripFilter('shared')}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+              tripFilter === 'shared'
+                ? 'bg-earth-600 text-white'
+                : 'bg-white text-earth-600 border border-earth-200 hover:bg-earth-50'
+            }`}
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Shared With Me
+            <Badge className="ml-1 bg-white/20 text-inherit">
+              {totalSharedTrips}
+            </Badge>
+          </button>
+        </div>
 
-          <TabsContent value="my-trips">
-            {isLoadingMyTrips ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-64 bg-gray-100 rounded-lg animate-pulse"
-                  />
-                ))}
+        {/* Unified Trip List */}
+        {isLoadingMyTrips || isLoadingSharedTrips ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-64 bg-gray-100 rounded-lg animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {/* Current Trips Section */}
+            {currentTrips.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="relative"
+              >
+                <div className="flex items-center gap-3 mb-8 pb-4 border-b border-emerald-100">
+                  <div className="bg-emerald-100 rounded-xl p-3">
+                    <Plane className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
+                      Currently Traveling
+                      <Badge className="bg-emerald-500 text-white text-sm px-3 py-1">
+                        {currentTrips.length}
+                      </Badge>
+                    </h2>
+                    <p className="text-earth-600 text-sm mt-1">Your active adventures</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {currentTrips.map((trip) => (
+                    <motion.div
+                      key={trip.trip_id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <TripCard
+                        trip={{
+                          ...trip,
+                          start_date: trip.arrival_date,
+                          end_date: trip.departure_date,
+                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                        }}
+                        onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        isShared={trip.isShared}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Upcoming Trips Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="relative"
+            >
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-blue-100">
+                <div className="bg-blue-100 rounded-xl p-3">
+                  <Calendar className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
+                    Upcoming Adventures
+                    <Badge className="bg-blue-500 text-white text-sm px-3 py-1">
+                      {filteredUpcomingTrips.length}
+                    </Badge>
+                  </h2>
+                  <p className="text-earth-600 text-sm mt-1">Trips to look forward to</p>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-12">
-                {/* Current Trips Section */}
-                {currentMyTrips.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.5 }}
-                    className="relative"
-                  >
-                    {/* Enhanced Section Header */}
-                    <div className="flex items-center gap-3 mb-8 pb-4 border-b border-emerald-100">
-                      <div className="bg-emerald-100 rounded-xl p-3">
-                        <Plane className="h-6 w-6 text-emerald-600" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                          Currently Traveling
-                          <Badge className="bg-emerald-500 text-white text-sm px-3 py-1">
-                            {currentMyTrips.length}
-                          </Badge>
-                        </h2>
-                        <p className="text-earth-600 text-sm mt-1">Your active adventures</p>
-                      </div>
-                    </div>
 
-                    {/* Enhanced Grid for Current Trips - Featured Layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {currentMyTrips.map((trip) => (
-                        <motion.div
-                          key={trip.trip_id}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <TripCard
-                            trip={{
-                              ...trip,
-                              start_date: trip.arrival_date,
-                              end_date: trip.departure_date,
-                              cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                            }}
-                            onHide={() => handleHideTrip(trip.trip_id)}
-                          />
-                        </motion.div>
-                      ))}
+              {filteredUpcomingTrips.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredUpcomingTrips.map((trip, index) => (
+                    <motion.div
+                      key={trip.trip_id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1, duration: 0.3 }}
+                    >
+                      <TripCard
+                        trip={{
+                          ...trip,
+                          start_date: trip.arrival_date,
+                          end_date: trip.departure_date,
+                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                        }}
+                        onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        isShared={trip.isShared}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <Card className="p-12 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+                  <div className="max-w-md mx-auto">
+                    <div className="bg-blue-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
+                      <MapPin className="h-12 w-12 text-blue-600 mx-auto" />
                     </div>
-                  </motion.div>
-                )}
-
-                {/* Upcoming Trips Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                  className="relative"
-                >
-                  {/* Enhanced Section Header */}
-                  <div className="flex items-center gap-3 mb-8 pb-4 border-b border-blue-100">
-                    <div className="bg-blue-100 rounded-xl p-3">
-                      <Calendar className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                        Upcoming Adventures
-                        <Badge className="bg-blue-500 text-white text-sm px-3 py-1">
-                          {filteredUpcomingMyTrips.length}
-                        </Badge>
-                      </h2>
-                      <p className="text-earth-600 text-sm mt-1">Trips to look forward to</p>
-                    </div>
+                    <h3 className="text-xl font-semibold text-earth-800 mb-3">
+                      {tripFilter === 'shared' ? 'No Shared Adventures Yet' : 'Your Next Adventure Awaits'}
+                    </h3>
+                    <p className="text-earth-600 mb-6">
+                      {tripFilter === 'shared'
+                        ? 'When someone shares a trip with you, it will appear here.'
+                        : "Ready to explore somewhere new? Let's plan your perfect getaway."}
+                    </p>
+                    {tripFilter !== 'shared' && (
+                      <Button
+                        onClick={() => navigate('/create-trip')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium"
+                      >
+                        Plan Your Trip
+                      </Button>
+                    )}
                   </div>
+                </Card>
+              )}
+            </motion.div>
 
-                  {filteredUpcomingMyTrips.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {filteredUpcomingMyTrips.map((trip, index) => (
-                        <motion.div
-                          key={trip.trip_id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1, duration: 0.3 }}
-                        >
-                          <TripCard
-                            trip={{
-                              ...trip,
-                              start_date: trip.arrival_date,
-                              end_date: trip.departure_date,
-                              cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                            }}
-                            onHide={() => handleHideTrip(trip.trip_id)}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Card className="p-12 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
-                      <div className="max-w-md mx-auto">
-                        <div className="bg-blue-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
-                          <MapPin className="h-12 w-12 text-blue-600 mx-auto" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-earth-800 mb-3">
-                          Your Next Adventure Awaits
-                        </h3>
-                        <p className="text-earth-600 mb-6">
-                          Ready to explore somewhere new? Let's plan your perfect getaway.
-                        </p>
-                        <Button 
-                          onClick={() => navigate('/create-trip')} 
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium"
-                        >
-                          Plan Your Trip
-                        </Button>
-                      </div>
-                    </Card>
-                  )}
-                </motion.div>
+            {/* Past Trips Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="relative"
+            >
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                <div className="bg-gray-100 rounded-xl p-3">
+                  <Clock className="h-6 w-6 text-gray-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
+                    Travel Memories
+                    <Badge className="bg-gray-500 text-white text-sm px-3 py-1">
+                      {pastTrips.length}
+                    </Badge>
+                  </h2>
+                  <p className="text-earth-600 text-sm mt-1">Cherished adventures from the past</p>
+                </div>
+              </div>
 
-                {/* Past Trips Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
-                  className="relative"
-                >
-                  {/* Enhanced Section Header */}
-                  <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
-                    <div className="bg-gray-100 rounded-xl p-3">
-                      <Clock className="h-6 w-6 text-gray-600" />
+              {pastTrips.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {pastTrips.map((trip, index) => (
+                    <motion.div
+                      key={trip.trip_id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05, duration: 0.3 }}
+                    >
+                      <TripCard
+                        trip={{
+                          ...trip,
+                          start_date: trip.arrival_date,
+                          end_date: trip.departure_date,
+                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                        }}
+                        onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        isShared={trip.isShared}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <Card className="p-8 text-center bg-gray-50 border-gray-100">
+                  <div className="max-w-sm mx-auto">
+                    <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
+                      <Clock className="h-10 w-10 text-gray-500 mx-auto" />
                     </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                        Travel Memories
-                        <Badge className="bg-gray-500 text-white text-sm px-3 py-1">
-                          {pastMyTrips.length}
-                        </Badge>
-                      </h2>
-                      <p className="text-earth-600 text-sm mt-1">Cherished adventures from the past</p>
-                    </div>
+                    <p className="text-earth-500 text-lg">No past adventures yet</p>
+                    <p className="text-earth-400 text-sm mt-1">Your travel memories will appear here</p>
                   </div>
+                </Card>
+              )}
+            </motion.div>
 
-                  {pastMyTrips.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {pastMyTrips.map((trip, index) => (
-                        <motion.div
-                          key={trip.trip_id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05, duration: 0.3 }}
-                        >
-                          <TripCard
-                            trip={{
-                              ...trip,
-                              start_date: trip.arrival_date,
-                              end_date: trip.departure_date,
-                              cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                            }}
-                            onHide={() => handleHideTrip(trip.trip_id)}
-                          />
-                        </motion.div>
-                      ))}
+            {/* Enhanced Empty State for No Trips */}
+            {allTrips.length === 0 && heroState !== 'pre-trip' && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                <Card className="p-16 text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200 shadow-xl">
+                  <div className="max-w-lg mx-auto">
+                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-lg">
+                      <MapPin className="h-16 w-16 text-white mx-auto" />
                     </div>
-                  ) : (
-                    <Card className="p-8 text-center bg-gray-50 border-gray-100">
-                      <div className="max-w-sm mx-auto">
-                        <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
-                          <Clock className="h-10 w-10 text-gray-500 mx-auto" />
-                        </div>
-                        <p className="text-earth-500 text-lg">No past adventures yet</p>
-                        <p className="text-earth-400 text-sm mt-1">Your travel memories will appear here</p>
-                      </div>
-                    </Card>
-                  )}
-                </motion.div>
+                    <h3 className="text-3xl font-bold text-earth-800 mb-4">
+                      {tripFilter === 'shared' ? 'No Shared Trips Yet' : 'Your Journey Begins Here'}
+                    </h3>
+                    <p className="text-earth-600 text-lg mb-8 leading-relaxed">
+                      {tripFilter === 'shared'
+                        ? 'When someone shares a trip with you, it will appear here.'
+                        : "Ready to explore the world? Create your first trip and let the adventures begin."}
+                    </p>
 
-                {/* Enhanced Empty State for No Trips */}
-                {filteredUpcomingMyTrips.length === 0 && currentMyTrips.length === 0 && pastMyTrips.length === 0 && heroState !== 'pre-trip' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                  >
-                    <Card className="p-16 text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200 shadow-xl">
-                      <div className="max-w-lg mx-auto">
-                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-lg">
-                          <MapPin className="h-16 w-16 text-white mx-auto" />
-                        </div>
-                        <h3 className="text-3xl font-bold text-earth-800 mb-4">
-                          Your Journey Begins Here
-                        </h3>
-                        <p className="text-earth-600 text-lg mb-8 leading-relaxed">
-                          Ready to explore the world? Create your first trip and let the adventures begin. 
-                          From dream destinations to detailed itineraries, we'll help you plan every step.
-                        </p>
-                        
-                        {/* Features Preview */}
+                    {tripFilter !== 'shared' && (
+                      <>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-sm">
                           <div className="bg-white/70 rounded-lg p-4">
                             <Calendar className="h-6 w-6 text-blue-600 mx-auto mb-2" />
@@ -657,220 +719,32 @@ const MyTrips = () => {
                             <p className="text-earth-700 font-medium">AI Assistance</p>
                           </div>
                         </div>
-                        
-                        <Button 
-                          onClick={() => navigate('/create-trip')} 
+
+                        <Button
+                          onClick={() => navigate('/create-trip')}
                           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                         >
                           <Plus className="h-5 w-5 mr-2" />
                           Create Your First Trip
                         </Button>
-                      </div>
-                    </Card>
-                  </motion.div>
-                )}
-              </div>
+                      </>
+                    )}
+                  </div>
+                </Card>
+              </motion.div>
             )}
+          </div>
+        )}
 
-            <div className="flex justify-center mt-12">
-              <Button
-                variant="ghost"
-                onClick={() => setShowHidden(!showHidden)}
-                className="text-earth-500 hover:text-earth-600"
-              >
-                {showHidden ? 'Show Active Trips' : 'Show Hidden Trips'}
-              </Button>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="shared-trips">
-            {isLoadingSharedTrips ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-64 bg-gray-100 rounded-lg animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-12">
-                {/* Current Shared Trips Section */}
-                {currentSharedTrips.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.5 }}
-                    className="relative"
-                  >
-                    {/* Enhanced Section Header */}
-                    <div className="flex items-center gap-3 mb-8 pb-4 border-b border-emerald-100">
-                      <div className="bg-emerald-100 rounded-xl p-3">
-                        <Users className="h-6 w-6 text-emerald-600" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                          Currently Shared
-                          <Badge className="bg-emerald-500 text-white text-sm px-3 py-1">
-                            {currentSharedTrips.length}
-                          </Badge>
-                        </h2>
-                        <p className="text-earth-600 text-sm mt-1">Active trips shared with you</p>
-                      </div>
-                    </div>
-
-                    {/* Enhanced Grid for Current Trips - Featured Layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {currentSharedTrips.map((trip) => (
-                        <motion.div
-                          key={trip.trip_id}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <TripCard
-                            trip={{
-                              ...trip,
-                              start_date: trip.arrival_date,
-                              end_date: trip.departure_date,
-                              cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                            }}
-                            isShared={true}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Upcoming Shared Trips Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                  className="relative"
-                >
-                  {/* Enhanced Section Header */}
-                  <div className="flex items-center gap-3 mb-8 pb-4 border-b border-purple-100">
-                    <div className="bg-purple-100 rounded-xl p-3">
-                      <Share2 className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                        Upcoming Shared
-                        <Badge className="bg-purple-500 text-white text-sm px-3 py-1">
-                          {upcomingSharedTrips.length}
-                        </Badge>
-                      </h2>
-                      <p className="text-earth-600 text-sm mt-1">Shared adventures to anticipate</p>
-                    </div>
-                  </div>
-
-                  {upcomingSharedTrips.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {upcomingSharedTrips.map((trip, index) => (
-                        <motion.div
-                          key={trip.trip_id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1, duration: 0.3 }}
-                        >
-                          <TripCard
-                            trip={{
-                              ...trip,
-                              start_date: trip.arrival_date,
-                              end_date: trip.departure_date,
-                              cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                            }}
-                            isShared={true}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Card className="p-12 text-center bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100">
-                      <div className="max-w-md mx-auto">
-                        <div className="bg-purple-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
-                          <Share2 className="h-12 w-12 text-purple-600 mx-auto" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-earth-800 mb-3">
-                          No Shared Adventures Yet
-                        </h3>
-                        <p className="text-earth-600 mb-6">
-                          When someone shares a trip with you, it will appear here.
-                        </p>
-                      </div>
-                    </Card>
-                  )}
-                </motion.div>
-
-                {/* Past Shared Trips Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
-                  className="relative"
-                >
-                  {/* Enhanced Section Header */}
-                  <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
-                    <div className="bg-gray-100 rounded-xl p-3">
-                      <Clock className="h-6 w-6 text-gray-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                        Shared Memories
-                        <Badge className="bg-gray-500 text-white text-sm px-3 py-1">
-                          {pastSharedTrips.length}
-                        </Badge>
-                      </h2>
-                      <p className="text-earth-600 text-sm mt-1">Past shared adventures</p>
-                    </div>
-                  </div>
-
-                  {pastSharedTrips.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {pastSharedTrips.map((trip, index) => (
-                        <motion.div
-                          key={trip.trip_id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05, duration: 0.3 }}
-                        >
-                          <TripCard
-                            trip={{
-                              ...trip,
-                              start_date: trip.arrival_date,
-                              end_date: trip.departure_date,
-                              cover_image_url: trip.cover_image_url ? trip.cover_image_url : 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
-                            }}
-                            isShared={true}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Card className="p-8 text-center bg-gray-50 border-gray-100">
-                      <div className="max-w-sm mx-auto">
-                        <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
-                          <Clock className="h-10 w-10 text-gray-500 mx-auto" />
-                        </div>
-                        <p className="text-earth-500 text-lg">No shared memories yet</p>
-                        <p className="text-earth-400 text-sm mt-1">Past shared trips will appear here</p>
-                      </div>
-                    </Card>
-                  )}
-                </motion.div>
-
-                {/* Show message if no shared trips at all */}
-                {upcomingSharedTrips.length === 0 && currentSharedTrips.length === 0 && pastSharedTrips.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-earth-500">No trips have been shared with you yet</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+        <div className="flex justify-center mt-12">
+          <Button
+            variant="ghost"
+            onClick={() => setShowHidden(!showHidden)}
+            className="text-earth-500 hover:text-earth-600"
+          >
+            {showHidden ? 'Show Active Trips' : 'Show Hidden Trips'}
+          </Button>
+        </div>
 
         <AlertDialog
           open={isDeleteDialogOpen}

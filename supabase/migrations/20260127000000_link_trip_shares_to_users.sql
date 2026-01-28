@@ -55,10 +55,5 @@ CREATE TRIGGER link_trip_shares_trigger
   FOR EACH ROW
   EXECUTE FUNCTION link_trip_shares_on_profile_change();
 
--- Backfill existing records: link trip_shares to users where email matches
--- This fixes all existing records that were created without shared_with_user_id
-UPDATE trip_shares ts
-SET shared_with_user_id = au.id
-FROM auth.users au
-WHERE LOWER(ts.shared_with_email) = LOWER(au.email)
-  AND ts.shared_with_user_id IS NULL;
+-- Backfill logic moved to 20260128000000_fix_trip_shares_owner_records.sql
+-- to handle cleanup of duplicate records before setting owner emails

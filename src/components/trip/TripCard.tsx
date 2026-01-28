@@ -208,9 +208,29 @@ const TripCard = ({
             </div>
           </div>
           
-          {/* Display shared badge in top-right corner with count if owned by user */}
-          {!isShared && tripIsShared && shareCount > 0 && (
-            <div className="absolute top-4 right-4">
+          {/* Display shared badge in top-right corner */}
+          <div className="absolute top-4 right-4">
+            {/* Show "Shared by" badge for trips shared with user */}
+            {isShared && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge className="flex items-center gap-1.5 bg-white/95 text-earth-700 border-0 backdrop-blur-sm shadow-lg px-2.5 py-1">
+                      <Share2 className="h-3 w-3 text-blue-600" />
+                      <span className="font-medium text-xs">
+                        {trip.owner_name || 'Shared'}
+                      </span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Shared by {trip.owner_name || 'someone'}</p>
+                    {trip.owner_email && <p className="text-xs opacity-75">{trip.owner_email}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {/* Show share count for trips user owns and has shared */}
+            {!isShared && tripIsShared && shareCount > 0 && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -224,26 +244,10 @@ const TripCard = ({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         <CardContent className="p-6 pt-4">
-          {/* Shared Trip Badge */}
-          {isShared && (
-            <div className="mb-4 flex items-center justify-between">
-              <Badge variant="outline" className="flex items-center gap-2 border-blue-200 bg-blue-50 text-blue-700 px-3 py-1">
-                {trip.owner_name ? (
-                  <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-medium">
-                    {trip.owner_name.split(' ').map(name => name[0]).join('').toUpperCase().substring(0, 2)}
-                  </div>
-                ) : (
-                  <Share2 className="h-4 w-4" />
-                )}
-                <span className="font-medium">Shared by {trip.owner_name || 'Unknown'}</span>
-              </Badge>
-            </div>
-          )}
-          
           {/* Trip Details - Now more compact since destination is in overlay */}
           <div className="space-y-3">
             {/* Additional trip info can go here */}

@@ -290,35 +290,41 @@ export const getSharedTrips = async () => {
         .eq('id', share.shared_by_user_id)
         .single();
 
-      // Get owner's name: prefer profile full_name, then fall back to getting
-      // name from the owner's trip_shares record (where shared_by_user_id === shared_with_user_id)
+      // Get the owner's trip_shares record (where shared_by_user_id === shared_with_user_id)
+      // This contains their email and name as fallback
+      const { data: ownerShare } = await supabase
+        .from('trip_shares' as any)
+        .select('first_name, last_name, shared_with_email')
+        .eq('trip_id', share.trip_id)
+        .eq('shared_by_user_id', share.shared_by_user_id)
+        .eq('shared_with_user_id', share.shared_by_user_id)
+        .maybeSingle();
+
+      // Get owner's name: prefer profile full_name, then trip_shares name
       let ownerName = ownerData?.full_name || '';
+      let ownerEmail = ownerShare?.shared_with_email || '';
 
-      // If profile has no name, try to get the owner's name from their trip_shares record
-      if (!ownerName) {
-        const { data: ownerShare } = await supabase
-          .from('trip_shares' as any)
-          .select('first_name, last_name')
-          .eq('trip_id', share.trip_id)
-          .eq('shared_by_user_id', share.shared_by_user_id)
-          .eq('shared_with_user_id', share.shared_by_user_id)
-          .maybeSingle();
-
-        if (ownerShare) {
-          const firstName = ownerShare.first_name || '';
-          const lastName = ownerShare.last_name || '';
-          // Don't use "Trip Owner" fallback - only use real names
-          if (firstName && firstName !== 'Trip') {
-            ownerName = [firstName, lastName].filter(Boolean).join(' ');
-          }
+      // If profile has no name, use trip_shares name
+      if (!ownerName && ownerShare) {
+        const firstName = ownerShare.first_name || '';
+        const lastName = ownerShare.last_name || '';
+        // Don't use "Trip Owner" fallback - only use real names
+        if (firstName && firstName !== 'Trip') {
+          ownerName = [firstName, lastName].filter(Boolean).join(' ');
         }
+      }
+
+      // If still no name but we have email, derive from email
+      if (!ownerName && ownerEmail) {
+        const emailPrefix = ownerEmail.split('@')[0] || '';
+        ownerName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
       }
 
       return {
         ...share,
         trips: share.trips || null,
         owner_name: ownerName,
-        owner_email: '' // Email not available in profiles table
+        owner_email: ownerEmail
       };
     })) as SharedTripWithDetails[];
 

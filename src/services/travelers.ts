@@ -8,18 +8,33 @@ const normalizePerm = (p?: string | null): "read" | "edit" =>
 // Helper function to add owner to trip_shares when trip is created
 export async function addOwnerToTripShares(tripId: string, userId: string) {
   try {
-    // Get owner's profile info
+    // Get owner's profile info and email
     const { data: profile } = await supabase
       .from('profiles')
       .select('full_name')
       .eq('id', userId)
       .single();
 
+    // Get owner's email from auth
+    const { data: { user } } = await supabase.auth.getUser();
+    const ownerEmail = user?.email?.toLowerCase() || null;
+
     // Parse full_name into first_name and last_name
-    const fullName = (profile?.full_name || 'Trip Owner').trim();
-    const nameParts = fullName.split(' ').filter(Boolean);
-    const firstName = nameParts[0] || 'Trip';
-    const lastName = nameParts.slice(1).join(' ') || 'Owner';
+    // Fallback to email prefix if no profile name (not "Trip Owner")
+    let firstName: string;
+    let lastName: string | null = null;
+
+    if (profile?.full_name?.trim()) {
+      const nameParts = profile.full_name.trim().split(' ').filter(Boolean);
+      firstName = nameParts[0];
+      lastName = nameParts.slice(1).join(' ') || null;
+    } else if (ownerEmail) {
+      // Derive name from email prefix as fallback
+      const emailPrefix = ownerEmail.split('@')[0] || 'User';
+      firstName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+    } else {
+      firstName = 'User';
+    }
 
     // Insert owner as a trip share record (owner always has edit)
     await supabase
@@ -30,8 +45,8 @@ export async function addOwnerToTripShares(tripId: string, userId: string) {
         shared_with_user_id: userId, // owner shares with themselves
         first_name: firstName,
         last_name: lastName,
-        shared_with_email: null,
-        permission_level: 'edit',     // <— ensure DB reflects edit
+        shared_with_email: ownerEmail, // Store owner's email too
+        permission_level: 'edit',
         created_at: new Date().toISOString(),
       });
 
