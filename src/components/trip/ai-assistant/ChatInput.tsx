@@ -30,6 +30,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [message]);
 
+  // Handle focus to prevent browser auto-scroll issues on mobile
+  const handleFocus = useCallback(() => {
+    // Prevent the browser from auto-scrolling the entire page
+    // Use a small timeout to let the keyboard appear first
+    setTimeout(() => {
+      if (textareaRef.current) {
+        // Scroll the textarea into view within its container only
+        textareaRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }, 100);
+  }, []);
+
   const handleSend = useCallback(() => {
     const trimmed = message.trim();
     // Can send if has message OR has attachment
@@ -117,6 +129,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             value={message}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
             placeholder={attachment ? 'Add a message (optional)...' : placeholder}
             disabled={disabled || isSending}
             rows={1}
