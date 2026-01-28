@@ -133,7 +133,21 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   return (
     <>
       <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerContent className="h-[100dvh] max-h-[100dvh] flex flex-col rounded-none [&>div:first-child]:hidden">
+        <DrawerContent
+          className="flex flex-col rounded-none [&>div:first-child]:hidden"
+          style={{
+            // Use fixed positioning filling the screen
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            // Prevent scroll chaining that causes content to escape bounds
+            overscrollBehavior: 'contain',
+            // Contain all content within bounds
+            overflow: 'hidden',
+          }}
+        >
           {/* Header with safe area padding for PWA/notch */}
           <DrawerHeader
             className="border-b border-sand-200 pb-3 flex-shrink-0"
@@ -212,8 +226,8 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 </div>
               )}
 
-              {/* Messages area - scrollable */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
+              {/* Messages area - scrollable with contained scroll behavior */}
+              <div className="flex-1 min-h-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
                 <ChatMessageList
                   messages={messages}
                   isLoading={isLoading}
@@ -242,7 +256,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
               {/* Input - with safe area padding for PWA bottom inset */}
               <div
-                className="flex-shrink-0"
+                className="flex-shrink-0 bg-white"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
               >
                 <ChatInput
