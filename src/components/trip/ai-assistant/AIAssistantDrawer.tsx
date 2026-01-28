@@ -161,20 +161,23 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     <>
       <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerContent
-          className="flex flex-col rounded-none border-none !mt-0 !h-auto !bottom-auto [&>div:first-child]:hidden"
+          className="flex flex-col rounded-none border-none bg-white [&>div:first-child]:hidden"
           style={{
             // Use fixed positioning with visual viewport height
             // This ensures the drawer resizes correctly when keyboard opens
             position: 'fixed',
-            top: viewport.offsetTop,
+            top: `${viewport.offsetTop}px`,
             left: 0,
             right: 0,
             // Use visual viewport height to account for keyboard
-            height: viewport.height,
+            // Using explicit px value to override Tailwind !important classes
+            height: `${viewport.height}px`,
             // Override the default bottom-0 from Vaul drawer
             bottom: 'auto',
             // Prevent any margin from default drawer styles
             marginTop: 0,
+            // Higher z-index to ensure we're above the bottom navigation (z-50)
+            zIndex: 100,
             // Prevent scroll chaining that causes content to escape bounds
             overscrollBehavior: 'contain',
             // Contain all content within bounds
@@ -182,6 +185,8 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
             // Ensure consistent width
             maxWidth: '100vw',
             width: '100%',
+            // Disable Vaul's transform animation that fights with our positioning
+            transform: 'none',
           }}
         >
           {/* Header with safe area padding for PWA/notch */}
