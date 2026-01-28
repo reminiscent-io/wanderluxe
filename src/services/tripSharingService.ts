@@ -53,14 +53,36 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       // The recipient can update their name later
       const emailPrefix = email.split('@')[0] || 'Guest';
       // Capitalize first letter
-      const firstName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+      let firstName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+      let lastName: string | null = null;
+
+      // Check if a user with this email already exists
+      const { data: existingUserId } = await supabase.rpc('get_user_id_by_email', {
+        lookup_email: email.toLowerCase().trim()
+      });
+
+      // If user exists, get their profile for better name display
+      if (existingUserId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', existingUserId)
+          .single();
+
+        if (profile?.full_name) {
+          const nameParts = profile.full_name.trim().split(' ').filter(Boolean);
+          firstName = nameParts[0] || firstName;
+          lastName = nameParts.slice(1).join(' ') || null;
+        }
+      }
 
       const shareData: any = {
         trip_id: tripId,
         shared_by_user_id: user.id,
         shared_with_email: email.toLowerCase().trim(),
+        shared_with_user_id: existingUserId || null,
         first_name: firstName,
-        last_name: null,
+        last_name: lastName,
         is_owner: false,
         permission_level: permissionLevel
       };

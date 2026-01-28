@@ -91,18 +91,19 @@ export async function listTravelers(tripId: string) {
     }
 
     // Mark owner by user_id equality, normalize permission, attach avatar_url,
-    // and use profile full_name for owner to ensure we show current name
+    // and use profile full_name if available, falling back to trip_shares name
     const travelers = shares.map((share: any) => {
       const isOwner = share.shared_by_user_id && share.shared_with_user_id
         ? share.shared_by_user_id === share.shared_with_user_id
         : false;
 
-      // For owners, use their current profile name instead of stored first_name/last_name
-      // This ensures we show their actual name, not the fallback "Trip Owner"
+      // Name priority: profile full_name > trip_shares first_name/last_name
+      // This ensures we show the user's actual name if they have a profile,
+      // otherwise fall back to the name entered when sharing the trip
       let firstName = share.first_name;
       let lastName = share.last_name;
 
-      if (isOwner && share.shared_with_user_id && fullNameMap[share.shared_with_user_id]) {
+      if (share.shared_with_user_id && fullNameMap[share.shared_with_user_id]) {
         const profileName = fullNameMap[share.shared_with_user_id];
         const nameParts = profileName.trim().split(' ').filter(Boolean);
         firstName = nameParts[0] || share.first_name;
