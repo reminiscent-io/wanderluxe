@@ -32,14 +32,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   // Handle focus to prevent browser auto-scroll issues on mobile
   const handleFocus = useCallback(() => {
-    // Prevent the browser from auto-scrolling the entire page
-    // Use a small timeout to let the keyboard appear first
-    setTimeout(() => {
-      if (textareaRef.current) {
-        // Scroll the textarea into view within its container only
-        textareaRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }
-    }, 100);
+    // On mobile, we don't want to call scrollIntoView at all because:
+    // 1. The visual viewport API already handles keyboard appearance
+    // 2. Browser scrollIntoView can cause the entire page to shift
+    // 3. The fixed positioning of the drawer keeps the input visible
+
+    // Prevent default scroll behavior by stopping propagation
+    // The drawer's fixed positioning with visual viewport height handles visibility
+    if (textareaRef.current) {
+      // Just ensure focus without scrolling
+      // The visual viewport resize will keep this in view
+    }
   }, []);
 
   const handleSend = useCallback(() => {

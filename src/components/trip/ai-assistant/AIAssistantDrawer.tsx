@@ -1,8 +1,9 @@
-import React, { useState, useCallback, Component, ReactNode } from 'react';
+import React, { useState, useCallback, useEffect, Component, ReactNode } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Sparkles, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { useVisualViewport } from '@/hooks/useVisualViewport';
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
 import PromptChips from './PromptChips';
@@ -79,6 +80,32 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   const [paywallUsage, setPaywallUsage] = useState<AIUsageInfo | undefined>();
   const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
 
+  // Use visual viewport to handle mobile keyboard properly
+  const viewport = useVisualViewport();
+
+  // Lock body scroll when drawer is open to prevent background scrolling
+  useEffect(() => {
+    if (open) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.overflow = '';
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [open]);
+
   const handleLimitReached = useCallback((usage: AIUsageInfo) => {
     setPaywallUsage(usage);
     setShowPaywall(true);
@@ -134,18 +161,27 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     <>
       <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerContent
-          className="flex flex-col rounded-none [&>div:first-child]:hidden"
+          className="flex flex-col rounded-none border-none !mt-0 !h-auto !bottom-auto [&>div:first-child]:hidden"
           style={{
-            // Use fixed positioning filling the screen
+            // Use fixed positioning with visual viewport height
+            // This ensures the drawer resizes correctly when keyboard opens
             position: 'fixed',
-            top: 0,
+            top: viewport.offsetTop,
             left: 0,
             right: 0,
-            bottom: 0,
+            // Use visual viewport height to account for keyboard
+            height: viewport.height,
+            // Override the default bottom-0 from Vaul drawer
+            bottom: 'auto',
+            // Prevent any margin from default drawer styles
+            marginTop: 0,
             // Prevent scroll chaining that causes content to escape bounds
             overscrollBehavior: 'contain',
             // Contain all content within bounds
             overflow: 'hidden',
+            // Ensure consistent width
+            maxWidth: '100vw',
+            width: '100%',
           }}
         >
           {/* Header with safe area padding for PWA/notch */}
