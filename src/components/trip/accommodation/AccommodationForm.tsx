@@ -25,7 +25,12 @@ import {
   type PlacePhotoMeta,
 } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronDown, MapPin, Phone, Globe } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { CURRENCIES, CURRENCY_NAMES } from "@/utils/currencyConstants";
 import TravelersTagMultiSelect from "@/components/trip/travelers/TravelersTagMultiSelect";
 import {
@@ -211,6 +216,11 @@ export default function AccommodationForm({
   /* -------------------------- Hotel photos ----------------------------- */
   const [hotelPhotos, setHotelPhotos] = useState<PlacePhotoMeta[]>([]);
 
+  /* ---------------------- Location details expand --------------------- */
+  const [locationOpen, setLocationOpen] = useState(
+    !!(initialData?.hotel_address || initialData?.hotel_phone || initialData?.hotel_website)
+  );
+
   // Load photos for edit mode (when we already have a place_id)
   useEffect(() => {
     const pid = initialData?.hotel_place_id;
@@ -278,6 +288,11 @@ export default function AccommodationForm({
                   form.setValue("hotel_website", d?.website ?? "");
                   form.setValue("hotel_url", d?.website ?? "");
 
+                  // Auto-expand location details when Google Places fills in data
+                  if (d?.formatted_address || d?.formatted_phone_number || d?.website) {
+                    setLocationOpen(true);
+                  }
+
                   // Prefer photos that come with the selection; otherwise fetch details now to get photos.
                   if (Array.isArray(d?.photos) && d.photos.length) {
                     setHotelPhotos(d.photos as PlacePhotoMeta[]);
@@ -295,45 +310,95 @@ export default function AccommodationForm({
           )}
         />
 
-        {/* Address & Phone (editable, auto-filled from Google Places) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField
-            control={form.control}
-            name="hotel_address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Address</FormLabel>
-                <FormControl>
-                  <input
-                    {...field}
-                    type="text"
-                    placeholder="Enter address"
-                    className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="hotel_phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <input
-                    {...field}
-                    type="tel"
-                    placeholder="Enter phone number"
-                    className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {/* Location Details (collapsible) */}
+        <Collapsible open={locationOpen} onOpenChange={setLocationOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-sand-700 bg-sand-50 hover:bg-sand-100 rounded-md border border-sand-200 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-sand-500" />
+                Location Details
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 text-sand-500 transition-transform duration-200 ${
+                  locationOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3 space-y-3">
+            {/* Address */}
+            <FormField
+              control={form.control}
+              name="hotel_address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5 text-sand-600">
+                    <MapPin className="h-3.5 w-3.5" />
+                    Address
+                  </FormLabel>
+                  <FormControl>
+                    <input
+                      {...field}
+                      type="text"
+                      placeholder="Enter address"
+                      className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Phone & Website row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="hotel_phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5 text-sand-600">
+                      <Phone className="h-3.5 w-3.5" />
+                      Phone
+                    </FormLabel>
+                    <FormControl>
+                      <input
+                        {...field}
+                        type="tel"
+                        placeholder="Enter phone number"
+                        className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hotel_website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5 text-sand-600">
+                      <Globe className="h-3.5 w-3.5" />
+                      Website
+                    </FormLabel>
+                    <FormControl>
+                      <input
+                        {...field}
+                        type="url"
+                        placeholder="https://..."
+                        className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Photo strip (side-scroll) */}
         {hotelPhotos.length > 0 && (
