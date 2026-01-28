@@ -1,6 +1,6 @@
 import React, { useState, useCallback, Component, ReactNode } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Sparkles, Trash2, X, AlertCircle } from 'lucide-react';
+import { Sparkles, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import ChatMessageList from './ChatMessageList';
@@ -133,8 +133,12 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   return (
     <>
       <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerContent className="h-[85svh] max-h-[85svh] flex flex-col">
-          <DrawerHeader className="border-b border-sand-200 pb-3 flex-shrink-0">
+        <DrawerContent className="h-[100dvh] max-h-[100dvh] flex flex-col rounded-none [&>div:first-child]:hidden">
+          {/* Header with safe area padding for PWA/notch */}
+          <DrawerHeader
+            className="border-b border-sand-200 pb-3 flex-shrink-0"
+            style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
@@ -181,15 +185,16 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   </AlertDialog>
                 )}
 
-                {/* Close button */}
+                {/* Minimize button */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleOpenChange(false)}
                   className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
                   disabled={isStreaming}
+                  title="Minimize"
                 >
-                  <X className="w-4 h-4" />
+                  <ChevronDown className="w-5 h-5" />
                 </Button>
               </div>
             </div>
@@ -235,8 +240,11 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 />
               </div>
 
-              {/* Input - with extra padding for mobile bottom navigation */}
-              <div className="flex-shrink-0 pb-safe">
+              {/* Input - with safe area padding for PWA bottom inset */}
+              <div
+                className="flex-shrink-0"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+              >
                 <ChatInput
                   onSend={handleSend}
                   disabled={isDisabled}
