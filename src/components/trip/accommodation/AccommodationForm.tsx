@@ -14,7 +14,6 @@ import {
   FormControl,
 } from "@/components/ui/form";
 import HotelSearchInput from "./HotelSearchInput";
-import HotelContactInfo from "./form/HotelContactInfo";
 import LuxuryDateTimeRangePicker, {
   LuxuryDateTimeRange,
 } from "@/components/ui/LuxuryDateTimeRangePicker";
@@ -296,8 +295,45 @@ export default function AccommodationForm({
           )}
         />
 
-        {/* Contact Preview */}
-        <HotelContactInfo address={form.watch("hotel_address")} phone={form.watch("hotel_phone")} />
+        {/* Address & Phone (editable, auto-filled from Google Places) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="hotel_address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Address</FormLabel>
+                <FormControl>
+                  <input
+                    {...field}
+                    type="text"
+                    placeholder="Enter address"
+                    className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="hotel_phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone</FormLabel>
+                <FormControl>
+                  <input
+                    {...field}
+                    type="tel"
+                    placeholder="Enter phone number"
+                    className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Photo strip (side-scroll) */}
         {hotelPhotos.length > 0 && (
