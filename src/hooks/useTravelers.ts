@@ -68,8 +68,12 @@ export function useTravelers(tripId: string) {
           table: 'trip_shares',
           filter: `trip_id=eq.${tripId}`,
         },
-        (payload) => {
+        () => {
+          // Invalidate travelers list
           queryClient.invalidateQueries({ queryKey: ['travelers', tripId] });
+          // Also invalidate TravelerAvatars queries for timeline
+          queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
+          queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
         }
       )
       .subscribe();
