@@ -6,7 +6,7 @@
 
 **The intelligent travel companion that transforms complex itineraries into seamless journeys.**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)](https://react.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?logo=supabase&logoColor=white)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -98,7 +98,7 @@ React Query's optimistic updates make the UI feel instant. Mutations update the 
 - **Global Auth**: React Context with automatic token refresh
 
 ### PDF Generation 📄
-18,000+ lines of pure client-side PDF generation using `pdfmake`. No server-side rendering, no external services—just beautiful, exportable itineraries.
+1,200+ lines of pure client-side PDF generation using `pdfmake`. No server-side rendering, no external services—just beautiful, exportable itineraries.
 
 ### Database Security 🔐
 Row Level Security (RLS) policies enforce access control at the PostgreSQL level. Users physically cannot query data they don't own—even with direct database access.
