@@ -87,7 +87,7 @@ supabase/
 - **Global Auth**: `AuthContext` (React Context) - authentication state with auto session refresh
 - **Server State**: `TanStack Query` - data fetching, caching, real-time subscriptions
 - **UI State**: React hooks (`useState`) - dialogs, forms, selected items
-- **Complex UI State**: `useSidebarState` hook (688 lines) - manages ~40 state variables for sidebar panels and dialogs
+- **Complex UI State**: `useSidebarState` hook (799 lines) - manages ~40 state variables for sidebar panels and dialogs
 
 #### 2. **Real-Time Collaboration**
 All real-time updates via Supabase subscriptions:
@@ -153,7 +153,7 @@ PostgreSQL database
 - Mutation handling with optimistic updates via React Query
 
 #### 7. **PDF Export**
-- **File**: `/src/services/pdfmake-export.ts` (18,085 lines - largest file)
+- **File**: `/src/services/pdfmake-export.ts` (1,210 lines)
 - **Endpoint**: `/api/export-pdf` (Express backend)
 - **Data**: Collects trips, days, activities, accommodations, transportation, budget
 - **Format**: Professional itinerary with logos, formatting, mobile-aware layout
@@ -236,8 +236,8 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 | File/Pattern | Purpose | Size |
 |---|---|---|
-| `useSidebarState.ts` | Sidebar UI state management | 688 lines |
-| `pdfmake-export.ts` | PDF itinerary generation | 18,085 lines |
+| `useSidebarState.ts` | Sidebar UI state management | 799 lines |
+| `pdfmake-export.ts` | PDF itinerary generation | 1,210 lines |
 | `AuthContext.tsx` | Global authentication state | - |
 | `pages/TripDetails.tsx` | Trip detail page wrapper | 164 lines |
 | `components/trip/*/` | Feature-specific components | varies |

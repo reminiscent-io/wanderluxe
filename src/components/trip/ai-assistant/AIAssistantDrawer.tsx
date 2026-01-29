@@ -1,5 +1,5 @@
 import React, { useState, useCallback, Component, ReactNode } from 'react';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { FullScreenModal } from '@/components/ui/fullscreen-modal';
 import { Sparkles, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
@@ -132,87 +132,72 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
   return (
     <>
-      <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerContent
-          className="flex flex-col rounded-none [&>div:first-child]:hidden"
-          style={{
-            // Use fixed positioning filling the screen
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            // Prevent scroll chaining that causes content to escape bounds
-            overscrollBehavior: 'contain',
-            // Contain all content within bounds
-            overflow: 'hidden',
-          }}
+      <FullScreenModal open={open} onOpenChange={handleOpenChange} closeOnOverlayClick={!isStreaming}>
+        {/* Header with safe area padding for PWA/notch */}
+        <div
+          className="border-b border-sand-200 pb-3 px-4 flex-shrink-0"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
         >
-          {/* Header with safe area padding for PWA/notch */}
-          <DrawerHeader
-            className="border-b border-sand-200 pb-3 flex-shrink-0"
-            style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <DrawerTitle className="text-left text-earth-700">Trip Assistant</DrawerTitle>
-                  <p className="text-xs text-sand-500">AI-powered travel help</p>
-                </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
-
-              <div className="flex items-center gap-1">
-                {/* Clear chat button */}
-                {messages.length > 0 && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-sand-400 hover:text-red-500"
-                        title="Clear chat"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Clear chat history?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete all messages in this conversation.
-                          This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={clearThread}
-                          className="bg-red-500 hover:bg-red-600"
-                        >
-                          Clear
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-
-                {/* Minimize button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleOpenChange(false)}
-                  className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
-                  disabled={isStreaming}
-                  title="Minimize"
-                >
-                  <ChevronDown className="w-5 h-5" />
-                </Button>
+              <div>
+                <h2 className="text-left text-earth-700 font-semibold text-lg leading-none tracking-tight">Trip Assistant</h2>
+                <p className="text-xs text-sand-500">AI-powered travel help</p>
               </div>
             </div>
-          </DrawerHeader>
+
+            <div className="flex items-center gap-1">
+              {/* Clear chat button */}
+              {messages.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-sand-400 hover:text-red-500"
+                      title="Clear chat"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear chat history?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all messages in this conversation.
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={clearThread}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        Clear
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+
+              {/* Minimize button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleOpenChange(false)}
+                className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
+                disabled={isStreaming}
+                title="Minimize"
+              >
+                <ChevronDown className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
 
           <AIAssistantErrorBoundary key={errorBoundaryKey} onReset={handleErrorBoundaryReset}>
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
@@ -272,8 +257,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               </div>
             </div>
           </AIAssistantErrorBoundary>
-        </DrawerContent>
-      </Drawer>
+      </FullScreenModal>
 
       {/* Paywall modal */}
       <PaywallModal
