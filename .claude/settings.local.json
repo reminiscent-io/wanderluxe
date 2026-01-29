@@ -49,13 +49,15 @@
       "Bash(export SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN)",
       "Bash(printenv:*)",
       "Bash(claude mcp add:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(fuser:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
