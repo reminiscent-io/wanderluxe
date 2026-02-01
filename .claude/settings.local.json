@@ -51,7 +51,9 @@
       "Bash(claude mcp add:*)",
       "Bash(git push)",
       "Bash(fuser:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(npm run:*)",
+      "Bash(bun add:*)"
     ],
     "deny": [],
     "ask": []
