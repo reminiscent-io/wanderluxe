@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
-import { getSharedTrips } from '@/services/tripSharingService';
+import { acceptTripShare, getSharedTrips, removeTripShare } from '@/services/tripSharingService';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Calendar, MapPin, Plane, Clock, Users, Share2, Globe, CheckCircle } from 'lucide-react';
@@ -108,6 +108,8 @@ const MyTrips = () => {
       return {
         ...share.trips,
         isShared: true,
+        shareId: share.id,
+        share_status: (share as any).share_status ?? 'accepted',
         sharedById: share.shared_by_user_id,
         owner_name: share.owner_name || null,
         owner_email: share.owner_email || null
@@ -115,6 +117,20 @@ const MyTrips = () => {
     }
     return null;
   }).filter(trip => trip !== null) || [];
+
+  const handleAcceptSharedTrip = async (shareId: string) => {
+    const ok = await acceptTripShare(shareId);
+    if (ok) {
+      queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
+    }
+  };
+
+  const handleLeaveSharedTrip = async (shareId: string) => {
+    const ok = await removeTripShare(shareId);
+    if (ok) {
+      queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
+    }
+  };
 
   const handleHideTrip = async (tripId: string) => {
     try {
@@ -546,6 +562,8 @@ const MyTrips = () => {
                           cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
                         onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
+                        onLeaveSharedTrip={trip.isShared ? handleLeaveSharedTrip : undefined}
                         isShared={trip.isShared}
                       />
                     </motion.div>
@@ -593,6 +611,8 @@ const MyTrips = () => {
                           cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
                         onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
+                        onLeaveSharedTrip={trip.isShared ? handleLeaveSharedTrip : undefined}
                         isShared={trip.isShared}
                       />
                     </motion.div>
@@ -664,6 +684,8 @@ const MyTrips = () => {
                           cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
                         onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
+                        onLeaveSharedTrip={trip.isShared ? handleLeaveSharedTrip : undefined}
                         isShared={trip.isShared}
                       />
                     </motion.div>

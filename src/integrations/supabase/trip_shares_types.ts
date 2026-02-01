@@ -3,6 +3,7 @@
  */
 
 export type PermissionLevel = 'read' | 'edit';
+export type ShareStatus = 'pending' | 'accepted';
 
 export interface TripShare {
   id: string;
@@ -10,6 +11,7 @@ export interface TripShare {
   shared_by_user_id: string;
   shared_with_email: string;
   permission_level?: PermissionLevel; // Optional for backward compatibility
+  share_status?: ShareStatus; // Optional for backward compatibility
   created_at: string;
 }
 

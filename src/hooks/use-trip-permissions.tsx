@@ -127,13 +127,25 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
         // Check if trip is shared with this user
         const { data: shareData, error: shareError } = await supabase
           .from('trip_shares')
-          .select('permission_level')
+          .select('permission_level, share_status')
           .eq('trip_id', tripId)
           .eq('shared_with_email', user.email)
           .single();
 
         if (shareError || !shareData) {
           // User has no access to this trip
+          setPermissions({
+            canEdit: false,
+            canView: false,
+            isOwner: false,
+            permissionLevel: null,
+            isLoading: false,
+          });
+          return;
+        }
+
+        // Require explicit acceptance for shared trips
+        if ((shareData as any).share_status === 'pending') {
           setPermissions({
             canEdit: false,
             canView: false,
@@ -193,12 +205,13 @@ export async function canEditTrip(tripId: string): Promise<boolean> {
     // Check if trip is shared with edit permission
     const { data: shareData } = await supabase
       .from('trip_shares')
-      .select('permission_level')
+      .select('permission_level, share_status')
       .eq('trip_id', tripId)
       .eq('shared_with_email', user.email)
       .single();
 
-    return shareData?.permission_level === 'edit';
+    if (!shareData || (shareData as any).share_status === 'pending') return false;
+    return shareData.permission_level === 'edit';
   } catch (error) {
     console.error('Error checking edit permission:', error);
     return false;
