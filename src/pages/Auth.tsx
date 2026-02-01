@@ -101,6 +101,11 @@ const Auth = () => {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/my-trips`,
+          // Force Google to show the account chooser (avoid "optimistically" reusing
+          // the last signed-in Google account on this device/browser).
+          queryParams: {
+            prompt: "select_account",
+          },
         },
       });
       if (error) throw error;

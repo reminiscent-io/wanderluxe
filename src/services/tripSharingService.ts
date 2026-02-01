@@ -233,6 +233,36 @@ export const removeTripShare = async (shareId: string): Promise<boolean> => {
 };
 
 /**
+ * Accept a pending trip share invitation (recipient-side).
+ * Uses a SECURITY DEFINER RPC to avoid granting broad UPDATE rights.
+ */
+export const acceptTripShare = async (shareId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('accept_trip_share', {
+      share_id: shareId,
+    });
+
+    if (error) {
+      console.error('Error accepting trip share:', error);
+      toast.error('Failed to accept invite');
+      return false;
+    }
+
+    if (!data) {
+      toast.error('Invite could not be accepted');
+      return false;
+    }
+
+    toast.success('Trip invite accepted');
+    return true;
+  } catch (error) {
+    console.error('Error accepting trip share:', error);
+    toast.error('An unexpected error occurred');
+    return false;
+  }
+};
+
+/**
  * Get all trips shared with the current user
  */
 export const getSharedTrips = async () => {

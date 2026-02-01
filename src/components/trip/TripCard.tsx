@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { EyeOff, Share2, Users, Calendar, MapPin } from 'lucide-react';
+import { EyeOff, Share2, Users, Calendar, MapPin, LogOut, Check, X } from 'lucide-react';
 import { format, getYear, parseISO, differenceInDays, isToday, isTomorrow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +15,8 @@ import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeath
 interface TripCardProps {
   trip: Trip & { 
     isShared?: boolean; 
+    shareId?: string;
+    share_status?: 'pending' | 'accepted';
     sharedById?: string;
     shareCount?: number;
     owner_name?: string;
@@ -22,6 +24,8 @@ interface TripCardProps {
   };
   isExample?: boolean;
   onHide?: (tripId: string) => void;
+  onAcceptInvite?: (shareId: string) => void;
+  onLeaveSharedTrip?: (shareId: string) => void;
   isShared?: boolean;
 }
 
@@ -29,6 +33,8 @@ const TripCard = ({
   trip,
   isExample = false,
   onHide,
+  onAcceptInvite,
+  onLeaveSharedTrip,
   isShared
 }: TripCardProps) => {
   const navigate = useNavigate();
@@ -37,6 +43,9 @@ const TripCard = ({
   // Use either the isShared prop or check if the trip object has isShared property
   const tripIsShared = isShared || trip.isShared;
   const shareCount = trip.shareCount || 0;
+  const canLeaveSharedTrip = !!isShared && !!trip.shareId && !!onLeaveSharedTrip;
+  const isPendingInvite = !!isShared && trip.share_status === 'pending';
+  const canAcceptInvite = isPendingInvite && !!trip.shareId && !!onAcceptInvite;
 
   // Check if trip starts within 5 days (forecast window)
   const daysUntilTrip = trip.arrival_date
@@ -149,6 +158,8 @@ const TripCard = ({
         onClick={(e) => {
           // Prevent navigation if the hide button is clicked
           if (e.defaultPrevented) return;
+          // For pending invites, require Accept/Decline first
+          if (isPendingInvite) return;
           navigate(`/trip/${trip.trip_id}`);
         }}
       >
@@ -246,6 +257,15 @@ const TripCard = ({
               </TooltipProvider>
             )}
           </div>
+
+          {/* Pending invite badge */}
+          {isPendingInvite && (
+            <div className="absolute bottom-4 right-4">
+              <Badge className="bg-amber-500 text-white border-0 px-3 py-1 font-medium shadow-lg backdrop-blur-sm">
+                Invite pending
+              </Badge>
+            </div>
+          )}
         </div>
         <CardContent className="p-6 pt-4">
           {/* Trip Details - Now more compact since destination is in overlay */}
@@ -256,10 +276,61 @@ const TripCard = ({
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center text-earth-600 text-sm font-medium">
                 <MapPin className="h-4 w-4 mr-2" />
-                <span className="text-earth-800">View Details</span>
+                <span className="text-earth-800">{isPendingInvite ? 'Accept to view details' : 'View Details'}</span>
               </div>
               
               <div className="flex gap-2">
+                {!isExample && canAcceptInvite && (
+                  <>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onAcceptInvite?.(trip.shareId!);
+                      }}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Accept
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-3"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Decline
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Decline this trip?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure? If you decline, this shared trip will disappear from your list and you’ll lose access.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onLeaveSharedTrip?.(trip.shareId!)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Yes, decline
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
+
                 {!isExample && !isShared && onHide && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -285,6 +356,42 @@ const TripCard = ({
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={() => onHide(trip.trip_id)} className="bg-gray-600 hover:bg-gray-700 text-sand-50">
                           Hide
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+
+                {!isExample && canLeaveSharedTrip && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        aria-label="Leave shared trip"
+                      >
+                        <LogOut className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Leave this trip?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          You'll lose access to this shared trip. You can be re-invited by the trip owner later.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onLeaveSharedTrip?.(trip.shareId!)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Leave trip
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

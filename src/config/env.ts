@@ -67,17 +67,22 @@ type Env = z.infer<typeof envSchema>;
  * @throws {Error} If validation fails with detailed error message
  */
 function validateEnv(): Env {
+  const isServer = typeof import.meta?.env === 'undefined';
+
+  const getVar = (key: string) =>
+    isServer ? process.env[key] : import.meta.env[key];
+
   const env = {
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
-    VITE_GOOGLE_MAPS_API_KEY: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    VITE_UNSPLASH_ACCESS_KEY: import.meta.env.VITE_UNSPLASH_ACCESS_KEY,
-    VITE_PARSE_TRAVEL_DOC_URL: import.meta.env.VITE_PARSE_TRAVEL_DOC_URL,
-    VITE_ADMIN_EMAIL: import.meta.env.VITE_ADMIN_EMAIL,
-    VITE_PLACE_PHOTO_CACHE_TTL_MS: import.meta.env.VITE_PLACE_PHOTO_CACHE_TTL_MS,
-    MODE: import.meta.env.MODE,
-    DEV: import.meta.env.DEV,
-    PROD: import.meta.env.PROD,
+    VITE_SUPABASE_URL: getVar('VITE_SUPABASE_URL'),
+    VITE_SUPABASE_ANON_KEY: getVar('VITE_SUPABASE_ANON_KEY'),
+    VITE_GOOGLE_MAPS_API_KEY: getVar('VITE_GOOGLE_MAPS_API_KEY'),
+    VITE_UNSPLASH_ACCESS_KEY: getVar('VITE_UNSPLASH_ACCESS_KEY'),
+    VITE_PARSE_TRAVEL_DOC_URL: getVar('VITE_PARSE_TRAVEL_DOC_URL'),
+    VITE_ADMIN_EMAIL: getVar('VITE_ADMIN_EMAIL'),
+    VITE_PLACE_PHOTO_CACHE_TTL_MS: getVar('VITE_PLACE_PHOTO_CACHE_TTL_MS'),
+    MODE: isServer ? process.env.NODE_ENV : import.meta.env.MODE,
+    DEV: isServer ? process.env.NODE_ENV === 'development' : import.meta.env.DEV,
+    PROD: isServer ? process.env.NODE_ENV === 'production' : import.meta.env.PROD,
   };
 
   try {
