@@ -151,6 +151,21 @@
     }
   }
 
+  /* Ensure fixed navigation background extends beyond viewport top */
+  /* This covers any gap caused by viewport-fit=cover on Safari desktop */
+  [data-app-nav]::before {
+    content: "";
+    position: absolute;
+    /* Extend 50px above the element to cover any Safari gap */
+    top: -50px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    /* Solid white to match the nearly-opaque nav background */
+    background: white;
+    z-index: -1;
+  }
+
   /* Fallback for browsers without dvh support */
   @supports not (height: 1dvh) {
     :root {

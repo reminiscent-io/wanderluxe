@@ -63,7 +63,7 @@ const Navigation: React.FC = () => {
       ref={headerRef}
       data-app-nav
       role="banner"
-      className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-sand-200"
+      className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm supports-[backdrop-filter]:bg-white/90 border-b border-sand-200"
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       <div className="mx-auto h-14 md:h-16 px-3 md:px-6 flex items-center justify-between">
