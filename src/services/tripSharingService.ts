@@ -312,6 +312,7 @@ export const getSharedTrips = async () => {
     );
 
     // Get owner information for each shared trip
+    // Also fetch trip preview for pending invites where RLS blocks trip data
     const processedData = await Promise.all(filteredData.map(async (share: any) => {
       // Fetch the owner's profile information
       const { data: ownerData } = await supabase
@@ -350,9 +351,31 @@ export const getSharedTrips = async () => {
         ownerName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
       }
 
+      // For pending invites where trips is null (RLS blocks full trip data),
+      // fetch basic trip preview via SECURITY DEFINER function
+      let tripData = share.trips;
+      if (!tripData && share.share_status === 'pending') {
+        const { data: preview } = await supabase.rpc('get_pending_trip_preview', {
+          p_share_id: share.id
+        });
+        if (preview && preview.length > 0) {
+          // Map the preview data to match expected trip structure
+          tripData = {
+            trip_id: preview[0].trip_id,
+            destination: preview[0].destination,
+            primary_destination: preview[0].primary_destination,
+            arrival_date: preview[0].arrival_date,
+            departure_date: preview[0].departure_date,
+            cover_image_url: preview[0].cover_image_url,
+            // Mark as preview so UI knows not to expect full data
+            _is_preview: true
+          };
+        }
+      }
+
       return {
         ...share,
-        trips: share.trips || null,
+        trips: tripData,
         owner_name: ownerName,
         owner_email: ownerEmail
       };
