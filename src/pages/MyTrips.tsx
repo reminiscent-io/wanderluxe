@@ -338,6 +338,11 @@ const MyTrips = () => {
                 daysUntil={daysUntilNextTrip!}
                 onViewTrip={() => navigate(`/trip/${nextTrip.trip_id}`)}
                 className="-mx-4 rounded-none"
+                isPendingInvite={(nextTrip as any).isShared && (nextTrip as any).share_status === 'pending'}
+                shareId={(nextTrip as any).shareId}
+                ownerName={(nextTrip as any).owner_name}
+                onAcceptInvite={handleAcceptSharedTrip}
+                onDeclineInvite={handleLeaveSharedTrip}
               />
             )}
             {heroState === 'default' && (
@@ -401,6 +406,11 @@ const MyTrips = () => {
                   trip={nextTrip}
                   daysUntil={daysUntilNextTrip!}
                   onViewTrip={() => navigate(`/trip/${nextTrip.trip_id}`)}
+                  isPendingInvite={(nextTrip as any).isShared && (nextTrip as any).share_status === 'pending'}
+                  shareId={(nextTrip as any).shareId}
+                  ownerName={(nextTrip as any).owner_name}
+                  onAcceptInvite={handleAcceptSharedTrip}
+                  onDeclineInvite={handleLeaveSharedTrip}
                 />
               )}
               {heroState === 'default' && (
