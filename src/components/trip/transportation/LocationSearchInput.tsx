@@ -164,8 +164,6 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
         width: dropdownPosition.width,
         zIndex: 9999
       }}
-      onMouseDown={(e) => e.preventDefault()}
-      onTouchStart={(e) => e.stopPropagation()}
     >
       {suggestions.map((suggestion, index) => (
         <button
@@ -174,11 +172,8 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
           className={`w-full px-3 py-2 text-left hover:bg-sand-50 active:bg-sand-100 border-b border-sand-100 last:border-b-0 touch-manipulation ${
             index === selectedIndex ? 'bg-sand-100' : ''
           }`}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleSuggestionSelect(suggestion)}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            handleSuggestionSelect(suggestion);
-          }}
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <div className="font-medium text-sm">
