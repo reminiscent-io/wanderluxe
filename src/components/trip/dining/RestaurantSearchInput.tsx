@@ -153,17 +153,14 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
         width: dropdownPosition.width,
         zIndex: 9999
       }}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      onMouseDown={() => {
         isSelectingRef.current = true;
       }}
       onMouseUp={() => {
         // Reset after a brief delay to allow click to complete
         setTimeout(() => { isSelectingRef.current = false; }, 100);
       }}
-      onTouchStart={(e) => {
-        e.stopPropagation();
+      onTouchStart={() => {
         isSelectingRef.current = true;
       }}
       onTouchEnd={() => {
@@ -177,6 +174,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
           className={`w-full px-3 py-2 text-left hover:bg-sand-50 active:bg-sand-100 border-b border-sand-100 last:border-b-0 touch-manipulation ${
             index === selectedIndex ? 'bg-sand-100' : ''
           }`}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => handleSuggestionSelect(suggestion)}
           onMouseEnter={() => setSelectedIndex(index)}
         >
