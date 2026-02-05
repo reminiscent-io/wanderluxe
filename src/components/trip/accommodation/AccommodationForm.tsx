@@ -20,6 +20,7 @@ import LuxuryDateTimeRangePicker, {
 import { AccommodationFormData } from "@/services/accommodation/accommodationService";
 import {
   loadGoogleMapsAPI,
+  searchPlaces,
   getPlaceDetails,
   getPhotoUrl,
   type PlacePhotoMeta,
@@ -229,6 +230,54 @@ export default function AccommodationForm({
       if (res?.photos?.length) setHotelPhotos(res.photos);
     });
   }, [initialData?.hotel_place_id]);
+
+  // Auto-resolve hotel name to Google Place when form opens with a name but no place_id
+  // (e.g., from AI document extraction or AI chat recommendations)
+  useEffect(() => {
+    const hotelName = initialData?.hotel;
+    const placeId = initialData?.hotel_place_id;
+
+    // Only auto-resolve if we have a name but no place_id
+    if (!hotelName || placeId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const results = await searchPlaces(hotelName, 'lodging', destination);
+        if (cancelled || results.length === 0) return;
+
+        const topMatch = results[0];
+        const details = await getPlaceDetails(topMatch.place_id);
+        if (cancelled || !details) return;
+
+        // Populate form fields with resolved Google Place data
+        form.setValue("hotel_place_id", details.place_id);
+        form.setValue("hotel_address", details.formatted_address ?? "");
+        form.setValue("hotel_phone", details.formatted_phone_number ?? "");
+        form.setValue("hotel_website", details.website ?? "");
+        if (details.website) {
+          form.setValue("hotel_url", details.website);
+        }
+
+        // Auto-expand location details since we now have data
+        if (details.formatted_address || details.formatted_phone_number || details.website) {
+          setLocationOpen(true);
+        }
+
+        // Load photos
+        if (details.photos?.length) {
+          setHotelPhotos(details.photos);
+        }
+      } catch (err) {
+        console.error("Auto-resolve hotel place failed:", err);
+        // Fail silently — user can still manually search
+      }
+    })();
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.hotel, initialData?.hotel_place_id, destination]);
 
   /* ---------------------- Load existing travelers --------------------- */
   useEffect(() => {
