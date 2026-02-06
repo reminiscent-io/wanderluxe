@@ -98,16 +98,10 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       }
     }
 
-    // Send email notification
-    const notificationSent = await sendShareNotification(email, user.email || 'A WanderLuxe user', tripDestination, tripId);
-    
-    // Even if notification fails, the trip is still shared in the database
-    if (!notificationSent) {
-      toast.warning(shareCreated ? 'Trip shared, but email notification could not be sent' : 'Email notification could not be sent');
-    } else {
-      toast.success(shareCreated ? 'Trip shared successfully and notification sent' : 'Email notification sent successfully');
-    }
+    // Send email notification (best-effort; the share row is already saved)
+    await sendShareNotification(email, user.email || 'A WanderLuxe user', tripDestination, tripId);
 
+    // Callers handle their own toast messages
     return true;
   } catch (error) {
     toast.error('An unexpected error occurred');
