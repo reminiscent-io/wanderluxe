@@ -169,9 +169,12 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   // Validate that a URL is a safe blob URL (prevents XSS via URL injection)
   const isSafeBlobUrl = (url: string | null): url is string => {
     if (!url) return false;
-    // Blob URLs created by URL.createObjectURL() always start with "blob:"
-    // and are safe to use in img src attributes
-    return url.startsWith('blob:');
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'blob:';
+    } catch {
+      return false;
+    }
   };
 
   // Fetch import usage on mount
@@ -473,6 +476,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
                   <img
                     src={previewUrl}
                     alt="Upload preview"
+                    referrerPolicy="no-referrer"
                     className="max-h-56 rounded-md border border-sand-200 shadow-sm object-contain bg-white"
                   />
                   <Button
