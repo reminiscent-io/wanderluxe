@@ -53,7 +53,12 @@
       "Bash(fuser:*)",
       "Bash(kill:*)",
       "Bash(npm run:*)",
-      "Bash(bun add:*)"
+      "Bash(bun add:*)",
+      "Bash(nvm ls-remote:*)",
+      "Bash(nvm install:*)",
+      "Bash(/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node --version)",
+      "Bash(/usr/local/bin/node:*)",
+      "Bash(bun:*)"
     ],
     "deny": [],
     "ask": []
