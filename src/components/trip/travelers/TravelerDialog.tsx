@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Traveler } from "@/hooks/useTravelers";
 import { cn } from "@/lib/utils";
-import { Eye, Edit, Share2, Trash2 } from "lucide-react";
+import { Eye, Edit, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { shareTrip } from "@/services/tripSharingService";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -188,14 +188,21 @@ export default function TravelerDialog({
   const [sending, setSending] = useState(false);
   const canShare = useMemo(() => emailIsValid(watchedEmail) && !isOwner, [watchedEmail, isOwner]);
 
-  const handleShareEmail = async () => {
+  const handleSaveAndSend = async () => {
     if (!canShare) return;
+
+    // Validate form before proceeding
+    const isValid = await form.trigger();
+    if (!isValid) return;
+
     try {
       setSending(true);
 
       // 1) Idempotent create/update of the traveler row
+      const idToUse =
+        ((isEditing && (traveler as any)?.id) ? (traveler as any).id : createdShareId) || undefined;
       const payload = {
-        ...(isEditing && (traveler as any)?.id ? { id: (traveler as any).id } : {}),
+        ...(idToUse ? { id: idToUse } : {}),
         first_name: form.getValues("first_name"),
         last_name: form.getValues("last_name") || undefined,
         shared_with_email: watchedEmail.trim(),
@@ -212,7 +219,7 @@ export default function TravelerDialog({
         }
       }
 
-      // 2) Capture created/located id so subsequent Save becomes UPDATE
+      // 2) Capture created/located id
       if ((upserted as any)?.id) {
         setCreatedShareId((upserted as any).id);
       } else {
@@ -241,16 +248,18 @@ export default function TravelerDialog({
       );
 
       if (ok) {
-        toast.success("Traveler added & email sent");
-        queryClient.invalidateQueries({ queryKey: ["travelers", tripId] });
-
-        // 4) Reset dirty state so Save doesn't try to re-insert
-        const current = form.getValues();
-        form.reset(current);
+        toast.success(isEditing ? "Traveler updated & invite sent" : "Traveler added & invite sent");
+      } else {
+        toast.success(isEditing ? "Traveler updated (email could not be sent)" : "Traveler added (email could not be sent)");
       }
+
+      queryClient.invalidateQueries({ queryKey: ["travelers", tripId] });
+      onOpenChange(false);
+      form.reset();
+      setCreatedShareId(null);
     } catch (err) {
-      console.error("Error sending share email:", err);
-      toast.error("Failed to send share email");
+      console.error("Error in save & send:", err);
+      toast.error("Failed to save traveler");
     } finally {
       setSending(false);
     }
@@ -388,26 +397,14 @@ export default function TravelerDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email (for sharing)</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="email"
-                        placeholder="email@example.com (optional)"
-                        disabled={isOwner}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleShareEmail}
-                      disabled={!canShare || sending}
-                      className={cn("shrink-0 bg-earth-600 text-white hover:bg-earth-700 shadow-sm")}
-                    >
-                      <Share2 className="h-4 w-4 mr-1" />
-                      Share Trip
-                    </Button>
-                  </div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="email@example.com (optional)"
+                      disabled={isOwner}
+                    />
+                  </FormControl>
                   {!emailIsValid(watchedEmail) && watchedEmail && (
                     <p className="text-xs text-red-600 mt-1">Please enter a valid email address</p>
                   )}
@@ -496,7 +493,21 @@ export default function TravelerDialog({
                 disabled={upsertMutation.isPending || isOwner || !form.formState.isDirty}
                 className="flex-1 bg-earth-600 hover:bg-earth-700 text-white"
               >
-                {upsertMutation.isPending ? "Saving..." : isEditing ? "Update" : "Add"}
+                {upsertMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveAndSend}
+                disabled={!canShare || sending || upsertMutation.isPending || isOwner}
+                className={cn(
+                  "flex-1",
+                  canShare
+                    ? "bg-earth-600 hover:bg-earth-700 text-white"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                )}
+              >
+                <Send className="h-4 w-4 mr-1.5" />
+                {sending ? "Sending..." : "Save & Send"}
               </Button>
             </div>
           </form>
