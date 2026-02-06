@@ -30,6 +30,16 @@ const TABLES = {
   transport: 'transportation',
   activities: 'day_activities',
   dining: 'reservations',
+  otherExpenses: 'other_expenses',
+} as const;
+
+// Brand palette (sand/earth)
+const BRAND = {
+  earth: '#6B6354',
+  earthLight: '#8A7F6C',
+  sand: '#FAF9F7',
+  sandDark: '#7B715F',
+  accent: '#5C544A',
 } as const;
 
 type ExportStrategy = 'auto' | 'open' | 'download' | 'blob';
@@ -63,6 +73,7 @@ type Item = {
 type Day = {
   date: string;
   title?: string;
+  description?: string;
   items: Item[];
   activityCount?: number;
   hasTransport?: boolean;
@@ -73,6 +84,8 @@ type AccommodationSummary = {
   checkIn: string;
   checkOut: string;
   address?: string;
+  phone?: string;
+  website?: string;
   checkInDate: string;
   checkOutDate: string;
 };
@@ -82,6 +95,7 @@ type TransportSegment = {
   to: string;
   date: string;
   type: string;
+  confirmationNumber?: string;
 };
 
 /* =========================================================================
@@ -281,25 +295,54 @@ async function drawToCanvas(blob: Blob, targetWidth: number): Promise<string | n
    Data build (Supabase)
    ========================================================================= */
 
+type DiningRef = { restaurant: string; confirmationNumber?: string };
+
+type BudgetData = {
+  budget: number | null;
+  categories: { category: string; amount: number }[];
+  total: number;
+};
+
 async function buildDays(
   tripId: string,
   o: PdfExportOptions
-): Promise<{ days: Day[]; stays: AccommodationSummary[]; transports: TransportSegment[] }> {
+): Promise<{
+  days: Day[];
+  stays: AccommodationSummary[];
+  transports: TransportSegment[];
+  diningRefs: DiningRef[];
+  budgetData: BudgetData;
+}> {
   const [
     { data: days, error: daysErr },
     { data: stays },
     { data: trans },
     { data: acts },
     { data: dine },
+    { data: otherExpenses },
+    { data: tripRow },
   ] = await Promise.all([
-    supabase.from(TABLES.days).select('day_id,date,title').eq('trip_id', tripId).order('date'),
+    supabase.from(TABLES.days).select('day_id,date,title,description').eq('trip_id', tripId).order('date'),
     supabase.from(TABLES.stays).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.transport).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.activities).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.dining).select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.otherExpenses).select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.trip).select('budget').eq('trip_id', tripId).single(),
   ]);
 
   if (daysErr) throw daysErr;
+
+  // Build budget data by category
+  const catMap: Record<string, number> = {};
+  (acts ?? []).forEach((a: any) => { if (a.cost) catMap['Activities'] = (catMap['Activities'] || 0) + a.cost; });
+  (stays ?? []).forEach((s: any) => { if (s.cost) catMap['Accommodations'] = (catMap['Accommodations'] || 0) + s.cost; });
+  (trans ?? []).forEach((t: any) => { if (t.cost) catMap['Transportation'] = (catMap['Transportation'] || 0) + t.cost; });
+  (dine ?? []).forEach((r: any) => { if (r.cost) catMap['Dining'] = (catMap['Dining'] || 0) + r.cost; });
+  (otherExpenses ?? []).forEach((e: any) => { if (e.cost) catMap['Other'] = (catMap['Other'] || 0) + e.cost; });
+  const categories = Object.entries(catMap).map(([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount);
+  const total = categories.reduce((sum, c) => sum + c.amount, 0);
+  const budgetData: BudgetData = { budget: tripRow?.budget ?? null, categories, total };
 
   // Build accommodation summary and sort by check-in date ascending
   const staysSummary: AccommodationSummary[] = (stays ?? [])
@@ -308,6 +351,8 @@ async function buildDays(
       checkIn: fmtShort(s.hotel_checkin_date),
       checkOut: fmtShort(s.hotel_checkout_date),
       address: s.hotel_address,
+      phone: s.hotel_phone || undefined,
+      website: s.hotel_website || undefined,
       checkInDate: s.hotel_checkin_date,
       checkOutDate: s.hotel_checkout_date,
     }))
@@ -325,6 +370,15 @@ async function buildDays(
       to: t.arrival_location,
       date: fmtShort(t.start_date),
       type: t.type === 'flight' ? 'Flight' : t.type ? t.type.charAt(0).toUpperCase() + t.type.slice(1) : 'Transport',
+      confirmationNumber: t.confirmation_number || undefined,
+    }));
+
+  // Build dining references (for confirmation numbers)
+  const diningRefs: DiningRef[] = (dine ?? [])
+    .filter((r: any) => r.confirmation_number)
+    .map((r: any) => ({
+      restaurant: r.restaurant_name,
+      confirmationNumber: r.confirmation_number,
     }));
 
   const processedDays: Day[] = (days ?? []).map((day: any) => {
@@ -482,7 +536,7 @@ async function buildDays(
     }
   }
 
-  return { days: processedDays, stays: staysSummary, transports: transportSegments };
+  return { days: processedDays, stays: staysSummary, transports: transportSegments, diningRefs, budgetData };
 }
 
 /* =========================================================================
@@ -665,31 +719,42 @@ function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number
     ? `${fmtShort(d.date)} • ${d.title}${travelMarker}`
     : `${fmtShort(d.date)}${travelMarker}`;
 
-  return {
-    stack: [
-      {
-        text: dayText,
-        fontSize,
-        bold: true,
-        color: '#111827',
-        margin: [0, isFirstOnPage ? 0 : 10, 0, 2] as [number, number, number, number],
-      },
-      {
-        canvas: [
-          {
-            type: 'line',
-            x1: 0,
-            y1: 0,
-            x2: Math.max(100, Math.round(contentWidth)),
-            y2: 0,
-            lineWidth: 0.5,
-            lineColor: '#E5E7EB',
-          },
-        ],
-        margin: [0, 0, 0, 6] as [number, number, number, number],
-      },
-    ],
-  };
+  const stack: any[] = [
+    {
+      text: dayText,
+      fontSize,
+      bold: true,
+      color: BRAND.earth,
+      margin: [0, isFirstOnPage ? 0 : 10, 0, 2] as [number, number, number, number],
+    },
+    {
+      canvas: [
+        {
+          type: 'line',
+          x1: 0,
+          y1: 0,
+          x2: Math.max(100, Math.round(contentWidth)),
+          y2: 0,
+          lineWidth: 0.5,
+          lineColor: BRAND.earthLight,
+        },
+      ],
+      margin: [0, 0, 0, 4] as [number, number, number, number],
+    },
+  ];
+
+  // Show day description if present (2d)
+  if (d.description?.trim()) {
+    stack.push({
+      text: d.description.trim(),
+      fontSize: fontSize - 2,
+      italics: true,
+      color: BRAND.earthLight,
+      margin: [0, 0, 0, 4] as [number, number, number, number],
+    });
+  }
+
+  return { stack };
 }
 
 /**
@@ -708,6 +773,21 @@ function renderCombinedCoverPage(
 ): any[] {
   const content: any[] = [];
 
+  // Earth-toned accent bar at the top of cover
+  content.push({
+    canvas: [
+      {
+        type: 'rect',
+        x: 0,
+        y: 0,
+        w: Math.max(200, Math.round(contentWidth)),
+        h: 6,
+        color: BRAND.earthLight,
+      },
+    ],
+    margin: [0, 0, 0, 12] as [number, number, number, number],
+  });
+
   // Cover image
   if (coverDataUrl) {
     content.push({
@@ -718,11 +798,12 @@ function renderCombinedCoverPage(
     });
   }
 
-  // Hero title and dates
+  // Hero title and dates in earth palette
   content.push({
     text: `${trip.destination || 'Trip'} Itinerary`,
-    fontSize: 18,
+    fontSize: 20,
     bold: true,
+    color: BRAND.earth,
     margin: [0, 0, 0, 4] as [number, number, number, number],
   });
 
@@ -730,10 +811,26 @@ function renderCombinedCoverPage(
     content.push({
       text: dateRange,
       fontSize: baseFontSize + 1.5,
-      color: '#6b6b6b',
-      margin: [0, 0, 0, 12] as [number, number, number, number],
+      color: BRAND.earthLight,
+      margin: [0, 0, 0, 8] as [number, number, number, number],
     });
   }
+
+  // Subtle divider between header and details
+  content.push({
+    canvas: [
+      {
+        type: 'line',
+        x1: 0,
+        y1: 0,
+        x2: Math.max(200, Math.round(contentWidth)),
+        y2: 0,
+        lineWidth: 0.75,
+        lineColor: BRAND.earthLight,
+      },
+    ],
+    margin: [0, 0, 0, 12] as [number, number, number, number],
+  });
 
   // Calculate stats
   const totalFlights = transports.filter((t) => t.type.toLowerCase().includes('flight')).length;
@@ -751,6 +848,7 @@ function renderCombinedCoverPage(
     text: 'Trip Details',
     fontSize: baseFontSize + 1,
     bold: true,
+    color: BRAND.earth,
     margin: [0, 0, 0, 6] as [number, number, number, number],
   });
 
@@ -766,6 +864,7 @@ function renderCombinedCoverPage(
       text: 'Accommodations',
       fontSize: baseFontSize + 1,
       bold: true,
+      color: BRAND.earth,
       margin: [0, 8, 0, 4] as [number, number, number, number],
     });
 
@@ -799,6 +898,7 @@ function renderCombinedCoverPage(
     text: 'Quick Stats',
     fontSize: baseFontSize + 1,
     bold: true,
+    color: BRAND.earth,
     margin: [0, 0, 0, 6] as [number, number, number, number],
   });
 
@@ -818,6 +918,7 @@ function renderCombinedCoverPage(
     text: 'Activity Level',
     fontSize: baseFontSize,
     bold: true,
+    color: BRAND.earth,
     margin: [0, 4, 0, 4] as [number, number, number, number],
   });
 
@@ -862,9 +963,14 @@ function renderCombinedCoverPage(
 }
 
 /**
- * Render reference section with full accommodation and restaurant details
+ * Render reference section with full accommodation, transportation, and dining details
  */
-function renderReferenceSection(stays: AccommodationSummary[], baseFontSize: number): any[] {
+function renderReferenceSection(
+  stays: AccommodationSummary[],
+  transports: TransportSegment[],
+  diningRefs: DiningRef[],
+  baseFontSize: number
+): any[] {
   const content: any[] = [];
 
   // Page break before reference section
@@ -874,45 +980,174 @@ function renderReferenceSection(stays: AccommodationSummary[], baseFontSize: num
     text: 'Reference Information',
     fontSize: baseFontSize + 4,
     bold: true,
+    color: BRAND.earth,
     margin: [0, 0, 0, 12] as [number, number, number, number],
   });
 
-  // Accommodation details
+  // Accommodation details with phone + website (2b, 2e)
   if (stays.length > 0) {
     content.push({
       text: 'Accommodation Details',
       fontSize: baseFontSize + 2,
       bold: true,
+      color: BRAND.earth,
       margin: [0, 8, 0, 8] as [number, number, number, number],
     });
 
     stays.forEach((stay, idx) => {
+      const details: any[] = [
+        { text: stay.hotel, fontSize: baseFontSize + 1, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] },
+        { text: `Check-in: ${stay.checkIn}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
+        { text: `Check-out: ${stay.checkOut}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
+      ];
+      if (stay.address) details.push({ text: stay.address, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] });
+      if (stay.phone) details.push({ text: `Phone: ${stay.phone}`, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] });
+      if (stay.website) details.push({ text: `Website: ${stay.website}`, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] });
+
       content.push({
-        stack: [
-          { text: stay.hotel, fontSize: baseFontSize + 1, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] },
-          { text: `Check-in: ${stay.checkIn}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
-          { text: `Check-out: ${stay.checkOut}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
-          ...(stay.address ? [{ text: stay.address, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] }] : []),
-        ],
+        stack: details,
         margin: [0, 0, 0, idx < stays.length - 1 ? 12 : 0] as [number, number, number, number],
       });
     });
   }
 
-  // Emergency contacts placeholder
+  // Transportation confirmation numbers (2b)
+  const transWithConf = transports.filter((t) => t.confirmationNumber);
+  if (transWithConf.length > 0) {
+    content.push({
+      text: 'Transportation Confirmations',
+      fontSize: baseFontSize + 2,
+      bold: true,
+      color: BRAND.earth,
+      margin: [0, 16, 0, 8] as [number, number, number, number],
+    });
+
+    const transTableBody = [
+      [
+        { text: 'Transport', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
+        { text: 'Route', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
+        { text: 'Confirmation #', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
+      ],
+      ...transWithConf.map((t) => [
+        { text: `${t.type} (${t.date})`, fontSize: baseFontSize - 0.5 },
+        { text: `${t.from} → ${t.to}`, fontSize: baseFontSize - 0.5 },
+        { text: t.confirmationNumber!, fontSize: baseFontSize - 0.5, bold: true },
+      ]),
+    ];
+
+    content.push({
+      table: { widths: ['auto', '*', 'auto'], body: transTableBody, dontBreakRows: true },
+      layout: 'lightHorizontalLines',
+    });
+  }
+
+  // Dining confirmation numbers (2b)
+  if (diningRefs.length > 0) {
+    content.push({
+      text: 'Dining Confirmations',
+      fontSize: baseFontSize + 2,
+      bold: true,
+      color: BRAND.earth,
+      margin: [0, 16, 0, 8] as [number, number, number, number],
+    });
+
+    const dineTableBody = [
+      [
+        { text: 'Restaurant', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
+        { text: 'Confirmation #', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
+      ],
+      ...diningRefs.map((r) => [
+        { text: r.restaurant, fontSize: baseFontSize - 0.5 },
+        { text: r.confirmationNumber!, fontSize: baseFontSize - 0.5, bold: true },
+      ]),
+    ];
+
+    content.push({
+      table: { widths: ['*', 'auto'], body: dineTableBody, dontBreakRows: true },
+      layout: 'lightHorizontalLines',
+    });
+  }
+
+  // Hotel contact information (2e — replaces empty Emergency Contacts placeholder)
+  const staysWithContact = stays.filter((s) => s.phone || s.website);
+  if (staysWithContact.length > 0) {
+    content.push({
+      text: 'Hotel Contact Information',
+      fontSize: baseFontSize + 2,
+      bold: true,
+      color: BRAND.earth,
+      margin: [0, 16, 0, 8] as [number, number, number, number],
+    });
+
+    staysWithContact.forEach((stay, idx) => {
+      const lines: any[] = [{ text: stay.hotel, fontSize: baseFontSize, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] }];
+      if (stay.phone) lines.push({ text: `Phone: ${stay.phone}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] });
+      if (stay.website) lines.push({ text: `Website: ${stay.website}`, fontSize: baseFontSize - 0.5, color: BRAND.earthLight, margin: [0, 0, 0, 2] as [number, number, number, number] });
+      content.push({
+        stack: lines,
+        margin: [0, 0, 0, idx < staysWithContact.length - 1 ? 8 : 0] as [number, number, number, number],
+      });
+    });
+  }
+
+  return content;
+}
+
+/**
+ * Render budget summary section (2c)
+ */
+function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): any[] {
+  if (budgetData.categories.length === 0) return [];
+
+  const content: any[] = [];
+
   content.push({
-    text: 'Emergency Contacts',
+    text: 'Budget Summary',
     fontSize: baseFontSize + 2,
     bold: true,
+    color: BRAND.earth,
     margin: [0, 16, 0, 8] as [number, number, number, number],
   });
 
+  const tableBody: any[][] = [
+    [
+      { text: 'Category', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
+      { text: 'Amount', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF', alignment: 'right' },
+    ],
+    ...budgetData.categories.map((c) => [
+      { text: c.category, fontSize: baseFontSize - 0.5 },
+      { text: `$${c.amount.toFixed(2)}`, fontSize: baseFontSize - 0.5, alignment: 'right' },
+    ]),
+    [
+      { text: 'Total', bold: true, fontSize: baseFontSize, fillColor: '#F5F3F2' },
+      { text: `$${budgetData.total.toFixed(2)}`, bold: true, fontSize: baseFontSize, alignment: 'right', fillColor: '#F5F3F2' },
+    ],
+  ];
+
   content.push({
-    text: 'Keep this section handy for important contacts and local emergency numbers.',
-    fontSize: baseFontSize - 0.5,
-    color: '#6B7280',
-    italics: true,
+    table: { widths: ['*', 'auto'], body: tableBody, dontBreakRows: true },
+    layout: 'lightHorizontalLines',
   });
+
+  // Budget vs actual
+  if (budgetData.budget != null && budgetData.budget > 0) {
+    const remaining = budgetData.budget - budgetData.total;
+    const overBudget = remaining < 0;
+    content.push({
+      columns: [
+        { text: `Budget: $${budgetData.budget.toFixed(2)}`, fontSize: baseFontSize - 0.5, width: 'auto' },
+        { text: '  |  ', fontSize: baseFontSize - 0.5, color: '#999', width: 'auto' },
+        {
+          text: overBudget ? `Over budget by $${Math.abs(remaining).toFixed(2)}` : `Remaining: $${remaining.toFixed(2)}`,
+          fontSize: baseFontSize - 0.5,
+          color: overBudget ? '#DC2626' : '#059669',
+          bold: true,
+          width: 'auto',
+        },
+      ],
+      margin: [0, 6, 0, 0] as [number, number, number, number],
+    });
+  }
 
   return content;
 }
@@ -945,10 +1180,10 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     const contentWidth = innerPageWidth(pageSize, pageMargins);
 
     console.log('[PDF Export] Fetching trip data...');
-    // Fetch minimal trip info
+    // Fetch trip info
     const { data: trip, error } = await supabase
       .from(TABLES.trip)
-      .select('destination,arrival_date,departure_date,cover_image_url')
+      .select('destination,arrival_date,departure_date,cover_image_url,budget')
       .eq('trip_id', tripId)
       .single();
 
@@ -971,7 +1206,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         : '';
 
     console.log('[PDF Export] Building days data...');
-    const { days, stays, transports } = await buildDays(tripId, o);
+    const { days, stays, transports, diningRefs, budgetData } = await buildDays(tripId, o);
     console.log('[PDF Export] Days built:', days.length, 'days');
 
     // Cover image (data URL, possibly downscaled)
@@ -1031,8 +1266,13 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       pageStartIdx++;
     }
 
+    // Add budget summary if costs are enabled (2c)
+    if (o.showCosts) {
+      content.push(...renderBudgetSummary(budgetData, baseFontSize));
+    }
+
     // Add reference section with full details
-    content.push(...renderReferenceSection(stays, baseFontSize));
+    content.push(...renderReferenceSection(stays, transports, diningRefs, baseFontSize));
 
     const doc: any = {
       pageSize,
@@ -1043,25 +1283,25 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         alignment: 'center',
         fontSize: headerFont,
         margin: [0, 10, 0, 0],
-        color: '#666',
+        color: BRAND.earthLight,
       }),
       footer: (p: number, c: number) => ({
         text: `Page ${p} of ${c} • exported ${fnsFormat(new Date(), 'PP p')}`,
         alignment: 'center',
         fontSize: footerFont,
         margin: [0, 0, 0, 10],
-        color: '#999',
+        color: BRAND.earthLight,
       }),
       content,
       styles: {
-        heroTitle: { fontSize: heroTitle, bold: true },
-        heroSub: { fontSize: baseFontSize + 1.5, color: '#6b6b6b' },
-        summaryPageTitle: { fontSize: dayHeader, bold: true, color: '#333', margin: [0, 0, 0, 12] },
-        summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: '#333' },
-        summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: '#8b7355', alignment: 'center' },
+        heroTitle: { fontSize: heroTitle, bold: true, color: BRAND.earth },
+        heroSub: { fontSize: baseFontSize + 1.5, color: BRAND.earthLight },
+        summaryPageTitle: { fontSize: dayHeader, bold: true, color: BRAND.earth, margin: [0, 0, 0, 12] },
+        summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: BRAND.earth },
+        summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: BRAND.earthLight, alignment: 'center' },
         summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
-        summaryItem: { fontSize: baseFontSize - 0.5, color: '#333' },
-        dayHeader: { fontSize: isMobile ? 18 : 24, bold: true, color: '#000000' },
+        summaryItem: { fontSize: baseFontSize - 0.5, color: BRAND.accent },
+        dayHeader: { fontSize: isMobile ? 18 : 24, bold: true, color: BRAND.earth },
 
         // Typography tweaks (cleaner + less heavy)
         timeCell: { fontSize: isMobile ? 8.5 : 9, bold: true, color: '#4B5563' },
