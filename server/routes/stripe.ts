@@ -82,7 +82,6 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
       hasStripeKey,
       hasSupabaseUrl,
       hasServiceRoleKey,
-      stripeKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7) || 'missing', // Shows sk_live_ or sk_test_
     });
 
     if (!hasStripeKey) {
