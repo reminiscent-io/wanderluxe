@@ -4,13 +4,18 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  BarChart2, Package, Settings, ArrowLeft, Users, Download, ShieldCheck
+  BarChart2, Package, Settings, ArrowLeft, Users, Download, ShieldCheck, Trash2
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -117,6 +122,35 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     handleEditDates, handleSaveDates,
     handleTravelerAdd, handleTravelerEdit
   } = sidebar;
+
+  const isOwner = !!trip && !!user && trip.user_id === user.id;
+
+  const handleDeleteTrip = async () => {
+    if (!tripId) return;
+    try {
+      const { error: sharesError } = await supabase
+        .from('trip_shares')
+        .delete()
+        .eq('trip_id', tripId);
+      if (sharesError) {
+        console.error('Error removing trip shares:', sharesError);
+      }
+
+      const { error } = await supabase
+        .from('trips')
+        .update({ hidden: true })
+        .eq('trip_id', tripId);
+      if (error) throw error;
+
+      toast({ title: 'Success', description: 'Trip deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['my-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
+      handleBackToTrips();
+    } catch (error) {
+      console.error('Failed to delete trip:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete trip' });
+    }
+  };
 
   const handleBackFromSecondary = () => {
     setSecondaryPanel(null);
@@ -236,7 +270,40 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
             </Button>
           </div>
         )}
-        
+
+        {/* Delete Trip - only visible to trip owner */}
+        {isOwner && tripId && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sand-500 hover:text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Trip
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this trip?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove the trip from your list and revoke access for anyone it was shared with. You can restore it later from hidden trips.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteTrip}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={avatarUrl || user?.user_metadata?.avatar_url} />
