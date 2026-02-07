@@ -12,7 +12,8 @@ import TimelineView from "../components/trip/TimelineView";
 import BudgetView from "../components/trip/BudgetView";
 import BookingView from "../components/trip/BookingView";
 import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
-import ChatView from "../components/trip/chat/ChatView";
+import AIAssistantPanel from "../components/trip/ai-assistant/AIAssistantPanel";
+import AIAssistantDrawer from "../components/trip/ai-assistant/AIAssistantDrawer";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { Card } from "@/components/ui/card";
@@ -48,6 +49,9 @@ const TripDetails = () => {
 
   // Quick add sheet state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+
+  // AI Assistant drawer state (mobile full-screen)
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   // Ref to access Sidebar methods
   const sidebarRef = useRef<SidebarHandle>(null);
@@ -213,7 +217,7 @@ const TripDetails = () => {
                 </ErrorBoundary>
               )}
 
-              {activeTab === 'chat' && <ChatView tripId={tripId || ''} canEdit={canEdit} />}
+              {activeTab === 'chat' && <AIAssistantPanel tripId={tripId || ''} />}
               {activeTab === 'vision-board' && <VisionBoardView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'budget' && <BudgetView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'booking' && <BookingView tripId={tripId} canEdit={canEdit} />}
@@ -227,6 +231,14 @@ const TripDetails = () => {
         tripId={tripId}
         onQuickAddClick={() => setQuickAddOpen(true)}
         onPeopleClick={() => sidebarRef.current?.openTravelersPanel()}
+        onAIClick={() => setAiDrawerOpen(true)}
+      />
+
+      {/* AI Assistant Drawer (mobile full-screen with safe area) */}
+      <AIAssistantDrawer
+        tripId={tripId || ''}
+        open={aiDrawerOpen}
+        onOpenChange={setAiDrawerOpen}
       />
 
       {/* Quick Add Sheet */}

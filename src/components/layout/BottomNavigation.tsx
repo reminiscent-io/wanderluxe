@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Calendar, BarChart2, Users, Plus } from "lucide-react";
+import { Calendar, BarChart2, Users, Plus, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -7,9 +7,10 @@ interface BottomNavigationProps {
   tripId: string | undefined;
   onQuickAddClick: () => void;
   onPeopleClick: () => void;
+  onAIClick: () => void;
 }
 
-const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick }: BottomNavigationProps) => {
+const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }: BottomNavigationProps) => {
   const timelineItem = {
     title: "Timeline",
     icon: Calendar,
@@ -24,7 +25,7 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick }: BottomNavi
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-sand-200 shadow-lg">
-      <div className="grid grid-cols-4 h-16 items-center px-2">
+      <div className="grid grid-cols-5 h-16 items-center px-2">
         {/* Timeline */}
         <NavLink
           to={timelineItem.href}
@@ -49,6 +50,15 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick }: BottomNavi
             );
           }}
         </NavLink>
+
+        {/* AI Chat */}
+        <button
+          onClick={onAIClick}
+          className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[10px]">AI Chat</span>
+        </button>
 
         {/* Center FAB */}
         <div className="flex items-center justify-center">
