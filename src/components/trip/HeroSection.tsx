@@ -201,8 +201,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     <>
       {/* Fixed hero background — purely visual, no interaction */}
       <div
-        className="fixed top-0 overflow-hidden w-full z-0 pointer-events-none"
+        className="fixed overflow-hidden w-full z-0 pointer-events-none"
         style={{
+          top: 'var(--app-nav-h, 56px)',
           left: 'var(--hero-left, 0)',
           width: 'var(--hero-width, 100%)',
           height: 'calc(100dvh - var(--app-nav-h, 56px) - 80px)',

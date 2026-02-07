@@ -173,10 +173,8 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
           formattedDate={formattedDate}
           index={index}
           isTodayFlag={isTodayFlag}
-          isTravelDay={isTravelDay}
           isCheckInDay={isCheckInDay}
           isCheckOutDay={isCheckOutDay}
-          totalEvents={totalEvents}
           summary={summary}
           isExpanded={isExpanded}
           onToggle={() => setIsExpanded(!isExpanded)}
