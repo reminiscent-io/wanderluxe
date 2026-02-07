@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  BarChart2, Package, Settings, ArrowLeft, Users, Download
+  BarChart2, Package, Settings, ArrowLeft, Users, Download, ShieldCheck
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -23,6 +23,7 @@ import TravelerDialog from "../trip/travelers/TravelerDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export interface SidebarHandle {
   openAccommodationDialog: () => void;
@@ -64,6 +65,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
+  const { isAdmin } = useIsAdmin();
 
   // Listen for custom event from Navigation hamburger menu
   React.useEffect(() => {
@@ -204,6 +206,22 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
       </ScrollArea>
 
       <div className="p-4 border-t border-sand-200 space-y-3">
+        {/* Mobile-only Admin Portal - Shows only on mobile for admins */}
+        {isAdmin && (
+          <div className="md:hidden">
+            <NavLink to="/admin" onClick={() => setIsOpen(false)}>
+              <Button
+                className="w-full justify-start text-sand-600 hover:text-earth-600 hover:bg-sand-50"
+                variant="ghost"
+                size="sm"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Admin Portal
+              </Button>
+            </NavLink>
+          </div>
+        )}
+
         {/* Mobile-only PWA Install Button - Shows only on mobile when in trip */}
         {tripId && canInstall && (
           <div className="md:hidden">

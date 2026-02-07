@@ -19,7 +19,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
-import { AIAssistantDrawer } from "@/components/trip/ai-assistant";
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
@@ -49,9 +48,6 @@ const TripDetails = () => {
 
   // Quick add sheet state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-
-  // AI Assistant drawer state (mobile)
-  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   // Ref to access Sidebar methods
   const sidebarRef = useRef<SidebarHandle>(null);
@@ -230,7 +226,6 @@ const TripDetails = () => {
       <BottomNavigation
         tripId={tripId}
         onQuickAddClick={() => setQuickAddOpen(true)}
-        onAIClick={() => setAiDrawerOpen(true)}
         onPeopleClick={() => sidebarRef.current?.openTravelersPanel()}
       />
 
@@ -241,14 +236,6 @@ const TripDetails = () => {
         onSelectAction={handleQuickAddAction}
       />
 
-      {/* AI Assistant Drawer (Mobile) */}
-      {tripId && (
-        <AIAssistantDrawer
-          tripId={tripId}
-          open={aiDrawerOpen}
-          onOpenChange={setAiDrawerOpen}
-        />
-      )}
     </div>
   );
 };
