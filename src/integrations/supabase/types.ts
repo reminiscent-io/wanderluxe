@@ -147,6 +147,7 @@
         Row: {
           arrival_date: string
           cover_image_url: string | null
+          cover_image_position: string | null
           created_at: string
           departure_date: string
           destination: string
@@ -159,6 +160,7 @@
         Insert: {
           arrival_date: string
           cover_image_url?: string | null
+          cover_image_position?: string | null
           created_at?: string
           departure_date: string
           destination: string
@@ -171,6 +173,7 @@
         Update: {
           arrival_date?: string
           cover_image_url?: string | null
+          cover_image_position?: string | null
           created_at?: string
           departure_date?: string
           destination?: string

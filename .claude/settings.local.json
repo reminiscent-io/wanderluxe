@@ -59,7 +59,8 @@
       "Bash(/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node --version)",
       "Bash(/usr/local/bin/node:*)",
       "Bash(bun:*)",
-      "Bash(npx skills add https://github.com/anthropics/skills --skill frontend-design)"
+      "Bash(npx skills add https://github.com/anthropics/skills --skill frontend-design)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

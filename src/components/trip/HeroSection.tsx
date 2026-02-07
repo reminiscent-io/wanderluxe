@@ -25,6 +25,7 @@ interface HeroSectionProps {
   canEdit?: boolean;
   primaryDestination?: string | null;
   primaryDestinationPlaceId?: string | null;
+  coverImagePosition?: string | null;
 }
 
 interface DateRangeDisplayProps {
@@ -59,6 +60,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   canEdit = true,
   primaryDestination,
   primaryDestinationPlaceId,
+  coverImagePosition,
 }) => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -70,7 +72,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [editedPrimaryDestinationPlaceId, setEditedPrimaryDestinationPlaceId] = useState(primaryDestinationPlaceId || '');
   const [editedImageUrl, setEditedImageUrl] = useState(imageUrl);
 
-  const [imagePosition, setImagePosition] = useState<string>("center 50%");
+  const [imagePosition, setImagePosition] = useState<string>(() => {
+    if (coverImagePosition && coverImagePosition !== 'center 50%') return coverImagePosition;
+    const saved = localStorage.getItem(`trip_image_position_${tripId}`);
+    return saved || coverImagePosition || 'center 50%';
+  });
 
   // Reset form state when dialog opens
   const handleOpenDialog = () => {
@@ -97,7 +103,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const handlePositionChange = (newPosition: string) => {
     setImagePosition(newPosition);
-    localStorage.setItem(`trip_image_position_${tripId}`, newPosition);
   };
 
   const handlePrimaryDestinationChange = (destination: string, placeId: string) => {
@@ -120,11 +125,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           destination: editedTitle,
           cover_image_url: editedImageUrl,
           primary_destination: editedPrimaryDestination || null,
-          primary_destination_place_id: editedPrimaryDestinationPlaceId || null
-        })
+          primary_destination_place_id: editedPrimaryDestinationPlaceId || null,
+          cover_image_position: imagePosition,
+        } as any)
         .eq('trip_id', tripId);
 
       if (error) throw error;
+
+      // Clean up legacy localStorage entry
+      localStorage.removeItem(`trip_image_position_${tripId}`);
 
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       setIsDialogOpen(false);
@@ -159,14 +168,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [arrivalDate, departureDate]);
 
-  // Load image position from localStorage when component mounts
-  React.useEffect(() => {
-    const savedPosition = localStorage.getItem(`trip_image_position_${tripId}`);
-    if (savedPosition) {
-      setImagePosition(savedPosition);
-    }
-  }, [tripId]);
-
   const formattedDateRange = React.useMemo(() => {
     const safeArrival = lastValidDates.arrivalDate;
     const safeDeparture = lastValidDates.departureDate;
@@ -193,15 +194,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Parallax scroll: fade out hero text as user scrolls down
   const { scrollY } = useScroll();
-  const heroTextOpacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const heroTextY = useTransform(scrollY, [0, 300], [0, -40]);
+  const heroTextOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const heroTextY = useTransform(scrollY, [0, 400], [0, -40]);
 
   return (
     <>
-      {/* Fixed hero background — stays in place while content scrolls over it */}
+      {/* Fixed hero background — purely visual, no interaction */}
       <div
-        className="fixed top-0 overflow-hidden w-full aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] z-0"
-        style={{ left: 'var(--hero-left, 0)', width: 'var(--hero-width, 100%)' }}
+        className="fixed top-0 overflow-hidden w-full z-0 pointer-events-none"
+        style={{
+          left: 'var(--hero-left, 0)',
+          width: 'var(--hero-width, 100%)',
+          height: 'calc(100dvh - var(--app-nav-h, 56px) - 80px)',
+          maxHeight: '70vh',
+          minHeight: '280px',
+        }}
       >
         {imageUrl ? (
           <div className="absolute inset-0 w-full h-full">
@@ -222,37 +229,49 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Gradient overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/10"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-sand-50/30"></div>
+      </div>
 
+      {/* Spacer — pushes content down + holds interactive hero text */}
+      <div
+        className="relative w-full"
+        style={{
+          height: 'calc(100dvh - var(--app-nav-h, 56px) - 80px)',
+          maxHeight: '70vh',
+          minHeight: '280px',
+        }}
+      >
         {/* Hero text content — fades out as user scrolls */}
         <motion.div
-          className="absolute top-0 left-0 right-0 aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] flex flex-col items-center justify-center p-10 md:p-16 text-white z-10"
-          style={{ opacity: heroTextOpacity, y: heroTextY }}
+          className="absolute inset-0 flex flex-col items-center justify-center p-10 md:p-16 text-white"
+          style={{
+            top: 'var(--app-nav-h, 56px)',
+            opacity: heroTextOpacity,
+            y: heroTextY,
+          }}
         >
           {isLoading ? (
             <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
           ) : (
-            <div className="group relative inline-block">
+            <div className="flex items-baseline gap-2 justify-center mb-4">
               <h1
-                className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg text-center tracking-tight ${canEdit ? 'cursor-pointer hover:text-white/90' : ''}`}
+                className={`text-4xl md:text-5xl lg:text-6xl font-bold drop-shadow-lg text-center tracking-tight ${canEdit ? 'cursor-pointer hover:text-white/90' : ''}`}
                 onClick={canEdit ? handleOpenDialog : undefined}
               >
                 {lastValidTitle}
               </h1>
               {canEdit && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                <button
+                  className="opacity-60 hover:opacity-100 transition-opacity text-white shrink-0 translate-y-[-0.1em]"
                   onClick={handleOpenDialog}
                 >
-                  <PencilIcon className="h-4 w-4" />
-                </Button>
+                  <PencilIcon className="h-5 w-5 md:h-6 md:w-6 drop-shadow-md" />
+                </button>
               )}
             </div>
           )}
 
           {primaryDestination ? (
-            <div className="group/dest relative mb-2">
+            <div className="mb-2">
               <p
                 className={`text-lg md:text-xl font-medium drop-shadow-md text-center flex items-center gap-2 justify-center ${canEdit ? 'cursor-pointer hover:text-white/80' : ''}`}
                 onClick={canEdit ? handleOpenDialog : undefined}
@@ -260,16 +279,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <MapPin className="h-4 w-4" />
                 {primaryDestination}
               </p>
-              {canEdit && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute -right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/dest:opacity-100 transition-opacity h-6 w-6 p-0"
-                  onClick={handleOpenDialog}
-                >
-                  <PencilIcon className="h-3 w-3" />
-                </Button>
-              )}
             </div>
           ) : canEdit && !isLoading ? (
             <button
@@ -286,28 +295,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             formattedDateRange={formattedDateRange}
           />
         </motion.div>
-
-      </div>
-
-      {/* Spacer — pushes content down to match the visible hero height */}
-      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px]">
-        {/* Edit button anchored to the spacer's bottom-right (visible hero area) */}
-        {canEdit && (
-          <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="opacity-50 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm text-sand-50"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOpenDialog();
-              }}
-            >
-              <PencilIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Edit Trip Details Dialog — outside the fixed layer so it renders correctly */}
@@ -319,7 +306,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           }
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto z-[60]">
+        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
           <DialogTitle>Edit Trip Details</DialogTitle>
           <div className="space-y-6 pt-2">
             {/* Trip Name */}
