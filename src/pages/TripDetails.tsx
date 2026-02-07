@@ -86,8 +86,7 @@ const TripDetails = () => {
     return () => clearTimeout(timer);
   }, [updateHeroBounds]);
 
-  const handleQuickAddAction = (action: "accommodation" | "transportation" | "activity" | "dining" | "import") => {
-    // Open the appropriate dialog or navigate based on the action
+  const handleQuickAddAction = (action: "accommodation" | "transportation" | "activity" | "dining") => {
     switch (action) {
       case "accommodation":
         sidebarRef.current?.openAccommodationDialog();
@@ -100,10 +99,6 @@ const TripDetails = () => {
         break;
       case "dining":
         sidebarRef.current?.openReservationDialog();
-        break;
-      case "import":
-        // Navigate to chat view for AI import/scan
-        navigate(`/trip/${tripId}/chat`);
         break;
     }
   };
