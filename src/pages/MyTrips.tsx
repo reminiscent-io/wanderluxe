@@ -8,16 +8,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from '../components/trip/TripCard';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction
-} from "@/components/ui/alert-dialog";
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 import { acceptTripShare, getSharedTrips, removeTripShare } from '@/services/tripSharingService';
@@ -35,8 +25,6 @@ const MyTrips = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { session } = useAuth();
 
   // Redirect to auth if not logged in
@@ -132,42 +120,31 @@ const MyTrips = () => {
     }
   };
 
-  const handleHideTrip = async (tripId: string) => {
+  const handleDeleteTrip = async (tripId: string) => {
     try {
+      // Remove all shares for this trip
+      const { error: sharesError } = await supabase
+        .from('trip_shares')
+        .delete()
+        .eq('trip_id', tripId);
+
+      if (sharesError) {
+        console.error('Error removing trip shares:', sharesError);
+      }
+
+      // Soft-delete: hide the trip instead of permanently deleting
       const { error } = await supabase
         .from('trips')
         .update({ hidden: true })
         .eq('trip_id', tripId);
 
-      if (error) {
-        console.error('Error hiding trip:', error);
-        throw error;
-      }
-
-      toast.success('Trip hidden successfully');
-      queryClient.invalidateQueries({ queryKey: ['my-trips', showHidden] });
-    } catch (error) {
-      console.error('Failed to hide trip:', error);
-      toast.error('Failed to hide trip');
-    }
-  };
-
-  const handleDeleteTrip = async () => {
-    if (!selectedTrip) return;
-
-    try {
-      const { error } = await supabase
-        .from('trips')
-        .delete()
-        .eq('trip_id', selectedTrip.trip_id);
-
       if (error) throw error;
 
       toast.success('Trip deleted successfully');
-      setIsDeleteDialogOpen(false);
-      setSelectedTrip(null);
       queryClient.invalidateQueries({ queryKey: ['my-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
     } catch (error) {
+      console.error('Failed to delete trip:', error);
       toast.error('Failed to delete trip');
     }
   };
@@ -571,7 +548,7 @@ const MyTrips = () => {
                           end_date: trip.departure_date,
                           cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
-                        onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
                         onLeaveSharedTrip={trip.isShared ? handleLeaveSharedTrip : undefined}
                         isShared={trip.isShared}
@@ -620,7 +597,7 @@ const MyTrips = () => {
                           end_date: trip.departure_date,
                           cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
-                        onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
                         onLeaveSharedTrip={trip.isShared ? handleLeaveSharedTrip : undefined}
                         isShared={trip.isShared}
@@ -693,7 +670,7 @@ const MyTrips = () => {
                           end_date: trip.departure_date,
                           cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
                         }}
-                        onHide={!trip.isShared ? () => handleHideTrip(trip.trip_id) : undefined}
+                        onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
                         onLeaveSharedTrip={trip.isShared ? handleLeaveSharedTrip : undefined}
                         isShared={trip.isShared}
@@ -778,28 +755,6 @@ const MyTrips = () => {
           </Button>
         </div>
 
-        <AlertDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the trip
-                and all its associated data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteTrip}>
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </div>
   );

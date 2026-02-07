@@ -11,6 +11,7 @@ import PrimaryDestinationInput from '@/components/trip/create/PrimaryDestination
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 interface HeroSectionProps {
   tripId: string;
@@ -190,91 +191,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [lastValidDates]);
 
+  // Parallax scroll: fade out hero text as user scrolls down
+  const { scrollY } = useScroll();
+  const heroTextOpacity = useTransform(scrollY, [0, 300], [1, 0]);
+  const heroTextY = useTransform(scrollY, [0, 300], [0, -40]);
+
   return (
-    <div
-      className="relative w-full mb-0"
-    >
-      <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden group rounded-none">
-        {canEdit && (
-          <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="opacity-50 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm text-sand-50"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOpenDialog();
-              }}
-            >
-              <PencilIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-
-        {/* Edit Trip Details Dialog */}
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCloseDialog();
-            }
-          }}
-        >
-          <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
-            <DialogTitle>Edit Trip Details</DialogTitle>
-            <div className="space-y-6 pt-2">
-              {/* Trip Name */}
-              <div className="space-y-3">
-                <Label htmlFor="tripName" className="text-earth-700 font-semibold">
-                  Trip name<span className="text-red-500"> *</span>
-                </Label>
-                <Input
-                  id="tripName"
-                  placeholder="e.g., NYE in Paris"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  className="bg-white/70 border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl py-3 px-4 shadow-sm"
-                />
-              </div>
-
-              {/* Primary Destination */}
-              <PrimaryDestinationInput
-                value={editedPrimaryDestination}
-                placeId={editedPrimaryDestinationPlaceId}
-                onChange={handlePrimaryDestinationChange}
-                placeholder="Search for a city..."
-              />
-
-              {/* Cover Image */}
-              <ImageSection
-                coverImageUrl={editedImageUrl}
-                onImageChange={handleImageChange}
-                objectPosition={imagePosition}
-                onPositionChange={handlePositionChange}
-              />
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2 pt-4 border-t border-earth-100">
-                <Button
-                  variant="ghost"
-                  onClick={handleCloseDialog}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-earth-600 hover:bg-earth-700 text-white"
-                  onClick={handleSaveChanges}
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
+    <>
+      {/* Fixed hero background — stays in place while content scrolls over it */}
+      <div
+        className="fixed top-0 overflow-hidden w-full aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] z-0"
+        style={{ left: 'var(--hero-left, 0)', width: 'var(--hero-width, 100%)' }}
+      >
         {imageUrl ? (
           <div className="absolute inset-0 w-full h-full">
             <UnsplashImage
@@ -291,15 +219,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="h-full w-full bg-gray-200 animate-pulse"></div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+        {/* Gradient overlays for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-sand-50/30"></div>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-10 md:p-16 text-white z-10">
+        {/* Hero text content — fades out as user scrolls */}
+        <motion.div
+          className="absolute top-0 left-0 right-0 aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] flex flex-col items-center justify-center p-10 md:p-16 text-white z-10"
+          style={{ opacity: heroTextOpacity, y: heroTextY }}
+        >
           {isLoading ? (
             <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
           ) : (
             <div className="group relative inline-block">
               <h1
-                className={`text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg text-center ${canEdit ? 'cursor-pointer hover:text-white/90' : ''}`}
+                className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg text-center tracking-tight ${canEdit ? 'cursor-pointer hover:text-white/90' : ''}`}
                 onClick={canEdit ? handleOpenDialog : undefined}
               >
                 {lastValidTitle}
@@ -351,9 +285,94 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             isLoading={isLoading}
             formattedDateRange={formattedDateRange}
           />
-        </div>
+        </motion.div>
+
       </div>
-    </div>
+
+      {/* Spacer — pushes content down to match the visible hero height */}
+      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px]">
+        {/* Edit button anchored to the spacer's bottom-right (visible hero area) */}
+        {canEdit && (
+          <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="opacity-50 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm text-sand-50"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleOpenDialog();
+              }}
+            >
+              <PencilIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Trip Details Dialog — outside the fixed layer so it renders correctly */}
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseDialog();
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto z-[60]">
+          <DialogTitle>Edit Trip Details</DialogTitle>
+          <div className="space-y-6 pt-2">
+            {/* Trip Name */}
+            <div className="space-y-3">
+              <Label htmlFor="tripName" className="text-earth-700 font-semibold">
+                Trip name<span className="text-red-500"> *</span>
+              </Label>
+              <Input
+                id="tripName"
+                placeholder="e.g., NYE in Paris"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                className="bg-white/70 border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl py-3 px-4 shadow-sm"
+              />
+            </div>
+
+            {/* Primary Destination */}
+            <PrimaryDestinationInput
+              value={editedPrimaryDestination}
+              placeId={editedPrimaryDestinationPlaceId}
+              onChange={handlePrimaryDestinationChange}
+              placeholder="Search for a city..."
+            />
+
+            {/* Cover Image */}
+            <ImageSection
+              coverImageUrl={editedImageUrl}
+              onImageChange={handleImageChange}
+              objectPosition={imagePosition}
+              onPositionChange={handlePositionChange}
+            />
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2 pt-4 border-t border-earth-100">
+              <Button
+                variant="ghost"
+                onClick={handleCloseDialog}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-earth-600 hover:bg-earth-700 text-white"
+                onClick={handleSaveChanges}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

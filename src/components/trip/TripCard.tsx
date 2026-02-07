@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { EyeOff, Share2, Users, Calendar, MapPin, LogOut, Check, X } from 'lucide-react';
+import { Trash2, Share2, Users, Calendar, MapPin, LogOut, Check, X } from 'lucide-react';
 import { format, getYear, parseISO, differenceInDays, isToday, isTomorrow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,7 +23,7 @@ interface TripCardProps {
     owner_email?: string;
   };
   isExample?: boolean;
-  onHide?: (tripId: string) => void;
+  onDelete?: (tripId: string) => void;
   onAcceptInvite?: (shareId: string) => void;
   onLeaveSharedTrip?: (shareId: string) => void;
   isShared?: boolean;
@@ -32,7 +32,7 @@ interface TripCardProps {
 const TripCard = ({
   trip,
   isExample = false,
-  onHide,
+  onDelete,
   onAcceptInvite,
   onLeaveSharedTrip,
   isShared
@@ -331,31 +331,31 @@ const TripCard = ({
                   </>
                 )}
 
-                {!isExample && !isShared && onHide && (
+                {!isExample && !isShared && onDelete && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full h-8 w-8"
+                        className="text-gray-400 hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
                       >
-                        <EyeOff className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Hide Trip</AlertDialogTitle>
+                        <AlertDialogTitle>Delete Trip</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to hide this trip? You won't be able to see it in your trips list anymore.
+                          This will remove the trip from your list and revoke access for anyone it was shared with. You can restore it later from hidden trips.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onHide(trip.trip_id)} className="bg-gray-600 hover:bg-gray-700 text-sand-50">
-                          Hide
+                        <AlertDialogAction onClick={() => onDelete(trip.trip_id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

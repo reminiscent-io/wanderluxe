@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react';
+import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
@@ -55,6 +55,35 @@ const TripDetails = () => {
 
   // Ref to access Sidebar methods
   const sidebarRef = useRef<SidebarHandle>(null);
+
+  // Ref + callback for aligning the fixed hero with the main content area (offset by sidebar)
+  const mainRef = useRef<HTMLElement>(null);
+  const updateHeroBounds = useCallback(() => {
+    if (mainRef.current) {
+      const rect = mainRef.current.getBoundingClientRect();
+      document.documentElement.style.setProperty('--hero-left', `${rect.left}px`);
+      document.documentElement.style.setProperty('--hero-width', `${rect.width}px`);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateHeroBounds();
+    window.addEventListener('resize', updateHeroBounds);
+    const observer = new MutationObserver(updateHeroBounds);
+    if (mainRef.current) {
+      observer.observe(mainRef.current, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+    return () => {
+      window.removeEventListener('resize', updateHeroBounds);
+      observer.disconnect();
+    };
+  }, [updateHeroBounds]);
+
+  // Re-measure after sidebar animation settles
+  useEffect(() => {
+    const timer = setTimeout(updateHeroBounds, 350);
+    return () => clearTimeout(timer);
+  }, [updateHeroBounds]);
 
   const handleQuickAddAction = (action: "accommodation" | "transportation" | "activity" | "dining" | "import") => {
     // Open the appropriate dialog or navigate based on the action
@@ -121,29 +150,44 @@ const TripDetails = () => {
   const sidebar = <Sidebar ref={sidebarRef} tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
   return (
-    // Offset the page content by the fixed navbar height so the hero touches the bottom of the nav
     <div className="flex min-h-screen">
       {sidebar}
-      <main className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
+      <main ref={mainRef} className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">
-          {/* Global header is already fixed via AppLayout; no page-level header here */}
 
-          {/* Ensure no unintended top margin before the hero */}
-          <div className="w-full mt-0">
-            <HeroSection
-              tripId={tripId}
-              title={displayData.destination}
-              imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
-              arrivalDate={displayData.arrival_date}
-              departureDate={displayData.departure_date}
-              isLoading={tripLoading && !previousTrip}
-              canEdit={canEdit}
-              primaryDestination={displayData.primary_destination}
-              primaryDestinationPlaceId={displayData.primary_destination_place_id}
+          {/* Hero — renders fixed background + spacer */}
+          <HeroSection
+            tripId={tripId}
+            title={displayData.destination}
+            imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
+            arrivalDate={displayData.arrival_date}
+            departureDate={displayData.departure_date}
+            isLoading={tripLoading && !previousTrip}
+            canEdit={canEdit}
+            primaryDestination={displayData.primary_destination}
+            primaryDestinationPlaceId={displayData.primary_destination_place_id}
+          />
+
+          {/* Content area — scrolls up and over the fixed hero image */}
+          <div
+            className="relative flex-1 w-full z-10 min-h-screen"
+            style={{
+              background: 'linear-gradient(180deg, rgba(250,249,247,0.88) 0%, rgba(250,249,247,0.95) 40px, rgba(250,249,247,0.97) 120px, rgba(250,249,247,1) 300px)',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+            }}
+          >
+            {/* Soft top edge — blends content into the hero */}
+            <div
+              className="absolute -top-8 left-0 right-0 h-8 pointer-events-none z-10"
+              style={{
+                background: 'linear-gradient(180deg, transparent 0%, rgba(250,249,247,0.5) 100%)',
+              }}
             />
-          </div>
 
-          <div className="relative flex-1 bg-sand-50/95 w-full z-10">
+            {/* Decorative curved edge */}
+            <div className="absolute -top-3 left-0 right-0 h-4 pointer-events-none z-10 rounded-t-[20px] bg-sand-50/60" />
+
             <div className="max-w-none mx-auto px-4 py-8 pb-24 md:pb-8">
               {!canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
