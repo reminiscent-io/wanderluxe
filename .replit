@@ -11,12 +11,8 @@ deploymentTarget = "cloudrun"
 build = ["sh", "-c", "bun run build"]
 
 [[ports]]
-localPort = 8080
-externalPort = 80
-
-[[ports]]
 localPort = 5000
-externalPort = 3000
+externalPort = 80
 
 [objectStorage]
 defaultBucketID = "replit-objstore-852a1cd5-5447-4cfc-b160-424e3a606d77"
