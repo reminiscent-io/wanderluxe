@@ -1,10 +1,14 @@
-const CACHE_NAME = 'wanderluxe-v2';
+const CACHE_NAME = 'wanderluxe-v3';
 const OFFLINE_URL = '/index.html';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/favicon.ico',
-  '/manifest.json'
+  '/manifest.json',
+  '/apple-touch-icon.png',
+  '/icon-192x192.png',
+  '/icon-384x384.png',
+  '/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {

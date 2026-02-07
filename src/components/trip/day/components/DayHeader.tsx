@@ -18,6 +18,7 @@ type Props = {
   onToggle: () => void;
   weather?: DailyForecast;
   currentWeather?: WeatherData['current'];
+  dateISO?: string;
 };
 
 const DayHeader: React.FC<Props> = ({
@@ -32,7 +33,19 @@ const DayHeader: React.FC<Props> = ({
   onToggle,
   weather,
   currentWeather,
+  dateISO,
 }) => {
+  // Countdown for Day 1 in the future
+  const daysUntil = React.useMemo(() => {
+    if (index !== 1 || !dateISO) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayDate = new Date(dateISO);
+    dayDate.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((dayDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : null;
+  }, [index, dateISO]);
+
   return (
     <motion.div 
       className="p-3 sm:p-4 md:p-6 cursor-pointer hover:bg-sand-25 transition-colors duration-200"
@@ -57,6 +70,11 @@ const DayHeader: React.FC<Props> = ({
                   currentWeather={currentWeather}
                   isToday={isTodayFlag}
                 />
+              )}
+              {daysUntil && (
+                <Badge className="bg-sky-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">
+                  Starts in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
+                </Badge>
               )}
               {isTodayFlag && (
                 <Badge className="bg-emerald-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">Today</Badge>

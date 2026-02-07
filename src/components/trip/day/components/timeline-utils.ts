@@ -19,10 +19,13 @@ export interface TimelineItem {
   };
 }
 
+export type HintType = 'layover' | 'free-time' | 'overlap';
+
 export type TimelineRenderRow =
   | { kind: 'item'; item: TimelineItem }
   | { kind: 'grouped'; id: string; items: TimelineItem[]; groupType: TimelineType; title: string; timeRange: string }
-  | { kind: 'hint'; id: string; text: string };
+  | { kind: 'hint'; id: string; text: string; hintType?: HintType; airport?: string }
+  | { kind: 'now'; id: string };
 
 /** ------------------------------- Utilities ------------------------------- */
 
@@ -312,11 +315,15 @@ export const generateGroupTitle = (items: TimelineItem[]): string => {
   }
 
   if (type === 'activity') {
-    return `${count} Activities`;
+    const names = items.map(i => i.title).filter(Boolean);
+    if (names.length <= 3) return names.join(', ');
+    return `${names.slice(0, 2).join(', ')}, +${names.length - 2} more`;
   }
 
   if (type === 'dining') {
-    return `${count} Dining Reservations`;
+    const names = items.map(i => i.title).filter(Boolean);
+    if (names.length <= 3) return names.join(', ');
+    return `${names.slice(0, 2).join(', ')}, +${names.length - 2} more`;
   }
 
   if (type === 'hotel') {

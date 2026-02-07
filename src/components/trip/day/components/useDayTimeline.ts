@@ -210,17 +210,36 @@ export function useDayTimeline({
     return items;
   }, [activities, filteredHotelStays, filteredTransportations, reservations, normalizedDay]);
 
-  // Compute rows with grouping and subtle layover hints
+  // Compute rows with grouping, layover hints, and gap detection
   const rows: TimelineRenderRow[] = useMemo(() => {
     const result: TimelineRenderRow[] = [];
 
     // First, group similar events
     const eventGroups = groupSimilarEvents(timelineItems, normalizedDay);
 
+    /** Get the end time of the last event in a group */
+    const getGroupEndTime = (group: typeof timelineItems): string | undefined => {
+      for (let i = group.length - 1; i >= 0; i--) {
+        const item = group[i];
+        // For transportation, use arrival time on this day
+        if (item.data?.__arrive_time_on_this_day) return item.data.__arrive_time_on_this_day;
+        if (item.endTime) return item.endTime;
+        if (item.time) return item.time;
+      }
+      return undefined;
+    };
+
+    /** Get the start time of the first event in a group */
+    const getGroupStartTime = (group: typeof timelineItems): string | undefined => {
+      const first = group[0];
+      if (first?.data?.__depart_time_on_this_day) return first.data.__depart_time_on_this_day;
+      return first?.time;
+    };
+
     for (let groupIdx = 0; groupIdx < eventGroups.length; groupIdx++) {
       const group = eventGroups[groupIdx];
 
-      // If group has multiple items (2+), create a grouped row
+      // Add the group/item row
       if (group.length >= 2) {
         const groupTitle = generateGroupTitle(group);
         const timeRange = generateGroupTimeRange(group);
@@ -233,42 +252,92 @@ export function useDayTimeline({
           timeRange,
         });
       } else {
-        // Single item, add as regular item
-        const curr = group[0];
-        result.push({ kind: 'item', item: curr });
+        result.push({ kind: 'item', item: group[0] });
+      }
 
-        // Check for layover hint with next item
-        const nextGroup = eventGroups[groupIdx + 1];
-        if (!nextGroup || nextGroup.length === 0) continue;
+      // Gap detection between current group and next group
+      const nextGroup = eventGroups[groupIdx + 1];
+      if (!nextGroup || nextGroup.length === 0) continue;
 
-        const next = nextGroup[0];
+      const currEndTimeStr = getGroupEndTime(group);
+      const nextStartTimeStr = getGroupStartTime(nextGroup);
+      if (!currEndTimeStr || !nextStartTimeStr) continue;
 
-        const currIsFlight = curr.type === 'transportation' && curr.data?.type === 'flight';
-        const nextIsFlight = next.type === 'transportation' && next.data?.type === 'flight';
-        if (!currIsFlight || !nextIsFlight) continue;
+      const currEnd = combineDateAndTime(normalizedDay, currEndTimeStr);
+      const nextStart = combineDateAndTime(normalizedDay, nextStartTimeStr);
+      if (!currEnd || !nextStart) continue;
 
-        const currArrive = curr.data.__arrive_time_on_this_day;
-        const nextDepart = next.data.__depart_time_on_this_day;
-        if (!currArrive || !nextDepart) continue;
+      // Check for flight layover (special case)
+      const lastItem = group[group.length - 1];
+      const nextFirst = nextGroup[0];
+      const lastIsFlight = lastItem.type === 'transportation' && lastItem.data?.type === 'flight';
+      const nextIsFlight = nextFirst.type === 'transportation' && nextFirst.data?.type === 'flight';
 
-        const currArriveAirport = extractIata(curr.data?.arrival_location);
-        const nextDepartAirport = extractIata(next.data?.departure_location);
-        if (!currArriveAirport || currArriveAirport !== nextDepartAirport) continue;
+      if (lastIsFlight && nextIsFlight) {
+        const currArriveAirport = extractIata(lastItem.data?.arrival_location);
+        const nextDepartAirport = extractIata(nextFirst.data?.departure_location);
+        if (currArriveAirport && currArriveAirport === nextDepartAirport) {
+          const mins = diffMinutes(currEnd, nextStart);
+          if (mins > 0) {
+            result.push({
+              kind: 'hint',
+              id: `layover-${lastItem.id}-${nextFirst.id}`,
+              text: `Layover at ${currArriveAirport} • ${humanizeMinutes(mins)}`,
+              hintType: 'layover' as const,
+              airport: currArriveAirport,
+            });
+            continue;
+          }
+        }
+      }
 
-        const arriveAt = combineDateAndTime(normalizedDay, currArrive);
-        const departAt = combineDateAndTime(normalizedDay, nextDepart);
-        if (!arriveAt || !departAt) continue;
+      // General gap detection
+      const gapMs = nextStart.getTime() - currEnd.getTime();
+      const gapMins = Math.round(gapMs / 60000);
 
-        const mins = diffMinutes(arriveAt, departAt);
-        if (!(mins > 0)) continue;
-
-        const text = `Layover • ${humanizeMinutes(mins)}`;
-        result.push({ kind: 'hint', id: `layover-${curr.id}-${next.id}`, text });
+      if (gapMins >= 90) {
+        // Free time gap
+        result.push({
+          kind: 'hint',
+          id: `gap-${groupIdx}`,
+          text: `${humanizeMinutes(gapMins)} free`,
+          hintType: 'free-time' as const,
+        });
+      } else if (gapMins < -5) {
+        // Overlap (allowing 5min tolerance)
+        result.push({
+          kind: 'hint',
+          id: `overlap-${groupIdx}`,
+          text: `Overlaps by ${humanizeMinutes(Math.abs(gapMins))}`,
+          hintType: 'overlap' as const,
+        });
       }
     }
 
+    // Insert NOW indicator if today
+    if (isTodayFlag) {
+      const nowDate = new Date();
+      const nowTimeStr = `${String(nowDate.getHours()).padStart(2, '0')}:${String(nowDate.getMinutes()).padStart(2, '0')}`;
+
+      // Find the right position to insert the NOW marker
+      let insertIdx = result.length; // default: at end
+      for (let i = 0; i < result.length; i++) {
+        const row = result[i];
+        let rowTime: string | undefined;
+        if (row.kind === 'item') rowTime = row.item.time;
+        else if (row.kind === 'grouped') rowTime = row.items[0]?.time;
+
+        if (rowTime && rowTime > nowTimeStr) {
+          insertIdx = i;
+          break;
+        }
+      }
+
+      result.splice(insertIdx, 0, { kind: 'now', id: 'now-indicator' });
+    }
+
     return result;
-  }, [timelineItems, normalizedDay]);
+  }, [timelineItems, normalizedDay, isTodayFlag]);
 
   // Group rows by time period
   const periodGroups: TimelinePeriodGroup[] = useMemo(() => {
@@ -283,8 +352,8 @@ export function useDayTimeline({
     // Distribute rows to periods
     let lastItemPeriod: TimePeriod = 'no-time';
     rows.forEach(row => {
-      if (row.kind === 'hint') {
-        // Attach hint to the period of the last item
+      if (row.kind === 'hint' || row.kind === 'now') {
+        // Attach hint/now to the period of the last item
         groupMap.get(lastItemPeriod)?.push(row);
       } else if (row.kind === 'grouped') {
         // For grouped items, use the time of the first item
