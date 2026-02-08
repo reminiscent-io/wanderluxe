@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Plus, UserPlus } from "lucide-react";
 import { useTravelers } from "@/hooks/useTravelers";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTripPermissions } from "@/hooks/use-trip-permissions";
+import { Separator } from "@/components/ui/separator";
 import Header from "../_shared/Header";
 import TravelerRow from "./TravelerRow";
+import InviteLinkSection from "./InviteLinkSection";
 
 interface TravelersPanelProps {
   tripId: string;
@@ -22,6 +26,7 @@ export default function TravelersPanel({
   onBack,
 }: TravelersPanelProps) {
   const { travelers, loading, error } = useTravelers(tripId);
+  const { isOwner } = useTripPermissions(tripId);
 
   if (loading) {
     return (
@@ -73,6 +78,13 @@ export default function TravelersPanel({
             />
           ))}
         </div>
+      )}
+
+      {isOwner && (
+        <>
+          <Separator className="my-4" />
+          <InviteLinkSection tripId={tripId} />
+        </>
       )}
     </div>
   );

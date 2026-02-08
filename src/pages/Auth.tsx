@@ -22,7 +22,13 @@ const Auth = () => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        const pendingCode = sessionStorage.getItem('pendingInviteCode');
+        if (pendingCode) {
+          sessionStorage.removeItem('pendingInviteCode');
+          navigate(`/invite/${pendingCode}`, { replace: true });
+        } else {
+          navigate("/");
+        }
       }
     });
   }, [navigate]);
@@ -57,7 +63,13 @@ const Auth = () => {
         });
       }
 
-      navigate("/my-trips");
+      const pendingCode = sessionStorage.getItem('pendingInviteCode');
+      if (pendingCode) {
+        sessionStorage.removeItem('pendingInviteCode');
+        navigate(`/invite/${pendingCode}`, { replace: true });
+      } else {
+        navigate("/my-trips");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -81,9 +93,17 @@ const Auth = () => {
       if (error) throw error;
       setIsSliding(true);
       // Wait for animation to complete before navigating
-      setTimeout(() => {
-        navigate("/my-trips");
-      }, 500);
+      const pendingCode = sessionStorage.getItem('pendingInviteCode');
+      if (pendingCode) {
+        sessionStorage.removeItem('pendingInviteCode');
+        setTimeout(() => {
+          navigate(`/invite/${pendingCode}`, { replace: true });
+        }, 500);
+      } else {
+        setTimeout(() => {
+          navigate("/my-trips");
+        }, 500);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -97,10 +117,17 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      const pendingCode = sessionStorage.getItem('pendingInviteCode');
+      const redirectUrl = pendingCode
+        ? `${window.location.origin}/invite/${pendingCode}`
+        : `${window.location.origin}/my-trips`;
+      // Clear code here since OAuth redirects away from the page
+      if (pendingCode) sessionStorage.removeItem('pendingInviteCode');
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/my-trips`,
+          redirectTo: redirectUrl,
           // Force Google to show the account chooser (avoid "optimistically" reusing
           // the last signed-in Google account on this device/browser).
           queryParams: {
