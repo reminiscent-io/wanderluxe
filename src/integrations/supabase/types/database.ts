@@ -795,6 +795,8 @@ export type Database = {
           budget: number | null
           is_public: boolean
           cover_image_position: string | null
+          primary_destination: string | null
+          primary_destination_place_id: string | null
         }
         Insert: {
           trip_id?: string
@@ -810,6 +812,8 @@ export type Database = {
           budget?: number | null
           is_public?: boolean
           cover_image_position?: string | null
+          primary_destination?: string | null
+          primary_destination_place_id?: string | null
         }
         Update: {
           trip_id?: string
@@ -825,6 +829,8 @@ export type Database = {
           budget?: number | null
           is_public?: boolean
           cover_image_position?: string | null
+          primary_destination?: string | null
+          primary_destination_place_id?: string | null
         }
         Relationships: []
       }

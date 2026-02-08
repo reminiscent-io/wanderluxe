@@ -258,12 +258,19 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('trips')
         .update({ budget: budgetValue } as any)
-        .eq('trip_id', tripId);
+        .eq('trip_id', tripId)
+        .select()
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        toast.error('Unable to save budget. You may not have edit permission for this trip.');
+        return;
+      }
 
       // Invalidate the trip query to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });

@@ -119,7 +119,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('trips')
         .update({
           destination: editedTitle,
@@ -128,9 +128,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           primary_destination_place_id: editedPrimaryDestinationPlaceId || null,
           cover_image_position: imagePosition,
         } as any)
-        .eq('trip_id', tripId);
+        .eq('trip_id', tripId)
+        .select()
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        toast.error('Unable to save changes. You may not have edit permission for this trip.');
+        return;
+      }
 
       // Clean up legacy localStorage entry
       localStorage.removeItem(`trip_image_position_${tripId}`);
