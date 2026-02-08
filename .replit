@@ -3,7 +3,7 @@ run = "bun run dev"
 
 [nix]
 channel = "stable-24_05"
-packages = ["supabase-cli", "nodejs_24", "imagemagick", "gh"]
+packages = ["supabase-cli", "nodejs_24", "imagemagick"]
 
 [deployment]
 run = ["sh", "-c", "bun run start"]
