@@ -246,7 +246,7 @@ export default function AccommodationForm({
 
     (async () => {
       try {
-        const results = await searchPlaces(hotelName, 'lodging', destination);
+        const results = await searchPlaces(hotelName, '', destination);
         if (cancelled || results.length === 0) return;
 
         const topMatch = results[0];

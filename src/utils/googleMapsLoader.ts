@@ -119,7 +119,7 @@ export async function searchPlaces(
 
     const params = new URLSearchParams({
       input: biasedInput,
-      types,
+      ...(types ? { types } : {}),
       language: "en",
       // sessiontoken helps Google group keystrokes; your function accepts arbitrary query params
       sessiontoken: crypto.randomUUID(),

@@ -17,7 +17,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   value,
   onChange,
   className,
-  placeholder = "Search for hotels...",
+  placeholder = "Search for hotels, addresses...",
   autoFocus,
   locationContext
 }) => {
@@ -63,7 +63,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 
     setIsLoading(true);
     try {
-      const results = await searchPlaces(query, 'lodging', locationContext);
+      const results = await searchPlaces(query, '', locationContext);
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
       setSelectedIndex(-1);
