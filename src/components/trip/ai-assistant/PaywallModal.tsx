@@ -8,19 +8,22 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Check, Clock, Loader2 } from 'lucide-react';
+import { Sparkles, Check, Clock, Loader2, UserPlus } from 'lucide-react';
 import type { AIUsageInfo } from '@/types/ai-assistant';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface PaywallModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   usage?: AIUsageInfo;
+  isAnonymous?: boolean;
 }
 
-const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage }) => {
+const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, isAnonymous }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const getResetTime = () => {
     if (!usage?.resetAt) return '';
@@ -91,6 +94,71 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage }
     }
   };
 
+  const handleSignUp = () => {
+    onOpenChange(false);
+    navigate('/auth');
+  };
+
+  // Anonymous sign-up variant
+  if (isAnonymous) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center sm:text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-earth-100 flex items-center justify-center mb-4">
+              <UserPlus className="w-6 h-6 text-earth-600" />
+            </div>
+            <DialogTitle className="text-xl">Sign up free to keep chatting</DialogTitle>
+            <DialogDescription className="text-sand-600">
+              You've used your {usage?.limit || 5} trial messages. Create a free account to continue.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="rounded-xl border border-sand-200 bg-gradient-to-br from-sand-50 to-white p-4">
+              <span className="font-semibold text-earth-700 mb-3 block">Free account includes:</span>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-sm text-earth-600">
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>10 AI messages per day</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-earth-600">
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>Save your conversations</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-earth-600">
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>Plan and manage your own trips</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-earth-600">
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>Add items directly to itineraries</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button
+              onClick={handleSignUp}
+              className="w-full bg-earth-500 hover:bg-earth-600 text-white"
+            >
+              Sign up free
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="w-full text-sand-600 hover:text-earth-600"
+            >
+              Not now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Authenticated paywall variant (existing)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

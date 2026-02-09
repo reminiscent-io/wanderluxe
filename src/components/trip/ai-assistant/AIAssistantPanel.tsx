@@ -81,6 +81,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     usage,
     hasMore,
     isLoadingMore,
+    isAnonymous,
     sendMessage,
     clearThread,
     loadMoreMessages
@@ -261,7 +262,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     clearExtraction();
   }, [clearThread, clearExtraction]);
 
-  const isDisabled = isStreaming || isExtracting || (usage && usage.tier === 'free' && usage.used >= usage.limit);
+  const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.used >= usage.limit);
 
   return (
     <>
@@ -376,7 +377,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               isSending={isStreaming || isExtracting}
               placeholder={
                 isDisabled && usage?.used === usage?.limit
-                  ? "Daily limit reached. Upgrade for unlimited messages."
+                  ? (isAnonymous ? "Sign up free to keep chatting" : "Daily limit reached. Upgrade for unlimited messages.")
                   : "Ask about your trip or attach a booking..."
               }
             />
@@ -389,6 +390,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
         open={showPaywall}
         onOpenChange={setShowPaywall}
         usage={paywallUsage || usage || undefined}
+        isAnonymous={isAnonymous}
       />
 
       {/* Import confirmation dialog */}

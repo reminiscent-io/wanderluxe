@@ -1,7 +1,7 @@
 // AI Assistant Types
 
 export type MessageRole = 'user' | 'assistant' | 'system';
-export type SubscriptionTier = 'free' | 'pro';
+export type SubscriptionTier = 'free' | 'pro' | 'anon';
 export type TravelItemType = 'accommodation' | 'transportation' | 'activity' | 'reservation';
 export type ExtractedItemStatus = 'pending' | 'created' | 'skipped';
 
@@ -155,6 +155,7 @@ export interface UseAIAssistantReturn {
   threadId: string | null;
   hasMore: boolean;
   isLoadingMore: boolean;
+  isAnonymous: boolean;
 
   // Actions
   sendMessage: (content: string) => Promise<void>;
