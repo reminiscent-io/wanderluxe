@@ -119,19 +119,23 @@ serve(async (req)=>{
      * 2) AUTOCOMPLETE (GET)
      * ------------------------------------------------------------------*/ if (req.method === "GET") {
       const input = url.searchParams.get("input");
-      const types = url.searchParams.get("types") || "establishment";
+      const types = url.searchParams.get("types") || "";
       const language = url.searchParams.get("language") || "en";
       // Use a sessiontoken to group user keystrokes
       const sessiontoken = url.searchParams.get("sessiontoken") || crypto.randomUUID();
       if (!input) throw new Error("Missing input parameter");
       const apiParams = new URLSearchParams({
         input,
-        types,
         language,
         sessiontoken,
         key: googleApiKey
-      }).toString();
-      const googleUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?${apiParams}`;
+      });
+      // Only include types filter when explicitly provided —
+      // omitting it lets Google return all types (lodging, addresses, etc.)
+      if (types) {
+        apiParams.set("types", types);
+      }
+      const googleUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?${apiParams.toString()}`;
       const googleResponse = await fetch(googleUrl);
       const googleData = await googleResponse.json();
       if (!googleResponse.ok) {
