@@ -105,12 +105,25 @@ const Auth = () => {
         }, 500);
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-        className: "bg-earth-100/50 border-destructive",
-      });
+      if (error.message?.toLowerCase().includes("email not confirmed")) {
+        // Resend the confirmation email automatically
+        await supabase.auth.resend({
+          type: "signup",
+          email,
+        });
+        toast({
+          title: "Email not verified",
+          description:
+            "We've sent a new verification link to your email. Please check your inbox and try again.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+          className: "bg-earth-100/50 border-destructive",
+        });
+      }
       setLoading(false);
     }
   };
