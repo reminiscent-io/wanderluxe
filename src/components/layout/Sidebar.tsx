@@ -25,10 +25,13 @@ import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
 import ActivityDialog from "../trip/day/activities/ActivityDialog";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import TravelerDialog from "../trip/travelers/TravelerDialog";
+import InviteLinkDialog from "../trip/travelers/InviteLinkDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useInviteLinks } from "@/hooks/useInviteLinks";
+import { Link2 } from "lucide-react";
 
 export interface SidebarHandle {
   openAccommodationDialog: () => void;
@@ -38,6 +41,7 @@ export interface SidebarHandle {
   openSidebarSheet: () => void;
   openTravelerDialog: () => void;
   openTravelersPanel: () => void;
+  openInviteLinkDialog: () => void;
 }
 
 export const tripNavItems = [
@@ -92,6 +96,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     openSidebarSheet: () => sidebar.setIsOpen(true),
     openTravelerDialog: () => sidebar.setTravelerOpen(true),
     openTravelersPanel: () => sidebar.handleSubitemClick('travelers'),
+    openInviteLinkDialog: () => sidebar.setInviteLinkOpen(true),
   }));
 
   const {
@@ -103,6 +108,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     activityOpen, setActivityOpen,
     reservationOpen, setReservationOpen,
     travelerOpen, setTravelerOpen,
+    inviteLinkOpen, setInviteLinkOpen,
     selectedAccommodation, setSelectedAccommodation,
     selectedTransportation, setSelectedTransportation,
     selectedActivity, setSelectedActivity,
@@ -124,6 +130,8 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
   } = sidebar;
 
   const isOwner = !!trip && !!user && trip.user_id === user.id;
+
+  const { createLink, creating } = useInviteLinks(tripId || "");
 
   const handleDeleteTrip = async () => {
     if (!tripId) return;
@@ -171,6 +179,16 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
             Back to Trips
           </Button>
           <Separator className="my-4" />
+          
+          <Button
+            size="sm"
+            className="w-full mb-4 bg-earth-500 text-white hover:bg-earth-600 shadow-sm"
+            onClick={() => setInviteLinkOpen(true)}
+          >
+            <Link2 className="mr-2 h-4 w-4" />
+            Generate Invite Link
+          </Button>
+
           {tripNavItems.map(item => (
             <div key={item.title}>
               <NavLink
@@ -523,6 +541,14 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         }}
         tripId={tripId}
         traveler={selectedTraveler}
+      />
+
+      <InviteLinkDialog
+        open={inviteLinkOpen}
+        onOpenChange={setInviteLinkOpen}
+        onGenerate={createLink}
+        creating={creating}
+        tripDestination={trip?.destination || ""}
       />
     </>
   );

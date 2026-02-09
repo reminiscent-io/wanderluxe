@@ -30,6 +30,8 @@ export interface SidebarState {
   setReservationOpen: (open: boolean) => void;
   travelerOpen: boolean;
   setTravelerOpen: (open: boolean) => void;
+  inviteLinkOpen: boolean;
+  setInviteLinkOpen: (open: boolean) => void;
   // Selected items for editing
   selectedAccommodation: any;
   setSelectedAccommodation: (item: any) => void;
@@ -100,6 +102,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const [activityOpen, setActivityOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
   const [travelerOpen, setTravelerOpen] = useState(false);
+  const [inviteLinkOpen, setInviteLinkOpen] = useState(false);
 
   // Trip date editing fields
   const [newArrival, setNewArrival] = useState('');
