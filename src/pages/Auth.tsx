@@ -14,8 +14,8 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [signUpNotice, setSignUpNotice] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -34,34 +34,69 @@ const Auth = () => {
     });
   }, [navigate]);
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
+  const navigateAfterAuth = (delay = 0) => {
+    const pendingCode = sessionStorage.getItem('pendingInviteCode');
+    if (pendingCode) {
+      sessionStorage.removeItem('pendingInviteCode');
+      const go = () => navigate(`/invite/${pendingCode}`, { replace: true });
+      delay ? setTimeout(go, delay) : go();
+    } else {
+      const go = () => navigate("/my-trips");
+      delay ? setTimeout(go, delay) : go();
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signUp({
+
+      // Try sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) throw error;
 
-      // Create profile after successful signup
-      if (data.user) {
-        // Profile creation will happen through a database trigger or backend function
-        // Don't try to manually create a profile from the client side
+      if (!signInError) {
+        // Sign in succeeded
+        setIsSliding(true);
+        navigateAfterAuth(500);
+        return;
+      }
+
+      // If email not confirmed, resend verification
+      if (signInError.message?.toLowerCase().includes("email not confirmed")) {
+        await supabase.auth.resend({ type: "signup", email });
         toast({
-          title: "Success!",
+          title: "Email not verified",
           description:
-            "Account created successfully. Check your email for verification.",
+            "We've sent a new verification link to your email. Please check your inbox and try again.",
         });
+        setLoading(false);
+        return;
       }
 
-      const pendingCode = sessionStorage.getItem('pendingInviteCode');
-      if (pendingCode) {
-        sessionStorage.removeItem('pendingInviteCode');
-        navigate(`/invite/${pendingCode}`, { replace: true });
-      } else {
-        navigate("/my-trips");
+      // If invalid credentials, try creating an account
+      if (signInError.message?.toLowerCase().includes("invalid login credentials")) {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) {
+          throw signUpError;
+        }
+
+        if (data.user) {
+          setSignUpNotice(true);
+        }
+
+        setLoading(false);
+        return;
       }
+
+      // Other sign-in error
+      throw signInError;
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -69,53 +104,6 @@ const Auth = () => {
         description: error.message,
         className: "bg-earth-100/50 border-destructive",
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      setIsSliding(true);
-      // Wait for animation to complete before navigating
-      const pendingCode = sessionStorage.getItem('pendingInviteCode');
-      if (pendingCode) {
-        sessionStorage.removeItem('pendingInviteCode');
-        setTimeout(() => {
-          navigate(`/invite/${pendingCode}`, { replace: true });
-        }, 500);
-      } else {
-        setTimeout(() => {
-          navigate("/my-trips");
-        }, 500);
-      }
-    } catch (error: any) {
-      if (error.message?.toLowerCase().includes("email not confirmed")) {
-        // Resend the confirmation email automatically
-        await supabase.auth.resend({
-          type: "signup",
-          email,
-        });
-        toast({
-          title: "Email not verified",
-          description:
-            "We've sent a new verification link to your email. Please check your inbox and try again.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-          className: "bg-earth-100/50 border-destructive",
-        });
-      }
       setLoading(false);
     }
   };
@@ -133,8 +121,6 @@ const Auth = () => {
         provider: "google",
         options: {
           redirectTo: redirectUrl,
-          // Force Google to show the account chooser (avoid "optimistically" reusing
-          // the last signed-in Google account on this device/browser).
           queryParams: {
             prompt: "select_account",
           },
@@ -168,10 +154,7 @@ const Auth = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-8 pb-8">
-            <form
-              onSubmit={isSignUp ? handleEmailSignUp : handleEmailSignIn}
-              className="space-y-5"
-            >
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-[14px] text-[#4B5563] mb-2">Email</Label>
                 <Input
@@ -179,11 +162,19 @@ const Auth = () => {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setSignUpNotice(false); }}
                   required
                   autoComplete="email"
                   className="bg-white border border-[#D1D5DB] rounded-lg h-12 px-4 placeholder:text-[#9CA3AF] focus-visible:border-[#3B82F6] focus-visible:border-2 focus-visible:ring-[3px] focus-visible:ring-[rgba(59,130,246,0.1)]"
                 />
+                {signUpNotice && (
+                  <div className="rounded-lg bg-[#F0EDE8] border border-[#D4CFC7] px-4 py-3 mt-1">
+                    <p className="text-[14px] font-medium text-[#5C544A]">Account created!</p>
+                    <p className="text-[13px] text-[#7B715F] mt-0.5">
+                      Check your email for a confirmation link, then sign in.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-[14px] text-[#4B5563] mb-2">Password</Label>
@@ -195,7 +186,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    autoComplete="current-password"
                     className="bg-white border border-[#D1D5DB] rounded-lg h-12 px-4 pr-11 placeholder:text-[#9CA3AF] focus-visible:border-[#3B82F6] focus-visible:border-2 focus-visible:ring-[3px] focus-visible:ring-[rgba(59,130,246,0.1)]"
                   />
                   <button
@@ -208,7 +199,6 @@ const Auth = () => {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-              {!isSignUp && (
                 <div className="flex justify-start mt-2">
                   <button
                     type="button"
@@ -218,17 +208,15 @@ const Auth = () => {
                     Forgot password?
                   </button>
                 </div>
-              )}
               </div>
 
-              {/* ORDER: Sign In/Up button, Google button, then "OR SIGN UP FOR FREE" text */}
               <div className="space-y-4 mt-6">
                 <Button
                   type="submit"
                   className="w-full h-12 bg-[#888888] hover:bg-[#999999] active:bg-[#777777] text-white transition-colors"
                   disabled={loading}
                 >
-                  {isSignUp ? "Sign Up" : "Sign In"}
+                  Sign In / Sign Up
                 </Button>
 
                 <Button
@@ -258,15 +246,6 @@ const Auth = () => {
                   </svg>
                   Google
                 </Button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp((v) => !v)}
-                  className="w-full text-center text-[15px] uppercase tracking-wide font-bold text-[#6B7280] hover:underline mt-6"
-                  aria-label={isSignUp ? "Or Sign In" : "Or Sign Up for Free"}
-                >
-                  {isSignUp ? "OR SIGN IN" : "OR SIGN UP FOR FREE"}
-                </button>
               </div>
             </form>
 
