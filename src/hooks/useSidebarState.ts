@@ -805,5 +805,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     handleEditActivity,
     handleTravelerAdd,
     handleTravelerEdit,
+    inviteLinkOpen,
+    setInviteLinkOpen
   };
 }
