@@ -36,6 +36,10 @@ export function useTripViewingStatus(tripId: string) {
   const presenceIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasMarkedViewingRef = useRef(false);
 
+  const invalidateViewingStatus = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["trip-view-status", tripId] });
+  }, [queryClient, tripId]);
+
   // Fetch all viewing statuses for this trip with user profiles
   const { data: viewingStatuses = [], isLoading } = useQuery({
     queryKey: ["trip-view-status", tripId],
@@ -100,7 +104,7 @@ export function useTripViewingStatus(tripId: string) {
     },
     enabled: !!tripId,
     staleTime: 10_000,
-    refetchInterval: 60_000, // Refetch every minute to check for stale presence
+    refetchInterval: 15_000, // Refetch every 15s as fallback for missed real-time events
   });
 
   // Mark current user as viewing
@@ -127,11 +131,14 @@ export function useTripViewingStatus(tripId: string) {
         console.error("Error marking as viewing:", error);
       } else {
         hasMarkedViewingRef.current = true;
+        // Immediately invalidate the query so the UI reflects the new status
+        // without waiting for the real-time subscription to fire
+        invalidateViewingStatus();
       }
     } catch (err) {
       console.error("Error in markAsViewing:", err);
     }
-  }, [tripId, user?.id]);
+  }, [tripId, user?.id, invalidateViewingStatus]);
 
   // Update presence timestamp (heartbeat)
   const updatePresence = useCallback(async () => {
