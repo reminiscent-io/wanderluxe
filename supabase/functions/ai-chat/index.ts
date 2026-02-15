@@ -7,6 +7,22 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS'
 };
 
+async function searchWeb(query: string, apiKey: string): Promise<{ organic: Array<{ title: string; link: string; snippet?: string }> }> {
+  const res = await fetch('https://google.serper.dev/search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-KEY': apiKey
+    },
+    body: JSON.stringify({ q: query, num: 8 })
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Serper API error: ${res.status} ${err}`);
+  }
+  return res.json();
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -35,6 +51,7 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  const serperApiKey = Deno.env.get('SERPER_API_KEY');
   const model = Deno.env.get('OPENAI_CHAT_MODEL') || 'gpt-4o-mini';
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -149,7 +166,7 @@ Deno.serve(async (req: Request) => {
     // Fetch accommodations, transportation, and reservations to infer actual location
     const { data: accommodations } = await supabase.from('accommodations').select('hotel, hotel_address').eq('trip_id', tripId).limit(5);
     const { data: transportation } = await supabase.from('transportation').select('arrival_location, departure_location').eq('trip_id', tripId).limit(5);
-    const { data: reservations } = await supabase.from('reservations').select('restaurant_name, address').eq('trip_id', tripId).limit(5);
+    const { data: reservations } = await supabase.from('reservations').select('restaurant_name, address, number_of_people').eq('trip_id', tripId).limit(5);
 
     // Build location context from multiple sources
     const locationHints: string[] = [];
@@ -212,9 +229,11 @@ Deno.serve(async (req: Request) => {
 
     const arrivalDate = trip?.arrival_date || 'TBD';
     const departureDate = trip?.departure_date || 'TBD';
+    const partySize = reservations?.find((r: any) => r.number_of_people != null)?.number_of_people;
+    const partySizeContext = partySize != null ? `\nParty size (from existing reservations): ${partySize}` : '';
 
     const systemPrompt = `You are a helpful travel assistant for a trip to ${tripName}. ${locationContext}
-Trip dates: ${arrivalDate} to ${departureDate}.${itineraryContext}
+Trip dates: ${arrivalDate} to ${departureDate}.${partySizeContext}${itineraryContext}
 
 Accommodations:
 ${formattedAccommodations}
@@ -225,13 +244,50 @@ ${formattedTransportation}
 Guidelines:
 - Be concise and helpful
 - Use markdown formatting for readability
-- When recommending hotels, restaurants, or attractions, make the name a clickable link
-- IMPORTANT: Only use these URL formats (never use IP addresses or made-up URLs):
+- When recommending hotels or attractions, make the name a clickable link using Google Maps or Google Search URLs
+- For restaurants, use the Restaurant Booking Links workflow below — you may use direct booking URLs (Resy, OpenTable, etc.) when found via search
+- IMPORTANT for non-restaurant places: Only use Google Maps or Google Search URL formats (never IP addresses or made-up URLs):
   - Google Maps: https://www.google.com/maps/search/PLACE+NAME+${searchLocation}
   - Google Search: https://www.google.com/search?q=PLACE+NAME+${searchLocation}
-- Replace PLACE+NAME with the actual place name using + for spaces
-- Format: **[Place Name](google maps or search url)** - Brief description
-- Example: **[The Ritz-Carlton](https://www.google.com/maps/search/The+Ritz-Carlton+${searchLocation})** - Luxury hotel with excellent service
+- Format: **[Place Name](url)** - Brief description
+
+## Restaurant Booking Links
+
+When you recommend, suggest, or discuss a specific restaurant for a user's trip, you MUST find booking links. ${serperApiKey ? 'Use the search_web tool to search. ' : 'Provide a Google Search link for the user to find booking pages. Only include Resy/OpenTable URLs if you are confident from your knowledge; otherwise say "Search for reservations" with the link. Always add: "Verify the link before booking."'}Follow this workflow:
+
+### Step 1: Identify the Restaurant
+Extract the restaurant name, city, and neighborhood (if known) from the conversation context or the trip destination.
+
+### Step 2: Search for Booking Links
+${serperApiKey ? `Call the search_web tool with these queries in priority order until you find results:
+1. "[restaurant name] [city] site:resy.com"
+2. "[restaurant name] [city] site:opentable.com"
+3. "[restaurant name] [city] reservations" (fallback — catches Tock, Yelp, SevenRooms, direct sites)
+
+For international destinations, also try: TheFork (Europe), Tabelog/Hotpepper (Japan), TableCheck, or "[restaurant] [city] reservations" for local platforms.` : 'Provide a Google Search link: https://www.google.com/search?q=RESTAURANT+NAME+PLUS+CITY+reservations (replace with actual names). Only include Resy/OpenTable URLs if confident from your knowledge; otherwise use the search link. Always add: "Verify the link before booking."'}
+
+### Step 3: Classify the Booking Platform
+From search results, identify which platform(s) the restaurant uses:
+- Resy — URLs contain resy.com/cities/
+- OpenTable — URLs contain opentable.com/r/ or opentable.com/restref/
+- Tock — URLs contain exploretock.com/
+- Yelp Reservations — URLs contain yelp.com/reservations/
+- SevenRooms — URLs contain sevenrooms.com/
+- TheFork — URLs contain thefork.com/ (Europe)
+- Direct — The restaurant's own booking page
+
+### Step 4: Present the Recommendation with Booking Action
+Always include a booking link with every restaurant recommendation. Format:
+
+**[Restaurant Name]** — [Cuisine Type], [Neighborhood]
+[1-2 sentence description of why it fits the user's needs]
+Price: [Price range if known]
+Book on [Platform Name]: [Direct URL to booking page]
+
+If multiple platforms exist, show both. If NO booking platform found, say so honestly and suggest Google Maps or the restaurant's website. NEVER fabricate or guess URLs — only use URLs from search results.
+
+### Step 5: Pre-fill When Possible
+If trip dates and party size are in context, you may append parameters to OpenTable URLs. Resy does not support deep-link pre-filling.
 
 CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:
 You have the ability to add items directly to the user's trip itinerary. This is a core feature.
@@ -247,7 +303,7 @@ YOU MUST output this JSON block at the END of your response:
 \`\`\`
 
 Item types and their fields:
-- reservation (restaurants/dining): {"restaurant_name", "date" (YYYY-MM-DD), "time" (HH:mm), "party_size", "address", "phone", "notes"}
+- reservation (restaurants/dining): {"restaurant_name", "date" (YYYY-MM-DD), "time" (HH:mm), "party_size", "address", "phone", "website" (booking URL when found), "notes"}
 - accommodation (hotels/stays): {"name", "address", "check_in_date" (YYYY-MM-DD), "check_out_date", "check_in_time" (HH:mm), "check_out_time", "confirmation_number", "cost", "currency"}
 - transportation (flights/trains/cars): {"type" (flight/train/shuttle/car_service/ferry/rental_car), "carrier", "departure_location", "arrival_location", "departure_date" (YYYY-MM-DD), "departure_time" (HH:mm), "arrival_date", "arrival_time", "confirmation_number", "cost", "currency"}
 - activity (tours/attractions/events): {"name", "date" (YYYY-MM-DD), "start_time" (HH:mm), "end_time", "location", "notes", "cost", "currency"}
@@ -259,15 +315,49 @@ Date calculation rules:
 - Only include fields you have information for; use null for unknown fields
 
 IMPORTANT: Never say "I can't add items" or "I don't have the ability to modify your itinerary". You DO have this ability through the JSON block. Always use it when the user wants to add something.`;
-    const openaiMsgs = [{ role: 'system', content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
 
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${openaiApiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages: openaiMsgs, stream: true, temperature: 0.7, max_tokens: 1000 })
-    });
+    const searchWebTool = serperApiKey ? {
+      type: 'function' as const,
+      function: {
+        name: 'search_web',
+        description: 'Search the web for up-to-date information. Use for: restaurant booking pages (Resy, OpenTable), weather, current events, news, opening hours, exchange rates, or any query that benefits from live web results.',
+        parameters: {
+          type: 'object',
+          properties: { query: { type: 'string', description: 'Search query, e.g. "Carbone NYC site:resy.com"' } },
+          required: ['query']
+        }
+      }
+    } : null;
 
-    if (!openaiRes.ok) return new Response(JSON.stringify({ code: 'OPENAI_ERROR', message: 'AI request failed' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const openaiMsgs = [{ role: 'system' as const, content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
+    const tools = searchWebTool ? [searchWebTool] : undefined;
+
+    // Force search_web when the message would benefit from live web data
+    const searchKeywords = /\b(restaurant|restaurants|dining|dinner|lunch|eat|food|reservation|reservations|book a table|opentable|resy|carbone|where should i eat|recommend.*restaurant|booking link|reservation link|weather|temperature|forecast|rainy|sunny|snow|humidity|what.*weather|how.*weather|news|latest|current|today|happening|events|concerts|attractions|opening hours|closed today|exchange rate|currency)\b/i;
+    const forceSearch = !!(tools && message && searchKeywords.test(message));
+
+    async function callOpenAI(
+      messages: Array<{ role: string; content?: string | null; tool_calls?: any[]; tool_call_id?: string; name?: string }>,
+      stream: boolean,
+      options?: { forceTool?: boolean; skipTools?: boolean }
+    ) {
+      const body: Record<string, unknown> = {
+        model,
+        messages,
+        stream,
+        temperature: 0.7,
+        max_tokens: 1500
+      };
+      if (tools && !options?.skipTools) {
+        body.tools = tools;
+        if (options?.forceTool) body.tool_choice = { type: 'function' as const, function: { name: 'search_web' } };
+      }
+      return fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${openaiApiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    }
 
     const encoder = new TextEncoder();
     let fullResponse = '';
@@ -300,32 +390,119 @@ IMPORTANT: Never say "I can't add items" or "I don't have the ability to modify 
       return { cleanContent, extractedItems: items };
     }
 
+    async function processStream(
+      openaiRes: Response,
+      controller: { enqueue: (chunk: Uint8Array) => void },
+      _messages: typeof openaiMsgs
+    ): Promise<{ fullResponse: string; toolCalls: Array<{ id: string; type: string; function: { name: string; arguments: string } }> | null }> {
+      const reader = openaiRes.body!.getReader();
+      const decoder = new TextDecoder();
+      let content = '';
+      const toolCallsAcc: Array<{ id: string; type: string; function: { name: string; arguments: string } }> = [];
+      const tcArgs: Record<number, string> = {};
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data: ') && line.slice(6) !== '[DONE]') {
+            try {
+              const data = JSON.parse(line.slice(6));
+              const delta = data.choices?.[0]?.delta;
+              const fin = data.choices?.[0]?.finish_reason;
+              if (delta?.content) {
+                content += delta.content;
+                controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: delta.content })}\n\n`));
+              }
+              if (delta?.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const idx = tc.index ?? 0;
+                  if (!toolCallsAcc[idx]) toolCallsAcc[idx] = { id: tc.id || `call_${idx}`, type: tc.type || 'function', function: { name: tc.function?.name || '', arguments: '' } };
+                  if (tc.id) toolCallsAcc[idx].id = tc.id;
+                  if (tc.function?.name) toolCallsAcc[idx].function.name = tc.function.name;
+                  if (tc.function?.arguments) tcArgs[idx] = (tcArgs[idx] || '') + tc.function.arguments;
+                }
+              }
+            } catch (_) {}
+          }
+        }
+      }
+
+      const withIndex = toolCallsAcc.map((tc, i) => (tc ? { tc, i } : null)).filter(Boolean) as Array<{ tc: { id: string; type: string; function: { name: string; arguments: string } }; i: number }>;
+      const toolCalls = withIndex.length > 0 ? withIndex.map(({ tc, i }) => ({
+        ...tc,
+        function: { ...tc.function, arguments: tcArgs[i] ?? tc.function?.arguments ?? '' }
+      })) : null;
+
+      return { fullResponse: content, toolCalls };
+    }
+
     const stream = new ReadableStream({
       async start(controller) {
-        const reader = openaiRes.body!.getReader();
-        const decoder = new TextDecoder();
         try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            for (const line of chunk.split('\n')) {
-              if (line.startsWith('data: ') && line.slice(6) !== '[DONE]') {
+          let currentMessages = [...openaiMsgs];
+          let lastResponse = '';
+          let openaiRes = await callOpenAI(currentMessages, true, { forceTool: forceSearch });
+
+          if (!openaiRes.ok) {
+            controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'AI request failed' })}\n\n`));
+            controller.close();
+            return;
+          }
+
+          const { fullResponse, toolCalls } = await processStream(openaiRes, controller, currentMessages);
+          lastResponse = fullResponse;
+
+          if (toolCalls && toolCalls.length > 0 && serperApiKey) {
+            const assistantMsg = { role: 'assistant' as const, content: fullResponse || null, tool_calls: toolCalls };
+            const toolResults: Array<{ role: 'tool'; tool_call_id: string; content: string }> = [];
+            for (const tc of toolCalls) {
+              if (tc.function.name === 'search_web') {
                 try {
-                  const content = JSON.parse(line.slice(6)).choices?.[0]?.delta?.content;
-                  if (content) { fullResponse += content; controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content })}\n\n`)); }
-                } catch {}
+                  const argsStr = (tc.function.arguments || '').trim();
+                  const args = argsStr ? JSON.parse(argsStr) : {};
+                  const q = typeof args.query === 'string' ? args.query : (typeof args.q === 'string' ? args.q : '');
+                  const searchQuery = q || message || 'restaurant reservations';
+                  const results = await searchWeb(searchQuery, serperApiKey);
+                  const summary = (results.organic || []).slice(0, 6).map((r: any) => `${r.title}: ${r.link}`).join('\n');
+                  toolResults.push({ role: 'tool', tool_call_id: tc.id, content: summary || 'No results found.' });
+                } catch (e) {
+                  toolResults.push({ role: 'tool', tool_call_id: tc.id, content: `Search error: ${e instanceof Error ? e.message : 'Unknown'}. You can suggest the user search Google for "[restaurant name] [city] reservations".` });
+                }
               }
             }
+            currentMessages = [...currentMessages, assistantMsg, ...toolResults];
+            const followRes = await callOpenAI(currentMessages, true, { skipTools: true });
+            if (followRes.ok) {
+              const { fullResponse: followContent } = await processStream(followRes, controller, currentMessages);
+              lastResponse = followContent;
+              // If model requested another tool call (shouldn't happen with skipTools), ignore to avoid infinite loop
+            } else {
+              const errBody = await followRes.text();
+              console.error('OpenAI follow-up error:', followRes.status, errBody);
+              lastResponse = 'I found some booking options but had trouble formatting them. Try searching for the restaurant name plus your city on Resy or OpenTable.';
+              controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: lastResponse })}\n\n`));
+            }
           }
-          const { cleanContent, extractedItems } = parseCreateItemsBlock(fullResponse);
+
+          const fallbackMsg = toolCalls?.length ? 'I searched for booking options but couldn\'t format the results. Try searching for the restaurant name plus your city on Resy or OpenTable.' : '';
+          const finalContent = lastResponse.trim() || fallbackMsg;
+          const { cleanContent, extractedItems } = parseCreateItemsBlock(finalContent);
+          const contentToSave = cleanContent || finalContent;
           if (extractedItems.length > 0) {
             controller.enqueue(encoder.encode(`event: extracted_items\ndata: ${JSON.stringify({ items: extractedItems, meta: { model, source: 'conversation' } })}\n\n`));
           }
-          const { data: saved } = await supabase.from('ai_chat_messages').insert({ thread_id: finalThreadId, role: 'assistant', content: cleanContent }).select('id').single();
-          controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify({ thread_id: finalThreadId, message_id: saved?.id, content: cleanContent })}\n\n`));
+          if (fallbackMsg && finalContent === fallbackMsg) {
+            controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: fallbackMsg })}\n\n`));
+          }
+          const { data: saved } = await supabase.from('ai_chat_messages').insert({ thread_id: finalThreadId, role: 'assistant', content: contentToSave || '(No response)' }).select('id').single();
+          controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify({ thread_id: finalThreadId, message_id: saved?.id, content: contentToSave || finalContent })}\n\n`));
           controller.close();
-        } catch (e) { controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'Stream error' })}\n\n`)); controller.close(); }
+        } catch (e) {
+          controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'Stream error' })}\n\n`));
+          controller.close();
+        }
       }
     });
 

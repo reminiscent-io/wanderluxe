@@ -323,6 +323,7 @@ Required in `.env`:
 - `VITE_GOOGLE_MAPS_API_KEY` - Google Places API
 - `OPENAI_API_KEY` - OpenAI API for chat
 - `OPENAI_CHAT_MODEL` - OpenAI model selection
+- `SERPER_API_KEY` - (optional, Edge Function secret) Serper API for web search when recommending restaurants; enables direct Resy/OpenTable booking links
 - `STRIPE_SECRET_KEY` - Stripe payment processing
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
 - `VITE_UNSPLASH_ACCESS_KEY` - Trip images (optional)
