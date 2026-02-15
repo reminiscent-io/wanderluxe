@@ -445,12 +445,15 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
             } else if (event.event === 'done') {
               const data = JSON.parse(event.data) as SSEDoneEvent;
 
+              // Use content from server when present (create_items was stripped); otherwise use accumulated stream
+              const messageContent = data.content ?? fullContent;
+
               // Add the complete assistant message to the cache
               const assistantMessage: AIChatMessage = {
                 id: data.message_id,
                 thread_id: data.thread_id,
                 role: 'assistant',
-                content: fullContent,
+                content: messageContent,
                 metadata: {},
                 created_at: new Date().toISOString()
               };

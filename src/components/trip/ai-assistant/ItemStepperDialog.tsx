@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, X, Check, SkipForward, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ExtractedItemCard from './ExtractedItemCard';
+import { supabase } from '@/integrations/supabase/client';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
@@ -123,6 +124,29 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [tripDates, setTripDates] = useState<{
+    arrival_date: string | null;
+    departure_date: string | null;
+    destination: string | null;
+  }>({ arrival_date: null, departure_date: null, destination: null });
+
+  useEffect(() => {
+    const fetchTrip = async () => {
+      const { data } = await supabase
+        .from('trips')
+        .select('arrival_date, departure_date, destination')
+        .eq('trip_id', tripId)
+        .single();
+      if (data) {
+        setTripDates({
+          arrival_date: data.arrival_date ?? null,
+          departure_date: data.departure_date ?? null,
+          destination: data.destination ?? null
+        });
+      }
+    };
+    if (open && tripId) fetchTrip();
+  }, [open, tripId]);
 
   const currentItem = items[currentIndex];
   const isLastItem = currentIndex === items.length - 1;
@@ -210,9 +234,12 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
             ))}
           </div>
 
-          {/* Current item card */}
+          {/* Current item card - click to open full edit dialog */}
           <div className="mb-4">
-            <ExtractedItemCard item={currentItem} />
+            <ExtractedItemCard
+              item={currentItem}
+              onEdit={handleEditClick}
+            />
           </div>
 
           {/* Action buttons */}
@@ -239,9 +266,10 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
             <Button
               onClick={handleEditClick}
               className="flex-1 bg-earth-500 hover:bg-earth-600 text-white"
+              title="Open full form to edit and add"
             >
               <Check className="w-4 h-4 mr-1" />
-              {isLastItem ? 'Add & Finish' : 'Add & Next'}
+              Edit & {isLastItem ? 'Finish' : 'Next'}
             </Button>
           </div>
         </DialogContent>
@@ -289,6 +317,9 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
           tripId={tripId}
           initialData={initialData as any}
           onSuccess={handleDialogSuccess}
+          tripArrivalDate={tripDates.arrival_date ?? undefined}
+          tripDepartureDate={tripDates.departure_date ?? undefined}
+          destination={tripDates.destination ?? undefined}
         />
       )}
     </>

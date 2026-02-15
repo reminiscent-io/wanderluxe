@@ -1,14 +1,19 @@
-import React, { useState, useCallback, Component, ReactNode } from 'react';
+import React, { useState, useCallback, useMemo, Component, ReactNode } from 'react';
 import { FullScreenModal } from '@/components/ui/fullscreen-modal';
 import { Sparkles, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { bulkImportItems } from '@/services/bulkImportService';
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
 import PromptChips from './PromptChips';
 import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
-import type { AIUsageInfo } from '@/types/ai-assistant';
+import ImportConfirmationDialog from './ImportConfirmationDialog';
+import ItemStepperDialog from './ItemStepperDialog';
+import type { AIUsageInfo, AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,17 +80,45 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   open,
   onOpenChange
 }) => {
+  const queryClient = useQueryClient();
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallUsage, setPaywallUsage] = useState<AIUsageInfo | undefined>();
   const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
+
+  // Extraction state (for chat-extracted items)
+  const [extractionMessages, setExtractionMessages] = useState<AIChatMessage[]>([]);
+  const [showStepperDialog, setShowStepperDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [itemsToProcess, setItemsToProcess] = useState<ExtractedItem[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleLimitReached = useCallback((usage: AIUsageInfo) => {
     setPaywallUsage(usage);
     setShowPaywall(true);
   }, []);
 
+  const handleConversationItemsExtracted = useCallback((items: ExtractedItem[]) => {
+    const extractionMessage: AIChatMessage = {
+      id: `assistant-conv-extract-${Date.now()}`,
+      thread_id: '',
+      role: 'assistant',
+      content: items.length === 1
+        ? "I've prepared this item for you to add to your trip:"
+        : `I've prepared ${items.length} items for you to add to your trip:`,
+      metadata: {},
+      created_at: new Date().toISOString(),
+      extractedItems: items,
+      extractionMeta: {
+        model: 'gpt-4o-mini',
+        pagesUsed: 0,
+        originalFileName: 'conversation'
+      }
+    };
+    setExtractionMessages(prev => [...prev, extractionMessage]);
+  }, []);
+
   const {
-    messages,
+    messages: chatMessages,
     isLoading,
     isStreaming,
     streamingContent,
@@ -98,8 +131,99 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     loadMoreMessages
   } = useAIAssistant({
     tripId,
-    onLimitReached: handleLimitReached
+    onLimitReached: handleLimitReached,
+    onItemsExtracted: handleConversationItemsExtracted
   });
+
+  const allMessages = useMemo(() => {
+    return [...chatMessages, ...extractionMessages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }, [chatMessages, extractionMessages]);
+
+  const handleImportAll = useCallback((items: ExtractedItem[]) => {
+    setItemsToProcess(items);
+    setShowConfirmDialog(true);
+  }, []);
+
+  const handleConfirmImport = useCallback(async () => {
+    setIsImporting(true);
+    try {
+      const result = await bulkImportItems(tripId, itemsToProcess);
+
+      if (result.successCount > 0) {
+        toast.success(`Added ${result.successCount} item${result.successCount !== 1 ? 's' : ''} to your trip`);
+        setExtractionMessages(prev =>
+          prev.map(msg => {
+            if (msg.extractedItems) {
+              return {
+                ...msg,
+                extractedItems: msg.extractedItems.map(item =>
+                  itemsToProcess.some(i => i.id === item.id)
+                    ? { ...item, status: 'created' as const }
+                    : item
+                )
+              };
+            }
+            return msg;
+          })
+        );
+        queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+        queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+      }
+
+      if (result.failedCount > 0) {
+        toast.error(`Failed to import ${result.failedCount} item${result.failedCount !== 1 ? 's' : ''}`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to import items');
+    } finally {
+      setIsImporting(false);
+      setShowConfirmDialog(false);
+      setItemsToProcess([]);
+    }
+  }, [tripId, itemsToProcess, queryClient]);
+
+  const handleReviewEdit = useCallback((items: ExtractedItem[]) => {
+    setItemsToProcess(items);
+    setShowStepperDialog(true);
+  }, []);
+
+  const handleItemProcessed = useCallback((itemId: string, status: 'created' | 'skipped') => {
+    setExtractionMessages(prev =>
+      prev.map(msg => {
+        if (msg.extractedItems) {
+          return {
+            ...msg,
+            extractedItems: msg.extractedItems.map(item =>
+              item.id === itemId ? { ...item, status } : item
+            )
+          };
+        }
+        return msg;
+      })
+    );
+    if (status === 'created') {
+      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+      queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+    }
+  }, [tripId, queryClient]);
+
+  const handleStepperComplete = useCallback(() => {
+    setItemsToProcess([]);
+    toast.success('All items have been processed');
+  }, []);
+
+  const handleClearChat = useCallback(() => {
+    clearThread();
+    setExtractionMessages([]);
+  }, [clearThread]);
 
   const handleSend = useCallback(async (message: string) => {
     try {
@@ -151,7 +275,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
             <div className="flex items-center gap-1">
               {/* Clear chat button */}
-              {messages.length > 0 && (
+              {allMessages.length > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
@@ -174,7 +298,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={clearThread}
+                        onClick={handleClearChat}
                         className="bg-red-500 hover:bg-red-600"
                       >
                         Clear
@@ -202,7 +326,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
           <AIAssistantErrorBoundary key={errorBoundaryKey} onReset={handleErrorBoundaryReset}>
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               {/* Prompt chips - show when no messages */}
-              {messages.length === 0 && !isLoading && (
+              {allMessages.length === 0 && !isLoading && (
                 <div className="flex-shrink-0">
                   <PromptChips
                     onSelect={handlePromptSelect}
@@ -214,13 +338,17 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               {/* Messages area - scrollable with contained scroll behavior */}
               <div className="flex-1 min-h-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
                 <ChatMessageList
-                  messages={messages}
+                  messages={allMessages}
                   isLoading={isLoading}
                   isStreaming={isStreaming}
                   streamingContent={streamingContent}
                   hasMore={hasMore}
                   isLoadingMore={isLoadingMore}
                   onLoadMore={loadMoreMessages}
+                  tripId={tripId}
+                  onImportAll={handleImportAll}
+                  onReviewEdit={handleReviewEdit}
+                  isImporting={isImporting}
                 />
               </div>
 
@@ -264,6 +392,25 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         open={showPaywall}
         onOpenChange={setShowPaywall}
         usage={paywallUsage || usage || undefined}
+      />
+
+      {/* Import confirmation dialog */}
+      <ImportConfirmationDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        items={itemsToProcess}
+        onConfirm={handleConfirmImport}
+        isImporting={isImporting}
+      />
+
+      {/* Item stepper dialog for review & edit */}
+      <ItemStepperDialog
+        open={showStepperDialog}
+        onOpenChange={setShowStepperDialog}
+        items={itemsToProcess}
+        tripId={tripId}
+        onItemProcessed={handleItemProcessed}
+        onComplete={handleStepperComplete}
       />
     </>
   );

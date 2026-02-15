@@ -134,6 +134,8 @@ export interface SSEDoneEvent {
   type: 'done';
   message_id: string;
   thread_id: string;
+  /** When create_items was stripped, use this for display instead of accumulated stream content */
+  content?: string;
 }
 
 export interface SSEErrorEvent {

@@ -168,12 +168,57 @@ async function importReservation(
   fields: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const reservationDate = fields.date as string;
+
+    // Find or create the trip_day for this date (reservations require day_id)
+    let dayId: string | null = null;
+
+    if (reservationDate) {
+      const { data: existingDay } = await supabase
+        .from('trip_days')
+        .select('day_id')
+        .eq('trip_id', tripId)
+        .eq('date', reservationDate)
+        .single();
+
+      if (existingDay) {
+        dayId = existingDay.day_id;
+      } else {
+        const { data: newDay, error: dayError } = await supabase
+          .from('trip_days')
+          .insert({
+            trip_id: tripId,
+            date: reservationDate,
+            title: null
+          })
+          .select('day_id')
+          .single();
+
+        if (dayError) throw dayError;
+        dayId = newDay?.day_id || null;
+      }
+    }
+
+    if (!dayId) {
+      throw new Error('Could not determine the day for this reservation');
+    }
+
+    // Get next order_index for this day
+    const { data: existingReservations } = await supabase
+      .from('reservations')
+      .select('order_index')
+      .eq('day_id', dayId)
+      .order('order_index', { ascending: false })
+      .limit(1);
+
+    const nextIndex = (existingReservations?.[0]?.order_index ?? -1) + 1;
+
     const { error } = await supabase
       .from('reservations')
       .insert({
         trip_id: tripId,
+        day_id: dayId,
         restaurant_name: (fields.restaurant_name as string) || '',
-        reservation_date: (fields.date as string) || '',
         reservation_time: toDbTime(fields.time as string) || '',
         number_of_people: typeof fields.party_size === 'number' ? fields.party_size : null,
         address: (fields.address as string) || null,
@@ -182,6 +227,7 @@ async function importReservation(
         notes: (fields.notes as string) || null,
         cost: typeof fields.cost === 'number' ? fields.cost : null,
         currency: (fields.currency as string) || 'USD',
+        order_index: nextIndex,
         created_at: new Date().toISOString()
       });
 
