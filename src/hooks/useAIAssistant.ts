@@ -16,6 +16,9 @@ import type {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const EDGE_FUNCTION_BASE = `${SUPABASE_URL}/functions/v1/ai-chat`;
 
+const ANON_STORAGE_KEY = 'anon-ai-count';
+const ANON_MESSAGE_LIMIT = 5;
+
 interface SSEExtractedItemsEvent {
   items: ExtractedItem[];
   meta: {
@@ -32,6 +35,25 @@ interface UseAIAssistantOptions {
 
 const PAGE_SIZE = 5;
 
+// Helper to read/write anonymous usage from sessionStorage
+function getAnonUsageCount(): number {
+  try {
+    return parseInt(sessionStorage.getItem(ANON_STORAGE_KEY) || '0', 10);
+  } catch {
+    return 0;
+  }
+}
+
+function incrementAnonUsageCount(): number {
+  const count = getAnonUsageCount() + 1;
+  try {
+    sessionStorage.setItem(ANON_STORAGE_KEY, String(count));
+  } catch {
+    // sessionStorage may be unavailable
+  }
+  return count;
+}
+
 export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: UseAIAssistantOptions): UseAIAssistantReturn {
   const queryClient = useQueryClient();
   const [isStreaming, setIsStreaming] = useState(false);
@@ -39,6 +61,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Helper to get auth token
@@ -46,6 +69,21 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token || null;
   }, []);
+
+  // Detect anonymous mode on mount and auth changes
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await getAuthToken();
+      setIsAnonymous(!token);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAuth();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [getAuthToken]);
 
   // Fetch messages (initial load - last PAGE_SIZE messages)
   const {
@@ -57,6 +95,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     queryFn: async (): Promise<{ messages: AIChatMessage[]; thread_id: string | null; hasMore: boolean }> => {
       const token = await getAuthToken();
       if (!token) {
+        // Anonymous: return empty - messages are only in local cache
         return { messages: [], thread_id: null, hasMore: false };
       }
 
@@ -80,7 +119,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
 
   // Load more (older) messages
   const loadMoreMessages = useCallback(async (): Promise<void> => {
-    if (isLoadingMore || !hasMore) return;
+    if (isLoadingMore || !hasMore || isAnonymous) return;
 
     const token = await getAuthToken();
     if (!token) return;
@@ -120,7 +159,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     } finally {
       setIsLoadingMore(false);
     }
-  }, [tripId, hasMore, isLoadingMore, getAuthToken, messagesData?.messages, queryClient]);
+  }, [tripId, hasMore, isLoadingMore, isAnonymous, getAuthToken, messagesData?.messages, queryClient]);
 
   // Fetch usage
   const {
@@ -131,7 +170,9 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     queryFn: async (): Promise<AIUsageInfo> => {
       const token = await getAuthToken();
       if (!token) {
-        return { used: 0, limit: 15, tier: 'free', resetAt: '' };
+        // Anonymous: return usage from sessionStorage
+        const used = getAnonUsageCount();
+        return { used, limit: ANON_MESSAGE_LIMIT, tier: 'anon', resetAt: '' };
       }
 
       const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/usage`, {
@@ -150,8 +191,169 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     staleTime: 60000 // 1 minute
   });
 
-  // Send message with streaming
-  const sendMessage = useCallback(async (content: string): Promise<void> => {
+  // Send message with streaming - anonymous path
+  const sendMessageAnon = useCallback(async (content: string): Promise<void> => {
+    const trimmedContent = (content || '').trim();
+    if (!trimmedContent || isStreaming) return;
+
+    // Check anonymous limit
+    const currentCount = getAnonUsageCount();
+    if (currentCount >= ANON_MESSAGE_LIMIT) {
+      const usageInfo: AIUsageInfo = {
+        used: currentCount,
+        limit: ANON_MESSAGE_LIMIT,
+        tier: 'anon',
+        resetAt: ''
+      };
+      onLimitReached?.(usageInfo);
+      setError('Sign up for a free account to keep chatting');
+      return;
+    }
+
+    setError(null);
+    setIsStreaming(true);
+    setStreamingContent('');
+
+    // Optimistically add user message
+    const optimisticUserMessage: AIChatMessage = {
+      id: `anon-user-${Date.now()}`,
+      thread_id: '',
+      role: 'user',
+      content: trimmedContent,
+      metadata: {},
+      created_at: new Date().toISOString()
+    };
+
+    queryClient.setQueryData(
+      ['ai-assistant-messages', tripId],
+      (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
+        messages: [...(old?.messages || []), optimisticUserMessage],
+        thread_id: null
+      })
+    );
+
+    // Build previous messages from cache for context
+    const currentMessages = queryClient.getQueryData<{ messages: AIChatMessage[] }>(['ai-assistant-messages', tripId]);
+    const previousMessages = (currentMessages?.messages || [])
+      .filter(m => m.id !== optimisticUserMessage.id)
+      .map(m => ({ role: m.role, content: m.content }));
+
+    abortControllerRef.current = new AbortController();
+    let fullContent = '';
+
+    const removeOptimisticMessage = () => {
+      queryClient.setQueryData(
+        ['ai-assistant-messages', tripId],
+        (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
+          messages: (old?.messages || []).filter(m => m.id !== optimisticUserMessage.id),
+          thread_id: null
+        })
+      );
+    };
+
+    try {
+      await fetchEventSource(`/api/trips/${tripId}/assistant/anon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: trimmedContent,
+          messages: previousMessages
+        }),
+        signal: abortControllerRef.current.signal,
+
+        onopen: async (response) => {
+          if (!response.ok) {
+            let errorData;
+            try {
+              errorData = await response.json();
+            } catch {
+              errorData = { message: `Server error: ${response.status}` };
+            }
+            throw errorData;
+          }
+        },
+
+        onmessage: (event) => {
+          try {
+            if (event.event === 'message') {
+              const data = JSON.parse(event.data) as SSEMessageEvent;
+              fullContent += data.content;
+              setStreamingContent(fullContent);
+            } else if (event.event === 'done') {
+              const data = JSON.parse(event.data) as SSEDoneEvent;
+
+              // Add the complete assistant message to the cache
+              const assistantMessage: AIChatMessage = {
+                id: data.message_id || `anon-assistant-${Date.now()}`,
+                thread_id: '',
+                role: 'assistant',
+                content: fullContent,
+                metadata: {},
+                created_at: new Date().toISOString()
+              };
+
+              queryClient.setQueryData(
+                ['ai-assistant-messages', tripId],
+                (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
+                  messages: [...(old?.messages || []), assistantMessage],
+                  thread_id: null
+                })
+              );
+
+              setStreamingContent('');
+              setIsStreaming(false);
+
+              // Increment anonymous usage counter
+              incrementAnonUsageCount();
+
+              // Refresh usage to reflect new count
+              refetchUsage();
+            } else if (event.event === 'error') {
+              const data = JSON.parse(event.data) as SSEErrorEvent;
+              throw data.error;
+            }
+          } catch (parseError) {
+            console.error('Error parsing SSE message:', parseError);
+          }
+        },
+
+        onerror: (err) => {
+          console.error('SSE connection error:', err);
+          throw err;
+        }
+      });
+    } catch (err) {
+      console.error('Send message error (anon):', err);
+
+      if (err instanceof Error && err.name === 'AbortError') {
+        setStreamingContent('');
+        setIsStreaming(false);
+        return;
+      }
+
+      const errorResponse = err as StreamingErrorResponse;
+      if (errorResponse?.code === 'RATE_LIMITED') {
+        setError('Too many requests. Please wait a moment and try again.');
+      } else if (errorResponse?.code === 'NOT_PUBLIC') {
+        setError('This trip is not publicly accessible.');
+      } else if (err instanceof TypeError && err.message.includes('Load failed')) {
+        setError('Connection error. Please check your internet and try again.');
+      } else {
+        const errorMessage = errorResponse?.message ||
+          (err instanceof Error ? err.message : 'Failed to send message. Please try again.');
+        setError(errorMessage);
+      }
+
+      removeOptimisticMessage();
+      setStreamingContent('');
+      setIsStreaming(false);
+    }
+  }, [tripId, isStreaming, queryClient, onLimitReached, refetchUsage]);
+
+  // Send message with streaming - authenticated path
+  const sendMessageAuth = useCallback(async (content: string): Promise<void> => {
     // Validate input before proceeding
     const trimmedContent = (content || '').trim();
     if (!trimmedContent || isStreaming) return;
@@ -313,7 +515,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
         removeOptimisticMessage();
       } else {
         // Generic error handling
-        const errorMessage = errorResponse?.message || 
+        const errorMessage = errorResponse?.message ||
           (err instanceof Error ? err.message : 'Failed to send message. Please try again.');
         setError(errorMessage);
         removeOptimisticMessage();
@@ -324,8 +526,26 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     }
   }, [tripId, isStreaming, getAuthToken, messagesData?.thread_id, queryClient, onLimitReached, onItemsExtracted, refetchUsage]);
 
+  // Route sendMessage to the appropriate handler
+  const sendMessage = useCallback(async (content: string): Promise<void> => {
+    if (isAnonymous) {
+      return sendMessageAnon(content);
+    }
+    return sendMessageAuth(content);
+  }, [isAnonymous, sendMessageAnon, sendMessageAuth]);
+
   // Clear thread/conversation
   const clearThread = useCallback(async (): Promise<void> => {
+    if (isAnonymous) {
+      // Anonymous: just clear local cache
+      queryClient.setQueryData(
+        ['ai-assistant-messages', tripId],
+        { messages: [], thread_id: null }
+      );
+      setError(null);
+      return;
+    }
+
     const token = await getAuthToken();
     if (!token) return;
 
@@ -350,7 +570,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     } catch (err) {
       setError('Failed to clear chat history');
     }
-  }, [tripId, getAuthToken, queryClient]);
+  }, [tripId, isAnonymous, getAuthToken, queryClient]);
 
   // Refresh usage
   const refreshUsage = useCallback(async (): Promise<void> => {
@@ -376,6 +596,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     threadId: messagesData?.thread_id || null,
     hasMore,
     isLoadingMore,
+    isAnonymous,
     sendMessage,
     clearThread,
     refreshUsage,

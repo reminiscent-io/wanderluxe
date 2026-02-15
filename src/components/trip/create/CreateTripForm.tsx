@@ -79,6 +79,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           arrival_date: startDate,
           departure_date: endDate,
           cover_image_url: coverImageUrl,
+          cover_image_position: imagePosition || 'center 50%',
           is_public: false,
           primary_destination: primaryDestination || null,
           primary_destination_place_id: primaryDestinationPlaceId || null,
@@ -93,11 +94,6 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 
         const days = getDaysBetweenDates(startDate, endDate);
         await createTripDays(trip.trip_id, days);
-
-        // persist the vertical focus so hero & card match
-        if (imagePosition && coverImageUrl) {
-          localStorage.setItem(`trip_image_position_${trip.trip_id}`, imagePosition);
-        }
 
         onSubmit(trip.trip_id);
       }

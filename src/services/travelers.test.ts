@@ -69,6 +69,7 @@ describe('travelers service', () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
         order: vi.fn().mockResolvedValue({ data: mockTravelers, error: null }),
       } as any);
 
@@ -78,12 +79,12 @@ describe('travelers service', () => {
       expect(result.data).toHaveLength(2);
 
       // Check permission normalization
-      expect(result.data[0].permission_level).toBe('edit');
-      expect(result.data[1].permission_level).toBe('read');
+      expect(result.data?.[0]?.permission_level).toBe('edit');
+      expect(result.data?.[1]?.permission_level).toBe('read');
 
       // Check owner detection
-      expect(result.data[0].is_owner).toBe(true);
-      expect(result.data[1].is_owner).toBe(false);
+      expect(result.data?.[0]?.is_owner).toBe(true);
+      expect(result.data?.[1]?.is_owner).toBe(false);
     });
 
     it('should return empty array on error', async () => {
@@ -277,11 +278,12 @@ describe('permission normalization', () => {
     vi.mocked(supabase.from).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockResolvedValue({ data: [], error: null }),
       order: vi.fn().mockResolvedValue({ data: [mockTraveler], error: null }),
     } as any);
 
     const result = await listTravelers('trip-1');
 
-    expect(result.data[0].permission_level).toBe(expected);
+    expect(result.data?.[0]?.permission_level).toBe(expected);
   });
 });

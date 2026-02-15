@@ -27,6 +27,7 @@ import LLMTraining from "./pages/LLMTraining";
 import Explore from "./pages/Explore";
 import Admin from "./pages/Admin";
 import AdminRoute from "./components/AdminRoute";
+import InviteRedeem from "./pages/InviteRedeem";
 
 // Create queryClient outside component to avoid recreation on every render
 const queryClient = new QueryClient({
@@ -59,6 +60,7 @@ const App = () => {
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/about" element={<LLMTraining />} />
+                  <Route path="/invite/:code" element={<InviteRedeem />} />
                   <Route
                     path="/create-trip"
                     element={

@@ -100,7 +100,7 @@ export function getPhotoUrl(photo: PlacePhotoMeta, maxWidth: number = 640): stri
 
 export async function searchPlaces(
   input: string,
-  types: string = "establishment",
+  types: string = "",
   locationContext?: string // e.g., "Paris, France" - appended to bias results
 ): Promise<AutocompleteResult[]> {
   if (!input?.trim()) return [];
@@ -119,7 +119,7 @@ export async function searchPlaces(
 
     const params = new URLSearchParams({
       input: biasedInput,
-      types,
+      ...(types ? { types } : {}),
       language: "en",
       // sessiontoken helps Google group keystrokes; your function accepts arbitrary query params
       sessiontoken: crypto.randomUUID(),

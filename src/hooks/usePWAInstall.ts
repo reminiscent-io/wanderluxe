@@ -7,16 +7,13 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    // Detect if already running as installed PWA
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || (navigator as any).standalone === true;
+    setIsInstalled(isStandalone);
   }, []);
 
   useEffect(() => {
@@ -32,6 +29,7 @@ export function usePWAInstall() {
   useEffect(() => {
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
+      setIsInstalled(true);
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -66,5 +64,5 @@ export function usePWAInstall() {
     }
   };
 
-  return { canInstall: isMobile, handleInstall };
+  return { canInstall: !isInstalled && (!!deferredPrompt || !!(navigator as any).share), handleInstall };
 }

@@ -5,12 +5,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
   Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2
+  BarChart2, Package, Settings, ArrowLeft, Users, Download, ShieldCheck, Trash2
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -20,10 +26,14 @@ import TripDateEditDialog from "../trip/timeline/TripDateEditDialog";
 import ActivityDialog from "../trip/day/activities/ActivityDialog";
 import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDialog";
 import TravelerDialog from "../trip/travelers/TravelerDialog";
+import InviteLinkDialog from "../trip/travelers/InviteLinkDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
 import ShareTripDialog from "@/components/trip/ShareTripDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useInviteLinks } from "@/hooks/useInviteLinks";
+import { Link2 } from "lucide-react";
 
 export interface SidebarHandle {
   openAccommodationDialog: () => void;
@@ -33,11 +43,11 @@ export interface SidebarHandle {
   openSidebarSheet: () => void;
   openTravelerDialog: () => void;
   openTravelersPanel: () => void;
+  openInviteLinkDialog: () => void;
 }
 
 export const tripNavItems = [
   { title: "Timeline", icon: Calendar, href: "timeline" },
-  { title: "Import to Timeline", icon: Sparkles, href: "chat" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
 ];
@@ -67,6 +77,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
   const [isShareDialogOpen, setIsShareDialogOpen] = React.useState(false);
+  const { isAdmin } = useIsAdmin();
 
   // Listen for custom event from Navigation hamburger menu
   React.useEffect(() => {
@@ -88,6 +99,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     openSidebarSheet: () => sidebar.setIsOpen(true),
     openTravelerDialog: () => sidebar.setTravelerOpen(true),
     openTravelersPanel: () => sidebar.handleSubitemClick('travelers'),
+    openInviteLinkDialog: () => sidebar.setInviteLinkOpen(true),
   }));
 
   const {
@@ -99,6 +111,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     activityOpen, setActivityOpen,
     reservationOpen, setReservationOpen,
     travelerOpen, setTravelerOpen,
+    inviteLinkOpen, setInviteLinkOpen,
     selectedAccommodation, setSelectedAccommodation,
     selectedTransportation, setSelectedTransportation,
     selectedActivity, setSelectedActivity,
@@ -119,6 +132,37 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     handleTravelerAdd, handleTravelerEdit
   } = sidebar;
 
+  const isOwner = !!trip && !!user && trip.user_id === user.id;
+
+  const { createLink, creating } = useInviteLinks(tripId || "");
+
+  const handleDeleteTrip = async () => {
+    if (!tripId) return;
+    try {
+      const { error: sharesError } = await supabase
+        .from('trip_shares')
+        .delete()
+        .eq('trip_id', tripId);
+      if (sharesError) {
+        console.error('Error removing trip shares:', sharesError);
+      }
+
+      const { error } = await supabase
+        .from('trips')
+        .update({ hidden: true })
+        .eq('trip_id', tripId);
+      if (error) throw error;
+
+      toast({ title: 'Success', description: 'Trip deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['my-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
+      handleBackToTrips();
+    } catch (error) {
+      console.error('Failed to delete trip:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete trip' });
+    }
+  };
+
   const handleBackFromSecondary = () => {
     setSecondaryPanel(null);
     if (window.innerWidth < 768) setIsOpen(true);
@@ -138,6 +182,16 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
             Back to Trips
           </Button>
           <Separator className="my-4" />
+          
+          <Button
+            size="sm"
+            className="w-full mb-4 bg-earth-500 text-white hover:bg-earth-600 shadow-sm"
+            onClick={() => setInviteLinkOpen(true)}
+          >
+            <Link2 className="mr-2 h-4 w-4" />
+            Generate Invite Link
+          </Button>
+
           {tripNavItems.map(item => (
             <div key={item.title}>
               <NavLink
@@ -217,6 +271,22 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
       </ScrollArea>
 
       <div className="p-4 border-t border-sand-200 space-y-3">
+        {/* Mobile-only Admin Portal - Shows only on mobile for admins */}
+        {isAdmin && (
+          <div className="md:hidden">
+            <NavLink to="/admin" onClick={() => setIsOpen(false)}>
+              <Button
+                className="w-full justify-start text-sand-600 hover:text-earth-600 hover:bg-sand-50"
+                variant="ghost"
+                size="sm"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Admin Portal
+              </Button>
+            </NavLink>
+          </div>
+        )}
+
         {/* Mobile-only PWA Install Button - Shows only on mobile when in trip */}
         {tripId && canInstall && (
           <div className="md:hidden">
@@ -231,7 +301,40 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
             </Button>
           </div>
         )}
-        
+
+        {/* Delete Trip - only visible to trip owner */}
+        {isOwner && tripId && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sand-500 hover:text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Trip
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this trip?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove the trip from your list and revoke access for anyone it was shared with. You can restore it later from hidden trips.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteTrip}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={avatarUrl || user?.user_metadata?.avatar_url} />

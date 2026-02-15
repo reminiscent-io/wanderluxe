@@ -30,6 +30,8 @@ export interface SidebarState {
   setReservationOpen: (open: boolean) => void;
   travelerOpen: boolean;
   setTravelerOpen: (open: boolean) => void;
+  inviteLinkOpen: boolean;
+  setInviteLinkOpen: (open: boolean) => void;
   // Selected items for editing
   selectedAccommodation: any;
   setSelectedAccommodation: (item: any) => void;
@@ -100,6 +102,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const [activityOpen, setActivityOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
   const [travelerOpen, setTravelerOpen] = useState(false);
+  const [inviteLinkOpen, setInviteLinkOpen] = useState(false);
 
   // Trip date editing fields
   const [newArrival, setNewArrival] = useState('');
@@ -126,17 +129,24 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const [newActivity, setNewActivity] = useState<ActivityFormData>({ ...initialActivityForm });
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>({ ...initialActivityForm });
 
-  // Load sidebar open state from localStorage on mount
+  // Load sidebar open state from localStorage on mount (desktop only)
   useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      setIsOpen(false);
+      return;
+    }
     const savedState = localStorage.getItem('sidebarOpen');
     if (savedState !== null) {
       setIsOpen(JSON.parse(savedState));
     }
   }, []);
 
-  // Save sidebar open state to localStorage whenever it changes
+  // Save sidebar open state to localStorage whenever it changes (desktop only)
   useEffect(() => {
-    localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
+    if (window.innerWidth >= 768) {
+      localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
+    }
   }, [isOpen]);
 
   // Fetch trip basic data
@@ -795,5 +805,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     handleEditActivity,
     handleTravelerAdd,
     handleTravelerEdit,
+    inviteLinkOpen,
+    setInviteLinkOpen
   };
 }

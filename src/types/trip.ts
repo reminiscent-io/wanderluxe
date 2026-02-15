@@ -186,5 +186,6 @@ export interface Trip {
   is_public?: boolean;
   primary_destination?: string | null;
   primary_destination_place_id?: string | null;
+  cover_image_position?: string | null;
   accommodations?: Accommodation[];
 }

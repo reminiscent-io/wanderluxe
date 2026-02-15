@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
@@ -618,6 +619,170 @@ router.delete('/api/trips/:tripId/assistant/messages', async (req: Request, res:
   } catch (error) {
     console.error('Error clearing chat:', error);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Rate limiter for anonymous chat - stricter than general limiter
+const anonChatLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 requests per 15 minutes per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' }
+});
+
+// Anonymous chat endpoint - no auth, public trips only, no DB persistence
+router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Request, res: Response) => {
+  try {
+    const { tripId } = req.params;
+    const { message, messages: previousMessages } = req.body as {
+      message: string;
+      messages?: Array<{ role: string; content: string }>;
+    };
+
+    // Validate input
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Initialize Supabase with service role
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    // Verify trip is public
+    const { data: trip, error: tripError } = await supabase
+      .from('trips')
+      .select('trip_id, is_public')
+      .eq('trip_id', tripId)
+      .single();
+
+    if (tripError || !trip) {
+      return res.status(404).json({ code: 'NOT_FOUND', message: 'Trip not found' });
+    }
+
+    if (!trip.is_public) {
+      return res.status(403).json({ code: 'NOT_PUBLIC', message: 'This trip is not publicly accessible' });
+    }
+
+    // Get trip context
+    const tripContext = await getTripContext(supabase, tripId);
+    if (!tripContext) {
+      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to load trip data' });
+    }
+
+    // Build system prompt - use a read-only variant without create_items instructions
+    const basePrompt = buildSystemPrompt(tripContext);
+    const anonSystemPrompt = basePrompt.replace(
+      /CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:[\s\S]*$/,
+      'NOTE: You are assisting an anonymous visitor viewing this trip. You can answer questions about the itinerary and provide travel recommendations, but you cannot modify the trip. If the user wants to add items, suggest they sign up for a free account.'
+    );
+
+    // Build messages array for OpenAI - use client-provided history (limited)
+    const historyMessages = (previousMessages || [])
+      .slice(-8) // Keep last 8 messages for context
+      .map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content
+      }));
+
+    const openaiMessages = [
+      { role: 'system', content: anonSystemPrompt },
+      ...historyMessages,
+      { role: 'user', content: message.trim() }
+    ];
+
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    // Call OpenAI with streaming
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: openaiMessages,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    });
+
+    if (!openaiResponse.ok) {
+      const errorText = await openaiResponse.text();
+      console.error('OpenAI error (anon):', openaiResponse.status, errorText);
+      sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message: 'Failed to generate response' });
+      return res.end();
+    }
+
+    // Process streaming response
+    let fullResponse = '';
+    const reader = openaiResponse.body?.getReader();
+    const decoder = new TextDecoder();
+
+    if (!reader) {
+      sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message: 'Failed to read response stream' });
+      return res.end();
+    }
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                fullResponse += content;
+                // Strip any create_items blocks from streaming content
+                if (!fullResponse.includes('```create_items')) {
+                  sendSSE(res, 'message', { content });
+                }
+              }
+            } catch {
+              // Skip invalid JSON chunks
+            }
+          }
+        }
+      }
+    } catch (streamError) {
+      console.error('Stream error (anon):', streamError);
+    }
+
+    // Strip any create_items block from final response (just in case AI includes it)
+    const { cleanContent } = parseCreateItemsBlock(fullResponse);
+
+    // Send done event - no message_id or thread_id since nothing is persisted
+    sendSSE(res, 'done', {
+      thread_id: null,
+      message_id: `anon-${Date.now()}`
+    });
+
+    res.end();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Anon chat error:', errorMessage);
+
+    if (!res.headersSent) {
+      return res.status(500).json({ code: 'INTERNAL_ERROR', message: errorMessage || 'An unexpected error occurred' });
+    }
+
+    sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message: errorMessage || 'An unexpected error occurred' });
+    res.end();
   }
 });
 

@@ -78,12 +78,6 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
     const hasSupabaseUrl = !!(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
     const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    console.log('Checkout environment check:', {
-      hasStripeKey,
-      hasSupabaseUrl,
-      hasServiceRoleKey,
-      stripeKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7) || 'missing', // Shows sk_live_ or sk_test_
-    });
 
     if (!hasStripeKey) {
       console.error('STRIPE_SECRET_KEY is not configured');

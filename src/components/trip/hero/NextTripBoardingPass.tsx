@@ -2,11 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plane, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { Plane, Calendar, Clock, ChevronRight, Share2, Check, X } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface NextTripBoardingPassProps {
   trip: Trip;
@@ -14,6 +25,12 @@ interface NextTripBoardingPassProps {
   onViewTrip: () => void;
   className?: string;
   fullBleed?: boolean;
+  // Shared trip props
+  isPendingInvite?: boolean;
+  shareId?: string;
+  ownerName?: string;
+  onAcceptInvite?: (shareId: string) => void;
+  onDeclineInvite?: (shareId: string) => void;
 }
 
 interface Countdown {
@@ -27,7 +44,12 @@ export function NextTripBoardingPass({
   daysUntil,
   onViewTrip,
   className,
-  fullBleed = false
+  fullBleed = false,
+  isPendingInvite = false,
+  shareId,
+  ownerName,
+  onAcceptInvite,
+  onDeclineInvite,
 }: NextTripBoardingPassProps) {
   const [countdown, setCountdown] = useState<Countdown>({ days: daysUntil, hours: 0, minutes: 0 });
 
@@ -81,7 +103,7 @@ export function NextTripBoardingPass({
         fullBleed ? "h-[40vh] -mx-4 rounded-none md:rounded-2xl md:mx-0" : "h-[320px] md:h-[380px]",
         className
       )}
-      onClick={onViewTrip}
+      onClick={isPendingInvite ? undefined : onViewTrip}
     >
       {/* Background Image */}
       <div className="absolute inset-0">
@@ -98,11 +120,26 @@ export function NextTripBoardingPass({
       <div className="relative h-full flex flex-col justify-between p-5 md:p-6">
         {/* Top Section */}
         <div className="flex items-start justify-between">
-          {/* Upcoming Badge */}
-          <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-semibold px-3 py-1 shadow-lg">
-            <Plane className="h-3 w-3 mr-1.5" />
-            UPCOMING
-          </Badge>
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-semibold px-3 py-1 shadow-lg">
+              <Plane className="h-3 w-3 mr-1.5" />
+              UPCOMING
+            </Badge>
+            {/* Shared by badge */}
+            {ownerName && (
+              <Badge className="flex items-center gap-1.5 bg-white/95 text-earth-700 border-0 backdrop-blur-sm shadow-lg px-2.5 py-1">
+                <Share2 className="h-3 w-3 text-blue-600" />
+                <span className="font-medium text-xs">{ownerName}</span>
+              </Badge>
+            )}
+            {/* Pending invite badge */}
+            {isPendingInvite && (
+              <Badge className="bg-amber-500 text-white border-0 px-3 py-1 font-medium shadow-lg backdrop-blur-sm">
+                Invite pending
+              </Badge>
+            )}
+          </div>
 
           {/* Weather Forecast */}
           {arrivalForecast && (
@@ -148,18 +185,64 @@ export function NextTripBoardingPass({
             </div>
           </div>
 
-          {/* CTA Button */}
-          <Button
-            size="lg"
-            className="w-full sm:w-auto bg-white text-earth-900 hover:bg-white/90 font-semibold shadow-lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewTrip();
-            }}
-          >
-            View Trip Details
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+          {/* CTA Buttons */}
+          {isPendingInvite && shareId ? (
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAcceptInvite?.(shareId);
+                }}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Accept Trip
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="flex-1 sm:flex-none bg-white/90 hover:bg-white text-earth-800 font-semibold shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Decline
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Decline this trip?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure? If you decline, this shared trip will disappear from your list and you'll lose access.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDeclineInvite?.(shareId)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Yes, decline
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          ) : (
+            <Button
+              size="lg"
+              className="w-full sm:w-auto bg-white text-earth-900 hover:bg-white/90 font-semibold shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewTrip();
+              }}
+            >
+              View Trip Details
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          )}
         </div>
       </div>
     </motion.div>

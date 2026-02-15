@@ -51,7 +51,22 @@
       "Bash(claude mcp add:*)",
       "Bash(git push)",
       "Bash(fuser:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(npm run:*)",
+      "Bash(bun add:*)",
+      "Bash(nvm ls-remote:*)",
+      "Bash(nvm install:*)",
+      "Bash(/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node --version)",
+      "Bash(/usr/local/bin/node:*)",
+      "Bash(bun:*)",
+      "Bash(npx skills add https://github.com/anthropics/skills --skill frontend-design)",
+      "WebSearch",
+      "Bash(gh:*)",
+      "Bash(/nix/store/*/bin/gh)",
+      "Bash(nix-env:*)",
+      "Bash(tar:*)",
+      "Bash(/tmp/gh_2.63.2_linux_amd64/bin/gh:*)",
+      "Bash(~/bin/gh auth login:*)"
     ],
     "deny": [],
     "ask": []

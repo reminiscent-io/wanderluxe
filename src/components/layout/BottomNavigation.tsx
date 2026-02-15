@@ -1,16 +1,16 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { Calendar, BarChart2, Users, Plus, Sparkles } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { Calendar, BarChart2, Users, Plus, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface BottomNavigationProps {
   tripId: string | undefined;
   onQuickAddClick: () => void;
-  onAIClick: () => void;
   onPeopleClick: () => void;
+  onAIClick: () => void;
 }
 
-const BottomNavigation = ({ tripId, onQuickAddClick, onAIClick, onPeopleClick }: BottomNavigationProps) => {
+const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }: BottomNavigationProps) => {
   const timelineItem = {
     title: "Timeline",
     icon: Calendar,
@@ -26,7 +26,7 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onAIClick, onPeopleClick }:
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-sand-200 shadow-lg">
       <div className="grid grid-cols-5 h-16 items-center px-2">
-        {/* First item: Timeline */}
+        {/* Timeline */}
         <NavLink
           to={timelineItem.href}
           className={({ isActive }) =>
@@ -51,13 +51,13 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onAIClick, onPeopleClick }:
           }}
         </NavLink>
 
-        {/* Second item: AI Assistant (opens drawer) */}
+        {/* AI Chat */}
         <button
           onClick={onAIClick}
           className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"
         >
-          <Sparkles className="h-5 w-5" />
-          <span className="text-[10px]">AI</span>
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[10px]">AI Chat</span>
         </button>
 
         {/* Center FAB */}
@@ -72,7 +72,7 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onAIClick, onPeopleClick }:
           </Button>
         </div>
 
-        {/* Fourth item: Budget */}
+        {/* Budget */}
         <NavLink
           to={budgetItem.href}
           className={({ isActive }) =>
@@ -97,7 +97,7 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onAIClick, onPeopleClick }:
           }}
         </NavLink>
 
-        {/* Fifth item: People */}
+        {/* People */}
         <button
           onClick={onPeopleClick}
           className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"

@@ -63,7 +63,7 @@ function getItemSummary(item: ExtractedItem): { title: string; subtitle: string 
 
       const route = from && to ? `${from} → ${to}` : from || to || '';
       const title = carrier ? `${typeLabel}: ${carrier}` : typeLabel;
-      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '';
       const subtitle = [route, dateStr, time].filter(Boolean).join(' • ');
 
       return { title, subtitle };
@@ -76,7 +76,7 @@ function getItemSummary(item: ExtractedItem): { title: string; subtitle: string 
       const address = fields.address as string;
 
       const dateRange = checkIn && checkOut
-        ? `${new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        ? `${new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })} - ${new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}`
         : checkIn || '';
 
       return {
@@ -91,7 +91,7 @@ function getItemSummary(item: ExtractedItem): { title: string; subtitle: string 
       const time = fields.start_time as string;
       const location = fields.location as string;
 
-      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '';
 
       return {
         title: name,
@@ -105,7 +105,7 @@ function getItemSummary(item: ExtractedItem): { title: string; subtitle: string 
       const time = fields.time as string;
       const partySize = fields.party_size as number;
 
-      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '';
       const partySizeStr = partySize ? `${partySize} guests` : '';
 
       return {

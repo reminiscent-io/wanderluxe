@@ -71,7 +71,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// Create HTTP server - Use port 5000 for Replit deployments
+// Cloud Run sets PORT env var; fall back to 5000 for local dev
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 

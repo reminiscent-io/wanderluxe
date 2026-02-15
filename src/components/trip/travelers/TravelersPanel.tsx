@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Link2 } from "lucide-react";
 import { useTravelers } from "@/hooks/useTravelers";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTripPermissions } from "@/hooks/use-trip-permissions";
+import { Separator } from "@/components/ui/separator";
 import Header from "../_shared/Header";
 import TravelerRow from "./TravelerRow";
 import ShareTripDialog from "../ShareTripDialog";
@@ -27,6 +30,7 @@ export default function TravelersPanel({
 }: TravelersPanelProps) {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { travelers, loading, error } = useTravelers(tripId);
+  const { isOwner } = useTripPermissions(tripId);
 
   if (loading) {
     return (
@@ -94,6 +98,13 @@ export default function TravelersPanel({
             />
           ))}
         </div>
+      )}
+
+      {isOwner && (
+        <>
+          <Separator className="my-4" />
+          <InviteLinkSection tripId={tripId} />
+        </>
       )}
     </div>
   );

@@ -13,6 +13,8 @@ import {
   FormMessage,
   FormControl,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import HotelSearchInput from "./HotelSearchInput";
 import LuxuryDateTimeRangePicker, {
   LuxuryDateTimeRange,
@@ -20,6 +22,7 @@ import LuxuryDateTimeRangePicker, {
 import { AccommodationFormData } from "@/services/accommodation/accommodationService";
 import {
   loadGoogleMapsAPI,
+  searchPlaces,
   getPlaceDetails,
   getPhotoUrl,
   type PlacePhotoMeta,
@@ -230,6 +233,54 @@ export default function AccommodationForm({
     });
   }, [initialData?.hotel_place_id]);
 
+  // Auto-resolve hotel name to Google Place when form opens with a name but no place_id
+  // (e.g., from AI document extraction or AI chat recommendations)
+  useEffect(() => {
+    const hotelName = initialData?.hotel;
+    const placeId = initialData?.hotel_place_id;
+
+    // Only auto-resolve if we have a name but no place_id
+    if (!hotelName || placeId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const results = await searchPlaces(hotelName, '', destination);
+        if (cancelled || results.length === 0) return;
+
+        const topMatch = results[0];
+        const details = await getPlaceDetails(topMatch.place_id);
+        if (cancelled || !details) return;
+
+        // Populate form fields with resolved Google Place data
+        form.setValue("hotel_place_id", details.place_id);
+        form.setValue("hotel_address", details.formatted_address ?? "");
+        form.setValue("hotel_phone", details.formatted_phone_number ?? "");
+        form.setValue("hotel_website", details.website ?? "");
+        if (details.website) {
+          form.setValue("hotel_url", details.website);
+        }
+
+        // Auto-expand location details since we now have data
+        if (details.formatted_address || details.formatted_phone_number || details.website) {
+          setLocationOpen(true);
+        }
+
+        // Load photos
+        if (details.photos?.length) {
+          setHotelPhotos(details.photos);
+        }
+      } catch (err) {
+        console.error("Auto-resolve hotel place failed:", err);
+        // Fail silently — user can still manually search
+      }
+    })();
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.hotel, initialData?.hotel_place_id, destination]);
+
   /* ---------------------- Load existing travelers --------------------- */
   useEffect(() => {
     if (initialData?.stay_id && tripId) {
@@ -266,7 +317,7 @@ export default function AccommodationForm({
   /* ------------------------------- JSX --------------------------------- */
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 w-full max-w-none">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 w-full overflow-hidden">
         {/* Hotel Name */}
         <FormField
           control={form.control}
@@ -340,11 +391,10 @@ export default function AccommodationForm({
                     Address
                   </FormLabel>
                   <FormControl>
-                    <input
+                    <Input
                       {...field}
                       type="text"
                       placeholder="Enter address"
-                      className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
                     />
                   </FormControl>
                   <FormMessage />
@@ -364,11 +414,10 @@ export default function AccommodationForm({
                       Phone
                     </FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         {...field}
                         type="tel"
                         placeholder="Enter phone number"
-                        className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
                       />
                     </FormControl>
                     <FormMessage />
@@ -385,11 +434,10 @@ export default function AccommodationForm({
                       Website
                     </FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         {...field}
                         type="url"
                         placeholder="https://..."
-                        className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
                       />
                     </FormControl>
                     <FormMessage />
@@ -404,8 +452,8 @@ export default function AccommodationForm({
         {hotelPhotos.length > 0 && (
           <div className="mt-2 space-y-2">
             <div className="text-xs text-sand-600">Photos</div>
-            <div className="-mx-1 overflow-x-auto">
-              <div className="flex gap-2 px-1 py-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="overflow-x-auto rounded-md">
+              <div className="flex gap-2 py-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {hotelPhotos.slice(0, 12).map((p, i) => {
                   // Offer progressively larger versions; min = 480px
                   const url480  = resolvePhotoUrl(p, 480);
@@ -477,26 +525,27 @@ export default function AccommodationForm({
         {/* Cost & Currency */}
         <div className="space-y-2">
           <FormLabel>Cost</FormLabel>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <FormField
               control={form.control}
               name="cost"
               render={({ field }) => (
-                <FormItem className="flex-1">
-                  <input
-                    type="text"
-                    value={
-                      field.value !== undefined && field.value !== null
-                        ? new Intl.NumberFormat("en-US").format(field.value)
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const numericValue = Number(e.target.value.replace(/,/g, ""));
-                      field.onChange(Number.isNaN(numericValue) ? null : numericValue);
-                    }}
-                    placeholder="0"
-                    className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500"
-                  />
+                <FormItem className="flex-1 min-w-0">
+                  <FormControl>
+                    <Input
+                      type="text"
+                      value={
+                        field.value !== undefined && field.value !== null
+                          ? new Intl.NumberFormat("en-US").format(field.value)
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const numericValue = Number(e.target.value.replace(/,/g, ""));
+                        field.onChange(Number.isNaN(numericValue) ? null : numericValue);
+                      }}
+                      placeholder="0"
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -504,14 +553,19 @@ export default function AccommodationForm({
               control={form.control}
               name="currency"
               render={({ field }) => (
-                <FormItem className="w-[110px] shrink-0">
-                  <select {...field} className="w-full rounded-md border border-gray-300 p-2 bg-white focus:border-earth-500 focus:ring-earth-500">
-                    {CURRENCY_OPTIONS.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.value}
-                      </option>
-                    ))}
-                  </select>
+                <FormItem className="w-24 shrink-0">
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      {CURRENCY_OPTIONS.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.value}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -525,7 +579,9 @@ export default function AccommodationForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Additional Details</FormLabel>
-              <textarea {...field} rows={1} className="w-full rounded-md border p-2" />
+              <FormControl>
+                <Textarea {...field} rows={2} placeholder="Notes, confirmation number, etc." />
+              </FormControl>
             </FormItem>
           )}
         />

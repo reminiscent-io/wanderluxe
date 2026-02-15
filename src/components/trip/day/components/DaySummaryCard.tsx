@@ -1,6 +1,7 @@
 import React from 'react';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
+import { convertCurrency } from '../../budget/utils/currencyConverter';
 import { TrendingUp, Wallet } from 'lucide-react';
 
 type Props = {
@@ -8,6 +9,8 @@ type Props = {
   hotelStays: HotelStay[];
   transportations: Transportation[];
   reservations: RestaurantReservation[];
+  tripCurrency?: string;
+  exchangeRates?: Record<string, Record<string, number>>;
 };
 
 interface CategoryCost {
@@ -23,6 +26,8 @@ const DaySummaryCard: React.FC<Props> = ({
   hotelStays,
   transportations,
   reservations,
+  tripCurrency = 'USD',
+  exchangeRates = {},
 }) => {
   const categoryData: CategoryCost[] = [];
 
@@ -76,9 +81,27 @@ const DaySummaryCard: React.FC<Props> = ({
 
   if (categoryData.length === 0) return null;
 
-  // Calculate total (assuming all same currency for simplicity)
-  const total = categoryData.reduce((sum, c) => sum + c.amount, 0);
-  const currency = categoryData[0]?.currency || 'USD';
+  // Detect if mixed currencies
+  const allCurrencies = new Set(categoryData.map(c => c.currency));
+  const hasMixedCurrencies = allCurrencies.size > 1;
+  const hasRates = Object.keys(exchangeRates).length > 0;
+
+  // Calculate total, converting to trip currency if mixed
+  let total: number;
+  let displayCurrency: string;
+  let convertedFrom: string[] = [];
+
+  if (hasMixedCurrencies && hasRates) {
+    total = categoryData.reduce((sum, c) => {
+      if (c.currency === tripCurrency) return sum + c.amount;
+      convertedFrom.push(c.currency);
+      return sum + convertCurrency(c.amount, c.currency, tripCurrency, exchangeRates);
+    }, 0);
+    displayCurrency = tripCurrency;
+  } else {
+    total = categoryData.reduce((sum, c) => sum + c.amount, 0);
+    displayCurrency = categoryData[0]?.currency || 'USD';
+  }
 
   return (
     <div className="bg-gradient-to-br from-sand-50 to-sand-100 rounded-lg p-4 border border-sand-200 mb-4">
@@ -89,9 +112,13 @@ const DaySummaryCard: React.FC<Props> = ({
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-earth-900">
-            {formatCurrencyWithSymbol(total, currency)}
+            {formatCurrencyWithSymbol(total, displayCurrency)}
           </div>
-          <div className="text-xs text-earth-500">Total spend</div>
+          <div className="text-xs text-earth-500">
+            {hasMixedCurrencies && hasRates && convertedFrom.length > 0
+              ? `Includes conversions from ${[...new Set(convertedFrom)].join(', ')}`
+              : 'Total spend'}
+          </div>
         </div>
       </div>
 

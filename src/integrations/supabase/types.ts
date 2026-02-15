@@ -146,36 +146,51 @@
       trips: {
         Row: {
           arrival_date: string
+          budget: number | null
           cover_image_url: string | null
+          cover_image_position: string | null
           created_at: string
           departure_date: string
           destination: string
           end_date: string
           hidden: boolean
+          is_public: boolean
+          primary_destination: string | null
+          primary_destination_place_id: string | null
           start_date: string
           trip_id: string
           user_id: string
         }
         Insert: {
           arrival_date: string
+          budget?: number | null
           cover_image_url?: string | null
+          cover_image_position?: string | null
           created_at?: string
           departure_date: string
           destination: string
           end_date: string
           hidden?: boolean
+          is_public?: boolean
+          primary_destination?: string | null
+          primary_destination_place_id?: string | null
           start_date: string
           trip_id?: string
           user_id: string
         }
         Update: {
           arrival_date?: string
+          budget?: number | null
           cover_image_url?: string | null
+          cover_image_position?: string | null
           created_at?: string
           departure_date?: string
           destination?: string
           end_date?: string
           hidden?: boolean
+          is_public?: boolean
+          primary_destination?: string | null
+          primary_destination_place_id?: string | null
           start_date?: string
           trip_id?: string
           user_id?: string

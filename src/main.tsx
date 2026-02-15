@@ -52,8 +52,21 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
+      .then((registration) => {
+        // Check for updates periodically (every 60 minutes)
+        setInterval(() => registration.update(), 60 * 60 * 1000);
+      })
       .catch(() => {
         // Service worker registration failed, app will still work online
       });
+  });
+
+  // Reload page when a new service worker takes control
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
   });
 }

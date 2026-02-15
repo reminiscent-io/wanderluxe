@@ -11,6 +11,7 @@ import PrimaryDestinationInput from '@/components/trip/create/PrimaryDestination
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 interface HeroSectionProps {
   tripId: string;
@@ -24,6 +25,7 @@ interface HeroSectionProps {
   canEdit?: boolean;
   primaryDestination?: string | null;
   primaryDestinationPlaceId?: string | null;
+  coverImagePosition?: string | null;
 }
 
 interface DateRangeDisplayProps {
@@ -58,6 +60,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   canEdit = true,
   primaryDestination,
   primaryDestinationPlaceId,
+  coverImagePosition,
 }) => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -69,7 +72,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [editedPrimaryDestinationPlaceId, setEditedPrimaryDestinationPlaceId] = useState(primaryDestinationPlaceId || '');
   const [editedImageUrl, setEditedImageUrl] = useState(imageUrl);
 
-  const [imagePosition, setImagePosition] = useState<string>("center 50%");
+  const [imagePosition, setImagePosition] = useState<string>(() => {
+    if (coverImagePosition && coverImagePosition !== 'center 50%') return coverImagePosition;
+    const saved = localStorage.getItem(`trip_image_position_${tripId}`);
+    return saved || coverImagePosition || 'center 50%';
+  });
 
   // Reset form state when dialog opens
   const handleOpenDialog = () => {
@@ -96,7 +103,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const handlePositionChange = (newPosition: string) => {
     setImagePosition(newPosition);
-    localStorage.setItem(`trip_image_position_${tripId}`, newPosition);
   };
 
   const handlePrimaryDestinationChange = (destination: string, placeId: string) => {
@@ -113,17 +119,28 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('trips')
         .update({
           destination: editedTitle,
           cover_image_url: editedImageUrl,
           primary_destination: editedPrimaryDestination || null,
-          primary_destination_place_id: editedPrimaryDestinationPlaceId || null
-        })
-        .eq('trip_id', tripId);
+          primary_destination_place_id: editedPrimaryDestinationPlaceId || null,
+          cover_image_position: imagePosition,
+        } as any)
+        .eq('trip_id', tripId)
+        .select()
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        toast.error('Unable to save changes. You may not have edit permission for this trip.');
+        return;
+      }
+
+      // Clean up legacy localStorage entry
+      localStorage.removeItem(`trip_image_position_${tripId}`);
 
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       setIsDialogOpen(false);
@@ -158,14 +175,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [arrivalDate, departureDate]);
 
-  // Load image position from localStorage when component mounts
-  React.useEffect(() => {
-    const savedPosition = localStorage.getItem(`trip_image_position_${tripId}`);
-    if (savedPosition) {
-      setImagePosition(savedPosition);
-    }
-  }, [tripId]);
-
   const formattedDateRange = React.useMemo(() => {
     const safeArrival = lastValidDates.arrivalDate;
     const safeDeparture = lastValidDates.departureDate;
@@ -190,91 +199,25 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [lastValidDates]);
 
+  // Parallax scroll: fade out hero text as user scrolls down
+  const { scrollY } = useScroll();
+  const heroTextOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const heroTextY = useTransform(scrollY, [0, 400], [0, -40]);
+
   return (
-    <div
-      className="relative w-full mb-0"
-    >
-      <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[800px] md:max-h-[600px] w-full overflow-hidden group rounded-none">
-        {canEdit && (
-          <div className="absolute bottom-4 right-4 flex space-x-2 z-20">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="opacity-50 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm text-sand-50"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOpenDialog();
-              }}
-            >
-              <PencilIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-
-        {/* Edit Trip Details Dialog */}
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCloseDialog();
-            }
-          }}
-        >
-          <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
-            <DialogTitle>Edit Trip Details</DialogTitle>
-            <div className="space-y-6 pt-2">
-              {/* Trip Name */}
-              <div className="space-y-3">
-                <Label htmlFor="tripName" className="text-earth-700 font-semibold">
-                  Trip name<span className="text-red-500"> *</span>
-                </Label>
-                <Input
-                  id="tripName"
-                  placeholder="e.g., NYE in Paris"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  className="bg-white/70 border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl py-3 px-4 shadow-sm"
-                />
-              </div>
-
-              {/* Primary Destination */}
-              <PrimaryDestinationInput
-                value={editedPrimaryDestination}
-                placeId={editedPrimaryDestinationPlaceId}
-                onChange={handlePrimaryDestinationChange}
-                placeholder="Search for a city..."
-              />
-
-              {/* Cover Image */}
-              <ImageSection
-                coverImageUrl={editedImageUrl}
-                onImageChange={handleImageChange}
-                objectPosition={imagePosition}
-                onPositionChange={handlePositionChange}
-              />
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2 pt-4 border-t border-earth-100">
-                <Button
-                  variant="ghost"
-                  onClick={handleCloseDialog}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-earth-600 hover:bg-earth-700 text-white"
-                  onClick={handleSaveChanges}
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
+    <>
+      {/* Fixed hero background — purely visual, no interaction */}
+      <div
+        className="fixed overflow-hidden w-full z-0 pointer-events-none"
+        style={{
+          top: 'var(--app-nav-h, 56px)',
+          left: 'var(--hero-left, 0)',
+          width: 'var(--hero-width, 100%)',
+          height: 'calc(100dvh - var(--app-nav-h, 56px) - 80px)',
+          maxHeight: '70vh',
+          minHeight: '280px',
+        }}
+      >
         {imageUrl ? (
           <div className="absolute inset-0 w-full h-full">
             <UnsplashImage
@@ -291,34 +234,52 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="h-full w-full bg-gray-200 animate-pulse"></div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+        {/* Gradient overlays for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-sand-50/30"></div>
+      </div>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-10 md:p-16 text-white z-10">
+      {/* Spacer — pushes content down + holds interactive hero text */}
+      <div
+        className="relative w-full"
+        style={{
+          height: 'calc(100dvh - var(--app-nav-h, 56px) - 80px)',
+          maxHeight: '70vh',
+          minHeight: '280px',
+        }}
+      >
+        {/* Hero text content — fades out as user scrolls */}
+        <motion.div
+          className="absolute inset-0 flex flex-col items-center justify-center p-10 md:p-16 text-white"
+          style={{
+            top: 'var(--app-nav-h, 56px)',
+            opacity: heroTextOpacity,
+            y: heroTextY,
+          }}
+        >
           {isLoading ? (
             <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
           ) : (
-            <div className="group relative inline-block">
+            <div className="flex items-baseline gap-2 justify-center mb-4">
               <h1
-                className={`text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg text-center ${canEdit ? 'cursor-pointer hover:text-white/90' : ''}`}
+                className={`text-4xl md:text-5xl lg:text-6xl font-bold drop-shadow-lg text-center tracking-tight ${canEdit ? 'cursor-pointer hover:text-white/90' : ''}`}
                 onClick={canEdit ? handleOpenDialog : undefined}
               >
                 {lastValidTitle}
               </h1>
               {canEdit && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                <button
+                  className="opacity-60 hover:opacity-100 transition-opacity text-white shrink-0 translate-y-[-0.1em]"
                   onClick={handleOpenDialog}
                 >
-                  <PencilIcon className="h-4 w-4" />
-                </Button>
+                  <PencilIcon className="h-5 w-5 md:h-6 md:w-6 drop-shadow-md" />
+                </button>
               )}
             </div>
           )}
 
           {primaryDestination ? (
-            <div className="group/dest relative mb-2">
+            <div className="mb-2">
               <p
                 className={`text-lg md:text-xl font-medium drop-shadow-md text-center flex items-center gap-2 justify-center ${canEdit ? 'cursor-pointer hover:text-white/80' : ''}`}
                 onClick={canEdit ? handleOpenDialog : undefined}
@@ -326,16 +287,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <MapPin className="h-4 w-4" />
                 {primaryDestination}
               </p>
-              {canEdit && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute -right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/dest:opacity-100 transition-opacity h-6 w-6 p-0"
-                  onClick={handleOpenDialog}
-                >
-                  <PencilIcon className="h-3 w-3" />
-                </Button>
-              )}
             </div>
           ) : canEdit && !isLoading ? (
             <button
@@ -351,9 +302,72 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             isLoading={isLoading}
             formattedDateRange={formattedDateRange}
           />
-        </div>
+        </motion.div>
       </div>
-    </div>
+
+      {/* Edit Trip Details Dialog — outside the fixed layer so it renders correctly */}
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseDialog();
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
+          <DialogTitle>Edit Trip Details</DialogTitle>
+          <div className="space-y-6 pt-2">
+            {/* Trip Name */}
+            <div className="space-y-3">
+              <Label htmlFor="tripName" className="text-earth-700 font-semibold">
+                Trip name<span className="text-red-500"> *</span>
+              </Label>
+              <Input
+                id="tripName"
+                placeholder="e.g., NYE in Paris"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                className="bg-white/70 border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl py-3 px-4 shadow-sm"
+              />
+            </div>
+
+            {/* Primary Destination */}
+            <PrimaryDestinationInput
+              value={editedPrimaryDestination}
+              placeId={editedPrimaryDestinationPlaceId}
+              onChange={handlePrimaryDestinationChange}
+              placeholder="Search for a city..."
+            />
+
+            {/* Cover Image */}
+            <ImageSection
+              coverImageUrl={editedImageUrl}
+              onImageChange={handleImageChange}
+              objectPosition={imagePosition}
+              onPositionChange={handlePositionChange}
+            />
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2 pt-4 border-t border-earth-100">
+              <Button
+                variant="ghost"
+                onClick={handleCloseDialog}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-earth-600 hover:bg-earth-700 text-white"
+                onClick={handleSaveChanges}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

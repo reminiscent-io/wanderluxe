@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react';
+import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
@@ -12,14 +12,14 @@ import TimelineView from "../components/trip/TimelineView";
 import BudgetView from "../components/trip/BudgetView";
 import BookingView from "../components/trip/BookingView";
 import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
-import ChatView from "../components/trip/chat/ChatView";
+import AIAssistantPanel from "../components/trip/ai-assistant/AIAssistantPanel";
+import AIAssistantDrawer from "../components/trip/ai-assistant/AIAssistantDrawer";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
-import { AIAssistantDrawer } from "@/components/trip/ai-assistant";
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
@@ -50,14 +50,43 @@ const TripDetails = () => {
   // Quick add sheet state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
-  // AI Assistant drawer state (mobile)
+  // AI Assistant drawer state (mobile full-screen)
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   // Ref to access Sidebar methods
   const sidebarRef = useRef<SidebarHandle>(null);
 
-  const handleQuickAddAction = (action: "accommodation" | "transportation" | "activity" | "dining" | "import") => {
-    // Open the appropriate dialog or navigate based on the action
+  // Ref + callback for aligning the fixed hero with the main content area (offset by sidebar)
+  const mainRef = useRef<HTMLElement>(null);
+  const updateHeroBounds = useCallback(() => {
+    if (mainRef.current) {
+      const rect = mainRef.current.getBoundingClientRect();
+      const pl = parseFloat(getComputedStyle(mainRef.current).paddingLeft) || 0;
+      document.documentElement.style.setProperty('--hero-left', `${rect.left + pl}px`);
+      document.documentElement.style.setProperty('--hero-width', `${rect.width - pl}px`);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateHeroBounds();
+    window.addEventListener('resize', updateHeroBounds);
+    const observer = new MutationObserver(updateHeroBounds);
+    if (mainRef.current) {
+      observer.observe(mainRef.current, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+    return () => {
+      window.removeEventListener('resize', updateHeroBounds);
+      observer.disconnect();
+    };
+  }, [updateHeroBounds]);
+
+  // Re-measure after sidebar animation settles
+  useEffect(() => {
+    const timer = setTimeout(updateHeroBounds, 350);
+    return () => clearTimeout(timer);
+  }, [updateHeroBounds]);
+
+  const handleQuickAddAction = (action: "accommodation" | "transportation" | "activity" | "dining") => {
     switch (action) {
       case "accommodation":
         sidebarRef.current?.openAccommodationDialog();
@@ -70,10 +99,6 @@ const TripDetails = () => {
         break;
       case "dining":
         sidebarRef.current?.openReservationDialog();
-        break;
-      case "import":
-        // Navigate to chat view for AI import/scan
-        navigate(`/trip/${tripId}/chat`);
         break;
     }
   };
@@ -121,30 +146,36 @@ const TripDetails = () => {
   const sidebar = <Sidebar ref={sidebarRef} tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
   return (
-    // Offset the page content by the fixed navbar height so the hero touches the bottom of the nav
     <div className="flex min-h-screen">
       {sidebar}
-      <main className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
+      <main ref={mainRef} className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">
-          {/* Global header is already fixed via AppLayout; no page-level header here */}
 
-          {/* Ensure no unintended top margin before the hero */}
-          <div className="w-full mt-0">
-            <HeroSection
-              tripId={tripId}
-              title={displayData.destination}
-              imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
-              arrivalDate={displayData.arrival_date}
-              departureDate={displayData.departure_date}
-              isLoading={tripLoading && !previousTrip}
-              canEdit={canEdit}
-              primaryDestination={displayData.primary_destination}
-              primaryDestinationPlaceId={displayData.primary_destination_place_id}
-            />
-          </div>
+          {/* Hero — renders fixed background + spacer */}
+          <HeroSection
+            tripId={tripId}
+            title={displayData.destination}
+            imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
+            arrivalDate={displayData.arrival_date}
+            departureDate={displayData.departure_date}
+            isLoading={tripLoading && !previousTrip}
+            canEdit={canEdit}
+            primaryDestination={displayData.primary_destination}
+            primaryDestinationPlaceId={displayData.primary_destination_place_id}
+            coverImagePosition={displayData.cover_image_position}
+          />
 
-          <div className="relative flex-1 bg-sand-50/95 w-full z-10">
-            <div className="max-w-none mx-auto px-4 py-8 pb-24 md:pb-8">
+          {/* Content area — scrolls up and over the fixed hero image */}
+          <div
+            className="relative flex-1 w-full z-10 min-h-screen rounded-t-[28px] bg-sand-50 -mt-6"
+            style={{
+              boxShadow: '0 -10px 40px -5px rgba(0,0,0,0.10)',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+            }}
+          >
+
+            <div className="max-w-none mx-auto px-4 pt-6 pb-24 md:pb-8">
               {!canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                   <div className="flex items-center">
@@ -186,7 +217,7 @@ const TripDetails = () => {
                 </ErrorBoundary>
               )}
 
-              {activeTab === 'chat' && <ChatView tripId={tripId || ''} canEdit={canEdit} />}
+              {activeTab === 'chat' && <AIAssistantPanel tripId={tripId || ''} />}
               {activeTab === 'vision-board' && <VisionBoardView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'budget' && <BudgetView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'booking' && <BookingView tripId={tripId} canEdit={canEdit} />}
@@ -199,8 +230,15 @@ const TripDetails = () => {
       <BottomNavigation
         tripId={tripId}
         onQuickAddClick={() => setQuickAddOpen(true)}
-        onAIClick={() => setAiDrawerOpen(true)}
         onPeopleClick={() => sidebarRef.current?.openTravelersPanel()}
+        onAIClick={() => setAiDrawerOpen(true)}
+      />
+
+      {/* AI Assistant Drawer (mobile full-screen with safe area) */}
+      <AIAssistantDrawer
+        tripId={tripId || ''}
+        open={aiDrawerOpen}
+        onOpenChange={setAiDrawerOpen}
       />
 
       {/* Quick Add Sheet */}
@@ -210,14 +248,6 @@ const TripDetails = () => {
         onSelectAction={handleQuickAddAction}
       />
 
-      {/* AI Assistant Drawer (Mobile) */}
-      {tripId && (
-        <AIAssistantDrawer
-          tripId={tripId}
-          open={aiDrawerOpen}
-          onOpenChange={setAiDrawerOpen}
-        />
-      )}
     </div>
   );
 };
