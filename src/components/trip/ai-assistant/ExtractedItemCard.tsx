@@ -6,6 +6,8 @@ import type { ExtractedItem, TravelItemType } from '@/types/ai-assistant';
 interface ExtractedItemCardProps {
   item: ExtractedItem;
   onStatusChange?: (id: string, status: 'created' | 'skipped') => void;
+  /** Called when the card is clicked (to open the full edit dialog). Omit when processed. */
+  onEdit?: () => void;
   compact?: boolean;
 }
 
@@ -122,22 +124,29 @@ function getItemSummary(item: ExtractedItem): { title: string; subtitle: string 
 const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
   item,
   onStatusChange,
+  onEdit,
   compact = false
 }) => {
   const config = ITEM_TYPE_CONFIG[item.itemType];
   const { title, subtitle } = getItemSummary(item);
   const hasWarnings = item.missingRequired.length > 0 || item.confidence < 0.7;
   const isProcessed = item.status === 'created' || item.status === 'skipped';
+  const isClickable = !isProcessed && onEdit;
 
   return (
     <div
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={isClickable ? onEdit : undefined}
+      onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit?.(); } } : undefined}
       className={cn(
         'rounded-lg border transition-all overflow-hidden',
         isProcessed ? 'opacity-60' : '',
         item.status === 'created' ? 'bg-green-50 border-green-200' :
         item.status === 'skipped' ? 'bg-sand-50 border-sand-200' :
         hasWarnings ? 'bg-amber-50 border-amber-200' : 'bg-white border-sand-200',
-        compact ? 'p-2' : 'p-3'
+        compact ? 'p-2' : 'p-3',
+        isClickable && 'cursor-pointer hover:ring-2 hover:ring-earth-300 hover:ring-offset-1 focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-offset-1'
       )}
     >
       <div className="flex items-start gap-2 min-w-0">
@@ -180,6 +189,11 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
             )}>
               {subtitle}
             </p>
+          )}
+
+          {/* Click to edit hint (when in stepper / edit flow) */}
+          {isClickable && (
+            <p className="mt-1 text-xs text-earth-500">Click to edit details</p>
           )}
 
           {/* Warnings */}

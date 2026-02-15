@@ -2,6 +2,7 @@ import React from 'react';
 import { ExternalLink, MapPin, Phone, Clock, ShieldCheck, Star as StarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
+import HotelPhotoThumb from './HotelPhotoThumb';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import TravelerAvatars from '../../timeline/TravelerAvatars';
 import { TimelineItem, TimelineType, getEventColors, formatTime12, formatTime12Stacked, getEventIconComponent, parseTimeToHM } from './timeline-utils';
@@ -172,7 +173,7 @@ const TimelineRow: React.FC<Props> = ({
               />
             </div>
 
-            {/* Main Content: Icon + Title/Subtitle */}
+            {/* Main Content: Icon + Title/Subtitle + Optional Hotel Thumb */}
             <div className="flex items-start gap-3">
               {/* Icon - Outline, no background */}
               <div className={cn("flex-shrink-0 mt-0.5", colors.node.replace('bg-', 'text-'))}>
@@ -211,6 +212,11 @@ const TimelineRow: React.FC<Props> = ({
                 {/* Type-specific metadata */}
                 <EventMetadata item={item} />
               </div>
+
+              {/* Hotel photo thumbnail (check-in/check-out events) */}
+              {item.type === 'hotel' && item.data?.hotel_place_id && (
+                <HotelPhotoThumb placeId={item.data.hotel_place_id} title={item.data.hotel} size="sm" />
+              )}
             </div>
 
             {/* Footer Section - Divider + Price + Action Link */}
@@ -321,6 +327,11 @@ const TimelineRow: React.FC<Props> = ({
               {/* Type-specific metadata */}
               <EventMetadata item={item} />
             </div>
+
+            {/* Hotel photo thumbnail (check-in/check-out events) */}
+            {item.type === 'hotel' && item.data?.hotel_place_id && (
+              <HotelPhotoThumb placeId={item.data.hotel_place_id} title={item.data.hotel} size="md" />
+            )}
           </div>
 
           {/* Footer Section - Divider + Price + Action Link */}

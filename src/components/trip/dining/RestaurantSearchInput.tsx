@@ -145,13 +145,13 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   const dropdownContent = showSuggestions && suggestions.length > 0 && (
     <div
       ref={dropdownRef}
-      className="bg-white border border-sand-200 rounded-md shadow-xl max-h-60 overflow-y-auto"
+      className="bg-white border border-sand-200 rounded-md shadow-xl max-h-60 overflow-y-auto pointer-events-auto"
       style={{
         position: 'fixed',
         top: dropdownPosition.top + 4,
         left: dropdownPosition.left,
         width: dropdownPosition.width,
-        zIndex: 9999
+        zIndex: 99999
       }}
       onMouseDown={() => {
         isSelectingRef.current = true;

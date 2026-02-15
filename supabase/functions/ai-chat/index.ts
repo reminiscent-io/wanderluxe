@@ -188,19 +188,39 @@ Deno.serve(async (req: Request) => {
 
     // Build itinerary summary if available
     let itineraryContext = '';
+    const formattedDays: string[] = [];
     if (days && days.length > 0) {
-      const daysSummary = days.slice(0, 5).map((d: any) => {
+      const daysSummary = days.slice(0, 10).map((d: any) => {
         const activities = d.day_activities?.map((a: any) => a.title).join(', ') || 'no activities yet';
-        return `${d.date}: ${activities}`;
-      }).join('\n');
-      itineraryContext = `\n\nCurrent itinerary:\n${daysSummary}`;
+        return `${d.date}${d.title ? ` - ${d.title}` : ''}:\n  ${activities}`;
+      }).join('\n\n');
+      itineraryContext = `\n\nCurrent Itinerary:\n${daysSummary}`;
     }
+
+    // Format accommodations for create_items context
+    const formattedAccommodations = (accommodations || []).slice(0, 5)
+      .map((a: any) => `- ${a.hotel}: ${a.hotel_checkin_date || 'TBD'} to ${a.hotel_checkout_date || 'TBD'}${a.hotel_address ? ` (${a.hotel_address})` : ''}`)
+      .join('\n') || 'No accommodations added yet';
+
+    // Format transportation
+    const formattedTransportation = (transportation || []).slice(0, 5)
+      .map((t: any) => `- ${t.type}${t.provider ? ` (${t.provider})` : ''}: ${t.departure_location || 'TBD'} → ${t.arrival_location || 'TBD'} on ${t.start_date}${t.start_time ? ` at ${t.start_time}` : ''}`)
+      .join('\n') || 'No transportation added yet';
 
     // Use a reasonable search location (primary destination > first hotel address > trip name)
     const searchLocation = (primaryDestination || accommodations?.[0]?.hotel_address || transportation?.[0]?.arrival_location || tripName).replace(/\s+/g, '+');
 
-    const systemPrompt = `You are a helpful travel assistant. ${locationContext}
-Trip dates: ${trip?.arrival_date || 'TBD'} to ${trip?.departure_date || 'TBD'}.${itineraryContext}
+    const arrivalDate = trip?.arrival_date || 'TBD';
+    const departureDate = trip?.departure_date || 'TBD';
+
+    const systemPrompt = `You are a helpful travel assistant for a trip to ${tripName}. ${locationContext}
+Trip dates: ${arrivalDate} to ${departureDate}.${itineraryContext}
+
+Accommodations:
+${formattedAccommodations}
+
+Transportation:
+${formattedTransportation}
 
 Guidelines:
 - Be concise and helpful
@@ -211,7 +231,34 @@ Guidelines:
   - Google Search: https://www.google.com/search?q=PLACE+NAME+${searchLocation}
 - Replace PLACE+NAME with the actual place name using + for spaces
 - Format: **[Place Name](google maps or search url)** - Brief description
-- Example: **[The Ritz-Carlton](https://www.google.com/maps/search/The+Ritz-Carlton+${searchLocation})** - Luxury hotel with excellent service`;
+- Example: **[The Ritz-Carlton](https://www.google.com/maps/search/The+Ritz-Carlton+${searchLocation})** - Luxury hotel with excellent service
+
+CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:
+You have the ability to add items directly to the user's trip itinerary. This is a core feature.
+Adding a reservation = creating a timeline event the user can click to import. You are NOT booking at the restaurant.
+When the user asks you to ADD, CREATE, SCHEDULE, or PUT something on their trip/itinerary/calendar, or says things like "I want to go to X for dinner on [day] at [time]", "add a dinner reservation at X", "schedule X for Tuesday", "put that on my itinerary", "add the Eiffel Tower visit", "yes add it", you MUST:
+
+1. Confirm what you're adding in a brief, friendly response
+2. ALWAYS include the JSON block below - this is what actually creates the item
+
+YOU MUST output this JSON block at the END of your response:
+\`\`\`create_items
+[{"itemType": "reservation", "fields": {"restaurant_name": "...", "date": "YYYY-MM-DD", "time": "HH:mm", ...}}]
+\`\`\`
+
+Item types and their fields:
+- reservation (restaurants/dining): {"restaurant_name", "date" (YYYY-MM-DD), "time" (HH:mm), "party_size", "address", "phone", "notes"}
+- accommodation (hotels/stays): {"name", "address", "check_in_date" (YYYY-MM-DD), "check_out_date", "check_in_time" (HH:mm), "check_out_time", "confirmation_number", "cost", "currency"}
+- transportation (flights/trains/cars): {"type" (flight/train/shuttle/car_service/ferry/rental_car), "carrier", "departure_location", "arrival_location", "departure_date" (YYYY-MM-DD), "departure_time" (HH:mm), "arrival_date", "arrival_time", "confirmation_number", "cost", "currency"}
+- activity (tours/attractions/events): {"name", "date" (YYYY-MM-DD), "start_time" (HH:mm), "end_time", "location", "notes", "cost", "currency"}
+
+Date calculation rules:
+- Trip dates are ${arrivalDate} to ${departureDate}
+- If user says "Friday", "Tuesday", etc., calculate the actual YYYY-MM-DD date within the trip
+- If user says "day 1", "day 3", etc., calculate from ${arrivalDate}
+- Only include fields you have information for; use null for unknown fields
+
+IMPORTANT: Never say "I can't add items" or "I don't have the ability to modify your itinerary". You DO have this ability through the JSON block. Always use it when the user wants to add something.`;
     const openaiMsgs = [{ role: 'system', content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
 
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -225,6 +272,33 @@ Guidelines:
     const encoder = new TextEncoder();
     let fullResponse = '';
     const finalThreadId = threadId;
+
+    function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: Array<{ id: string; itemType: string; fields: Record<string, unknown>; missingRequired: string[]; confidence: number; status: 'pending' }> } {
+      const createItemsRegex = /```create_items\s*([\s\S]*?)```/;
+      const match = response.match(createItemsRegex);
+      if (!match) return { cleanContent: response, extractedItems: [] };
+      const jsonStr = match[1].trim();
+      let items: Array<{ id: string; itemType: string; fields: Record<string, unknown>; missingRequired: string[]; confidence: number; status: 'pending' }> = [];
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const rawItems = Array.isArray(parsed) ? parsed : [parsed];
+        const requiredByType: Record<string, string[]> = {
+          accommodation: ['name', 'check_in_date', 'check_out_date'],
+          transportation: ['type', 'departure_location', 'arrival_location', 'departure_date'],
+          activity: ['name', 'date'],
+          reservation: ['restaurant_name', 'date', 'time']
+        };
+        items = rawItems.map((item: any, idx: number) => {
+          const itemType = item.itemType || 'activity';
+          const fields = item.fields || item;
+          const required = requiredByType[itemType] || [];
+          const missingRequired = required.filter((k: string) => !fields[k]);
+          return { id: `ai-item-${idx}-${Date.now()}`, itemType, fields, missingRequired, confidence: 0.85, status: 'pending' as const };
+        });
+      } catch (_e) { /* ignore parse errors */ }
+      const cleanContent = response.replace(createItemsRegex, '').trim();
+      return { cleanContent, extractedItems: items };
+    }
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -244,8 +318,12 @@ Guidelines:
               }
             }
           }
-          const { data: saved } = await supabase.from('ai_chat_messages').insert({ thread_id: finalThreadId, role: 'assistant', content: fullResponse }).select('id').single();
-          controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify({ thread_id: finalThreadId, message_id: saved?.id })}\n\n`));
+          const { cleanContent, extractedItems } = parseCreateItemsBlock(fullResponse);
+          if (extractedItems.length > 0) {
+            controller.enqueue(encoder.encode(`event: extracted_items\ndata: ${JSON.stringify({ items: extractedItems, meta: { model, source: 'conversation' } })}\n\n`));
+          }
+          const { data: saved } = await supabase.from('ai_chat_messages').insert({ thread_id: finalThreadId, role: 'assistant', content: cleanContent }).select('id').single();
+          controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify({ thread_id: finalThreadId, message_id: saved?.id, content: cleanContent })}\n\n`));
           controller.close();
         } catch (e) { controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'Stream error' })}\n\n`)); controller.close(); }
       }
