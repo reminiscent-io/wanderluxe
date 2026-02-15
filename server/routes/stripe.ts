@@ -113,7 +113,7 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
       return res.status(500).json({ error: 'Failed to set up payment. Please try again.' });
     }
 
-    const origin = req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000';
+    const origin = req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5001';
     const successUrl = `${origin}/profile?upgraded=true`;
     const cancelUrl = `${origin}/profile?cancelled=true`;
     console.log('Creating checkout session with URLs:', { origin, successUrl, cancelUrl });
@@ -362,7 +362,7 @@ router.post('/api/stripe/create-portal', async (req: Request, res: Response) => 
       return res.status(400).json({ error: 'No subscription found' });
     }
 
-    const returnUrl = `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/profile`;
+    const returnUrl = `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5001'}/profile`;
 
     const stripeClient = getStripe();
     const portalSession = await stripeClient.billingPortal.sessions.create({

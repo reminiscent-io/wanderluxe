@@ -213,8 +213,12 @@ const Auth = () => {
               <div className="space-y-4 mt-6">
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-[#888888] hover:bg-[#999999] active:bg-[#777777] text-white transition-colors"
-                  disabled={loading}
+                  className={`w-full h-12 text-white transition-colors ${
+                    password.length > 0
+                      ? "bg-earth-600 hover:bg-earth-700 active:bg-earth-800"
+                      : "bg-[#B0B0B0] hover:bg-[#B0B0B0] active:bg-[#B0B0B0] cursor-not-allowed"
+                  }`}
+                  disabled={loading || password.length === 0}
                 >
                   Sign In / Sign Up
                 </Button>

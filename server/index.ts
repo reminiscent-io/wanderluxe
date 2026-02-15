@@ -71,8 +71,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// Cloud Run sets PORT env var; fall back to 5000 for local dev
-const PORT = process.env.PORT || 5000;
+// Cloud Run sets PORT env var; fall back to 5001 (5000 used by macOS AirPlay)
+const PORT = process.env.PORT || 5001;
 const httpServer = createServer(app);
 
 // Start server on 0.0.0.0 to accept external connections

@@ -4,8 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2
-  BarChart2, Package, Settings, ArrowLeft, Users, Download, ShieldCheck, Trash2
+  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2, ShieldCheck, Trash2
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -33,7 +32,6 @@ import ShareTripDialog from "@/components/trip/ShareTripDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useInviteLinks } from "@/hooks/useInviteLinks";
-import { Link2 } from "lucide-react";
 
 export interface SidebarHandle {
   openAccommodationDialog: () => void;
