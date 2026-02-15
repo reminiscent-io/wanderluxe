@@ -4,15 +4,23 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const UserAvatar = () => {
-  const { session, avatarUrl, fullName, user } = useAuth();
+  const { session, avatarUrl, fullName, profileLoaded } = useAuth();
   const navigate = useNavigate();
 
   if (!session?.user) return null;
 
-  // Use avatarUrl from profile, fall back to OAuth metadata avatar
-  const displayAvatarUrl = avatarUrl || user?.user_metadata?.avatar_url;
+  // Show loading skeleton until profile has loaded (avoids flashing Google avatar → initials → photo)
+  if (!profileLoaded) {
+    return (
+      <Skeleton className="h-10 w-10 shrink-0 rounded-full border-2 border-earth-500" />
+    );
+  }
+
+  // Use only avatarUrl from profile (AuthContext already falls back to OAuth when setting it)
+  const displayAvatarUrl = avatarUrl ?? undefined;
 
   const getInitials = () => {
     if (fullName) {
@@ -33,8 +41,8 @@ const UserAvatar = () => {
       onClick={() => navigate('/profile')}
     >
       <Avatar className="border-2 border-earth-500">
-        <AvatarImage src={displayAvatarUrl || undefined} alt={fullName || 'Profile'} />
-        <AvatarFallback className="bg-sand-50 text-earth-500">
+        <AvatarImage src={displayAvatarUrl} alt={fullName || 'Profile'} />
+        <AvatarFallback delayMs={400} className="bg-sand-50 text-earth-500">
           {getInitials()}
         </AvatarFallback>
       </Avatar>

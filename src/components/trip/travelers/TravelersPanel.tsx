@@ -1,15 +1,17 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus } from "lucide-react";
+import { UserPlus, Link2 } from "lucide-react";
 import { useTravelers } from "@/hooks/useTravelers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTripPermissions } from "@/hooks/use-trip-permissions";
 import { Separator } from "@/components/ui/separator";
 import Header from "../_shared/Header";
 import TravelerRow from "./TravelerRow";
-import InviteLinkSection from "./InviteLinkSection";
+import ShareTripDialog from "../ShareTripDialog";
 
 interface TravelersPanelProps {
   tripId: string;
+  tripDestination?: string;
   onAdd: () => void;
   onEdit: (traveler: any) => void;
   isMobile: boolean;
@@ -19,12 +21,14 @@ interface TravelersPanelProps {
 
 export default function TravelersPanel({
   tripId,
+  tripDestination = "Trip",
   onAdd,
   onEdit,
   isMobile,
   onClose,
   onBack,
 }: TravelersPanelProps) {
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { travelers, loading, error } = useTravelers(tripId);
   const { isOwner } = useTripPermissions(tripId);
 
@@ -57,10 +61,26 @@ export default function TravelersPanel({
       <Button
         size="sm"
         onClick={onAdd}
-        className="mb-4 w-full bg-earth-500 text-white hover:bg-earth-600"
+        className="mb-3 w-full bg-earth-500 text-white hover:bg-earth-600"
       >
         <UserPlus size={14} className="mr-1" /> Add Traveler
       </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsShareDialogOpen(true)}
+        className="mb-4 w-full border-sand-300 text-sand-700 hover:bg-sand-50 hover:border-sand-400"
+      >
+        <Link2 size={14} className="mr-1" /> Generate Invite Link
+      </Button>
+
+      <ShareTripDialog
+        tripId={tripId}
+        tripDestination={tripDestination}
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+      />
 
       {travelers.length === 0 ? (
         <div className="text-center py-12 border border-dashed rounded-lg">

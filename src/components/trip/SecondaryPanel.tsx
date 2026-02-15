@@ -34,7 +34,7 @@ interface SecondaryPanelProps {
   transportation: any[];
   activities: any[];
   reservations: any[];
-  trip: { arrival_date: string; departure_date: string; id: string } | null;
+  trip: { arrival_date: string; departure_date: string; id: string; destination?: string } | null;
 
   onAccommodationAdd: () => void;
   onAccommodationEdit: (a: any) => void;
@@ -144,6 +144,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
         <TravelersPanel
           {...headerProps}
           tripId={trip?.id || ""}
+          tripDestination={trip?.destination || "Trip"}
           onAdd={onTravelerAdd}
           onEdit={onTravelerEdit}
           isMobile={isMobile}
