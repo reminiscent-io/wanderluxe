@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download
+  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -22,6 +22,7 @@ import RestaurantReservationDialog from "../trip/dining/RestaurantReservationDia
 import TravelerDialog from "../trip/travelers/TravelerDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
+import ShareTripDialog from "@/components/trip/ShareTripDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SidebarHandle {
@@ -65,6 +66,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
+  const [isShareDialogOpen, setIsShareDialogOpen] = React.useState(false);
 
   // Listen for custom event from Navigation hamburger menu
   React.useEffect(() => {
@@ -146,7 +148,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                 className={({ isActive }) => cn(
                   "w-full justify-start text-left flex items-center px-4 py-2 rounded-md transition-colors",
                   isActive
-                    ? "bg-earth-100 text-earth-700 font-medium"
+                    ? "bg-earth-100 text-earth-700"
                     : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
                 )}
               >
@@ -154,6 +156,16 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                 {item.title}
               </NavLink>
 
+              {item.title === "Booking" && tripId && (
+                <Button
+                  size="sm"
+                  onClick={() => setIsShareDialogOpen(true)}
+                  className="mt-2 mb-4 w-full bg-earth-500 text-white hover:bg-earth-600 shadow-sm"
+                >
+                  <Link2 className="mr-2 h-4 w-4" />
+                  Generate Invite Link
+                </Button>
+              )}
               {item.title === "Timeline" && (
                 <div className="mt-2 mb-4">
                   <div className="space-y-1 mb-3">
@@ -166,7 +178,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                         className={cn(
                           "w-full justify-start pl-6 h-8 text-xs",
                           secondaryPanel === child.key
-                            ? "bg-earth-50 text-earth-600 font-medium"
+                            ? "bg-earth-50 text-earth-600"
                             : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
                         )}
                       >
@@ -188,7 +200,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                         className={cn(
                           "w-full justify-start pl-6 h-8 text-xs",
                           secondaryPanel === child.key
-                            ? "bg-earth-50 text-earth-600 font-medium"
+                            ? "bg-earth-50 text-earth-600"
                             : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
                         )}
                       >
@@ -278,7 +290,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         transportation={transportation}
         activities={activities}
         reservations={reservations}
-        trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date, id: trip.trip_id } : null}
+        trip={trip ? { arrival_date: trip.arrival_date, departure_date: trip.departure_date, id: trip.trip_id, destination: trip.destination } : null}
         onAccommodationAdd={handleAccommodationAdd}
         onAccommodationEdit={handleAccommodationEdit}
         onTransportationAdd={handleTransportationAdd}
@@ -440,6 +452,15 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         tripId={tripId}
         traveler={selectedTraveler}
       />
+
+      {tripId && (
+        <ShareTripDialog
+          tripId={tripId}
+          tripDestination={trip?.destination || "Trip"}
+          open={isShareDialogOpen}
+          onOpenChange={setIsShareDialogOpen}
+        />
+      )}
     </>
   );
 });
