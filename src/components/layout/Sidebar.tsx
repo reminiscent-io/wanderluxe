@@ -28,7 +28,6 @@ import TravelerDialog from "../trip/travelers/TravelerDialog";
 import InviteLinkDialog from "../trip/travelers/InviteLinkDialog";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import SecondaryPanel from "@/components/trip/SecondaryPanel";
-import ShareTripDialog from "@/components/trip/ShareTripDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useInviteLinks } from "@/hooks/useInviteLinks";
@@ -74,7 +73,6 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
   const { canInstall, handleInstall } = usePWAInstall();
-  const [isShareDialogOpen, setIsShareDialogOpen] = React.useState(false);
   const { isAdmin } = useIsAdmin();
 
   // Listen for custom event from Navigation hamburger menu
@@ -180,15 +178,6 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
             Back to Trips
           </Button>
           <Separator className="my-4" />
-          
-          <Button
-            size="sm"
-            className="w-full mb-4 bg-earth-500 text-white hover:bg-earth-600 shadow-sm"
-            onClick={() => setInviteLinkOpen(true)}
-          >
-            <Link2 className="mr-2 h-4 w-4" />
-            Generate Invite Link
-          </Button>
 
           {tripNavItems.map(item => (
             <div key={item.title}>
@@ -211,7 +200,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
               {item.title === "Booking" && tripId && (
                 <Button
                   size="sm"
-                  onClick={() => setIsShareDialogOpen(true)}
+                  onClick={() => setInviteLinkOpen(true)}
                   className="mt-2 mb-4 w-full bg-earth-500 text-white hover:bg-earth-600 shadow-sm"
                 >
                   <Link2 className="mr-2 h-4 w-4" />
@@ -555,11 +544,12 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
       />
 
       {tripId && (
-        <ShareTripDialog
-          tripId={tripId}
+        <InviteLinkDialog
+          open={inviteLinkOpen}
+          onOpenChange={setInviteLinkOpen}
+          onGenerate={createLink}
+          creating={creating}
           tripDestination={trip?.destination || "Trip"}
-          open={isShareDialogOpen}
-          onOpenChange={setIsShareDialogOpen}
         />
       )}
     </>
