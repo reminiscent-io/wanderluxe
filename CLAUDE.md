@@ -11,7 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development
 ```bash
 bun install              # Install dependencies
-bun run dev             # Start development server (Vite on http://localhost:5173)
+bun run dev             # Start dev server (Express + Vite, http://localhost:8080)
+bun run dev:frontend    # Vite only (no Express backend)
+bun run dev:server      # Express server only
 bun run type-check      # TypeScript type checking
 bun run lint            # ESLint code quality check
 ```
@@ -21,12 +23,9 @@ bun run lint            # ESLint code quality check
 bun run build           # Production build
 bun run build:dev       # Development build
 bun run preview         # Preview production build (port 8080)
-```
-
-### Database
-```bash
-bun run db:push         # Apply Supabase migrations
-bun run db:reset        # Reset database (development only)
+bun run test            # Run tests (Vitest)
+bun run test:watch      # Watch mode
+bun run test:coverage   # Coverage report
 ```
 
 ## Architecture Overview
@@ -38,45 +37,64 @@ bun run db:reset        # Reset database (development only)
 - **Real-time**: Supabase real-time subscriptions via WebSocket
 - **Backend**: Express.js + Supabase Edge Functions (Deno)
 - **AI**: OpenAI GPT-4o-mini
+- **Payments**: Stripe
 - **External APIs**: Google Places, SendGrid, Unsplash
+- **Testing**: Vitest
+- **PWA**: Service worker + manifest for installable app
 
 ### Directory Structure
 
 ```
 src/
 ├── components/
-│   ├── trip/              # Trip feature components (14 subdirs)
+│   ├── trip/              # Trip feature components (15 subdirs)
+│   │   ├── _shared/       # Shared trip utilities
 │   │   ├── accommodation/ # Hotel management
+│   │   ├── ai-assistant/  # AI assistant components
 │   │   ├── budget/        # Expense tracking
-│   │   ├── chat/          # AI assistant
+│   │   ├── chat/          # Chat interface
 │   │   ├── create/        # Trip creation flow
 │   │   ├── day/           # Day-by-day components
+│   │   ├── details/       # Trip detail views
 │   │   ├── dining/        # Restaurant reservations
+│   │   ├── hero/          # Trip hero/header
+│   │   ├── stats/         # Trip statistics
 │   │   ├── timeline/      # Itinerary display
 │   │   ├── transportation/# Flight/train/car bookings
 │   │   ├── travelers/     # Collaborator management
-│   │   ├── vision-board/  # Inspiration gallery
-│   │   └── ...            # Other trip features
+│   │   └── vision-board/  # Inspiration gallery
+│   ├── admin/             # Admin dashboard components
 │   ├── layout/            # Sidebar, Navigation, AppLayout
-│   └── ui/                # Shadcn/ui primitive components (~40)
+│   ├── navigation/        # Navigation components
+│   └── ui/                # Shadcn/ui primitive components (~55)
 ├── pages/                 # Route pages (MyTrips, TripDetails, Budget, Profile, etc.)
 ├── hooks/                 # Custom hooks (useSidebarState, useChat, useTripQuery, etc.)
 ├── services/              # Business logic (pdfmake-export, travelers, tripDaysService, etc.)
-├── contexts/              # React Context (AuthContext)
+├── contexts/              # React Context (AuthContext, ConsentContext)
+├── config/                # Environment config (env.ts)
+├── lib/                   # Theme, utilities
 ├── integrations/supabase/ # Supabase client & auto-generated types
+├── test/                  # Test setup & mocks
 ├── types/                 # TypeScript definitions
 └── utils/                 # Utility functions
 
 server/
 ├── index.ts              # Express server setup
-└── routes/               # API routes (PDF export, notifications, etc.)
+├── dev-server.ts         # Development server config
+└── routes/               # API routes (PDF export, notifications, Stripe, AI chat)
 
 supabase/
-├── functions/            # Serverless Deno functions
-│   ├── send-share-notification/
-│   ├── google-places-proxy/
-│   ├── parse-travel-doc/
-│   └── ...
+├── functions/            # Serverless Deno functions (10 functions)
+│   ├── ai-chat/                  # AI chat via OpenAI
+│   ├── fetch-unsplash-metadata/  # Unsplash image metadata
+│   ├── fetch-url-metadata/       # URL metadata extraction
+│   ├── generate-image/           # AI image generation
+│   ├── google-places-proxy/      # Google Places API proxy
+│   ├── parse-travel-doc/         # Travel document parsing
+│   ├── send-email/               # Email via SendGrid
+│   ├── send-share-notification/  # Trip share notifications
+│   ├── update-exchange-rates/    # Currency exchange updates
+│   └── weather-proxy/            # Weather data proxy
 ├── migrations/           # SQL migration files
 └── config.toml          # Supabase configuration
 ```
@@ -87,7 +105,7 @@ supabase/
 - **Global Auth**: `AuthContext` (React Context) - authentication state with auto session refresh
 - **Server State**: `TanStack Query` - data fetching, caching, real-time subscriptions
 - **UI State**: React hooks (`useState`) - dialogs, forms, selected items
-- **Complex UI State**: `useSidebarState` hook (799 lines) - manages ~40 state variables for sidebar panels and dialogs
+- **Complex UI State**: `useSidebarState` hook - manages sidebar panels and dialog states
 
 #### 2. **Real-Time Collaboration**
 All real-time updates via Supabase subscriptions:
@@ -123,9 +141,9 @@ PostgreSQL database
 
 #### 5. **AI Chat Integration**
 - Chat interface: `ChatView` component in trip details
-- Backend: Calls OpenAI via Edge Function
-- Data: `chat_logs` table stores history with embeddings
-- Real-time: Subscription to chat_logs for instant message updates
+- Backend: Calls OpenAI via `ai-chat` Edge Function
+- Data: `ai_chat_threads` + `ai_chat_messages` tables; `user_ai_usage` tracks usage
+- Real-time: Subscription to chat messages for instant updates
 - Context: Includes trip details in system prompt for location-specific recommendations
 
 #### 6. **Component Patterns**
@@ -134,7 +152,6 @@ PostgreSQL database
 - `useSidebarState()` manages complex nested dialog states
 - Secondary panels for accommodation/activity/dining details
 - Responsive: Fixed on desktop, drawer on mobile
-- 365 lines, handles 40+ state variables
 
 **Trip Details Page**
 - Wrapper component routes to different views (Timeline, Budget, Booking, Chat, VisionBoard)
@@ -159,18 +176,23 @@ PostgreSQL database
 - **Format**: Professional itinerary with logos, formatting, mobile-aware layout
 - **Library**: pdfmake (no external PDF service)
 
-#### 8. **Database Schema** (17 tables)
+#### 8. **Database Schema** (~22 tables)
 Key tables:
 - `trips` - Trip records with dates, budget, destination
 - `trip_days` - Days within a trip
-- `day_activities` - Activities scheduled for days
-- `accommodations` / `transportation` / `reservations` - Bookings
-- `*_travelers` - User assignments to bookings
+- `day_activities` / `day_activity_travelers` - Activities and assignments
+- `accommodations` / `accommodations_days` / `accommodation_travelers` - Hotel bookings
+- `transportation` / `transportation_travelers` - Flight/train/car bookings
+- `reservations` / `reservation_travelers` - Dining reservations
 - `trip_shares` - Trip sharing & permissions
 - `profiles` - User profiles (auto-created on signup)
-- `chat_logs` - AI conversation history
+- `ai_chat_threads` / `ai_chat_messages` - AI conversation history
+- `user_ai_usage` - AI usage tracking
 - `vision_board_items` - Travel inspiration
 - `currencies` / `exchange_rates` - Multi-currency support
+- `weather_cache` - Cached weather data
+- `other_expenses` - Non-booking expenses
+- `user_engagement_events` / `trip_view_status` - Analytics
 
 All tables have RLS policies: users can only access their own trips or shared trips.
 
@@ -184,15 +206,43 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useTravelers()` - Collaborator management
 - `useTripPermissions()` - Permission checking
 - `useSessionKeepAlive()` - Session management with tab visibility detection
+- `useAIAssistant()` - AI assistant integration
+- `useAdminMetrics()` - Admin dashboard data
+- `useIsAdmin()` - Admin role checking
+- `usePWAInstall()` - PWA install prompt
+- `useWeather()` - Weather data fetching
+- `useDocumentExtraction()` - Travel document parsing
+- `useTravelStats()` - Travel statistics
+- `useTripViewingStatus()` - Trip viewing analytics
 
 #### 10. **Styling System**
-- **Framework**: Tailwind CSS 3.4.11 with custom config
+- **Framework**: Tailwind CSS with custom config
 - **Colors**: Sand/earth palette (luxury travel aesthetic)
   - Sand: #FAF9F7 → #7B715F (light to dark)
   - Earth: #F5F3F2 → #5C544A (light to dark)
 - **Components**: Shadcn/ui (40+ Radix UI primitives)
 - **Animations**: Custom fade-up, fade-down, slide-up, slide-down
 - **Responsive**: Mobile-first with Tailwind breakpoints
+
+#### 11. **Stripe Integration**
+- Payment processing via `server/routes/stripe.ts`
+- Stripe SDK v20+ in dependencies
+- Database columns for Stripe data on trips
+
+#### 12. **Admin Dashboard**
+- Components in `src/components/admin/`
+- Admin page with engagement, users, and overview tabs
+- Protected via `useIsAdmin()` hook
+
+#### 13. **PWA Support**
+- `public/manifest.json` + `public/sw.js` for installable app
+- PWA icons at multiple resolutions (144, 192, 384, 512)
+- `usePWAInstall()` hook for install prompt
+
+#### 14. **Weather Integration**
+- `weather_cache` table for caching
+- `weather-proxy` Edge Function
+- `useWeather()` hook for trip weather data
 
 ## Common Development Tasks
 
@@ -214,7 +264,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 ### Adding Database Table/Migration
 1. Create SQL file in `supabase/migrations/`
 2. Define RLS policies for security
-3. Run `bun run db:push`
+3. Apply migration via Supabase dashboard or CLI
 4. Auto-generated types appear in `src/integrations/supabase/types/database.ts`
 5. Update TypeScript models in `src/integrations/supabase/types/models.ts`
 
@@ -234,16 +284,18 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 ## Important Files & Patterns
 
-| File/Pattern | Purpose | Size |
-|---|---|---|
-| `useSidebarState.ts` | Sidebar UI state management | 799 lines |
-| `pdfmake-export.ts` | PDF itinerary generation | 1,210 lines |
-| `AuthContext.tsx` | Global authentication state | - |
-| `pages/TripDetails.tsx` | Trip detail page wrapper | 164 lines |
-| `components/trip/*/` | Feature-specific components | varies |
-| `hooks/use*Realtime.ts` | Real-time data hooks | 100-200 lines |
-| `integrations/supabase/` | Supabase types & client | auto-generated |
-| `services/` | Business logic layer | - |
+| File/Pattern | Purpose |
+|---|---|
+| `hooks/useSidebarState.ts` | Sidebar UI state management (largest hook) |
+| `services/pdfmake-export.ts` | PDF itinerary generation (largest service) |
+| `contexts/AuthContext.tsx` | Global authentication state |
+| `pages/TripDetails.tsx` | Trip detail page wrapper |
+| `components/trip/*/` | Feature-specific components |
+| `hooks/use*Realtime.ts` | Real-time data hooks |
+| `integrations/supabase/` | Supabase types & client (auto-generated) |
+| `services/` | Business logic layer |
+| `server/routes/stripe.ts` | Stripe payment routes |
+| `vitest.config.ts` | Test configuration |
 
 ## Performance Considerations
 
@@ -270,8 +322,12 @@ Required in `.env`:
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 - `VITE_GOOGLE_MAPS_API_KEY` - Google Places API
 - `OPENAI_API_KEY` - OpenAI API for chat
-- `SENDGRID_API_KEY` - Email service
+- `OPENAI_CHAT_MODEL` - OpenAI model selection
+- `STRIPE_SECRET_KEY` - Stripe payment processing
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
 - `VITE_UNSPLASH_ACCESS_KEY` - Trip images (optional)
+- `VITE_ADMIN_EMAIL` - Admin user email
+- `VITE_PARSE_TRAVEL_DOC_URL` - Travel document parsing endpoint
 
 ## Debugging Tips
 
