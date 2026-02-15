@@ -10,6 +10,7 @@ interface AuthContextType {
   avatarUrl: string | null;
   fullName: string | null;
   lastLoginAt: string | null;
+  profileLoaded: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   avatarUrl: null,
   fullName: null,
   lastLoginAt: null,
+  profileLoaded: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -32,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const [lastLoginAt, setLastLoginAt] = useState<string | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Add cache-busting to avatar URLs to ensure fresh images are loaded
   const addCacheBusting = (url: string | null): string | null => {
@@ -54,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      if (profile) {
+        if (profile) {
         // Get OAuth metadata for fallbacks (fetch fresh, don't use stale state)
         const { data: { user: authUser } } = await supabase.auth.getUser();
         const oauthAvatar = authUser?.user_metadata?.avatar_url;
@@ -65,8 +68,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setFullName(profile.full_name || oauthName || null);
         setLastLoginAt(profile.last_login_at);
       }
+      setProfileLoaded(true);
     } catch (err) {
       console.error('Error in fetchProfile:', err);
+      setProfileLoaded(true);
     }
   };
 
@@ -115,6 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (profileError) {
             console.error('Error creating profile:', profileError);
           }
+          setProfileLoaded(true);
         } else {
           // Get OAuth metadata for fallbacks - wrapped in try/catch to not block profile data
           let oauthAvatar: string | undefined;
@@ -137,9 +143,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (isNewLogin || !profile.last_login_at) {
             await updateLastLogin(userId);
           }
+          setProfileLoaded(true);
         }
       } catch (err) {
         console.error('Error in ensureProfile:', err);
+        setProfileLoaded(true);
       }
     };
 
@@ -147,7 +155,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
+      if (!session?.user) {
+        setProfileLoaded(true);
+      } else {
         ensureProfile(session.user.id, false);
       }
     });
@@ -158,7 +168,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
+      if (!session?.user) {
+        setProfileLoaded(false);
+      } else {
         // Only update last login on actual sign in events
         const isNewLogin = event === 'SIGNED_IN';
         ensureProfile(session.user.id, isNewLogin);
@@ -242,10 +254,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       avatarUrl,
       fullName,
       lastLoginAt,
+      profileLoaded,
       signOut,
       refreshProfile,
     }),
-    [session, user, subscriptionTier, avatarUrl, fullName, lastLoginAt] // signOut/refreshProfile are stable
+    [session, user, subscriptionTier, avatarUrl, fullName, lastLoginAt, profileLoaded]
   );
 
   return (
