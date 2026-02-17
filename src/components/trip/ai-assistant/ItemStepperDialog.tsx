@@ -130,6 +130,15 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
     destination: string | null;
   }>({ arrival_date: null, departure_date: null, destination: null });
 
+  // Reset internal state whenever the dialog opens so stale index / editDialogOpen
+  // from a previous session don't cause the dialog to render nothing.
+  useEffect(() => {
+    if (open) {
+      setCurrentIndex(0);
+      setEditDialogOpen(false);
+    }
+  }, [open]);
+
   useEffect(() => {
     const fetchTrip = async () => {
       const { data } = await supabase
