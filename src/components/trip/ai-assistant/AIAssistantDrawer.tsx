@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { useDocumentExtraction } from '@/hooks/useDocumentExtraction';
 import { bulkImportItems } from '@/services/bulkImportService';
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
@@ -13,7 +14,7 @@ import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
 import ImportConfirmationDialog from './ImportConfirmationDialog';
 import ItemStepperDialog from './ItemStepperDialog';
-import type { AIUsageInfo, AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
+import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem } from '@/types/ai-assistant';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -135,6 +136,12 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     onItemsExtracted: handleConversationItemsExtracted
   });
 
+  const {
+    isExtracting,
+    extractDocument,
+    clearExtraction
+  } = useDocumentExtraction();
+
   const allMessages = useMemo(() => {
     return [...chatMessages, ...extractionMessages].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -223,15 +230,56 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   const handleClearChat = useCallback(() => {
     clearThread();
     setExtractionMessages([]);
-  }, [clearThread]);
+    clearExtraction();
+  }, [clearThread, clearExtraction]);
 
-  const handleSend = useCallback(async (message: string) => {
+  const handleSend = useCallback(async (message: string, attachment?: ChatFileAttachment) => {
     try {
-      await sendMessage(message);
+      if (attachment) {
+        // Create user message with attachment preview
+        const userMessage: AIChatMessage = {
+          id: `user-extract-${Date.now()}`,
+          thread_id: '',
+          role: 'user',
+          content: message || 'Please extract items from this document',
+          metadata: {},
+          created_at: new Date().toISOString(),
+          attachmentPreviewUrl: attachment.previewUrl,
+          attachmentFileName: attachment.file.name
+        };
+
+        setExtractionMessages(prev => [...prev, userMessage]);
+
+        // Extract document via OCR
+        const items = await extractDocument(attachment);
+
+        if (items) {
+          const assistantMessage: AIChatMessage = {
+            id: `assistant-extract-${Date.now()}`,
+            thread_id: '',
+            role: 'assistant',
+            content: items.length > 0
+              ? `I found ${items.length} item${items.length !== 1 ? 's' : ''} in your document.`
+              : "I couldn't find any bookable items in this document.",
+            metadata: {},
+            created_at: new Date().toISOString(),
+            extractedItems: items,
+            extractionMeta: {
+              model: 'gpt-4o-mini',
+              pagesUsed: 1,
+              originalFileName: attachment.file.name
+            }
+          };
+
+          setExtractionMessages(prev => [...prev, assistantMessage]);
+        }
+      } else if (message.trim()) {
+        await sendMessage(message);
+      }
     } catch (err) {
       console.error('Unexpected error in handleSend:', err);
     }
-  }, [sendMessage]);
+  }, [sendMessage, extractDocument]);
 
   const handlePromptSelect = useCallback(async (prompt: string) => {
     try {
@@ -242,17 +290,17 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   }, [sendMessage]);
 
   const handleOpenChange = useCallback((newOpen: boolean) => {
-    if (isStreaming && !newOpen) {
+    if ((isStreaming || isExtracting) && !newOpen) {
       return;
     }
     onOpenChange(newOpen);
-  }, [isStreaming, onOpenChange]);
+  }, [isStreaming, isExtracting, onOpenChange]);
 
   const handleErrorBoundaryReset = useCallback(() => {
     setErrorBoundaryKey(prev => prev + 1);
   }, []);
 
-  const isDisabled = isStreaming || (usage && usage.tier === 'free' && usage.used >= usage.limit);
+  const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.used >= usage.limit);
 
   return (
     <>
@@ -339,7 +387,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               <div className="flex-1 min-h-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
                 <ChatMessageList
                   messages={allMessages}
-                  isLoading={isLoading}
+                  isLoading={isLoading || isExtracting}
                   isStreaming={isStreaming}
                   streamingContent={streamingContent}
                   hasMore={hasMore}
@@ -375,11 +423,11 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 <ChatInput
                   onSend={handleSend}
                   disabled={isDisabled}
-                  isSending={isStreaming}
+                  isSending={isStreaming || isExtracting}
                   placeholder={
                     isDisabled && usage?.used === usage?.limit
                       ? "Daily limit reached. Upgrade for unlimited."
-                      : "Ask about your trip..."
+                      : "Ask about your trip or attach a booking..."
                   }
                 />
               </div>
