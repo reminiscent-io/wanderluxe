@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { TimelineItem, TimelineType, getEventColors, formatTime12Stacked, formatTime12, getEventIconComponent } from './timeline-utils';
 import TimelineRow from './TimelineRow';
+import TravelerAvatars from '../../timeline/TravelerAvatars';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Props = {
@@ -142,6 +143,11 @@ const GroupedEventCard: React.FC<Props> = ({
                               {item.time && (
                                 <span className="text-[10px] ml-0.5">{formatTime12Stacked(item.time).meridiem}</span>
                               )}
+                              {item.type === 'transportation' && item.endTime && (
+                                <div className="text-[10px] text-earth-400 mt-0.5">
+                                  → {formatTime12(item.endTime)}
+                                </div>
+                              )}
                             </div>
 
                             {/* Content */}
@@ -154,6 +160,16 @@ const GroupedEventCard: React.FC<Props> = ({
                                   {item.description}
                                 </div>
                               )}
+                            </div>
+
+                            {/* Traveler Avatars */}
+                            <div className="flex-shrink-0">
+                              <TravelerAvatars
+                                tripId={tripId}
+                                eventType={item.type === 'hotel' ? 'accommodation' : item.type}
+                                eventId={item.type === 'hotel' ? item.data?.stay_id : item.id}
+                                maxShow={2}
+                              />
                             </div>
                           </div>
                         </div>
@@ -270,6 +286,11 @@ const GroupedEventCard: React.FC<Props> = ({
                             {item.time && (
                               <span className="text-[10px] ml-0.5">{formatTime12Stacked(item.time).meridiem}</span>
                             )}
+                            {item.type === 'transportation' && item.endTime && (
+                              <div className="text-[10px] text-earth-400 mt-0.5">
+                                → {formatTime12(item.endTime)}
+                              </div>
+                            )}
                           </div>
 
                           {/* Content */}
@@ -282,6 +303,16 @@ const GroupedEventCard: React.FC<Props> = ({
                                 {item.description}
                               </div>
                             )}
+                          </div>
+
+                          {/* Traveler Avatars */}
+                          <div className="flex-shrink-0">
+                            <TravelerAvatars
+                              tripId={tripId}
+                              eventType={item.type === 'hotel' ? 'accommodation' : item.type}
+                              eventId={item.type === 'hotel' ? item.data?.stay_id : item.id}
+                              maxShow={3}
+                            />
                           </div>
                         </div>
                       </div>

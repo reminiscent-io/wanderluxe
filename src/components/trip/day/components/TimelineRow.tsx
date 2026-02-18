@@ -192,7 +192,7 @@ const TimelineRow: React.FC<Props> = ({
                   </span>
                   {item.time && (
                     <span className="text-xs font-medium text-earth-500 whitespace-nowrap">
-                      {formatTime12(item.time)}
+                      {formatTime12(item.time)}{item.type === 'transportation' && item.endTime ? ` → ${formatTime12(item.endTime)}` : ''}
                     </span>
                   )}
                 </div>
@@ -204,8 +204,8 @@ const TimelineRow: React.FC<Props> = ({
                   </div>
                 )}
 
-                {/* End Time */}
-                {item.endTime && (
+                {/* End Time (non-transportation) */}
+                {item.endTime && item.type !== 'transportation' && (
                   <div className="text-xs text-earth-400 mt-1">until {formatTime12(item.endTime)}</div>
                 )}
 
@@ -310,6 +310,11 @@ const TimelineRow: React.FC<Props> = ({
               {/* Event Title - Bold, slightly reduced size */}
               <div className="text-sm font-bold text-earth-900 hover:text-earth-950 transition-colors line-clamp-2">
                 {item.title}
+                {item.type === 'transportation' && item.time && item.endTime && (
+                  <span className="ml-2 text-xs font-medium text-earth-500">
+                    {formatTime12(item.time)} → {formatTime12(item.endTime)}
+                  </span>
+                )}
               </div>
 
               {/* Subtitle/Details */}
@@ -319,8 +324,8 @@ const TimelineRow: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* End Time */}
-              {item.endTime && (
+              {/* End Time (non-transportation) */}
+              {item.endTime && item.type !== 'transportation' && (
                 <div className="text-xs text-earth-400 mt-1">until {formatTime12(item.endTime)}</div>
               )}
 
