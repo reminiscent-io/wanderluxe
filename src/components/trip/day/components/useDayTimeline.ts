@@ -153,17 +153,17 @@ export function useDayTimeline({
       if (isMultiDay) {
         if (isStartDay) {
           displayTime = t.start_time || undefined;
-          title = `Depart: ${t.departure_location || 'Departure'}`;
+          title = `${t.departure_location || 'Departure'} →`;
         } else if (isEndDay) {
           displayTime = t.end_time || undefined;
-          title = `Arrive: ${t.arrival_location || 'Arrival'}`;
+          title = `→ ${t.arrival_location || 'Arrival'}`;
         } else {
           displayTime = undefined;
           title = `${typeLabel} (In Transit): ${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`;
         }
       } else {
         displayTime = t.start_time || undefined;
-        title = `Depart: ${t.departure_location || 'Departure'} • Arrive: ${t.arrival_location || 'Arrival'}`;
+        title = `${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`;
       }
 
       const departTimeOnThisDay = isStartDay ? t.start_time : undefined;
