@@ -55,7 +55,7 @@ const DayHeader: React.FC<Props> = ({
       <div className="flex items-start sm:items-center justify-between gap-2">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <div className="flex flex-col min-w-0">
-            <span className="text-base sm:text-lg md:text-xl font-bold text-earth-800 truncate">
+            <span className="text-base sm:text-lg md:text-xl font-display font-normal text-earth-800 truncate">
               {dayTitle} {formattedDate}
             </span>
             <div className="text-xs sm:text-sm md:text-base text-earth-600 font-medium">

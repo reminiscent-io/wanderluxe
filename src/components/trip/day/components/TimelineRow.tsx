@@ -5,7 +5,7 @@ import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@
 import HotelPhotoThumb from './HotelPhotoThumb';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import TravelerAvatars from '../../timeline/TravelerAvatars';
-import { TimelineItem, TimelineType, getEventColors, formatTime12, formatTime12Stacked, getEventIconComponent, parseTimeToHM } from './timeline-utils';
+import { TimelineItem, TimelineType, formatTime12, formatTime12Stacked, getEventIconComponent, parseTimeToHM } from './timeline-utils';
 
 type Props = {
   item: TimelineItem;
@@ -123,8 +123,6 @@ const TimelineRow: React.FC<Props> = ({
   item, idx, isLast, tripId, isPast,
   onActivityClick, onHotelClick, onTransportationClick, onReservationClick
 }) => {
-  const colors = getEventColors(item.type as TimelineType);
-
   const handleItemClick = () => {
     if (item.type === 'activity' && onActivityClick && item.data) return onActivityClick(item.data);
     if (item.type === 'hotel' && onHotelClick && item.data) return onHotelClick(item.data);
@@ -149,11 +147,7 @@ const TimelineRow: React.FC<Props> = ({
               style={{
                 borderWidth: '2px',
                 borderStyle: 'solid',
-                borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' :
-                            colors.node === 'bg-sky-500' ? '#0ea5e9' :
-                            colors.node === 'bg-emerald-500' ? '#10b981' :
-                            colors.node === 'bg-rose-500' ? '#f43f5e' :
-                            '#d1d5db',
+                borderColor: '#8A7F6C',
               }}
             />
           </div>
@@ -176,7 +170,7 @@ const TimelineRow: React.FC<Props> = ({
             {/* Main Content: Icon + Title/Subtitle + Optional Hotel Thumb */}
             <div className="flex items-start gap-3">
               {/* Icon - Outline, no background */}
-              <div className={cn("flex-shrink-0 mt-0.5", colors.node.replace('bg-', 'text-'))}>
+              <div className="flex-shrink-0 mt-0.5 text-earth-600">
                 {React.createElement(
                   getEventIconComponent(item.type as TimelineType, item.data?.type),
                   { className: 'h-5 w-5', strokeWidth: 1.5 }
@@ -267,15 +261,11 @@ const TimelineRow: React.FC<Props> = ({
         {/* Column 2: Timeline Rail - Node Only */}
         <div className="relative flex flex-col items-center">
           <div
-            className="relative w-5 h-5 rounded-full flex-shrink-0 mt-2 bg-white z-10"
+            className="relative w-3 h-3 rounded-full flex-shrink-0 mt-2 bg-white z-10"
             style={{
-              borderWidth: '3px',
+              borderWidth: '2px',
               borderStyle: 'solid',
-              borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' :
-                          colors.node === 'bg-sky-500' ? '#0ea5e9' :
-                          colors.node === 'bg-emerald-500' ? '#10b981' :
-                          colors.node === 'bg-rose-500' ? '#f43f5e' :
-                          '#94a3b8'
+              borderColor: '#8A7F6C',
             }}
           />
         </div>
@@ -297,11 +287,11 @@ const TimelineRow: React.FC<Props> = ({
 
           {/* Main Content: Icon + Title/Subtitle */}
           <div className="flex items-start gap-3 sm:gap-4">
-            {/* Icon Container: Responsive size with event-type background */}
-            <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
+            {/* Icon - Outline, no background */}
+            <div className="flex-shrink-0 mt-0.5 text-earth-600">
               {React.createElement(
                 getEventIconComponent(item.type as TimelineType, item.data?.type),
-                { className: 'h-4 w-4 sm:h-5 sm:w-5' }
+                { className: 'h-5 w-5', strokeWidth: 1.5 }
               )}
             </div>
 

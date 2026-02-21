@@ -21,6 +21,7 @@ interface TimelineContentProps {
   tripDepartureDate?: string;
   canEdit?: boolean;
   weather?: WeatherData;
+  tripDestination?: string;
 }
 
 const TimelineContent: React.FC<TimelineContentProps> = ({
@@ -30,7 +31,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   tripArrivalDate,
   tripDepartureDate,
   canEdit = true,
-  weather
+  weather,
+  tripDestination
 }) => {
   const queryClient = useQueryClient();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
@@ -158,6 +160,11 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   cost: activity.cost ? String(activity.cost) : '',
                   currency: activity.currency || 'USD',
                   date: day.date.split('T')[0], // Add the current day's date
+                  location_address: activity.location_address || null,
+                  location_place_id: activity.location_place_id || null,
+                  location_phone: activity.location_phone || null,
+                  location_website: activity.location_website || null,
+                  location_rating: activity.location_rating || null,
                 });
                 // Don't open the add dialog when editing
                 setActivityOpen(false);
@@ -239,6 +246,11 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     end_time: activityEdit.end_time || null,
                     cost: activityEdit.cost ? parseFloat(activityEdit.cost) : null,
                     currency: activityEdit.currency || null,
+                    location_address: activityEdit.location_address || null,
+                    location_place_id: activityEdit.location_place_id || null,
+                    location_phone: activityEdit.location_phone || null,
+                    location_website: activityEdit.location_website || null,
+                    location_rating: activityEdit.location_rating || null,
                   };
 
                   // If date was changed, find the new day_id and update it
@@ -298,7 +310,12 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                       cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
                       currency: newActivity.currency || null,
                       order_index: 0,
-                      is_paid: false
+                      is_paid: false,
+                      location_address: newActivity.location_address || null,
+                      location_place_id: newActivity.location_place_id || null,
+                      location_phone: newActivity.location_phone || null,
+                      location_website: newActivity.location_website || null,
+                      location_rating: newActivity.location_rating || null,
                     })
                     .select()
                     .single();
@@ -365,6 +382,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
             tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
             tripId={sortedDays[0].trip_id}
             activityId={editingActivity?.id || null}
+            destination={tripDestination}
           />
           
           {/* Restaurant Reservation Dialog - always available */}

@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format } from 'date-fns';
 import TravelersTagMultiSelect from './travelers/TravelersTagMultiSelect';
 import { getDayActivityTravelerIds, setDayActivityTravelers } from '@/services/travelers';
+import GooglePlacesAutocomplete from './accommodation/GooglePlacesAutocomplete';
+import type { PlaceResult } from '@/utils/googleMapsLoader';
+import RestaurantContactInfo from './dining/form/RestaurantContactInfo';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
@@ -23,6 +26,7 @@ interface ActivityFormProps {
   preselectedDate?: string;
   tripId: string;
   activityId?: string | null; // Add activity ID for edit mode
+  destination?: string; // Trip destination to bias Google Places results
 }
 
 const DEFAULT_START_TIME = '08:00'; // Default to 8:00 AM for activities
@@ -77,11 +81,13 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   preselectedDate,
   tripId,
   activityId,
+  destination,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useCustomEndTime, setUseCustomEndTime] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [locationSearch, setLocationSearch] = useState(activity.location_address || '');
 
   // Load existing travelers for edit mode
   useEffect(() => {
@@ -248,6 +254,54 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           required
         />
         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
+      </div>
+
+      {/* Location Field - Google Places Search */}
+      <div>
+        <label className="block text-sm font-medium text-earth-700">
+          Location
+        </label>
+        <div className="mt-1">
+          <GooglePlacesAutocomplete
+            value={locationSearch}
+            placeholder="Search for a location..."
+            locationContext={destination}
+            onChange={(name, details?: PlaceResult) => {
+              setLocationSearch(name);
+              if (details) {
+                onActivityChange({
+                  ...activity,
+                  location_address: details.formatted_address || null,
+                  location_place_id: details.place_id || null,
+                  location_phone: details.formatted_phone_number || null,
+                  location_website: details.website || null,
+                  location_rating: details.rating || null,
+                });
+              } else {
+                // User is typing freely — clear place details
+                onActivityChange({
+                  ...activity,
+                  location_address: null,
+                  location_place_id: null,
+                  location_phone: null,
+                  location_website: null,
+                  location_rating: null,
+                });
+              }
+            }}
+          />
+        </div>
+        {/* Show place details when a location is selected */}
+        {(activity.location_address || activity.location_phone || activity.location_website || activity.location_rating) && (
+          <div className="mt-2">
+            <RestaurantContactInfo
+              address={activity.location_address || undefined}
+              phone={activity.location_phone || undefined}
+              website={activity.location_website || undefined}
+              rating={activity.location_rating || undefined}
+            />
+          </div>
+        )}
       </div>
 
       {/* Description Field */}

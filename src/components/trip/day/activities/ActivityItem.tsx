@@ -1,4 +1,5 @@
 import React from 'react';
+import { MapPin } from 'lucide-react';
 import { DayActivity } from '@/types/trip';
 
 interface ActivityItemProps {
@@ -45,6 +46,12 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
           {activity.start_time && formatTime(activity.start_time)}
           {activity.start_time && activity.end_time && " - "}
           {activity.end_time && formatTime(activity.end_time)}
+        </p>
+      )}
+      {activity.location_address && (
+        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+          <span className="truncate">{activity.location_address}</span>
         </p>
       )}
       {activity.description && (

@@ -237,6 +237,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           tripDepartureDate={localTripDates.departure_date || undefined}
           canEdit={canEdit}
           weather={weather}
+          tripDestination={tripDestination}
         />
       </div>
 

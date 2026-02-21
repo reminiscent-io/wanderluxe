@@ -269,6 +269,11 @@ export type Database = {
           currency: string
           created_at: string
           order_index: number
+          location_address: string | null
+          location_place_id: string | null
+          location_phone: string | null
+          location_website: string | null
+          location_rating: number | null
         }
         Insert: {
           id?: string
@@ -281,6 +286,11 @@ export type Database = {
           currency?: string
           created_at?: string
           order_index: number
+          location_address?: string | null
+          location_place_id?: string | null
+          location_phone?: string | null
+          location_website?: string | null
+          location_rating?: number | null
         }
         Update: {
           id?: string
@@ -293,6 +303,11 @@ export type Database = {
           currency?: string
           created_at?: string
           order_index?: number
+          location_address?: string | null
+          location_place_id?: string | null
+          location_phone?: string | null
+          location_website?: string | null
+          location_rating?: number | null
         }
         Relationships: [
           {
