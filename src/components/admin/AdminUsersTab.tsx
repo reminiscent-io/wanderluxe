@@ -77,7 +77,7 @@ export function AdminUsersTab() {
       {/* Signups Over Time */}
       <section>
         <h3 className="mb-4 text-lg font-semibold text-earth-900">Weekly Signups (Last 12 Weeks)</h3>
-        <div className="rounded-xl border border-sand-200 bg-white p-6">
+        <div className="rounded-xl border border-sand-200 bg-background p-6">
           {signupsByWeek.length === 0 ? (
             <p className="text-center text-sand-500">No signup data available</p>
           ) : (

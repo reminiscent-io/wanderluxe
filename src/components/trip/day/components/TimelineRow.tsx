@@ -160,7 +160,7 @@ const TimelineRow: React.FC<Props> = ({
 
           {/* Event Card */}
           <div
-            className="relative flex-1 min-w-0 bg-white rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-gray-100"
+            className="relative flex-1 min-w-0 bg-background rounded-lg shadow-warm-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-[hsl(var(--border))]"
             onClick={handleItemClick}
           >
             {/* Top-right: Avatar Stack (Face Pile) */}
@@ -222,7 +222,7 @@ const TimelineRow: React.FC<Props> = ({
             {/* Footer Section - Divider + Price + Action Link */}
             {hasFooter && (
               <>
-                <div className="border-t border-gray-200 mt-3 pt-3" />
+                <div className="border-t border-[hsl(var(--border))] mt-3 pt-3" />
                 <div className="flex items-center justify-between">
                   {item.data?.cost ? (
                     <span className="text-xs font-semibold text-emerald-600">
@@ -282,7 +282,7 @@ const TimelineRow: React.FC<Props> = ({
 
         {/* Column 3: Event Card */}
         <div
-          className="relative flex-1 min-w-0 bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
+          className="relative flex-1 min-w-0 bg-background rounded-xl shadow-warm-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
           onClick={handleItemClick}
         >
           {/* Top-right: Avatar Stack (Face Pile) */}
@@ -342,7 +342,7 @@ const TimelineRow: React.FC<Props> = ({
           {/* Footer Section - Divider + Price + Action Link */}
           {hasFooter && (
             <>
-              <div className="border-t border-gray-200 mt-3 pt-3" />
+              <div className="border-t border-[hsl(var(--border))] mt-3 pt-3" />
               <div className="flex items-center justify-between">
                 {item.data?.cost ? (
                   <span className="text-xs font-semibold text-emerald-600">

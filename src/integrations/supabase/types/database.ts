@@ -795,6 +795,8 @@ export type Database = {
           budget: number | null
           is_public: boolean
           cover_image_position: string | null
+          cover_image_photographer: string | null
+          cover_image_photographer_username: string | null
           primary_destination: string | null
           primary_destination_place_id: string | null
         }
@@ -812,6 +814,8 @@ export type Database = {
           budget?: number | null
           is_public?: boolean
           cover_image_position?: string | null
+          cover_image_photographer?: string | null
+          cover_image_photographer_username?: string | null
           primary_destination?: string | null
           primary_destination_place_id?: string | null
         }
@@ -829,6 +833,8 @@ export type Database = {
           budget?: number | null
           is_public?: boolean
           cover_image_position?: string | null
+          cover_image_photographer?: string | null
+          cover_image_photographer_username?: string | null
           primary_destination?: string | null
           primary_destination_place_id?: string | null
         }

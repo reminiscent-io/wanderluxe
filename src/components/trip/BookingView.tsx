@@ -105,12 +105,12 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId, canEdit = true }) => 
             <div className="space-y-3">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-earth-400 mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-gray-700">Based in New York</span>
+                <span className="text-sm text-earth-700">Based in New York</span>
               </div>
 
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-earth-500">About</h4>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-earth-700">
                   NYC-based traveler passionate about high-end US and Western Europe adventures, 
                   expertly balancing luxury experiences with smart value optimization.
                 </p>
@@ -132,7 +132,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId, canEdit = true }) => 
 
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-earth-500">Travel Style</h4>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-earth-700">
                   I blend a pastry chef's love for exceptional food with deep travel experience across Europe and the US. 
                   With a luxury-leaning yet value-driven approach, I craft highly organized itineraries that balance 
                   indulgence and discovery—fun, exciting, and effortlessly relaxing.
@@ -153,15 +153,15 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId, canEdit = true }) => 
               Contact Kevin on Fora Travel
             </Button>
             <div className="text-center sm:text-left">
-              <p className="text-xs text-gray-600">Response time: 1-2 business days</p>
-              <p className="text-xs text-gray-600">Get travel inspiration, hotel bookings & custom itineraries</p>
+              <p className="text-xs text-earth-600">Response time: 1-2 business days</p>
+              <p className="text-xs text-earth-600">Get travel inspiration, hotel bookings & custom itineraries</p>
             </div>
           </div>
         </div>
 
         {/* Fora Branding */}
         <div className="flex items-center justify-center mt-4 pt-4 border-t border-sand-100">
-          <p className="text-xs text-gray-500 flex items-center gap-1">
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
             Powered by 
             <span className="font-medium text-earth-600">Fora Travel</span>
           </p>
@@ -174,32 +174,32 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId, canEdit = true }) => 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Exclusive Perks & Upgrades</h4>
-            <p className="text-sm text-gray-700">Access to room upgrades, hotel credits, complimentary breakfast, and extended check-in/out times.</p>
+            <p className="text-sm text-earth-700">Access to room upgrades, hotel credits, complimentary breakfast, and extended check-in/out times.</p>
           </div>
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Keep Your Rewards</h4>
-            <p className="text-sm text-gray-700">You still earn all your credit card points and hotel loyalty points when booking through Fora.</p>
+            <p className="text-sm text-earth-700">You still earn all your credit card points and hotel loyalty points when booking through Fora.</p>
           </div>
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Expert Knowledge</h4>
-            <p className="text-sm text-gray-700">Insider tips and recommendations from someone who's been there and knows what works.</p>
+            <p className="text-sm text-earth-700">Insider tips and recommendations from someone who's been there and knows what works.</p>
           </div>
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Personalized Service</h4>
-            <p className="text-sm text-gray-700">Custom itineraries tailored to your preferences, budget, and travel style.</p>
+            <p className="text-sm text-earth-700">Custom itineraries tailored to your preferences, budget, and travel style.</p>
           </div>
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Hotels & Accommodations</h4>
-            <p className="text-sm text-gray-700">Full service booking for hotels, resorts, and vacation rentals like Vrbo with exclusive advisor rates.</p>
+            <p className="text-sm text-earth-700">Full service booking for hotels, resorts, and vacation rentals like Vrbo with exclusive advisor rates.</p>
           </div>
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Support When You Need It</h4>
-            <p className="text-sm text-gray-700">Professional assistance before, during, and after your trip for peace of mind.</p>
+            <p className="text-sm text-earth-700">Professional assistance before, during, and after your trip for peace of mind.</p>
           </div>
         </div>
         
         <div className="mt-4 pt-4 border-t border-sand-100">
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-earth-600">
             <strong>Current Services:</strong> Hotels, resorts, vacation rentals, ground transportation, and travel experiences. 
             Flight booking services are currently limited but may be available for select destinations.
           </p>

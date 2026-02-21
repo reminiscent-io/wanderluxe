@@ -20,7 +20,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 }) => {
   if (hotelStays.length === 0) {
     return (
-      <div className="text-center py-4 text-gray-500">
+      <div className="text-center py-4 text-muted-foreground">
         No accommodations added yet.
       </div>
     );
@@ -40,13 +40,13 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
       {hotelStays.map((stay) => (
         <Card 
           key={stay.stay_id} 
-          className="p-3 sm:p-4 bg-white hover:shadow-md transition-shadow"
+          className="p-3 sm:p-4 bg-background hover:shadow-md transition-shadow"
         >
           {/* Mobile-first layout with responsive adjustments */}
           <div className="space-y-3">
             {/* Header with hotel name and actions */}
             <div className="flex justify-between items-start gap-2">
-              <h3 className="font-semibold text-base sm:text-lg text-gray-900 flex-1 min-w-0">
+              <h3 className="font-semibold text-base sm:text-lg text-foreground flex-1 min-w-0">
                 {stay.hotel}
               </h3>
               <div className="flex space-x-1 flex-shrink-0">
@@ -84,9 +84,9 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
             </div>
 
             {/* Hotel details - condensed layout */}
-            <div className="text-sm text-gray-700 space-y-1">
+            <div className="text-sm text-earth-700 space-y-1">
               <div className="flex flex-wrap items-center gap-1">
-                <span className="font-medium text-xs text-gray-500">Nights:</span>
+                <span className="font-medium text-xs text-muted-foreground">Nights:</span>
                 <span className="text-xs">
                   {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
                 </span>
@@ -94,7 +94,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 
               {stay.hotel_address && (
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1">
-                  <span className="font-medium text-xs text-gray-500 flex-shrink-0">Address:</span>
+                  <span className="font-medium text-xs text-muted-foreground flex-shrink-0">Address:</span>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stay.hotel_address)}`}
                     target="_blank"
@@ -110,12 +110,12 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
               <div className="flex flex-wrap gap-3 text-xs">
                 {stay.hotel_phone && (
                   <div>
-                    <span className="font-medium text-gray-500">Phone:</span> {stay.hotel_phone}
+                    <span className="font-medium text-muted-foreground">Phone:</span> {stay.hotel_phone}
                   </div>
                 )}
                 {stay.cost && (
                   <div>
-                    <span className="font-medium text-gray-500">Cost:</span> 
+                    <span className="font-medium text-muted-foreground">Cost:</span> 
                     {CURRENCY_SYMBOLS[stay.currency] || '$'}{Number(stay.cost).toLocaleString()}
                   </div>
                 )}
@@ -123,7 +123,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
 
               {stay.hotel_details && (
                 <div className="text-xs">
-                  <span className="font-medium text-gray-500">Details:</span> {stay.hotel_details}
+                  <span className="font-medium text-muted-foreground">Details:</span> {stay.hotel_details}
                 </div>
               )}
 

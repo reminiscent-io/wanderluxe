@@ -177,7 +177,7 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
             variant="outline"
             size="sm"
             onClick={() => setIsDialogOpen(true)}
-            className="bg-white/10 text-gray-500 hover:bg-sand-600 h-8 w-8 p-0"
+            className="bg-white/10 text-muted-foreground hover:bg-sand-600 h-8 w-8 p-0"
           >
             <Plus className="h-4 w-4" />
           </Button>

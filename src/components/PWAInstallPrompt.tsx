@@ -23,6 +23,13 @@ export default function PWAInstallPrompt() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  // Auto-dismiss after 5 seconds
+  useEffect(() => {
+    if (!showPrompt) return;
+    const timer = setTimeout(() => setShowPrompt(false), 5000);
+    return () => clearTimeout(timer);
+  }, [showPrompt]);
+
   useEffect(() => {
     const handleAppInstalled = () => {
       setShowPrompt(false);
@@ -53,7 +60,7 @@ export default function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 md:max-w-xs">
-      <Card className="bg-white/90 backdrop-blur-sm border-sand-200 shadow-sm">
+      <Card className="bg-white/90 backdrop-blur-sm border-sand-200 shadow-warm-sm">
         <div className="p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">

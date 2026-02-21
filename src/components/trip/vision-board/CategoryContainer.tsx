@@ -26,10 +26,10 @@ const CategoryContainer: React.FC<CategoryContainerProps> = ({ id, title, items 
       {...listeners}
       className="bg-sand-50 p-4 rounded-lg shadow border border-sand-200"
     >
-      <h3 className="font-semibold text-xl mb-4 text-gray-900">{title}</h3>
+      <h3 className="font-semibold text-xl mb-4 text-foreground">{title}</h3>
       
       {items.length === 0 ? (
-        <div className="text-gray-500 text-sm italic">No items yet</div>
+        <div className="text-muted-foreground text-sm italic">No items yet</div>
       ) : (
         <div className="flex flex-wrap gap-4">
           {items.map(item => (

@@ -30,25 +30,25 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
 
         onEditClick(activity);
       }}
-      className="bg-white p-3 rounded-md border border-gray-100 shadow-sm hover:bg-gray-50 cursor-pointer transition-colors w-full text-left"
+      className="bg-background p-3 rounded-md border border-[hsl(var(--border))] shadow-warm-sm hover:bg-secondary cursor-pointer transition-colors w-full text-left"
     >
       <div className="flex items-center justify-between">
-        <h5 className="font-medium text-gray-900">{activity.title}</h5>
+        <h5 className="font-medium text-foreground">{activity.title}</h5>
         {formattedCost && (
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {formattedCost}
           </span>
         )}
       </div>
       {(activity.start_time || activity.end_time) && (
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {activity.start_time && formatTime(activity.start_time)}
           {activity.start_time && activity.end_time && " - "}
           {activity.end_time && formatTime(activity.end_time)}
         </p>
       )}
       {activity.description && (
-        <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+        <p className="text-sm text-earth-600 mt-1">{activity.description}</p>
       )}
     </button>
 

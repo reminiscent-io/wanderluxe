@@ -18,26 +18,26 @@ const RestaurantContactInfo: React.FC<RestaurantContactInfoProps> = ({
   if (!address && !phone && !website && !rating) return null;
   
   return (
-    <div className="space-y-2 p-3 bg-gray-50 rounded-md border max-w-full overflow-hidden">
+    <div className="space-y-2 p-3 bg-secondary rounded-md border max-w-full overflow-hidden">
       {/* Address and Phone on same line */}
       {(address || phone) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {address && (
             <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
-                <Label className="text-xs text-gray-600">Address</Label>
-                <p className="text-sm text-gray-800 break-words">{address}</p>
+                <Label className="text-xs text-earth-600">Address</Label>
+                <p className="text-sm text-foreground break-words">{address}</p>
               </div>
             </div>
           )}
           
           {phone && (
             <div className="flex items-start gap-2">
-              <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+              <Phone className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
-                <Label className="text-xs text-gray-600">Phone</Label>
-                <p className="text-sm text-gray-800">{phone}</p>
+                <Label className="text-xs text-earth-600">Phone</Label>
+                <p className="text-sm text-foreground">{phone}</p>
               </div>
             </div>
           )}
@@ -49,9 +49,9 @@ const RestaurantContactInfo: React.FC<RestaurantContactInfoProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {website && (
             <div className="flex items-start gap-2">
-              <ExternalLink className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+              <ExternalLink className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
-                <Label className="text-xs text-gray-600">Website</Label>
+                <Label className="text-xs text-earth-600">Website</Label>
                 <a 
                   href={website} 
                   target="_blank" 
@@ -68,8 +68,8 @@ const RestaurantContactInfo: React.FC<RestaurantContactInfoProps> = ({
             <div className="flex items-start gap-2">
               <Star className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
               <div>
-                <Label className="text-xs text-gray-600">Rating</Label>
-                <p className="text-sm text-gray-800">{rating.toFixed(1)} / 5.0</p>
+                <Label className="text-xs text-earth-600">Rating</Label>
+                <p className="text-sm text-foreground">{rating.toFixed(1)} / 5.0</p>
               </div>
             </div>
           )}

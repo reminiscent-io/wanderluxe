@@ -156,7 +156,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   const dropdownContent = showSuggestions && suggestions.length > 0 && (
     <div
       ref={dropdownRef}
-      className="bg-white border border-sand-200 rounded-md shadow-xl max-h-60 overflow-y-auto"
+      className="bg-white border border-sand-200 rounded-md shadow-warm-xl max-h-60 overflow-y-auto"
       style={{
         position: 'fixed',
         top: dropdownPosition.top + 4,

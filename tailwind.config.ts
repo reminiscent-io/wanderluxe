@@ -18,6 +18,19 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        display: ['"DM Serif Display"', 'Georgia', 'serif'],
+        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        'card': '0.75rem',
+      },
+      boxShadow: {
+        'warm-sm': '0 1px 3px 0 rgba(139, 119, 93, 0.08), 0 1px 2px -1px rgba(139, 119, 93, 0.08)',
+        'warm': '0 4px 12px -2px rgba(139, 119, 93, 0.1), 0 2px 6px -2px rgba(139, 119, 93, 0.06)',
+        'warm-lg': '0 10px 30px -4px rgba(139, 119, 93, 0.12), 0 4px 12px -4px rgba(139, 119, 93, 0.06)',
+        'warm-xl': '0 20px 50px -8px rgba(139, 119, 93, 0.15), 0 8px 20px -6px rgba(139, 119, 93, 0.08)',
+      },
       colors: {
         border: "hsl(var(--border))",
         background: "hsl(var(--background))",
@@ -43,6 +56,20 @@ export default {
           400: "#8A7F6C",
           500: "#6B6354",
           600: "#5C544A",
+        },
+        sunset: {
+          50: '#FFF7ED',
+          100: '#FFEDD5',
+          200: '#FED7AA',
+          300: '#FDBA74',
+          400: '#FB923C',
+          500: '#F97316',
+          600: '#EA580C',
+        },
+        navy: {
+          800: '#1E293B',
+          900: '#0F172A',
+          950: '#020617',
         },
       },
       animation: {

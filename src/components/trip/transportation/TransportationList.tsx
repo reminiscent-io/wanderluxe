@@ -15,7 +15,7 @@ const TransportationList: React.FC<TransportationListProps> = ({
 }) => {
   if (!transportations || transportations.length === 0) {
     return (
-      <div className="text-center py-4 text-gray-500">
+      <div className="text-center py-4 text-muted-foreground">
         No transportation added yet.
       </div>
     );
@@ -32,8 +32,8 @@ const TransportationList: React.FC<TransportationListProps> = ({
             onDelete={() => onDelete(transportation.id)}
           />
         ) : (
-          <Card key={`incomplete-${index}`} className="p-3 sm:p-4 bg-white">
-            <p className="text-gray-500 text-sm">Transportation data is incomplete.</p>
+          <Card key={`incomplete-${index}`} className="p-3 sm:p-4 bg-background">
+            <p className="text-muted-foreground text-sm">Transportation data is incomplete.</p>
           </Card>
         )
       )}

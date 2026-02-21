@@ -88,11 +88,11 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
             <InfoItem
               icon={<MapPin className="h-4 w-4 text-earth-400" />}
               text={reservation.address}
-              className="text-sm text-gray-600"
+              className="text-sm text-earth-600"
             />
           )}
           
-          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+          <div className="flex flex-wrap gap-4 text-sm text-earth-600">
             {reservation.phone_number && (
               <IconLink
                 href={`tel:${reservation.phone_number}`}
@@ -113,7 +113,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
       </div>
 
       {/* Details section */}
-      <div className="flex flex-wrap gap-4 text-sm text-gray-600 border-t border-sand-200 pt-2">
+      <div className="flex flex-wrap gap-4 text-sm text-earth-600 border-t border-sand-200 pt-2">
         {reservation.reservation_time && (
           <InfoItem
             icon={<Clock className="h-4 w-4 text-earth-400" />}
@@ -139,7 +139,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
       {/* Notes section */}
       {reservation.notes && (
-        <p className="text-sm text-gray-600 border-t border-sand-200 pt-2">
+        <p className="text-sm text-earth-600 border-t border-sand-200 pt-2">
           {reservation.notes}
         </p>
       )}

@@ -79,7 +79,7 @@ const VisionBoardItem: React.FC<VisionBoardItemProps> = ({ item }) => {
                 </div>
               </div>
             </div>
-            {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
+            {item.description && <p className="text-sm text-earth-600">{item.description}</p>}
           </div>
         </button>
       </Card>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { DEFAULT_TRIP_IMAGE, DEFAULT_TRIP_IMAGE_PHOTOGRAPHER, DEFAULT_TRIP_IMAGE_USERNAME } from '@/constants/unsplash';
 
 interface DayImageProps {
   dayId: string;
@@ -20,7 +21,7 @@ const DayImage: React.FC<DayImageProps> = ({
   ...props // handle any other props passed to the component
 }) => {
   const displayImageUrl =
-    imageUrl || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f';
+    imageUrl || DEFAULT_TRIP_IMAGE;
     
   // Initialize with provided objectPosition, but prefer localStorage value if available
   const [imagePosition, setImagePosition] = useState(objectPosition);
@@ -63,7 +64,7 @@ const DayImage: React.FC<DayImageProps> = ({
   }, [objectPosition, dayId]);
 
   return (
-    <div className={cn('relative w-full bg-gray-200 h-full', className)} {...props}>
+    <div className={cn('relative w-full bg-sand-200 h-full', className)} {...props}>
       {displayImageUrl ? (
         <div className="relative overflow-hidden rounded-lg w-full h-full">
           {title && (
@@ -101,9 +102,21 @@ const DayImage: React.FC<DayImageProps> = ({
               }}
             />
           </div>
+          {/* Unsplash attribution — only for fallback image */}
+          {!imageUrl && (
+            <div className="absolute bottom-1 right-1.5 z-10 text-white/40 text-[10px] hover:text-white/70 transition-opacity">
+              <a href={`https://unsplash.com/@${DEFAULT_TRIP_IMAGE_USERNAME}?utm_source=wanderluxe&utm_medium=referral`} target="_blank" rel="noopener noreferrer">
+                {DEFAULT_TRIP_IMAGE_PHOTOGRAPHER}
+              </a>
+              {' / '}
+              <a href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral" target="_blank" rel="noopener noreferrer">
+                Unsplash
+              </a>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="flex items-center justify-center text-gray-400 h-[400px]">
+        <div className="flex items-center justify-center text-muted-foreground h-[400px]">
           No image available
         </div>
       )}

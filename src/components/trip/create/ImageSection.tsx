@@ -9,18 +9,26 @@ import { supabase } from "@/integrations/supabase/client";
 import ImageUpload from "@/components/ImageUpload";
 import UnsplashImage from '@/components/UnsplashImage';
 
+export interface ImageMetadata {
+  photographer?: string;
+  username?: string;
+}
+
 interface ImageSectionProps {
   coverImageUrl: string;
-  onImageChange: (url: string) => void;
+  onImageChange: (url: string, metadata?: ImageMetadata) => void;
   objectPosition?: string;                       // e.g. "center 50%"
   onPositionChange?: (position: string) => void; // "center X%"
 }
 
-// Returned from your supabase fn
+// Returned from the generate-image edge function
 interface UnsplashHit {
   id: string;
   url: string;
   description: string;
+  photographer: string;
+  username: string;
+  downloadLocation: string;
 }
 
 const ImageSection: React.FC<ImageSectionProps> = ({
@@ -69,9 +77,11 @@ const ImageSection: React.FC<ImageSectionProps> = ({
     }
   };
 
-  const selectUnsplash = (url: string) => {
-    setLocalImageUrl(url);
-    onImageChange(url);
+  const selectUnsplash = (hit: UnsplashHit) => {
+    setLocalImageUrl(hit.url);
+    onImageChange(hit.url, { photographer: hit.photographer, username: hit.username });
+    // Trigger Unsplash download endpoint (API guideline requirement)
+    supabase.functions.invoke('fetch-unsplash-metadata', { body: { photoId: hit.id } });
     toast.success('Cover image selected');
   };
 
@@ -94,7 +104,7 @@ const ImageSection: React.FC<ImageSectionProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium text-gray-700">Cover Image</Label>
+      <Label className="text-sm font-medium text-earth-700">Cover Image</Label>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
         <TabsList className="grid grid-cols-2 w-full">
@@ -122,7 +132,7 @@ const ImageSection: React.FC<ImageSectionProps> = ({
                 <button
                   key={img.id}
                   className="relative rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-earth-500"
-                  onClick={() => selectUnsplash(img.url)}
+                  onClick={() => selectUnsplash(img)}
                   type="button"
                 >
                   <UnsplashImage
@@ -130,6 +140,8 @@ const ImageSection: React.FC<ImageSectionProps> = ({
                     alt={img.description || "Unsplash image"}
                     className="h-36 w-full object-cover"
                     showAttribution={true}
+                    photographer={img.photographer}
+                    unsplashUsername={img.username}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                   <div className="absolute bottom-2 right-2">

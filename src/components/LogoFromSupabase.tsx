@@ -82,7 +82,7 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
   }, [logoName]);
 
   if (isLoading) {
-    return <div className={`bg-gray-200 animate-pulse ${className}`}></div>;
+    return <div className={`bg-sand-200 animate-pulse ${className}`}></div>;
   }
 
   if (!logoUrl) {

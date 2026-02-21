@@ -236,7 +236,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title Field */}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="title" className="block text-sm font-medium text-earth-700">
           Title <span className="text-red-500">*</span>
         </label>
         <input
@@ -244,7 +244,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="text"
           value={activity.title}
           onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
-          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-gray-300 p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.title ? 'border-red-500' : ''}`}
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-[hsl(var(--border))] p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.title ? 'border-red-500' : ''}`}
           required
         />
         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
@@ -252,14 +252,14 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Description Field */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-earth-700">
           Description
         </label>
         <textarea
           id="description"
           value={activity.description || ''}
           onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border border-[hsl(var(--border))] p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
           rows={1}
         />
       </div>
@@ -267,7 +267,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       {/* Date Selection */}
       {tripDateOptions.length > 0 && (
         <div>
-          <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="date" className="block text-sm font-medium text-earth-700">
             Date <span className="text-red-500">*</span>
           </label>
           <Select onValueChange={(value) => onActivityChange({ ...activity, date: value })} value={activity.date || ''}>
@@ -294,7 +294,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       <div className="space-y-3">
         {/* Start Time - Compact */}
         <div className="flex items-center gap-3">
-          <label htmlFor="start-time" className="text-sm font-medium text-gray-700 w-16 shrink-0">
+          <label htmlFor="start-time" className="text-sm font-medium text-earth-700 w-16 shrink-0">
             Start
           </label>
           <Input
@@ -323,7 +323,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
         {/* Duration Presets */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">Duration</label>
+          <label className="text-sm font-medium text-earth-700">Duration</label>
           <div className="flex flex-wrap gap-2">
             {DURATION_PRESETS.map((preset) => (
               <button
@@ -365,7 +365,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         {/* Custom End Time - Only shown when custom is selected */}
         {useCustomEndTime && (
           <div className="flex items-center gap-3">
-            <label htmlFor="end-time" className="text-sm font-medium text-gray-700 w-16 shrink-0">
+            <label htmlFor="end-time" className="text-sm font-medium text-earth-700 w-16 shrink-0">
               End
             </label>
             <Input
@@ -398,7 +398,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Cost and Currency */}
       <div className="space-y-2">
-        <label htmlFor="cost" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="cost" className="block text-sm font-medium text-earth-700">
           Cost
         </label>
         <div className="flex gap-3">
@@ -413,7 +413,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               }
               onChange={(e) => handleCostChange(e.target.value)}
               placeholder="0"
-              className={`block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 bg-white ${errors.cost ? 'border-red-500' : 'border-gray-300'}`}
+              className={`block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 bg-white ${errors.cost ? 'border-red-500' : 'border-[hsl(var(--border))]'}`}
             />
             {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
           </div>
@@ -439,7 +439,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Travelers */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-earth-700">
           Travelers
         </label>
         <div className="mt-1">

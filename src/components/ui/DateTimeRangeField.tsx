@@ -128,7 +128,7 @@ export default function DateTimeRangeField({
                 align="start"
                 side="bottom"
                 sideOffset={4}
-                className="z-[1000] w-[300px] max-w-[calc(100vw-1rem)] p-0 rounded-md border bg-white shadow-lg"
+                className="z-[1000] w-[300px] max-w-[calc(100vw-1rem)] p-0 rounded-md border bg-background shadow-warm-lg"
                 onEscapeKeyDown={(e) => e.stopPropagation()}
                 onPointerDownOutside={(e) => {
                   // @ts-ignore

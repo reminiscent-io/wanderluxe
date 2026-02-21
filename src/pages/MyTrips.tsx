@@ -20,6 +20,7 @@ import { differenceInDays } from 'date-fns';
 import { ActiveTripCard, NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { TravelStatsCard, MonthlyActivityChart } from '@/components/trip/stats';
 import { useTravelStats } from '@/hooks/useTravelStats';
+import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
 
 const MyTrips = () => {
   const navigate = useNavigate();
@@ -430,7 +431,7 @@ const MyTrips = () => {
         >
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 type="search"
                 placeholder="Search destinations, dates..."
@@ -504,7 +505,7 @@ const MyTrips = () => {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-64 bg-gray-100 rounded-lg animate-pulse"
+                className="h-64 bg-muted rounded-lg animate-pulse"
               />
             ))}
           </div>
@@ -546,7 +547,7 @@ const MyTrips = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
@@ -566,14 +567,14 @@ const MyTrips = () => {
               transition={{ delay: 0.2, duration: 0.5 }}
               className="relative"
             >
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-blue-100">
-                <div className="bg-blue-100 rounded-xl p-3">
-                  <Calendar className="h-6 w-6 text-blue-600" />
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-sand-200">
+                <div className="bg-sand-200 rounded-xl p-3">
+                  <Calendar className="h-6 w-6 text-earth-600" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
                     Upcoming Adventures
-                    <Badge className="bg-blue-500 text-white text-sm px-3 py-1">
+                    <Badge className="bg-earth-500 text-white text-sm px-3 py-1">
                       {filteredUpcomingTrips.length}
                     </Badge>
                   </h2>
@@ -595,7 +596,7 @@ const MyTrips = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
@@ -606,10 +607,10 @@ const MyTrips = () => {
                   ))}
                 </div>
               ) : (
-                <Card className="p-12 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+                <Card className="p-12 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-sand-200">
                   <div className="max-w-md mx-auto">
-                    <div className="bg-blue-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
-                      <MapPin className="h-12 w-12 text-blue-600 mx-auto" />
+                    <div className="bg-sand-200 rounded-full p-4 w-20 h-20 mx-auto mb-6">
+                      <MapPin className="h-12 w-12 text-earth-600 mx-auto" />
                     </div>
                     <h3 className="text-xl font-semibold text-earth-800 mb-3">
                       {tripFilter === 'shared' ? 'No Shared Adventures Yet' : 'Your Next Adventure Awaits'}
@@ -622,7 +623,7 @@ const MyTrips = () => {
                     {tripFilter !== 'shared' && (
                       <Button
                         onClick={() => navigate('/create-trip')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-medium"
                       >
                         Plan Your Trip
                       </Button>
@@ -639,14 +640,14 @@ const MyTrips = () => {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="relative"
             >
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
-                <div className="bg-gray-100 rounded-xl p-3">
-                  <Clock className="h-6 w-6 text-gray-600" />
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-sand-200">
+                <div className="bg-sand-100 rounded-xl p-3">
+                  <Clock className="h-6 w-6 text-earth-600" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
                     Travel Memories
-                    <Badge className="bg-gray-500 text-white text-sm px-3 py-1">
+                    <Badge className="bg-earth-500 text-white text-sm px-3 py-1">
                       {pastTrips.length}
                     </Badge>
                   </h2>
@@ -668,7 +669,7 @@ const MyTrips = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
@@ -679,10 +680,10 @@ const MyTrips = () => {
                   ))}
                 </div>
               ) : (
-                <Card className="p-8 text-center bg-gray-50 border-gray-100">
+                <Card className="p-8 text-center bg-secondary border-sand-200">
                   <div className="max-w-sm mx-auto">
-                    <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
-                      <Clock className="h-10 w-10 text-gray-500 mx-auto" />
+                    <div className="bg-sand-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
+                      <Clock className="h-10 w-10 text-earth-400 mx-auto" />
                     </div>
                     <p className="text-earth-500 text-lg">No past adventures yet</p>
                     <p className="text-earth-400 text-sm mt-1">Your travel memories will appear here</p>
@@ -698,9 +699,9 @@ const MyTrips = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                <Card className="p-16 text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200 shadow-xl">
+                <Card className="p-16 text-center bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 border-sand-200 shadow-warm-xl">
                   <div className="max-w-lg mx-auto">
-                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-lg">
+                    <div className="bg-gradient-to-br from-sunset-500 to-sunset-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-warm-lg">
                       <MapPin className="h-16 w-16 text-white mx-auto" />
                     </div>
                     <h3 className="text-3xl font-bold text-earth-800 mb-4">
@@ -716,22 +717,23 @@ const MyTrips = () => {
                       <>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-sm">
                           <div className="bg-white/70 rounded-lg p-4">
-                            <Calendar className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                            <Calendar className="h-6 w-6 text-sunset-500 mx-auto mb-2" />
                             <p className="text-earth-700 font-medium">Smart Planning</p>
                           </div>
                           <div className="bg-white/70 rounded-lg p-4">
-                            <Users className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                            <Users className="h-6 w-6 text-earth-600 mx-auto mb-2" />
                             <p className="text-earth-700 font-medium">Group Travel</p>
                           </div>
                           <div className="bg-white/70 rounded-lg p-4">
-                            <Plane className="h-6 w-6 text-indigo-600 mx-auto mb-2" />
+                            <Plane className="h-6 w-6 text-sand-500 mx-auto mb-2" />
                             <p className="text-earth-700 font-medium">AI Assistance</p>
                           </div>
                         </div>
 
                         <Button
                           onClick={() => navigate('/create-trip')}
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                          variant="sunset"
+                          className="px-10 py-4 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105"
                         >
                           <Plus className="h-5 w-5 mr-2" />
                           Create Your First Trip

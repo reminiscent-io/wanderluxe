@@ -70,7 +70,7 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
               {sortedAccommodations.map((stay) => (
                 <div
                   key={stay.stay_id}
-                  className="bg-white rounded-lg p-3 border border-sand-200 shadow-sm hover:shadow-md transition-shadow"
+                  className="bg-background rounded-lg p-3 border border-sand-200 shadow-warm-sm hover:shadow-warm transition-shadow"
                 >
                   <div className="font-medium text-earth-700 text-sm mb-2 line-clamp-1">
                     {stay.hotel}
@@ -126,7 +126,7 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
                 return (
                   <div
                     key={transport.id}
-                    className="bg-white rounded-lg p-3 border border-sand-200 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-background rounded-lg p-3 border border-sand-200 shadow-warm-sm hover:shadow-warm transition-shadow"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Icon className="h-3.5 w-3.5 text-earth-600 flex-shrink-0" />

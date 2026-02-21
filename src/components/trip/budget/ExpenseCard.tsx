@@ -45,7 +45,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({
         <div className="flex items-center gap-2">
           {getIcon()}
           <span className="text-lg font-medium">{title}</span>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {currency} {amount.toFixed(2)}
           </span>
         </div>

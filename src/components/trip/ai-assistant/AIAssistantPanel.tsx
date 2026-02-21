@@ -250,8 +250,12 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
   }, []);
 
   // Handle clear chat - also clear extraction messages
-  const handleClearChat = useCallback(() => {
-    clearThread();
+  const handleClearChat = useCallback(async () => {
+    try {
+      await clearThread();
+    } catch (e) {
+      console.error('Failed to clear thread:', e);
+    }
     setExtractionMessages([]);
     clearExtraction();
   }, [clearThread, clearExtraction]);
@@ -260,7 +264,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white rounded-lg shadow-sm border border-sand-200 overflow-hidden">
+      <div className="flex flex-col h-full bg-background rounded-lg shadow-warm-sm border border-sand-200 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-sand-200 bg-gradient-to-r from-sand-50 to-white">
           <div className="flex items-center gap-2">

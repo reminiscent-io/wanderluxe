@@ -168,7 +168,7 @@ export default function InviteLinkDialog({
           </div>
         ) : (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-gray-600">{preamble}</p>
+            <p className="text-sm text-earth-600">{preamble}</p>
             <div className="flex gap-2">
               <Input
                 readOnly

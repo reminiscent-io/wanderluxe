@@ -59,26 +59,26 @@ describe('transportationUtils', () => {
 
   describe('getTransportationColor', () => {
     it('should return correct color classes for known transportation types', () => {
-      expect(getTransportationColor('flight')).toBe('bg-blue-100 text-blue-800');
+      expect(getTransportationColor('flight')).toBe('bg-sunset-100 text-sunset-600');
       expect(getTransportationColor('train')).toBe('bg-green-100 text-green-800');
-      expect(getTransportationColor('car_service')).toBe('bg-gray-100 text-gray-800');
+      expect(getTransportationColor('car_service')).toBe('bg-sand-100 text-earth-700');
       expect(getTransportationColor('shuttle')).toBe('bg-yellow-100 text-yellow-800');
       expect(getTransportationColor('ferry')).toBe('bg-cyan-100 text-cyan-800');
       expect(getTransportationColor('rental_car')).toBe('bg-purple-100 text-purple-800');
     });
 
-    it('should return default gray color for null or undefined', () => {
-      expect(getTransportationColor(null)).toBe('bg-gray-100 text-gray-800');
-      expect(getTransportationColor(undefined as any)).toBe('bg-gray-100 text-gray-800');
+    it('should return default color for null or undefined', () => {
+      expect(getTransportationColor(null)).toBe('bg-sand-100 text-earth-700');
+      expect(getTransportationColor(undefined as any)).toBe('bg-sand-100 text-earth-700');
     });
 
-    it('should return default gray color for unknown types', () => {
-      expect(getTransportationColor('helicopter')).toBe('bg-gray-100 text-gray-800');
-      expect(getTransportationColor('unknown_type')).toBe('bg-gray-100 text-gray-800');
+    it('should return default color for unknown types', () => {
+      expect(getTransportationColor('helicopter')).toBe('bg-sand-100 text-earth-700');
+      expect(getTransportationColor('unknown_type')).toBe('bg-sand-100 text-earth-700');
     });
 
-    it('should return default gray color for empty string', () => {
-      expect(getTransportationColor('')).toBe('bg-gray-100 text-gray-800');
+    it('should return default color for empty string', () => {
+      expect(getTransportationColor('')).toBe('bg-sand-100 text-earth-700');
     });
   });
 });

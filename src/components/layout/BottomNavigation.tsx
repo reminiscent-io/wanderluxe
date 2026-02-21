@@ -24,7 +24,7 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }:
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-sand-200 shadow-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-sand-200 shadow-warm-lg">
       <div className="grid grid-cols-5 h-16 items-center px-2">
         {/* Timeline */}
         <NavLink
@@ -65,7 +65,7 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }:
           <Button
             onClick={onQuickAddClick}
             size="icon"
-            className="h-14 w-14 rounded-full bg-earth-600 hover:bg-earth-700 shadow-lg -mt-8 ring-4 ring-white"
+            className="h-14 w-14 rounded-full bg-earth-600 hover:bg-earth-700 shadow-warm-lg -mt-8 ring-4 ring-white"
             aria-label="Quick add"
           >
             <Plus className="h-6 w-6 text-white" />

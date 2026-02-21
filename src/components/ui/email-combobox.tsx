@@ -51,7 +51,7 @@ export function EmailCombobox({
               className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
               disabled={suggestions.length === 0}
             >
-              <ChevronDown className={`h-3 w-3 ${suggestions.length === 0 ? 'text-gray-300' : 'text-gray-600'}`} />
+              <ChevronDown className={`h-3 w-3 ${suggestions.length === 0 ? 'text-sand-300' : 'text-earth-600'}`} />
             </Button>
           </DropdownMenuTrigger>
           {suggestions.length > 0 && (

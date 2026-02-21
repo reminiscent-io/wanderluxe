@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
+import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
@@ -155,9 +156,11 @@ const TripDetails = () => {
           <HeroSection
             tripId={tripId}
             title={displayData.destination}
-            imageUrl={displayData.cover_image_url || "https://images.unsplash.com/photo-1578894381163-e72c17f2d45f"}
+            imageUrl={displayData.cover_image_url || DEFAULT_TRIP_IMAGE}
             arrivalDate={displayData.arrival_date}
             departureDate={displayData.departure_date}
+            photographer={displayData.cover_image_photographer}
+            unsplashUsername={displayData.cover_image_photographer_username}
             isLoading={tripLoading && !previousTrip}
             canEdit={canEdit}
             primaryDestination={displayData.primary_destination}

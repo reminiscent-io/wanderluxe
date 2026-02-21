@@ -259,8 +259,8 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       <Card
         id={`day-${index}`}
         className={cn(
-          "relative overflow-hidden transition-all duration-300 bg-white shadow-sm md:hover:shadow-md border border-sand-200 rounded-lg md:rounded-xl",
-          isTodayFlag && "border-l-4 border-l-earth-600 shadow-lg"
+          "relative overflow-hidden transition-all duration-300 bg-background shadow-warm-sm md:hover:shadow-warm border border-sand-200 rounded-lg md:rounded-xl",
+          isTodayFlag && "border-l-4 border-l-earth-600 shadow-warm-lg"
         )}
       >
         {/* Header */}
@@ -289,7 +289,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="border-t border-sand-200 overflow-hidden"
             >
-              <div className="bg-gray-100 px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-6">
+              <div className="bg-muted px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-6">
                 {hasContent ? (
                   <DndContext
                     sensors={sensors}
@@ -305,7 +305,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
 
                         <div className="relative space-y-3">
                           {/* Continuous timeline line - responsive positioning */}
-                          <div className="absolute left-[12px] sm:left-[80px] top-4 bottom-0 w-px bg-gray-200 -translate-x-1/2" />
+                          <div className="absolute left-[12px] sm:left-[80px] top-4 bottom-0 w-px bg-sand-200 -translate-x-1/2" />
                           {periodGroups.map((group, groupIdx) => {
                             const isExpanded = isPeriodExpanded(group.period);
                             const eventCount = group.rows.filter(row => row.kind !== 'hint' && row.kind !== 'now').length;

@@ -7,40 +7,38 @@ import LogoFromSupabase from "./LogoFromSupabase";
 const SLIDE_MS = 2500; // time each image is shown
 const FADE_MS = 2000;  // crossfade duration
 
+const HERO_IMAGES = [
+  { url: "https://images.unsplash.com/photo-1506929562872-bb421503ef21", photographer: "Gaddafi Rusli", username: "gaddafirusli" },
+  { url: "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17", photographer: "Jairph", username: "jairph" },
+  { url: "https://images.unsplash.com/photo-1649955092030-fb171eda019a", photographer: "Julian Terenzio", username: "julianterenzio" },
+  { url: "https://images.unsplash.com/photo-1632937018569-841a551be57a", photographer: "Márcio Pêgo", username: "marciopego" },
+  { url: "https://plus.unsplash.com/premium_photo-1722201172121-9ab816dc1c34", photographer: "Lala Azizli", username: "lazizli" },
+  { url: "https://images.unsplash.com/photo-1624963053656-cecdf576d028", photographer: "Daniel J. Schwarz", username: "danieljschwarz" },
+  { url: "https://images.unsplash.com/photo-1571663237561-397f179622fb", photographer: "Joan Oger", username: "joanoger" },
+  { url: "https://images.unsplash.com/photo-1643981670720-eef07ebdb179", photographer: "Henrique Ferreira", username: "rickpsd" },
+  { url: "https://images.unsplash.com/photo-1516496636080-14fb876e029d", photographer: "Hu Chen", username: "huchenme" },
+  { url: "https://images.unsplash.com/photo-1498036882173-b41c28a8ba34", photographer: "Pawel Nolbert", username: "hellocolor" },
+  { url: "https://images.unsplash.com/photo-1541628951107-a9af5346a3e4", photographer: "Thibault Penin", username: "thibaultpenin" },
+  { url: "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc", photographer: "Nick Karvounis", username: "nickkarvounis" },
+  { url: "https://images.unsplash.com/photo-1663841365361-db6ca65ac126", photographer: "Caroline Roose", username: "carolineclementine" },
+  { url: "https://images.unsplash.com/photo-1586752488885-6ce47fdfd874", photographer: "Victor He", username: "victorhwn725" },
+];
+
 const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
 
-  const rawImages = useMemo(
-    () => [
-      "https://images.unsplash.com/photo-1506929562872-bb421503ef21",
-      "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17",
-      "https://images.unsplash.com/photo-1649955092030-fb171eda019a",
-      "https://images.unsplash.com/photo-1632937018569-841a551be57a",
-      "https://plus.unsplash.com/premium_photo-1722201172121-9ab816dc1c34",
-      "https://images.unsplash.com/photo-1624963053656-cecdf576d028",
-      "https://images.unsplash.com/photo-1571663237561-397f179622fb",
-      "https://images.unsplash.com/photo-1643981670720-eef07ebdb179",
-      "https://images.unsplash.com/photo-1516496636080-14fb876e029d",
-      "https://images.unsplash.com/photo-1498036882173-b41c28a8ba34",
-      "https://images.unsplash.com/photo-1541628951107-a9af5346a3e4",
-      "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc",
-      "https://images.unsplash.com/photo-1663841365361-db6ca65ac126",
-      "https://images.unsplash.com/photo-1586752488885-6ce47fdfd874"
-    ],
-    []
-  );
-
   // Normalize to a consistent size/quality for smoother transitions
   const images = useMemo(
     () =>
-      rawImages.map((u) =>
-        u.includes("?")
-          ? `${u}&auto=format&fit=crop&w=1920&q=80`
-          : `${u}?auto=format&fit=crop&w=1920&q=80`
-      ),
-    [rawImages]
+      HERO_IMAGES.map((entry) => ({
+        ...entry,
+        src: entry.url.includes("?")
+          ? `${entry.url}&auto=format&fit=crop&w=1920&q=80`
+          : `${entry.url}?auto=format&fit=crop&w=1920&q=80`,
+      })),
+    []
   );
 
   const [index, setIndex] = useState(0);
@@ -71,10 +69,10 @@ const Hero = () => {
   useEffect(() => {
     const next = (index + 1) % images.length;
     const img = new Image();
-    img.src = images[next];
+    img.src = images[next].src;
   }, [index, images]);
 
-  const currentSrc = images[index];
+  const current = images[index];
 
   return (
     <div
@@ -89,7 +87,7 @@ const Hero = () => {
       >
         <AnimatePresence>
           <motion.div
-            key={currentSrc}
+            key={current.src}
             className="absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -113,7 +111,7 @@ const Hero = () => {
               style={{ willChange: "transform" }}
             >
               <UnsplashImage
-                src={currentSrc}
+                src={current.src}
                 className="w-full h-full object-cover pointer-events-none select-none"
                 style={{ minHeight: "calc(var(--app-height, 1vh) * 100)" }}
                 objectPosition="center center"
@@ -125,6 +123,27 @@ const Hero = () => {
 
             {/* Soft gradient scrim for legibility */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/50" />
+
+            {/* Unsplash attribution — above the gradient scrim */}
+            <div className="absolute bottom-4 right-4 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
+              <a
+                href={`https://unsplash.com/@${current.username}?utm_source=wanderluxe&utm_medium=referral`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                {current.photographer}
+              </a>
+              {' / '}
+              <a
+                href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Unsplash
+              </a>
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>

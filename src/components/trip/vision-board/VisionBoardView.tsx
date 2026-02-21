@@ -128,7 +128,7 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId, canEdit = true })
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
       </div>
     );
   }
@@ -136,7 +136,7 @@ const VisionBoardView: React.FC<VisionBoardProps> = ({ tripId, canEdit = true })
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Vision Board</h2>
+        <h2 className="text-2xl font-bold text-foreground">Vision Board</h2>
         {canEdit && (
           <Button onClick={() => {
             setIsAddingItem(true);

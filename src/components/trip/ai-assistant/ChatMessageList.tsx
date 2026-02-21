@@ -11,7 +11,6 @@ interface ChatMessageListProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
-  // For extraction handling
   tripId?: string;
   onImportAll?: (items: ExtractedItem[]) => Promise<void>;
   onReviewEdit?: (items: ExtractedItem[]) => void;
@@ -35,11 +34,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef<number>(0);
   const hasInitialScrolled = useRef<boolean>(false);
+  const scrollThrottleRef = useRef<boolean>(false);
+  const userScrolledUpRef = useRef<boolean>(false);
+  const lastMessageCountRef = useRef<number>(0);
 
   // Scroll to bottom on initial load
   useEffect(() => {
     if (messages.length > 0 && !hasInitialScrolled.current && scrollRef.current) {
-      // Use instant scroll for initial load
       scrollRef.current.scrollIntoView({ behavior: 'instant' });
       hasInitialScrolled.current = true;
     }
@@ -49,6 +50,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   useEffect(() => {
     if (messages.length === 0) {
       hasInitialScrolled.current = false;
+      userScrolledUpRef.current = false;
     }
   }, [messages.length]);
 
@@ -62,34 +64,65 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     }
   }, [messages, isLoadingMore]);
 
-  // Auto-scroll to bottom when new messages arrive or streaming content updates
+  // When a new message arrives (not streaming update), scroll to bottom
   useEffect(() => {
-    // Skip if this is the initial load (handled by separate effect)
     if (!hasInitialScrolled.current) return;
+    if (messages.length > lastMessageCountRef.current) {
+      userScrolledUpRef.current = false;
+      if (scrollRef.current) {
+        scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    lastMessageCountRef.current = messages.length;
+  }, [messages.length]);
+
+  // Auto-scroll during streaming, but only if user hasn't scrolled up
+  useEffect(() => {
+    if (!hasInitialScrolled.current || !isStreaming) return;
+    if (userScrolledUpRef.current) return;
 
     if (scrollRef.current && containerRef.current) {
       const container = containerRef.current;
       const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        container.scrollHeight - container.scrollTop - container.clientHeight < 150;
 
-      // Always scroll when streaming, or when near bottom
-      if (isStreaming || isNearBottom) {
-        scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+      if (isNearBottom) {
+        scrollRef.current.scrollIntoView({ behavior: 'instant' });
       }
     }
-  }, [messages, streamingContent, isStreaming]);
+  }, [streamingContent, isStreaming]);
 
-  // Handle scroll to detect when user scrolls to top
-  const handleScroll = useCallback(() => {
-    if (!containerRef.current || !hasMore || isLoadingMore || !onLoadMore) return;
-
-    const container = containerRef.current;
-    // Trigger load more when scrolled within 50px of top
-    if (container.scrollTop < 50) {
-      prevScrollHeightRef.current = container.scrollHeight;
-      onLoadMore();
+  // Reset user-scrolled-up flag when streaming ends
+  useEffect(() => {
+    if (!isStreaming) {
+      userScrolledUpRef.current = false;
     }
-  }, [hasMore, isLoadingMore, onLoadMore]);
+  }, [isStreaming]);
+
+  // Throttled scroll handler to detect user scrolling up and load-more
+  const handleScroll = useCallback(() => {
+    if (scrollThrottleRef.current) return;
+    scrollThrottleRef.current = true;
+
+    requestAnimationFrame(() => {
+      scrollThrottleRef.current = false;
+      if (!containerRef.current) return;
+
+      const container = containerRef.current;
+
+      // Track if user scrolled away from bottom during streaming
+      if (isStreaming) {
+        const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        userScrolledUpRef.current = distFromBottom > 200;
+      }
+
+      // Load more when near top
+      if (hasMore && !isLoadingMore && onLoadMore && container.scrollTop < 50) {
+        prevScrollHeightRef.current = container.scrollHeight;
+        onLoadMore();
+      }
+    });
+  }, [hasMore, isLoadingMore, onLoadMore, isStreaming]);
 
   if (isLoading) {
     return (
@@ -137,8 +170,8 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-2 space-y-1 touch-pan-y"
-      style={{ WebkitOverflowScrolling: 'touch' }}
+      className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-2 space-y-1 touch-pan-y"
+      style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
     >
       {/* Load more indicator at top */}
       {hasMore && (

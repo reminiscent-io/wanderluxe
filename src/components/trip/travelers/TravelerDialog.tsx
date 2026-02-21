@@ -460,7 +460,7 @@ export default function TravelerDialog({
                       </Button>
                     </div>
                     {!hasEmail && !isOwner && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Add an email address to enable permission settings.
                       </p>
                     )}
@@ -503,7 +503,7 @@ export default function TravelerDialog({
                   "flex-1",
                   canShare
                     ? "bg-earth-600 hover:bg-earth-700 text-white"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-sand-200 text-muted-foreground cursor-not-allowed"
                 )}
               >
                 <Send className="h-4 w-4 mr-1.5" />

@@ -34,13 +34,13 @@ const TransportationCard = ({ type, details, duration, index }: TransportationCa
       viewport={{ once: true }}
       className="my-4"
     >
-      <Card className={`max-w-md mx-auto ${type === 'hotel-checkout' ? 'bg-gray-50' : ''}`}>
+      <Card className={`max-w-md mx-auto ${type === 'hotel-checkout' ? 'bg-secondary' : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <Icon className="h-6 w-6 text-earth-500" />
             <div>
               <p className="font-medium">{details}</p>
-              {duration && <p className="text-sm text-gray-600">Duration: {duration}</p>}
+              {duration && <p className="text-sm text-earth-600">Duration: {duration}</p>}
             </div>
           </div>
         </CardContent>

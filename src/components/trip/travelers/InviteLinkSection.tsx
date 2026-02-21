@@ -54,13 +54,13 @@ export default function InviteLinkSection({ tripId }: InviteLinkSectionProps) {
     <div className="mt-4">
       <div className="flex items-center gap-2 mb-3">
         <Link2 className="h-4 w-4 text-earth-500" />
-        <h3 className="text-sm font-semibold text-gray-700">Share via Link</h3>
+        <h3 className="text-sm font-semibold text-earth-700">Share via Link</h3>
       </div>
 
       <Button
         size="sm"
         variant="outline"
-        className="w-full mb-3 bg-white text-sand-700 border-sand-300 hover:bg-sand-50 hover:border-sand-400"
+        className="w-full mb-3 bg-background text-sand-700 border-sand-300 hover:bg-sand-50 hover:border-sand-400"
         onClick={() => setDialogOpen(true)}
       >
         <Link2 className="mr-1 h-3.5 w-3.5" />
@@ -68,9 +68,9 @@ export default function InviteLinkSection({ tripId }: InviteLinkSectionProps) {
       </Button>
 
       {loading ? (
-        <p className="text-xs text-gray-400 text-center py-2">Loading links...</p>
+        <p className="text-xs text-muted-foreground text-center py-2">Loading links...</p>
       ) : inviteLinks.length === 0 ? (
-        <p className="text-xs text-gray-400 text-center py-2">No invite links yet.</p>
+        <p className="text-xs text-muted-foreground text-center py-2">No invite links yet.</p>
       ) : (
         <div className="space-y-2">
           {inviteLinks.map((link) => (

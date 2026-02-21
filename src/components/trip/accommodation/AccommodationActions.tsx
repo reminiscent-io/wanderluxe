@@ -183,7 +183,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
   }
 
   return (
-    <div className="p-4 bg-gray-50 rounded-b-lg border-t border-gray-200">
+    <div className="p-4 bg-secondary rounded-b-lg border-t border-[hsl(var(--border))]">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">
           {editingStay ? 'Edit Hotel Stay' : 'Add Hotel Stay'}
@@ -192,7 +192,7 @@ const AccommodationActions: React.FC<AccommodationActionsProps> = ({
           variant="ghost"
           size="icon"
           onClick={onCancel}
-          className="text-gray-500"
+          className="text-muted-foreground"
         >
           <X className="h-4 w-4" />
         </Button>

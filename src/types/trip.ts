@@ -187,5 +187,7 @@ export interface Trip {
   primary_destination?: string | null;
   primary_destination_place_id?: string | null;
   cover_image_position?: string | null;
+  cover_image_photographer?: string | null;
+  cover_image_photographer_username?: string | null;
   accommodations?: Accommodation[];
 }

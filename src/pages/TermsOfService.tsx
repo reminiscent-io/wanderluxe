@@ -15,7 +15,7 @@ const TermsOfService: React.FC = () => {
 
           <section className="space-y-10">
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">1. Overview of Services</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Overview of Services</h2>
               <p>
                 Welcome to <strong>WanderLuxe</strong> (the "Site"), owned and operated by <strong>Wanderluxe Travel LLC</strong> ("we," "us," or "our"). By accessing or using the Site, you agree to be bound by these Terms of Service ("Terms"). If you do not agree, please do not use the Site.
               </p>
@@ -24,7 +24,7 @@ const TermsOfService: React.FC = () => {
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">2. Eligibility and Accounts</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Eligibility and Accounts</h2>
               <p>
                 You must be at least the age of majority in your jurisdiction to use the Site. By creating an account, you represent that all information provided is accurate and complete. You are responsible for maintaining the confidentiality of your account credentials and for any activities that occur under your account.
               </p>
@@ -33,13 +33,13 @@ const TermsOfService: React.FC = () => {
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">3. Privacy and Data Collection</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">3. Privacy and Data Collection</h2>
               <p>
                 We collect only the data necessary to provide our services, including basic account details and standard analytics via Google Analytics. We do not sell your personal information. For more details, please review our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">4. AI-Powered Services and Document Processing</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">4. AI-Powered Services and Document Processing</h2>
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">AI Travel Assistant</h3>
@@ -74,19 +74,19 @@ const TermsOfService: React.FC = () => {
               </div>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">5. Third‑Party APIs and Services</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Third‑Party APIs and Services</h2>
               <p>
                 Our Site integrates with various third‑party services and APIs including but not limited to Perplexity AI, OpenAI, Google services, and mapping providers. Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services and are not responsible for their availability, accuracy, or practices.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">5. User Conduct</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">5. User Conduct</h2>
               <p>
                 You agree to use the Site in a lawful manner and not to engage in any activity that could harm the Site or other users. We reserve the right to suspend or terminate your account for violations of these Terms.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">6. Intellectual Property</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Intellectual Property</h2>
               <p>
                 All content on the Site, excluding user‑submitted content, is owned by or licensed to Wanderluxe Travel LLC. You may not reproduce, distribute, or create derivative works without our explicit permission.
               </p>
@@ -95,43 +95,43 @@ const TermsOfService: React.FC = () => {
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">7. Disclaimer of Warranties</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Disclaimer of Warranties</h2>
               <p>
                 The Site and all its services are provided on an “AS IS” and “AS AVAILABLE” basis without warranties of any kind. We do not guarantee the accuracy, reliability, or availability of the Site.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">8. Limitation of Liability</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">8. Limitation of Liability</h2>
               <p>
                 To the fullest extent permitted by law, Wanderluxe Travel LLC shall not be liable for any direct, indirect, incidental, or consequential damages arising out of your use of the Site. Our total liability is limited to any fees paid by you in the six months preceding the claim, if any.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">9. Indemnification</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">9. Indemnification</h2>
               <p>
                 You agree to indemnify and hold harmless Wanderluxe Travel LLC and its affiliates from any claims, damages, or expenses arising from your use of the Site or breach of these Terms.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">10. Termination</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">10. Termination</h2>
               <p>
                 We reserve the right to suspend or terminate your access to the Site at any time, without notice, for any reason including violation of these Terms. Upon termination, you must immediately cease using the Site.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">11. Changes to These Terms</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">11. Changes to These Terms</h2>
               <p>
                 We may modify these Terms at any time. Changes will be posted on the Site, and your continued use of the Site after such changes constitutes your acceptance of the updated Terms.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">12. Governing Law</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">12. Governing Law</h2>
               <p>
                 These Terms shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law provisions. Any disputes arising under or in connection with these Terms shall be subject to the exclusive jurisdiction of the state and federal courts located in Albany County, New York.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">13. Contact Us</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">13. Contact Us</h2>
               <p>
                 If you have any questions or concerns regarding these Terms, please contact us at{' '}
                 <a href="mailto:info@wanderluxe.io" className="text-primary hover:underline">

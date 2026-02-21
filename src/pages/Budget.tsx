@@ -207,7 +207,7 @@ const Budget = () => {
       case 'food': return 'bg-orange-100 text-orange-800';
       case 'entertainment': return 'bg-purple-100 text-purple-800';
       case 'other': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -215,7 +215,7 @@ const Budget = () => {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -224,7 +224,7 @@ const Budget = () => {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-200">
+      <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm shadow-warm-sm hover:shadow-md transition-all duration-200">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -288,7 +288,7 @@ const Budget = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-earth-500">Budget Overview</h2>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Display in:</span>
+                <span className="text-sm text-muted-foreground">Display in:</span>
                 <CurrencySelector
                   value={selectedCurrency}
                   onValueChange={setSelectedCurrency}
@@ -296,7 +296,7 @@ const Budget = () => {
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Exchange rates last updated: {new Date().toLocaleDateString('en-US', { 
                 month: 'numeric', 
                 day: 'numeric', 

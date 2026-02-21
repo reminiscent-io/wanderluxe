@@ -145,7 +145,7 @@ export default function TravelersTagMultiSelect({
                       key={t.id}
                       value={`${displayName} ${t.shared_with_email ?? ""}`.trim()}
                       onSelect={() => handleSelect(t)}
-                      className="cursor-pointer hover:bg-gray-50 bg-white data-[selected=true]:bg-gray-100 pointer-events-auto"
+                      className="cursor-pointer hover:bg-secondary bg-white data-[selected=true]:bg-muted pointer-events-auto"
                     >
                       <Check className={cn("mr-2 h-4 w-4", selected ? "opacity-100" : "opacity-0")} />
                       <div className="flex flex-col pointer-events-none">

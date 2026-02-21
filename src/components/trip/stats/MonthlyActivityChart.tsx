@@ -32,7 +32,7 @@ export function MonthlyActivityChart({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "rounded-xl p-4 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/50",
+          "rounded-xl p-4 bg-gradient-to-br from-sand-50 to-earth-50 border border-sand-200/50",
           className
         )}
       >
@@ -53,7 +53,7 @@ export function MonthlyActivityChart({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "rounded-xl p-4 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 border border-blue-200/50 backdrop-blur-sm",
+        "rounded-xl p-4 bg-gradient-to-br from-sand-50/50 to-earth-50/50 border border-sand-200/50 backdrop-blur-sm",
         className
       )}
     >

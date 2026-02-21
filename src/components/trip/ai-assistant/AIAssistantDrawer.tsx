@@ -222,8 +222,12 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     toast.success('All items have been processed');
   }, []);
 
-  const handleClearChat = useCallback(() => {
-    clearThread();
+  const handleClearChat = useCallback(async () => {
+    try {
+      await clearThread();
+    } catch (e) {
+      console.error('Failed to clear thread:', e);
+    }
     setExtractionMessages([]);
     clearExtraction();
   }, [clearThread, clearExtraction]);
@@ -378,22 +382,19 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 </div>
               )}
 
-              {/* Messages area - scrollable with contained scroll behavior */}
-              <div className="flex-1 min-h-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-                <ChatMessageList
-                  messages={allMessages}
-                  isLoading={isLoading || isExtracting}
-                  isStreaming={isStreaming}
-                  streamingContent={streamingContent}
-                  hasMore={hasMore}
-                  isLoadingMore={isLoadingMore}
-                  onLoadMore={loadMoreMessages}
-                  tripId={tripId}
-                  onImportAll={handleImportAll}
-                  onReviewEdit={handleReviewEdit}
-                  isImporting={isImporting}
-                />
-              </div>
+              <ChatMessageList
+                messages={allMessages}
+                isLoading={isLoading || isExtracting}
+                isStreaming={isStreaming}
+                streamingContent={streamingContent}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={loadMoreMessages}
+                tripId={tripId}
+                onImportAll={handleImportAll}
+                onReviewEdit={handleReviewEdit}
+                isImporting={isImporting}
+              />
 
               {/* Error display */}
               {error && (

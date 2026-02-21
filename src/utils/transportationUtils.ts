@@ -45,13 +45,13 @@ export const getTransportationIcon = (type: TransportationType | string | null):
  */
 export const getTransportationColor = (type: TransportationType | string | null): string => {
   const colorMap: Record<string, string> = {
-    'flight': 'bg-blue-100 text-blue-800',
+    'flight': 'bg-sunset-100 text-sunset-600',
     'train': 'bg-green-100 text-green-800',
-    'car_service': 'bg-gray-100 text-gray-800',
+    'car_service': 'bg-sand-100 text-earth-700',
     'shuttle': 'bg-yellow-100 text-yellow-800',
     'ferry': 'bg-cyan-100 text-cyan-800',
     'rental_car': 'bg-purple-100 text-purple-800'
   };
-  
-  return colorMap[type || ''] || 'bg-gray-100 text-gray-800';
+
+  return colorMap[type || ''] || 'bg-sand-100 text-earth-700';
 };

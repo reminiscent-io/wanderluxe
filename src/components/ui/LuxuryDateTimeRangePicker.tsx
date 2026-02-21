@@ -146,7 +146,7 @@ export default function LuxuryDateTimeRangePicker({
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogContent 
                 className={cn(
-                  "bg-white border-0 shadow-2xl",
+                  "bg-white border-0 shadow-warm-xl",
                   isMobile 
                     ? "w-[95vw] max-w-[95vw] h-[90dvh] max-h-[90dvh] rounded-2xl p-0" 
                     : "w-[420px] max-w-[420px] rounded-xl p-0"
