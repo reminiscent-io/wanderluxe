@@ -93,8 +93,8 @@ export function FullScreenModal({
         )}
         style={{
           top: viewport.offsetTop,
-          left: 0,
-          right: 0,
+          left: viewport.offsetLeft,
+          width: viewport.width,
           height: viewport.height,
           overscrollBehavior: 'contain',
           overflow: 'hidden',
