@@ -13,7 +13,6 @@ import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
 import ExtractionResultMessage from './ExtractionResultMessage';
 import ItemStepperDialog from './ItemStepperDialog';
-import ImportConfirmationDialog from './ImportConfirmationDialog';
 import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem } from '@/types/ai-assistant';
 import {
   AlertDialog,
@@ -40,7 +39,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
   // Extraction state
   const [extractionMessages, setExtractionMessages] = useState<AIChatMessage[]>([]);
   const [showStepperDialog, setShowStepperDialog] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [itemsToProcess, setItemsToProcess] = useState<ExtractedItem[]>([]);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -164,17 +162,11 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     }
   }, [sendMessage]);
 
-  // Handle import all items
+  // Handle import all items - directly performs the import
   const handleImportAll = useCallback(async (items: ExtractedItem[]) => {
-    setItemsToProcess(items);
-    setShowConfirmDialog(true);
-  }, []);
-
-  // Confirm bulk import
-  const handleConfirmImport = useCallback(async () => {
     setIsImporting(true);
     try {
-      const result = await bulkImportItems(tripId, itemsToProcess);
+      const result = await bulkImportItems(tripId, items);
 
       if (result.successCount > 0) {
         toast.success(`Added ${result.successCount} item${result.successCount !== 1 ? 's' : ''} to your trip`);
@@ -186,7 +178,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               return {
                 ...msg,
                 extractedItems: msg.extractedItems.map(item =>
-                  itemsToProcess.some(i => i.id === item.id)
+                  items.some(i => i.id === item.id)
                     ? { ...item, status: 'created' as const }
                     : item
                 )
@@ -206,15 +198,17 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
 
       if (result.failedCount > 0) {
         toast.error(`Failed to import ${result.failedCount} item${result.failedCount !== 1 ? 's' : ''}`);
+        throw new Error(`Failed to import ${result.failedCount} item(s)`);
       }
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to import items');
+      if (!e?.message?.includes('Failed to import')) {
+        toast.error(e?.message || 'Failed to import items');
+      }
+      throw e;
     } finally {
       setIsImporting(false);
-      setShowConfirmDialog(false);
-      setItemsToProcess([]);
     }
-  }, [tripId, itemsToProcess, queryClient]);
+  }, [tripId, queryClient]);
 
   // Handle review & edit flow
   const handleReviewEdit = useCallback((items: ExtractedItem[]) => {
@@ -391,15 +385,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
         onOpenChange={setShowPaywall}
         usage={paywallUsage || usage || undefined}
         isAnonymous={isAnonymous}
-      />
-
-      {/* Import confirmation dialog */}
-      <ImportConfirmationDialog
-        open={showConfirmDialog}
-        onOpenChange={setShowConfirmDialog}
-        items={itemsToProcess}
-        onConfirm={handleConfirmImport}
-        isImporting={isImporting}
       />
 
       {/* Item stepper dialog for review & edit */}
