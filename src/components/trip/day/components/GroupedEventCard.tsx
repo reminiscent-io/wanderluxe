@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
-import { TimelineItem, TimelineType, getEventColors, formatTime12Stacked, formatTime12, getEventIconComponent } from './timeline-utils';
+import { TimelineItem, TimelineType, formatTime12Stacked, formatTime12, getEventIconComponent } from './timeline-utils';
 import TimelineRow from './TimelineRow';
 import TravelerAvatars from '../../timeline/TravelerAvatars';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,7 +30,6 @@ const GroupedEventCard: React.FC<Props> = ({
   onReservationClick,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const colors = getEventColors(groupType);
 
   // Get the first item's time for display
   const firstItem = items[0];
@@ -53,11 +51,7 @@ const GroupedEventCard: React.FC<Props> = ({
               style={{
                 borderWidth: '2px',
                 borderStyle: 'solid',
-                borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' :
-                            colors.node === 'bg-sky-500' ? '#0ea5e9' :
-                            colors.node === 'bg-emerald-500' ? '#10b981' :
-                            colors.node === 'bg-rose-500' ? '#f43f5e' :
-                            '#d1d5db',
+                borderColor: '#8A7F6C',
                 opacity: 0.6
               }}
             />
@@ -72,7 +66,7 @@ const GroupedEventCard: React.FC<Props> = ({
               {/* Main Content: Icon + Title */}
               <div className="flex items-start gap-3">
                 {/* Icon - Outline, no background */}
-                <div className={cn("flex-shrink-0 mt-0.5", colors.node.replace('bg-', 'text-'))}>
+                <div className="flex-shrink-0 mt-0.5 text-earth-600">
                   {React.createElement(IconComponent, { className: 'h-5 w-5', strokeWidth: 1.5 })}
                 </div>
 
@@ -200,15 +194,11 @@ const GroupedEventCard: React.FC<Props> = ({
         {/* Column 2: Timeline Rail - Node Only */}
         <div className="relative flex flex-col items-center">
           <div
-            className="relative w-5 h-5 rounded-full flex-shrink-0 mt-2 bg-white shadow-md z-10"
+            className="relative w-3 h-3 rounded-full flex-shrink-0 mt-2 bg-white z-10"
             style={{
-              borderWidth: '3px',
+              borderWidth: '2px',
               borderStyle: 'solid',
-              borderColor: colors.node === 'bg-amber-500' ? '#f59e0b' :
-                          colors.node === 'bg-sky-500' ? '#0ea5e9' :
-                          colors.node === 'bg-emerald-500' ? '#10b981' :
-                          colors.node === 'bg-rose-500' ? '#f43f5e' :
-                          '#94a3b8'
+              borderColor: '#8A7F6C',
             }}
           />
         </div>
@@ -221,9 +211,9 @@ const GroupedEventCard: React.FC<Props> = ({
           >
             {/* Main Content: Icon + Title */}
             <div className="flex items-start gap-3 sm:gap-4">
-              {/* Icon Container: Responsive size */}
-              <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white", colors.node)}>
-                {React.createElement(IconComponent, { className: 'h-4 w-4 sm:h-5 sm:w-5' })}
+              {/* Icon - Outline, no background */}
+              <div className="flex-shrink-0 mt-0.5 text-earth-600">
+                {React.createElement(IconComponent, { className: 'h-5 w-5', strokeWidth: 1.5 })}
               </div>
 
               {/* Text Content */}

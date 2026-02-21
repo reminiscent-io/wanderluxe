@@ -62,17 +62,6 @@ export const getTransportationIconComponent = (type: string) => {
   return iconMap[type] || <Bus className="h-3 w-3" />;
 };
 
-export const getEventColors = (type: TimelineType) => {
-  switch (type) {
-    case 'hotel':
-      return { node: 'bg-amber-500', line: 'bg-amber-200', icon: 'text-amber-600' };
-    case 'transportation':
-      return { node: 'bg-sky-500', line: 'bg-sky-200', icon: 'text-sky-600' };
-    case 'activity':
-      return { node: 'bg-emerald-500', line: 'bg-emerald-200', icon: 'text-emerald-600' };
-    case 'dining':
-      return { node: 'bg-rose-500', line: 'bg-rose-200', icon: 'text-rose-600' };
-    case 'layover':
-      return { node: 'bg-purple-500', line: 'bg-purple-200', icon: 'text-purple-600' };
-    default:
-      return { node: 'bg
+export const getEventColors = (_type: TimelineType) => {
+  return { node: 'bg-earth-400', line: 'bg-earth-200', icon: 'text-earth-600' };
+};
