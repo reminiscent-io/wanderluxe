@@ -250,8 +250,12 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
   }, []);
 
   // Handle clear chat - also clear extraction messages
-  const handleClearChat = useCallback(() => {
-    clearThread();
+  const handleClearChat = useCallback(async () => {
+    try {
+      await clearThread();
+    } catch (e) {
+      console.error('Failed to clear thread:', e);
+    }
     setExtractionMessages([]);
     clearExtraction();
   }, [clearThread, clearExtraction]);
