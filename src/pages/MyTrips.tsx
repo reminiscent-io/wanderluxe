@@ -20,6 +20,7 @@ import { differenceInDays } from 'date-fns';
 import { ActiveTripCard, NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { TravelStatsCard, MonthlyActivityChart } from '@/components/trip/stats';
 import { useTravelStats } from '@/hooks/useTravelStats';
+import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
 
 const MyTrips = () => {
   const navigate = useNavigate();
@@ -546,7 +547,7 @@ const MyTrips = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
@@ -595,7 +596,7 @@ const MyTrips = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}
@@ -668,7 +669,7 @@ const MyTrips = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         onDelete={!trip.isShared ? () => handleDeleteTrip(trip.trip_id) : undefined}
                         onAcceptInvite={trip.isShared ? handleAcceptSharedTrip : undefined}

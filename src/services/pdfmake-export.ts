@@ -13,7 +13,7 @@
     ---------------------------------------------------------------------- */
 
 import pdfMake from 'pdfmake/build/pdfmake';
-import 'pdfmake/build/vfs_fonts';
+import { loadPdfFonts } from './pdf-fonts';
 
 import { supabase } from '@/integrations/supabase/client';
 import { parseISO, format as fnsFormat, isSameDay } from 'date-fns';
@@ -33,28 +33,25 @@ const TABLES = {
   otherExpenses: 'other_expenses',
 } as const;
 
-// Brand palette (sand/earth)
+// Brand palette (sand/earth/sunset)
 const BRAND = {
   earth: '#6B6354',
   earthLight: '#8A7F6C',
+  earthMid: '#A89B8E',
   sand: '#FAF9F7',
   sandDark: '#7B715F',
   accent: '#5C544A',
+  sunset: '#D97706',
 } as const;
 
 type ExportStrategy = 'auto' | 'open' | 'download' | 'blob';
 type PagePreset = 'auto' | 'mobile' | 'desktop';
 
-const ICON: Record<string, string> = {
-  transportation: '✈',
-  flight: '✈',
-  accommodation: '■',
-  hotel: '■',
-  dining: '●',
-  restaurant: '●',
-  activity: '◆',
-  activities: '◆',
-};
+/** Format a snake_case transport type into Title Case (e.g. "car_service" → "Car Service") */
+function formatType(raw: string | null | undefined): string {
+  if (!raw) return 'Transport';
+  return raw.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+}
 
 // Fixed-width, anchored time matcher: "8:05 am" (linear; no catastrophic backtracking)
 const TIME_RE = /^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])m\s*$/i;
@@ -369,7 +366,7 @@ async function buildDays(
       from: t.departure_location,
       to: t.arrival_location,
       date: fmtShort(t.start_date),
-      type: t.type === 'flight' ? 'Flight' : t.type ? t.type.charAt(0).toUpperCase() + t.type.slice(1) : 'Transport',
+      type: formatType(t.type),
       confirmationNumber: t.confirmation_number || undefined,
     }));
 
@@ -427,12 +424,10 @@ async function buildDays(
 
         hasTransport = true;
 
-        const title =
-          t.type === 'flight'
-            ? `Flight${t.provider ? `: ${t.provider}` : ''}`
-            : t.type
-              ? t.type.charAt(0).toUpperCase() + t.type.slice(1)
-              : 'Transport';
+        const formattedType = formatType(t.type);
+        const title = t.type === 'flight' && t.provider
+          ? `Flight: ${t.provider}`
+          : formattedType;
 
         const startStr = fmtTime(t.start_time);
         const endStr = fmtTime(t.end_time);
@@ -550,31 +545,30 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
 
   // Color coding by activity type
   const typeColors: Record<string, string> = {
-    transportation: '#3B82F6', // blue
-    flight: '#3B82F6',
+    transportation: BRAND.sunset,
+    flight: BRAND.sunset,
     dining: '#F97316', // orange
     restaurant: '#F97316',
     activity: '#10B981', // green
     activities: '#10B981',
-    accommodation: '#6B7280', // gray
-    hotel: '#6B7280',
+    accommodation: BRAND.earthLight,
+    hotel: BRAND.earthLight,
   };
 
   const body = items.map((it, idx) => {
-    const icon = ICON[it.type] || '';
     const typeColor = typeColors[it.type] || '#333';
-    const zebra = idx % 2 === 0 ? '#FFFFFF' : '#F9FAFB';
+    const zebra = idx % 2 === 0 ? '#FFFFFF' : BRAND.sand;
 
     const titleLine =
       (o.showCosts && it.cost)
         ? {
             columns: [
-              { text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor, width: '*' },
+              { text: it.title, style: 'itemTitle', color: typeColor, width: '*' },
               { text: it.cost, style: 'itemCost', alignment: 'right', width: 'auto' },
             ],
             columnGap: 8,
           }
-        : { text: `${icon} ${it.title}`, style: 'itemTitle', color: typeColor };
+        : { text: it.title, style: 'itemTitle', color: typeColor };
 
     const combinedDetails: string[] = [];
     if (it.details) combinedDetails.push(it.details);
@@ -601,7 +595,7 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
     layout: {
       hLineWidth: (i: number) => (i === 0 || i === body.length ? 0 : 0.5),
       vLineWidth: () => 0,
-      hLineColor: () => '#E5E7EB',
+      hLineColor: () => '#E6E2DE',
       paddingLeft: () => 0,
       paddingRight: () => 0,
       paddingTop: () => 4,
@@ -617,7 +611,7 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
 function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize: number): any[] {
   if (!stays.length) return [];
 
-  const content: any[] = [{ text: "🏨 WHERE YOU'RE STAYING", style: 'summaryTitle', margin: [0, 0, 0, 8] }];
+  const content: any[] = [{ text: "WHERE YOU'RE STAYING", style: 'summaryTitle', margin: [0, 0, 0, 8] }];
 
   const table = {
     table: {
@@ -645,7 +639,7 @@ function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize:
 function renderTransportSummary(transports: TransportSegment[]): any[] {
   if (!transports.length) return [];
 
-  const content: any[] = [{ text: '✈️ TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
+  const content: any[] = [{ text: '✈  TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
 
   transports.forEach((t, idx) => {
     content.push({
@@ -659,11 +653,11 @@ function renderTransportSummary(transports: TransportSegment[]): any[] {
 }
 
 function renderDailySummary(days: Day[]): any[] {
-  const content: any[] = [{ text: '📅 DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
+  const content: any[] = [{ text: 'DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
 
   days.forEach((d, idx) => {
     const density = getDensityIndicator(d.activityCount || 0);
-    const travelTag = d.hasTransport ? ' ✈️ Travel Day' : '';
+    const travelTag = d.hasTransport ? ' ✈ Travel Day' : '';
     content.push({
       columns: [
         { text: `${fmtShort(d.date)}:`, style: 'summaryItem', width: 'auto' },
@@ -714,7 +708,7 @@ function calculatePageFit(days: Day[], startIdx: number): number {
  * Render compact day header with inline travel marker + divider line
  */
 function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number, contentWidth: number): any {
-  const travelMarker = d.hasTransport ? ' ✈️ TRAVEL DAY' : '';
+  const travelMarker = d.hasTransport ? ' ✈ TRAVEL DAY' : '';
   const dayText = d.title?.trim()
     ? `${fmtShort(d.date)} • ${d.title}${travelMarker}`
     : `${fmtShort(d.date)}${travelMarker}`;
@@ -723,7 +717,8 @@ function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number
     {
       text: dayText,
       fontSize,
-      bold: true,
+      bold: false,
+      font: 'DMSerifDisplay',
       color: BRAND.earth,
       margin: [0, isFirstOnPage ? 0 : 10, 0, 2] as [number, number, number, number],
     },
@@ -801,8 +796,9 @@ function renderCombinedCoverPage(
   // Hero title and dates in earth palette
   content.push({
     text: `${trip.destination || 'Trip'} Itinerary`,
-    fontSize: 20,
-    bold: true,
+    fontSize: 26,
+    bold: false,
+    font: 'DMSerifDisplay',
     color: BRAND.earth,
     margin: [0, 0, 0, 4] as [number, number, number, number],
   });
@@ -810,7 +806,7 @@ function renderCombinedCoverPage(
   if (dateRange) {
     content.push({
       text: dateRange,
-      fontSize: baseFontSize + 1.5,
+      fontSize: baseFontSize + 3,
       color: BRAND.earthLight,
       margin: [0, 0, 0, 8] as [number, number, number, number],
     });
@@ -846,8 +842,9 @@ function renderCombinedCoverPage(
   // LEFT COLUMN: Trip details + Accommodation summary
   leftColumn.push({
     text: 'Trip Details',
-    fontSize: baseFontSize + 1,
-    bold: true,
+    fontSize: baseFontSize + 2,
+    bold: false,
+    font: 'DMSerifDisplay',
     color: BRAND.earth,
     margin: [0, 0, 0, 6] as [number, number, number, number],
   });
@@ -862,8 +859,9 @@ function renderCombinedCoverPage(
   if (stays.length > 0) {
     leftColumn.push({
       text: 'Accommodations',
-      fontSize: baseFontSize + 1,
-      bold: true,
+      fontSize: baseFontSize + 2,
+      bold: false,
+      font: 'DMSerifDisplay',
       color: BRAND.earth,
       margin: [0, 8, 0, 4] as [number, number, number, number],
     });
@@ -896,28 +894,30 @@ function renderCombinedCoverPage(
   // RIGHT COLUMN: Stats
   rightColumn.push({
     text: 'Quick Stats',
-    fontSize: baseFontSize + 1,
-    bold: true,
+    fontSize: baseFontSize + 2,
+    bold: false,
+    font: 'DMSerifDisplay',
     color: BRAND.earth,
     margin: [0, 0, 0, 6] as [number, number, number, number],
   });
 
   rightColumn.push({
-    text: `✈️ ${totalFlights} flight${totalFlights !== 1 ? 's' : ''}`,
+    text: `${totalFlights} flight${totalFlights !== 1 ? 's' : ''}`,
     fontSize: baseFontSize - 0.5,
     margin: [0, 0, 0, 2] as [number, number, number, number],
   });
 
   rightColumn.push({
-    text: `🎯 ${totalActivities} activit${totalActivities !== 1 ? 'ies' : 'y'}`,
+    text: `${totalActivities} activit${totalActivities !== 1 ? 'ies' : 'y'}`,
     fontSize: baseFontSize - 0.5,
     margin: [0, 0, 0, 6] as [number, number, number, number],
   });
 
   rightColumn.push({
     text: 'Activity Level',
-    fontSize: baseFontSize,
-    bold: true,
+    fontSize: baseFontSize + 1,
+    bold: false,
+    font: 'DMSerifDisplay',
     color: BRAND.earth,
     margin: [0, 4, 0, 4] as [number, number, number, number],
   });
@@ -979,7 +979,8 @@ function renderReferenceSection(
   content.push({
     text: 'Reference Information',
     fontSize: baseFontSize + 4,
-    bold: true,
+    bold: false,
+    font: 'DMSerifDisplay',
     color: BRAND.earth,
     margin: [0, 0, 0, 12] as [number, number, number, number],
   });
@@ -989,7 +990,8 @@ function renderReferenceSection(
     content.push({
       text: 'Accommodation Details',
       fontSize: baseFontSize + 2,
-      bold: true,
+      bold: false,
+      font: 'DMSerifDisplay',
       color: BRAND.earth,
       margin: [0, 8, 0, 8] as [number, number, number, number],
     });
@@ -1000,9 +1002,9 @@ function renderReferenceSection(
         { text: `Check-in: ${stay.checkIn}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
         { text: `Check-out: ${stay.checkOut}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
       ];
-      if (stay.address) details.push({ text: stay.address, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] });
-      if (stay.phone) details.push({ text: `Phone: ${stay.phone}`, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] });
-      if (stay.website) details.push({ text: `Website: ${stay.website}`, fontSize: baseFontSize - 0.5, color: '#6B7280', margin: [0, 0, 0, 2] as [number, number, number, number] });
+      if (stay.address) details.push({ text: stay.address, fontSize: baseFontSize - 0.5, color: BRAND.earthMid, margin: [0, 0, 0, 2] as [number, number, number, number] });
+      if (stay.phone) details.push({ text: `Phone: ${stay.phone}`, fontSize: baseFontSize - 0.5, color: BRAND.earthMid, margin: [0, 0, 0, 2] as [number, number, number, number] });
+      if (stay.website) details.push({ text: `Website: ${stay.website}`, fontSize: baseFontSize - 0.5, color: BRAND.earthMid, margin: [0, 0, 0, 2] as [number, number, number, number] });
 
       content.push({
         stack: details,
@@ -1017,7 +1019,8 @@ function renderReferenceSection(
     content.push({
       text: 'Transportation Confirmations',
       fontSize: baseFontSize + 2,
-      bold: true,
+      bold: false,
+      font: 'DMSerifDisplay',
       color: BRAND.earth,
       margin: [0, 16, 0, 8] as [number, number, number, number],
     });
@@ -1046,7 +1049,8 @@ function renderReferenceSection(
     content.push({
       text: 'Dining Confirmations',
       fontSize: baseFontSize + 2,
-      bold: true,
+      bold: false,
+      font: 'DMSerifDisplay',
       color: BRAND.earth,
       margin: [0, 16, 0, 8] as [number, number, number, number],
     });
@@ -1074,7 +1078,8 @@ function renderReferenceSection(
     content.push({
       text: 'Hotel Contact Information',
       fontSize: baseFontSize + 2,
-      bold: true,
+      bold: false,
+      font: 'DMSerifDisplay',
       color: BRAND.earth,
       margin: [0, 16, 0, 8] as [number, number, number, number],
     });
@@ -1104,7 +1109,8 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): any[
   content.push({
     text: 'Budget Summary',
     fontSize: baseFontSize + 2,
-    bold: true,
+    bold: false,
+    font: 'DMSerifDisplay',
     color: BRAND.earth,
     margin: [0, 16, 0, 8] as [number, number, number, number],
   });
@@ -1136,7 +1142,7 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): any[
     content.push({
       columns: [
         { text: `Budget: $${budgetData.budget.toFixed(2)}`, fontSize: baseFontSize - 0.5, width: 'auto' },
-        { text: '  |  ', fontSize: baseFontSize - 0.5, color: '#999', width: 'auto' },
+        { text: '  |  ', fontSize: baseFontSize - 0.5, color: BRAND.earthMid, width: 'auto' },
         {
           text: overBudget ? `Over budget by $${Math.abs(remaining).toFixed(2)}` : `Remaining: $${remaining.toFixed(2)}`,
           fontSize: baseFontSize - 0.5,
@@ -1158,6 +1164,7 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): any[
 
 export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): Promise<void> {
   try {
+    await loadPdfFonts();
     console.log('[PDF Export] Starting export for trip:', tripId);
     console.log('[PDF Export] Options:', o);
 
@@ -1277,10 +1284,11 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     const doc: any = {
       pageSize,
       pageMargins,
-      defaultStyle: { fontSize: baseFontSize, lineHeight: 1.25 },
+      defaultStyle: { fontSize: baseFontSize, lineHeight: 1.25, font: 'DMSans' },
       header: () => ({
         text: [trip.destination, dateRange ? ` • ${dateRange}` : ''].join(''),
         alignment: 'center',
+        font: 'DMSans',
         fontSize: headerFont,
         margin: [0, 10, 0, 0],
         color: BRAND.earthLight,
@@ -1288,26 +1296,27 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       footer: (p: number, c: number) => ({
         text: `Page ${p} of ${c} • exported ${fnsFormat(new Date(), 'PP p')}`,
         alignment: 'center',
+        font: 'DMSans',
         fontSize: footerFont,
         margin: [0, 0, 0, 10],
         color: BRAND.earthLight,
       }),
       content,
       styles: {
-        heroTitle: { fontSize: heroTitle, bold: true, color: BRAND.earth },
+        heroTitle: { fontSize: heroTitle, bold: false, font: 'DMSerifDisplay', color: BRAND.earth },
         heroSub: { fontSize: baseFontSize + 1.5, color: BRAND.earthLight },
-        summaryPageTitle: { fontSize: dayHeader, bold: true, color: BRAND.earth, margin: [0, 0, 0, 12] },
+        summaryPageTitle: { fontSize: dayHeader, bold: false, font: 'DMSerifDisplay', color: BRAND.earth, margin: [0, 0, 0, 12] },
         summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: BRAND.earth },
         summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: BRAND.earthLight, alignment: 'center' },
         summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
         summaryItem: { fontSize: baseFontSize - 0.5, color: BRAND.accent },
-        dayHeader: { fontSize: isMobile ? 18 : 24, bold: true, color: BRAND.earth },
+        dayHeader: { fontSize: isMobile ? 18 : 24, bold: false, font: 'DMSerifDisplay', color: BRAND.earth },
 
-        // Typography tweaks (cleaner + less heavy)
-        timeCell: { fontSize: isMobile ? 8.5 : 9, bold: true, color: '#4B5563' },
+        // Typography tweaks (warm palette)
+        timeCell: { fontSize: isMobile ? 8.5 : 9, bold: true, color: BRAND.earthLight },
         itemTitle: { fontSize: isMobile ? 10 : 10.5, bold: true },
-        itemDetail: { fontSize: isMobile ? 9 : 9.5, color: '#374151' },
-        itemMeta: { fontSize: isMobile ? 8 : 9, italics: true, color: '#6B7280' },
+        itemDetail: { fontSize: isMobile ? 9 : 9.5, color: BRAND.earth },
+        itemMeta: { fontSize: isMobile ? 8 : 9, italics: true, color: BRAND.earthMid },
         itemCost: { fontSize: isMobile ? 10 : 11, bold: true, color: '#059669' },
       },
     };

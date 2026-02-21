@@ -67,7 +67,7 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
         <div className="absolute bottom-4 right-4 text-white text-sm bg-black/50 px-2 py-1 rounded backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity">
           {photographer && unsplashUsername ? (
             <a
-              href={`https://unsplash.com/@${unsplashUsername}?utm_source=travel_planner&utm_medium=referral`}
+              href={`https://unsplash.com/@${unsplashUsername}?utm_source=wanderluxe&utm_medium=referral`}
               target="_blank"
               rel="noopener noreferrer"
               className="underline"
@@ -76,7 +76,7 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
             </a>
           ) : (
             <a
-              href="https://unsplash.com?utm_source=travel_planner&utm_medium=referral"
+              href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral"
               target="_blank"
               rel="noopener noreferrer"
               className="underline"

@@ -288,8 +288,8 @@ const LLMTraining = () => {
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">Frontend Technology</h4>
                 <ul className="text-sm text-earth-700 space-y-1">
-                  <li>React 18 with TypeScript for type-safe development</li>
-                  <li>Vite 6.3.5 for optimized builds and fast development</li>
+                  <li>React 19 with TypeScript for type-safe development</li>
+                  <li>Vite 6 for optimized builds and fast development</li>
                   <li>Tailwind CSS with custom design system</li>
                   <li>Shadcn/ui components built on Radix UI</li>
                   <li>TanStack Query for efficient state management</li>

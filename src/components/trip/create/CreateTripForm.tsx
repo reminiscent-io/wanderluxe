@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ImageSection from "./ImageSection";
+import ImageSection, { ImageMetadata } from "./ImageSection";
 import TimingSection from "./TimingSection";
 import DestinationInput from "./DestinationInput";
 import PrimaryDestinationInput from "./PrimaryDestinationInput";
@@ -41,6 +41,14 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [primaryDestination, setPrimaryDestination] = useState('');
   const [primaryDestinationPlaceId, setPrimaryDestinationPlaceId] = useState('');
+  const [photographerName, setPhotographerName] = useState('');
+  const [photographerUsername, setPhotographerUsername] = useState('');
+
+  const handleImageChange = (url: string, metadata?: ImageMetadata) => {
+    setCoverImageUrl(url);
+    setPhotographerName(metadata?.photographer || '');
+    setPhotographerUsername(metadata?.username || '');
+  };
 
   const handlePrimaryDestinationChange = (destination: string, placeId: string) => {
     setPrimaryDestination(destination);
@@ -80,6 +88,8 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
           departure_date: endDate,
           cover_image_url: coverImageUrl,
           cover_image_position: imagePosition || 'center 50%',
+          cover_image_photographer: photographerName || null,
+          cover_image_photographer_username: photographerUsername || null,
           is_public: false,
           primary_destination: primaryDestination || null,
           primary_destination_place_id: primaryDestinationPlaceId || null,
@@ -132,7 +142,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
 
       <ImageSection
         coverImageUrl={coverImageUrl}
-        onImageChange={setCoverImageUrl}
+        onImageChange={handleImageChange}
         objectPosition={imagePosition}
         onPositionChange={setImagePosition}
       />

@@ -6,7 +6,7 @@ import { PencilIcon, MapPin } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import ImageSection from '@/components/trip/create/ImageSection';
+import ImageSection, { ImageMetadata } from '@/components/trip/create/ImageSection';
 import PrimaryDestinationInput from '@/components/trip/create/PrimaryDestinationInput';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -71,6 +71,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [editedPrimaryDestination, setEditedPrimaryDestination] = useState(primaryDestination || '');
   const [editedPrimaryDestinationPlaceId, setEditedPrimaryDestinationPlaceId] = useState(primaryDestinationPlaceId || '');
   const [editedImageUrl, setEditedImageUrl] = useState(imageUrl);
+  const [editedPhotographer, setEditedPhotographer] = useState(photographer || '');
+  const [editedPhotographerUsername, setEditedPhotographerUsername] = useState(unsplashUsername || '');
 
   const [imagePosition, setImagePosition] = useState<string>(() => {
     if (coverImagePosition && coverImagePosition !== 'center 50%') return coverImagePosition;
@@ -84,6 +86,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     setEditedPrimaryDestination(primaryDestination || '');
     setEditedPrimaryDestinationPlaceId(primaryDestinationPlaceId || '');
     setEditedImageUrl(imageUrl);
+    setEditedPhotographer(photographer || '');
+    setEditedPhotographerUsername(unsplashUsername || '');
     setIsDialogOpen(true);
   };
 
@@ -95,10 +99,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     setEditedPrimaryDestination(primaryDestination || '');
     setEditedPrimaryDestinationPlaceId(primaryDestinationPlaceId || '');
     setEditedImageUrl(imageUrl);
+    setEditedPhotographer(photographer || '');
+    setEditedPhotographerUsername(unsplashUsername || '');
   };
 
-  const handleImageChange = (newImageUrl: string) => {
+  const handleImageChange = (newImageUrl: string, metadata?: ImageMetadata) => {
     setEditedImageUrl(newImageUrl);
+    setEditedPhotographer(metadata?.photographer || '');
+    setEditedPhotographerUsername(metadata?.username || '');
   };
 
   const handlePositionChange = (newPosition: string) => {
@@ -124,6 +132,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         .update({
           destination: editedTitle,
           cover_image_url: editedImageUrl,
+          cover_image_photographer: editedPhotographer || null,
+          cover_image_photographer_username: editedPhotographerUsername || null,
           primary_destination: editedPrimaryDestination || null,
           primary_destination_place_id: editedPrimaryDestinationPlaceId || null,
           cover_image_position: imagePosition,
@@ -237,6 +247,29 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Gradient overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/10"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-sand-50/30"></div>
+
+        {/* Unsplash attribution — above gradient overlays */}
+        {photographer && unsplashUsername && (
+          <div className="absolute bottom-3 right-3 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity pointer-events-auto">
+            <a
+              href={`https://unsplash.com/@${unsplashUsername}?utm_source=wanderluxe&utm_medium=referral`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              {photographer}
+            </a>
+            {' / '}
+            <a
+              href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Unsplash
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Spacer — pushes content down + holds interactive hero text */}

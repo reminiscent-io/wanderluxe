@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 // Import hero and stats components from MyTrips
 import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { TravelStatsCard, MonthlyActivityChart } from '@/components/trip/stats';
+import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
 
 const Explore = () => {
   const navigate = useNavigate();
@@ -397,7 +398,7 @@ const Explore = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         isExample={true}
                       />
@@ -444,7 +445,7 @@ const Explore = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         isExample={true}
                       />
@@ -511,7 +512,7 @@ const Explore = () => {
                           ...trip,
                           start_date: trip.arrival_date,
                           end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f'
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
                         }}
                         isExample={true}
                       />

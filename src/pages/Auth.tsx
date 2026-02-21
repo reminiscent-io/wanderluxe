@@ -141,6 +141,26 @@ const Auth = () => {
     <div className="relative min-h-screen flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat">
         <div className="absolute inset-0 bg-black/30" />
+        {/* Unsplash attribution */}
+        <div className="absolute bottom-3 left-3 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
+          <a
+            href="https://unsplash.com/@gaddafirusli?utm_source=wanderluxe&utm_medium=referral"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Gaddafi Rusli
+          </a>
+          {' / '}
+          <a
+            href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Unsplash
+          </a>
+        </div>
       </div>
       <motion.div
         animate={isSliding ? { x: "-100%", opacity: 0 } : { x: 0, opacity: 1 }}

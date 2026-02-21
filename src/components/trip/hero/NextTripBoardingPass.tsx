@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plane, Calendar, Clock, ChevronRight, Share2, Check, X } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { cn } from '@/lib/utils';
+import { DEFAULT_TRIP_IMAGE, DEFAULT_TRIP_IMAGE_PHOTOGRAPHER, DEFAULT_TRIP_IMAGE_USERNAME } from '@/constants/unsplash';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
 import {
@@ -90,8 +91,7 @@ export function NextTripBoardingPass({
 
   const arrival = parseISO(trip.arrival_date);
   const departure = parseISO(trip.departure_date);
-  const defaultImage = 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f';
-  const coverImage = trip.cover_image_url || defaultImage;
+  const coverImage = trip.cover_image_url || DEFAULT_TRIP_IMAGE;
 
   return (
     <motion.div
@@ -114,6 +114,23 @@ export function NextTripBoardingPass({
         />
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+        {/* Unsplash attribution */}
+        {(() => {
+          const photographer = trip.cover_image_url ? trip.cover_image_photographer : DEFAULT_TRIP_IMAGE_PHOTOGRAPHER;
+          const username = trip.cover_image_url ? trip.cover_image_photographer_username : DEFAULT_TRIP_IMAGE_USERNAME;
+          if (!photographer || !username) return null;
+          return (
+            <div className="absolute bottom-1.5 right-1.5 z-10 text-white/50 text-[10px] hover:text-white/80 transition-opacity pointer-events-auto">
+              <a href={`https://unsplash.com/@${username}?utm_source=wanderluxe&utm_medium=referral`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                {photographer}
+              </a>
+              {' / '}
+              <a href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                Unsplash
+              </a>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Content Overlay */}

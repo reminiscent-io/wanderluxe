@@ -58,7 +58,7 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 ### Frontend
 - ⚛️ **React 19** + **TypeScript** — Type-safe, component-driven UI
 - ⚡ **Vite 6** — Lightning-fast builds and HMR
-- 🎨 **Tailwind CSS** — Custom sand/earth luxury palette
+- 🎨 **Tailwind CSS** — Warm editorial palette with DM Serif Display & DM Sans typography
 - 🧩 **Shadcn/ui** + **Radix UI** — Accessible, composable components
 - 🔄 **TanStack Query** — Intelligent server state management
 
@@ -227,13 +227,13 @@ wanderluxe/
 
 ## 🎨 Design Philosophy
 
-WanderLuxe's aesthetic embodies **understated luxury** and **effortless sophistication**:
+WanderLuxe's aesthetic is inspired by **1980s–90s editorial travel magazines** — warm, sophisticated, and intentional:
 
-- 🎨 **Color Palette** — Sand & earth tones (#FAF9F7 → #5C544A) evoke premium travel
-- ✍️ **Typography** — Clean, readable hierarchy with proper whitespace
-- 🧩 **Components** — Consistent spacing, subtle shadows, smooth interactions
+- 🎨 **Color Palette** — Warm cream backgrounds, sand/earth neutrals, sunset-orange accents, and bronze primary tones — no cold grays
+- ✍️ **Typography** — DM Serif Display for editorial headings, DM Sans for clean body text, with careful tracking and hierarchy
+- 🧩 **Components** — Rounded cards (`0.75rem`), brown-tinted warm shadows, grain texture overlays on hero sections
 - 📱 **Responsive** — Mobile-first design that scales beautifully to desktop
-- ✨ **Animations** — Delicate fade-in/slide-up transitions for polish
+- ✨ **Animations** — Delicate fade-in/slide-up transitions, parallax hero scroll, subtle image warmth filters
 
 ## 🔒 Security & Privacy
 

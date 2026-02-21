@@ -18,6 +18,8 @@ bun run type-check      # TypeScript type checking
 bun run lint            # ESLint code quality check
 ```
 
+> **Note**: If `bun` is not on PATH, use `npx` equivalents: `npx tsc --noEmit` (type-check), `npx vitest run` (tests).
+
 ### Building & Testing
 ```bash
 bun run build           # Production build
@@ -217,12 +219,20 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
-- **Colors**: Sand/earth palette (luxury travel aesthetic)
-  - Sand: #FAF9F7 → #7B715F (light to dark)
-  - Earth: #F5F3F2 → #5C544A (light to dark)
+- **Typography**: DM Serif Display (headings h1-h3, `font-display`), DM Sans (body/UI, `font-sans`) via Google Fonts
+- **Colors**: Warm editorial travel palette via CSS custom properties + Tailwind scales
+  - Sand/Earth: warm neutrals for text and backgrounds
+  - Sunset (50-600): orange accent scale for CTAs and highlights
+  - Navy (800-950): dark tones
+  - CSS vars (`--background`, `--foreground`, `--border`, etc.) in `src/index.css` control semantic tokens
+- **Shadows**: Brown-tinted warm shadows (`shadow-warm-sm`, `shadow-warm`, `shadow-warm-lg`, `shadow-warm-xl`)
+- **Border Radius**: `rounded-card` (0.75rem) for cards
+- **Button Variants**: `sunset` variant for primary CTAs (gradient orange)
 - **Components**: Shadcn/ui (40+ Radix UI primitives)
 - **Animations**: Custom fade-up, fade-down, slide-up, slide-down
 - **Responsive**: Mobile-first with Tailwind breakpoints
+- **Utilities**: `bg-grain` (subtle noise texture, parent must be positioned), `img-warm` (subtle saturation filter for photos)
+- **Gotcha**: Custom `@layer utilities` in `index.css` override Tailwind built-in utilities (e.g. `position: relative` overrides `fixed`) — avoid setting `position` in custom utility classes
 
 #### 11. **Stripe Integration**
 - Payment processing via `server/routes/stripe.ts`

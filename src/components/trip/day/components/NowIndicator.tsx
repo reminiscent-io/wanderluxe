@@ -17,10 +17,6 @@ const NowIndicator: React.FC = () => {
     return () => clearTimeout(timeout);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, []);
-
   const timeStr = now.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',

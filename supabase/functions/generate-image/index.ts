@@ -96,6 +96,7 @@ serve(async (req)=>{
         url: photo.urls.regular,
         description: photo.description || photo.alt_description,
         photographer: photo.user.name,
+        username: photo.user.username,
         downloadLocation: photo.links.download_location
       }));
     console.log('Processed images:', images);
