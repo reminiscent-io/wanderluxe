@@ -43,6 +43,7 @@ interface ActivityDialogProps {
   preselectedDate?: string;
   tripId: string;
   activityId?: string | null; // edit mode
+  destination?: string; // Trip destination to bias Google Places results
 }
 
 const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
@@ -61,6 +62,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     preselectedDate,
     tripId,
     activityId,
+    destination,
   } = props;
 
   const queryClient = useQueryClient();
@@ -226,6 +228,11 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
           end_time: dataToSave.end_time || null,
           cost: costNum,
           currency: dataToSave.currency || "USD",
+          location_address: dataToSave.location_address || null,
+          location_place_id: dataToSave.location_place_id || null,
+          location_phone: dataToSave.location_phone || null,
+          location_website: dataToSave.location_website || null,
+          location_rating: dataToSave.location_rating || null,
         };
 
         if (isEditMode) {
@@ -286,6 +293,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
             preselectedDate={resolvedPreselectedDate}
             tripId={tripId}
             activityId={activityId}
+            destination={destination}
           />
         </div>
       </DialogContent>

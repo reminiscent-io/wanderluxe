@@ -39,6 +39,11 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         cost: costAsNumber,
         currency: activity.currency || 'USD',
         order_index: activities.length,
+        location_address: activity.location_address || null,
+        location_place_id: activity.location_place_id || null,
+        location_phone: activity.location_phone || null,
+        location_website: activity.location_website || null,
+        location_rating: activity.location_rating || null,
       };
 
       const { data, error } = await supabase
@@ -79,6 +84,11 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         end_time: updatedActivity.end_time?.trim() || null,
         cost: costAsNumber,
         currency: updatedActivity.currency || 'USD',
+        location_address: updatedActivity.location_address || null,
+        location_place_id: updatedActivity.location_place_id || null,
+        location_phone: updatedActivity.location_phone || null,
+        location_website: updatedActivity.location_website || null,
+        location_rating: updatedActivity.location_rating || null,
       };
 
       // If date was changed, find the new day_id and update it

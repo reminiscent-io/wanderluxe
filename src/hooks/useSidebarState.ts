@@ -527,6 +527,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         cost: costNum,
         currency: activity.currency || 'USD',
         order_index: 0,
+        location_address: activity.location_address || null,
+        location_place_id: activity.location_place_id || null,
+        location_phone: activity.location_phone || null,
+        location_website: activity.location_website || null,
+        location_rating: activity.location_rating || null,
       };
       const { data, error } = await supabase.from('day_activities').insert(newActivityEntry).select().single();
       if (error) throw error;
@@ -571,6 +576,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         end_time: updatedActivity.end_time || null,
         cost: costNum,
         currency: updatedActivity.currency || 'USD',
+        location_address: updatedActivity.location_address || null,
+        location_place_id: updatedActivity.location_place_id || null,
+        location_phone: updatedActivity.location_phone || null,
+        location_website: updatedActivity.location_website || null,
+        location_rating: updatedActivity.location_rating || null,
       };
       const { error } = await supabase.from('day_activities').update(updates).eq('id', id);
       if (error) throw error;

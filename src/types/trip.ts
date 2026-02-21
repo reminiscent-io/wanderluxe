@@ -10,6 +10,11 @@ export interface ActivityFormData {
   cost?: string | null;
   currency: Currency;
   travelers?: string[];
+  location_address?: string | null;
+  location_place_id?: string | null;
+  location_phone?: string | null;
+  location_website?: string | null;
+  location_rating?: number | null;
 }
 
 // Define the database types (number-based for database storage)
@@ -26,6 +31,11 @@ export interface DayActivity {
   order_index: number;
   created_at: string;
   is_paid: boolean;
+  location_address?: string | null;
+  location_place_id?: string | null;
+  location_phone?: string | null;
+  location_website?: string | null;
+  location_rating?: number | null;
 }
 
 export interface TripDay {
