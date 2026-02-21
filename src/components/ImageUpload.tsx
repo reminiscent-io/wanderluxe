@@ -174,7 +174,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       {preview ? (
         <div className="space-y-2">
           <div
-            className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 select-none"
+            className="relative w-full h-48 rounded-lg overflow-hidden bg-muted select-none"
             ref={containerRef}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -226,7 +226,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           {onPositionChange && (
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Vertical position</span>
+                <span className="text-sm text-earth-600">Vertical position</span>
                 <div className="flex gap-1">
                   <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => nudge('up')}>
                     <ArrowUp className="h-3.5 w-3.5" />
@@ -277,21 +277,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               onDrop={onDrop}
               className={[
                 "flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer",
-                isDragOver ? "border-earth-500 bg-earth-50/60" : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                isDragOver ? "border-earth-500 bg-earth-50/60" : "border-[hsl(var(--border))] bg-secondary hover:bg-muted"
               ].join(" ")}
             >
               {uploading ? (
                 <div className="flex flex-col items-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-                  <p className="mt-2 text-sm text-gray-600">Uploading...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
+                  <p className="mt-2 text-sm text-earth-600">Uploading...</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center text-center px-3">
-                  <Upload className="h-8 w-8 text-gray-500 mb-2" />
-                  <p className="text-sm text-gray-700">
+                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-earth-700">
                     Drag & drop, click, or paste an image
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP up to {MAX_FILE_MB}MB</p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP up to {MAX_FILE_MB}MB</p>
                 </div>
               )}
             </label>

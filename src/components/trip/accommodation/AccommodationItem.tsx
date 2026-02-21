@@ -23,14 +23,14 @@ const AccommodationItem: React.FC<AccommodationItemProps> = ({ stay, onEdit, onD
   };
 
   return (
-    <div className="flex items-start justify-between p-4 border rounded-lg bg-white hover:shadow-sm transition-all">
+    <div className="flex items-start justify-between p-4 border rounded-lg bg-background hover:shadow-warm-sm transition-all">
       <div className="flex-1">
-        <div className="font-medium text-gray-700">{stay.hotel}</div>
-        <div className="text-sm text-gray-500">
+        <div className="font-medium text-earth-700">{stay.hotel}</div>
+        <div className="text-sm text-muted-foreground">
           {formatDate(stay.hotel_checkin_date)} - {formatDate(stay.hotel_checkout_date)}
         </div>
         {stay.cost && (
-          <div className="text-sm text-gray-600 mt-1">
+          <div className="text-sm text-earth-600 mt-1">
             {formatCurrency(stay.cost, stay.currency)}
           </div>
         )}

@@ -18,13 +18,13 @@ const HotelDetails: React.FC<HotelDetailsProps> = ({
       {address && (
         <div>
           <Label>Address</Label>
-          <p className="text-sm text-gray-600">{address}</p>
+          <p className="text-sm text-earth-600">{address}</p>
         </div>
       )}
       {phone && (
         <div>
           <Label>Phone</Label>
-          <p className="text-sm text-gray-600">{formatInternationalPhone(phone)}</p>
+          <p className="text-sm text-earth-600">{formatInternationalPhone(phone)}</p>
         </div>
       )}
     </div>

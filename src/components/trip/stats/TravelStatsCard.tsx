@@ -19,10 +19,10 @@ interface TravelStatsCardProps {
 
 const gradientClasses: Record<GradientType, { bg: string; icon: string; iconBg: string; text: string }> = {
   blue: {
-    bg: 'bg-gradient-to-br from-blue-500/10 to-blue-600/20 border-blue-200/50',
-    icon: 'text-blue-600',
-    iconBg: 'bg-blue-100',
-    text: 'text-blue-900'
+    bg: 'bg-gradient-to-br from-sunset-100/60 to-sand-100 border-sand-200/50',
+    icon: 'text-sunset-600',
+    iconBg: 'bg-sunset-100',
+    text: 'text-earth-900'
   },
   green: {
     bg: 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/20 border-emerald-200/50',
@@ -31,10 +31,10 @@ const gradientClasses: Record<GradientType, { bg: string; icon: string; iconBg: 
     text: 'text-emerald-900'
   },
   purple: {
-    bg: 'bg-gradient-to-br from-purple-500/10 to-purple-600/20 border-purple-200/50',
-    icon: 'text-purple-600',
-    iconBg: 'bg-purple-100',
-    text: 'text-purple-900'
+    bg: 'bg-gradient-to-br from-earth-100/60 to-sand-100 border-sand-200/50',
+    icon: 'text-earth-600',
+    iconBg: 'bg-earth-100',
+    text: 'text-earth-900'
   },
   sand: {
     bg: 'bg-gradient-to-br from-sand-100 to-earth-100 border-sand-200/50',
@@ -83,7 +83,7 @@ export function TravelStatsCard({
               fill="none"
               stroke="currentColor"
               strokeWidth="4"
-              className="text-gray-200"
+              className="text-sand-200"
             />
             <circle
               cx="24"
@@ -112,12 +112,12 @@ export function TravelStatsCard({
         : 0;
 
       return (
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+        <div className="w-full h-2 bg-sand-200 rounded-full overflow-hidden mt-2">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${percentage}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className={cn("h-full rounded-full", gradient === 'blue' ? 'bg-blue-500' : gradient === 'green' ? 'bg-emerald-500' : gradient === 'purple' ? 'bg-purple-500' : 'bg-earth-500')}
+            className={cn("h-full rounded-full", gradient === 'blue' ? 'bg-sunset-500' : gradient === 'green' ? 'bg-emerald-500' : gradient === 'purple' ? 'bg-earth-500' : 'bg-earth-500')}
           />
         </div>
       );

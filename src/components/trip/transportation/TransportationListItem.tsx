@@ -62,14 +62,14 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   if (compact) {
     return (
       <Card 
-        className="p-3 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+        className="p-3 rounded-lg shadow-warm-sm cursor-pointer hover:shadow-md transition-shadow"
         onClick={onClick}
       >
         <div>
           <h4 className="font-medium">
             {transportation.departure_location} to {transportation.arrival_location}
           </h4>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
             {transportation.start_time && ` ${formatTimeRange(transportation.start_time, transportation.end_time)}`}
           </p>
@@ -81,11 +81,11 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   // Detailed view with edit and delete buttons
   if (!transportation || !transportation.type || !transportation.departure_location || !transportation.arrival_location) {
     return (
-      <Card className="p-4 rounded-lg shadow-sm bg-earth-500/10">
+      <Card className="p-4 rounded-lg shadow-warm-sm bg-earth-500/10">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="text-lg font-medium">Transportation Details Incomplete</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {transportation?.start_date ? formatDate(transportation.start_date) : 'Date missing'}
             </p>
           </div>
@@ -113,7 +113,7 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
   }
 
   return (
-    <Card className="p-3 sm:p-4 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow">
+    <Card className="p-3 sm:p-4 rounded-lg shadow-warm-sm bg-background hover:shadow-md transition-shadow">
       <div className="space-y-3">
         {/* Header with transportation type and actions */}
         <div className="flex justify-between items-start gap-2">
@@ -152,17 +152,17 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
         </div>
 
         {/* Route display - prominent From → To */}
-        <div className="flex items-center gap-2 text-base sm:text-lg font-medium text-gray-900">
+        <div className="flex items-center gap-2 text-base sm:text-lg font-medium text-foreground">
           <span className="truncate">{transportation.departure_location}</span>
-          <span className="text-gray-400 flex-shrink-0">→</span>
+          <span className="text-muted-foreground flex-shrink-0">→</span>
           <span className="truncate">{transportation.arrival_location}</span>
         </div>
 
         {/* Date and time */}
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-earth-600">
           {transportation.start_date ? formatDate(transportation.start_date) : 'Date missing'}
           {transportation.start_time && (
-            <span className="ml-2 text-gray-500">
+            <span className="ml-2 text-muted-foreground">
               {formatTimeRange(transportation.start_time, transportation.end_time)}
             </span>
           )}
@@ -172,21 +172,21 @@ const TransportationListItem: React.FC<TransportationListItemProps> = ({
         <div className="space-y-1 text-sm">
           {transportation.provider && (
             <div className="flex flex-wrap items-center gap-1">
-              <span className="font-medium text-gray-500 text-xs">Provider:</span>
+              <span className="font-medium text-muted-foreground text-xs">Provider:</span>
               <span className="text-xs">{transportation.provider}</span>
             </div>
           )}
           
           {transportation.cost !== null && (
             <div className="flex flex-wrap items-center gap-1">
-              <span className="font-medium text-gray-500 text-xs">Cost:</span>
+              <span className="font-medium text-muted-foreground text-xs">Cost:</span>
               <span className="text-xs font-medium">{formatCost(transportation.cost)}</span>
             </div>
           )}
 
           {transportation.details && (
-            <div className="text-xs text-gray-600 mt-2">
-              <span className="font-medium text-gray-500">Details:</span> {transportation.details}
+            <div className="text-xs text-earth-600 mt-2">
+              <span className="font-medium text-muted-foreground">Details:</span> {transportation.details}
             </div>
           )}
         </div>

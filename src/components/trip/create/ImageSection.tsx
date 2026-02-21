@@ -94,7 +94,7 @@ const ImageSection: React.FC<ImageSectionProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium text-gray-700">Cover Image</Label>
+      <Label className="text-sm font-medium text-earth-700">Cover Image</Label>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
         <TabsList className="grid grid-cols-2 w-full">

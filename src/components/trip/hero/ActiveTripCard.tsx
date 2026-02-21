@@ -42,7 +42,7 @@ export function ActiveTripCard({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
       className={cn(
-        "relative overflow-hidden rounded-2xl shadow-xl cursor-pointer group",
+        "relative overflow-hidden rounded-2xl shadow-warm-xl cursor-pointer group",
         fullBleed ? "h-[40vh] -mx-4 rounded-none md:rounded-2xl md:mx-0" : "h-[320px] md:h-[380px]"
       )}
       onClick={onViewItinerary}
@@ -52,7 +52,7 @@ export function ActiveTripCard({
         <img
           src={coverImage}
           alt={trip.destination}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 img-warm"
         />
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

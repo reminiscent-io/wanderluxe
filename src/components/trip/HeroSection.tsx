@@ -38,7 +38,7 @@ const DateRangeDisplay: React.FC<DateRangeDisplayProps> = ({
   formattedDateRange
 }) => {
   if (isLoading) {
-    return <div className="h-6 w-64 bg-gray-300/30 animate-pulse rounded"></div>;
+    return <div className="h-6 w-64 bg-sand-300/30 animate-pulse rounded"></div>;
   }
 
   if (formattedDateRange) {
@@ -208,7 +208,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     <>
       {/* Fixed hero background — purely visual, no interaction */}
       <div
-        className="fixed overflow-hidden w-full z-0 pointer-events-none"
+        className="fixed overflow-hidden w-full z-0 pointer-events-none bg-grain"
         style={{
           top: 'var(--app-nav-h, 56px)',
           left: 'var(--hero-left, 0)',
@@ -231,7 +231,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             />
           </div>
         ) : (
-          <div className="h-full w-full bg-gray-200 animate-pulse"></div>
+          <div className="h-full w-full bg-sand-200 animate-pulse"></div>
         )}
 
         {/* Gradient overlays for depth */}
@@ -258,7 +258,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           }}
         >
           {isLoading ? (
-            <div className="h-10 w-48 bg-gray-300/30 animate-pulse rounded"></div>
+            <div className="h-10 w-48 bg-sand-300/30 animate-pulse rounded"></div>
           ) : (
             <div className="flex items-baseline gap-2 justify-center mb-4">
               <h1

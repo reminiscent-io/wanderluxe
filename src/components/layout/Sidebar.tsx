@@ -361,7 +361,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <div
-          className="fixed left-0 w-[280px] bg-white border-r border-sand-200 z-30"
+          className="fixed left-0 w-[280px] bg-background border-r border-[hsl(var(--border))] z-30"
           style={{
             top: "calc(var(--app-nav-h, 64px) + env(safe-area-inset-top, 0px))",
             height: "calc(calc(var(--app-height, 1vh) * 100) - var(--app-nav-h, 64px) - env(safe-area-inset-top, 0px))",

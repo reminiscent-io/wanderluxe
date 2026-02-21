@@ -21,7 +21,7 @@ export function DefaultHeroCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className={cn(
-        "relative overflow-hidden rounded-2xl shadow-xl min-h-[320px] md:min-h-[300px]",
+        "relative overflow-hidden rounded-2xl shadow-warm-xl min-h-[320px] md:min-h-[300px] bg-grain",
         className
       )}
     >
@@ -41,7 +41,7 @@ export function DefaultHeroCard({
       )}
 
       {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-sunset-50/40 via-sand-50/30 to-earth-50/30" />
 
       {/* Pattern overlay */}
       <div
@@ -60,7 +60,7 @@ export function DefaultHeroCard({
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           className="mb-6"
         >
-          <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-full p-5 shadow-xl">
+          <div className="bg-gradient-to-br from-sunset-500 to-sunset-600 rounded-full p-5 shadow-warm-xl">
             <Compass className="h-10 w-10 text-white" />
           </div>
         </motion.div>
@@ -75,7 +75,8 @@ export function DefaultHeroCard({
         <Button
           size="lg"
           onClick={onCreateTrip}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          variant="sunset"
+          className="font-semibold transition-all duration-300 transform hover:scale-105"
         >
           <Plus className="h-5 w-5 mr-2" />
           Plan New Adventure

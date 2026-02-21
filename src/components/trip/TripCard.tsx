@@ -136,11 +136,11 @@ const TripCard = ({
       } else if (daysUntil <= 7) {
         return { status: 'soon', label: `${daysUntil} days`, color: 'bg-blue-500' };
       } else {
-        return { status: 'upcoming', label: `${daysUntil} days`, color: 'bg-gray-500' };
+        return { status: 'upcoming', label: `${daysUntil} days`, color: 'bg-earth-500' };
       }
     }
     
-    return { status: 'past', label: 'Completed', color: 'bg-gray-400' };
+    return { status: 'past', label: 'Completed', color: 'bg-sand-400' };
   };
 
   const tripStatus = getTripStatus();
@@ -154,7 +154,7 @@ const TripCard = ({
       className="group"
     >
       <Card 
-        className="overflow-hidden cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white group-hover:shadow-earth-200/25"
+        className="overflow-hidden cursor-pointer border-0 shadow-warm-lg hover:shadow-warm-xl transition-all duration-300 bg-background group-hover:shadow-earth-200/25"
         onClick={(e) => {
           // Prevent navigation if the hide button is clicked
           if (e.defaultPrevented) return;
@@ -167,7 +167,7 @@ const TripCard = ({
           <motion.img 
             src={imageUrl}
             alt={trip.destination} 
-            className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 img-warm"
             whileHover={{ scale: 1.05 }}
           />
           {/* Enhanced gradient overlay */}
@@ -337,7 +337,7 @@ const TripCard = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -368,7 +368,7 @@ const TripCard = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();

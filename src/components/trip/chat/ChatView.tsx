@@ -423,7 +423,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
   // ---------- UI ----------
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="mt-1 bg-white">
+      <Card className="mt-1 bg-background">
         <CardHeader>
           <CardTitle className="text-earth-600">Upload a booking confirmation</CardTitle>
         </CardHeader>
@@ -432,7 +432,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
           <div className="space-y-2 mb-4">
             <Label className="text-sm">1. Select item type (e.g., transportation)</Label>
             <Select value={itemType} onValueChange={(v) => setItemType(v as TravelItemType)}>
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Select item type…" />
               </SelectTrigger>
               <SelectContent className="z-[300] bg-sand-50">
@@ -477,7 +477,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
                     src={previewUrl}
                     alt="Upload preview"
                     referrerPolicy="no-referrer"
-                    className="max-h-56 rounded-md border border-sand-200 shadow-sm object-contain bg-white"
+                    className="max-h-56 rounded-md border border-sand-200 shadow-warm-sm object-contain bg-background"
                   />
                   <Button
                     variant="ghost"

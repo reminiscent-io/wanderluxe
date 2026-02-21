@@ -48,7 +48,7 @@ const AccommodationList: React.FC<AccommodationListProps> = ({
       </div>
 
       {accommodations.length === 0 ? (
-        <p className="text-gray-500 text-sm">No accommodations added yet.</p>
+        <p className="text-muted-foreground text-sm">No accommodations added yet.</p>
       ) : (
         <div className="space-y-3">
           {accommodations.map((accommodation) => (

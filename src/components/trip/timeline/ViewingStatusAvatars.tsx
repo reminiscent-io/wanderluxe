@@ -87,9 +87,9 @@ const ViewingStatusAvatars: React.FC<ViewingStatusAvatarsProps> = ({
       case "active":
         return "ring-green-500"; // Green for actively viewing
       case "viewed":
-        return "ring-gray-400"; // Grey for has viewed
+        return "ring-sand-400"; // Grey for has viewed
       case "never":
-        return "ring-gray-800"; // Black/dark for never viewed
+        return "ring-earth-800"; // Black/dark for never viewed
     }
   };
 
@@ -164,8 +164,8 @@ const ViewingStatusAvatars: React.FC<ViewingStatusAvatarsProps> = ({
                       t.viewingCategory === "active"
                         ? "text-green-600"
                         : t.viewingCategory === "viewed"
-                        ? "text-gray-500"
-                        : "text-gray-400"
+                        ? "text-muted-foreground"
+                        : "text-muted-foreground"
                     }`}>
                       {statusText}
                     </p>
@@ -178,7 +178,7 @@ const ViewingStatusAvatars: React.FC<ViewingStatusAvatarsProps> = ({
           {overflowCount > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-400 text-xs font-medium text-white ring-2 ring-white hover:z-10">
+                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sand-400 text-xs font-medium text-white ring-2 ring-white hover:z-10">
                   +{overflowCount}
                 </div>
               </TooltipTrigger>
@@ -192,7 +192,7 @@ const ViewingStatusAvatars: React.FC<ViewingStatusAvatarsProps> = ({
         </div>
 
         {activeCount > 0 && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted-foreground">
             {activeCount === 1 ? "1 viewing" : `${activeCount} viewing`}
           </span>
         )}

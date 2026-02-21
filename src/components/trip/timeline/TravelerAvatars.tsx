@@ -158,7 +158,7 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
         {overflowCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-400 text-xs font-medium text-white ring-2 ring-white hover:z-10">
+              <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sand-400 text-xs font-medium text-white ring-2 ring-white hover:z-10">
                 +{overflowCount}
               </div>
             </TooltipTrigger>

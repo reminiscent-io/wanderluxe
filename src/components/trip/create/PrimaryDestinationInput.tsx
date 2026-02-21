@@ -185,7 +185,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   const dropdownContent = showSuggestions && suggestions.length > 0 && (
     <div
       ref={dropdownRef}
-      className="bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto text-gray-900"
+      className="bg-background border border-[hsl(var(--border))] rounded-md shadow-warm-xl max-h-60 overflow-y-auto text-foreground"
       style={usePortal ? {
         position: 'fixed',
         top: dropdownPosition.top + 4, // 4px vertical offset
@@ -204,8 +204,8 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
         <button
           key={suggestion.place_id}
           type="button"
-          className={`w-full px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 last:border-b-0 touch-manipulation select-none ${
-            index === selectedIndex ? 'bg-gray-100' : ''
+          className={`w-full px-4 py-3 text-left hover:bg-secondary active:bg-muted border-b border-[hsl(var(--border))] last:border-b-0 touch-manipulation select-none ${
+            index === selectedIndex ? 'bg-muted' : ''
           }`}
           onClick={(e) => {
             e.preventDefault();
@@ -226,12 +226,12 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
+            <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-sm !text-gray-900 truncate">
+              <div className="font-medium text-sm !text-foreground truncate">
                 {suggestion.structured_formatting.main_text}
               </div>
-              <div className="text-xs text-gray-500 truncate">
+              <div className="text-xs text-muted-foreground truncate">
                 {suggestion.structured_formatting.secondary_text}
               </div>
             </div>
@@ -259,7 +259,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
           onBlur={handleBlur}
           onFocus={() => inputValue.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
           className={cn(
-            "pr-16 !bg-white !text-gray-900 placeholder:!text-gray-500",
+            "pr-16 !bg-background !text-foreground placeholder:!text-muted-foreground",
             className || "",
             inputClassName || ""
           )}

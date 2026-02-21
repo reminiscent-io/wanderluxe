@@ -66,18 +66,18 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
   };
 
   return (
-    <div className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm">
-      <Calendar className="h-5 w-5 text-gray-500 mt-1" />
+    <div className="flex items-start gap-4 p-4 bg-background rounded-lg shadow-warm-sm">
+      <Calendar className="h-5 w-5 text-muted-foreground mt-1" />
       <div className="flex-1 space-y-2">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-medium">{stay.hotel}</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {safeFormatDate(stay.hotel_checkin_date, 'MMM d, yyyy')} - {' '}
               {safeFormatDate(stay.hotel_checkout_date, 'MMM d, yyyy')}
             </p>
             {stay.hotel_details && (
-              <p className="text-sm text-gray-600 mt-1">{stay.hotel_details}</p>
+              <p className="text-sm text-earth-600 mt-1">{stay.hotel_details}</p>
             )}
             {stay.hotel_url && (
               <a 
@@ -95,7 +95,7 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => onEdit(stay.stay_id)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-muted-foreground hover:text-earth-700"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -110,15 +110,15 @@ const HotelStayCard: React.FC<HotelStayCardProps> = ({
           </div>
         </div>
 
-        <div className="pt-2 border-t border-gray-100">
-          <p className="text-xs text-gray-500 font-medium mb-1">Daily Schedule:</p>
+        <div className="pt-2 border-t border-[hsl(var(--border))]">
+          <p className="text-xs text-muted-foreground font-medium mb-1">Daily Schedule:</p>
           <div className="space-y-1">
             {stayDates.map((date, index) => {
               const isValidDate = isValid(date);
               return (
                 <p 
                   key={isValidDate ? date.toISOString() : `invalid-${index}`}
-                  className="text-xs text-gray-500"
+                  className="text-xs text-muted-foreground"
                 >
                   {isValidDate 
                     ? format(date, 'EEEE, MMMM d, yyyy') 

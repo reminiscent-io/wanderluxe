@@ -44,7 +44,7 @@ export default function InviteLinkRow({ link, shareText, onEdit, onDisable, onDe
     <>
       <div
         className={`flex items-center justify-between gap-2 p-3 rounded-lg border ${
-          isDisabled ? 'bg-gray-50 opacity-60' : 'bg-white'
+          isDisabled ? 'bg-secondary opacity-60' : 'bg-background'
         }`}
       >
         <div className="flex-1 min-w-0">
@@ -55,7 +55,7 @@ export default function InviteLinkRow({ link, shareText, onEdit, onDisable, onDe
             >
               {link.permission_level === 'edit' ? 'Edit' : 'View'}
             </Badge>
-            <span className="text-xs text-gray-500">{expiryLabel()}</span>
+            <span className="text-xs text-muted-foreground">{expiryLabel()}</span>
           </div>
         </div>
 

@@ -15,8 +15,8 @@ const TripDetailsError: React.FC<TripDetailsErrorProps> = ({ message = 'Unable t
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800">Error Loading Trip</h2>
-          <p className="text-gray-600 mt-2">{message}</p>
+          <h2 className="text-2xl font-bold text-foreground">Error Loading Trip</h2>
+          <p className="text-earth-600 mt-2">{message}</p>
           <button 
             onClick={() => navigate('/my-trips')}
             className="mt-4 px-4 py-2 bg-earth-500 text-white rounded hover:bg-earth-600"

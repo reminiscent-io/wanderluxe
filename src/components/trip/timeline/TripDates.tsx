@@ -193,7 +193,7 @@ const TripDates: React.FC<TripDatesProps> = ({
 
       {/* EXPANDED CONTENT */}
       {!isCollapsed && (
-        <div className="px-4 pb-4 pt-0 border-t border-gray-100/50">
+        <div className="px-4 pb-4 pt-0 border-t border-[hsl(var(--border))]/50">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-8">
             <TripDateDisplay label="Arrival" date={arrivalDate} />
             <TripDateDisplay label="Departure" date={departureDate} />

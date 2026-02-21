@@ -17,7 +17,7 @@ const BudgetHeader: React.FC<BudgetHeaderProps> = ({
     <div className="flex flex-col space-y-4">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Display in:</span>
+          <span className="text-sm text-muted-foreground">Display in:</span>
           <CurrencySelector
             value={selectedCurrency}
             onValueChange={onCurrencyChange}
@@ -26,7 +26,7 @@ const BudgetHeader: React.FC<BudgetHeaderProps> = ({
         </div>
       </div>
       {lastUpdated && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Exchange rates last updated: {format(new Date(lastUpdated), 'M/d/yy h:mm a')}
         </p>
       )}

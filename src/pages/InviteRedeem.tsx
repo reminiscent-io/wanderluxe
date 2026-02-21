@@ -109,7 +109,7 @@ const InviteRedeem = () => {
       <div className="min-h-screen flex items-center justify-center bg-sand-50 p-4">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-earth-500 mb-4" />
-          <p className="text-gray-600">
+          <p className="text-earth-600">
             {state === 'redeeming' ? 'Joining trip...' : 'Loading invite...'}
           </p>
         </div>
@@ -125,8 +125,8 @@ const InviteRedeem = () => {
           <Card className="max-w-md w-full">
             <CardContent className="pt-6 text-center">
               <LogIn className="mx-auto h-12 w-12 text-earth-400 mb-4" />
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">Sign In to Join This Trip</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Sign In to Join This Trip</h2>
+              <p className="text-earth-600 mb-6">
                 Sign in or create an account to accept this invite.
               </p>
               <div className="space-y-3">
@@ -149,9 +149,9 @@ const InviteRedeem = () => {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">Unable to Join</h2>
-            <p className="text-gray-600 mb-6">{errorMessage}</p>
-            <p className="text-sm text-gray-500 mb-4">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Unable to Join</h2>
+            <p className="text-earth-600 mb-6">{errorMessage}</p>
+            <p className="text-sm text-muted-foreground mb-4">
               Contact the trip owner for a new invite link.
             </p>
             <Button onClick={() => navigate('/')} variant="outline">
@@ -180,13 +180,13 @@ const InviteRedeem = () => {
           <p className="text-sm text-earth-500 font-medium">
             {preview?.inviter_name} invited you to join
           </p>
-          <CardTitle className="text-2xl text-gray-800">
+          <CardTitle className="text-2xl text-foreground">
             {preview?.destination}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {preview?.arrival_date && preview?.departure_date && (
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-earth-600">
               <Calendar className="h-4 w-4" />
               <span className="text-sm">
                 {formatDate(preview.arrival_date)} — {formatDate(preview.departure_date)}
@@ -198,7 +198,7 @@ const InviteRedeem = () => {
             <Button onClick={handleSignIn} className="w-full bg-earth-500 text-white hover:bg-earth-600">
               Sign In to Join Trip
             </Button>
-            <p className="text-xs text-center text-gray-500">
+            <p className="text-xs text-center text-muted-foreground">
               You'll need to sign in or create an account to join this trip.
             </p>
           </div>

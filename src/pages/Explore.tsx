@@ -316,7 +316,7 @@ const Explore = () => {
         >
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 type="search"
                 placeholder="Search destinations..."
@@ -354,7 +354,7 @@ const Explore = () => {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="h-64 bg-gray-100 rounded-lg animate-pulse"
+                className="h-64 bg-muted rounded-lg animate-pulse"
               />
             ))}
           </div>
@@ -414,14 +414,14 @@ const Explore = () => {
               transition={{ delay: 0.2, duration: 0.5 }}
               className="relative"
             >
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-blue-100">
-                <div className="bg-blue-100 rounded-xl p-3">
-                  <Calendar className="h-6 w-6 text-blue-600" />
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-sand-200">
+                <div className="bg-sand-200 rounded-xl p-3">
+                  <Calendar className="h-6 w-6 text-earth-600" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
                     Upcoming Adventures
-                    <Badge className="bg-blue-500 text-white text-sm px-3 py-1">
+                    <Badge className="bg-earth-500 text-white text-sm px-3 py-1">
                       {filteredUpcomingTrips.length}
                     </Badge>
                   </h2>
@@ -452,10 +452,10 @@ const Explore = () => {
                   ))}
                 </div>
               ) : (
-                <Card className="p-12 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+                <Card className="p-12 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-sand-200">
                   <div className="max-w-md mx-auto">
-                    <div className="bg-blue-100 rounded-full p-4 w-20 h-20 mx-auto mb-6">
-                      <MapPin className="h-12 w-12 text-blue-600 mx-auto" />
+                    <div className="bg-sand-200 rounded-full p-4 w-20 h-20 mx-auto mb-6">
+                      <MapPin className="h-12 w-12 text-earth-600 mx-auto" />
                     </div>
                     <h3 className="text-xl font-semibold text-earth-800 mb-3">
                       Your Next Adventure Awaits
@@ -481,14 +481,14 @@ const Explore = () => {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="relative"
             >
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
-                <div className="bg-gray-100 rounded-xl p-3">
-                  <Clock className="h-6 w-6 text-gray-600" />
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-sand-200">
+                <div className="bg-sand-100 rounded-xl p-3">
+                  <Clock className="h-6 w-6 text-earth-600" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
                     Travel Memories
-                    <Badge className="bg-gray-500 text-white text-sm px-3 py-1">
+                    <Badge className="bg-earth-500 text-white text-sm px-3 py-1">
                       {pastTrips.length}
                     </Badge>
                   </h2>
@@ -519,10 +519,10 @@ const Explore = () => {
                   ))}
                 </div>
               ) : (
-                <Card className="p-8 text-center bg-gray-50 border-gray-100">
+                <Card className="p-8 text-center bg-secondary border-sand-200">
                   <div className="max-w-sm mx-auto">
-                    <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
-                      <Clock className="h-10 w-10 text-gray-500 mx-auto" />
+                    <div className="bg-sand-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
+                      <Clock className="h-10 w-10 text-earth-400 mx-auto" />
                     </div>
                     <p className="text-earth-500 text-lg">No past adventures yet</p>
                     <p className="text-earth-400 text-sm mt-1">Travel memories will appear here</p>
@@ -538,9 +538,9 @@ const Explore = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                <Card className="p-16 text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200 shadow-xl">
+                <Card className="p-16 text-center bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 border-sand-200 shadow-warm-xl">
                   <div className="max-w-lg mx-auto">
-                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-lg">
+                    <div className="bg-gradient-to-br from-sunset-500 to-sunset-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-warm-lg">
                       <MapPin className="h-16 w-16 text-white mx-auto" />
                     </div>
                     <h3 className="text-3xl font-bold text-earth-800 mb-4">
@@ -553,7 +553,7 @@ const Explore = () => {
                     <Button
                       onClick={() => navigate(session ? '/create-trip' : '/auth')}
                       size="lg"
-                      className="px-10 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="px-10 py-4 rounded-xl text-lg font-semibold shadow-warm-lg hover:shadow-warm-xl transition-all duration-300"
                     >
                       <Plus className="h-5 w-5 mr-2" />
                       {session ? 'Create Your First Trip' : 'Get Started Free'}
@@ -570,7 +570,7 @@ const Explore = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                <Card className="p-16 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-earth-200 shadow-xl">
+                <Card className="p-16 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-earth-200 shadow-warm-xl">
                   <div className="max-w-lg mx-auto">
                     <div className="bg-earth-100 rounded-full p-6 w-28 h-28 mx-auto mb-8">
                       <Search className="h-16 w-16 text-earth-600 mx-auto" />

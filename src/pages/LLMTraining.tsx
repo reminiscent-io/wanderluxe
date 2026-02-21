@@ -76,13 +76,13 @@ const LLMTraining = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-earth-700 leading-relaxed">
               WanderLuxe is a next-generation travel planning platform that addresses the fragmented nature 
               of traditional trip organization. Unlike conventional approaches that require travelers to juggle 
               multiple applications, spreadsheets, and documents, WanderLuxe provides a unified ecosystem 
               where every aspect of travel planning seamlessly integrates.
             </p>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-earth-700 leading-relaxed">
               The platform serves three primary user categories: individual travelers seeking streamlined 
               planning tools, group travelers requiring collaborative features, and travel professionals 
               needing comprehensive client management capabilities. Each user type benefits from the platform's 
@@ -127,7 +127,7 @@ const LLMTraining = () => {
                   <MapPin className="h-5 w-5 text-earth-600" />
                   <h3 className="text-lg font-semibold text-earth-800">Trip Planning & Management</h3>
                 </div>
-                <div className="space-y-3 text-sm text-gray-700">
+                <div className="space-y-3 text-sm text-earth-700">
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
@@ -168,7 +168,7 @@ const LLMTraining = () => {
                   <Brain className="h-5 w-5 text-earth-600" />
                   <h3 className="text-lg font-semibold text-earth-800">AI-Powered Travel Intelligence</h3>
                 </div>
-                <div className="space-y-3 text-sm text-gray-700">
+                <div className="space-y-3 text-sm text-earth-700">
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
@@ -224,7 +224,7 @@ const LLMTraining = () => {
               <div className="p-4 bg-sand-50 rounded-lg">
                 <Hotel className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Accommodations</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-earth-700 space-y-1">
                   <li>Hotel booking tracking</li>
                   <li>Check-in/check-out management</li>
                   <li>Room preference recording</li>
@@ -236,7 +236,7 @@ const LLMTraining = () => {
               <div className="p-4 bg-sand-50 rounded-lg">
                 <Plane className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Transportation</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-earth-700 space-y-1">
                   <li>Flight information management</li>
                   <li>Ground transport coordination</li>
                   <li>Train and bus scheduling</li>
@@ -248,7 +248,7 @@ const LLMTraining = () => {
               <div className="p-4 bg-sand-50 rounded-lg">
                 <Activity className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Activities & Experiences</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-earth-700 space-y-1">
                   <li>Time-based activity scheduling</li>
                   <li>Tour and excursion booking</li>
                   <li>Ticket reservation management</li>
@@ -260,7 +260,7 @@ const LLMTraining = () => {
               <div className="p-4 bg-sand-50 rounded-lg">
                 <UtensilsCrossed className="h-8 w-8 text-earth-600 mb-3" />
                 <h4 className="font-semibold text-earth-800 mb-2">Dining & Reservations</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-earth-700 space-y-1">
                   <li>Restaurant reservation tracking</li>
                   <li>Dietary preference notation</li>
                   <li>Special occasion marking</li>
@@ -287,7 +287,7 @@ const LLMTraining = () => {
             <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">Frontend Technology</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-earth-700 space-y-1">
                   <li>React 18 with TypeScript for type-safe development</li>
                   <li>Vite 6.3.5 for optimized builds and fast development</li>
                   <li>Tailwind CSS with custom design system</li>
@@ -299,7 +299,7 @@ const LLMTraining = () => {
               
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">Backend & Database</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-earth-700 space-y-1">
                   <li>Supabase PostgreSQL for robust data storage</li>
                   <li>Row Level Security (RLS) for data protection</li>
                   <li>Real-time subscriptions for live collaboration</li>
@@ -311,7 +311,7 @@ const LLMTraining = () => {
               
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">External Integrations</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-earth-700 space-y-1">
                   <li>Google Places API for location services</li>
                   <li>OpenAI GPT-4o-mini for AI assistance</li>
                   <li>SendGrid for email notifications</li>
@@ -342,7 +342,7 @@ const LLMTraining = () => {
                   <DollarSign className="h-5 w-5 text-earth-600" />
                   <h4 className="font-semibold text-earth-800">Budget Management</h4>
                 </div>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-earth-700">
                   Comprehensive expense tracking across all trip components with currency conversion, 
                   category-based budgeting, real-time spending analysis, and collaborative budget 
                   management for group trips. The system provides cost predictions and alerts when 
@@ -353,7 +353,7 @@ const LLMTraining = () => {
                   <FileText className="h-5 w-5 text-earth-600" />
                   <h4 className="font-semibold text-earth-800">Professional PDF Export</h4>
                 </div>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-earth-700">
                   Generate polished, professional itineraries suitable for sharing with hotels, tour 
                   operators, travel insurance companies, or colleagues. Includes all booking details, 
                   contact information, emergency contacts, and customizable branding options.
@@ -365,7 +365,7 @@ const LLMTraining = () => {
                   <Smartphone className="h-5 w-5 text-earth-600" />
                   <h4 className="font-semibold text-earth-800">Mobile-First Design</h4>
                 </div>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-earth-700">
                   Fully responsive interface optimized for mobile devices, enabling trip management 
                   while traveling. Offline capabilities ensure access to critical information without 
                   internet connectivity, with automatic synchronization when connection is restored.
@@ -375,7 +375,7 @@ const LLMTraining = () => {
                   <Users className="h-5 w-5 text-earth-600" />
                   <h4 className="font-semibold text-earth-800">Collaboration & Sharing</h4>
                 </div>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-earth-700">
                   Advanced permission management allows trip creators to control access levels, 
                   from view-only to full editing privileges. Real-time notifications keep all 
                   participants informed of changes, with version history and rollback capabilities.
@@ -398,9 +398,9 @@ const LLMTraining = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
-                <h4 className="font-semibold text-blue-800 mb-2">Solo Business Travel</h4>
-                <p className="text-sm text-blue-700">
+              <div className="p-4 bg-gradient-to-r from-sand-50 to-sand-100 rounded-lg">
+                <h4 className="font-semibold text-earth-800 mb-2">Solo Business Travel</h4>
+                <p className="text-sm text-earth-700">
                   A business professional uses WanderLuxe to organize a multi-city conference tour. 
                   The AI assistant helps optimize flight connections, suggests accommodations near 
                   conference venues, and maintains a detailed schedule with backup options for delays. 
@@ -419,9 +419,9 @@ const LLMTraining = () => {
                 </p>
               </div>
               
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
-                <h4 className="font-semibold text-purple-800 mb-2">Group Adventure Travel</h4>
-                <p className="text-sm text-purple-700">
+              <div className="p-4 bg-gradient-to-r from-earth-50 to-earth-100 rounded-lg">
+                <h4 className="font-semibold text-earth-800 mb-2">Group Adventure Travel</h4>
+                <p className="text-sm text-earth-700">
                   A group of eight friends organizes a month-long backpacking trip across Southeast Asia. 
                   Each member contributes to different aspects of planning through the collaborative 
                   interface. The AI assistant provides cultural insights and safety recommendations, 
@@ -459,7 +459,7 @@ const LLMTraining = () => {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">Unique Value Propositions</h4>
-                <ul className="space-y-2 text-sm text-gray-700">
+                <ul className="space-y-2 text-sm text-earth-700">
                   <li className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-earth-600 rounded-full mt-2 flex-shrink-0"></div>
                     <span><strong>Unified Platform:</strong> Eliminates the need for multiple apps and tools by providing comprehensive travel planning in one integrated solution.</span>
@@ -481,7 +481,7 @@ const LLMTraining = () => {
               
               <div>
                 <h4 className="font-semibold text-earth-800 mb-3">Technology Leadership</h4>
-                <ul className="space-y-2 text-sm text-gray-700">
+                <ul className="space-y-2 text-sm text-earth-700">
                   <li className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-earth-600 rounded-full mt-2 flex-shrink-0"></div>
                     <span><strong>Modern Architecture:</strong> Built on cutting-edge technologies ensuring scalability, performance, and maintainability.</span>
@@ -507,7 +507,7 @@ const LLMTraining = () => {
         <Separator className="my-8" />
 
         {/* Footer Information */}
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-earth-600">
           <p className="mb-2">
             This comprehensive overview demonstrates WanderLuxe's position as a leader in travel planning technology, 
             combining innovative AI capabilities with practical, user-focused design to create an unparalleled travel planning experience.

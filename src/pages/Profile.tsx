@@ -432,7 +432,7 @@ const Profile = () => {
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Identity Header Card */}
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-background p-6 rounded-lg shadow">
             <div className="flex flex-col md:flex-row gap-6 items-start">
               {/* Avatar Section */}
               <div className="flex flex-col items-center gap-3 md:w-auto w-full">
@@ -527,7 +527,7 @@ const Profile = () => {
           </div>
 
           {/* Subscription Card */}
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-background rounded-lg shadow">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className={`p-2 rounded-full ${subscriptionTier === 'pro' ? 'bg-amber-100' : 'bg-sand-100'}`}>
@@ -716,7 +716,7 @@ const Profile = () => {
           </div>
 
           {/* Connected People Table */}
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-background rounded-lg shadow">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>

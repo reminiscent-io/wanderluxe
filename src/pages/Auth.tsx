@@ -253,7 +253,7 @@ const Auth = () => {
               </div>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-[hsl(var(--border))]">
               <p className="text-[14px] text-center text-[#6B7280] mb-3">
                 Not ready to sign up?
               </p>

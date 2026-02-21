@@ -58,7 +58,7 @@ export function AdminEngagementTab() {
       {/* Events by Type */}
       <section>
         <h3 className="mb-4 text-lg font-semibold text-earth-900">Events by Type</h3>
-        <div className="rounded-xl border border-sand-200 bg-white overflow-hidden">
+        <div className="rounded-xl border border-sand-200 bg-background overflow-hidden">
           {engagementSummary.length === 0 ? (
             <p className="p-6 text-center text-sand-500">No engagement data available</p>
           ) : (
@@ -93,7 +93,7 @@ export function AdminEngagementTab() {
       {/* Activity Over Time */}
       <section>
         <h3 className="mb-4 text-lg font-semibold text-earth-900">Daily Activity (Last 30 Days)</h3>
-        <div className="rounded-xl border border-sand-200 bg-white p-6">
+        <div className="rounded-xl border border-sand-200 bg-background p-6">
           {engagementOverTime.length === 0 ? (
             <p className="text-center text-sand-500">No activity data available</p>
           ) : (

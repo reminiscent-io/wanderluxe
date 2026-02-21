@@ -40,7 +40,7 @@ const SortableTimelineRow: React.FC<Props> = (props) => {
       style={style}
       className={cn(
         "group relative",
-        isDragging && "z-50 opacity-90 shadow-lg rounded-xl"
+        isDragging && "z-50 opacity-90 shadow-warm-lg rounded-xl"
       )}
     >
       {/* Drag Handle */}

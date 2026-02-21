@@ -91,7 +91,7 @@ export default function TravelerRow({ traveler, onEdit }: TravelerRowProps) {
             </div>
 
             {traveler.shared_with_email && (
-              <p className="text-xs text-gray-500 truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {traveler.shared_with_email}
               </p>
             )}

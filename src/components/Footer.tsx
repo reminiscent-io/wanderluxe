@@ -32,7 +32,7 @@ const Footer = () => {
               Privacy Policy
             </Link>
           </div>
-          <p className="text-xs text-gray-500 text-center mt-4">
+          <p className="text-xs text-muted-foreground text-center mt-4">
             This site uses <i>Google Maps</i>. By using this site, you agree to their <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline">Terms of Service</a>.
           </p>
         </div>

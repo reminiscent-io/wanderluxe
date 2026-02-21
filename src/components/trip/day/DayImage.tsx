@@ -63,7 +63,7 @@ const DayImage: React.FC<DayImageProps> = ({
   }, [objectPosition, dayId]);
 
   return (
-    <div className={cn('relative w-full bg-gray-200 h-full', className)} {...props}>
+    <div className={cn('relative w-full bg-sand-200 h-full', className)} {...props}>
       {displayImageUrl ? (
         <div className="relative overflow-hidden rounded-lg w-full h-full">
           {title && (
@@ -103,7 +103,7 @@ const DayImage: React.FC<DayImageProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center text-gray-400 h-[400px]">
+        <div className="flex items-center justify-center text-muted-foreground h-[400px]">
           No image available
         </div>
       )}

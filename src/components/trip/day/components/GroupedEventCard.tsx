@@ -66,7 +66,7 @@ const GroupedEventCard: React.FC<Props> = ({
           {/* Grouped Event Card */}
           <div className="relative flex-1 min-w-0">
             <div
-              className="bg-white rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-gray-100"
+              className="bg-background rounded-lg shadow-warm-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-[hsl(var(--border))]"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               {/* Main Content: Icon + Title */}
@@ -117,12 +117,12 @@ const GroupedEventCard: React.FC<Props> = ({
                   transition={{ duration: 0.2, ease: 'easeInOut' }}
                   className="overflow-hidden mt-2"
                 >
-                  <div className="space-y-2 pl-4 border-l-2 border-gray-200">
+                  <div className="space-y-2 pl-4 border-l-2 border-[hsl(var(--border))]">
                     {items.map((item, idx) => (
                       <div key={item.id} className="relative">
                         {/* Individual event card - simplified version */}
                         <div
-                          className="bg-sand-50 rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-sand-200"
+                          className="bg-sand-50 rounded-lg shadow-warm-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-sand-200"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (item.type === 'activity' && onActivityClick && item.data) {
@@ -216,7 +216,7 @@ const GroupedEventCard: React.FC<Props> = ({
         {/* Column 3: Grouped Event Card */}
         <div className="relative flex-1 min-w-0">
           <div
-            className="bg-white rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
+            className="bg-background rounded-xl shadow-warm-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
             onClick={() => setIsExpanded(!isExpanded)}
           >
             {/* Main Content: Icon + Title */}
@@ -260,12 +260,12 @@ const GroupedEventCard: React.FC<Props> = ({
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
                 className="overflow-hidden mt-2"
               >
-                <div className="space-y-2 pl-4 border-l-2 border-gray-200">
+                <div className="space-y-2 pl-4 border-l-2 border-[hsl(var(--border))]">
                   {items.map((item, idx) => (
                     <div key={item.id} className="relative">
                       {/* Individual event card - simplified version */}
                       <div
-                        className="bg-sand-50 rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-sand-200"
+                        className="bg-sand-50 rounded-lg shadow-warm-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-sand-200"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (item.type === 'activity' && onActivityClick && item.data) {

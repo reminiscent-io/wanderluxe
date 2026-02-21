@@ -22,7 +22,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
 
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={`w-auto min-w-[80px] rounded-lg px-3 py-2 text-sm bg-sand-50 border border-gray-200 ${className}`}>
+      <SelectTrigger className={`w-auto min-w-[80px] rounded-lg px-3 py-2 text-sm bg-sand-50 border border-[hsl(var(--border))] ${className}`}>
         <SelectValue placeholder="$">{displayValue}</SelectValue>
       </SelectTrigger>
       <SelectContent className="z-[9999]">

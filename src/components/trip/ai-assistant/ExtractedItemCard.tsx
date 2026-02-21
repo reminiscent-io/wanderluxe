@@ -144,7 +144,7 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
         isProcessed ? 'opacity-60' : '',
         item.status === 'created' ? 'bg-green-50 border-green-200' :
         item.status === 'skipped' ? 'bg-sand-50 border-sand-200' :
-        hasWarnings ? 'bg-amber-50 border-amber-200' : 'bg-white border-sand-200',
+        hasWarnings ? 'bg-amber-50 border-amber-200' : 'bg-background border-sand-200',
         compact ? 'p-2' : 'p-3',
         isClickable && 'cursor-pointer hover:ring-2 hover:ring-earth-300 hover:ring-offset-1 focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-offset-1'
       )}

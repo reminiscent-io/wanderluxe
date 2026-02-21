@@ -24,7 +24,7 @@ export default function CookieConsentBanner() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6">
-      <Card className="mx-auto max-w-2xl bg-white/95 backdrop-blur-sm border-sand-200 shadow-lg">
+      <Card className="mx-auto max-w-2xl bg-white/95 backdrop-blur-sm border-sand-200 shadow-warm-lg">
         <div className="p-4 md:p-5">
           {/* Main banner content */}
           <div className="flex items-start gap-3">

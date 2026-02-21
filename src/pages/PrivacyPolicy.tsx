@@ -13,37 +13,37 @@ const PrivacyPolicy: React.FC = () => {
           </h1>
           <section className="space-y-10">
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">1. Introduction</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Introduction</h2>
               <p>
                 Welcome to <strong>WanderLuxe</strong>, operated by <strong>Wanderluxe Travel LLC</strong>. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">2. Information We Collect</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Information We Collect</h2>
               <p>
                 We may collect personal data such as your name, email address, and other relevant details when you register for an account or use our services. Additionally, non-personal data is collected automatically via cookies and similar technologies.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">3. How We Use Your Information</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">3. How We Use Your Information</h2>
               <p>
                 Your information is used to provide, enhance, and personalize our services, as well as to communicate with you about updates or promotions. We may also use your data for internal analytics.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">4. Sharing Your Information</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Sharing Your Information</h2>
               <p>
                 We do not sell your personal information. We may share your data with trusted third-party providers who assist in operating our website and delivering our services, under strict confidentiality agreements.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">5. Data Security</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Data Security</h2>
               <p>
                 We implement various security measures to protect your information. However, no method of transmission over the internet is completely secure, and we cannot guarantee absolute security.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">6. Your Rights</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Your Rights</h2>
               <p>
                 You have the right to access, update, or delete your personal information. If you have any questions or concerns regarding our privacy practices, please contact us at{' '}
                 <a href="mailto:info@wanderluxe.io" className="text-primary hover:underline">
@@ -52,13 +52,13 @@ const PrivacyPolicy: React.FC = () => {
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">7. Cookies and Tracking Technologies</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Cookies and Tracking Technologies</h2>
               <p>
                 We use cookies and similar tracking technologies to enhance your experience on our site and to gather data on usage patterns. You can adjust your browser settings to refuse cookies, though this may impact site functionality.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">8. Changes to This Privacy Policy</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">8. Changes to This Privacy Policy</h2>
               <p>
                 We may update this Privacy Policy from time to time. Any changes will be posted on this page along with an updated effective date.
               </p>

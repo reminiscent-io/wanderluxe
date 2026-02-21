@@ -24,7 +24,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-sand-200 p-6 shadow-sm',
+        'bg-background rounded-xl border border-sand-200 p-6 shadow-warm-sm',
         className
       )}
     >

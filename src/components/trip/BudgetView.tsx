@@ -244,7 +244,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
       case 'activities':
       case 'entertainment': return 'bg-purple-100 text-purple-800';
       case 'other': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -329,7 +329,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-200">
+      <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm shadow-warm-sm hover:shadow-md transition-all duration-200">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">

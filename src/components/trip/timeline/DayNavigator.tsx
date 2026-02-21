@@ -168,7 +168,7 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
       </div>
       
       {/* Mobile View - Floating Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t shadow-lg pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t shadow-warm-lg pb-safe">
         <div className="flex items-center justify-between gap-2 px-2 py-3">
           <Button
             variant="ghost"
