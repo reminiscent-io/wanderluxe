@@ -20,7 +20,6 @@ export type EngagementEventType =
   | 'pdf_exported'
   | 'ai_message_sent'
   | 'trip_shared'
-  | 'vision_board_item_added'
   | 'expense_added';
 
 interface EventData {

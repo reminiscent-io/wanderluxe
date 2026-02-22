@@ -305,7 +305,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
 
                         <div className="relative space-y-3">
                           {/* Continuous timeline line - responsive positioning */}
-                          <div className="absolute left-[12px] sm:left-[80px] top-4 bottom-0 w-px bg-sand-200 -translate-x-1/2" />
+                          <div className="absolute left-[12px] sm:left-[20px] top-4 bottom-0 w-px bg-sand-200 -translate-x-1/2" />
                           {periodGroups.map((group, groupIdx) => {
                             const isExpanded = isPeriodExpanded(group.period);
                             const eventCount = group.rows.filter(row => row.kind !== 'hint' && row.kind !== 'now').length;

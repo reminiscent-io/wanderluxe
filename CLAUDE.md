@@ -49,7 +49,7 @@ bun run test:coverage   # Coverage report
 ```
 src/
 ├── components/
-│   ├── trip/              # Trip feature components (15 subdirs)
+│   ├── trip/              # Trip feature components (14 subdirs)
 │   │   ├── _shared/       # Shared trip utilities
 │   │   ├── accommodation/ # Hotel management
 │   │   ├── ai-assistant/  # AI assistant components
@@ -63,8 +63,7 @@ src/
 │   │   ├── stats/         # Trip statistics
 │   │   ├── timeline/      # Itinerary display
 │   │   ├── transportation/# Flight/train/car bookings
-│   │   ├── travelers/     # Collaborator management
-│   │   └── vision-board/  # Inspiration gallery
+│   │   └── travelers/     # Collaborator management
 │   ├── admin/             # Admin dashboard components
 │   ├── layout/            # Sidebar, Navigation, AppLayout
 │   ├── navigation/        # Navigation components
@@ -156,7 +155,7 @@ PostgreSQL database
 - Responsive: Fixed on desktop, drawer on mobile
 
 **Trip Details Page**
-- Wrapper component routes to different views (Timeline, Budget, Booking, Chat, VisionBoard)
+- Wrapper component routes to different views (Timeline, Budget, Booking, Chat)
 - Each view fetches its own data via React Query
 - Real-time subscriptions keep data fresh
 - Shared trip permissions checked via `useTripPermissions()`
@@ -190,7 +189,6 @@ Key tables:
 - `profiles` - User profiles (auto-created on signup)
 - `ai_chat_threads` / `ai_chat_messages` - AI conversation history
 - `user_ai_usage` - AI usage tracking
-- `vision_board_items` - Travel inspiration
 - `currencies` / `exchange_rates` - Multi-currency support
 - `weather_cache` - Cached weather data
 - `other_expenses` - Non-booking expenses

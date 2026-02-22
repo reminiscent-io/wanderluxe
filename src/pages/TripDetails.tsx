@@ -11,7 +11,6 @@ import TripDetailsError from '@/components/trip/details/TripDetailsError';
 import TimelineView from "../components/trip/TimelineView";
 import BudgetView from "../components/trip/BudgetView";
 import BookingView from "../components/trip/BookingView";
-import VisionBoardView from "../components/trip/vision-board/VisionBoardView";
 import AIAssistantPanel from "../components/trip/ai-assistant/AIAssistantPanel";
 import AIAssistantDrawer from "../components/trip/ai-assistant/AIAssistantDrawer";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -35,7 +34,6 @@ const TripDetails = () => {
     if (path.includes('/budget')) return 'budget';
     if (path.includes('/booking')) return 'booking';
     if (path.includes('/chat')) return 'chat';
-    if (path.includes('/vision-board')) return 'vision-board';
     return 'timeline';
   }, [location.pathname]);
 
@@ -221,7 +219,6 @@ const TripDetails = () => {
               )}
 
               {activeTab === 'chat' && <AIAssistantPanel tripId={tripId || ''} />}
-              {activeTab === 'vision-board' && <VisionBoardView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'budget' && <BudgetView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'booking' && <BookingView tripId={tripId} canEdit={canEdit} />}
             </div>

@@ -200,7 +200,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       {/* Timeline Content - Left side, 60% width on desktop, full width on mobile */}
       <div className="w-full md:w-[60%] px-1 md:px-4 space-y-8">
         <div className="flex justify-between items-center mb-2 pt-4 md:pt-0">
-          <h2 className="text-2xl font-bold text-earth-500">Trip Timeline</h2>
+          <h2 className="text-2xl font-display font-normal text-earth-500">Trip Timeline</h2>
           <div className="flex gap-2">
             <Button
               variant="outline"
