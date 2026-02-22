@@ -5,7 +5,7 @@ import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@
 import HotelPhotoThumb from './HotelPhotoThumb';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import TravelerAvatars from '../../timeline/TravelerAvatars';
-import { TimelineItem, TimelineType, formatTime12, formatTime12Stacked, getEventIconComponent, parseTimeToHM } from './timeline-utils';
+import { TimelineItem, TimelineType, formatTimeRange, getEventIconComponent, parseTimeToHM } from './timeline-utils';
 
 type Props = {
   item: TimelineItem;
@@ -120,7 +120,7 @@ const getFooterLink = (item: TimelineItem): { href: string; label: string } | nu
 };
 
 const TimelineRow: React.FC<Props> = ({
-  item, idx, isLast, tripId, isPast,
+  item, tripId, isPast,
   onActivityClick, onHotelClick, onTransportationClick, onReservationClick
 }) => {
   const handleItemClick = () => {
@@ -130,35 +130,46 @@ const TimelineRow: React.FC<Props> = ({
     if (item.type === 'dining' && onReservationClick && item.data) return onReservationClick(item.data);
   };
 
-  const timeData = formatTime12Stacked(item.time);
   const footerLink = getFooterLink(item);
   const hasFooter = !!(item.data?.cost || footerLink);
 
+  // Build the time label
+  const timeLabel = item.time
+    ? formatTimeRange(item.time, item.endTime, item.type === 'transportation')
+    : '';
+
   return (
     <div className={cn("pb-3 sm:pb-4 last:pb-0", isPast && "opacity-50")}>
-      {/* Mobile Layout */}
-      <div className="sm:hidden">
-        {/* Node and Event Card */}
-        <div className="grid grid-cols-[24px_1fr] gap-2">
-          {/* Timeline Rail - Small Subtle Dot */}
-          <div className="relative flex flex-col items-center">
-            <div
-              className="relative w-3 h-3 rounded-full flex-shrink-0 mt-2 bg-white z-10"
-              style={{
-                borderWidth: '2px',
-                borderStyle: 'solid',
-                borderColor: '#8A7F6C',
-              }}
-            />
-          </div>
+      {/* Unified Layout: Rail + Content */}
+      <div className="grid grid-cols-[24px_1fr] sm:grid-cols-[40px_1fr] gap-2 sm:gap-3">
+        {/* Column 1: Timeline Rail - Node */}
+        <div className="relative flex flex-col items-center">
+          <div
+            className="relative w-3 h-3 rounded-full flex-shrink-0 mt-0.5 bg-white z-10"
+            style={{
+              borderWidth: '2px',
+              borderStyle: 'solid',
+              borderColor: '#8A7F6C',
+            }}
+          />
+        </div>
+
+        {/* Column 2: Time Label + Event Card */}
+        <div className="flex flex-col gap-1.5 min-w-0">
+          {/* Time Range Label */}
+          {timeLabel && (
+            <span className="text-xs sm:text-sm font-semibold text-earth-600 tracking-tight leading-none">
+              {timeLabel}
+            </span>
+          )}
 
           {/* Event Card */}
           <div
-            className="relative flex-1 min-w-0 bg-background rounded-lg shadow-warm-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-[hsl(var(--border))]"
+            className="relative flex-1 min-w-0 bg-background rounded-lg sm:rounded-xl shadow-warm hover:shadow-warm-lg p-3 sm:p-4 cursor-pointer transition-all duration-200 border border-sand-200"
             onClick={handleItemClick}
           >
-            {/* Top-right: Avatar Stack (Face Pile) */}
-            <div className="absolute top-3 right-3">
+            {/* Top-right: Avatar Stack */}
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
               <TravelerAvatars
                 tripId={tripId}
                 eventType={item.type === 'hotel' ? 'accommodation' : item.type}
@@ -169,26 +180,19 @@ const TimelineRow: React.FC<Props> = ({
 
             {/* Main Content: Icon + Title/Subtitle + Optional Hotel Thumb */}
             <div className="flex items-start gap-3">
-              {/* Icon - Outline, no background */}
+              {/* Icon */}
               <div className="flex-shrink-0 mt-0.5 text-earth-600">
                 {React.createElement(
-                  getEventIconComponent(item.type as TimelineType, item.data?.type),
+                  getEventIconComponent(item.type as TimelineType, item.data?.type) as React.ComponentType<any>,
                   { className: 'h-5 w-5', strokeWidth: 1.5 }
                 )}
               </div>
 
-              {/* Text Content: Title + Time + Subtitle */}
+              {/* Text Content */}
               <div className="flex-1 min-w-0 pr-8">
-                {/* Event Title with inline time */}
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-earth-900 hover:text-earth-950 transition-colors">
-                    {item.title}
-                  </span>
-                  {item.time && (
-                    <span className="text-xs font-medium text-earth-500 whitespace-nowrap">
-                      {formatTime12(item.time)}{item.type === 'transportation' && item.endTime ? ` → ${formatTime12(item.endTime)}` : ''}
-                    </span>
-                  )}
+                {/* Event Title */}
+                <div className="text-sm font-display font-normal text-earth-900 hover:text-earth-950 transition-colors line-clamp-2">
+                  {item.title}
                 </div>
 
                 {/* Subtitle/Details */}
@@ -198,22 +202,17 @@ const TimelineRow: React.FC<Props> = ({
                   </div>
                 )}
 
-                {/* End Time (non-transportation) */}
-                {item.endTime && item.type !== 'transportation' && (
-                  <div className="text-xs text-earth-400 mt-1">until {formatTime12(item.endTime)}</div>
-                )}
-
                 {/* Type-specific metadata */}
                 <EventMetadata item={item} />
               </div>
 
-              {/* Hotel photo thumbnail (check-in/check-out events) */}
+              {/* Hotel photo thumbnail */}
               {item.type === 'hotel' && item.data?.hotel_place_id && (
                 <HotelPhotoThumb placeId={item.data.hotel_place_id} title={item.data.hotel} size="sm" />
               )}
             </div>
 
-            {/* Footer Section - Divider + Price + Action Link */}
+            {/* Footer Section */}
             {hasFooter && (
               <>
                 <div className="border-t border-[hsl(var(--border))] mt-3 pt-3" />
@@ -241,121 +240,6 @@ const TimelineRow: React.FC<Props> = ({
               </>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Desktop Layout: Time on left (original layout) */}
-      <div className="hidden sm:grid sm:grid-cols-[60px_40px_1fr] gap-0">
-        {/* Column 1: Time */}
-        <div className="flex-shrink-0 pr-2 text-right">
-          <div className="font-bold text-earth-900 text-sm">
-            {timeData.time || '—'}
-          </div>
-          {timeData.meridiem && (
-            <div className="font-bold text-earth-700 text-xs">
-              {timeData.meridiem}
-            </div>
-          )}
-        </div>
-
-        {/* Column 2: Timeline Rail - Node Only */}
-        <div className="relative flex flex-col items-center">
-          <div
-            className="relative w-3 h-3 rounded-full flex-shrink-0 mt-2 bg-white z-10"
-            style={{
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              borderColor: '#8A7F6C',
-            }}
-          />
-        </div>
-
-        {/* Column 3: Event Card */}
-        <div
-          className="relative flex-1 min-w-0 bg-background rounded-xl shadow-warm-sm hover:shadow-md p-4 cursor-pointer transition-all duration-200"
-          onClick={handleItemClick}
-        >
-          {/* Top-right: Avatar Stack (Face Pile) */}
-          <div className="absolute top-4 right-4">
-            <TravelerAvatars
-              tripId={tripId}
-              eventType={item.type === 'hotel' ? 'accommodation' : item.type}
-              eventId={item.type === 'hotel' ? item.data.stay_id : item.id}
-              maxShow={3}
-            />
-          </div>
-
-          {/* Main Content: Icon + Title/Subtitle */}
-          <div className="flex items-start gap-3 sm:gap-4">
-            {/* Icon - Outline, no background */}
-            <div className="flex-shrink-0 mt-0.5 text-earth-600">
-              {React.createElement(
-                getEventIconComponent(item.type as TimelineType, item.data?.type),
-                { className: 'h-5 w-5', strokeWidth: 1.5 }
-              )}
-            </div>
-
-            {/* Text Content: Title + Subtitle */}
-            <div className="flex-1 min-w-0">
-              {/* Event Title - Bold, slightly reduced size */}
-              <div className="text-sm font-bold text-earth-900 hover:text-earth-950 transition-colors line-clamp-2">
-                {item.title}
-                {item.type === 'transportation' && item.time && item.endTime && (
-                  <span className="ml-2 text-xs font-medium text-earth-500">
-                    {formatTime12(item.time)} → {formatTime12(item.endTime)}
-                  </span>
-                )}
-              </div>
-
-              {/* Subtitle/Details */}
-              {item.description && (
-                <div className="text-xs text-earth-500 mt-1 line-clamp-2">
-                  {item.description}
-                </div>
-              )}
-
-              {/* End Time (non-transportation) */}
-              {item.endTime && item.type !== 'transportation' && (
-                <div className="text-xs text-earth-400 mt-1">until {formatTime12(item.endTime)}</div>
-              )}
-
-              {/* Type-specific metadata */}
-              <EventMetadata item={item} />
-            </div>
-
-            {/* Hotel photo thumbnail (check-in/check-out events) */}
-            {item.type === 'hotel' && item.data?.hotel_place_id && (
-              <HotelPhotoThumb placeId={item.data.hotel_place_id} title={item.data.hotel} size="md" />
-            )}
-          </div>
-
-          {/* Footer Section - Divider + Price + Action Link */}
-          {hasFooter && (
-            <>
-              <div className="border-t border-[hsl(var(--border))] mt-3 pt-3" />
-              <div className="flex items-center justify-between">
-                {item.data?.cost ? (
-                  <span className="text-xs font-semibold text-emerald-600">
-                    {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
-                  </span>
-                ) : (
-                  <div />
-                )}
-                {footerLink && (
-                  <a
-                    href={footerLink.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
-                  >
-                    {footerLink.label}
-                    <ExternalLink className="h-3 w-3" strokeWidth={2} />
-                  </a>
-                )}
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>

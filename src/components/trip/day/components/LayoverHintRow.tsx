@@ -40,24 +40,9 @@ const LayoverHintRow: React.FC<Props> = ({ text, hintType = 'layover' }) => {
 
   return (
     <div className="pb-2 sm:pb-3">
-      {/* Mobile Layout */}
-      <div className="sm:hidden">
-        <div className="grid grid-cols-[24px_1fr] gap-2">
-          <div className="relative flex flex-col items-center">
-            <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-3 z-10", config.dotColor)} />
-          </div>
-          <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed", config.bg, config.border)}>
-            <Icon className={cn("h-3.5 w-3.5 flex-shrink-0", config.iconColor)} />
-            <span className={cn("text-xs font-medium", config.textColor)}>{text}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Layout */}
-      <div className="hidden sm:grid sm:grid-cols-[60px_40px_1fr] gap-0">
-        <div className="flex-shrink-0" />
+      <div className="grid grid-cols-[24px_1fr] sm:grid-cols-[40px_1fr] gap-2 sm:gap-3">
         <div className="relative flex flex-col items-center">
-          <div className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0 mt-2.5 z-10", config.dotColor)} />
+          <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full flex-shrink-0 mt-2.5 z-10", config.dotColor)} />
         </div>
         <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed", config.bg, config.border)}>
           <Icon className={cn("h-3.5 w-3.5 flex-shrink-0", config.iconColor)} />

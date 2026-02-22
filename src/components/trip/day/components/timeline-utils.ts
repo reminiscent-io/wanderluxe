@@ -29,6 +29,15 @@ export type TimelineRenderRow =
 
 /** ------------------------------- Utilities ------------------------------- */
 
+// "9:00 AM – 2:30 PM" or "9:20 AM → 11:45 AM" (arrow for transport)
+export const formatTimeRange = (startTime?: string, endTime?: string, useArrow?: boolean): string => {
+  if (!startTime) return '';
+  const start = formatTime12(startTime);
+  if (!endTime) return start;
+  const end = formatTime12(endTime);
+  return useArrow ? `${start} → ${end}` : `${start} – ${end}`;
+};
+
 // time -> "h:mm AM/PM"
 export const formatTime12 = (time?: string) => {
   if (!time) return '';

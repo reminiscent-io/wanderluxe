@@ -187,7 +187,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                   if (window.innerWidth < 768) setIsOpen(false);
                 }}
                 className={({ isActive }) => cn(
-                  "w-full justify-start text-left flex items-center px-4 py-2 rounded-md transition-colors",
+                  "w-full justify-start text-left flex items-center px-4 py-2 rounded-md transition-colors font-display",
                   isActive
                     ? "bg-earth-100 text-earth-700"
                     : "text-sand-600 hover:text-earth-600 hover:bg-sand-50"
@@ -217,7 +217,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                         size="sm"
                         onClick={() => handleSubitemClick(child.key)}
                         className={cn(
-                          "w-full justify-start pl-6 h-8 text-xs",
+                          "w-full justify-start pl-6 h-8 text-xs font-display",
                           secondaryPanel === child.key
                             ? "bg-earth-50 text-earth-600"
                             : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
@@ -239,7 +239,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                         size="sm"
                         onClick={() => handleSubitemClick(child.key)}
                         className={cn(
-                          "w-full justify-start pl-6 h-8 text-xs",
+                          "w-full justify-start pl-6 h-8 text-xs font-display",
                           secondaryPanel === child.key
                             ? "bg-earth-50 text-earth-600"
                             : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"

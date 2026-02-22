@@ -197,47 +197,6 @@
         }
         Relationships: []
       }
-      vision_board_items: {
-        Row: {
-          id: string
-          trip_id: string
-          title: string
-          description: string | null
-          image_url: string | null
-          link_url: string | null
-          created_at: string
-          order_index: number
-        }
-        Insert: {
-          id?: string
-          trip_id: string
-          title: string
-          description?: string | null
-          image_url?: string | null
-          link_url?: string | null
-          created_at?: string
-          order_index: number
-        }
-        Update: {
-          id?: string
-          trip_id?: string
-          title?: string
-          description?: string | null
-          image_url?: string | null
-          link_url?: string | null
-          created_at?: string
-          order_index?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vision_board_items_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["trip_id"]
-          }
-        ]
-      }
     }
     Views: {
       [_ in never]: never

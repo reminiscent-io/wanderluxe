@@ -25,36 +25,16 @@ const NowIndicator: React.FC = () => {
 
   return (
     <div ref={ref} className="relative py-1">
-      {/* Mobile Layout */}
-      <div className="sm:hidden">
-        <div className="grid grid-cols-[24px_1fr] gap-2 items-center">
-          <div className="flex justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 z-10" />
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-red-500" />
-            <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap uppercase tracking-wide">
-              Now {timeStr}
-            </span>
-            <div className="flex-1 h-px bg-red-500" />
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Layout */}
-      <div className="hidden sm:grid sm:grid-cols-[60px_40px_1fr] gap-0 items-center">
-        <div className="text-right pr-2">
-          <span className="text-[10px] font-bold text-red-500 uppercase tracking-wide">Now</span>
-        </div>
+      <div className="grid grid-cols-[24px_1fr] sm:grid-cols-[40px_1fr] gap-2 sm:gap-3 items-center">
         <div className="flex justify-center">
-          <div className="w-3 h-3 rounded-full bg-red-500 z-10 ring-2 ring-red-200" />
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500 z-10 sm:w-3 sm:h-3 sm:ring-2 sm:ring-red-200" />
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1 h-px bg-red-500" />
-          <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap">
-            {timeStr}
+          <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap uppercase tracking-wide">
+            Now {timeStr}
           </span>
-          <div className="w-8 h-px bg-red-500" />
+          <div className="flex-1 h-px bg-red-500" />
         </div>
       </div>
     </div>
