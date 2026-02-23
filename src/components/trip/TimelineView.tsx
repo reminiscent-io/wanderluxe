@@ -112,7 +112,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           console.log('Skipping trip dates update - missing dates in data:', data);
         }
       }
-      toast.success('Timeline updated successfully');
     } catch (error) {
       console.error('Error refreshing timeline:', error);
       toast.error('Failed to refresh timeline');
@@ -158,7 +157,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
       if (error) throw error;
 
-      toast.success('Day deleted successfully');
       refreshDays();
     } catch (error) {
       console.error('Error deleting day:', error);

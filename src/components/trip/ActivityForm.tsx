@@ -506,7 +506,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* Buttons */}
-      <div className="flex justify-between items-center pt-6 mt-2 border-t border-sand-200">
+      <div className="sticky bottom-0 z-10 bg-background flex justify-between items-center pt-4 -mt-px border-t border-sand-200">
         <div>
           {onDelete && (
             <button

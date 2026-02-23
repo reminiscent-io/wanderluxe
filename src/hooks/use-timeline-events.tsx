@@ -76,7 +76,6 @@ export function useTimelineEvents(tripId: string) {
       return data;
     },
     onSuccess: () => {
-      toast.success('Stay updated successfully');
       queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
     },
     onError: (error) => {
@@ -91,7 +90,6 @@ export function useTimelineEvents(tripId: string) {
       throw new Error('Accommodation functionality has been removed');
     },
     onSuccess: () => {
-      toast.success('Event deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
     },
     onError: (error) => {

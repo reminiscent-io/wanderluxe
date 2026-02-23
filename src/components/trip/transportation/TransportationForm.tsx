@@ -172,7 +172,7 @@ export default function TransportationForm({
           tripId={tripId}
         />
 
-        <div className="flex items-center justify-between pt-6 mt-2 border-t border-sand-200">
+        <div className="sticky bottom-0 z-10 bg-background flex items-center justify-between pt-4 -mt-px border-t border-sand-200">
           <div>
             {initialData && onDelete && (
               <Button

@@ -307,7 +307,6 @@ const Profile = () => {
       setAvatarUrl(cacheBustedUrl);
       // Refresh the auth context so nav/sidebar update immediately
       await refreshProfile();
-      toast.success('Avatar updated successfully');
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast.error('Failed to upload avatar');
@@ -349,7 +348,6 @@ const Profile = () => {
 
       // Refresh the auth context so nav/sidebar update immediately
       await refreshProfile();
-      toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
@@ -409,7 +407,6 @@ const Profile = () => {
         // Skipping DB write here; still allow saving as an "alias" for future. Consider persisting to a contacts_overrides table if you have one.
       }
 
-      toast.success("Contact updated");
       setEditOpen(false);
       await fetchContacts();
     } catch (e: any) {

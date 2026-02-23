@@ -142,7 +142,6 @@ export default function TravelerDialog({
       return result;
     },
     onSuccess: () => {
-      toast.success(isEditing ? "Traveler updated" : "Traveler added");
       queryClient.invalidateQueries({ queryKey: ["travelers", tripId] });
       onOpenChange(false);
       form.reset();
@@ -303,7 +302,6 @@ export default function TravelerDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Traveler removed");
       queryClient.invalidateQueries({ queryKey: ["travelers", tripId] });
       setCreatedShareId(null);
       onOpenChange(false);

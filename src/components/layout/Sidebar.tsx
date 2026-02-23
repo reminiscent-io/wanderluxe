@@ -31,6 +31,7 @@ import SecondaryPanel from "@/components/trip/SecondaryPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useInviteLinks } from "@/hooks/useInviteLinks";
+import { useTripPermissions } from "@/hooks/use-trip-permissions";
 
 export interface SidebarHandle {
   openAccommodationDialog: () => void;
@@ -128,6 +129,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
     handleTravelerAdd, handleTravelerEdit
   } = sidebar;
 
+  const { canEdit } = useTripPermissions(tripId);
   const isOwner = !!trip && !!user && trip.user_id === user.id;
 
   const { createLink, creating } = useInviteLinks(tripId || "");
@@ -149,7 +151,6 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         .eq('trip_id', tripId);
       if (error) throw error;
 
-      toast({ title: 'Success', description: 'Trip deleted successfully' });
       queryClient.invalidateQueries({ queryKey: ['my-trips'] });
       queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
       handleBackToTrips();
@@ -376,6 +377,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
         activeKey={secondaryPanel}
         onClose={() => setSecondaryPanel(null)}
         onBack={handleBackFromSecondary}
+        canEdit={canEdit}
         accommodations={accommodations}
         transportation={transportation}
         activities={activities}
@@ -472,11 +474,9 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
                 .eq('id', selectedReservation.id)
                 .eq('trip_id', tripId);
               if (error) throw error;
-              toast({ title: 'Success', description: 'Reservation updated' });
             } else {
               const { error } = await supabase.from('reservations').insert([data]);
               if (error) throw error;
-              toast({ title: 'Success', description: 'Reservation added' });
             }
             queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
             queryClient.invalidateQueries({ queryKey: ['reservations'] });

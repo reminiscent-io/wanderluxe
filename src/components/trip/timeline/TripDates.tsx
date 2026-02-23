@@ -124,7 +124,6 @@ const TripDates: React.FC<TripDatesProps> = ({
       await createTripDays(tripId, allDates);
     }
 
-    toast.success('Trip dates updated');
     onDatesChange({ arrival_date: arr, departure_date: dep });
     setIsOpen(false);
     setIsSubmitting(false);

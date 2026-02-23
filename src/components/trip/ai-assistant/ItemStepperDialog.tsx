@@ -93,6 +93,7 @@ const mapToActivity = (f: Record<string, any>, tripId: string) => ({
   end_time: toDbTime(f.end_time) ?? '',
   cost: typeof f.cost === 'number' ? String(f.cost) : '',
   currency: f.currency ?? 'USD',
+  location_address: f.location ?? null,
   travelers: [],
   trip_id: tripId,
 });

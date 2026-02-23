@@ -141,7 +141,6 @@ const MyTrips = () => {
 
       if (error) throw error;
 
-      toast.success('Trip deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['my-trips'] });
       queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
     } catch (error) {

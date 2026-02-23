@@ -154,7 +154,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       setIsDialogOpen(false);
-      toast.success('Trip details updated successfully');
     } catch (error) {
       console.error('Error updating trip details:', error);
       toast.error('Failed to update trip details');

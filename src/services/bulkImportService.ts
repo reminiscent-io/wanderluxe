@@ -150,6 +150,7 @@ async function importActivity(
         end_time: toDbTime(fields.end_time as string),
         cost: typeof fields.cost === 'number' ? fields.cost : null,
         currency: (fields.currency as string) || 'USD',
+        location_address: (fields.location as string) || null,
         order_index: nextIndex,
         created_at: new Date().toISOString()
       });

@@ -179,8 +179,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     const dataToSave = activityData || finalActivity;
 
     try {
-      const { toast } = await import("sonner");
-
       if (!dataToSave.title?.trim()) {
         throw new Error("Activity title is required");
       }
@@ -241,13 +239,11 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
             .update(dbData)
             .eq("id", activityId!);
           if (error) throw error;
-          toast.success("Activity updated");
         } else {
           const { error } = await supabase
             .from("day_activities")
             .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
           if (error) throw error;
-          toast.success("Activity added");
         }
 
         // Invalidate queries to refresh the UI (use trip-scoped keys for consistency)
@@ -270,7 +266,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90dvh] overflow-y-auto scrollbar-none p-4 sm:p-6"
+        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90dvh] p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="flex-shrink-0">

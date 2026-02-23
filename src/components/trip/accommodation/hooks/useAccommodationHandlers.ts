@@ -21,7 +21,6 @@ export const useAccommodationHandlers = ({ tripId, onAccommodationChange }: UseA
       return await deleteAccommodation(stayId);
     },
     onSuccess: () => {
-      toast.success('Accommodation deleted successfully');
       // Invalidate the accommodations query for this trip
       queryClient.invalidateQueries(['accommodations', tripId]);
       // Only call onAccommodationChange if it's a function
