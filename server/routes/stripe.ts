@@ -34,6 +34,137 @@ function getSupabase(): SupabaseClient {
 const PRO_PRICE_AMOUNT = 399;
 const PRO_PRICE_CURRENCY = 'usd';
 
+async function resolveUserIdFromSubscription(
+  sb: SupabaseClient,
+  subscription: Stripe.Subscription
+): Promise<string | undefined> {
+  const userId = subscription.metadata?.supabase_user_id;
+  if (userId) return userId;
+
+  if (!subscription.customer) return undefined;
+
+  const customerId = typeof subscription.customer === 'string'
+    ? subscription.customer
+    : subscription.customer.id;
+
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  return profile?.id;
+}
+
+async function handleCheckoutCompleted(
+  sb: SupabaseClient,
+  event: Stripe.Event
+): Promise<void> {
+  const session = event.data.object as Stripe.Checkout.Session;
+  const userId = session.metadata?.supabase_user_id;
+
+  if (!userId || !session.subscription) return;
+
+  await sb
+    .from('profiles')
+    .update({
+      subscription_tier: 'pro',
+      stripe_subscription_id: session.subscription as string,
+      ai_messages_limit: -1,
+      ai_imports_limit: -1,
+    })
+    .eq('id', userId);
+
+  console.log(`User ${userId} upgraded to Pro`);
+}
+
+async function handleSubscriptionUpdated(
+  sb: SupabaseClient,
+  event: Stripe.Event
+): Promise<void> {
+  const subscription = event.data.object as Stripe.Subscription;
+  const userId = await resolveUserIdFromSubscription(sb, subscription);
+
+  if (!userId) return;
+
+  const isActive = subscription.status === 'active' || subscription.status === 'trialing';
+
+  await sb
+    .from('profiles')
+    .update({
+      subscription_tier: isActive ? 'pro' : 'free',
+      ai_messages_limit: isActive ? -1 : 10,
+      ai_imports_limit: isActive ? -1 : 5,
+    })
+    .eq('id', userId);
+
+  console.log(`User ${userId} subscription updated: ${subscription.status}`);
+}
+
+async function handleSubscriptionDeleted(
+  sb: SupabaseClient,
+  event: Stripe.Event
+): Promise<void> {
+  const subscription = event.data.object as Stripe.Subscription;
+  const userId = await resolveUserIdFromSubscription(sb, subscription);
+
+  if (!userId) return;
+
+  await sb
+    .from('profiles')
+    .update({
+      subscription_tier: 'free',
+      stripe_subscription_id: null,
+      ai_messages_limit: 10,
+      ai_imports_limit: 5,
+    })
+    .eq('id', userId);
+
+  console.log(`User ${userId} subscription cancelled`);
+}
+
+async function handleInvoicePaymentSucceeded(
+  sb: SupabaseClient,
+  stripeClient: Stripe,
+  event: Stripe.Event
+): Promise<void> {
+  const invoice = event.data.object as Stripe.Invoice;
+  const subscriptionId = (invoice as any).subscription;
+  if (!subscriptionId) return;
+
+  const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
+  const userId = subscription.metadata?.supabase_user_id;
+
+  if (!userId) return;
+
+  await sb
+    .from('profiles')
+    .update({
+      subscription_tier: 'pro',
+      ai_messages_limit: -1,
+      ai_imports_limit: -1,
+    })
+    .eq('id', userId);
+
+  console.log(`User ${userId} payment succeeded`);
+}
+
+async function handleInvoicePaymentFailed(
+  stripeClient: Stripe,
+  event: Stripe.Event
+): Promise<void> {
+  const invoice = event.data.object as Stripe.Invoice;
+  const subscriptionId = (invoice as any).subscription;
+  if (!subscriptionId) return;
+
+  const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
+  const userId = subscription.metadata?.supabase_user_id;
+
+  if (userId) {
+    console.log(`User ${userId} payment failed - subscription may be suspended`);
+  }
+}
+
 async function getOrCreateStripeCustomer(userId: string, email: string): Promise<string> {
   const sb = getSupabase();
   const stripeClient = getStripe();
@@ -211,123 +342,21 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
     const stripeClient = getStripe();
 
     switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.metadata?.supabase_user_id;
-
-        if (userId && session.subscription) {
-          await sb
-            .from('profiles')
-            .update({
-              subscription_tier: 'pro',
-              stripe_subscription_id: session.subscription as string,
-              ai_messages_limit: -1,
-              ai_imports_limit: -1,
-            })
-            .eq('id', userId);
-
-          console.log(`User ${userId} upgraded to Pro`);
-        }
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(sb, event);
         break;
-      }
-
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
-        let userId = subscription.metadata?.supabase_user_id;
-
-        if (!userId && subscription.customer) {
-          const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
-          const { data: profile } = await sb
-            .from('profiles')
-            .select('id')
-            .eq('stripe_customer_id', customerId)
-            .single();
-          userId = profile?.id;
-        }
-
-        if (userId) {
-          const isActive = subscription.status === 'active' || subscription.status === 'trialing';
-
-          await sb
-            .from('profiles')
-            .update({
-              subscription_tier: isActive ? 'pro' : 'free',
-              ai_messages_limit: isActive ? -1 : 10,
-              ai_imports_limit: isActive ? -1 : 5,
-            })
-            .eq('id', userId);
-
-          console.log(`User ${userId} subscription updated: ${subscription.status}`);
-        }
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(sb, event);
         break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
-        let userId = subscription.metadata?.supabase_user_id;
-
-        if (!userId && subscription.customer) {
-          const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
-          const { data: profile } = await sb
-            .from('profiles')
-            .select('id')
-            .eq('stripe_customer_id', customerId)
-            .single();
-          userId = profile?.id;
-        }
-
-        if (userId) {
-          await sb
-            .from('profiles')
-            .update({
-              subscription_tier: 'free',
-              stripe_subscription_id: null,
-              ai_messages_limit: 10,
-              ai_imports_limit: 5,
-            })
-            .eq('id', userId);
-
-          console.log(`User ${userId} subscription cancelled`);
-        }
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(sb, event);
         break;
-      }
-
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = (invoice as any).subscription;
-        if (subscriptionId) {
-          const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
-          const userId = subscription.metadata?.supabase_user_id;
-
-          if (userId) {
-            await sb
-              .from('profiles')
-              .update({
-                subscription_tier: 'pro',
-                ai_messages_limit: -1,
-                ai_imports_limit: -1,
-              })
-              .eq('id', userId);
-
-            console.log(`User ${userId} payment succeeded`);
-          }
-        }
+      case 'invoice.payment_succeeded':
+        await handleInvoicePaymentSucceeded(sb, stripeClient, event);
         break;
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = (invoice as any).subscription;
-        if (subscriptionId) {
-          const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
-          const userId = subscription.metadata?.supabase_user_id;
-
-          if (userId) {
-            console.log(`User ${userId} payment failed - subscription may be suspended`);
-          }
-        }
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(stripeClient, event);
         break;
-      }
     }
   } catch (error) {
     console.error('Error processing webhook:', error);

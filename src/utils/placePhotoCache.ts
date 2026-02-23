@@ -69,27 +69,32 @@ export function setCachedPlacePhotos(placeId: string, photos: PlacePhotoMeta[]) 
   }
 }
 
-/** Best-effort sweep of expired entries (no‑op if storage is unavailable). */
-export function clearExpiredPlacePhotoCache(ttlMs: number = DEFAULT_TTL_MS) {
+function clearExpiredMemoryEntries(ttlMs: number): void {
   const now = Date.now();
-  // memory
   for (const [k, v] of mem) {
     if (now - v.ts >= ttlMs) mem.delete(k);
   }
-  // sessionStorage
-  if (canUseSessionStorage()) {
-    try {
-      const toRemove: string[] = [];
-      for (let i = 0; i < window.sessionStorage.length; i += 1) {
-        const key = window.sessionStorage.key(i);
-        if (key && key.startsWith(KEY_PREFIX)) {
-          const raw = window.sessionStorage.getItem(key);
-          if (!raw) continue;
-          const parsed = JSON.parse(raw);
-          if (!parsed?.ts || now - parsed.ts >= ttlMs) toRemove.push(key);
-        }
-      }
-      toRemove.forEach((k) => window.sessionStorage.removeItem(k));
-    } catch {}
-  }
+}
+
+function clearExpiredSessionEntries(ttlMs: number): void {
+  if (!canUseSessionStorage()) return;
+  try {
+    const now = Date.now();
+    const toRemove: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i += 1) {
+      const key = window.sessionStorage.key(i);
+      if (!key || !key.startsWith(KEY_PREFIX)) continue;
+      const raw = window.sessionStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.ts || now - parsed.ts >= ttlMs) toRemove.push(key);
+    }
+    toRemove.forEach((k) => window.sessionStorage.removeItem(k));
+  } catch {}
+}
+
+/** Best-effort sweep of expired entries (no-op if storage is unavailable). */
+export function clearExpiredPlacePhotoCache(ttlMs: number = DEFAULT_TTL_MS) {
+  clearExpiredMemoryEntries(ttlMs);
+  clearExpiredSessionEntries(ttlMs);
 }

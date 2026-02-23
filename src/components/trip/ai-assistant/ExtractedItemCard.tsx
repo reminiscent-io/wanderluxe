@@ -43,82 +43,86 @@ const ITEM_TYPE_CONFIG: Record<TravelItemType, {
   }
 };
 
-// Get display summary based on item type
-function getItemSummary(item: ExtractedItem): { title: string; subtitle: string } {
-  const { fields, itemType } = item;
+type ItemSummary = { title: string; subtitle: string };
 
-  switch (itemType) {
-    case 'transportation': {
-      const type = (fields.type as string) || 'Transport';
-      const carrier = fields.carrier as string;
-      const from = fields.departure_location as string;
-      const to = fields.arrival_location as string;
-      const date = fields.departure_date as string;
-      const time = fields.departure_time as string;
+const SHORT_DATE: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', timeZone: 'UTC' };
 
-      const typeLabel = type === 'flight' ? 'Flight' :
-                        type === 'train' ? 'Train' :
-                        type === 'ferry' ? 'Ferry' :
-                        type === 'rental_car' ? 'Car Rental' :
-                        type === 'car_service' ? 'Car Service' :
-                        type === 'shuttle' ? 'Shuttle' : 'Transport';
+function formatShortDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', SHORT_DATE);
+}
 
-      const route = from && to ? `${from} → ${to}` : from || to || '';
-      const title = carrier ? `${typeLabel}: ${carrier}` : typeLabel;
-      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '';
-      const subtitle = [route, dateStr, time].filter(Boolean).join(' • ');
+const TRANSPORT_TYPE_LABELS: Record<string, string> = {
+  flight: 'Flight',
+  train: 'Train',
+  ferry: 'Ferry',
+  rental_car: 'Car Rental',
+  car_service: 'Car Service',
+  shuttle: 'Shuttle'
+};
 
-      return { title, subtitle };
-    }
+function getTransportationSummary(fields: Record<string, unknown>): ItemSummary {
+  const type = (fields.type as string) || 'Transport';
+  const carrier = fields.carrier as string;
+  const from = fields.departure_location as string;
+  const to = fields.arrival_location as string;
+  const date = fields.departure_date as string;
+  const time = fields.departure_time as string;
 
-    case 'accommodation': {
-      const name = (fields.name as string) || 'Hotel';
-      const checkIn = fields.check_in_date as string;
-      const checkOut = fields.check_out_date as string;
-      const address = fields.address as string;
+  const typeLabel = TRANSPORT_TYPE_LABELS[type] || 'Transport';
+  const route = from && to ? `${from} → ${to}` : from || to || '';
+  const title = carrier ? `${typeLabel}: ${carrier}` : typeLabel;
+  const dateStr = date ? formatShortDate(date) : '';
 
-      const dateRange = checkIn && checkOut
-        ? `${new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })} - ${new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}`
-        : checkIn || '';
+  return { title, subtitle: [route, dateStr, time].filter(Boolean).join(' • ') };
+}
 
-      return {
-        title: name,
-        subtitle: [dateRange, address].filter(Boolean).join(' • ')
-      };
-    }
+function getAccommodationSummary(fields: Record<string, unknown>): ItemSummary {
+  const name = (fields.name as string) || 'Hotel';
+  const checkIn = fields.check_in_date as string;
+  const checkOut = fields.check_out_date as string;
+  const address = fields.address as string;
 
-    case 'activity': {
-      const name = (fields.name as string) || 'Activity';
-      const date = fields.date as string;
-      const time = fields.start_time as string;
-      const location = fields.location as string;
+  const dateRange = checkIn && checkOut
+    ? `${formatShortDate(checkIn)} - ${formatShortDate(checkOut)}`
+    : checkIn || '';
 
-      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '';
+  return { title: name, subtitle: [dateRange, address].filter(Boolean).join(' • ') };
+}
 
-      return {
-        title: name,
-        subtitle: [dateStr, time, location].filter(Boolean).join(' • ')
-      };
-    }
+function getActivitySummary(fields: Record<string, unknown>): ItemSummary {
+  const name = (fields.name as string) || 'Activity';
+  const date = fields.date as string;
+  const time = fields.start_time as string;
+  const location = fields.location as string;
+  const dateStr = date ? formatShortDate(date) : '';
 
-    case 'reservation': {
-      const name = (fields.restaurant_name as string) || 'Restaurant';
-      const date = fields.date as string;
-      const time = fields.time as string;
-      const partySize = fields.party_size as number;
+  return { title: name, subtitle: [dateStr, time, location].filter(Boolean).join(' • ') };
+}
 
-      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '';
-      const partySizeStr = partySize ? `${partySize} guests` : '';
+function getReservationSummary(fields: Record<string, unknown>): ItemSummary {
+  const name = (fields.restaurant_name as string) || 'Restaurant';
+  const date = fields.date as string;
+  const time = fields.time as string;
+  const partySize = fields.party_size as number;
+  const dateStr = date ? formatShortDate(date) : '';
+  const partySizeStr = partySize ? `${partySize} guests` : '';
 
-      return {
-        title: name,
-        subtitle: [dateStr, time, partySizeStr].filter(Boolean).join(' • ')
-      };
-    }
+  return { title: name, subtitle: [dateStr, time, partySizeStr].filter(Boolean).join(' • ') };
+}
 
-    default:
-      return { title: 'Unknown Item', subtitle: '' };
+const SUMMARY_HANDLERS: Record<TravelItemType, (fields: Record<string, unknown>) => ItemSummary> = {
+  transportation: getTransportationSummary,
+  accommodation: getAccommodationSummary,
+  activity: getActivitySummary,
+  reservation: getReservationSummary
+};
+
+function getItemSummary(item: ExtractedItem): ItemSummary {
+  const handler = SUMMARY_HANDLERS[item.itemType];
+  if (!handler) {
+    return { title: 'Unknown Item', subtitle: '' };
   }
+  return handler(item.fields);
 }
 
 const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({

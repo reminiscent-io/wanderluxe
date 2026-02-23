@@ -16,51 +16,98 @@ interface DayWeatherBadgeProps {
   compact?: boolean;
 }
 
-export function DayWeatherBadge({ forecast, currentWeather, isToday, className, compact = false }: DayWeatherBadgeProps) {
-  // For today, prefer current weather if available
-  const showCurrent = isToday && currentWeather;
+function CompactTempDisplay({ showCurrent, currentWeather, forecast }: {
+  showCurrent: boolean;
+  currentWeather?: WeatherData['current'];
+  forecast?: DailyForecast;
+}) {
+  if (showCurrent && currentWeather) return <span className="font-medium">{currentWeather.temp}°</span>;
+  if (forecast) return <span className="font-medium">{forecast.tempHigh}°</span>;
+  return null;
+}
 
-  if (!forecast && !showCurrent) {
-    return null;
+function FullTempDisplay({ showCurrent, currentWeather, forecast }: {
+  showCurrent: boolean;
+  currentWeather?: WeatherData['current'];
+  forecast?: DailyForecast;
+}) {
+  if (showCurrent && currentWeather) {
+    return (
+      <>
+        <span className="font-semibold">{currentWeather.temp}°</span>
+        {forecast && (
+          <span className="text-earth-400 text-[10px]">
+            ({forecast.tempHigh}°/{forecast.tempLow}°)
+          </span>
+        )}
+      </>
+    );
   }
+  if (forecast) {
+    return (
+      <>
+        <span>{forecast.tempHigh}°</span>
+        <span className="text-earth-400">/</span>
+        <span className="text-earth-400">{forecast.tempLow}°</span>
+      </>
+    );
+  }
+  return null;
+}
 
-  // Use current weather icon for today, forecast icon otherwise
-  const icon = showCurrent
-    ? getWeatherEmoji(currentWeather.icon)
-    : forecast ? getWeatherIcon(forecast.condition) : '';
+function WeatherTooltipBody({ showCurrent, currentWeather, forecast, includeTime }: {
+  showCurrent: boolean;
+  currentWeather?: WeatherData['current'];
+  forecast?: DailyForecast;
+  includeTime?: boolean;
+}) {
+  return (
+    <>
+      {showCurrent && currentWeather && (
+        <div className={forecast ? "mb-2" : undefined}>
+          <p className="font-semibold text-emerald-600">{includeTime ? 'Current conditions' : 'Right now'}</p>
+          <p className="capitalize">{currentWeather.description}</p>
+          <p className="font-medium">
+            {currentWeather.temp}°F{includeTime && currentWeather.localTime ? ` at ${currentWeather.localTime}` : ''}
+          </p>
+        </div>
+      )}
+      {forecast && (
+        <div>
+          {showCurrent && includeTime && <p className="font-semibold text-earth-600">Today's forecast</p>}
+          {showCurrent && !includeTime && <hr className="my-1 border-sand-200" />}
+          <p className={includeTime ? "capitalize" : "font-medium capitalize"}>{forecast.description}</p>
+          <p>High: {forecast.tempHigh}°F / Low: {forecast.tempLow}°F</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function DayWeatherBadge({ forecast, currentWeather, isToday, className, compact = false }: DayWeatherBadgeProps) {
+  const showCurrent = !!(isToday && currentWeather);
+
+  if (!forecast && !showCurrent) return null;
+
+  let icon = '';
+  if (showCurrent) {
+    icon = getWeatherEmoji(currentWeather!.icon);
+  } else if (forecast) {
+    icon = getWeatherIcon(forecast.condition);
+  }
 
   if (compact) {
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={cn(
-              "inline-flex items-center gap-1 text-xs text-earth-500",
-              className
-            )}>
+            <div className={cn("inline-flex items-center gap-1 text-xs text-earth-500", className)}>
               <span>{icon}</span>
-              {showCurrent ? (
-                <span className="font-medium">{currentWeather.temp}°</span>
-              ) : forecast ? (
-                <span className="font-medium">{forecast.tempHigh}°</span>
-              ) : null}
+              <CompactTempDisplay showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            {showCurrent && (
-              <>
-                <p className="font-semibold text-emerald-600">Right now</p>
-                <p className="capitalize">{currentWeather.description}</p>
-                <p className="font-medium">{currentWeather.temp}°F</p>
-              </>
-            )}
-            {forecast && (
-              <>
-                {showCurrent && <hr className="my-1 border-sand-200" />}
-                <p className="font-medium capitalize">{forecast.description}</p>
-                <p>High: {forecast.tempHigh}°F / Low: {forecast.tempLow}°F</p>
-              </>
-            )}
+            <WeatherTooltipBody showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -80,41 +127,11 @@ export function DayWeatherBadge({ forecast, currentWeather, isToday, className, 
             className
           )}>
             <span className="text-sm">{icon}</span>
-            {showCurrent ? (
-              // For today: show current temp prominently, with high/low in smaller text
-              <>
-                <span className="font-semibold">{currentWeather.temp}°</span>
-                {forecast && (
-                  <span className="text-earth-400 text-[10px]">
-                    ({forecast.tempHigh}°/{forecast.tempLow}°)
-                  </span>
-                )}
-              </>
-            ) : forecast ? (
-              // For other days: show high/low
-              <>
-                <span>{forecast.tempHigh}°</span>
-                <span className="text-earth-400">/</span>
-                <span className="text-earth-400">{forecast.tempLow}°</span>
-              </>
-            ) : null}
+            <FullTempDisplay showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
           </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs max-w-[200px]">
-          {showCurrent && (
-            <div className="mb-2">
-              <p className="font-semibold text-emerald-600">Current conditions</p>
-              <p className="capitalize">{currentWeather.description}</p>
-              <p className="font-medium">{currentWeather.temp}°F at {currentWeather.localTime}</p>
-            </div>
-          )}
-          {forecast && (
-            <div>
-              {showCurrent && <p className="font-semibold text-earth-600">Today's forecast</p>}
-              <p className="capitalize">{forecast.description}</p>
-              <p>High: {forecast.tempHigh}°F / Low: {forecast.tempLow}°F</p>
-            </div>
-          )}
+          <WeatherTooltipBody showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} includeTime />
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

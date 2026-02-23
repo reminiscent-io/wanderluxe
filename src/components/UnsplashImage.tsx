@@ -12,8 +12,29 @@ interface UnsplashImageProps {
   unsplashUsername?: string;
 }
 
-const UnsplashImage: React.FC<UnsplashImageProps> = ({ 
-  src, 
+function isSupabaseStorageUrl(src: string): boolean {
+  return src.includes('supabase.co/storage') && src.includes('trip-images');
+}
+
+async function resolveSignedUrl(src: string): Promise<string | null> {
+  if (src.includes('token=')) return null;
+
+  const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
+  if (!pathMatch) return null;
+
+  try {
+    const { data: { signedUrl }, error } = await supabase.storage
+      .from('trip-images')
+      .createSignedUrl(pathMatch[1], 31536000);
+    if (!error && signedUrl) return signedUrl;
+  } catch (err) {
+    console.error('Error getting signed URL:', err);
+  }
+  return null;
+}
+
+const UnsplashImage: React.FC<UnsplashImageProps> = ({
+  src,
   alt = "Image",
   className = "",
   showAttribution = true,
@@ -26,27 +47,12 @@ const UnsplashImage: React.FC<UnsplashImageProps> = ({
 
   useEffect(() => {
     const loadImage = async () => {
-      // Check if this is a Supabase storage URL
-      if (src.includes('supabase.co/storage') && src.includes('trip-images')) {
+      if (isSupabaseStorageUrl(src)) {
         setIsSupabaseImage(true);
-        
-        // Extract file path and get signed URL if not already signed
-        if (!src.includes('token=')) {
-          const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
-          if (pathMatch) {
-            try {
-              const { data: { signedUrl }, error } = await supabase.storage
-                .from('trip-images')
-                .createSignedUrl(pathMatch[1], 31536000); // 1 year
-              
-              if (!error && signedUrl) {
-                setImageUrl(signedUrl);
-                return;
-              }
-            } catch (err) {
-              console.error('Error getting signed URL:', err);
-            }
-          }
+        const signed = await resolveSignedUrl(src);
+        if (signed) {
+          setImageUrl(signed);
+          return;
         }
       }
       setImageUrl(src);

@@ -170,11 +170,57 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     }
   };
 
-  /**
-   * Save handler
-   * - When onSubmit is provided (sidebar/timeline path): delegate ALL persistence to parent
-   * - When NO onSubmit (chat path): handle persistence here directly
-   */
+  const persistViaChatPath = async (dataToSave: ActivityFormData, selectedDate: string) => {
+    const { data: tripDay, error: tripDayError } = await supabase
+      .from("trip_days")
+      .select("day_id")
+      .eq("trip_id", tripId)
+      .eq("date", selectedDate)
+      .single();
+
+    if (tripDayError || !tripDay) {
+      throw new Error(
+        "Could not find trip day for selected date. Please select a valid date."
+      );
+    }
+
+    const costNum =
+      dataToSave.cost && dataToSave.cost.trim() !== ""
+        ? parseFloat(dataToSave.cost)
+        : null;
+
+    const dbData = {
+      day_id: tripDay.day_id,
+      title: dataToSave.title.trim(),
+      description: dataToSave.description?.trim() || null,
+      start_time: dataToSave.start_time || null,
+      end_time: dataToSave.end_time || null,
+      cost: costNum,
+      currency: dataToSave.currency || "USD",
+      location_address: dataToSave.location_address || null,
+      location_place_id: dataToSave.location_place_id || null,
+      location_phone: dataToSave.location_phone || null,
+      location_website: dataToSave.location_website || null,
+      location_rating: dataToSave.location_rating || null,
+    };
+
+    if (isEditMode) {
+      const { error } = await supabase
+        .from("day_activities")
+        .update(dbData)
+        .eq("id", activityId!);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from("day_activities")
+        .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
+      if (error) throw error;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["activities", tripId] });
+    queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+  };
+
   const handleSubmit = async (activityData?: ActivityFormData) => {
     const dataToSave = activityData || finalActivity;
 
@@ -188,67 +234,12 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
         throw new Error("Please choose a valid date");
       }
 
-      // Ensure normalized date is in dataToSave for parent handlers
       const normalizedData = { ...dataToSave, date: selectedDate };
 
       if (onSubmit) {
-        // Sidebar/timeline path: delegate to parent handler
-        // Parent handles DB persistence, traveler tags, and query invalidation
         await onSubmit(normalizedData);
       } else {
-        // Chat path: handle persistence directly
-        // Find the corresponding day_id for the selected date
-        const { data: tripDay, error: tripDayError } = await supabase
-          .from("trip_days")
-          .select("day_id")
-          .eq("trip_id", tripId)
-          .eq("date", selectedDate)
-          .single();
-
-        if (tripDayError || !tripDay) {
-          throw new Error(
-            "Could not find trip day for selected date. Please select a valid date."
-          );
-        }
-
-        // Convert cost from string to number
-        const costNum =
-          dataToSave.cost && dataToSave.cost.trim() !== ""
-            ? parseFloat(dataToSave.cost)
-            : null;
-
-        // DB payload
-        const dbData = {
-          day_id: tripDay.day_id,
-          title: dataToSave.title.trim(),
-          description: dataToSave.description?.trim() || null,
-          start_time: dataToSave.start_time || null,
-          end_time: dataToSave.end_time || null,
-          cost: costNum,
-          currency: dataToSave.currency || "USD",
-          location_address: dataToSave.location_address || null,
-          location_place_id: dataToSave.location_place_id || null,
-          location_phone: dataToSave.location_phone || null,
-          location_website: dataToSave.location_website || null,
-          location_rating: dataToSave.location_rating || null,
-        };
-
-        if (isEditMode) {
-          const { error } = await supabase
-            .from("day_activities")
-            .update(dbData)
-            .eq("id", activityId!);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from("day_activities")
-            .insert([{ ...dbData, trip_id: tripId, order_index: 0 }]);
-          if (error) throw error;
-        }
-
-        // Invalidate queries to refresh the UI (use trip-scoped keys for consistency)
-        queryClient.invalidateQueries({ queryKey: ["activities", tripId] });
-        queryClient.invalidateQueries({ queryKey: ["trip", tripId] });
+        await persistViaChatPath(dataToSave, selectedDate);
       }
 
       onOpenChange(false);

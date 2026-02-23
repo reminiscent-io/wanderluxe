@@ -1,11 +1,21 @@
 
 import { format, parse, addDays, isAfter, differenceInDays } from 'date-fns';
 
+// Parse a date string as local time (avoids UTC shift from `new Date()`)
+const parseLocal = (dateString: string): Date => {
+  // Date-only strings like "2024-01-15" → parse as local time
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return parse(dateString, 'yyyy-MM-dd', new Date());
+  }
+  // Full ISO strings with time/timezone → use Date constructor
+  return new Date(dateString);
+};
+
 // Format a date string to display format (e.g., "Jan 1, 2024")
 export const formatDate = (dateString?: string | null): string => {
   if (!dateString) return '';
   try {
-    const date = new Date(dateString);
+    const date = parseLocal(dateString);
     return format(date, 'MMM d, yyyy');
   } catch (error) {
     console.error('Error formatting date:', error);
@@ -54,8 +64,8 @@ export const calculateDurationInDays = (startDateStr?: string, endDateStr?: stri
   if (!startDateStr || !endDateStr) return 0;
 
   try {
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
+    const startDate = parseLocal(startDateStr);
+    const endDate = parseLocal(endDateStr);
 
     // Add 1 to include both the start and end day
     return differenceInDays(endDate, startDate) + 1;
@@ -70,8 +80,8 @@ export const formatDateRange = (startDateStr?: string | null, endDateStr?: strin
   if (!startDateStr || !endDateStr) return '';
 
   try {
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
+    const startDate = parseLocal(startDateStr);
+    const endDate = parseLocal(endDateStr);
 
     // Validate dates
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {

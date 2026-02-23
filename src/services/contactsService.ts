@@ -48,6 +48,134 @@ export const contactsByEmail = (contacts: ConnectedContact[]) =>
     return acc;
   }, {});
 
+type OutgoingShare = {
+  trip_id: string;
+  created_at: string;
+  shared_with_user_id: string | null;
+  shared_with_email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+};
+
+type IncomingShare = {
+  trip_id: string;
+  created_at: string;
+  shared_by_user_id: string | null;
+};
+
+type ProfileMap = Record<string, { id: string; full_name: string | null }>;
+
+function outgoingShareKey(r: OutgoingShare): string {
+  return r.shared_with_user_id
+    ? `user:${r.shared_with_user_id}`
+    : `email:${(r.shared_with_email || "").toLowerCase()}`;
+}
+
+function pickEarlier(a: string | null | undefined, b: string | null | undefined): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return b < a ? b : a;
+}
+
+function pickLater(a: string | null | undefined, b: string | null | undefined): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return b > a ? b : a;
+}
+
+function touchContact(
+  map: Map<string, ConnectedContact>,
+  key: string,
+  patch: Partial<ConnectedContact>,
+  createdAt?: string | null,
+  dir: "incoming" | "outgoing" = "outgoing"
+): void {
+  const prev = map.get(key) || {
+    key,
+    directions: [],
+    trips_count: 0,
+    first_shared_at: createdAt ?? null,
+    last_shared_at: createdAt ?? null,
+  };
+  map.set(key, {
+    ...prev,
+    ...patch,
+    directions: Array.from(new Set([...(prev.directions ?? []), dir])),
+    first_shared_at: pickEarlier(prev.first_shared_at, createdAt),
+    last_shared_at: pickLater(prev.last_shared_at, createdAt),
+    trips_count: prev.trips_count,
+  });
+}
+
+async function fetchOutgoingShares(myId: string): Promise<OutgoingShare[]> {
+  const { data: myTrips } = await supabase
+    .from("trips")
+    .select("trip_id")
+    .eq("user_id", myId);
+
+  const myTripIds = (myTrips ?? []).map((t) => t.trip_id);
+  if (!myTripIds.length) return [];
+
+  const { data } = await supabase
+    .from("trip_shares" as any)
+    .select("trip_id, created_at, shared_with_user_id, shared_with_email, first_name, last_name")
+    .in("trip_id", myTripIds);
+  return data ?? [];
+}
+
+async function fetchIncomingShares(myEmail: string): Promise<IncomingShare[]> {
+  const { data } = await supabase
+    .from("trip_shares" as any)
+    .select("trip_id, created_at, shared_by_user_id")
+    .ilike("shared_with_email", myEmail);
+  return data ?? [];
+}
+
+async function fetchProfiles(userIds: Set<string>): Promise<ProfileMap> {
+  if (!userIds.size) return {};
+  const { data: profs } = await supabase
+    .from("profiles")
+    .select("id, full_name")
+    .in("id", Array.from(userIds));
+  const result: ProfileMap = {};
+  for (const p of profs ?? []) result[p.id] = { id: p.id, full_name: p.full_name };
+  return result;
+}
+
+function collectUserIds(outgoing: OutgoingShare[], incoming: IncomingShare[]): Set<string> {
+  const userIds = new Set<string>();
+  for (const r of outgoing) if (r.shared_with_user_id) userIds.add(r.shared_with_user_id);
+  for (const r of incoming) if (r.shared_by_user_id) userIds.add(r.shared_by_user_id);
+  return userIds;
+}
+
+function computeTripCounts(
+  map: Map<string, ConnectedContact>,
+  outgoing: OutgoingShare[],
+  incoming: IncomingShare[]
+): void {
+  const tripsByKey = new Map<string, Set<string>>();
+  const pushTrip = (key: string, tripId: string) => {
+    const s = tripsByKey.get(key) ?? new Set<string>();
+    s.add(tripId);
+    tripsByKey.set(key, s);
+  };
+  for (const r of outgoing) pushTrip(outgoingShareKey(r), r.trip_id);
+  for (const r of incoming) {
+    if (!r.shared_by_user_id) continue;
+    pushTrip(`user:${r.shared_by_user_id}`, r.trip_id);
+  }
+  for (const [key, contact] of map.entries()) {
+    contact.trips_count = tripsByKey.get(key)?.size ?? 0;
+  }
+}
+
+function directionScore(x: ConnectedContact): number {
+  if (x.directions.includes("incoming") && x.directions.includes("outgoing")) return 2;
+  if (x.directions.includes("outgoing")) return 1;
+  return 0;
+}
+
 export async function getConnectedContacts(): Promise<ConnectedContact[]> {
   const { data: me } = await supabase.auth.getUser();
   const user = me?.user;
@@ -56,150 +184,37 @@ export async function getConnectedContacts(): Promise<ConnectedContact[]> {
   const myId = user.id;
   const myEmail = (user.email || "").toLowerCase();
 
-  // 1) My trips (I’m the owner) → outgoing shares
-  const { data: myTrips } = await supabase
-    .from("trips")
-    .select("trip_id")
-    .eq("user_id", myId);
+  const outgoing = await fetchOutgoingShares(myId);
+  const incoming = await fetchIncomingShares(myEmail);
 
-  const myTripIds = (myTrips ?? []).map((t) => t.trip_id);
-  let outgoing: {
-    trip_id: string;
-    created_at: string;
-    shared_with_user_id: string | null;
-    shared_with_email: string | null;
-    first_name: string | null;
-    last_name: string | null;
-  }[] = [];
+  const userIds = collectUserIds(outgoing, incoming);
+  const profilesById = await fetchProfiles(userIds);
 
-  if (myTripIds.length) {
-    const { data } = await supabase
-      .from("trip_shares" as any)
-      .select("trip_id, created_at, shared_with_user_id, shared_with_email, first_name, last_name")
-      .in("trip_id", myTripIds);
-    outgoing = data ?? [];
-  }
-
-  // 2) Incoming shares → shared with my email (owner is another user)
-  const { data: incoming } = await supabase
-    .from("trip_shares" as any)
-    .select("trip_id, created_at, shared_by_user_id")
-    .ilike("shared_with_email", myEmail);
-
-  // 3) Gather all user_ids we saw and look up profiles (public readable)
-  const userIds = new Set<string>();
-  for (const r of outgoing) if (r.shared_with_user_id) userIds.add(r.shared_with_user_id);
-  for (const r of incoming ?? []) if (r.shared_by_user_id) userIds.add(r.shared_by_user_id);
-
-  let profilesById: Record<string, { id: string; full_name: string | null }> = {};
-  if (userIds.size) {
-    const { data: profs } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", Array.from(userIds));
-    for (const p of profs ?? []) profilesById[p.id] = { id: p.id, full_name: p.full_name };
-  }
-
-  // 4) Merge into contacts map
   const map = new Map<string, ConnectedContact>();
 
-  const touch = (
-    key: string,
-    patch: Partial<ConnectedContact>,
-    tripId: string,
-    createdAt?: string | null,
-    dir: "incoming" | "outgoing" = "outgoing"
-  ) => {
-    const prev = map.get(key) || {
-      key,
-      directions: [],
-      trips_count: 0,
-      first_shared_at: createdAt ?? null,
-      last_shared_at: createdAt ?? null,
-    };
-    const next: ConnectedContact = {
-      ...prev,
-      ...patch,
-      directions: Array.from(new Set([...(prev.directions ?? []), dir])),
-      first_shared_at:
-        !prev.first_shared_at || (createdAt && createdAt < prev.first_shared_at)
-          ? createdAt ?? prev.first_shared_at
-          : prev.first_shared_at,
-      last_shared_at:
-        !prev.last_shared_at || (createdAt && createdAt > prev.last_shared_at)
-          ? createdAt ?? prev.last_shared_at
-          : prev.last_shared_at,
-      trips_count: prev.trips_count, // recomputed later
-    };
-    map.set(key, next);
-  };
-
-  // Outgoing — I shared with them
   for (const r of outgoing) {
-    const key = r.shared_with_user_id
-      ? `user:${r.shared_with_user_id}`
-      : `email:${(r.shared_with_email || "").toLowerCase()}`;
-
-    touch(
-      key,
-      {
-        user_id: r.shared_with_user_id ?? null,
-        email: (r.shared_with_email || null)?.toLowerCase() ?? null,
-        profile_full_name: r.shared_with_user_id ? profilesById[r.shared_with_user_id]?.full_name ?? null : null,
-        share_first_name: r.first_name ?? null,
-        share_last_name: r.last_name ?? null,
-      },
-      r.trip_id,
-      r.created_at,
-      "outgoing"
-    );
+    touchContact(map, outgoingShareKey(r), {
+      user_id: r.shared_with_user_id ?? null,
+      email: (r.shared_with_email || null)?.toLowerCase() ?? null,
+      profile_full_name: r.shared_with_user_id ? profilesById[r.shared_with_user_id]?.full_name ?? null : null,
+      share_first_name: r.first_name ?? null,
+      share_last_name: r.last_name ?? null,
+    }, r.created_at, "outgoing");
   }
 
-  // Incoming — they shared with me
-  for (const r of incoming ?? []) {
+  for (const r of incoming) {
     if (!r.shared_by_user_id) continue;
-    const key = `user:${r.shared_by_user_id}`;
-    touch(
-      key,
-      {
-        user_id: r.shared_by_user_id,
-        profile_full_name: profilesById[r.shared_by_user_id]?.full_name ?? null,
-      },
-      r.trip_id,
-      r.created_at,
-      "incoming"
-    );
+    touchContact(map, `user:${r.shared_by_user_id}`, {
+      user_id: r.shared_by_user_id,
+      profile_full_name: profilesById[r.shared_by_user_id]?.full_name ?? null,
+    }, r.created_at, "incoming");
   }
 
-  // Compute distinct trips per contact key for trips_count
-  const tripsByKey = new Map<string, Set<string>>();
-  const pushTrip = (key: string, tripId: string) => {
-    const s = tripsByKey.get(key) ?? new Set<string>();
-    s.add(tripId);
-    tripsByKey.set(key, s);
-  };
-  for (const r of outgoing) {
-    const key = r.shared_with_user_id
-      ? `user:${r.shared_with_user_id}`
-      : `email:${(r.shared_with_email || "").toLowerCase()}`;
-    pushTrip(key, r.trip_id);
-  }
-  for (const r of incoming ?? []) {
-    if (!r.shared_by_user_id) continue;
-    const key = `user:${r.shared_by_user_id}`;
-    pushTrip(key, r.trip_id);
-  }
-  for (const [key, contact] of map.entries()) {
-    contact.trips_count = (tripsByKey.get(key)?.size ?? 0);
-  }
+  computeTripCounts(map, outgoing, incoming);
 
-  // Sort: both → outgoing → incoming, then most recent activity
   const asArr = Array.from(map.values());
   asArr.sort((a, b) => {
-    const score = (x: ConnectedContact) =>
-      (x.directions.includes("incoming") && x.directions.includes("outgoing")) ? 2 :
-      (x.directions.includes("outgoing")) ? 1 : 0;
-    const s = score(b) - score(a);
+    const s = directionScore(b) - directionScore(a);
     if (s !== 0) return s;
     return (b.last_shared_at ?? "").localeCompare(a.last_shared_at ?? "");
   });

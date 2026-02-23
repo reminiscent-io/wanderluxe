@@ -13,7 +13,7 @@ export interface TimelineItem {
   description?: string;
   icon: React.ReactNode;
   id: string;
-  data?: any & {
+  data?: Record<string, unknown> & {
     __depart_time_on_this_day?: string | undefined;
     __arrive_time_on_this_day?: string | undefined;
   };
@@ -276,60 +276,53 @@ const shouldGroupEvents = (prev: TimelineItem, curr: TimelineItem, dateISO: stri
   return true;
 };
 
+const transportTypeLabel = (transportType: unknown): string => {
+  switch (transportType) {
+    case 'flight': return 'Flights';
+    case 'train': return 'Trains';
+    case 'car': return 'Car Services';
+    case 'bus': return 'Buses';
+    default: return 'Transports';
+  }
+};
+
+const generateTransportGroupTitle = (items: TimelineItem[]): string => {
+  const typeLabel = transportTypeLabel(items[0].data?.type);
+
+  const firstArrival = extractIata(items[0].data?.arrival_location);
+  const allSameArrival = firstArrival && items.every(item =>
+    extractIata(item.data?.arrival_location) === firstArrival
+  );
+  if (allSameArrival) return `Group Arrivals: ${firstArrival}`;
+
+  const firstDeparture = extractIata(items[0].data?.departure_location);
+  const allSameDeparture = firstDeparture && items.every(item =>
+    extractIata(item.data?.departure_location) === firstDeparture
+  );
+  if (allSameDeparture) return `Group Departures: ${firstDeparture}`;
+
+  return `${items.length} ${typeLabel}`;
+};
+
+const summarizeNames = (items: TimelineItem[]): string => {
+  const names = items.map(i => i.title).filter(Boolean);
+  if (names.length <= 3) return names.join(', ');
+  return `${names.slice(0, 2).join(', ')}, +${names.length - 2} more`;
+};
+
 // Generate a group title for a set of grouped events
 export const generateGroupTitle = (items: TimelineItem[]): string => {
   if (items.length === 0) return '';
 
   const type = items[0].type;
-  const count = items.length;
 
-  if (type === 'transportation') {
-    const transportType = items[0].data?.type;
-    const typeLabel =
-      transportType === 'flight' ? 'Flights' :
-      transportType === 'train' ? 'Trains' :
-      transportType === 'car' ? 'Car Services' :
-      transportType === 'bus' ? 'Buses' : 'Transports';
-
-    // Try to get common location
-    const firstArrival = extractIata(items[0].data?.arrival_location);
-    const allSameArrival = items.every(item =>
-      extractIata(item.data?.arrival_location) === firstArrival
-    );
-
-    if (allSameArrival && firstArrival) {
-      return `Group Arrivals: ${firstArrival}`;
-    }
-
-    const firstDeparture = extractIata(items[0].data?.departure_location);
-    const allSameDeparture = items.every(item =>
-      extractIata(item.data?.departure_location) === firstDeparture
-    );
-
-    if (allSameDeparture && firstDeparture) {
-      return `Group Departures: ${firstDeparture}`;
-    }
-
-    return `${count} ${typeLabel}`;
+  switch (type) {
+    case 'transportation': return generateTransportGroupTitle(items);
+    case 'activity': return summarizeNames(items);
+    case 'dining': return summarizeNames(items);
+    case 'hotel': return `${items.length} Hotel Events`;
+    default: return `${items.length} Events`;
   }
-
-  if (type === 'activity') {
-    const names = items.map(i => i.title).filter(Boolean);
-    if (names.length <= 3) return names.join(', ');
-    return `${names.slice(0, 2).join(', ')}, +${names.length - 2} more`;
-  }
-
-  if (type === 'dining') {
-    const names = items.map(i => i.title).filter(Boolean);
-    if (names.length <= 3) return names.join(', ');
-    return `${names.slice(0, 2).join(', ')}, +${names.length - 2} more`;
-  }
-
-  if (type === 'hotel') {
-    return `${count} Hotel Events`;
-  }
-
-  return `${count} Events`;
 };
 
 // Generate time range for grouped events

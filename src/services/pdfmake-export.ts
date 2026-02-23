@@ -213,12 +213,12 @@ function sanitizeFilename(input?: string | null): string {
 
 function getDensityIndicator(count: number): any {
   if (count >= 5) {
-    return { text: ' Busy ', fontSize: 10, bold: true, color: '#FFFFFF', background: '#DC2626', margin: [0, 0, 4, 0] };
+    return { text: ' Busy ', fontSize: 10, bold: true, color: '#FFFFFF', background: BRAND.earth, margin: [0, 0, 4, 0] };
   }
   if (count >= 3) {
-    return { text: ' Moderate ', fontSize: 10, bold: true, color: '#000000', background: '#FBBF24', margin: [0, 0, 4, 0] };
+    return { text: ' Moderate ', fontSize: 10, bold: true, color: '#FFFFFF', background: BRAND.earthLight, margin: [0, 0, 4, 0] };
   }
-  return { text: ' Light ', fontSize: 10, bold: true, color: '#FFFFFF', background: '#10B981', margin: [0, 0, 4, 0] };
+  return { text: ' Light ', fontSize: 10, bold: true, color: '#FFFFFF', background: BRAND.earthMid, margin: [0, 0, 4, 0] };
 }
 
 /* =========================================================================
@@ -440,7 +440,7 @@ async function buildDays(
           details: t.details || undefined,
           location:
             t.departure_location && t.arrival_location
-              ? `From: ${t.departure_location} → ${t.arrival_location}`
+              ? `From: ${t.departure_location} to ${t.arrival_location}`
               : t.departure_location || undefined,
           cost: t.cost != null ? `${t.currency} ${t.cost}` : undefined,
           sortKey: minsFromTime(startStr || '8:00 am'),
@@ -543,32 +543,19 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
     return { text: 'No activities scheduled', style: 'itemMeta', margin: [0, 0, 0, 6] };
   }
 
-  // Color coding by activity type
-  const typeColors: Record<string, string> = {
-    transportation: BRAND.sunset,
-    flight: BRAND.sunset,
-    dining: '#F97316', // orange
-    restaurant: '#F97316',
-    activity: '#10B981', // green
-    activities: '#10B981',
-    accommodation: BRAND.earthLight,
-    hotel: BRAND.earthLight,
-  };
-
   const body = items.map((it, idx) => {
-    const typeColor = typeColors[it.type] || '#333';
     const zebra = idx % 2 === 0 ? '#FFFFFF' : BRAND.sand;
 
     const titleLine =
       (o.showCosts && it.cost)
         ? {
             columns: [
-              { text: it.title, style: 'itemTitle', color: typeColor, width: '*' },
+              { text: it.title, style: 'itemTitle', width: '*' },
               { text: it.cost, style: 'itemCost', alignment: 'right', width: 'auto' },
             ],
             columnGap: 8,
           }
-        : { text: it.title, style: 'itemTitle', color: typeColor };
+        : { text: it.title, style: 'itemTitle' };
 
     const combinedDetails: string[] = [];
     if (it.details) combinedDetails.push(it.details);
@@ -643,7 +630,7 @@ function renderTransportSummary(transports: TransportSegment[]): any[] {
 
   transports.forEach((t, idx) => {
     content.push({
-      text: `${t.type}: ${t.from} → ${t.to} (${t.date})`,
+      text: `${t.type}: ${t.from} to ${t.to} (${t.date})`,
       style: 'summaryItem',
       margin: [0, idx === 0 ? 0 : 4, 0, 4],
     });
@@ -752,6 +739,46 @@ function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number
   return { stack };
 }
 
+function buildActivityLevelEntries(
+  busyDays: number,
+  moderateDays: number,
+  lightDays: number,
+  baseFontSize: number
+): any[] {
+  const entries: any[] = [];
+  const levels: Array<{ count: number; label: string; color: string }> = [
+    { count: busyDays, label: 'Busy (4+ activities)', color: BRAND.earth },
+    { count: moderateDays, label: 'Moderate (2-3 activities)', color: BRAND.earthLight },
+    { count: lightDays, label: 'Light (0-1 activities)', color: BRAND.earthMid },
+  ];
+  for (const { count, label, color } of levels) {
+    if (count > 0) {
+      entries.push({
+        text: `\u2022 ${label}: ${count} day${count !== 1 ? 's' : ''}`,
+        fontSize: baseFontSize - 1,
+        color,
+        margin: [0, 0, 0, 2] as [number, number, number, number],
+      });
+    }
+  }
+  return entries;
+}
+
+function computeDayStats(days: Day[]): { totalActivities: number; busyDays: number; moderateDays: number; lightDays: number } {
+  let totalActivities = 0;
+  let busyDays = 0;
+  let moderateDays = 0;
+  let lightDays = 0;
+  for (const d of days) {
+    const count = d.activityCount || 0;
+    totalActivities += count;
+    if (count >= 4) busyDays++;
+    else if (count >= 2) moderateDays++;
+    else lightDays++;
+  }
+  return { totalActivities, busyDays, moderateDays, lightDays };
+}
+
 /**
  * Render combined cover page with 2-column layout
  */
@@ -830,10 +857,7 @@ function renderCombinedCoverPage(
 
   // Calculate stats
   const totalFlights = transports.filter((t) => t.type.toLowerCase().includes('flight')).length;
-  const totalActivities = days.reduce((sum, d) => sum + (d.activityCount || 0), 0);
-  const busyDays = days.filter((d) => (d.activityCount || 0) >= 4).length;
-  const moderateDays = days.filter((d) => (d.activityCount || 0) >= 2 && (d.activityCount || 0) < 4).length;
-  const lightDays = days.filter((d) => (d.activityCount || 0) < 2).length;
+  const { totalActivities, busyDays, moderateDays, lightDays } = computeDayStats(days);
 
   // 2-column layout
   const leftColumn: any[] = [];
@@ -922,32 +946,7 @@ function renderCombinedCoverPage(
     margin: [0, 4, 0, 4] as [number, number, number, number],
   });
 
-  if (busyDays > 0) {
-    rightColumn.push({
-      text: `• Busy (4+ activities): ${busyDays} day${busyDays !== 1 ? 's' : ''}`,
-      fontSize: baseFontSize - 1,
-      color: '#DC2626',
-      margin: [0, 0, 0, 2] as [number, number, number, number],
-    });
-  }
-
-  if (moderateDays > 0) {
-    rightColumn.push({
-      text: `• Moderate (2-3 activities): ${moderateDays} day${moderateDays !== 1 ? 's' : ''}`,
-      fontSize: baseFontSize - 1,
-      color: '#F59E0B',
-      margin: [0, 0, 0, 2] as [number, number, number, number],
-    });
-  }
-
-  if (lightDays > 0) {
-    rightColumn.push({
-      text: `• Light (0-1 activities): ${lightDays} day${lightDays !== 1 ? 's' : ''}`,
-      fontSize: baseFontSize - 1,
-      color: '#10B981',
-      margin: [0, 0, 0, 2] as [number, number, number, number],
-    });
-  }
+  rightColumn.push(...buildActivityLevelEntries(busyDays, moderateDays, lightDays, baseFontSize));
 
   // Add columns to content
   content.push({
@@ -1033,7 +1032,7 @@ function renderReferenceSection(
       ],
       ...transWithConf.map((t) => [
         { text: `${t.type} (${t.date})`, fontSize: baseFontSize - 0.5 },
-        { text: `${t.from} → ${t.to}`, fontSize: baseFontSize - 0.5 },
+        { text: `${t.from} to ${t.to}`, fontSize: baseFontSize - 0.5 },
         { text: t.confirmationNumber!, fontSize: baseFontSize - 0.5, bold: true },
       ]),
     ];
@@ -1146,7 +1145,7 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): any[
         {
           text: overBudget ? `Over budget by $${Math.abs(remaining).toFixed(2)}` : `Remaining: $${remaining.toFixed(2)}`,
           fontSize: baseFontSize - 0.5,
-          color: overBudget ? '#DC2626' : '#059669',
+          color: overBudget ? BRAND.sunset : BRAND.earth,
           bold: true,
           width: 'auto',
         },
@@ -1314,10 +1313,10 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
 
         // Typography tweaks (warm palette)
         timeCell: { fontSize: isMobile ? 8.5 : 9, bold: true, color: BRAND.earthLight },
-        itemTitle: { fontSize: isMobile ? 10 : 10.5, bold: true },
-        itemDetail: { fontSize: isMobile ? 9 : 9.5, color: BRAND.earth },
+        itemTitle: { fontSize: isMobile ? 10 : 10.5, bold: true, color: BRAND.earth },
+        itemDetail: { fontSize: isMobile ? 9 : 9.5, color: BRAND.earthLight },
         itemMeta: { fontSize: isMobile ? 8 : 9, italics: true, color: BRAND.earthMid },
-        itemCost: { fontSize: isMobile ? 10 : 11, bold: true, color: '#059669' },
+        itemCost: { fontSize: isMobile ? 8 : 8.5, color: BRAND.earthMid },
       },
     };
 

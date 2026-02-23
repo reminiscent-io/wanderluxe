@@ -24,6 +24,58 @@ interface TimelineContentProps {
   tripDestination?: string;
 }
 
+const EMPTY_ACTIVITY: ActivityFormData = {
+  title: '',
+  description: '',
+  start_time: '',
+  end_time: '',
+  cost: '',
+  currency: 'USD',
+};
+
+function buildActivityFormData(activity: DayActivity, dayDate: string): ActivityFormData {
+  return {
+    title: activity.title,
+    description: activity.description || '',
+    start_time: activity.start_time ? activity.start_time.slice(0, 5) : '',
+    end_time: activity.end_time ? activity.end_time.slice(0, 5) : '',
+    cost: activity.cost ? String(activity.cost) : '',
+    currency: activity.currency || 'USD',
+    date: dayDate.split('T')[0],
+    location_address: activity.location_address || null,
+    location_place_id: activity.location_place_id || null,
+    location_phone: activity.location_phone || null,
+    location_website: activity.location_website || null,
+    location_rating: activity.location_rating || null,
+  };
+}
+
+function buildActivityPayload(form: ActivityFormData): Record<string, any> {
+  return {
+    title: form.title,
+    description: form.description || null,
+    start_time: form.start_time || null,
+    end_time: form.end_time || null,
+    cost: form.cost ? Number.parseFloat(form.cost) : null,
+    currency: form.currency || null,
+    location_address: form.location_address || null,
+    location_place_id: form.location_place_id || null,
+    location_phone: form.location_phone || null,
+    location_website: form.location_website || null,
+    location_rating: form.location_rating || null,
+  };
+}
+
+function hotelStaysForDay(day: TripDay, hotelStays: HotelStay[]): HotelStay[] {
+  return hotelStays.filter(stay => {
+    if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
+    const dayDate = new Date(day.date.split('T')[0]);
+    const checkinDate = new Date(stay.hotel_checkin_date.split('T')[0]);
+    const checkoutDate = new Date(stay.hotel_checkout_date.split('T')[0]);
+    return dayDate >= checkinDate && dayDate <= checkoutDate;
+  });
+}
+
 const TimelineContent: React.FC<TimelineContentProps> = ({
   days = [],
   dayIndexMap,
@@ -41,31 +93,15 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   const [transportationOpen, setTransportationOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
-  
-  // States for editing
+
   const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
   const [editingHotel, setEditingHotel] = useState<HotelStay | null>(null);
   const [editingTransportation, setEditingTransportation] = useState<Transportation | null>(null);
   const [editingReservation, setEditingReservation] = useState<RestaurantReservation | null>(null);
-  
-  const [newActivity, setNewActivity] = useState<ActivityFormData>({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD',
-  });
-  
-  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    cost: '',
-    currency: 'USD',
-  });
-  
+
+  const [newActivity, setNewActivity] = useState<ActivityFormData>({ ...EMPTY_ACTIVITY });
+  const [activityEdit, setActivityEdit] = useState<ActivityFormData>({ ...EMPTY_ACTIVITY });
+
   if (!days.length) {
     return (
       <div className="text-center py-12 border border-dashed rounded-lg">
@@ -74,34 +110,218 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     );
   }
 
-  // Sort days by date
-  const sortedDays = [...days].sort((a, b) => 
+  const sortedDays = [...days].sort((a, b) =>
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
-  
-  const handleDialogSuccess = () => {
-    // Refresh the trip data
-    if (sortedDays.length > 0) {
-      queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-    }
+
+  const tripId = sortedDays[0].trip_id;
+
+  function invalidateTripQueries(): void {
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+  }
+
+  function invalidateTripAndDayQueries(): void {
+    invalidateTripQueries();
+    queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
+  }
+
+  const handleAccommodationSuccess = (): void => {
+    invalidateTripQueries();
+    queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
     setSelectedDayId(null);
   };
 
-  const handleAccommodationSuccess = () => {
-    if (sortedDays.length > 0) {
-      queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-      queryClient.invalidateQueries({ queryKey: ['accommodations', sortedDays[0].trip_id] });
-    }
+  const handleTransportationSuccess = (): void => {
+    invalidateTripQueries();
+    queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
     setSelectedDayId(null);
   };
 
-  const handleTransportationSuccess = () => {
-    if (sortedDays.length > 0) {
-      queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-      queryClient.invalidateQueries({ queryKey: ['transportation', sortedDays[0].trip_id] });
+  const handleActivityDialogClose = (): void => {
+    setActivityOpen(false);
+    setEditingActivity(null);
+    setActivityEdit({ ...EMPTY_ACTIVITY });
+    setSelectedDayId(null);
+    setPreselectedDate(undefined);
+  };
+
+  const handleEditActivity = async (activity: ActivityFormData): Promise<void> => {
+    if (!editingActivity?.id) return;
+    try {
+      const updateData = buildActivityPayload(activityEdit);
+
+      if (activity?.date) {
+        const { data: tripDay, error: dayError } = await supabase
+          .from('trip_days')
+          .select('day_id')
+          .eq('trip_id', tripId)
+          .eq('date', activity.date)
+          .single();
+
+        if (!dayError && tripDay) {
+          updateData.day_id = tripDay.day_id;
+        }
+      }
+
+      const { error } = await supabase
+        .from('day_activities')
+        .update(updateData)
+        .eq('id', editingActivity.id);
+
+      if (error) throw error;
+
+      if (activityEdit.travelers && editingActivity.id) {
+        await setDayActivityTravelers(tripId, editingActivity.id, activityEdit.travelers);
+      }
+
+      invalidateTripAndDayQueries();
+      if (editingActivity.day_id) {
+        queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
+      }
+
+      setEditingActivity(null);
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error('Failed to update activity');
+    }
+  };
+
+  const handleAddActivity = async (): Promise<void> => {
+    try {
+      const { data, error } = await supabase
+        .from('day_activities')
+        .insert({
+          day_id: selectedDayId,
+          trip_id: tripId,
+          ...buildActivityPayload(newActivity),
+          order_index: 0,
+          is_paid: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (newActivity.travelers && newActivity.travelers.length > 0 && data?.id) {
+        await setDayActivityTravelers(tripId, data.id, newActivity.travelers);
+      }
+
+      setActivityOpen(false);
+      setNewActivity({ ...EMPTY_ACTIVITY });
+
+      invalidateTripAndDayQueries();
+      if (selectedDayId) {
+        queryClient.invalidateQueries({ queryKey: ['activities', selectedDayId] });
+      }
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      toast.error('Failed to add activity');
+    }
+  };
+
+  const handleActivitySubmit = async (activity: ActivityFormData): Promise<void> => {
+    if (editingActivity?.id) {
+      await handleEditActivity(activity);
+    } else {
+      await handleAddActivity();
     }
     setSelectedDayId(null);
+    setPreselectedDate(undefined);
   };
+
+  const handleActivityDelete = async (id: string): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('day_activities')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setEditingActivity(null);
+
+      invalidateTripAndDayQueries();
+      if (editingActivity?.day_id) {
+        queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
+      }
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error('Failed to delete activity');
+    }
+  };
+
+  const handleAddReservation = async (data: any): Promise<void> => {
+    if (!selectedDayId) return;
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .insert({
+          ...data,
+          day_id: selectedDayId,
+          trip_id: tripId,
+        });
+
+      if (error) throw error;
+      invalidateTripQueries();
+      queryClient.invalidateQueries({ queryKey: ['reservations', tripId, selectedDayId] });
+    } catch (error) {
+      console.error('Error adding reservation:', error);
+      toast.error('Failed to add reservation');
+    }
+  };
+
+  const handleEditReservation = async (data: any): Promise<void> => {
+    if (!editingReservation) return;
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update(data)
+        .eq('id', editingReservation.id);
+
+      if (error) throw error;
+      invalidateTripQueries();
+      if (editingReservation.day_id) {
+        queryClient.invalidateQueries({ queryKey: ['reservations', tripId, editingReservation.day_id] });
+      }
+    } catch (error) {
+      console.error('Error updating reservation:', error);
+      toast.error('Failed to update reservation');
+    }
+  };
+
+  const handleReservationSubmit = async (data: any): Promise<void> => {
+    if (editingReservation) {
+      await handleEditReservation(data);
+    } else {
+      await handleAddReservation(data);
+    }
+    setReservationOpen(false);
+    setEditingReservation(null);
+    setSelectedDayId(null);
+  };
+
+  const handleReservationDelete = editingReservation ? async (): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', editingReservation.id);
+
+      if (error) throw error;
+
+      setReservationOpen(false);
+      setEditingReservation(null);
+
+      invalidateTripQueries();
+      if (editingReservation.day_id) {
+        queryClient.invalidateQueries({ queryKey: ['reservations', tripId, editingReservation.day_id] });
+      }
+
+      setSelectedDayId(null);
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+      toast.error('Failed to delete reservation');
+    }
+  } : undefined;
 
   return (
     <>
@@ -109,7 +329,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       <div className="space-y-2 sm:space-y-3 md:space-y-4 snap-y snap-proximity pb-20 md:pb-4 -mx-1 md:-mx-6 px-1 md:px-6 py-4 md:py-6 rounded-lg">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
-          const dayDate = day.date.split('T')[0]; // Normalize to YYYY-MM-DD
+          const dayDate = day.date.split('T')[0];
           const dayWeather = getWeatherForDate(weather, dayDate);
           const isTodayDay = isToday(dayDate);
 
@@ -124,15 +344,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 index={dayIndex}
                 weather={dayWeather}
                 currentWeather={isTodayDay ? weather?.current : undefined}
-              hotelStays={hotelStays.filter(stay => {
-                if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-                
-                const dayDate = new Date(day.date.split('T')[0]);
-                const checkinDate = new Date(stay.hotel_checkin_date.split('T')[0]);
-                const checkoutDate = new Date(stay.hotel_checkout_date.split('T')[0]);
-                
-                return dayDate >= checkinDate && dayDate <= checkoutDate;
-              })}
+              hotelStays={hotelStaysForDay(day, hotelStays)}
               onActivityAdd={() => {
                 setSelectedDayId(day.day_id);
                 setPreselectedDate(day.date.split('T')[0]);
@@ -152,21 +364,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               }}
               onActivityClick={(activity) => {
                 setEditingActivity(activity);
-                setActivityEdit({
-                  title: activity.title,
-                  description: activity.description || '',
-                  start_time: activity.start_time ? activity.start_time.slice(0, 5) : '',
-                  end_time: activity.end_time ? activity.end_time.slice(0, 5) : '',
-                  cost: activity.cost ? String(activity.cost) : '',
-                  currency: activity.currency || 'USD',
-                  date: day.date.split('T')[0], // Add the current day's date
-                  location_address: activity.location_address || null,
-                  location_place_id: activity.location_place_id || null,
-                  location_phone: activity.location_phone || null,
-                  location_website: activity.location_website || null,
-                  location_rating: activity.location_rating || null,
-                });
-                // Don't open the add dialog when editing
+                setActivityEdit(buildActivityFormData(activity, day.date));
                 setActivityOpen(false);
               }}
               onHotelClick={(hotel) => {
@@ -179,7 +377,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               }}
               onReservationClick={(reservation) => {
                 setEditingReservation(reservation);
-                setReservationOpen(true);  // Open the dialog when clicking a reservation
+                setReservationOpen(true);
               }}
               canEdit={canEdit}
               />
@@ -187,289 +385,65 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           );
         })}
       </div>
-      
+
       {/* Dialogs */}
-      {sortedDays.length > 0 && (
-        <>
-          <AccommodationDialog
-            tripId={sortedDays[0].trip_id}
-            open={accommodationOpen}
-            onOpenChange={(open) => {
-              setAccommodationOpen(open);
-              if (!open) setEditingHotel(null);
-            }}
-            initialData={editingHotel as any || undefined}
-            onSuccess={handleAccommodationSuccess}
-          />
-          
-          <TransportationDialog
-            tripId={sortedDays[0].trip_id}
-            open={transportationOpen}
-            onOpenChange={(open) => {
-              setTransportationOpen(open);
-              if (!open) setEditingTransportation(null);
-            }}
-            initialData={editingTransportation as any || undefined}
-            onSuccess={handleTransportationSuccess}
-          />
-          
-          {/* Consolidated Activity Dialog - handles both add and edit */}
-          <ActivityDialog
-            isOpen={activityOpen || !!editingActivity}
-            onOpenChange={(open) => {
-              if (!open) {
-                setActivityOpen(false);
-                setEditingActivity(null);
-                setActivityEdit({
-                  title: '',
-                  description: '',
-                  start_time: '',
-                  end_time: '',
-                  cost: '',
-                  currency: 'USD',
-                });
-                setSelectedDayId(null);
-                setPreselectedDate(undefined);
-              }
-            }}
-            activity={editingActivity ? activityEdit : newActivity}
-            onActivityChange={editingActivity ? setActivityEdit : setNewActivity}
-            preselectedDate={!editingActivity ? preselectedDate : undefined}
-            onSubmit={async (activity) => {
-              if (editingActivity?.id) {
-                // Edit mode
-                try {
-                  const updateData: Record<string, any> = {
-                    title: activityEdit.title,
-                    description: activityEdit.description || null,
-                    start_time: activityEdit.start_time || null,
-                    end_time: activityEdit.end_time || null,
-                    cost: activityEdit.cost ? parseFloat(activityEdit.cost) : null,
-                    currency: activityEdit.currency || null,
-                    location_address: activityEdit.location_address || null,
-                    location_place_id: activityEdit.location_place_id || null,
-                    location_phone: activityEdit.location_phone || null,
-                    location_website: activityEdit.location_website || null,
-                    location_rating: activityEdit.location_rating || null,
-                  };
+      <AccommodationDialog
+        tripId={tripId}
+        open={accommodationOpen}
+        onOpenChange={(open) => {
+          setAccommodationOpen(open);
+          if (!open) setEditingHotel(null);
+        }}
+        initialData={editingHotel as any || undefined}
+        onSuccess={handleAccommodationSuccess}
+      />
 
-                  // If date was changed, find the new day_id and update it
-                  if (activity?.date) {
-                    const { data: tripDay, error: dayError } = await supabase
-                      .from('trip_days')
-                      .select('day_id')
-                      .eq('trip_id', sortedDays[0].trip_id)
-                      .eq('date', activity.date)
-                      .single();
+      <TransportationDialog
+        tripId={tripId}
+        open={transportationOpen}
+        onOpenChange={(open) => {
+          setTransportationOpen(open);
+          if (!open) setEditingTransportation(null);
+        }}
+        initialData={editingTransportation as any || undefined}
+        onSuccess={handleTransportationSuccess}
+      />
 
-                    if (!dayError && tripDay) {
-                      updateData.day_id = tripDay.day_id;
-                    }
-                  }
+      <ActivityDialog
+        isOpen={activityOpen || !!editingActivity}
+        onOpenChange={(open) => {
+          if (!open) handleActivityDialogClose();
+        }}
+        activity={editingActivity ? activityEdit : newActivity}
+        onActivityChange={editingActivity ? setActivityEdit : setNewActivity}
+        preselectedDate={editingActivity ? undefined : preselectedDate}
+        onSubmit={handleActivitySubmit}
+        onDelete={handleActivityDelete}
+        eventId={editingActivity?.day_id || selectedDayId || ''}
+        tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
+        tripId={tripId}
+        activityId={editingActivity?.id || null}
+        destination={tripDestination}
+      />
 
-                  const { error } = await supabase
-                    .from('day_activities')
-                    .update(updateData)
-                    .eq('id', editingActivity.id);
-                  
-                  if (error) throw error;
-                  
-                  // Save traveler tags if we have travelers selected
-                  if (activityEdit.travelers && editingActivity?.id) {
-                    await setDayActivityTravelers(sortedDays[0].trip_id, editingActivity.id, activityEdit.travelers);
-                  }
-                  
-                  // Invalidate queries
-                  if (sortedDays.length > 0) {
-                    queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-                    queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
-                  }
-                  if (editingActivity?.day_id) {
-                    queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
-                  }
-                  
-                  setEditingActivity(null);
-                } catch (error) {
-                  console.error('Error updating activity:', error);
-                  toast.error('Failed to update activity');
-                }
-              } else {
-                // Add mode
-                try {
-                  const { data, error } = await supabase
-                    .from('day_activities')
-                    .insert({
-                      day_id: selectedDayId,
-                      trip_id: sortedDays[0].trip_id,
-                      title: newActivity.title,
-                      description: newActivity.description || null,
-                      start_time: newActivity.start_time || null,
-                      end_time: newActivity.end_time || null,
-                      cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
-                      currency: newActivity.currency || null,
-                      order_index: 0,
-                      is_paid: false,
-                      location_address: newActivity.location_address || null,
-                      location_place_id: newActivity.location_place_id || null,
-                      location_phone: newActivity.location_phone || null,
-                      location_website: newActivity.location_website || null,
-                      location_rating: newActivity.location_rating || null,
-                    })
-                    .select()
-                    .single();
-                    
-                  if (error) throw error;
-                  
-                  // Save traveler tags if we have travelers selected
-                  if (newActivity.travelers && newActivity.travelers.length > 0 && data?.id) {
-                    await setDayActivityTravelers(sortedDays[0].trip_id, data.id, newActivity.travelers);
-                  }
-                  
-                  setActivityOpen(false);
-                  setNewActivity({
-                    title: '',
-                    description: '',
-                    start_time: '',
-                    end_time: '',
-                    cost: '',
-                    currency: 'USD',
-                  });
-                  
-                  // Invalidate queries
-                  if (sortedDays.length > 0) {
-                    queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-                    queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
-                  }
-                  if (selectedDayId) {
-                    queryClient.invalidateQueries({ queryKey: ['activities', selectedDayId] });
-                  }
-                } catch (error) {
-                  console.error('Error adding activity:', error);
-                  toast.error('Failed to add activity');
-                }
-              }
-              setSelectedDayId(null);
-              setPreselectedDate(undefined);
-            }}
-            onDelete={async (id) => {
-              try {
-                const { error } = await supabase
-                  .from('day_activities')
-                  .delete()
-                  .eq('id', id);
-                
-                if (error) throw error;
-                setEditingActivity(null);
-                
-                // Invalidate queries
-                if (sortedDays.length > 0) {
-                  queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-                  queryClient.invalidateQueries({ queryKey: ['trip-days', sortedDays[0].trip_id] });
-                }
-                if (editingActivity?.day_id) {
-                  queryClient.invalidateQueries({ queryKey: ['activities', editingActivity.day_id] });
-                }
-              } catch (error) {
-                console.error('Error deleting activity:', error);
-                toast.error('Failed to delete activity');
-              }
-            }}
-            eventId={editingActivity?.day_id || selectedDayId || ''}
-            tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
-            tripId={sortedDays[0].trip_id}
-            activityId={editingActivity?.id || null}
-            destination={tripDestination}
-          />
-          
-          {/* Restaurant Reservation Dialog - always available */}
-          <RestaurantReservationDialog
-            isOpen={reservationOpen}
-            onOpenChange={(open) => {
-              setReservationOpen(open);
-              if (!open) {
-                setEditingReservation(null);
-                setSelectedDayId(null);
-              }
-            }}
-            tripId={sortedDays[0].trip_id}
-            title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
-            editingReservation={editingReservation || undefined}
-            isSubmitting={false}
-            onSubmit={async (data) => {
-              // Handle the submission with proper day_id
-              if (!editingReservation && selectedDayId) {
-                // Add new reservation
-                try {
-                  const { error } = await supabase
-                    .from('reservations')
-                    .insert({
-                      ...data,
-                      day_id: selectedDayId,
-                      trip_id: sortedDays[0].trip_id
-                    });
-                  
-                  if (error) throw error;
-
-                  // Invalidate both trip and reservation queries for real-time updates
-                  queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-                  queryClient.invalidateQueries({ queryKey: ['reservations', sortedDays[0].trip_id, selectedDayId] });
-                } catch (error) {
-                  console.error('Error adding reservation:', error);
-                  toast.error('Failed to add reservation');
-                }
-              } else if (editingReservation) {
-                // Update existing reservation
-                try {
-                  const { error } = await supabase
-                    .from('reservations')
-                    .update(data)
-                    .eq('id', editingReservation.id);
-                  
-                  if (error) throw error;
-
-                  // Invalidate both trip and reservation queries for real-time updates
-                  queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-                  if (editingReservation.day_id) {
-                    queryClient.invalidateQueries({ queryKey: ['reservations', sortedDays[0].trip_id, editingReservation.day_id] });
-                  }
-                } catch (error) {
-                  console.error('Error updating reservation:', error);
-                  toast.error('Failed to update reservation');
-                }
-              }
-              setReservationOpen(false);
-              setEditingReservation(null);
-              setSelectedDayId(null);
-            }}
-            onDelete={editingReservation ? async () => {
-              try {
-                const { error } = await supabase
-                  .from('reservations')
-                  .delete()
-                  .eq('id', editingReservation.id);
-                
-                if (error) throw error;
-                
-                setReservationOpen(false);
-                setEditingReservation(null);
-                
-                // Invalidate both trip and reservation queries for real-time updates
-                queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
-                if (editingReservation.day_id) {
-                  queryClient.invalidateQueries({ queryKey: ['reservations', sortedDays[0].trip_id, editingReservation.day_id] });
-                }
-                
-                setSelectedDayId(null);
-              } catch (error) {
-                console.error('Error deleting reservation:', error);
-                toast.error('Failed to delete reservation');
-              }
-            } : undefined}
-            tripArrivalDate={tripArrivalDate}
-            tripDepartureDate={tripDepartureDate}
-          />
-        </>
-      )}
+      <RestaurantReservationDialog
+        isOpen={reservationOpen}
+        onOpenChange={(open) => {
+          setReservationOpen(open);
+          if (!open) {
+            setEditingReservation(null);
+            setSelectedDayId(null);
+          }
+        }}
+        tripId={tripId}
+        title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
+        editingReservation={editingReservation || undefined}
+        isSubmitting={false}
+        onSubmit={handleReservationSubmit}
+        onDelete={handleReservationDelete}
+        tripArrivalDate={tripArrivalDate}
+        tripDepartureDate={tripDepartureDate}
+      />
     </>
   );
 };

@@ -41,13 +41,301 @@ type UseDayTimelineOutput = {
   isCheckInDay: boolean;
   isCheckOutDay: boolean;
   isTravelDay: boolean;
-  totalEvents: number;              // hints don’t count
+  totalEvents: number;              // hints don't count
 };
 
 export interface TimelinePeriodGroup {
   period: TimePeriod;
   label: string;
   rows: TimelineRenderRow[];
+}
+
+function buildActivityItems(activities: DayActivity[]): TimelineItem[] {
+  const items: TimelineItem[] = [];
+  for (const activity of activities) {
+    if (!activity.id) continue;
+    items.push({
+      type: 'activity',
+      time: activity.start_time || undefined,
+      endTime: activity.end_time || undefined,
+      title: activity.title,
+      description: activity.description || undefined,
+      icon: null,
+      id: activity.id,
+      data: activity,
+    });
+  }
+  return items;
+}
+
+function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string): TimelineItem[] {
+  const items: TimelineItem[] = [];
+  for (const stay of hotelStays) {
+    if (stay.hotel_checkin_date === normalizedDay && stay.checkin_time) {
+      items.push({
+        type: 'hotel',
+        time: stay.checkin_time,
+        title: `Check-in: ${stay.hotel}`,
+        description: stay.hotel_address,
+        icon: null,
+        id: `checkin-${stay.stay_id}`,
+        data: stay,
+      });
+    }
+    if (stay.hotel_checkout_date === normalizedDay && stay.checkout_time) {
+      items.push({
+        type: 'hotel',
+        time: stay.checkout_time,
+        title: `Check-out: ${stay.hotel}`,
+        icon: null,
+        id: `checkout-${stay.stay_id}`,
+        data: stay,
+      });
+    }
+  }
+  return items;
+}
+
+function getTransportTypeLabel(type: string): string {
+  switch (type) {
+    case 'flight': return 'Flight';
+    case 'train': return 'Train';
+    case 'car': return 'Car';
+    case 'bus': return 'Bus';
+    default: return 'Transport';
+  }
+}
+
+function getTransportDisplayInfo(
+  t: Transportation,
+  normalizedDay: string,
+): { displayTime: string | undefined; title: string; isStartDay: boolean; isEndDay: boolean; isMultiDay: boolean } {
+  const startDate = t.start_date;
+  const endDate = t.end_date || startDate;
+  const isStartDay = normalizedDay === startDate;
+  const isEndDay = normalizedDay === endDate;
+  const isMultiDay = startDate !== endDate;
+
+  if (!isMultiDay) {
+    return {
+      displayTime: t.start_time || undefined,
+      title: `${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
+      isStartDay,
+      isEndDay,
+      isMultiDay,
+    };
+  }
+
+  if (isStartDay) {
+    return {
+      displayTime: t.start_time || undefined,
+      title: `${t.departure_location || 'Departure'} →`,
+      isStartDay,
+      isEndDay,
+      isMultiDay,
+    };
+  }
+
+  if (isEndDay) {
+    return {
+      displayTime: t.end_time || undefined,
+      title: `→ ${t.arrival_location || 'Arrival'}`,
+      isStartDay,
+      isEndDay,
+      isMultiDay,
+    };
+  }
+
+  const typeLabel = getTransportTypeLabel(t.type);
+  return {
+    displayTime: undefined,
+    title: `${typeLabel} (In Transit): ${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
+    isStartDay,
+    isEndDay,
+    isMultiDay,
+  };
+}
+
+function buildTransportationItems(transportations: Transportation[], normalizedDay: string): TimelineItem[] {
+  const items: TimelineItem[] = [];
+  for (const t of transportations) {
+    const { displayTime, title, isStartDay, isEndDay, isMultiDay } = getTransportDisplayInfo(t, normalizedDay);
+
+    const departTimeOnThisDay = isStartDay ? t.start_time : undefined;
+    const arriveTimeOnThisDay = isEndDay ? t.end_time : (isStartDay && !isMultiDay ? t.end_time : undefined);
+
+    items.push({
+      type: 'transportation',
+      time: displayTime,
+      endTime: departTimeOnThisDay && arriveTimeOnThisDay ? arriveTimeOnThisDay : undefined,
+      title,
+      description: t.details,
+      icon: null,
+      id: t.id,
+      data: {
+        ...t,
+        __depart_time_on_this_day: departTimeOnThisDay,
+        __arrive_time_on_this_day: arriveTimeOnThisDay,
+      },
+    });
+  }
+  return items;
+}
+
+function buildDiningItems(reservations: RestaurantReservation[] | undefined | null): TimelineItem[] {
+  const items: TimelineItem[] = [];
+  for (const r of reservations || []) {
+    if (!r.reservation_time) continue;
+    items.push({
+      type: 'dining',
+      time: r.reservation_time,
+      title: r.restaurant_name,
+      description: r.notes || undefined,
+      icon: null,
+      id: r.id,
+      data: r,
+    });
+  }
+  return items;
+}
+
+function sortTimelineItems(items: TimelineItem[]): void {
+  items.sort((a, b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+}
+
+function getGroupEndTime(group: TimelineItem[]): string | undefined {
+  for (let i = group.length - 1; i >= 0; i--) {
+    const item = group[i];
+    if (item.data?.__arrive_time_on_this_day) return item.data.__arrive_time_on_this_day;
+    if (item.endTime) return item.endTime;
+    if (item.time) return item.time;
+  }
+  return undefined;
+}
+
+function getGroupStartTime(group: TimelineItem[]): string | undefined {
+  const first = group[0];
+  if (first?.data?.__depart_time_on_this_day) return first.data.__depart_time_on_this_day;
+  return first?.time;
+}
+
+function buildGroupRow(group: TimelineItem[]): TimelineRenderRow {
+  if (group.length >= 2) {
+    return {
+      kind: 'grouped',
+      id: `group-${group[0].id}`,
+      items: group,
+      groupType: group[0].type,
+      title: generateGroupTitle(group),
+      timeRange: generateGroupTimeRange(group),
+    };
+  }
+  return { kind: 'item', item: group[0] };
+}
+
+function buildLayoverHint(
+  lastItem: TimelineItem,
+  nextFirst: TimelineItem,
+  currEnd: Date,
+  nextStart: Date,
+): TimelineRenderRow | null {
+  const lastIsFlight = lastItem.type === 'transportation' && lastItem.data?.type === 'flight';
+  const nextIsFlight = nextFirst.type === 'transportation' && nextFirst.data?.type === 'flight';
+  if (!lastIsFlight || !nextIsFlight) return null;
+
+  const currArriveAirport = extractIata(lastItem.data?.arrival_location);
+  const nextDepartAirport = extractIata(nextFirst.data?.departure_location);
+  if (!currArriveAirport || currArriveAirport !== nextDepartAirport) return null;
+
+  const mins = diffMinutes(currEnd, nextStart);
+  if (mins <= 0) return null;
+
+  return {
+    kind: 'hint',
+    id: `layover-${lastItem.id}-${nextFirst.id}`,
+    text: `Layover at ${currArriveAirport} • ${humanizeMinutes(mins)}`,
+    hintType: 'layover' as const,
+    airport: currArriveAirport,
+  };
+}
+
+function buildGapHint(
+  groupIdx: number,
+  currEnd: Date,
+  nextStart: Date,
+): TimelineRenderRow | null {
+  const gapMs = nextStart.getTime() - currEnd.getTime();
+  const gapMins = Math.round(gapMs / 60000);
+
+  if (gapMins >= 90) {
+    return {
+      kind: 'hint',
+      id: `gap-${groupIdx}`,
+      text: `${humanizeMinutes(gapMins)} free`,
+      hintType: 'free-time' as const,
+    };
+  }
+
+  if (gapMins < -5) {
+    return {
+      kind: 'hint',
+      id: `overlap-${groupIdx}`,
+      text: `Overlaps by ${humanizeMinutes(Math.abs(gapMins))}`,
+      hintType: 'overlap' as const,
+    };
+  }
+
+  return null;
+}
+
+function buildGapOrLayoverHint(
+  group: TimelineItem[],
+  nextGroup: TimelineItem[],
+  groupIdx: number,
+  normalizedDay: string,
+): TimelineRenderRow | null {
+  if (!nextGroup || nextGroup.length === 0) return null;
+
+  const currEndTimeStr = getGroupEndTime(group);
+  const nextStartTimeStr = getGroupStartTime(nextGroup);
+  if (!currEndTimeStr || !nextStartTimeStr) return null;
+
+  const currEnd = combineDateAndTime(normalizedDay, currEndTimeStr);
+  const nextStart = combineDateAndTime(normalizedDay, nextStartTimeStr);
+  if (!currEnd || !nextStart) return null;
+
+  const lastItem = group[group.length - 1];
+  const nextFirst = nextGroup[0];
+
+  const layover = buildLayoverHint(lastItem, nextFirst, currEnd, nextStart);
+  if (layover) return layover;
+
+  return buildGapHint(groupIdx, currEnd, nextStart);
+}
+
+function insertNowIndicator(result: TimelineRenderRow[]): void {
+  const nowDate = new Date();
+  const nowTimeStr = `${String(nowDate.getHours()).padStart(2, '0')}:${String(nowDate.getMinutes()).padStart(2, '0')}`;
+
+  let insertIdx = result.length;
+  for (let i = 0; i < result.length; i++) {
+    const row = result[i];
+    let rowTime: string | undefined;
+    if (row.kind === 'item') rowTime = row.item.time;
+    else if (row.kind === 'grouped') rowTime = row.items[0]?.time;
+
+    if (rowTime && rowTime > nowTimeStr) {
+      insertIdx = i;
+      break;
+    }
+  }
+
+  result.splice(insertIdx, 0, { kind: 'now', id: 'now-indicator' });
 }
 
 export function useDayTimeline({
@@ -73,7 +361,7 @@ export function useDayTimeline({
   }, [hotelStays, normalizedDay]);
 
   const allDayHotels = useMemo(() => {
-    return filteredHotelStays.filter(stay => 
+    return filteredHotelStays.filter(stay =>
       stay.hotel_checkin_date !== normalizedDay && stay.hotel_checkout_date !== normalizedDay
     );
   }, [filteredHotelStays, normalizedDay]);
@@ -91,249 +379,31 @@ export function useDayTimeline({
 
   // Build timeline items
   const timelineItems: TimelineItem[] = useMemo(() => {
-    const items: TimelineItem[] = [];
-
-    // Activities
-    for (const activity of activities) {
-      if (!activity.id) continue;
-      items.push({
-        type: 'activity',
-        time: activity.start_time || undefined,
-        endTime: activity.end_time || undefined,
-        title: activity.title,
-        description: activity.description || undefined,
-        icon: null, // icon injected in row via CSS color
-        id: activity.id,
-        data: activity,
-      });
-    }
-
-    // Hotels (check-in/out)
-    for (const stay of filteredHotelStays) {
-      if (stay.hotel_checkin_date === normalizedDay && stay.checkin_time) {
-        items.push({
-          type: 'hotel',
-          time: stay.checkin_time,
-          title: `Check-in: ${stay.hotel}`,
-          description: stay.hotel_address,
-          icon: null,
-          id: `checkin-${stay.stay_id}`,
-          data: stay,
-        });
-      }
-      if (stay.hotel_checkout_date === normalizedDay && stay.checkout_time) {
-        items.push({
-          type: 'hotel',
-          time: stay.checkout_time,
-          title: `Check-out: ${stay.hotel}`,
-          icon: null,
-          id: `checkout-${stay.stay_id}`,
-          data: stay,
-        });
-      }
-    }
-
-    // Transportation
-    for (const t of filteredTransportations) {
-      const typeLabel =
-        t.type === 'flight' ? 'Flight' :
-        t.type === 'train' ? 'Train' :
-        t.type === 'car' ? 'Car' :
-        t.type === 'bus' ? 'Bus' : 'Transport';
-
-      const startDate = t.start_date;
-      const endDate   = t.end_date || startDate;
-      const isStartDay = normalizedDay === startDate;
-      const isEndDay   = normalizedDay === endDate;
-      const isMultiDay = startDate !== endDate;
-
-      let displayTime: string | undefined;
-      let title: string;
-
-      if (isMultiDay) {
-        if (isStartDay) {
-          displayTime = t.start_time || undefined;
-          title = `${t.departure_location || 'Departure'} →`;
-        } else if (isEndDay) {
-          displayTime = t.end_time || undefined;
-          title = `→ ${t.arrival_location || 'Arrival'}`;
-        } else {
-          displayTime = undefined;
-          title = `${typeLabel} (In Transit): ${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`;
-        }
-      } else {
-        displayTime = t.start_time || undefined;
-        title = `${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`;
-      }
-
-      const departTimeOnThisDay = isStartDay ? t.start_time : undefined;
-      const arriveTimeOnThisDay = isEndDay ? t.end_time : (isStartDay && !isMultiDay ? t.end_time : undefined);
-
-      items.push({
-        type: 'transportation',
-        time: displayTime,
-        endTime: departTimeOnThisDay && arriveTimeOnThisDay ? arriveTimeOnThisDay : undefined,
-        title,
-        description: t.details,
-        icon: null, // Icon will be rendered in TimelineRow based on transportation type
-        id: t.id,
-        data: {
-          ...t,
-          __depart_time_on_this_day: departTimeOnThisDay,
-          __arrive_time_on_this_day: arriveTimeOnThisDay,
-        },
-      });
-    }
-
-    // Dining
-    for (const r of reservations || []) {
-      if (!r.reservation_time) continue;
-      items.push({
-        type: 'dining',
-        time: r.reservation_time,
-        title: r.restaurant_name,
-        description: r.notes || undefined,
-        icon: null,
-        id: r.id,
-        data: r,
-      });
-    }
-
-    // Sort by time (items without time go last)
-    items.sort((a, b) => {
-      if (!a.time && !b.time) return 0;
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      return a.time.localeCompare(b.time);
-    });
-
+    const items: TimelineItem[] = [
+      ...buildActivityItems(activities),
+      ...buildHotelItems(filteredHotelStays, normalizedDay),
+      ...buildTransportationItems(filteredTransportations, normalizedDay),
+      ...buildDiningItems(reservations),
+    ];
+    sortTimelineItems(items);
     return items;
   }, [activities, filteredHotelStays, filteredTransportations, reservations, normalizedDay]);
 
   // Compute rows with grouping, layover hints, and gap detection
   const rows: TimelineRenderRow[] = useMemo(() => {
     const result: TimelineRenderRow[] = [];
-
-    // First, group similar events
     const eventGroups = groupSimilarEvents(timelineItems, normalizedDay);
-
-    /** Get the end time of the last event in a group */
-    const getGroupEndTime = (group: typeof timelineItems): string | undefined => {
-      for (let i = group.length - 1; i >= 0; i--) {
-        const item = group[i];
-        // For transportation, use arrival time on this day
-        if (item.data?.__arrive_time_on_this_day) return item.data.__arrive_time_on_this_day;
-        if (item.endTime) return item.endTime;
-        if (item.time) return item.time;
-      }
-      return undefined;
-    };
-
-    /** Get the start time of the first event in a group */
-    const getGroupStartTime = (group: typeof timelineItems): string | undefined => {
-      const first = group[0];
-      if (first?.data?.__depart_time_on_this_day) return first.data.__depart_time_on_this_day;
-      return first?.time;
-    };
 
     for (let groupIdx = 0; groupIdx < eventGroups.length; groupIdx++) {
       const group = eventGroups[groupIdx];
+      result.push(buildGroupRow(group));
 
-      // Add the group/item row
-      if (group.length >= 2) {
-        const groupTitle = generateGroupTitle(group);
-        const timeRange = generateGroupTimeRange(group);
-        result.push({
-          kind: 'grouped',
-          id: `group-${group[0].id}`,
-          items: group,
-          groupType: group[0].type,
-          title: groupTitle,
-          timeRange,
-        });
-      } else {
-        result.push({ kind: 'item', item: group[0] });
-      }
-
-      // Gap detection between current group and next group
-      const nextGroup = eventGroups[groupIdx + 1];
-      if (!nextGroup || nextGroup.length === 0) continue;
-
-      const currEndTimeStr = getGroupEndTime(group);
-      const nextStartTimeStr = getGroupStartTime(nextGroup);
-      if (!currEndTimeStr || !nextStartTimeStr) continue;
-
-      const currEnd = combineDateAndTime(normalizedDay, currEndTimeStr);
-      const nextStart = combineDateAndTime(normalizedDay, nextStartTimeStr);
-      if (!currEnd || !nextStart) continue;
-
-      // Check for flight layover (special case)
-      const lastItem = group[group.length - 1];
-      const nextFirst = nextGroup[0];
-      const lastIsFlight = lastItem.type === 'transportation' && lastItem.data?.type === 'flight';
-      const nextIsFlight = nextFirst.type === 'transportation' && nextFirst.data?.type === 'flight';
-
-      if (lastIsFlight && nextIsFlight) {
-        const currArriveAirport = extractIata(lastItem.data?.arrival_location);
-        const nextDepartAirport = extractIata(nextFirst.data?.departure_location);
-        if (currArriveAirport && currArriveAirport === nextDepartAirport) {
-          const mins = diffMinutes(currEnd, nextStart);
-          if (mins > 0) {
-            result.push({
-              kind: 'hint',
-              id: `layover-${lastItem.id}-${nextFirst.id}`,
-              text: `Layover at ${currArriveAirport} • ${humanizeMinutes(mins)}`,
-              hintType: 'layover' as const,
-              airport: currArriveAirport,
-            });
-            continue;
-          }
-        }
-      }
-
-      // General gap detection
-      const gapMs = nextStart.getTime() - currEnd.getTime();
-      const gapMins = Math.round(gapMs / 60000);
-
-      if (gapMins >= 90) {
-        // Free time gap
-        result.push({
-          kind: 'hint',
-          id: `gap-${groupIdx}`,
-          text: `${humanizeMinutes(gapMins)} free`,
-          hintType: 'free-time' as const,
-        });
-      } else if (gapMins < -5) {
-        // Overlap (allowing 5min tolerance)
-        result.push({
-          kind: 'hint',
-          id: `overlap-${groupIdx}`,
-          text: `Overlaps by ${humanizeMinutes(Math.abs(gapMins))}`,
-          hintType: 'overlap' as const,
-        });
-      }
+      const hint = buildGapOrLayoverHint(group, eventGroups[groupIdx + 1], groupIdx, normalizedDay);
+      if (hint) result.push(hint);
     }
 
-    // Insert NOW indicator if today
     if (isTodayFlag) {
-      const nowDate = new Date();
-      const nowTimeStr = `${String(nowDate.getHours()).padStart(2, '0')}:${String(nowDate.getMinutes()).padStart(2, '0')}`;
-
-      // Find the right position to insert the NOW marker
-      let insertIdx = result.length; // default: at end
-      for (let i = 0; i < result.length; i++) {
-        const row = result[i];
-        let rowTime: string | undefined;
-        if (row.kind === 'item') rowTime = row.item.time;
-        else if (row.kind === 'grouped') rowTime = row.items[0]?.time;
-
-        if (rowTime && rowTime > nowTimeStr) {
-          insertIdx = i;
-          break;
-        }
-      }
-
-      result.splice(insertIdx, 0, { kind: 'now', id: 'now-indicator' });
+      insertNowIndicator(result);
     }
 
     return result;
