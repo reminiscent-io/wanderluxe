@@ -3,6 +3,7 @@ import shareNotificationRoutes from './share-notification';
 import aiChatRoutes from './ai-chat';
 import stripeRoutes from './stripe';
 import invitePreviewRoutes from './invite-preview';
+import adminInsightsRoutes from './admin-insights';
 
 export function registerRoutes(app: Express) {
   // Invite preview must be registered before the SPA catch-all
@@ -11,4 +12,5 @@ export function registerRoutes(app: Express) {
   app.use(shareNotificationRoutes);
   app.use(aiChatRoutes);
   app.use(stripeRoutes);
+  app.use(adminInsightsRoutes);
 }
