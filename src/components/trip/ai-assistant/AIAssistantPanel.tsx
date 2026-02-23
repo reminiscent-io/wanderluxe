@@ -30,6 +30,38 @@ interface AIAssistantPanelProps {
   tripId: string;
 }
 
+function markItemsCreated(
+  messages: AIChatMessage[],
+  importedItems: ExtractedItem[]
+): AIChatMessage[] {
+  const importedIds = new Set(importedItems.map(i => i.id));
+  return messages.map(msg => {
+    if (!msg.extractedItems) return msg;
+    return {
+      ...msg,
+      extractedItems: msg.extractedItems.map(item =>
+        importedIds.has(item.id) ? { ...item, status: 'created' as const } : item
+      )
+    };
+  });
+}
+
+function applyItemStatusUpdate(
+  messages: AIChatMessage[],
+  itemId: string,
+  status: 'created' | 'skipped'
+): AIChatMessage[] {
+  return messages.map(msg => {
+    if (!msg.extractedItems) return msg;
+    return {
+      ...msg,
+      extractedItems: msg.extractedItems.map(item =>
+        item.id === itemId ? { ...item, status } : item
+      )
+    };
+  });
+}
+
 const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
   const queryClient = useQueryClient();
   const [showPaywall, setShowPaywall] = useState(false);
@@ -171,22 +203,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
       if (result.successCount > 0) {
         toast.success(`Added ${result.successCount} item${result.successCount !== 1 ? 's' : ''} to your trip`);
 
-        // Update the extraction messages to mark items as created
-        setExtractionMessages(prev =>
-          prev.map(msg => {
-            if (msg.extractedItems) {
-              return {
-                ...msg,
-                extractedItems: msg.extractedItems.map(item =>
-                  items.some(i => i.id === item.id)
-                    ? { ...item, status: 'created' as const }
-                    : item
-                )
-              };
-            }
-            return msg;
-          })
-        );
+        setExtractionMessages(prev => markItemsCreated(prev, items));
 
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
@@ -218,22 +235,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
 
   // Handle individual item processed in stepper
   const handleItemProcessed = useCallback((itemId: string, status: 'created' | 'skipped') => {
-    // Update item status in extraction messages
-    setExtractionMessages(prev =>
-      prev.map(msg => {
-        if (msg.extractedItems) {
-          return {
-            ...msg,
-            extractedItems: msg.extractedItems.map(item =>
-              item.id === itemId ? { ...item, status } : item
-            )
-          };
-        }
-        return msg;
-      })
-    );
+    setExtractionMessages(prev => applyItemStatusUpdate(prev, itemId, status));
 
-    // If created, invalidate queries
     if (status === 'created') {
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });

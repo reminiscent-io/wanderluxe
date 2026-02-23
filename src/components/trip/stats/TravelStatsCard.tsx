@@ -63,15 +63,24 @@ export function TravelStatsCard({
 }: TravelStatsCardProps) {
   const colors = gradientClasses[gradient];
 
+  const chartPercentage = chart && chartData && chartData.total > 0
+    ? (chartData.completed / chartData.total) * 100
+    : 0;
+
+  const progressBarColorMap: Record<GradientType, string> = {
+    blue: 'bg-sunset-500',
+    green: 'bg-emerald-500',
+    purple: 'bg-earth-500',
+    sand: 'bg-earth-500',
+    amber: 'bg-earth-500',
+  };
+
   const renderChart = () => {
     if (!chart || !chartData) return null;
 
     if (chart === 'donut') {
-      const percentage = chartData.total > 0
-        ? (chartData.completed / chartData.total) * 100
-        : 0;
       const circumference = 2 * Math.PI * 20;
-      const strokeDashoffset = circumference - (percentage / 100) * circumference;
+      const strokeDashoffset = circumference - (chartPercentage / 100) * circumference;
 
       return (
         <div className="relative w-14 h-14 flex-shrink-0">
@@ -100,24 +109,20 @@ export function TravelStatsCard({
             />
           </svg>
           <div className={cn("absolute inset-0 flex items-center justify-center text-xs font-bold", colors.text)}>
-            {Math.round(percentage)}%
+            {Math.round(chartPercentage)}%
           </div>
         </div>
       );
     }
 
     if (chart === 'progress') {
-      const percentage = chartData.total > 0
-        ? (chartData.completed / chartData.total) * 100
-        : 0;
-
       return (
         <div className="w-full h-2 bg-sand-200 rounded-full overflow-hidden mt-2">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${percentage}%` }}
+            animate={{ width: `${chartPercentage}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className={cn("h-full rounded-full", gradient === 'blue' ? 'bg-sunset-500' : gradient === 'green' ? 'bg-emerald-500' : gradient === 'purple' ? 'bg-earth-500' : 'bg-earth-500')}
+            className={cn("h-full rounded-full", progressBarColorMap[gradient])}
           />
         </div>
       );

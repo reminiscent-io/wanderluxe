@@ -54,6 +54,123 @@ function incrementAnonUsageCount(): number {
   return count;
 }
 
+function handleSSEOpen(response: Response): void {
+  if (!response.ok) {
+    throw new Error(`Server error: ${response.status}`);
+  }
+}
+
+interface SSEStreamAccumulator {
+  fullContent: string;
+}
+
+interface AnonSSEContext {
+  accumulator: SSEStreamAccumulator;
+  setStreamingContent: (content: string) => void;
+  setIsStreaming: (streaming: boolean) => void;
+  queryClient: ReturnType<typeof import('@tanstack/react-query').useQueryClient>;
+  tripId: string;
+  refetchUsage: () => void;
+}
+
+function handleAnonSSEMessage(event: { event: string; data: string }, ctx: AnonSSEContext): void {
+  try {
+    if (event.event === 'message') {
+      const data = JSON.parse(event.data) as SSEMessageEvent;
+      ctx.accumulator.fullContent += data.content;
+      ctx.setStreamingContent(ctx.accumulator.fullContent);
+    } else if (event.event === 'done') {
+      const data = JSON.parse(event.data) as SSEDoneEvent;
+
+      const assistantMessage: AIChatMessage = {
+        id: data.message_id || `anon-assistant-${Date.now()}`,
+        thread_id: '',
+        role: 'assistant',
+        content: ctx.accumulator.fullContent,
+        metadata: {},
+        created_at: new Date().toISOString()
+      };
+
+      ctx.queryClient.setQueryData(
+        ['ai-assistant-messages', ctx.tripId],
+        (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
+          messages: [...(old?.messages || []), assistantMessage],
+          thread_id: null
+        })
+      );
+
+      ctx.setStreamingContent('');
+      ctx.setIsStreaming(false);
+      incrementAnonUsageCount();
+      ctx.refetchUsage();
+    } else if (event.event === 'error') {
+      const data = JSON.parse(event.data) as SSEErrorEvent;
+      throw data.error;
+    }
+  } catch (parseError) {
+    console.error('Error parsing SSE message:', parseError);
+  }
+}
+
+interface AuthSSEContext {
+  accumulator: SSEStreamAccumulator;
+  setStreamingContent: (content: string) => void;
+  setIsStreaming: (streaming: boolean) => void;
+  queryClient: ReturnType<typeof import('@tanstack/react-query').useQueryClient>;
+  tripId: string;
+  refetchUsage: () => void;
+  onItemsExtracted?: (items: ExtractedItem[]) => void;
+}
+
+function handleAuthSSEMessage(event: { event: string; data: string }, ctx: AuthSSEContext): void {
+  try {
+    if (event.event === 'message') {
+      const data = JSON.parse(event.data) as SSEMessageEvent;
+      ctx.accumulator.fullContent += data.content;
+      ctx.setStreamingContent(ctx.accumulator.fullContent);
+    } else if (event.event === 'done') {
+      const data = JSON.parse(event.data) as SSEDoneEvent;
+      const messageContent = data.content ?? ctx.accumulator.fullContent;
+
+      const assistantMessage: AIChatMessage = {
+        id: data.message_id,
+        thread_id: data.thread_id,
+        role: 'assistant',
+        content: messageContent,
+        metadata: {},
+        created_at: new Date().toISOString()
+      };
+
+      ctx.queryClient.setQueryData(
+        ['ai-assistant-messages', ctx.tripId],
+        (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
+          messages: [...(old?.messages || []), assistantMessage],
+          thread_id: data.thread_id
+        })
+      );
+
+      ctx.setStreamingContent('');
+      ctx.setIsStreaming(false);
+      ctx.refetchUsage();
+    } else if (event.event === 'extracted_items') {
+      const data = JSON.parse(event.data) as SSEExtractedItemsEvent;
+      if (data.items && data.items.length > 0 && ctx.onItemsExtracted) {
+        ctx.onItemsExtracted(data.items);
+      }
+    } else if (event.event === 'error') {
+      const data = JSON.parse(event.data) as SSEErrorEvent;
+      throw data.error;
+    }
+  } catch (parseError) {
+    console.error('Error parsing SSE message:', parseError);
+  }
+}
+
+function handleSSEError(err: unknown): never {
+  console.error('SSE connection error:', err);
+  throw err;
+}
+
 export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: UseAIAssistantOptions): UseAIAssistantReturn {
   const queryClient = useQueryClient();
   const [isStreaming, setIsStreaming] = useState(false);
@@ -239,7 +356,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       .map(m => ({ role: m.role, content: m.content }));
 
     abortControllerRef.current = new AbortController();
-    let fullContent = '';
+    const accumulator: SSEStreamAccumulator = { fullContent: '' };
 
     const removeOptimisticMessage = () => {
       queryClient.setQueryData(
@@ -249,6 +366,15 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
           thread_id: null
         })
       );
+    };
+
+    const anonCtx: AnonSSEContext = {
+      accumulator,
+      setStreamingContent,
+      setIsStreaming,
+      queryClient,
+      tripId,
+      refetchUsage
     };
 
     try {
@@ -262,67 +388,9 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
           messages: previousMessages
         }),
         signal: abortControllerRef.current.signal,
-
-        onopen: async (response) => {
-          if (!response.ok) {
-            let errorData;
-            try {
-              errorData = await response.json();
-            } catch {
-              errorData = { message: `Server error: ${response.status}` };
-            }
-            throw errorData;
-          }
-        },
-
-        onmessage: (event) => {
-          try {
-            if (event.event === 'message') {
-              const data = JSON.parse(event.data) as SSEMessageEvent;
-              fullContent += data.content;
-              setStreamingContent(fullContent);
-            } else if (event.event === 'done') {
-              const data = JSON.parse(event.data) as SSEDoneEvent;
-
-              // Add the complete assistant message to the cache
-              const assistantMessage: AIChatMessage = {
-                id: data.message_id || `anon-assistant-${Date.now()}`,
-                thread_id: '',
-                role: 'assistant',
-                content: fullContent,
-                metadata: {},
-                created_at: new Date().toISOString()
-              };
-
-              queryClient.setQueryData(
-                ['ai-assistant-messages', tripId],
-                (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
-                  messages: [...(old?.messages || []), assistantMessage],
-                  thread_id: null
-                })
-              );
-
-              setStreamingContent('');
-              setIsStreaming(false);
-
-              // Increment anonymous usage counter
-              incrementAnonUsageCount();
-
-              // Refresh usage to reflect new count
-              refetchUsage();
-            } else if (event.event === 'error') {
-              const data = JSON.parse(event.data) as SSEErrorEvent;
-              throw data.error;
-            }
-          } catch (parseError) {
-            console.error('Error parsing SSE message:', parseError);
-          }
-        },
-
-        onerror: (err) => {
-          console.error('SSE connection error:', err);
-          throw err;
-        }
+        onopen: handleSSEOpen,
+        onmessage: (event) => handleAnonSSEMessage(event, anonCtx),
+        onerror: handleSSEError
       });
     } catch (err) {
       console.error('Send message error (anon):', err);
@@ -398,7 +466,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController();
-    let fullContent = '';
+    const accumulator: SSEStreamAccumulator = { fullContent: '' };
 
     // Helper to remove the optimistic message on error
     const removeOptimisticMessage = () => {
@@ -409,6 +477,16 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
           thread_id: old?.thread_id || null
         })
       );
+    };
+
+    const authCtx: AuthSSEContext = {
+      accumulator,
+      setStreamingContent,
+      setIsStreaming,
+      queryClient,
+      tripId,
+      refetchUsage,
+      onItemsExtracted
     };
 
     try {
@@ -423,75 +501,9 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
           thread_id: messagesData?.thread_id
         }),
         signal: abortControllerRef.current.signal,
-
-        onopen: async (response) => {
-          if (!response.ok) {
-            let errorData;
-            try {
-              errorData = await response.json();
-            } catch {
-              errorData = { message: `Server error: ${response.status}` };
-            }
-            throw errorData;
-          }
-        },
-
-        onmessage: (event) => {
-          try {
-            if (event.event === 'message') {
-              const data = JSON.parse(event.data) as SSEMessageEvent;
-              fullContent += data.content;
-              setStreamingContent(fullContent);
-            } else if (event.event === 'done') {
-              const data = JSON.parse(event.data) as SSEDoneEvent;
-
-              // Use content from server when present (create_items was stripped); otherwise use accumulated stream
-              const messageContent = data.content ?? fullContent;
-
-              // Add the complete assistant message to the cache
-              const assistantMessage: AIChatMessage = {
-                id: data.message_id,
-                thread_id: data.thread_id,
-                role: 'assistant',
-                content: messageContent,
-                metadata: {},
-                created_at: new Date().toISOString()
-              };
-
-              queryClient.setQueryData(
-                ['ai-assistant-messages', tripId],
-                (old: { messages: AIChatMessage[]; thread_id: string | null } | undefined) => ({
-                  messages: [...(old?.messages || []), assistantMessage],
-                  thread_id: data.thread_id
-                })
-              );
-
-              setStreamingContent('');
-              setIsStreaming(false);
-
-              // Refresh usage after successful message
-              refetchUsage();
-            } else if (event.event === 'extracted_items') {
-              // AI detected item creation intent and extracted structured data
-              const data = JSON.parse(event.data) as SSEExtractedItemsEvent;
-              if (data.items && data.items.length > 0 && onItemsExtracted) {
-                onItemsExtracted(data.items);
-              }
-            } else if (event.event === 'error') {
-              const data = JSON.parse(event.data) as SSEErrorEvent;
-              throw data.error;
-            }
-          } catch (parseError) {
-            console.error('Error parsing SSE message:', parseError);
-            // Don't throw - continue trying to process other messages
-          }
-        },
-
-        onerror: (err) => {
-          // Don't throw on network errors - handle them gracefully
-          console.error('SSE connection error:', err);
-          throw err;
-        }
+        onopen: handleSSEOpen,
+        onmessage: (event) => handleAuthSSEMessage(event, authCtx),
+        onerror: handleSSEError
       });
     } catch (err) {
       console.error('Send message error:', err);

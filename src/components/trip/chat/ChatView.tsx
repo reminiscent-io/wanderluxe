@@ -230,6 +230,22 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
     onInputFiles(e.dataTransfer.files);
   };
 
+  const extractFileFromClipboardItem = async (it: any): Promise<File | null> => {
+    for (const type of it.types) {
+      const isImage = type.startsWith("image/");
+      const isPdf = type === "application/pdf";
+      if (!isImage && !isPdf) continue;
+
+      const blob = await it.getType(type);
+      const name = isPdf ? "pasted.pdf" : `pasted.${type.split("/")[1]}`;
+      const pasted = new File([blob], name, { type });
+      const err = validateFile(pasted);
+      if (err) throw new Error(err);
+      return pasted;
+    }
+    return null;
+  };
+
   const onPasteClick = async () => {
     try {
       if (!navigator.clipboard || !("read" in navigator.clipboard)) {
@@ -238,23 +254,11 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
       }
       const items = await (navigator.clipboard as any).read();
       for (const it of items) {
-        for (const type of it.types) {
-          if (type.startsWith("image/") || type === "image/png" || type === "image/jpeg") {
-            const blob = await it.getType(type);
-            const pasted = new File([blob], `pasted.${type.split("/")[1]}`, { type });
-            const err = validateFile(pasted); if (err) throw new Error(err);
-            setFile(pasted);
-            await preparePreview(pasted);
-            return;
-          }
-          if (type === "application/pdf") {
-            const blob = await it.getType(type);
-            const pasted = new File([blob], "pasted.pdf", { type });
-            const err = validateFile(pasted); if (err) throw new Error(err);
-            setFile(pasted);
-            await preparePreview(pasted);
-            return;
-          }
+        const pasted = await extractFileFromClipboardItem(it);
+        if (pasted) {
+          setFile(pasted);
+          await preparePreview(pasted);
+          return;
         }
       }
       toast.message("No image or PDF found in clipboard");
@@ -357,47 +361,54 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
     }
   };
 
-  const handleExtract = async () => {
-    if (!itemType) return toast.info("Choose what to create first.");
-    if (!file) return toast.info("Upload or paste an image/PDF.");
-    if (!previewReady) return toast.error("Preview isn't ready yet. If you uploaded a PDF, we're rendering the first page.");
+  const isAtImportLimit = (): boolean => {
+    if (!importUsage) return false;
+    if (importUsage.tier === 'pro' || importUsage.limit === -1) return false;
+    return importUsage.used >= importUsage.limit;
+  };
 
-    // Check if user has remaining imports (skip for pro users)
-    if (importUsage && importUsage.tier !== 'pro' && importUsage.limit !== -1) {
-      if (importUsage.used >= importUsage.limit) {
-        toast.error(`You've reached your daily limit of ${importUsage.limit} imports. Upgrade to Pro for unlimited imports!`);
-        return;
-      }
-    }
-
-    const data = await extract(file, itemType as TravelItemType);
-    if (!data) return;
-
-    // Increment usage only after successful extraction
+  const trackUsageIncrement = async () => {
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
-      if (token) {
-        const usageResp = await fetch('/api/ai-imports/usage', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (usageResp.ok) {
-          const usageData = await usageResp.json();
-          setImportUsage(prev => prev ? { ...prev, used: usageData.used } : null);
-        }
+      if (!token) return;
+      const usageResp = await fetch('/api/ai-imports/usage', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (usageResp.ok) {
+        const usageData = await usageResp.json();
+        setImportUsage(prev => prev ? { ...prev, used: usageData.used } : null);
       }
     } catch (e) {
       console.error('Failed to update import usage:', e);
     }
+  };
 
-    switch (data.itemType) {
+  const openDialogForType = (type: TravelItemType) => {
+    switch (type) {
       case "accommodation": setOpenAcc(true); break;
       case "transportation": setOpenTp(true); break;
       case "activity": setOpenAct(true); break;
       case "reservation": setOpenRes(true); break;
     }
+  };
+
+  const handleExtract = async () => {
+    if (!itemType) return toast.info("Choose what to create first.");
+    if (!file) return toast.info("Upload or paste an image/PDF.");
+    if (!previewReady) return toast.error("Preview isn't ready yet. If you uploaded a PDF, we're rendering the first page.");
+
+    if (isAtImportLimit()) {
+      toast.error(`You've reached your daily limit of ${importUsage!.limit} imports. Upgrade to Pro for unlimited imports!`);
+      return;
+    }
+
+    const data = await extract(file, itemType as TravelItemType);
+    if (!data) return;
+
+    await trackUsageIncrement();
+    openDialogForType(data.itemType);
   };
 
   // --------- map OCR → initialData ----------

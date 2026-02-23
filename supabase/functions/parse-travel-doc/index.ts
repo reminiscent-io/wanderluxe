@@ -459,248 +459,190 @@ const pickNearestFuture = (month, day, now)=>{
     "date"
   ]
 };
+const correctOutOfRangeYear = (fields, key)=>{
+  const current = typeof fields[key] === "string" ? fields[key] : null;
+  const parsed = parseIso(current);
+  if (!parsed) return;
+  const { y, m, d } = parsed;
+  if (INFER_YEARS.includes(y)) return;
+  const picked = pickNearestFuture(m, d, TODAY_UTC);
+  if (picked) fields[key] = iso(picked.getUTCFullYear(), m, d);
+};
+
+const ensureCheckoutAfterCheckin = (fields)=>{
+  if (typeof fields["check_in_date"] !== "string" || typeof fields["check_out_date"] !== "string") return;
+  const ci = parseIso(fields["check_in_date"]);
+  const co = parseIso(fields["check_out_date"]);
+  if (!ci || !co) return;
+  const ciDt = toUTC(ci.y, ci.m, ci.d);
+  const coDt = toUTC(co.y, co.m, co.d);
+  if (coDt >= ciDt) return;
+  const picked = pickNearestFuture(co.m, co.d, ciDt);
+  if (picked) {
+    fields["check_out_date"] = iso(picked.getUTCFullYear(), co.m, co.d);
+  } else {
+    const next = new Date(ciDt.getTime() + 24 * 60 * 60 * 1000);
+    fields["check_out_date"] = iso(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate());
+  }
+};
+
 const applyDateAssumptions = (itemType, fields)=>{
   const targets = DATE_FIELDS_BY_TYPE[itemType] ?? [];
-
-  // Correct any dates with years outside our expected range
-  for (const key of targets){
-    const current = typeof fields[key] === "string" ? fields[key] : null;
-    const parsed = parseIso(current);
-
-    if (parsed) {
-      const { y, m, d } = parsed;
-      // If year is outside our allowed window (e.g., old documents with 2023/2024),
-      // re-infer using nearest future date logic
-      if (!INFER_YEARS.includes(y)) {
-        const picked = pickNearestFuture(m, d, TODAY_UTC);
-        if (picked) {
-          fields[key] = iso(picked.getUTCFullYear(), m, d);
-        }
-      }
-    }
-  }
-
-  // Ensure accommodation checkout >= check-in
-  if (itemType === "accommodation" && typeof fields["check_in_date"] === "string" && typeof fields["check_out_date"] === "string") {
-    const ci = parseIso(fields["check_in_date"]);
-    const co = parseIso(fields["check_out_date"]);
-    if (ci && co) {
-      const ciDt = toUTC(ci.y, ci.m, ci.d);
-      const coDt = toUTC(co.y, co.m, co.d);
-      if (coDt < ciDt) {
-        // If checkout is before check-in, push it to next occurrence of that month/day after check-in
-        const picked = pickNearestFuture(co.m, co.d, ciDt);
-        if (picked) {
-          fields["check_out_date"] = iso(picked.getUTCFullYear(), co.m, co.d);
-        } else {
-          // Fallback: next day
-          const next = new Date(ciDt.getTime() + 24 * 60 * 60 * 1000);
-          fields["check_out_date"] = iso(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate());
-        }
-      }
-    }
-  }
-
+  for (const key of targets) correctOutOfRangeYear(fields, key);
+  if (itemType === "accommodation") ensureCheckoutAfterCheckin(fields);
   return fields;
 };
+// ----------------- Shared helpers -----------------
+const buildVisionPayload = (system, user, dataUrl, maxTokens)=>({
+  model: MODEL,
+  messages: [
+    { role: "system", content: system },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: user },
+        { type: "image_url", image_url: { url: dataUrl } }
+      ]
+    }
+  ],
+  response_format: { type: "json_object" },
+  temperature: 0,
+  max_tokens: maxTokens
+});
+
+const callOpenAI = async (payload)=>{
+  const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${OPENAI_API_KEY}`,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!aiRes.ok) {
+    const txt = await aiRes.text();
+    console.error("OpenAI error:", aiRes.status, txt);
+    return { error: err("OpenAI request failed", 502) };
+  }
+  const json = await aiRes.json();
+  const raw = json?.choices?.[0]?.message?.content?.trim();
+  if (!raw) return { error: err("No content generated", 500) };
+  try {
+    return { data: JSON.parse(raw) };
+  } catch {
+    return { error: err("Model returned non-JSON output", 500) };
+  }
+};
+
+const processExtractedItem = (item, idx)=>{
+  const type = item.itemType;
+  const fields = item.fields || {};
+  const confidence = typeof item.confidence === "number" ? item.confidence : 0.5;
+  const withAssumptions = applyDateAssumptions(type, fields);
+  const normalized = normalizeFields(type, withAssumptions);
+  const required = requiredByType[type] || [];
+  const missingRequired = required.filter((k)=>!normalized[k]);
+  return {
+    id: `item-${idx}-${Date.now()}`,
+    itemType: type,
+    fields: normalized,
+    missingRequired,
+    confidence,
+    status: "pending"
+  };
+};
+
+const authenticateRequest = async (req)=>{
+  const authHeader = req.headers.get("authorization") ?? "";
+  const supa = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } }
+  });
+  const { data: userData, error: userErr } = await supa.auth.getUser();
+  if (userErr || !userData?.user) return null;
+  return userData.user;
+};
+
+const validateFile = (file)=>{
+  if (!file) return "Missing file";
+  if (!("type" in file)) return "Missing file content-type";
+  if (!["image/", "application/pdf"].some((p)=>file.type.startsWith(p))) {
+    return "Unsupported file type. Please upload an image or PDF.";
+  }
+  if (file.size > MAX_FILE_BYTES) return "File too large (max 15 MB)";
+  return null;
+};
+
+const handleMultiItem = async (dataUrl, file)=>{
+  const { system, user } = multiItemPrompt();
+  const payload = buildVisionPayload(system, user, dataUrl, 4000);
+  const result = await callOpenAI(payload);
+  if (result.error) return result.error;
+
+  const rawItems = Array.isArray(result.data.items) ? result.data.items : [];
+  const processedItems = rawItems.slice(0, MAX_ITEMS).map(processExtractedItem);
+
+  return ok({
+    items: processedItems,
+    meta: {
+      model: MODEL,
+      pagesUsed: 1,
+      totalItemsDetected: result.data.totalDetected || processedItems.length,
+      originalFileName: file.name || "document"
+    }
+  });
+};
+
+const handleSingleItem = async (itemType, dataUrl, file)=>{
+  const validTypes = ["accommodation", "transportation", "activity", "reservation"];
+  if (!validTypes.includes(itemType)) {
+    return err(`Invalid itemType. Must be one of: ${validTypes.join(", ")} or 'auto' for multi-item mode`);
+  }
+
+  const { system, user } = promptFor(itemType);
+  const payload = buildVisionPayload(system, user, dataUrl, 1200);
+  const result = await callOpenAI(payload);
+  if (result.error) return result.error;
+
+  const withAssumptions = applyDateAssumptions(itemType, result.data);
+  const normalized = normalizeFields(itemType, withAssumptions);
+  const required = requiredByType[itemType] || [];
+  const missingRequired = required.filter((k)=>!normalized[k]);
+
+  return ok({
+    itemType,
+    fields: normalized,
+    missingRequired,
+    meta: { model: MODEL, pagesUsed: 1 }
+  });
+};
+
 // ----------------- Handler -----------------
 serve(async (req)=>{
   try {
     if (req.method === "OPTIONS") {
-      return new Response("ok", {
-        headers: cors
-      });
+      return new Response("ok", { headers: cors });
     }
     if (req.method !== "POST") return err("Method not allowed", 405);
-    // ---- Auth: verify JWT ----
-    const authHeader = req.headers.get("authorization") ?? "";
-    const supa = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: {
-        headers: {
-          Authorization: authHeader
-        }
-      }
-    });
-    const { data: userData, error: userErr } = await supa.auth.getUser();
-    if (userErr || !userData?.user) return err("Unauthorized", 401);
-    // ---- Parse form-data ----
+
+    const user = await authenticateRequest(req);
+    if (!user) return err("Unauthorized", 401);
+
     const ctype = req.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
       return err("Send multipart/form-data with fields: file (required), itemType (optional)");
     }
+
     const form = await req.formData();
     const file = form.get("file");
+    const fileError = validateFile(file);
+    if (fileError) return err(fileError);
+
     const itemType = String(form.get("itemType") ?? "").toLowerCase();
     const isMultiItemMode = !itemType || itemType === "auto";
-
-    if (!file) return err("Missing file");
-    if (!("type" in file)) return err("Missing file content-type");
-    if (![
-      "image/",
-      "application/pdf"
-    ].some((p)=>file.type.startsWith(p))) {
-      return err("Unsupported file type. Please upload an image or PDF.");
-    }
-    if (file.size > MAX_FILE_BYTES) return err("File too large (max 15 MB)");
-
     const dataUrl = await toDataUrl(file);
 
-    // ============ MULTI-ITEM MODE ============
-    if (isMultiItemMode) {
-      const { system, user } = multiItemPrompt();
-
-      const payload = {
-        model: MODEL,
-        messages: [
-          { role: "system", content: system },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: user },
-              { type: "image_url", image_url: { url: dataUrl } }
-            ]
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0,
-        max_tokens: 4000 // Larger for multi-item
-      };
-
-      const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${OPENAI_API_KEY}`,
-          "content-type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!aiRes.ok) {
-        const txt = await aiRes.text();
-        console.error("OpenAI error:", aiRes.status, txt);
-        return err("OpenAI request failed", 502);
-      }
-
-      const json = await aiRes.json();
-      const raw = json?.choices?.[0]?.message?.content?.trim();
-      if (!raw) return err("No content generated", 500);
-
-      let parsed;
-      try {
-        parsed = JSON.parse(raw);
-      } catch {
-        return err("Model returned non-JSON output", 500);
-      }
-
-      // Process each extracted item
-      const rawItems = Array.isArray(parsed.items) ? parsed.items : [];
-      const processedItems = rawItems.slice(0, MAX_ITEMS).map((item, idx) => {
-        const type = item.itemType;
-        const fields = item.fields || {};
-        const confidence = typeof item.confidence === "number" ? item.confidence : 0.5;
-
-        // Apply date assumptions and normalize
-        const withAssumptions = applyDateAssumptions(type, fields);
-        const normalized = normalizeFields(type, withAssumptions);
-        const required = requiredByType[type] || [];
-        const missingRequired = required.filter((k)=>!normalized[k]);
-
-        return {
-          id: `item-${idx}-${Date.now()}`,
-          itemType: type,
-          fields: normalized,
-          missingRequired,
-          confidence,
-          status: "pending" as const
-        };
-      });
-
-      return ok({
-        items: processedItems,
-        meta: {
-          model: MODEL,
-          pagesUsed: file.type === "application/pdf" ? 1 : 1,
-          totalItemsDetected: parsed.totalDetected || processedItems.length,
-          originalFileName: file.name || "document"
-        }
-      });
-    }
-
-    // ============ SINGLE-ITEM MODE (backwards compatible) ============
-    const validTypes = ["accommodation", "transportation", "activity", "reservation"];
-    if (!validTypes.includes(itemType)) {
-      return err(`Invalid itemType. Must be one of: ${validTypes.join(", ")} or 'auto' for multi-item mode`);
-    }
-
-    const { system, user } = promptFor(itemType);
-
-    const payload = {
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: system
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: user
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: dataUrl
-              }
-            }
-          ]
-        }
-      ],
-      response_format: {
-        type: "json_object"
-      },
-      temperature: 0,
-      max_tokens: 1200
-    };
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${OPENAI_API_KEY}`,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-    if (!aiRes.ok) {
-      const txt = await aiRes.text();
-      console.error("OpenAI error:", aiRes.status, txt);
-      return err("OpenAI request failed", 502);
-    }
-    const json = await aiRes.json();
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return err("No content generated", 500);
-    let fields;
-    try {
-      fields = JSON.parse(raw);
-    } catch  {
-      return err("Model returned non-JSON output", 500);
-    }
-    // --- Apply deterministic date assumptions BEFORE normalization
-    const withAssumptions = applyDateAssumptions(itemType, fields);
-    // Normalize + compute missing
-    const normalized = normalizeFields(itemType, withAssumptions);
-    const required = requiredByType[itemType] || [];
-    const missingRequired = required.filter((k)=>!normalized[k]);
-    // Canonical response
-    return ok({
-      itemType,
-      fields: normalized,
-      missingRequired,
-      meta: {
-        model: MODEL,
-        pagesUsed: file.type === "application/pdf" ? 1 : 1
-      }
-    });
+    if (isMultiItemMode) return await handleMultiItem(dataUrl, file);
+    return await handleSingleItem(itemType, dataUrl, file);
   } catch (e) {
     console.error("parse-travel-doc error", e);
     return err("Server error", 500);

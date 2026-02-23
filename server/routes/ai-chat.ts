@@ -337,8 +337,115 @@ async function checkAndIncrementUsage(
 }
 
 // Send SSE event helper
-function sendSSE(res: Response, event: string, data: unknown) {
+function sendSSE(res: Response, event: string, data: unknown): void {
   res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+function setupSSEHeaders(res: Response): void {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+}
+
+interface OpenAIStreamResult {
+  fullResponse: string;
+}
+
+function extractDeltaContent(line: string): string | null {
+  if (!line.startsWith('data: ')) return null;
+
+  const data = line.slice(6);
+  if (data === '[DONE]') return null;
+
+  try {
+    const parsed = JSON.parse(data);
+    return parsed.choices?.[0]?.delta?.content || null;
+  } catch {
+    return null;
+  }
+}
+
+function sendSSEError(res: Response, message: string): void {
+  sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message });
+  res.end();
+}
+
+async function streamOpenAIResponse(
+  messages: Array<{ role: string; content: string }>,
+  res: Response,
+  options: { maxTokens: number; filterCreateItems?: boolean }
+): Promise<OpenAIStreamResult | null> {
+  const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      stream: true,
+      temperature: 0.7,
+      max_tokens: options.maxTokens
+    })
+  });
+
+  if (!openaiResponse.ok) {
+    const errorText = await openaiResponse.text();
+    console.error('OpenAI error:', openaiResponse.status, errorText);
+    sendSSEError(res, 'Failed to generate response');
+    return null;
+  }
+
+  const reader = openaiResponse.body?.getReader();
+  if (!reader) {
+    sendSSEError(res, 'Failed to read response stream');
+    return null;
+  }
+
+  const decoder = new TextDecoder();
+  let fullResponse = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n')) {
+        const content = extractDeltaContent(line);
+        if (!content) continue;
+
+        fullResponse += content;
+        const shouldFilter = options.filterCreateItems && fullResponse.includes('```create_items');
+        if (!shouldFilter) {
+          sendSSE(res, 'message', { content });
+        }
+      }
+    }
+  } catch (streamError) {
+    console.error('Stream error:', streamError);
+  }
+
+  return { fullResponse };
+}
+
+function handleStreamError(res: Response, error: unknown, label: string): void {
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  console.error(`${label}:`, errorMessage);
+  if (error instanceof Error && error.stack) {
+    console.error('Stack:', error.stack);
+  }
+
+  if (!res.headersSent) {
+    res.status(500).json({ code: 'INTERNAL_ERROR', message: errorMessage || 'An unexpected error occurred' });
+    return;
+  }
+
+  sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message: errorMessage || 'An unexpected error occurred' });
+  res.end();
 }
 
 // Parse create_items block from AI response
@@ -356,55 +463,73 @@ interface ParsedResponse {
   extractedItems: ExtractedItem[];
 }
 
+const REQUIRED_FIELDS_BY_TYPE: Record<string, string[]> = {
+  accommodation: ['name', 'check_in_date', 'check_out_date'],
+  transportation: ['type', 'departure_location', 'arrival_location', 'departure_date'],
+  activity: ['name', 'date'],
+  reservation: ['restaurant_name', 'date', 'time']
+};
+
+function mapRawItemToExtracted(item: Record<string, unknown>, idx: number): ExtractedItem {
+  const itemType = (item.itemType as string) || 'activity';
+  const fields = (item.fields as Record<string, unknown>) || item;
+  const required = REQUIRED_FIELDS_BY_TYPE[itemType] || [];
+  const missingRequired = required.filter(k => !fields[k]);
+
+  return {
+    id: `ai-item-${idx}-${Date.now()}`,
+    itemType: itemType as ExtractedItem['itemType'],
+    fields,
+    missingRequired,
+    confidence: 0.85,
+    status: 'pending' as const
+  };
+}
+
+const CREATE_ITEMS_REGEX = /```create_items\s*([\s\S]*?)```/;
+
 function parseCreateItemsBlock(response: string): ParsedResponse {
-  // Look for the create_items code block
-  const createItemsRegex = /```create_items\s*([\s\S]*?)```/;
-  const match = response.match(createItemsRegex);
+  const match = response.match(CREATE_ITEMS_REGEX);
 
   if (!match) {
     return { cleanContent: response, extractedItems: [] };
   }
 
-  // Extract and parse the JSON
   const jsonStr = match[1].trim();
   let items: ExtractedItem[] = [];
 
   try {
     const parsed = JSON.parse(jsonStr);
     const rawItems = Array.isArray(parsed) ? parsed : [parsed];
-
-    items = rawItems.map((item, idx) => {
-      const itemType = item.itemType || 'activity';
-      const fields = item.fields || item;
-
-      // Determine missing required fields
-      const requiredByType: Record<string, string[]> = {
-        accommodation: ['name', 'check_in_date', 'check_out_date'],
-        transportation: ['type', 'departure_location', 'arrival_location', 'departure_date'],
-        activity: ['name', 'date'],
-        reservation: ['restaurant_name', 'date', 'time']
-      };
-
-      const required = requiredByType[itemType] || [];
-      const missingRequired = required.filter(k => !fields[k]);
-
-      return {
-        id: `ai-item-${idx}-${Date.now()}`,
-        itemType,
-        fields,
-        missingRequired,
-        confidence: 0.85, // AI-generated items have slightly lower default confidence
-        status: 'pending' as const
-      };
-    });
+    items = rawItems.map(mapRawItemToExtracted);
   } catch (e) {
     console.error('Failed to parse create_items JSON:', e);
   }
 
-  // Remove the create_items block from the response
-  const cleanContent = response.replace(createItemsRegex, '').trim();
-
+  const cleanContent = response.replace(CREATE_ITEMS_REGEX, '').trim();
   return { cleanContent, extractedItems: items };
+}
+
+function buildAnonSystemPrompt(basePrompt: string): string {
+  return basePrompt.replace(
+    /CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:[\s\S]*$/,
+    'NOTE: You are assisting an anonymous visitor viewing this trip. You can answer questions about the itinerary and provide travel recommendations, but you cannot modify the trip. If the user wants to add items, suggest they sign up for a free account.'
+  );
+}
+
+function buildOpenAIMessages(
+  systemPrompt: string,
+  history: Array<{ role: string; content: string }>,
+  userMessage?: string
+): Array<{ role: string; content: string }> {
+  const messages: Array<{ role: string; content: string }> = [
+    { role: 'system', content: systemPrompt },
+    ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+  ];
+  if (userMessage) {
+    messages.push({ role: 'user', content: userMessage });
+  }
+  return messages;
 }
 
 // Health check endpoint
@@ -640,15 +765,12 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
       messages?: Array<{ role: string; content: string }>;
     };
 
-    // Validate input
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Initialize Supabase with service role
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Verify trip is public
     const { data: trip, error: tripError } = await supabase
       .from('trips')
       .select('trip_id, is_public')
@@ -663,126 +785,24 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
       return res.status(403).json({ code: 'NOT_PUBLIC', message: 'This trip is not publicly accessible' });
     }
 
-    // Get trip context
     const tripContext = await getTripContext(supabase, tripId);
     if (!tripContext) {
       return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to load trip data' });
     }
 
-    // Build system prompt - use a read-only variant without create_items instructions
-    const basePrompt = buildSystemPrompt(tripContext);
-    const anonSystemPrompt = basePrompt.replace(
-      /CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:[\s\S]*$/,
-      'NOTE: You are assisting an anonymous visitor viewing this trip. You can answer questions about the itinerary and provide travel recommendations, but you cannot modify the trip. If the user wants to add items, suggest they sign up for a free account.'
-    );
+    const anonSystemPrompt = buildAnonSystemPrompt(buildSystemPrompt(tripContext));
+    const historyMessages = (previousMessages || []).slice(-8);
+    const openaiMessages = buildOpenAIMessages(anonSystemPrompt, historyMessages, message.trim());
 
-    // Build messages array for OpenAI - use client-provided history (limited)
-    const historyMessages = (previousMessages || [])
-      .slice(-8) // Keep last 8 messages for context
-      .map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content
-      }));
+    setupSSEHeaders(res);
 
-    const openaiMessages = [
-      { role: 'system', content: anonSystemPrompt },
-      ...historyMessages,
-      { role: 'user', content: message.trim() }
-    ];
+    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 800, filterCreateItems: true });
+    if (!result) return;
 
-    // Set up SSE headers
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
-
-    // Call OpenAI with streaming
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: openaiMessages,
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 800
-      })
-    });
-
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('OpenAI error (anon):', openaiResponse.status, errorText);
-      sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message: 'Failed to generate response' });
-      return res.end();
-    }
-
-    // Process streaming response
-    let fullResponse = '';
-    const reader = openaiResponse.body?.getReader();
-    const decoder = new TextDecoder();
-
-    if (!reader) {
-      sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message: 'Failed to read response stream' });
-      return res.end();
-    }
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                fullResponse += content;
-                // Strip any create_items blocks from streaming content
-                if (!fullResponse.includes('```create_items')) {
-                  sendSSE(res, 'message', { content });
-                }
-              }
-            } catch {
-              // Skip invalid JSON chunks
-            }
-          }
-        }
-      }
-    } catch (streamError) {
-      console.error('Stream error (anon):', streamError);
-    }
-
-    // Strip any create_items block from final response (just in case AI includes it)
-    const { cleanContent } = parseCreateItemsBlock(fullResponse);
-
-    // Send done event - no message_id or thread_id since nothing is persisted
-    sendSSE(res, 'done', {
-      thread_id: null,
-      message_id: `anon-${Date.now()}`
-    });
-
+    sendSSE(res, 'done', { thread_id: null, message_id: `anon-${Date.now()}` });
     res.end();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Anon chat error:', errorMessage);
-
-    if (!res.headersSent) {
-      return res.status(500).json({ code: 'INTERNAL_ERROR', message: errorMessage || 'An unexpected error occurred' });
-    }
-
-    sendSSE(res, 'error', { code: 'INTERNAL_ERROR', message: errorMessage || 'An unexpected error occurred' });
-    res.end();
+    handleStreamError(res, error, 'Anon chat error');
   }
 });
 
@@ -792,33 +812,22 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
     const { tripId } = req.params;
     const { message, thread_id }: SendMessageRequest = req.body;
 
-    // Validate input
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Get user ID from auth
     const userId = await getUserIdFromToken(req.headers.authorization || '');
     if (!userId) {
-      return res.status(401).json({
-        code: 'UNAUTHORIZED',
-        message: 'Please sign in to use the assistant'
-      });
+      return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Please sign in to use the assistant' });
     }
 
-    // Initialize Supabase with service role
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Verify trip access
     const hasAccess = await canAccessTrip(supabase, userId, tripId);
     if (!hasAccess) {
-      return res.status(403).json({
-        code: 'TRIP_ACCESS_DENIED',
-        message: 'You do not have access to this trip'
-      });
+      return res.status(403).json({ code: 'TRIP_ACCESS_DENIED', message: 'You do not have access to this trip' });
     }
 
-    // Check usage limit
     const usage = await checkAndIncrementUsage(supabase, userId);
     if (!usage.allowed) {
       const tomorrow = new Date();
@@ -834,170 +843,48 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
       });
     }
 
-    // Get or create thread
     const threadId = await getOrCreateThread(supabase, userId, tripId, thread_id);
     if (!threadId) {
-      return res.status(500).json({
-        code: 'INTERNAL_ERROR',
-        message: 'Failed to create conversation thread'
-      });
+      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to create conversation thread' });
     }
 
-    // Save user message
     const userMessageId = await saveMessage(supabase, threadId, 'user', message.trim());
     if (!userMessageId) {
-      return res.status(500).json({
-        code: 'INTERNAL_ERROR',
-        message: 'Failed to save message'
-      });
+      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to save message' });
     }
 
-    // Get trip context
     const tripContext = await getTripContext(supabase, tripId);
     if (!tripContext) {
-      return res.status(500).json({
-        code: 'INTERNAL_ERROR',
-        message: 'Failed to load trip data'
-      });
+      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to load trip data' });
     }
 
-    // Get recent messages for context
     const recentMessages = await getRecentMessages(supabase, threadId, 10);
+    const openaiMessages = buildOpenAIMessages(buildSystemPrompt(tripContext), recentMessages);
 
-    // Build messages array for OpenAI
-    const systemPrompt = buildSystemPrompt(tripContext);
-    const openaiMessages = [
-      { role: 'system', content: systemPrompt },
-      ...recentMessages.map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content
-      }))
-    ];
+    setupSSEHeaders(res);
 
-    // Set up SSE headers
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
+    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 1000 });
+    if (!result) return;
 
-    // Call OpenAI with streaming
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: openaiMessages,
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 1000
-      })
-    });
+    const { cleanContent, extractedItems } = parseCreateItemsBlock(result.fullResponse);
 
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('OpenAI error:', openaiResponse.status, errorText);
-      sendSSE(res, 'error', {
-        code: 'INTERNAL_ERROR',
-        message: 'Failed to generate response'
-      });
-      return res.end();
-    }
-
-    // Process streaming response
-    let fullResponse = '';
-    const reader = openaiResponse.body?.getReader();
-    const decoder = new TextDecoder();
-
-    if (!reader) {
-      sendSSE(res, 'error', {
-        code: 'INTERNAL_ERROR',
-        message: 'Failed to read response stream'
-      });
-      return res.end();
-    }
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                fullResponse += content;
-                sendSSE(res, 'message', { content });
-              }
-            } catch {
-              // Skip invalid JSON chunks
-            }
-          }
-        }
-      }
-    } catch (streamError) {
-      console.error('Stream error:', streamError);
-    }
-
-    // Parse response for create_items block
-    const { cleanContent, extractedItems } = parseCreateItemsBlock(fullResponse);
-
-    // Save assistant response (with clean content, without the JSON block)
     const assistantMessageId = await saveMessage(supabase, threadId, 'assistant', cleanContent, {
       model: MODEL,
-      tokens: { completion: fullResponse.length }, // Approximate
+      tokens: { completion: result.fullResponse.length },
       hasExtractedItems: extractedItems.length > 0
     });
 
-    // Send extracted items event if any were found
     if (extractedItems.length > 0) {
       sendSSE(res, 'extracted_items', {
         items: extractedItems,
-        meta: {
-          model: MODEL,
-          source: 'conversation'
-        }
+        meta: { model: MODEL, source: 'conversation' }
       });
     }
 
-    // Send done event
-    sendSSE(res, 'done', {
-      thread_id: threadId,
-      message_id: assistantMessageId
-    });
-
+    sendSSE(res, 'done', { thread_id: threadId, message_id: assistantMessageId });
     res.end();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Chat error:', errorMessage);
-    if (errorStack) console.error('Stack:', errorStack);
-
-    // If headers not sent, send JSON error
-    if (!res.headersSent) {
-      return res.status(500).json({
-        code: 'INTERNAL_ERROR',
-        message: errorMessage || 'An unexpected error occurred'
-      });
-    }
-
-    // If streaming, send SSE error
-    sendSSE(res, 'error', {
-      code: 'INTERNAL_ERROR',
-      message: errorMessage || 'An unexpected error occurred'
-    });
-    res.end();
+    handleStreamError(res, error, 'Chat error');
   }
 });
 

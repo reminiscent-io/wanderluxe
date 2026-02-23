@@ -12,6 +12,54 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
 
+async function resolveSupabaseSignedUrl(src: string): Promise<string | null> {
+  const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
+  if (!pathMatch) return null;
+  try {
+    const { data: { signedUrl }, error } = await supabase.storage
+      .from('trip-images')
+      .createSignedUrl(pathMatch[1], 31536000);
+    if (!error && signedUrl) return signedUrl;
+  } catch (err) {
+    console.error('Error getting signed URL:', err);
+  }
+  return null;
+}
+
+type TripStatus = { status: string; label: string; color: string };
+
+function computeTripStatus(arrivalDate?: string, departureDate?: string): TripStatus | null {
+  if (!arrivalDate || !departureDate) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const arrival = parseISO(arrivalDate);
+  const departure = parseISO(departureDate);
+
+  if (today >= arrival && today <= departure) {
+    return { status: 'current', label: 'Traveling Now', color: 'bg-emerald-500' };
+  }
+
+  if (arrival <= today) {
+    return { status: 'past', label: 'Completed', color: 'bg-sand-400' };
+  }
+
+  if (isToday(arrival)) {
+    return { status: 'today', label: 'Departure Today!', color: 'bg-orange-500' };
+  }
+
+  if (isTomorrow(arrival)) {
+    return { status: 'tomorrow', label: 'Tomorrow', color: 'bg-blue-500' };
+  }
+
+  const daysUntil = differenceInDays(arrival, today);
+  if (daysUntil <= 7) {
+    return { status: 'soon', label: `${daysUntil} days`, color: 'bg-blue-500' };
+  }
+
+  return { status: 'upcoming', label: `${daysUntil} days`, color: 'bg-earth-500' };
+}
+
 interface TripCardProps {
   trip: Trip & { 
     isShared?: boolean; 
@@ -64,26 +112,11 @@ const TripCard = ({
   useEffect(() => {
     const loadImage = async () => {
       const src = trip.cover_image_url;
-      
-      // Check if this is a Supabase storage URL
-      if (src && src.includes('supabase.co/storage') && src.includes('trip-images')) {
-        // Extract file path and get signed URL if not already signed
-        if (!src.includes('token=')) {
-          const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
-          if (pathMatch) {
-            try {
-              const { data: { signedUrl }, error } = await supabase.storage
-                .from('trip-images')
-                .createSignedUrl(pathMatch[1], 31536000); // 1 year
-              
-              if (!error && signedUrl) {
-                setImageUrl(signedUrl);
-                return;
-              }
-            } catch (err) {
-              console.error('Error getting signed URL:', err);
-            }
-          }
+      if (src && src.includes('supabase.co/storage') && src.includes('trip-images') && !src.includes('token=')) {
+        const signed = await resolveSupabaseSignedUrl(src);
+        if (signed) {
+          setImageUrl(signed);
+          return;
         }
       }
       setImageUrl(src);
@@ -114,36 +147,7 @@ const TripCard = ({
     return ''; // Return empty string if no dates available
   };
 
-  // Calculate trip status and urgency
-  const getTripStatus = () => {
-    if (!trip.arrival_date || !trip.departure_date) return null;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const arrivalDate = parseISO(trip.arrival_date);
-    const departureDate = parseISO(trip.departure_date);
-    
-    if (today >= arrivalDate && today <= departureDate) {
-      return { status: 'current', label: 'Traveling Now', color: 'bg-emerald-500' };
-    }
-    
-    if (arrivalDate > today) {
-      const daysUntil = differenceInDays(arrivalDate, today);
-      if (isToday(arrivalDate)) {
-        return { status: 'today', label: 'Departure Today!', color: 'bg-orange-500' };
-      } else if (isTomorrow(arrivalDate)) {
-        return { status: 'tomorrow', label: 'Tomorrow', color: 'bg-blue-500' };
-      } else if (daysUntil <= 7) {
-        return { status: 'soon', label: `${daysUntil} days`, color: 'bg-blue-500' };
-      } else {
-        return { status: 'upcoming', label: `${daysUntil} days`, color: 'bg-earth-500' };
-      }
-    }
-    
-    return { status: 'past', label: 'Completed', color: 'bg-sand-400' };
-  };
-
-  const tripStatus = getTripStatus();
+  const tripStatus = computeTripStatus(trip.arrival_date, trip.departure_date);
 
   return (
     <motion.div

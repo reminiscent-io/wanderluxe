@@ -752,6 +752,46 @@ function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number
   return { stack };
 }
 
+function buildActivityLevelEntries(
+  busyDays: number,
+  moderateDays: number,
+  lightDays: number,
+  baseFontSize: number
+): any[] {
+  const entries: any[] = [];
+  const levels: Array<{ count: number; label: string; color: string }> = [
+    { count: busyDays, label: 'Busy (4+ activities)', color: '#DC2626' },
+    { count: moderateDays, label: 'Moderate (2-3 activities)', color: '#F59E0B' },
+    { count: lightDays, label: 'Light (0-1 activities)', color: '#10B981' },
+  ];
+  for (const { count, label, color } of levels) {
+    if (count > 0) {
+      entries.push({
+        text: `\u2022 ${label}: ${count} day${count !== 1 ? 's' : ''}`,
+        fontSize: baseFontSize - 1,
+        color,
+        margin: [0, 0, 0, 2] as [number, number, number, number],
+      });
+    }
+  }
+  return entries;
+}
+
+function computeDayStats(days: Day[]): { totalActivities: number; busyDays: number; moderateDays: number; lightDays: number } {
+  let totalActivities = 0;
+  let busyDays = 0;
+  let moderateDays = 0;
+  let lightDays = 0;
+  for (const d of days) {
+    const count = d.activityCount || 0;
+    totalActivities += count;
+    if (count >= 4) busyDays++;
+    else if (count >= 2) moderateDays++;
+    else lightDays++;
+  }
+  return { totalActivities, busyDays, moderateDays, lightDays };
+}
+
 /**
  * Render combined cover page with 2-column layout
  */
@@ -830,10 +870,7 @@ function renderCombinedCoverPage(
 
   // Calculate stats
   const totalFlights = transports.filter((t) => t.type.toLowerCase().includes('flight')).length;
-  const totalActivities = days.reduce((sum, d) => sum + (d.activityCount || 0), 0);
-  const busyDays = days.filter((d) => (d.activityCount || 0) >= 4).length;
-  const moderateDays = days.filter((d) => (d.activityCount || 0) >= 2 && (d.activityCount || 0) < 4).length;
-  const lightDays = days.filter((d) => (d.activityCount || 0) < 2).length;
+  const { totalActivities, busyDays, moderateDays, lightDays } = computeDayStats(days);
 
   // 2-column layout
   const leftColumn: any[] = [];
@@ -922,32 +959,7 @@ function renderCombinedCoverPage(
     margin: [0, 4, 0, 4] as [number, number, number, number],
   });
 
-  if (busyDays > 0) {
-    rightColumn.push({
-      text: `• Busy (4+ activities): ${busyDays} day${busyDays !== 1 ? 's' : ''}`,
-      fontSize: baseFontSize - 1,
-      color: '#DC2626',
-      margin: [0, 0, 0, 2] as [number, number, number, number],
-    });
-  }
-
-  if (moderateDays > 0) {
-    rightColumn.push({
-      text: `• Moderate (2-3 activities): ${moderateDays} day${moderateDays !== 1 ? 's' : ''}`,
-      fontSize: baseFontSize - 1,
-      color: '#F59E0B',
-      margin: [0, 0, 0, 2] as [number, number, number, number],
-    });
-  }
-
-  if (lightDays > 0) {
-    rightColumn.push({
-      text: `• Light (0-1 activities): ${lightDays} day${lightDays !== 1 ? 's' : ''}`,
-      fontSize: baseFontSize - 1,
-      color: '#10B981',
-      margin: [0, 0, 0, 2] as [number, number, number, number],
-    });
-  }
+  rightColumn.push(...buildActivityLevelEntries(busyDays, moderateDays, lightDays, baseFontSize));
 
   // Add columns to content
   content.push({
