@@ -25,6 +25,7 @@ interface Props {
   }>;
   onAdd: () => void;
   onEdit: (t: any) => void;
+  canEdit?: boolean;
   isMobile: boolean;
   onClose: () => void;
   onBack: () => void;
@@ -34,6 +35,7 @@ export default function TransportationPanel({
   transportation,
   onAdd,
   onEdit,
+  canEdit = true,
   isMobile,
   onClose,
   onBack,
@@ -53,13 +55,15 @@ export default function TransportationPanel({
     <div className="p-4">
       <Header title="Transportation" {...{ isMobile, onBack, onClose }} />
 
-      <Button
-        size="sm"
-        onClick={onAdd}
-        className="mb-4 w-full bg-earth-500 text-white hover:bg-earth-600"
-      >
-        <Plus size={14} className="mr-1" /> Add Transportation
-      </Button>
+      {canEdit && (
+        <Button
+          size="sm"
+          onClick={onAdd}
+          className="mb-4 w-full bg-earth-500 text-white hover:bg-earth-600"
+        >
+          <Plus size={14} className="mr-1" /> Add Transportation
+        </Button>
+      )}
 
       {dates.map((d) => (
         <div key={d} className="space-y-2">
@@ -90,10 +94,11 @@ export default function TransportationPanel({
               }
 
               return (
-                <button
+                <div
                   key={t.id}
-                  onClick={() => onEdit(t)}
-                  className="ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors hover:bg-sand-100"
+                  onClick={canEdit ? () => onEdit(t) : undefined}
+                  role={canEdit ? "button" : undefined}
+                  className={`ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors ${canEdit ? 'hover:bg-sand-100 cursor-pointer' : ''}`}
                 >
                   <h4 className="mb-1 text-sm font-medium flex items-center gap-2">
                     <span className="text-base">{getTransportationIcon(t.type)}</span>
@@ -105,7 +110,7 @@ export default function TransportationPanel({
                       {(t.currency || "USD")} {t.cost.toLocaleString()}
                     </p>
                   )}
-                </button>
+                </div>
               );
             })}
         </div>

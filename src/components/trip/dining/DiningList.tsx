@@ -96,7 +96,6 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
               .throwOnError();
 
             console.log('UPDATE status', status, 'data', data);
-            toast.success('Reservation updated');
           } else {
             /* ----- INSERT ----- */
             const { data, status } = await supabase
@@ -110,8 +109,6 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
               toast.error(
                 'Row saved, but SELECT policy is hiding it. Check RLS.'
               );
-            } else {
-              toast.success('Reservation added');
             }
           }
 
@@ -150,8 +147,6 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
           .eq('id', deletingId)
           .eq('trip_id', tripId)
           .throwOnError();
-
-        toast.success('Reservation deleted');
 
         await qc.invalidateQueries({
           queryKey: reservationsKey(tripId, dayId),

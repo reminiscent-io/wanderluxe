@@ -405,7 +405,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['accommodations'] });
-      toast({ title: 'Success', description: 'Accommodation deleted' });
     } catch (err) {
       console.error('Error deleting accommodation:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete accommodation' });
@@ -431,7 +430,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
-      toast({ title: 'Success', description: 'Transportation deleted' });
     } catch (err) {
       console.error('Error deleting transportation:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete transportation' });
@@ -457,7 +455,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      toast({ title: 'Success', description: 'Reservation deleted' });
     } catch (err) {
       console.error('Error deleting reservation:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete reservation' });
@@ -493,7 +490,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-      toast({ title: 'Success', description: 'Activity deleted' });
     } catch (err) {
       console.error('Error deleting activity:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete activity' });
@@ -543,7 +539,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-      toast({ title: 'Success', description: 'Activity added' });
       setActivityOpen(false);
     } catch (err) {
       console.error('Error adding activity:', err);
@@ -592,7 +587,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-      toast({ title: 'Success', description: 'Activity updated' });
       setSelectedActivity(null);
     } catch (err) {
       console.error('Error editing activity:', err);
@@ -701,7 +695,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       await createTripDays(tripId || '', allDates);
     }
     
-    toast({ title: 'Success', description: 'Trip dates updated' });
     setTripDatesOpen(false);
     setIsSubmittingDates(false);
   };

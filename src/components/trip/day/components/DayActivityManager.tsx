@@ -57,7 +57,6 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         toast.error('Failed to save activity');
         throw error;
       }
-      toast.success('Activity added successfully');
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       queryClient.invalidateQueries({ queryKey: ['activities', id] });
     } catch (error) {
@@ -115,7 +114,6 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         .single();
 
       if (error) throw error;
-      toast.success('Activity updated successfully');
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       queryClient.invalidateQueries({ queryKey: ['activities', id] });
     } catch (error) {
@@ -132,7 +130,6 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         .delete()
         .eq('id', activityId);
       if (error) throw error;
-      toast.success('Activity deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       queryClient.invalidateQueries({ queryKey: ['activities', id] });
     } catch (error) {

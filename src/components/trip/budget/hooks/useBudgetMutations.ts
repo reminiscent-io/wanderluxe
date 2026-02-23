@@ -66,7 +66,6 @@ export const useBudgetMutations = (tripId: string) => {
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
     },
     onSuccess: () => {
-      toast.success('Expense added successfully');
     }
   });
 
@@ -81,7 +80,6 @@ export const useBudgetMutations = (tripId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Expense updated successfully');
     },
     onError: (error) => {
       console.error('Error updating expense:', error);
@@ -100,7 +98,6 @@ export const useBudgetMutations = (tripId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Expense deleted successfully');
     },
     onError: (error) => {
       console.error('Error deleting expense:', error);

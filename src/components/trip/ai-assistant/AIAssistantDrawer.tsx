@@ -219,7 +219,6 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
   const handleStepperComplete = useCallback(() => {
     setItemsToProcess([]);
-    toast.success('All items have been processed');
   }, []);
 
   const handleClearChat = useCallback(async () => {

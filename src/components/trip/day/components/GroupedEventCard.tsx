@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
-import { TimelineItem, TimelineType, formatTime12Stacked, formatTime12, getEventIconComponent } from './timeline-utils';
+import { TimelineItem, TimelineType, formatTimeRange, getEventIconComponent } from './timeline-utils';
 import TimelineRow from './TimelineRow';
 import TravelerAvatars from '../../timeline/TravelerAvatars';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -128,40 +128,36 @@ const GroupedEventCard: React.FC<Props> = ({
                             }
                           }}
                         >
-                          <div className="flex items-start gap-3">
-                            {/* Time */}
-                            <div className="flex-shrink-0 text-xs font-medium text-earth-700 w-14">
-                              {item.time ? formatTime12Stacked(item.time).time : '\u2014'}
-                              {item.time && (
-                                <span className="text-[10px] ml-0.5">{formatTime12Stacked(item.time).meridiem}</span>
-                              )}
-                              {item.type === 'transportation' && item.endTime && (
-                                <div className="text-[10px] text-earth-400 mt-0.5">
-                                  &rarr; {formatTime12(item.endTime)}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-earth-900 line-clamp-1">
-                                {item.title}
+                          <div>
+                            {/* Time range on one row */}
+                            {item.time && (
+                              <div className="text-xs font-semibold text-earth-600 tracking-tight mb-1">
+                                {formatTimeRange(item.time, item.endTime, item.type === 'transportation')}
                               </div>
-                              {item.description && (
-                                <div className="text-xs text-earth-500 mt-0.5 line-clamp-1">
-                                  {item.description}
-                                </div>
-                              )}
-                            </div>
+                            )}
 
-                            {/* Traveler Avatars */}
-                            <div className="flex-shrink-0">
-                              <TravelerAvatars
-                                tripId={tripId}
-                                eventType={item.type === 'hotel' ? 'accommodation' : item.type}
-                                eventId={item.type === 'hotel' ? item.data?.stay_id : item.id}
-                                maxShow={3}
-                              />
+                            {/* Title + Avatars */}
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-semibold text-earth-900 line-clamp-1">
+                                  {item.title}
+                                </div>
+                                {item.description && (
+                                  <div className="text-xs text-earth-500 mt-0.5 line-clamp-1">
+                                    {item.description}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Traveler Avatars */}
+                              <div className="flex-shrink-0">
+                                <TravelerAvatars
+                                  tripId={tripId}
+                                  eventType={item.type === 'hotel' ? 'accommodation' : item.type}
+                                  eventId={item.type === 'hotel' ? item.data?.stay_id : item.id}
+                                  maxShow={3}
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>

@@ -279,8 +279,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     await setDayActivityTravelers(sortedDays[0].trip_id, editingActivity.id, activityEdit.travelers);
                   }
                   
-                  toast.success('Activity updated successfully');
-                  
                   // Invalidate queries
                   if (sortedDays.length > 0) {
                     queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
@@ -327,7 +325,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     await setDayActivityTravelers(sortedDays[0].trip_id, data.id, newActivity.travelers);
                   }
                   
-                  toast.success('Activity added successfully');
                   setActivityOpen(false);
                   setNewActivity({
                     title: '',
@@ -362,7 +359,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                   .eq('id', id);
                 
                 if (error) throw error;
-                toast.success('Activity deleted successfully');
                 setEditingActivity(null);
                 
                 // Invalidate queries
@@ -413,8 +409,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     });
                   
                   if (error) throw error;
-                  toast.success('Reservation added successfully');
-                  
+
                   // Invalidate both trip and reservation queries for real-time updates
                   queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
                   queryClient.invalidateQueries({ queryKey: ['reservations', sortedDays[0].trip_id, selectedDayId] });
@@ -431,8 +426,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                     .eq('id', editingReservation.id);
                   
                   if (error) throw error;
-                  toast.success('Reservation updated successfully');
-                  
+
                   // Invalidate both trip and reservation queries for real-time updates
                   queryClient.invalidateQueries({ queryKey: ['trip', sortedDays[0].trip_id] });
                   if (editingReservation.day_id) {
@@ -456,7 +450,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 
                 if (error) throw error;
                 
-                toast.success('Reservation deleted successfully');
                 setReservationOpen(false);
                 setEditingReservation(null);
                 

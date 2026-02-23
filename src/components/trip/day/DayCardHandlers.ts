@@ -11,7 +11,6 @@ export const useDayCardHandlers = (id: string, onDelete: (id: string) => void) =
         .eq('day_id', id);
 
       if (error) throw error;
-      toast.success('Day title updated successfully');
       return true;
     } catch (error) {
       console.error('Error updating day title:', error);
@@ -46,7 +45,6 @@ export const useDayCardHandlers = (id: string, onDelete: (id: string) => void) =
 
       if (dayError) throw dayError;
 
-      toast.success('Day deleted successfully');
       onDelete(id);
     } catch (error) {
       console.error('Error deleting day:', error);

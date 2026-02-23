@@ -276,7 +276,6 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
       await queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
 
       setIsEditingBudget(false);
-      toast.success('Budget updated successfully');
     } catch (error) {
       console.error('Error updating budget:', error);
       toast.error('Failed to update budget. Please try again.');

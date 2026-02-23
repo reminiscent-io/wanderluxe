@@ -317,7 +317,7 @@ export default function AccommodationForm({
   /* ------------------------------- JSX --------------------------------- */
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 w-full overflow-hidden">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 w-full">
         {/* Hotel Name */}
         <FormField
           control={form.control}
@@ -602,7 +602,7 @@ export default function AccommodationForm({
         />
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-6 mt-2 border-t border-sand-200">
+        <div className="sticky bottom-0 z-10 bg-background flex justify-between items-center pt-4 -mt-px border-t border-sand-200">
           <div>
             {initialData && onDelete && (
               <Button

@@ -82,7 +82,6 @@ const ImageSection: React.FC<ImageSectionProps> = ({
     onImageChange(hit.url, { photographer: hit.photographer, username: hit.username });
     // Trigger Unsplash download endpoint (API guideline requirement)
     supabase.functions.invoke('fetch-unsplash-metadata', { body: { photoId: hit.id } });
-    toast.success('Cover image selected');
   };
 
   // Handle image removal - only update local state, don't save empty URL

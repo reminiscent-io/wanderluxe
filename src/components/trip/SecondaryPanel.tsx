@@ -29,6 +29,7 @@ interface SecondaryPanelProps {
   activeKey: string | null;
   onClose: () => void;  // ✕ or backdrop
   onBack: () => void;   // ←
+  canEdit?: boolean;
 
   accommodations: any[];
   transportation: any[];
@@ -54,6 +55,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
     activeKey,
     onClose,
     onBack,
+    canEdit = true,
     accommodations,
     transportation,
     activities,
@@ -87,6 +89,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           accommodations={accommodations}
           onAdd={onAccommodationAdd}
           onEdit={onAccommodationEdit}
+          canEdit={canEdit}
           isMobile={isMobile}
           onClose={onClose}
         />
@@ -99,6 +102,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           transportation={transportation}
           onAdd={onTransportationAdd}
           onEdit={onTransportationEdit}
+          canEdit={canEdit}
           isMobile={isMobile}
           onClose={onClose}
         />
@@ -111,6 +115,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           activities={activities}
           onAdd={onActivityAdd}
           onEdit={onActivityEdit}
+          canEdit={canEdit}
           isMobile={isMobile}
           onClose={onClose}
         />
@@ -123,6 +128,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           reservations={reservations}
           onAdd={onReservationAdd}
           onEdit={onReservationEdit}
+          canEdit={canEdit}
           isMobile={isMobile}
           onClose={onClose}
         />
@@ -134,6 +140,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
           {...headerProps}
           trip={trip}
           onEdit={onEditDates}
+          canEdit={canEdit}
           isMobile={isMobile}
           onClose={onClose}
         />

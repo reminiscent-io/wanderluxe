@@ -206,9 +206,15 @@ const TimelineRow: React.FC<Props> = ({
                 <EventMetadata item={item} />
               </div>
 
-              {/* Hotel photo thumbnail */}
+              {/* Place photo thumbnail */}
               {item.type === 'hotel' && item.data?.hotel_place_id && (
-                <HotelPhotoThumb placeId={item.data.hotel_place_id} title={item.data.hotel} size="sm" />
+                <HotelPhotoThumb placeId={item.data.hotel_place_id} title={item.data.hotel} size="md" />
+              )}
+              {item.type === 'activity' && item.data?.location_place_id && (
+                <HotelPhotoThumb placeId={item.data.location_place_id} title={item.title} size="md" />
+              )}
+              {item.type === 'dining' && item.data?.place_id && (
+                <HotelPhotoThumb placeId={item.data.place_id} title={item.title} size="md" />
               )}
             </div>
 

@@ -69,7 +69,6 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
           .eq('trip_id', tripId);
         
         if (error) throw error;
-        toast.success('Reservation updated');
       } else {
         // Create new reservation
         const { error } = await supabase
@@ -77,7 +76,6 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
           .insert([{ ...data, trip_id: tripId }]);
         
         if (error) throw error;
-        toast.success('Reservation added');
       }
 
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
@@ -109,8 +107,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
         .eq('trip_id', tripId);
       
       if (error) throw error;
-      toast.success('Reservation deleted');
-      
+
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       onOpenChange(false);
@@ -123,14 +120,14 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="overflow-visible">
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0 z-40">
           <DialogTitle>{title || (finalInitialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
           <DialogDescription className="sr-only">
             {finalInitialData?.id ? 'Update your restaurant booking details' : 'Add a new dining reservation'}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto scrollbar-none px-1 overflow-visible">
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
           <RestaurantReservationForm
             onSubmit={handleSubmit}
             isSubmitting={legacyIsSubmitting ?? isSubmitting}

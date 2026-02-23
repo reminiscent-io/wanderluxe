@@ -246,7 +246,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
   // Handle stepper complete
   const handleStepperComplete = useCallback(() => {
     setItemsToProcess([]);
-    toast.success('All items have been processed');
   }, []);
 
   // Handle clear chat - also clear extraction messages

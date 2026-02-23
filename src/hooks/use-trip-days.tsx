@@ -60,7 +60,6 @@ export const useTripDays = (tripId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      toast.success('Day added successfully');
     },
     onError: () => {
       toast.error('Failed to add day');
@@ -91,7 +90,6 @@ export const useTripDays = (tripId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      toast.success('Day updated successfully');
     },
     onError: () => {
       toast.error('Failed to update day');
@@ -132,7 +130,6 @@ export const useTripDays = (tripId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      toast.success('Activity added successfully');
     },
     onError: () => {
       toast.error('Failed to add activity');
@@ -168,7 +165,6 @@ export const useTripDays = (tripId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
-      toast.success('Activities reordered successfully');
     },
     onError: () => {
       toast.error('Failed to reorder activities');

@@ -81,7 +81,6 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           .update({ ...basePayload })
           .eq("stay_id", initialData.stay_id);
         if (error) throw error;
-        toast.success("Accommodation updated successfully");
       } else {
         const { error } = await supabase.from("accommodations").insert([
           {
@@ -94,7 +93,6 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
           },
         ]);
         if (error) throw error;
-        toast.success("Accommodation added successfully");
       }
       
       // Invalidate queries to refresh the UI
@@ -122,7 +120,6 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         queryClient.invalidateQueries({ queryKey: ['accommodations'] });
         queryClient.invalidateQueries({ queryKey: ['trip'] });
         
-        toast.success("Accommodation deleted successfully");
         onSuccess();
         onOpenChange(false);
       }

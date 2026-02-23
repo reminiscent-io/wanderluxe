@@ -141,7 +141,6 @@ const MyTrips = () => {
 
       if (error) throw error;
 
-      toast.success('Trip deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['my-trips'] });
       queryClient.invalidateQueries({ queryKey: ['shared-trips'] });
     } catch (error) {
@@ -292,7 +291,7 @@ const MyTrips = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-14 sm:pt-20 pb-8">
         {/* Dynamic Travel Headquarters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

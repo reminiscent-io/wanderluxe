@@ -57,7 +57,6 @@ export const useBudgetEvents = (tripId: string | undefined) => {
       if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Expense deleted successfully');
     } catch (error) {
       console.error('Error deleting expense:', error);
       toast.error('Failed to delete expense');
@@ -74,7 +73,6 @@ export const useBudgetEvents = (tripId: string | undefined) => {
       if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      toast.success('Expense updated successfully');
     } catch (error) {
       console.error('Error updating expense:', error);
       toast.error('Failed to update expense');

@@ -84,7 +84,6 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           .single();
         if (error || !updatedRecord) throw error;
         savedRecord = updatedRecord;
-        toast.success('Transportation updated successfully');
       } else {
         // Insert new
         const { data: inserted, error } = await supabase
@@ -94,7 +93,6 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
           .single();
         if (error || !inserted) throw error;
         savedRecord = inserted;
-        toast.success('Transportation added successfully');
       }
 
       // Invalidate queries to refresh the UI
@@ -128,7 +126,6 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
       queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       
-      toast.success('Transportation deleted successfully');
       onOpenChange(false);
     } catch (err) {
       console.error('Error deleting transportation:', err);

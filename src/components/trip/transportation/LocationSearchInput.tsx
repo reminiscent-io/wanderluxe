@@ -27,6 +27,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isSelectingRef = useRef(false);
 
   // Update dropdown position when showing suggestions
   useEffect(() => {
@@ -137,14 +138,14 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
     }
   };
 
-  const handleBlur = (e: React.FocusEvent) => {
-    // Longer timeout for mobile devices where touch events take longer to process
+  const handleBlur = () => {
+    if (isSelectingRef.current) return;
     setTimeout(() => {
-      if (!dropdownRef.current?.contains(document.activeElement)) {
+      if (!isSelectingRef.current && !dropdownRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
         setSelectedIndex(-1);
       }
-    }, 300);
+    }, 200);
   };
 
   useEffect(() => {
@@ -156,14 +157,18 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   const dropdownContent = showSuggestions && suggestions.length > 0 && (
     <div
       ref={dropdownRef}
-      className="bg-white border border-sand-200 rounded-md shadow-warm-xl max-h-60 overflow-y-auto"
+      className="bg-white border border-sand-200 rounded-md shadow-warm-xl max-h-60 overflow-y-auto pointer-events-auto"
       style={{
         position: 'fixed',
         top: dropdownPosition.top + 4,
         left: dropdownPosition.left,
         width: dropdownPosition.width,
-        zIndex: 9999
+        zIndex: 99999
       }}
+      onMouseDown={() => { isSelectingRef.current = true; }}
+      onMouseUp={() => { setTimeout(() => { isSelectingRef.current = false; }, 100); }}
+      onTouchStart={() => { isSelectingRef.current = true; }}
+      onTouchEnd={() => { setTimeout(() => { isSelectingRef.current = false; }, 100); }}
     >
       {suggestions.map((suggestion, index) => (
         <button

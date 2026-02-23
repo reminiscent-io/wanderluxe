@@ -53,7 +53,6 @@ export default function EditInviteLinkDialog({
 
     try {
       onSave(link.id, updates);
-      toast.success('Invite link updated');
       onOpenChange(false);
     } catch {
       toast.error('Failed to update invite link');

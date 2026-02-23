@@ -11,7 +11,7 @@ interface HotelPhotoThumbProps {
   size?: 'sm' | 'md';
 }
 
-const sizeMap = { sm: 'h-10 w-14', md: 'h-12 w-16' };
+const sizeMap = { sm: 'h-10 w-14', md: 'h-16 w-22' };
 
 export default function HotelPhotoThumb({
   placeId,
@@ -73,7 +73,8 @@ export default function HotelPhotoThumb({
 
   if (!placeId) return null;
 
-  const src = photo ? (getPhotoUrl?.(photo, 160) || (photo as any)?.url) : null;
+  const maxWidth = size === 'md' ? 240 : 160;
+  const src = photo ? (getPhotoUrl?.(photo, maxWidth) || (photo as any)?.url) : null;
 
   return (
     <div

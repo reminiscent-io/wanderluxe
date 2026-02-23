@@ -96,7 +96,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
       setPreview(signedUrl);
       onChange(signedUrl);
-      toast.success('Image uploaded successfully');
     } catch (err) {
       console.error('Upload error:', err);
       toast.error('Failed to upload image');
