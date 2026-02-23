@@ -1,6 +1,6 @@
-import { useMemo } from ‘react’;
-import { format, parseISO, isToday } from ‘date-fns’;
-import { DayActivity, HotelStay, Transportation, RestaurantReservation } from ‘@/types/trip’;
+import { useMemo } from 'react';
+import { format, parseISO, isToday } from 'date-fns';
+import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import {
   TimelineItem,
   TimelineRenderRow,
@@ -18,7 +18,7 @@ import {
   groupSimilarEvents,
   generateGroupTitle,
   generateGroupTimeRange,
-} from ‘./timeline-utils’;
+} from './timeline-utils';
 
 type UseDayTimelineInput = {
   dateISO: string;
@@ -41,7 +41,7 @@ type UseDayTimelineOutput = {
   isCheckInDay: boolean;
   isCheckOutDay: boolean;
   isTravelDay: boolean;
-  totalEvents: number;              // hints don’t count
+  totalEvents: number;              // hints don't count
 };
 
 export interface TimelinePeriodGroup {
@@ -55,7 +55,7 @@ function buildActivityItems(activities: DayActivity[]): TimelineItem[] {
   for (const activity of activities) {
     if (!activity.id) continue;
     items.push({
-      type: ‘activity’,
+      type: 'activity',
       time: activity.start_time || undefined,
       endTime: activity.end_time || undefined,
       title: activity.title,
@@ -73,7 +73,7 @@ function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string): Timeli
   for (const stay of hotelStays) {
     if (stay.hotel_checkin_date === normalizedDay && stay.checkin_time) {
       items.push({
-        type: ‘hotel’,
+        type: 'hotel',
         time: stay.checkin_time,
         title: `Check-in: ${stay.hotel}`,
         description: stay.hotel_address,
@@ -84,7 +84,7 @@ function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string): Timeli
     }
     if (stay.hotel_checkout_date === normalizedDay && stay.checkout_time) {
       items.push({
-        type: ‘hotel’,
+        type: 'hotel',
         time: stay.checkout_time,
         title: `Check-out: ${stay.hotel}`,
         icon: null,
@@ -98,11 +98,11 @@ function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string): Timeli
 
 function getTransportTypeLabel(type: string): string {
   switch (type) {
-    case ‘flight’: return ‘Flight’;
-    case ‘train’: return ‘Train’;
-    case ‘car’: return ‘Car’;
-    case ‘bus’: return ‘Bus’;
-    default: return ‘Transport’;
+    case 'flight': return 'Flight';
+    case 'train': return 'Train';
+    case 'car': return 'Car';
+    case 'bus': return 'Bus';
+    default: return 'Transport';
   }
 }
 
@@ -119,7 +119,7 @@ function getTransportDisplayInfo(
   if (!isMultiDay) {
     return {
       displayTime: t.start_time || undefined,
-      title: `${t.departure_location || ‘Departure’} → ${t.arrival_location || ‘Arrival’}`,
+      title: `${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -129,7 +129,7 @@ function getTransportDisplayInfo(
   if (isStartDay) {
     return {
       displayTime: t.start_time || undefined,
-      title: `${t.departure_location || ‘Departure’} →`,
+      title: `${t.departure_location || 'Departure'} →`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -139,7 +139,7 @@ function getTransportDisplayInfo(
   if (isEndDay) {
     return {
       displayTime: t.end_time || undefined,
-      title: `→ ${t.arrival_location || ‘Arrival’}`,
+      title: `→ ${t.arrival_location || 'Arrival'}`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -149,7 +149,7 @@ function getTransportDisplayInfo(
   const typeLabel = getTransportTypeLabel(t.type);
   return {
     displayTime: undefined,
-    title: `${typeLabel} (In Transit): ${t.departure_location || ‘Departure’} → ${t.arrival_location || ‘Arrival’}`,
+    title: `${typeLabel} (In Transit): ${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
     isStartDay,
     isEndDay,
     isMultiDay,
@@ -165,7 +165,7 @@ function buildTransportationItems(transportations: Transportation[], normalizedD
     const arriveTimeOnThisDay = isEndDay ? t.end_time : (isStartDay && !isMultiDay ? t.end_time : undefined);
 
     items.push({
-      type: ‘transportation’,
+      type: 'transportation',
       time: displayTime,
       endTime: departTimeOnThisDay && arriveTimeOnThisDay ? arriveTimeOnThisDay : undefined,
       title,
@@ -187,7 +187,7 @@ function buildDiningItems(reservations: RestaurantReservation[] | undefined | nu
   for (const r of reservations || []) {
     if (!r.reservation_time) continue;
     items.push({
-      type: ‘dining’,
+      type: 'dining',
       time: r.reservation_time,
       title: r.restaurant_name,
       description: r.notes || undefined,
@@ -227,7 +227,7 @@ function getGroupStartTime(group: TimelineItem[]): string | undefined {
 function buildGroupRow(group: TimelineItem[]): TimelineRenderRow {
   if (group.length >= 2) {
     return {
-      kind: ‘grouped’,
+      kind: 'grouped',
       id: `group-${group[0].id}`,
       items: group,
       groupType: group[0].type,
@@ -235,7 +235,7 @@ function buildGroupRow(group: TimelineItem[]): TimelineRenderRow {
       timeRange: generateGroupTimeRange(group),
     };
   }
-  return { kind: ‘item’, item: group[0] };
+  return { kind: 'item', item: group[0] };
 }
 
 function buildLayoverHint(
@@ -244,8 +244,8 @@ function buildLayoverHint(
   currEnd: Date,
   nextStart: Date,
 ): TimelineRenderRow | null {
-  const lastIsFlight = lastItem.type === ‘transportation’ && lastItem.data?.type === ‘flight’;
-  const nextIsFlight = nextFirst.type === ‘transportation’ && nextFirst.data?.type === ‘flight’;
+  const lastIsFlight = lastItem.type === 'transportation' && lastItem.data?.type === 'flight';
+  const nextIsFlight = nextFirst.type === 'transportation' && nextFirst.data?.type === 'flight';
   if (!lastIsFlight || !nextIsFlight) return null;
 
   const currArriveAirport = extractIata(lastItem.data?.arrival_location);
@@ -256,10 +256,10 @@ function buildLayoverHint(
   if (mins <= 0) return null;
 
   return {
-    kind: ‘hint’,
+    kind: 'hint',
     id: `layover-${lastItem.id}-${nextFirst.id}`,
     text: `Layover at ${currArriveAirport} • ${humanizeMinutes(mins)}`,
-    hintType: ‘layover’ as const,
+    hintType: 'layover' as const,
     airport: currArriveAirport,
   };
 }
@@ -274,19 +274,19 @@ function buildGapHint(
 
   if (gapMins >= 90) {
     return {
-      kind: ‘hint’,
+      kind: 'hint',
       id: `gap-${groupIdx}`,
       text: `${humanizeMinutes(gapMins)} free`,
-      hintType: ‘free-time’ as const,
+      hintType: 'free-time' as const,
     };
   }
 
   if (gapMins < -5) {
     return {
-      kind: ‘hint’,
+      kind: 'hint',
       id: `overlap-${groupIdx}`,
       text: `Overlaps by ${humanizeMinutes(Math.abs(gapMins))}`,
-      hintType: ‘overlap’ as const,
+      hintType: 'overlap' as const,
     };
   }
 
@@ -320,14 +320,14 @@ function buildGapOrLayoverHint(
 
 function insertNowIndicator(result: TimelineRenderRow[]): void {
   const nowDate = new Date();
-  const nowTimeStr = `${String(nowDate.getHours()).padStart(2, ‘0’)}:${String(nowDate.getMinutes()).padStart(2, ‘0’)}`;
+  const nowTimeStr = `${String(nowDate.getHours()).padStart(2, '0')}:${String(nowDate.getMinutes()).padStart(2, '0')}`;
 
   let insertIdx = result.length;
   for (let i = 0; i < result.length; i++) {
     const row = result[i];
     let rowTime: string | undefined;
-    if (row.kind === ‘item’) rowTime = row.item.time;
-    else if (row.kind === ‘grouped’) rowTime = row.items[0]?.time;
+    if (row.kind === 'item') rowTime = row.item.time;
+    else if (row.kind === 'grouped') rowTime = row.items[0]?.time;
 
     if (rowTime && rowTime > nowTimeStr) {
       insertIdx = i;
@@ -335,7 +335,7 @@ function insertNowIndicator(result: TimelineRenderRow[]): void {
     }
   }
 
-  result.splice(insertIdx, 0, { kind: ‘now’, id: ‘now-indicator’ });
+  result.splice(insertIdx, 0, { kind: 'now', id: 'now-indicator' });
 }
 
 export function useDayTimeline({
@@ -347,7 +347,7 @@ export function useDayTimeline({
 }: UseDayTimelineInput): UseDayTimelineOutput {
 
   const normalizedDay = useMemo(() => getNormalizedDay(dateISO), [dateISO]);
-  const formattedDate = useMemo(() => format(parseISO(dateISO), ‘MMM d’), [dateISO]);
+  const formattedDate = useMemo(() => format(parseISO(dateISO), 'MMM d'), [dateISO]);
   const isTodayFlag = isToday(parseISO(dateISO));
 
   // Filter hotel stays for this day

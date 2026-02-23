@@ -318,7 +318,7 @@ const TripCard = ({
                         <AlertDialogHeader>
                           <AlertDialogTitle>Decline this trip?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure? If you decline, this shared trip will disappear from your list and you’ll lose access.
+                            Are you sure? If you decline, this shared trip will disappear from your list and you'll lose access.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

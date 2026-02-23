@@ -38,7 +38,7 @@ const edgeResponseSchema = z.object({
 });
 type EdgePayload = z.infer<typeof edgeResponseSchema>;
 
-// ---- ENV endpoint (don’t hard-code) ----
+// ---- ENV endpoint (don't hard-code) ----
 const PARSE_ENDPOINT =
   import.meta.env.VITE_PARSE_TRAVEL_DOC_URL ||
   "https://arnengxblsfnezrqcsxw.functions.supabase.co/parse-travel-doc";
@@ -325,7 +325,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
     setProcessing(true);
     try {
       if (original.type === "application/pdf" && !convertedForSend) {
-        throw new Error("We couldn’t render the PDF. Please try again or upload an image.");
+        throw new Error("We couldn't render the PDF. Please try again or upload an image.");
       }
       const toSend = convertedForSend || original;
 
