@@ -326,7 +326,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   return (
     <>
       {/* Day Cards */}
-      <div className="space-y-2 sm:space-y-3 md:space-y-4 snap-y snap-proximity pb-20 md:pb-4 -mx-1 md:-mx-6 px-1 md:px-6 py-4 md:py-6 rounded-lg">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4 pb-20 md:pb-4 -mx-1 md:-mx-6 px-1 md:px-6 py-4 md:py-6 rounded-lg">
         {sortedDays.map((day, index) => {
           const dayIndex = dayIndexMap.get(day.day_id) || index + 1;
           const dayDate = day.date.split('T')[0];
@@ -334,7 +334,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           const isTodayDay = isToday(dayDate);
 
           return (
-            <div key={day.day_id} className="snap-start">
+            <div key={day.day_id}>
               <CompactDayCard
                 id={day.day_id}
                 tripId={day.trip_id}
