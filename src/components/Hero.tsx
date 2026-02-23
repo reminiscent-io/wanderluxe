@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
 
@@ -197,6 +198,19 @@ const Hero = () => {
             </motion.p>
           </motion.div>
         </div>
+      </motion.div>
+
+      {/* Scroll-down hint */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, y: [0, 8, 0] }}
+        transition={{
+          opacity: { delay: 3, duration: 1 },
+          y: { delay: 3, duration: 2, repeat: Infinity, ease: "easeInOut" },
+        }}
+      >
+        <ChevronDown className="h-8 w-8 text-white/60" />
       </motion.div>
     </div>
   );
