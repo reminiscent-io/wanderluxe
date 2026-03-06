@@ -91,10 +91,12 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   currentWeather,
 }) => {
   // Check if day is in the past for auto-collapse
-  const dayDate = new Date(date);
+  // Parse date parts manually to avoid UTC vs local timezone mismatch
+  // (new Date("YYYY-MM-DD") parses as UTC midnight, not local midnight)
+  const [year, month, day] = date.split('T')[0].split('-').map(Number);
+  const dayDate = new Date(year, month - 1, day);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  dayDate.setHours(0, 0, 0, 0);
   const isPastDay = dayDate < today;
 
   const [isExpanded, setIsExpanded] = useState(!isPastDay);
