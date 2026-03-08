@@ -2,7 +2,16 @@
 import { format, parse, addDays, isBefore, isEqual, differenceInDays } from 'date-fns';
 
 /**
- * Generates an array of dates between start and end (inclusive)
+ * Parse a "YYYY-MM-DD" string as a local-midnight Date (no UTC offset issues).
+ */
+function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/**
+ * Generates an array of date strings between start and end (inclusive).
+ * Uses local-date parsing and date-fns arithmetic to avoid timezone/DST bugs.
  */
 export const generateDateArray = (startDate: string, endDate: string): string[] => {
   if (!startDate || !endDate) {
@@ -10,27 +19,22 @@ export const generateDateArray = (startDate: string, endDate: string): string[] 
     return [];
   }
 
-  const datesArray: string[] = [];
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
 
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    console.error('Invalid dates provided to generateDateArray', { startDate, endDate, start, end });
+    console.error('Invalid dates provided to generateDateArray', { startDate, endDate });
     return [];
   }
 
-  // Generate array of dates between start and end (inclusive of start)
-  const current = new Date(start);
-  while (current <= end) { //Corrected the comparison to include the end date.
-    const dateString = current.toISOString().split('T')[0];
-    datesArray.push(dateString);
-    current.setDate(current.getDate() + 1);
+  const datesArray: string[] = [];
+  let current = start;
+  while (current <= end) {
+    datesArray.push(format(current, 'yyyy-MM-dd'));
+    current = addDays(current, 1);
   }
 
-  console.log(`Generated ${datesArray.length} dates:`, datesArray);
   return datesArray;
 };
 
-// We don't need to create an alias since we're already exporting the function with the correct name
-// If other parts of the app expect a function named 'generateDatesArray', uncomment the line below:
 export const generateDatesArray = generateDateArray;

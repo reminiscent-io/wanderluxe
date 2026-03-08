@@ -672,6 +672,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     } catch (err) {
       console.error('Failed to add new trip days:', err);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to add new trip days' });
+      throw err;
     }
   };
 
@@ -679,22 +680,26 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const saveDateChanges = async (arr: string, dep: string) => {
     console.log('saveDateChanges called with:', { arr, dep, tripId });
     console.log('Current trip data:', trip);
-    
+
+    // Capture old dates before any async work to avoid closure staleness
+    const oldArrival = trip?.arrival_date;
+    const oldDeparture = trip?.departure_date;
+
     const { error } = await supabase
       .from('trips')
       .update({ arrival_date: arr, departure_date: dep })
       .eq('trip_id', tripId);
     if (error) throw error;
-    
-    if (trip?.arrival_date && trip?.departure_date) {
+
+    if (oldArrival && oldDeparture) {
       console.log('Taking addNewTripDays path - existing trip has dates');
-      await addNewTripDays(trip.arrival_date, trip.departure_date, arr, dep);
+      await addNewTripDays(oldArrival, oldDeparture, arr, dep);
     } else {
       console.log('Taking createTripDays path - no existing dates');
       const allDates = generateDatesArray(arr, dep);
       await createTripDays(tripId || '', allDates);
     }
-    
+
     setTripDatesOpen(false);
     setIsSubmittingDates(false);
   };
