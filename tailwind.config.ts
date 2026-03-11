@@ -71,6 +71,10 @@ export default {
           900: '#0F172A',
           950: '#020617',
         },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
       },
       animation: {
         "fade-up": "fadeUp 0.5s ease-out forwards",
