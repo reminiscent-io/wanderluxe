@@ -129,8 +129,8 @@ Date calculation rules:
 IMPORTANT: Never say "I can't add items" or "I don't have the ability to modify your itinerary". You DO have this ability through the JSON block. Always use it when the user wants to add something.`;
 }
 
-// Get user ID from Supabase JWT
-async function getUserIdFromToken(authHeader: string): Promise<string | null> {
+// Get user ID and email from Supabase JWT
+async function getUserFromToken(authHeader: string): Promise<{ id: string; email: string } | null> {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
@@ -144,11 +144,17 @@ async function getUserIdFromToken(authHeader: string): Promise<string | null> {
     return null;
   }
 
-  return data.user.id;
+  return { id: data.user.id, email: data.user.email || '' };
+}
+
+// Backward-compatible wrapper
+async function getUserIdFromToken(authHeader: string): Promise<string | null> {
+  const user = await getUserFromToken(authHeader);
+  return user?.id || null;
 }
 
 // Check if user can access trip
-async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: string, tripId: string): Promise<boolean> {
+async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: string, tripId: string, userEmail?: string): Promise<boolean> {
   // Check if user owns the trip
   const { data: ownedTrip } = await supabase
     .from('trips')
@@ -159,15 +165,39 @@ async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: 
 
   if (ownedTrip) return true;
 
-  // Check if trip is shared with user
-  const { data: sharedTrip } = await supabase
+  // Check if trip is shared with user by user_id
+  const { data: sharedByUserId } = await supabase
     .from('trip_shares')
     .select('id')
     .eq('trip_id', tripId)
     .eq('shared_with_user_id', userId)
-    .single();
+    .eq('share_status', 'accepted')
+    .maybeSingle();
 
-  return !!sharedTrip;
+  if (sharedByUserId) return true;
+
+  // Also check by email (shared_with_user_id may be null if user hadn't signed up when shared)
+  if (userEmail) {
+    const { data: sharedByEmail } = await supabase
+      .from('trip_shares')
+      .select('id')
+      .eq('trip_id', tripId)
+      .ilike('shared_with_email', userEmail.toLowerCase())
+      .eq('share_status', 'accepted')
+      .maybeSingle();
+
+    if (sharedByEmail) return true;
+  }
+
+  // Check if trip is public (allow read access)
+  const { data: publicTrip } = await supabase
+    .from('trips')
+    .select('trip_id')
+    .eq('trip_id', tripId)
+    .eq('is_public', true)
+    .maybeSingle();
+
+  return !!publicTrip;
 }
 
 // Get trip context for AI
@@ -667,16 +697,17 @@ router.post('/api/ai-imports/usage', async (req: Request, res: Response) => {
 router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
-    const userId = await getUserIdFromToken(req.headers.authorization || '');
+    const authUser = await getUserFromToken(req.headers.authorization || '');
 
-    if (!userId) {
+    if (!authUser) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    const userId = authUser.id;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     // Verify trip access
-    const hasAccess = await canAccessTrip(supabase, userId, tripId);
+    const hasAccess = await canAccessTrip(supabase, userId, tripId, authUser.email);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied to this trip' });
     }
@@ -714,16 +745,17 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
 router.delete('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
-    const userId = await getUserIdFromToken(req.headers.authorization || '');
+    const authUser = await getUserFromToken(req.headers.authorization || '');
 
-    if (!userId) {
+    if (!authUser) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    const userId = authUser.id;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     // Verify trip access
-    const hasAccess = await canAccessTrip(supabase, userId, tripId);
+    const hasAccess = await canAccessTrip(supabase, userId, tripId, authUser.email);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied to this trip' });
     }
@@ -769,6 +801,28 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
       return res.status(400).json({ error: 'Message is required' });
     }
 
+    if (message.length > 2000) {
+      return res.status(400).json({ error: 'Message exceeds maximum length of 2000 characters' });
+    }
+
+    // Validate previousMessages array
+    let historyMessages: Array<{ role: string; content: string }> = [];
+    if (previousMessages) {
+      if (!Array.isArray(previousMessages)) {
+        return res.status(400).json({ error: 'Messages must be an array' });
+      }
+      historyMessages = previousMessages
+        .slice(-8)
+        .filter((msg): msg is { role: string; content: string } => {
+          if (typeof msg !== 'object' || !msg) return false;
+          const { role, content } = msg as Record<string, unknown>;
+          // Only allow user/assistant roles — reject system role injection
+          if (typeof role !== 'string' || !['user', 'assistant'].includes(role)) return false;
+          if (typeof content !== 'string' || content.length === 0 || content.length > 2000) return false;
+          return true;
+        });
+    }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     const { data: trip, error: tripError } = await supabase
@@ -791,7 +845,6 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
     }
 
     const anonSystemPrompt = buildAnonSystemPrompt(buildSystemPrompt(tripContext));
-    const historyMessages = (previousMessages || []).slice(-8);
     const openaiMessages = buildOpenAIMessages(anonSystemPrompt, historyMessages, message.trim());
 
     setupSSEHeaders(res);
@@ -816,14 +869,15 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    const userId = await getUserIdFromToken(req.headers.authorization || '');
-    if (!userId) {
+    const authUser = await getUserFromToken(req.headers.authorization || '');
+    if (!authUser) {
       return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Please sign in to use the assistant' });
     }
+    const userId = authUser.id;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    const hasAccess = await canAccessTrip(supabase, userId, tripId);
+    const hasAccess = await canAccessTrip(supabase, userId, tripId, authUser.email);
     if (!hasAccess) {
       return res.status(403).json({ code: 'TRIP_ACCESS_DENIED', message: 'You do not have access to this trip' });
     }

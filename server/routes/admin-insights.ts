@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
@@ -170,8 +171,17 @@ SHARING & COLLABORATION:
 Please analyze these metrics and provide your insights.`;
 }
 
+// Rate limiter for admin insight generation — prevents API cost abuse
+const adminInsightsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 requests per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 'RATE_LIMITED', message: 'Too many insight requests. Please try again later.' }
+});
+
 // POST /api/admin/insights — Generate a new AI insight
-router.post('/api/admin/insights', async (req: Request, res: Response) => {
+router.post('/api/admin/insights', adminInsightsLimiter, async (req: Request, res: Response) => {
   try {
     // Authenticate
     const userId = await getUserIdFromToken(req.headers.authorization || '');
