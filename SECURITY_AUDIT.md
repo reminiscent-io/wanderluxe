@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-A comprehensive security audit of the WanderLuxe travel planning platform identified **6 Critical**, **8 High**, **6 Medium**, and **5 Low** severity issues across the full stack. The application demonstrates solid baseline security practices (Supabase RLS, JWT auth, no hardcoded secrets), but has significant gaps in CORS configuration, input validation, XSS prevention, and server hardening.
+A comprehensive security audit of the WanderLuxe travel planning platform identified **7 Critical**, **10 High**, **10 Medium**, and **8 Low** severity issues across the full stack. The application demonstrates solid baseline security practices (Supabase RLS, JWT auth, no hardcoded secrets), but has significant gaps in CORS configuration, input validation, XSS prevention, authorization logic, and server hardening.
 
 **Overall Security Posture: MODERATE - Requires remediation before handling sensitive user data at scale.**
 
@@ -18,10 +18,10 @@ A comprehensive security audit of the WanderLuxe travel planning platform identi
 
 | Severity | Count | Categories |
 |----------|-------|------------|
-| CRITICAL | 6 | CORS, SSRF, XSS, Webhook idempotency |
-| HIGH | 8 | Input validation, URL validation, rate limiting, TypeScript config |
-| MEDIUM | 6 | Security headers, logging, cache poisoning, prompt injection |
-| LOW | 5 | Email validation, env validation, ESLint config |
+| CRITICAL | 7 | CORS, SSRF, XSS, Webhook idempotency, Admin bypass |
+| HIGH | 10 | Input validation, URL validation, rate limiting, session mgmt, TypeScript config |
+| MEDIUM | 10 | Security headers, logging, cache poisoning, prompt injection, invite codes |
+| LOW | 8 | Email validation, env validation, ESLint config, caching |
 
 ---
 
@@ -147,6 +147,19 @@ switch (event.type) {
 
 ---
 
+### C7. Admin Permission Bypass via Hardcoded Email in Frontend
+**File:** `src/hooks/use-trip-permissions.tsx:89, 104-113`
+
+```typescript
+const adminEmail = (import.meta.env?.VITE_ADMIN_EMAIL as string | undefined)?.toLowerCase() || 'kevin@wanderluxe.io';
+```
+
+**Risk:** Admin email is hardcoded as a fallback in frontend code. This grants special edit access on public trips to a specific email address. If `VITE_ADMIN_EMAIL` is unset, the system silently defaults to `kevin@wanderluxe.io`. Admin access should never be determined by frontend email matching - it should come exclusively from the database `profiles.is_admin` column via `useIsAdmin()`.
+
+**Fix:** Remove the hardcoded fallback and email-based admin check entirely. Rely only on database-backed `is_admin` field.
+
+---
+
 ## HIGH Findings
 
 ### H1. Missing URL Protocol Whitelist for Rendered Links
@@ -245,7 +258,29 @@ if (!['http:', 'https:'].includes(parsed.protocol)) imageUrl = fallbackUrl;
 
 ---
 
-### H8. `@vitejs/plugin-react-swc` Pinned to "latest"
+### H8. Session Refresh Interval Too Long (20 Minutes)
+**File:** `src/contexts/AuthContext.tsx:207`
+
+```typescript
+}, 20 * 60 * 1000); // 20 minutes (increased from 10)
+```
+
+**Risk:** Standard OAuth best practice is 5-10 minute refresh intervals. A 20-minute window increases exposure if a token is stolen.
+
+**Fix:** Reduce to 10 minutes or lower. Implement token rotation on each refresh.
+
+---
+
+### H9. Email-Based Trip Sharing Vulnerable to Email Changes
+**File:** `src/hooks/use-trip-permissions.tsx:132`
+
+Trip shares are matched via email string comparison. Email addresses can change in OAuth providers, creating permission inconsistencies.
+
+**Fix:** Use `shared_with_user_id` (UUID) for permission checks. Keep email as a human-readable label only.
+
+---
+
+### H10. `@vitejs/plugin-react-swc` Pinned to "latest"
 **File:** `package.json:125`
 
 ```json
@@ -325,6 +360,42 @@ Wildcard patterns `.replit.dev` and `.repl.co` match ANY subdomain, including th
 
 ---
 
+### M7. Anonymous Chat Endpoint Missing Array Validation
+**File:** `server/routes/ai-chat.ts:760-806`
+
+The `previousMessages` array parameter is not validated - no length limits, no type checking of individual items.
+
+**Fix:** Validate max 10 items, each max 1000 chars, role must be 'user' or 'assistant'.
+
+---
+
+### M8. Invite Code Stored in SessionStorage
+**Files:** `src/pages/Auth.tsx:26,38,113-118`, `src/pages/InviteRedeem.tsx:94`
+
+Invite codes stored in client-side sessionStorage are vulnerable to XSS exfiltration.
+
+**Fix:** Pass codes via URL params only; don't persist in storage.
+
+---
+
+### M9. Protected Routes Have 1-Second Grace Period
+**File:** `src/components/ProtectedRoute.tsx:18-24`
+
+A 1-second delay before redirecting unauthenticated users allows protected components to briefly render, potentially leaking route structure.
+
+**Fix:** Show a loading state immediately instead of rendering protected content.
+
+---
+
+### M10. Invite Link Doesn't Validate Inviter Permissions
+**File:** `supabase/migrations/20260209000001_create_trip_invite_links.sql:148-236`
+
+`redeem_invite_link()` allows anyone with a valid code to join without validating that the inviter had share permission.
+
+**Fix:** Add a check that the inviter is the trip owner or has editor-level permissions.
+
+---
+
 ## LOW Findings
 
 ### L1. Weak Email Validation
@@ -343,6 +414,15 @@ Regex `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` accepts invalid emails like `a@b.c`.
 
 ### L5. Vite Dev Proxy `secure: false`
 **File:** `vite.config.ts:42` - disables HTTPS cert validation in development proxy.
+
+### L6. `useIsAdmin` Caches for 5 Minutes
+**File:** `src/hooks/useIsAdmin.ts:35` - if admin status is revoked, user retains access for up to 5 minutes.
+
+### L7. Session Keep-Alive Query Doesn't Verify User Identity
+**File:** `src/hooks/useSessionKeepAlive.ts:32` - queries `profiles` table without verifying returned data matches current user.
+
+### L8. RLS Policies Use Manual LOWER() for Email Matching
+**File:** `supabase/migrations/20260122000000_fix_trip_shares_email_matching.sql:54` - case normalization should happen at signup, not in every RLS check.
 
 ---
 
@@ -373,20 +453,24 @@ Regex `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` accepts invalid emails like `a@b.c`.
 2. **C3** - Add SSRF protection to URL metadata fetcher (~1 hour)
 3. **C4** - Sanitize Google Places attributions with DOMPurify (~30 min)
 4. **C5** - Add `.url()` validation to restaurant website field (~15 min)
-5. **H1** - Add URL protocol whitelist utility (~1 hour)
+5. **C7** - Remove hardcoded admin email; use database-backed `is_admin` only (~30 min)
+6. **H1** - Add URL protocol whitelist utility (~1 hour)
 
 ### Next Sprint
-6. **C6** - Add webhook idempotency table (~2 hours)
-7. **M1** - Add helmet security headers (~30 min)
-8. **H3/H4** - Add Zod validation to admin and chat endpoints (~2 hours)
-9. **H6** - Add per-endpoint rate limiters for Stripe (~1 hour)
-10. **H5** - Enable TypeScript strict mode (~4+ hours, incremental)
+7. **C6** - Add webhook idempotency table (~2 hours)
+8. **M1** - Add helmet security headers (~30 min)
+9. **H3/H4** - Add Zod validation to admin and chat endpoints (~2 hours)
+10. **H6** - Add per-endpoint rate limiters for Stripe (~1 hour)
+11. **H8** - Reduce session refresh interval to 10 minutes (~5 min)
+12. **H9** - Migrate trip sharing to UUID-based matching (~3 hours)
+13. **H5** - Enable TypeScript strict mode (~4+ hours, incremental)
 
 ### Backlog
-11. **M2** - Implement structured logging (~2 hours)
-12. **M3** - Restrict service worker caching scope (~1 hour)
-13. **H2** - Add auth and size limits to photo proxy (~2 hours)
-14. All LOW severity items
+14. **M2** - Implement structured logging (~2 hours)
+15. **M3** - Restrict service worker caching scope (~1 hour)
+16. **H2** - Add auth and size limits to photo proxy (~2 hours)
+17. **M7-M10** - Chat validation, invite code handling, protected route grace period
+18. All LOW severity items
 
 ---
 
