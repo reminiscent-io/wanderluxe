@@ -190,13 +190,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const { data, error } = await supabase.auth.refreshSession();
           clearTimeout(timeoutId);
-          
+
           if (data.session) {
             setSession(data.session);
             setUser(data.session.user ?? null);
             console.log("Session refreshed successfully");
           } else if (error) {
             console.warn("Session refresh error:", error);
+            // Clear session if token is definitively expired/invalid
+            if (error.message?.includes('expired') || error.message?.includes('invalid') || error.status === 401) {
+              console.warn("Session expired during periodic refresh - clearing auth state");
+              setSession(null);
+              setUser(null);
+            }
           }
         } catch (fetchErr) {
           console.warn("Session refresh network error:", fetchErr);
@@ -217,6 +223,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(data.session.user ?? null);
           } else if (error) {
             console.warn("Session refresh error on visibility change:", error);
+            // If token is expired or invalid, clear session to force re-login
+            if (error.message?.includes('expired') || error.message?.includes('invalid') || error.status === 401) {
+              console.warn("Session expired - clearing auth state");
+              setSession(null);
+              setUser(null);
+            }
           }
         } catch (err) {
           console.error("Session refresh failed on visibility change:", err);

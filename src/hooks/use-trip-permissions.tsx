@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PermissionLevel } from '@/integrations/supabase/trip_shares_types';
+import { useIsAdmin } from './useIsAdmin';
 
 interface TripPermissions {
   canEdit: boolean;
@@ -23,6 +24,7 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
     permissionLevel: null,
     isLoading: true,
   });
+  const { isAdmin } = useIsAdmin();
 
   useEffect(() => {
     if (!tripId) {
@@ -84,11 +86,6 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
         const isOwner = tripData.user_id === user.id;
 
-        // Check if user is admin (special admin access for public trips)
-        // @ts-ignore - import.meta.env is available in Vite
-        const adminEmail = (import.meta.env?.VITE_ADMIN_EMAIL as string | undefined)?.toLowerCase() || 'kevin@wanderluxe.io';
-        const isKevin = user.email?.toLowerCase() === adminEmail;
-
         if (isOwner) {
           setPermissions({
             canEdit: true,
@@ -100,8 +97,8 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
           return;
         }
 
-        // If trip is public and user is Kevin, grant edit access
-        if (tripData.is_public && isKevin) {
+        // If trip is public and user is a database-verified admin, grant edit access
+        if (tripData.is_public && isAdmin) {
           setPermissions({
             canEdit: true,
             canView: true,
@@ -112,7 +109,7 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
           return;
         }
 
-        // If trip is public (but user is not Kevin), allow view-only access
+        // If trip is public (but user is not admin), allow view-only access
         if (tripData.is_public) {
           setPermissions({
             canEdit: false,
@@ -178,7 +175,7 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
     };
 
     checkPermissions();
-  }, [tripId]);
+  }, [tripId, isAdmin]);
 
   return permissions;
 }
