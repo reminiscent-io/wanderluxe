@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Sparkles, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -14,17 +14,6 @@ import PaywallModal from './PaywallModal';
 import ExtractionResultMessage from './ExtractionResultMessage';
 import ItemStepperDialog from './ItemStepperDialog';
 import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem } from '@/types/ai-assistant';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
 
 interface AIAssistantPanelProps {
   tripId: string;
@@ -252,15 +241,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
   }, []);
 
   // Handle clear chat - also clear extraction messages
-  const handleClearChat = useCallback(async () => {
-    try {
-      await clearThread();
-    } catch (e) {
-      console.error('Failed to clear thread:', e);
-    }
-    setExtractionMessages([]);
-    clearExtraction();
-  }, [clearThread, clearExtraction]);
 
   const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.used >= usage.limit);
 
@@ -280,40 +260,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
           </div>
 
           <div className="flex items-center gap-1">
-            {/* Clear chat button */}
-            {allMessages.length > 0 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-sand-400 hover:text-red-500"
-                    title="Clear chat"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Clear chat history?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete all messages in this conversation.
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleClearChat}
-                      className="bg-red-500 hover:bg-red-600"
-                    >
-                      Clear
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-
             {/* Collapse toggle */}
             <Button
               variant="ghost"
