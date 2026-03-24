@@ -8,14 +8,12 @@ interface RestaurantSearchInputProps {
   value: string;
   onChange: (value: string, details?: PlaceResult) => void;
   autoFocus?: boolean;
-  locationContext?: string; // e.g., "Paris, France" to bias search results
 }
 
 const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
   value,
   onChange,
-  autoFocus,
-  locationContext
+  autoFocus
 }) => {
   const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +58,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
     setIsLoading(true);
     try {
       // Use 'establishment' to include restaurants, bars, cafes, etc.
-      const results = await searchPlaces(query, 'establishment', locationContext);
+      const results = await searchPlaces(query, 'establishment');
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
       setSelectedIndex(-1);
@@ -71,7 +69,7 @@ const RestaurantSearchInput: React.FC<RestaurantSearchInputProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [locationContext]);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
