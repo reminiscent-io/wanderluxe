@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, Component, ReactNode } from 'react';
 import { FullScreenModal } from '@/components/ui/fullscreen-modal';
+import { useVisualViewport } from '@/hooks/useVisualViewport';
 import { Sparkles, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
@@ -81,6 +82,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   onOpenChange
 }) => {
   const queryClient = useQueryClient();
+  const { isKeyboardOpen } = useVisualViewport();
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallUsage, setPaywallUsage] = useState<AIUsageInfo | undefined>();
   const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
@@ -402,18 +404,20 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 </div>
               )}
 
-              {/* Usage meter */}
-              <div className="flex-shrink-0">
-                <UsageMeter
-                  usage={usage}
-                  onUpgradeClick={() => setShowPaywall(true)}
-                />
-              </div>
+              {/* Usage meter - hidden when keyboard is open to save space */}
+              {!isKeyboardOpen && (
+                <div className="flex-shrink-0">
+                  <UsageMeter
+                    usage={usage}
+                    onUpgradeClick={() => setShowPaywall(true)}
+                  />
+                </div>
+              )}
 
-              {/* Input - with safe area padding for PWA bottom inset */}
+              {/* Input - safe area padding only when keyboard is closed (keyboard covers the home indicator) */}
               <div
                 className="flex-shrink-0 bg-white"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+                style={{ paddingBottom: isKeyboardOpen ? 0 : 'env(safe-area-inset-bottom, 0px)' }}
               >
                 <ChatInput
                   onSend={handleSend}
