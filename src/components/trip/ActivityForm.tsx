@@ -265,7 +265,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           <GooglePlacesAutocomplete
             value={locationSearch}
             placeholder="Search for a location..."
-            locationContext={destination}
             onChange={(name, details?: PlaceResult) => {
               setLocationSearch(name);
               if (details) {

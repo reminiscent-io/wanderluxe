@@ -299,7 +299,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <RestaurantSearchInput
                 autoFocus
                 value={field.value}
-                locationContext={destination}
                 onChange={(name, details) => {
                   field.onChange(name);
                   if (details) {

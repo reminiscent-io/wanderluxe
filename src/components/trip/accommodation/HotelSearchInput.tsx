@@ -11,13 +11,11 @@ declare global {
 interface HotelSearchInputProps {
   value: string;
   onChange: (hotelName: string, placeDetails?: google.maps.places.PlaceResult) => void;
-  locationContext?: string; // e.g., "Paris, France" to bias search results
 }
 
 const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
   value,
-  onChange,
-  locationContext
+  onChange
 }) => {
 
   return (
@@ -25,8 +23,7 @@ const HotelSearchInput: React.FC<HotelSearchInputProps> = ({
       <GooglePlacesAutocomplete
         value={value}
         onChange={onChange}
-        placeholder="Start typing to search for hotels..."
-        locationContext={locationContext}
+        placeholder="Search for a hotel name or address..."
       />
     </div>
   );

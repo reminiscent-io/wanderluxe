@@ -246,7 +246,7 @@ export default function AccommodationForm({
 
     (async () => {
       try {
-        const results = await searchPlaces(hotelName, '', destination);
+        const results = await searchPlaces(hotelName);
         if (cancelled || results.length === 0) return;
 
         const topMatch = results[0];
@@ -329,7 +329,6 @@ export default function AccommodationForm({
               </FormLabel>
               <HotelSearchInput
                 value={field.value}
-                locationContext={destination}
                 onChange={(val, d: any) => {
                   field.onChange(val);
                   // Basic details from picker (if present)

@@ -10,16 +10,14 @@ interface GooglePlacesAutocompleteProps {
   className?: string;
   placeholder?: string;
   autoFocus?: boolean;
-  locationContext?: string; // e.g., "Paris, France" to bias search results
 }
 
 const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   value,
   onChange,
   className,
-  placeholder = "Search for hotels, addresses...",
-  autoFocus,
-  locationContext
+  placeholder = "Search for a hotel name or address...",
+  autoFocus
 }) => {
   const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +61,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 
     setIsLoading(true);
     try {
-      const results = await searchPlaces(query, '', locationContext);
+      const results = await searchPlaces(query);
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
       setSelectedIndex(-1);
@@ -74,7 +72,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [locationContext]);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
