@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireAuth } from '../_shared/auth.ts';
 
 function isAllowedUrl(urlString: string): boolean {
   try {
@@ -89,6 +90,11 @@ serve(async (req)=>{
     });
   }
   try {
+    try { await requireAuth(req); } catch {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401,
+      });
+    }
     const { url } = await req.json();
     if (!url) {
       throw new Error('URL is required');

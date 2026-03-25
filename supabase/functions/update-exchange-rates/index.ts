@@ -8,6 +8,16 @@ Deno.serve(async (req)=>{
     });
   }
   try {
+    // Require cron secret or service role key for authorization
+    const authHeader = req.headers.get('Authorization');
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token || (token !== cronSecret && token !== serviceRoleKey)) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401,
+      });
+    }
     // Initialize Supabase client
     const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     // Fetch exchange rates from an API (using exchangerate-api.com as an example)
