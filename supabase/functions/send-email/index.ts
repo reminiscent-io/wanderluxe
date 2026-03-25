@@ -8,7 +8,7 @@ const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "mail.wanderluxe.io";
 if (!MAILGUN_API_KEY) throw new Error("MAILGUN_API_KEY is not set");
 // tiny helpers
-const isEmail = (s)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+const isEmail = (s)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && !/[\r\n]/.test(s);
 const esc = (s)=>s.replace(/[&<>"']/g, (m)=>({
       "&": "&amp;",
       "<": "&lt;",

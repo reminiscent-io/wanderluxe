@@ -35,9 +35,11 @@ serve(async (req)=>{
     });
   }
   const { recipientEmail, tripDestination, sharedByEmail } = body;
-  if (!recipientEmail || !tripDestination || !sharedByEmail) {
+  const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && !/[\r\n]/.test(s);
+  const esc = (s: string) => s.replace(/[&<>"']/g, (m) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m] || m));
+  if (!recipientEmail || !sharedByEmail || !tripDestination || !isEmail(recipientEmail) || !isEmail(sharedByEmail)) {
     return new Response(JSON.stringify({
-      error: 'Missing required fields'
+      error: 'Missing or invalid required fields'
     }), {
       headers: {
         ...corsHeaders,
@@ -51,13 +53,13 @@ serve(async (req)=>{
     const msg = {
       to: recipientEmail,
       from: 'noreply@yourtravelapp.com',
-      subject: `Trip to ${tripDestination} has been shared with you`,
+      subject: `Trip to ${esc(tripDestination)} has been shared with you`,
       text: `${sharedByEmail} has shared their trip to ${tripDestination} with you.`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>A Trip Has Been Shared With You</h2>
-          <p><strong>${sharedByEmail}</strong> has shared their trip to
-             <strong>${tripDestination}</strong> with you.</p>
+          <p><strong>${esc(sharedByEmail)}</strong> has shared their trip to
+             <strong>${esc(tripDestination)}</strong> with you.</p>
           <p>Sign in to view and collaborate on planning this exciting trip!</p>
           <div style="margin: 25px 0;">
             <a href="${SUPABASE_URL}"
