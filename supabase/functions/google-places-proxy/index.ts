@@ -128,18 +128,26 @@ serve(async (req)=>{
       return await handlePhotoProxy(url, googleApiKey, req);
     }
 
-    // Authenticated routes require a valid user token
+    // 2) Place Details (POST) — allow anonymous access for public trip viewing
+    //    Uses IP-based rate limiting when unauthenticated
+    if (req.method === "POST") {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader) {
+        const user = await authenticateUser(req);
+        if (!checkRateLimit(`user:${user.id}`)) return rateLimitResponse();
+      } else {
+        const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+        if (!checkRateLimit(`details:${ip}`)) return rateLimitResponse();
+      }
+      return await handlePlaceDetails(req, googleApiKey);
+    }
+
+    // 3) Autocomplete (GET) — requires authentication (used only when editing)
     const user = await authenticateUser(req);
     if (!checkRateLimit(`user:${user.id}`)) return rateLimitResponse();
 
-    // 2) Autocomplete (GET)
     if (req.method === "GET") {
       return await handleAutocomplete(url, googleApiKey);
-    }
-
-    // 3) Place Details (POST)
-    if (req.method === "POST") {
-      return await handlePlaceDetails(req, googleApiKey);
     }
 
     return jsonResponse({ error: "Method not allowed" }, 405);
