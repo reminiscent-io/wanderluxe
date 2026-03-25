@@ -1,8 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-};
+import { corsHeaders } from '../_shared/cors.ts';
+import { requireAuth } from '../_shared/auth.ts';
 serve(async (req)=>{
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -11,6 +9,11 @@ serve(async (req)=>{
     });
   }
   try {
+    try { await requireAuth(req); } catch {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401,
+      });
+    }
     const { photoId } = await req.json();
     console.log('Received photo ID:', photoId); // Debug log
     if (!photoId) {
@@ -18,6 +21,9 @@ serve(async (req)=>{
     }
     // Clean up the photo ID to ensure proper format
     const cleanPhotoId = photoId.trim();
+    if (!/^[a-zA-Z0-9_-]+$/.test(cleanPhotoId)) {
+      throw new Error('Invalid photo ID format');
+    }
     console.log('Clean photo ID:', cleanPhotoId); // Debug log
     // Track the view of the photo
     const trackResponse = await fetch(`https://api.unsplash.com/photos/${cleanPhotoId}/download`, {

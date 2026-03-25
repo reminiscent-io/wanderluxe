@@ -4,6 +4,8 @@ import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
+const isValidUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 // Environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
@@ -46,6 +48,15 @@ interface TripContext {
   }>;
 }
 
+// Sanitize user-controlled strings before inserting into AI prompts
+function sanitizeForPrompt(input: string | null | undefined): string {
+  if (!input) return '';
+  return input
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[`$\\]/g, '')
+    .slice(0, 200);
+}
+
 // Build system prompt with trip context
 function buildSystemPrompt(tripContext: TripContext): string {
   const { destination, arrival_date, departure_date, days, accommodations, transportation } = tripContext;
@@ -59,28 +70,30 @@ function buildSystemPrompt(tripContext: TripContext): string {
   const formattedDays = days.slice(0, 10).map(day => {
     const activitiesList = day.activities
       .slice(0, 5)
-      .map(a => `  - ${a.title}${a.start_time ? ` (${a.start_time})` : ''}`)
+      .map(a => `  - ${sanitizeForPrompt(a.title)}${a.start_time ? ` (${a.start_time})` : ''}`)
       .join('\n');
-    return `${day.date}${day.title ? ` - ${day.title}` : ''}:\n${activitiesList || '  No activities scheduled'}`;
+    return `${day.date}${day.title ? ` - ${sanitizeForPrompt(day.title)}` : ''}:\n${activitiesList || '  No activities scheduled'}`;
   }).join('\n\n');
 
   // Format accommodations
   const formattedAccommodations = accommodations
     .filter(a => a.hotel)
     .slice(0, 5)
-    .map(a => `- ${a.hotel}: ${a.hotel_checkin_date} to ${a.hotel_checkout_date}${a.hotel_address ? ` (${a.hotel_address})` : ''}`)
+    .map(a => `- ${sanitizeForPrompt(a.hotel)}: ${a.hotel_checkin_date} to ${a.hotel_checkout_date}${a.hotel_address ? ` (${sanitizeForPrompt(a.hotel_address)})` : ''}`)
     .join('\n') || 'No accommodations added yet';
 
   // Format transportation
   const formattedTransportation = transportation
     .slice(0, 5)
-    .map(t => `- ${t.type}${t.provider ? ` (${t.provider})` : ''}: ${t.departure_location || 'TBD'} → ${t.arrival_location || 'TBD'} on ${t.start_date}${t.start_time ? ` at ${t.start_time}` : ''}`)
+    .map(t => `- ${sanitizeForPrompt(t.type)}${t.provider ? ` (${sanitizeForPrompt(t.provider)})` : ''}: ${sanitizeForPrompt(t.departure_location) || 'TBD'} → ${sanitizeForPrompt(t.arrival_location) || 'TBD'} on ${t.start_date}${t.start_time ? ` at ${t.start_time}` : ''}`)
     .join('\n') || 'No transportation added yet';
 
-  return `You are a helpful travel planning assistant for a trip to ${destination}.
+  const safeDestination = sanitizeForPrompt(destination);
+
+  return `You are a helpful travel planning assistant for a trip to ${safeDestination}.
 
 Trip Details:
-- Destination: ${destination}
+- Destination: ${safeDestination}
 - Dates: ${arrival_date} to ${departure_date}
 - Duration: ${daysCount} days
 
@@ -94,7 +107,7 @@ Transportation:
 ${formattedTransportation}
 
 Guidelines:
-- Provide specific, actionable suggestions tailored to ${destination}
+- Provide specific, actionable suggestions tailored to ${safeDestination}
 - Reference the existing itinerary when making recommendations
 - Note that availability, hours, and prices should be verified by the traveler
 - Use bullet points and clear formatting for readability
@@ -697,6 +710,7 @@ router.post('/api/ai-imports/usage', async (req: Request, res: Response) => {
 router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const authUser = await getUserFromToken(req.headers.authorization || '');
 
     if (!authUser) {
@@ -745,6 +759,7 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
 router.delete('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const authUser = await getUserFromToken(req.headers.authorization || '');
 
     if (!authUser) {
@@ -792,6 +807,7 @@ const anonChatLimiter = rateLimit({
 router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const { message, messages: previousMessages } = req.body as {
       message: string;
       messages?: Array<{ role: string; content: string }>;
@@ -863,10 +879,15 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
 router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const { message, thread_id }: SendMessageRequest = req.body;
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+
+    if (message.length > 4000) {
+      return res.status(400).json({ error: 'Message exceeds maximum length' });
     }
 
     const authUser = await getUserFromToken(req.headers.authorization || '');
