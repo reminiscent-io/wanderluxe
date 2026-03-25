@@ -613,6 +613,7 @@ async function handlePostMessage(
 ): Promise<Response> {
   const { message, thread_id } = await req.json();
   if (!message?.trim()) return jsonResponse({ error: 'Message required' }, 400);
+  if (message.length > 4000) return jsonResponse({ error: 'Message too long' }, 400);
 
   const today = new Date().toISOString().split('T')[0];
   const { data: usageData } = await supabase.rpc('increment_ai_usage', { check_user_id: userId, check_date: today });

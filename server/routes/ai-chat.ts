@@ -4,6 +4,8 @@ import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
+const isValidUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 // Environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
@@ -697,6 +699,7 @@ router.post('/api/ai-imports/usage', async (req: Request, res: Response) => {
 router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const authUser = await getUserFromToken(req.headers.authorization || '');
 
     if (!authUser) {
@@ -745,6 +748,7 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
 router.delete('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const authUser = await getUserFromToken(req.headers.authorization || '');
 
     if (!authUser) {
@@ -792,6 +796,7 @@ const anonChatLimiter = rateLimit({
 router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const { message, messages: previousMessages } = req.body as {
       message: string;
       messages?: Array<{ role: string; content: string }>;
@@ -863,10 +868,15 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
 router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const { message, thread_id }: SendMessageRequest = req.body;
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+
+    if (message.length > 4000) {
+      return res.status(400).json({ error: 'Message exceeds maximum length' });
     }
 
     const authUser = await getUserFromToken(req.headers.authorization || '');

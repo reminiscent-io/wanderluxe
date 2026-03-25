@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 
+const isValidInviteCode = (code: string) => /^[a-zA-Z0-9_-]+$/.test(code);
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +26,7 @@ const Auth = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         const pendingCode = sessionStorage.getItem('pendingInviteCode');
-        if (pendingCode) {
+        if (pendingCode && isValidInviteCode(pendingCode)) {
           sessionStorage.removeItem('pendingInviteCode');
           navigate(`/invite/${pendingCode}`, { replace: true });
         } else {
@@ -36,7 +38,7 @@ const Auth = () => {
 
   const navigateAfterAuth = (delay = 0) => {
     const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    if (pendingCode) {
+    if (pendingCode && isValidInviteCode(pendingCode)) {
       sessionStorage.removeItem('pendingInviteCode');
       const go = () => navigate(`/invite/${pendingCode}`, { replace: true });
       delay ? setTimeout(go, delay) : go();
@@ -111,7 +113,7 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     try {
       const pendingCode = sessionStorage.getItem('pendingInviteCode');
-      const redirectUrl = pendingCode
+      const redirectUrl = (pendingCode && isValidInviteCode(pendingCode))
         ? `${window.location.origin}/invite/${pendingCode}`
         : `${window.location.origin}/my-trips`;
       // Clear code here since OAuth redirects away from the page
