@@ -3,11 +3,7 @@
 // WanderLuxe — Share Trip Email via Mailgun (Supabase Edge Function)
 const DEFAULT_VIEW_URL = "https://wanderluxe.io";
 // Minimal CORS (tighten the origin if you want an allowlist)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+import { corsHeaders } from '../_shared/cors.ts';
 const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "mail.wanderluxe.io";
 if (!MAILGUN_API_KEY) throw new Error("MAILGUN_API_KEY is not set");
