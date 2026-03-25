@@ -268,27 +268,29 @@ function buildLocationContext(
   const locationHints: string[] = [];
 
   accommodations?.forEach((a: any) => {
-    if (a.hotel_address) locationHints.push(a.hotel_address);
-    else if (a.hotel) locationHints.push(a.hotel);
+    if (a.hotel_address) locationHints.push(sanitizeForPrompt(a.hotel_address));
+    else if (a.hotel) locationHints.push(sanitizeForPrompt(a.hotel));
   });
 
   transportation?.forEach((t: any) => {
-    if (t.arrival_location) locationHints.push(t.arrival_location);
+    if (t.arrival_location) locationHints.push(sanitizeForPrompt(t.arrival_location));
   });
 
   reservations?.forEach((r: any) => {
-    if (r.address) locationHints.push(r.address);
+    if (r.address) locationHints.push(sanitizeForPrompt(r.address));
   });
 
   const inferredLocations = locationHints.length > 0 ? locationHints.slice(0, 3).join('; ') : null;
+  const safeTripName = sanitizeForPrompt(tripName);
+  const safeDest = sanitizeForPrompt(primaryDestination);
 
-  if (primaryDestination) {
-    return `The trip "${tripName}" is to ${primaryDestination}.`;
+  if (safeDest) {
+    return `The trip "${safeTripName}" is to ${safeDest}.`;
   }
   if (inferredLocations) {
-    return `The trip is named "${tripName}". Based on booked accommodations, transportation, and reservations, the locations include: ${inferredLocations}.`;
+    return `The trip is named "${safeTripName}". Based on booked accommodations, transportation, and reservations, the locations include: ${inferredLocations}.`;
   }
-  return `The trip destination is: ${tripName}.`;
+  return `The trip destination is: ${safeTripName}.`;
 }
 
 function buildSearchStep2WithSerper(): string {
@@ -322,7 +324,9 @@ function buildSystemPrompt(params: SystemPromptParams): string {
   const mapsUrl = 'https://www.google.com/maps/search/PLACE+NAME+' + searchLocation;
   const searchUrl = 'https://www.google.com/search?q=PLACE+NAME+' + searchLocation;
 
-  return `You are a helpful travel assistant for a trip to ${tripName}. ${locationContext}
+  const safeTripName = sanitizeForPrompt(tripName);
+
+  return `You are a helpful travel assistant for a trip to ${safeTripName}. ${locationContext}
 Trip dates: ${arrivalDate} to ${departureDate}.${partySizeContext}${itineraryContext}
 
 Accommodations:
@@ -472,11 +476,16 @@ async function fetchTripContext(supabase: SupabaseClient, tripId: string) {
   return { trip, days, accommodations, transportation, reservations };
 }
 
+function sanitizeForPrompt(input: string | null | undefined): string {
+  if (!input) return '';
+  return input.replace(/[\r\n]+/g, ' ').replace(/[`$\\]/g, '').slice(0, 200);
+}
+
 function buildItineraryContext(days: any[] | null): string {
   if (!days || days.length === 0) return '';
   const daysSummary = days.slice(0, 10).map((d: any) => {
-    const activities = d.day_activities?.map((a: any) => a.title).join(', ') || 'no activities yet';
-    const titleSuffix = d.title ? ' - ' + d.title : '';
+    const activities = d.day_activities?.map((a: any) => sanitizeForPrompt(a.title)).join(', ') || 'no activities yet';
+    const titleSuffix = d.title ? ' - ' + sanitizeForPrompt(d.title) : '';
     return d.date + titleSuffix + ':\n  ' + activities;
   }).join('\n\n');
   return '\n\nCurrent Itinerary:\n' + daysSummary;
@@ -484,8 +493,8 @@ function buildItineraryContext(days: any[] | null): string {
 
 function formatAccommodationLine(a: any): string {
   const dates = (a.hotel_checkin_date || 'TBD') + ' to ' + (a.hotel_checkout_date || 'TBD');
-  const address = a.hotel_address ? ' (' + a.hotel_address + ')' : '';
-  return '- ' + a.hotel + ': ' + dates + address;
+  const address = a.hotel_address ? ' (' + sanitizeForPrompt(a.hotel_address) + ')' : '';
+  return '- ' + sanitizeForPrompt(a.hotel) + ': ' + dates + address;
 }
 
 function formatAccommodations(accommodations: any[] | null): string {
@@ -495,11 +504,11 @@ function formatAccommodations(accommodations: any[] | null): string {
 }
 
 function formatTransportationLine(t: any): string {
-  const provider = t.provider ? ' (' + t.provider + ')' : '';
-  const departure = t.departure_location || 'TBD';
-  const arrival = t.arrival_location || 'TBD';
+  const provider = t.provider ? ' (' + sanitizeForPrompt(t.provider) + ')' : '';
+  const departure = sanitizeForPrompt(t.departure_location) || 'TBD';
+  const arrival = sanitizeForPrompt(t.arrival_location) || 'TBD';
   const time = t.start_time ? ' at ' + t.start_time : '';
-  return '- ' + t.type + provider + ': ' + departure + ' \u2192 ' + arrival + ' on ' + t.start_date + time;
+  return '- ' + sanitizeForPrompt(t.type) + provider + ': ' + departure + ' \u2192 ' + arrival + ' on ' + t.start_date + time;
 }
 
 function formatTransportation(transportation: any[] | null): string {

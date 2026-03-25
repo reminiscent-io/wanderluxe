@@ -48,6 +48,15 @@ interface TripContext {
   }>;
 }
 
+// Sanitize user-controlled strings before inserting into AI prompts
+function sanitizeForPrompt(input: string | null | undefined): string {
+  if (!input) return '';
+  return input
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[`$\\]/g, '')
+    .slice(0, 200);
+}
+
 // Build system prompt with trip context
 function buildSystemPrompt(tripContext: TripContext): string {
   const { destination, arrival_date, departure_date, days, accommodations, transportation } = tripContext;
@@ -61,28 +70,30 @@ function buildSystemPrompt(tripContext: TripContext): string {
   const formattedDays = days.slice(0, 10).map(day => {
     const activitiesList = day.activities
       .slice(0, 5)
-      .map(a => `  - ${a.title}${a.start_time ? ` (${a.start_time})` : ''}`)
+      .map(a => `  - ${sanitizeForPrompt(a.title)}${a.start_time ? ` (${a.start_time})` : ''}`)
       .join('\n');
-    return `${day.date}${day.title ? ` - ${day.title}` : ''}:\n${activitiesList || '  No activities scheduled'}`;
+    return `${day.date}${day.title ? ` - ${sanitizeForPrompt(day.title)}` : ''}:\n${activitiesList || '  No activities scheduled'}`;
   }).join('\n\n');
 
   // Format accommodations
   const formattedAccommodations = accommodations
     .filter(a => a.hotel)
     .slice(0, 5)
-    .map(a => `- ${a.hotel}: ${a.hotel_checkin_date} to ${a.hotel_checkout_date}${a.hotel_address ? ` (${a.hotel_address})` : ''}`)
+    .map(a => `- ${sanitizeForPrompt(a.hotel)}: ${a.hotel_checkin_date} to ${a.hotel_checkout_date}${a.hotel_address ? ` (${sanitizeForPrompt(a.hotel_address)})` : ''}`)
     .join('\n') || 'No accommodations added yet';
 
   // Format transportation
   const formattedTransportation = transportation
     .slice(0, 5)
-    .map(t => `- ${t.type}${t.provider ? ` (${t.provider})` : ''}: ${t.departure_location || 'TBD'} → ${t.arrival_location || 'TBD'} on ${t.start_date}${t.start_time ? ` at ${t.start_time}` : ''}`)
+    .map(t => `- ${sanitizeForPrompt(t.type)}${t.provider ? ` (${sanitizeForPrompt(t.provider)})` : ''}: ${sanitizeForPrompt(t.departure_location) || 'TBD'} → ${sanitizeForPrompt(t.arrival_location) || 'TBD'} on ${t.start_date}${t.start_time ? ` at ${t.start_time}` : ''}`)
     .join('\n') || 'No transportation added yet';
 
-  return `You are a helpful travel planning assistant for a trip to ${destination}.
+  const safeDestination = sanitizeForPrompt(destination);
+
+  return `You are a helpful travel planning assistant for a trip to ${safeDestination}.
 
 Trip Details:
-- Destination: ${destination}
+- Destination: ${safeDestination}
 - Dates: ${arrival_date} to ${departure_date}
 - Duration: ${daysCount} days
 
@@ -96,7 +107,7 @@ Transportation:
 ${formattedTransportation}
 
 Guidelines:
-- Provide specific, actionable suggestions tailored to ${destination}
+- Provide specific, actionable suggestions tailored to ${safeDestination}
 - Reference the existing itinerary when making recommendations
 - Note that availability, hours, and prices should be verified by the traveler
 - Use bullet points and clear formatting for readability
