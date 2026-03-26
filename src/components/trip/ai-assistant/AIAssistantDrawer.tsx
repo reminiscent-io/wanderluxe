@@ -287,48 +287,32 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       <FullScreenModal open={open} onOpenChange={handleOpenChange} closeOnOverlayClick={!isStreaming}>
         {/* Header with safe area padding for PWA/notch */}
         <div
-          className="border-b border-sand-200 pb-3 px-4 flex-shrink-0"
-          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+          className="border-b border-sand-200 pb-2 px-4 flex-shrink-0"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 10px)' }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
               </div>
-              <div>
-                <h2 className="text-left text-earth-700 font-semibold text-lg leading-none tracking-tight">Trip Assistant</h2>
-                <p className="text-xs text-sand-500">AI-powered travel help</p>
-              </div>
+              <h2 className="text-left text-earth-700 font-semibold text-base leading-none tracking-tight">Trip Assistant</h2>
             </div>
 
-            <div className="flex items-center gap-1">
-              {/* Minimize button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleOpenChange(false)}
-                className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
-                disabled={isStreaming}
-                title="Minimize"
-              >
-                <ChevronDown className="w-5 h-5" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleOpenChange(false)}
+              className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
+              disabled={isStreaming}
+              title="Minimize"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </Button>
           </div>
         </div>
 
           <AIAssistantErrorBoundary key={errorBoundaryKey} onReset={handleErrorBoundaryReset}>
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              {/* Prompt chips - show when no messages */}
-              {allMessages.length === 0 && !isLoading && (
-                <div className="flex-shrink-0">
-                  <PromptChips
-                    onSelect={handlePromptSelect}
-                    disabled={isDisabled}
-                  />
-                </div>
-              )}
-
               <ChatMessageList
                 messages={allMessages}
                 isLoading={isLoading || isExtracting}
@@ -341,6 +325,12 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 onImportAll={handleImportAll}
                 onReviewEdit={handleReviewEdit}
                 isImporting={isImporting}
+                emptyStateSlot={
+                  <PromptChips
+                    onSelect={handlePromptSelect}
+                    disabled={isDisabled}
+                  />
+                }
               />
 
               {/* Error display */}

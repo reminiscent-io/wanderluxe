@@ -82,7 +82,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = (message.trim().length > 0 || attachment) && !disabled && !isSending;
 
   return (
-    <div className="border-t border-sand-200 bg-background p-3">
+    <div className="border-t border-sand-200 bg-background px-3 py-2">
       {/* Attachment preview */}
       {attachment && (
         <div className="mb-2 relative inline-block">
