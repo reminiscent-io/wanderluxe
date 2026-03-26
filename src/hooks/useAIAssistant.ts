@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { supabase } from '@/integrations/supabase/client';
+import { useBufferedStreaming } from '@/hooks/useBufferedStreaming';
 import type {
   AIChatMessage,
   AIUsageInfo,
@@ -174,8 +175,23 @@ function handleSSEError(err: unknown): never {
 export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: UseAIAssistantOptions): UseAIAssistantReturn {
   const queryClient = useQueryClient();
   const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const {
+    displayedContent: streamingContent,
+    setBufferContent,
+    startBuffering,
+    reset: resetBuffer
+  } = useBufferedStreaming(30);
+
+  // Adapter: setStreamingContent now goes through the buffer
+  // When setting empty string, also stop the buffer flush loop
+  const setStreamingContent = useCallback((content: string) => {
+    if (content === '') {
+      resetBuffer();
+    } else {
+      setBufferContent(content);
+    }
+  }, [setBufferContent, resetBuffer]);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -329,7 +345,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
 
     setError(null);
     setIsStreaming(true);
-    setStreamingContent('');
+    startBuffering();
 
     // Optimistically add user message
     const optimisticUserMessage: AIChatMessage = {
@@ -418,7 +434,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       setStreamingContent('');
       setIsStreaming(false);
     }
-  }, [tripId, isStreaming, queryClient, onLimitReached, refetchUsage]);
+  }, [tripId, isStreaming, queryClient, onLimitReached, refetchUsage, startBuffering]);
 
   // Send message with streaming - authenticated path
   const sendMessageAuth = useCallback(async (content: string): Promise<void> => {
@@ -428,7 +444,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
 
     setError(null);
     setIsStreaming(true);
-    setStreamingContent('');
+    startBuffering();
 
     let token: string | null = null;
     try {
@@ -539,7 +555,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       setStreamingContent('');
       setIsStreaming(false);
     }
-  }, [tripId, isStreaming, getAuthToken, messagesData?.thread_id, queryClient, onLimitReached, onItemsExtracted, refetchUsage]);
+  }, [tripId, isStreaming, getAuthToken, messagesData?.thread_id, queryClient, onLimitReached, onItemsExtracted, refetchUsage, startBuffering]);
 
   // Route sendMessage to the appropriate handler
   const sendMessage = useCallback(async (content: string): Promise<void> => {

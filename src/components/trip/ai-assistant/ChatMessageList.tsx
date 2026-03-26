@@ -89,7 +89,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         container.scrollHeight - container.scrollTop - container.clientHeight < 150;
 
       if (isNearBottom) {
-        scrollRef.current.scrollIntoView({ behavior: 'instant' });
+        scrollRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [streamingContent, isStreaming]);
