@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wanderluxe-v3';
+const CACHE_NAME = 'wanderluxe-v4';
 const OFFLINE_URL = '/index.html';
 const URLS_TO_CACHE = [
   '/',
@@ -39,6 +39,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Skip cross-origin requests — let the browser handle them directly
+  // This avoids CSP connect-src violations for external resources (fonts, images, analytics)
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) {
     return;
   }
 
