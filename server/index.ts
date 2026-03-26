@@ -38,7 +38,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://*.supabase.co", "https://maps.googleapis.com", "https://lh3.googleusercontent.com", "https://places.googleapis.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://plus.unsplash.com", "https://*.supabase.co", "https://maps.googleapis.com", "https://lh3.googleusercontent.com", "https://places.googleapis.com"],
       connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "https://api.stripe.com", "https://maps.googleapis.com", "https://places.googleapis.com"],
       frameSrc: ["'self'", "https://js.stripe.com"],
     },
