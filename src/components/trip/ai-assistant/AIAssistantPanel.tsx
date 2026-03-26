@@ -280,14 +280,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
         {/* Collapsible content */}
         {!isCollapsed && (
           <>
-            {/* Prompt chips - show when no messages */}
-            {allMessages.length === 0 && !isLoading && (
-              <PromptChips
-                onSelect={handlePromptSelect}
-                disabled={isDisabled}
-              />
-            )}
-
             {/* Messages area */}
             <ChatMessageList
               messages={allMessages}
@@ -301,6 +293,12 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               onImportAll={handleImportAll}
               onReviewEdit={handleReviewEdit}
               isImporting={isImporting}
+              emptyStateSlot={
+                <PromptChips
+                  onSelect={handlePromptSelect}
+                  disabled={isDisabled}
+                />
+              }
             />
 
             {/* Error display */}
