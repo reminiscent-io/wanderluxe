@@ -4,9 +4,9 @@
 // OR { items: [...], meta } for multi-item mode (when itemType is not specified).
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.3";
+import { getCorsHeaders } from '../_shared/cors.ts';
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const MODEL = Deno.env.get("OPENAI_OCR_MODEL") ?? "gpt-4o-mini";
-const ALLOW_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") ?? "*"; // set to your app URL in prod
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
@@ -27,19 +27,15 @@ const INFER_YEARS = [
   BASE_YEAR + 2
 ]; // e.g., 2025–2027 as requested
 // ----------------- CORS helpers -----------------
-const cors = {
-  "access-control-allow-origin": ALLOW_ORIGIN,
-  "access-control-allow-headers": "authorization, content-type",
-  "access-control-allow-methods": "POST, OPTIONS"
-};
-const ok = (json, status = 200)=>new Response(JSON.stringify(json), {
+let cors: Record<string, string> = getCorsHeaders(null);
+const ok = (json: unknown, status = 200)=>new Response(JSON.stringify(json), {
     status,
     headers: {
       "content-type": "application/json",
       ...cors
     }
   });
-const err = (msg, status = 400)=>ok({
+const err = (msg: string, status = 400)=>ok({
     error: msg
   }, status);
 // ----------------- File → data URL -----------------
@@ -619,6 +615,7 @@ const handleSingleItem = async (itemType, dataUrl, file)=>{
 // ----------------- Handler -----------------
 serve(async (req)=>{
   try {
+    cors = getCorsHeaders(req.headers.get('origin'));
     if (req.method === "OPTIONS") {
       return new Response("ok", { headers: cors });
     }
