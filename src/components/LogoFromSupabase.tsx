@@ -21,33 +21,16 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
   useEffect(() => {
     const loadLogo = async () => {
       // Use direct URL for Black Full logo if that's what we're looking for
-      if (logoName === "Black Full") {
-        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Black%20Full.png");
-        setIsLoading(false);
-        return;
-      }
-      
-      // Use direct URLs for other logos
-      if (logoName === "Black Simple") {
-        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Black%20Simple.png");
-        setIsLoading(false);
-        return;
-      }
-      
-      if (logoName === "White Full") {
-        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//White%20Full.png");
-        setIsLoading(false);
-        return;
-      }
-      
-      if (logoName === "White Simple") {
-        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//White%20Simple.png");
-        setIsLoading(false);
-        return;
-      }
-      
-      if (logoName === "Sand Simple") {
-        setLogoUrl("https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos//Sand%20Simple.png");
+      const directLogos: Record<string, string> = {
+        "Black Full": "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/Black%20Full_v2.png",
+        "Black Simple": "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/Black%20Simple.png",
+        "White Full": "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/White%20Full.png",
+        "White Simple": "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/White%20Simple.png",
+        "Sand Simple": "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/Sand%20Simple.png",
+      };
+
+      if (directLogos[logoName]) {
+        setLogoUrl(directLogos[logoName]);
         setIsLoading(false);
         return;
       }
