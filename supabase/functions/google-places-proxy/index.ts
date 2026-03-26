@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 // Rate limiting configuration
 const RATE_LIMIT = 100; // requests per hour per key
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
@@ -15,24 +15,24 @@ function checkRateLimit(key) {
   return true;
 }
 
-function jsonResponse(body, status = 200) {
+function jsonResponse(body, status = 200, cors: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...cors, "Content-Type": "application/json" },
     status
   });
 }
 
-function rateLimitResponse() {
-  return jsonResponse({ error: "Rate limit exceeded. Try again later." }, 429);
+function rateLimitResponse(cors: Record<string, string> = {}) {
+  return jsonResponse({ error: "Rate limit exceeded. Try again later." }, 429, cors);
 }
 
-async function handlePhotoProxy(url, googleApiKey, req) {
+async function handlePhotoProxy(url, googleApiKey, req, cors: Record<string, string> = {}) {
   const photoRef = url.searchParams.get("photo_reference");
   const maxwidth = url.searchParams.get("maxwidth") ?? "640";
   const maxheight = url.searchParams.get("maxheight");
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(`photo:${ip}`)) return rateLimitResponse();
+  if (!checkRateLimit(`photo:${ip}`)) return rateLimitResponse(cors);
 
   const params = new URLSearchParams({ photo_reference: photoRef, key: googleApiKey });
   if (maxheight) params.set("maxheight", maxheight);
@@ -44,10 +44,10 @@ async function handlePhotoProxy(url, googleApiKey, req) {
 
   if (!gRes.ok || !gRes.body) {
     const text = await gRes.text().catch(()=>"");
-    return jsonResponse({ error: "Google Photos error", details: text }, 502);
+    return jsonResponse({ error: "Google Photos error", details: text }, 502, cors);
   }
 
-  const headers = new Headers(corsHeaders);
+  const headers = new Headers(cors);
   headers.set("Content-Type", gRes.headers.get("content-type") || "image/jpeg");
   headers.set("Cache-Control", "public, max-age=86400, immutable");
   return new Response(gRes.body, { headers, status: 200 });

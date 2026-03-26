@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import * as SendGrid from 'https://esm.sh/@sendgrid/mail@7.7.0';
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 serve(async (req)=>{
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   /* ----- 1. CORS pre-flight ----- */ if (req.method === 'OPTIONS') {
     return new Response('ok', {
       headers: corsHeaders

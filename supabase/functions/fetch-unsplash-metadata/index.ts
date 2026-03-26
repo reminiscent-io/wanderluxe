@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 import { requireAuth } from '../_shared/auth.ts';
 serve(async (req)=>{
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {

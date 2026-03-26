@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 import { requireAuth } from '../_shared/auth.ts';
 
 function isAllowedUrl(urlString: string): boolean {
@@ -84,6 +84,7 @@ async function fetchGooglePlacesImage(url) {
   }
 }
 serve(async (req)=>{
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
       headers: corsHeaders
