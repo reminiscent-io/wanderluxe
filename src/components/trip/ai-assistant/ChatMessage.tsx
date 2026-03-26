@@ -133,7 +133,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           <div
             className={cn(
               'rounded-2xl px-4 py-2.5 text-sm overflow-hidden',
-              'bg-sand-50 text-earth-700 border border-sand-200 rounded-tl-sm'
+              'bg-sand-50 text-earth-700 border border-sand-200 rounded-tl-sm',
+              isStreaming && 'transition-all duration-150 ease-out'
             )}
           >
             <div className="prose prose-sm prose-earth max-w-full break-words overflow-wrap-anywhere">
