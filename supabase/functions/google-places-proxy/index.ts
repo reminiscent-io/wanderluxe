@@ -53,7 +53,7 @@ async function handlePhotoProxy(url, googleApiKey, req, cors: Record<string, str
   return new Response(gRes.body, { headers, status: 200 });
 }
 
-async function handleAutocomplete(url, googleApiKey) {
+async function handleAutocomplete(url, googleApiKey, cors: Record<string, string> = {}) {
   const input = url.searchParams.get("input");
   const types = url.searchParams.get("types") || "";
   const language = url.searchParams.get("language") || "en";
@@ -71,10 +71,10 @@ async function handleAutocomplete(url, googleApiKey) {
   if (!googleResponse.ok) {
     throw new Error(`Google API error: ${googleData.error_message || "Unknown error"}`);
   }
-  return jsonResponse(googleData);
+  return jsonResponse(googleData, 200, cors);
 }
 
-async function handlePlaceDetails(req, googleApiKey) {
+async function handlePlaceDetails(req, googleApiKey, cors: Record<string, string> = {}) {
   const body = await req.json();
   const placeId = body.placeId || body.place_id;
   const fieldsArray = Array.isArray(body.fields) ? body.fields : undefined;
@@ -90,7 +90,7 @@ async function handlePlaceDetails(req, googleApiKey) {
   if (!googleResponse.ok) {
     throw new Error(`Google API error: ${googleData.error_message || "Unknown error"}`);
   }
-  return jsonResponse(googleData);
+  return jsonResponse(googleData, 200, cors);
 }
 
 async function authenticateUser(req) {
@@ -108,6 +108,7 @@ async function authenticateUser(req) {
 }
 
 serve(async (req)=>{
+  const corsHeaders = getCorsHeaders(req.headers.get("origin"));
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -115,13 +116,13 @@ serve(async (req)=>{
   const url = new URL(req.url);
   const googleApiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
   if (!googleApiKey) {
-    return jsonResponse({ error: "Google Places API key not configured" }, 500);
+    return jsonResponse({ error: "Google Places API key not configured" }, 500, corsHeaders);
   }
 
   try {
     // 1) Public photo proxy (no auth required)
     if (req.method === "GET" && url.searchParams.has("photo_reference")) {
-      return await handlePhotoProxy(url, googleApiKey, req);
+      return await handlePhotoProxy(url, googleApiKey, req, corsHeaders);
     }
 
     // 2) Place Details (POST) — allow anonymous access for public trip viewing
@@ -130,25 +131,25 @@ serve(async (req)=>{
       const authHeader = req.headers.get("authorization");
       if (authHeader) {
         const user = await authenticateUser(req);
-        if (!checkRateLimit(`user:${user.id}`)) return rateLimitResponse();
+        if (!checkRateLimit(`user:${user.id}`)) return rateLimitResponse(corsHeaders);
       } else {
         const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-        if (!checkRateLimit(`details:${ip}`)) return rateLimitResponse();
+        if (!checkRateLimit(`details:${ip}`)) return rateLimitResponse(corsHeaders);
       }
-      return await handlePlaceDetails(req, googleApiKey);
+      return await handlePlaceDetails(req, googleApiKey, corsHeaders);
     }
 
     // 3) Autocomplete (GET) — requires authentication (used only when editing)
     const user = await authenticateUser(req);
-    if (!checkRateLimit(`user:${user.id}`)) return rateLimitResponse();
+    if (!checkRateLimit(`user:${user.id}`)) return rateLimitResponse(corsHeaders);
 
     if (req.method === "GET") {
-      return await handleAutocomplete(url, googleApiKey);
+      return await handleAutocomplete(url, googleApiKey, corsHeaders);
     }
 
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return jsonResponse({ error: "Method not allowed" }, 405, corsHeaders);
   } catch (error) {
     console.error("Google Places proxy error:", error);
-    return jsonResponse({ error: "An internal server error occurred." }, 500);
+    return jsonResponse({ error: "An internal server error occurred." }, 500, corsHeaders);
   }
 });
