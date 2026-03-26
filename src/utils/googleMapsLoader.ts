@@ -192,7 +192,11 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceResult | nu
     return (json.result ?? null) as PlaceResult | null;
   } catch (error) {
     console.error("getPlaceDetails error:", error);
-    toast.error("Failed to get location details");
+    // Only show toast for authenticated users (anonymous viewing should fail silently)
+    const session = (await supabase.auth.getSession()).data.session;
+    if (session) {
+      toast.error("Failed to get location details");
+    }
     return null;
   }
 }
