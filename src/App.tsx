@@ -57,9 +57,9 @@ const App = () => {
             <Toaster />
             <Sonner />
             <PWAInstallPrompt />
-            <CookieConsentBanner />
             <BrowserRouter>
               <ScrollToTop />
+              <CookieConsentBanner />
               <AppLayout>
                 <Routes>
                   <Route path="/" element={<Index />} />
