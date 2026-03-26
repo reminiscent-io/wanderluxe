@@ -52,3 +52,9 @@ args = "Run Development Server"
 
 [agent]
 integrations = ["javascript_openai:1.0.0"]
+
+[userenv]
+
+[userenv.production]
+ALLOWED_ORIGINS = "https://wanderluxe.io,https://www.wanderluxe.io"
+ALLOWED_ORIGIN = "https://wanderluxe.io"
