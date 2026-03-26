@@ -3,6 +3,7 @@ const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://wanderluxe.io'
 const ALLOWED_ORIGIN_PATTERNS = [
   /\.replit\.dev(:\d+)?$/,
   /\.repl\.co(:\d+)?$/,
+  /\.replit\.app(:\d+)?$/,
 ];
 
 export function getCorsHeaders(origin: string | null): Record<string, string> {
