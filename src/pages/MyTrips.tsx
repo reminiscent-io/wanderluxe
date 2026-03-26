@@ -291,7 +291,7 @@ const MyTrips = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-14 md:pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
         {/* Dynamic Travel Headquarters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -330,20 +330,21 @@ const MyTrips = () => {
             )}
 
             {/* Mobile: Swipeable Stats Row */}
-            <div className="-mx-4 px-4 overflow-x-auto mt-4">
-              <div className="flex gap-4 py-2 snap-x snap-mandatory
+            <div className="-mx-4 px-4 overflow-x-auto mt-3">
+              <div className="flex gap-3 py-1 snap-x snap-mandatory
                             [-ms-overflow-style:none] [scrollbar-width:none]
                             [&::-webkit-scrollbar]:hidden">
-                <div className="min-w-[200px] snap-start shrink-0">
+                <div className="min-w-[160px] snap-start shrink-0">
                   <TravelStatsCard
                     title="Days Traveling"
                     value={travelStats.totalDaysTraveled}
                     subtitle="Total days explored"
                     icon={Globe}
                     gradient="blue"
+                    compact
                   />
                 </div>
-                <div className="min-w-[200px] snap-start shrink-0">
+                <div className="min-w-[160px] snap-start shrink-0">
                   <TravelStatsCard
                     title="Trip Progress"
                     value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
@@ -352,15 +353,17 @@ const MyTrips = () => {
                     gradient="green"
                     chart="donut"
                     chartData={travelStats.completionRate}
+                    compact
                   />
                 </div>
-                <div className="min-w-[200px] snap-start shrink-0">
+                <div className="min-w-[160px] snap-start shrink-0">
                   <TravelStatsCard
                     title="Destinations"
                     value={travelStats.countriesVisited}
                     subtitle="Places visited"
                     icon={MapPin}
                     gradient="purple"
+                    compact
                   />
                 </div>
               </div>
@@ -454,45 +457,46 @@ const MyTrips = () => {
         </motion.div>
         
         {/* Filter Chips */}
-        <div className="flex items-center gap-2 mb-8">
-          <span className="text-sm text-earth-600 mr-2">Show:</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-6 sm:mb-8">
+          <span className="text-xs sm:text-sm text-earth-600 mr-1 sm:mr-2">Show:</span>
           <button
             onClick={() => setTripFilter('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${
               tripFilter === 'all'
                 ? 'bg-earth-600 text-white'
                 : 'bg-white text-earth-600 border border-earth-200 hover:bg-earth-50'
             }`}
           >
             All Trips
-            <Badge className="ml-2 bg-white/20 text-inherit">
+            <Badge className="ml-1.5 sm:ml-2 bg-white/20 text-inherit text-[10px] sm:text-xs px-1.5 sm:px-2">
               {totalMyTrips + totalSharedTrips}
             </Badge>
           </button>
           <button
             onClick={() => setTripFilter('mine')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${
               tripFilter === 'mine'
                 ? 'bg-earth-600 text-white'
                 : 'bg-white text-earth-600 border border-earth-200 hover:bg-earth-50'
             }`}
           >
             My Trips
-            <Badge className="ml-2 bg-white/20 text-inherit">
+            <Badge className="ml-1.5 sm:ml-2 bg-white/20 text-inherit text-[10px] sm:text-xs px-1.5 sm:px-2">
               {totalMyTrips}
             </Badge>
           </button>
           <button
             onClick={() => setTripFilter('shared')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+            className={`px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors flex items-center gap-1 ${
               tripFilter === 'shared'
                 ? 'bg-earth-600 text-white'
                 : 'bg-white text-earth-600 border border-earth-200 hover:bg-earth-50'
             }`}
           >
-            <Share2 className="h-3.5 w-3.5" />
-            Shared With Me
-            <Badge className="ml-1 bg-white/20 text-inherit">
+            <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span className="hidden sm:inline">Shared With Me</span>
+            <span className="sm:hidden">Shared</span>
+            <Badge className="ml-1 bg-white/20 text-inherit text-[10px] sm:text-xs px-1.5 sm:px-2">
               {totalSharedTrips}
             </Badge>
           </button>
