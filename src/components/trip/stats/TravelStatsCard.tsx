@@ -14,6 +14,7 @@ interface TravelStatsCardProps {
   chart?: 'progress' | 'donut';
   chartData?: { completed: number; total: number };
   className?: string;
+  compact?: boolean;
   onClick?: () => void;
 }
 
@@ -59,6 +60,7 @@ export function TravelStatsCard({
   chart,
   chartData,
   className,
+  compact,
   onClick
 }: TravelStatsCardProps) {
   const colors = gradientClasses[gradient];
@@ -83,7 +85,7 @@ export function TravelStatsCard({
       const strokeDashoffset = circumference - (chartPercentage / 100) * circumference;
 
       return (
-        <div className="relative w-14 h-14 flex-shrink-0">
+        <div className={cn("relative flex-shrink-0", compact ? "w-11 h-11" : "w-14 h-14")}>
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
             <circle
               cx="24"
@@ -137,7 +139,8 @@ export function TravelStatsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "rounded-xl p-4 border backdrop-blur-sm",
+        "rounded-xl border backdrop-blur-sm",
+        compact ? "p-3" : "p-4",
         colors.bg,
         onClick && "cursor-pointer hover:scale-[1.02] transition-transform",
         className
@@ -152,7 +155,7 @@ export function TravelStatsCard({
             </div>
             <span className="text-xs font-medium text-earth-600 truncate">{title}</span>
           </div>
-          <div className={cn("text-3xl md:text-4xl font-black tracking-tight", colors.text)}>
+          <div className={cn("font-black tracking-tight", compact ? "text-2xl" : "text-3xl md:text-4xl", colors.text)}>
             {value}
           </div>
           {subtitle && (
