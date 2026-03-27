@@ -145,9 +145,9 @@ const TripDetails = () => {
   const sidebar = <Sidebar ref={sidebarRef} tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       {sidebar}
-      <main ref={mainRef} className="flex-1 pl-0 md:pl-[280px] transition-all duration-300">
+      <main ref={mainRef} className="flex-1 min-w-0 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">
 
           {/* Hero — renders fixed background + spacer */}
