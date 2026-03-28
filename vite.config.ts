@@ -45,7 +45,23 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks(id) {
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
+            return 'charts';
+          }
+          if (id.includes('node_modules/pdfmake') || id.includes('node_modules/pdfjs-dist') || id.includes('node_modules/html-to-pdfmake')) {
+            return 'pdf';
+          }
+          if (id.includes('node_modules/react-markdown') || id.includes('node_modules/react-syntax-highlighter')) {
+            return 'markdown';
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'motion';
+          }
+          if (id.includes('node_modules/@dnd-kit')) {
+            return 'dnd';
+          }
+        },
       }
     },
     sourcemap: mode === 'development',

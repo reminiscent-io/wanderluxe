@@ -93,19 +93,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const ensureProfile = async (userId: string, isNewLogin: boolean = false) => {
       try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('id, subscription_tier, avatar_url, full_name, last_login_at')
-          .eq('id', userId)
-          .single();
+        // Run profile fetch and OAuth metadata fetch in parallel
+        const [profileResult, authUserResult] = await Promise.allSettled([
+          supabase
+            .from('profiles')
+            .select('id, subscription_tier, avatar_url, full_name, last_login_at')
+            .eq('id', userId)
+            .single(),
+          supabase.auth.getUser(),
+        ]);
 
-        if (error) {
-          console.error('Error fetching profile in ensureProfile:', error);
+        const profile = profileResult.status === 'fulfilled' ? profileResult.value.data : null;
+        const profileError = profileResult.status === 'fulfilled' ? profileResult.value.error : profileResult.reason;
+        const authUser = authUserResult.status === 'fulfilled' ? authUserResult.value.data?.user : null;
+
+        if (profileError) {
+          console.error('Error fetching profile in ensureProfile:', profileError);
+          setProfileLoaded(true);
           return;
         }
 
         if (!profile) {
-          const { error: profileError } = await supabase
+          const { error: insertError } = await supabase
             .from('profiles')
             .insert([
               {
@@ -117,33 +126,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }
             ]);
 
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
           }
           setProfileLoaded(true);
         } else {
-          // Get OAuth metadata for fallbacks - wrapped in try/catch to not block profile data
-          let oauthAvatar: string | undefined;
-          let oauthName: string | undefined;
-          try {
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            oauthAvatar = authUser?.user_metadata?.avatar_url;
-            oauthName = authUser?.user_metadata?.full_name;
-          } catch (authErr) {
-            console.warn('Could not fetch OAuth metadata for fallbacks:', authErr);
-          }
+          const oauthAvatar = authUser?.user_metadata?.avatar_url;
+          const oauthName = authUser?.user_metadata?.full_name;
 
           setSubscriptionTier(profile.subscription_tier || 'free');
-          // Use profile avatar_url, fall back to OAuth metadata avatar
           setAvatarUrl(addCacheBusting(profile.avatar_url) || oauthAvatar || null);
           setFullName(profile.full_name || oauthName || null);
           setLastLoginAt(profile.last_login_at);
-
-          // Update last login timestamp on new sign in, or if it's never been set
-          if (isNewLogin || !profile.last_login_at) {
-            await updateLastLogin(userId);
-          }
           setProfileLoaded(true);
+
+          // Fire-and-forget — don't block profile loading on this write
+          if (isNewLogin || !profile.last_login_at) {
+            updateLastLogin(userId);
+          }
         }
       } catch (err) {
         console.error('Error in ensureProfile:', err);
