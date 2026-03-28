@@ -166,16 +166,17 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Validate that a URL is a safe blob URL (prevents XSS via URL injection)
-  const isSafeBlobUrl = (url: string | null): url is string => {
-    if (!url) return false;
+  // Sanitize preview URL: only allow blob: protocol to prevent XSS via URL injection
+  const sanitizedPreviewUrl = useMemo<string | null>(() => {
+    if (!previewUrl) return null;
     try {
-      const parsed = new URL(url);
-      return parsed.protocol === 'blob:';
+      const parsed = new URL(previewUrl);
+      if (parsed.protocol === 'blob:') return previewUrl;
     } catch {
-      return false;
+      // Invalid URL — reject
     }
-  };
+    return null;
+  }, [previewUrl]);
 
   // Fetch import usage on mount
   useEffect(() => {
@@ -482,10 +483,10 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
               </p>
 
               {/* Live preview (image or first page of PDF) */}
-              {isSafeBlobUrl(previewUrl) ? (
+              {sanitizedPreviewUrl ? (
                 <div className="mt-3 relative">
                   <img
-                    src={previewUrl}
+                    src={sanitizedPreviewUrl}
                     alt="Upload preview"
                     referrerPolicy="no-referrer"
                     className="max-h-56 rounded-md border border-sand-200 shadow-warm-sm object-contain bg-background"
