@@ -15,6 +15,7 @@ interface ChatMessageListProps {
   onImportAll?: (items: ExtractedItem[]) => Promise<void>;
   onReviewEdit?: (items: ExtractedItem[]) => void;
   isImporting?: boolean;
+  emptyStateSlot?: React.ReactNode;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -28,7 +29,8 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   tripId,
   onImportAll,
   onReviewEdit,
-  isImporting = false
+  isImporting = false,
+  emptyStateSlot
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +89,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         container.scrollHeight - container.scrollTop - container.clientHeight < 150;
 
       if (isNearBottom) {
-        scrollRef.current.scrollIntoView({ behavior: 'instant' });
+        scrollRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [streamingContent, isStreaming]);
@@ -137,19 +139,16 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 
   if (messages.length === 0 && !isStreaming) {
     return (
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="flex flex-col items-center gap-4 text-center max-w-sm">
-          <div className="w-12 h-12 rounded-full bg-sand-100 flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-earth-500" />
+      <div className="flex-1 flex flex-col items-center justify-center px-5 py-4 gap-5">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="w-10 h-10 rounded-full bg-sand-100 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-earth-500" />
           </div>
-          <div>
-            <h3 className="font-medium text-earth-700 mb-1">Trip Assistant</h3>
-            <p className="text-sm text-sand-500">
-              Ask me anything about your trip! I can help with recommendations,
-              scheduling, packing tips, and more.
-            </p>
-          </div>
+          <p className="text-sm text-sand-500 max-w-[260px]">
+            Ask me anything about your trip — recommendations, scheduling, packing tips, and more.
+          </p>
         </div>
+        {emptyStateSlot}
       </div>
     );
   }

@@ -4,6 +4,8 @@ import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
+const isValidUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 // Environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
@@ -46,6 +48,15 @@ interface TripContext {
   }>;
 }
 
+// Sanitize user-controlled strings before inserting into AI prompts
+function sanitizeForPrompt(input: string | null | undefined): string {
+  if (!input) return '';
+  return input
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[`$\\]/g, '')
+    .slice(0, 200);
+}
+
 // Build system prompt with trip context
 function buildSystemPrompt(tripContext: TripContext): string {
   const { destination, arrival_date, departure_date, days, accommodations, transportation } = tripContext;
@@ -59,28 +70,30 @@ function buildSystemPrompt(tripContext: TripContext): string {
   const formattedDays = days.slice(0, 10).map(day => {
     const activitiesList = day.activities
       .slice(0, 5)
-      .map(a => `  - ${a.title}${a.start_time ? ` (${a.start_time})` : ''}`)
+      .map(a => `  - ${sanitizeForPrompt(a.title)}${a.start_time ? ` (${a.start_time})` : ''}`)
       .join('\n');
-    return `${day.date}${day.title ? ` - ${day.title}` : ''}:\n${activitiesList || '  No activities scheduled'}`;
+    return `${day.date}${day.title ? ` - ${sanitizeForPrompt(day.title)}` : ''}:\n${activitiesList || '  No activities scheduled'}`;
   }).join('\n\n');
 
   // Format accommodations
   const formattedAccommodations = accommodations
     .filter(a => a.hotel)
     .slice(0, 5)
-    .map(a => `- ${a.hotel}: ${a.hotel_checkin_date} to ${a.hotel_checkout_date}${a.hotel_address ? ` (${a.hotel_address})` : ''}`)
+    .map(a => `- ${sanitizeForPrompt(a.hotel)}: ${a.hotel_checkin_date} to ${a.hotel_checkout_date}${a.hotel_address ? ` (${sanitizeForPrompt(a.hotel_address)})` : ''}`)
     .join('\n') || 'No accommodations added yet';
 
   // Format transportation
   const formattedTransportation = transportation
     .slice(0, 5)
-    .map(t => `- ${t.type}${t.provider ? ` (${t.provider})` : ''}: ${t.departure_location || 'TBD'} → ${t.arrival_location || 'TBD'} on ${t.start_date}${t.start_time ? ` at ${t.start_time}` : ''}`)
+    .map(t => `- ${sanitizeForPrompt(t.type)}${t.provider ? ` (${sanitizeForPrompt(t.provider)})` : ''}: ${sanitizeForPrompt(t.departure_location) || 'TBD'} → ${sanitizeForPrompt(t.arrival_location) || 'TBD'} on ${t.start_date}${t.start_time ? ` at ${t.start_time}` : ''}`)
     .join('\n') || 'No transportation added yet';
 
-  return `You are a helpful travel planning assistant for a trip to ${destination}.
+  const safeDestination = sanitizeForPrompt(destination);
+
+  return `You are a helpful travel planning assistant for a trip to ${safeDestination}.
 
 Trip Details:
-- Destination: ${destination}
+- Destination: ${safeDestination}
 - Dates: ${arrival_date} to ${departure_date}
 - Duration: ${daysCount} days
 
@@ -94,7 +107,7 @@ Transportation:
 ${formattedTransportation}
 
 Guidelines:
-- Provide specific, actionable suggestions tailored to ${destination}
+- Provide specific, actionable suggestions tailored to ${safeDestination}
 - Reference the existing itinerary when making recommendations
 - Note that availability, hours, and prices should be verified by the traveler
 - Use bullet points and clear formatting for readability
@@ -129,8 +142,8 @@ Date calculation rules:
 IMPORTANT: Never say "I can't add items" or "I don't have the ability to modify your itinerary". You DO have this ability through the JSON block. Always use it when the user wants to add something.`;
 }
 
-// Get user ID from Supabase JWT
-async function getUserIdFromToken(authHeader: string): Promise<string | null> {
+// Get user ID and email from Supabase JWT
+async function getUserFromToken(authHeader: string): Promise<{ id: string; email: string } | null> {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
@@ -144,11 +157,17 @@ async function getUserIdFromToken(authHeader: string): Promise<string | null> {
     return null;
   }
 
-  return data.user.id;
+  return { id: data.user.id, email: data.user.email || '' };
+}
+
+// Backward-compatible wrapper
+async function getUserIdFromToken(authHeader: string): Promise<string | null> {
+  const user = await getUserFromToken(authHeader);
+  return user?.id || null;
 }
 
 // Check if user can access trip
-async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: string, tripId: string): Promise<boolean> {
+async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: string, tripId: string, userEmail?: string): Promise<boolean> {
   // Check if user owns the trip
   const { data: ownedTrip } = await supabase
     .from('trips')
@@ -159,15 +178,39 @@ async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: 
 
   if (ownedTrip) return true;
 
-  // Check if trip is shared with user
-  const { data: sharedTrip } = await supabase
+  // Check if trip is shared with user by user_id
+  const { data: sharedByUserId } = await supabase
     .from('trip_shares')
     .select('id')
     .eq('trip_id', tripId)
     .eq('shared_with_user_id', userId)
-    .single();
+    .eq('share_status', 'accepted')
+    .maybeSingle();
 
-  return !!sharedTrip;
+  if (sharedByUserId) return true;
+
+  // Also check by email (shared_with_user_id may be null if user hadn't signed up when shared)
+  if (userEmail) {
+    const { data: sharedByEmail } = await supabase
+      .from('trip_shares')
+      .select('id')
+      .eq('trip_id', tripId)
+      .ilike('shared_with_email', userEmail.toLowerCase())
+      .eq('share_status', 'accepted')
+      .maybeSingle();
+
+    if (sharedByEmail) return true;
+  }
+
+  // Check if trip is public (allow read access)
+  const { data: publicTrip } = await supabase
+    .from('trips')
+    .select('trip_id')
+    .eq('trip_id', tripId)
+    .eq('is_public', true)
+    .maybeSingle();
+
+  return !!publicTrip;
 }
 
 // Get trip context for AI
@@ -667,16 +710,18 @@ router.post('/api/ai-imports/usage', async (req: Request, res: Response) => {
 router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
-    const userId = await getUserIdFromToken(req.headers.authorization || '');
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
+    const authUser = await getUserFromToken(req.headers.authorization || '');
 
-    if (!userId) {
+    if (!authUser) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    const userId = authUser.id;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     // Verify trip access
-    const hasAccess = await canAccessTrip(supabase, userId, tripId);
+    const hasAccess = await canAccessTrip(supabase, userId, tripId, authUser.email);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied to this trip' });
     }
@@ -714,16 +759,18 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
 router.delete('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
-    const userId = await getUserIdFromToken(req.headers.authorization || '');
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
+    const authUser = await getUserFromToken(req.headers.authorization || '');
 
-    if (!userId) {
+    if (!authUser) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    const userId = authUser.id;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     // Verify trip access
-    const hasAccess = await canAccessTrip(supabase, userId, tripId);
+    const hasAccess = await canAccessTrip(supabase, userId, tripId, authUser.email);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied to this trip' });
     }
@@ -760,6 +807,7 @@ const anonChatLimiter = rateLimit({
 router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const { message, messages: previousMessages } = req.body as {
       message: string;
       messages?: Array<{ role: string; content: string }>;
@@ -767,6 +815,28 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+
+    if (message.length > 2000) {
+      return res.status(400).json({ error: 'Message exceeds maximum length of 2000 characters' });
+    }
+
+    // Validate previousMessages array
+    let historyMessages: Array<{ role: string; content: string }> = [];
+    if (previousMessages) {
+      if (!Array.isArray(previousMessages)) {
+        return res.status(400).json({ error: 'Messages must be an array' });
+      }
+      historyMessages = previousMessages
+        .slice(-8)
+        .filter((msg): msg is { role: string; content: string } => {
+          if (typeof msg !== 'object' || !msg) return false;
+          const { role, content } = msg as Record<string, unknown>;
+          // Only allow user/assistant roles — reject system role injection
+          if (typeof role !== 'string' || !['user', 'assistant'].includes(role)) return false;
+          if (typeof content !== 'string' || content.length === 0 || content.length > 2000) return false;
+          return true;
+        });
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -791,7 +861,6 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
     }
 
     const anonSystemPrompt = buildAnonSystemPrompt(buildSystemPrompt(tripContext));
-    const historyMessages = (previousMessages || []).slice(-8);
     const openaiMessages = buildOpenAIMessages(anonSystemPrompt, historyMessages, message.trim());
 
     setupSSEHeaders(res);
@@ -810,20 +879,26 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
 router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
+    if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
     const { message, thread_id }: SendMessageRequest = req.body;
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    const userId = await getUserIdFromToken(req.headers.authorization || '');
-    if (!userId) {
+    if (message.length > 4000) {
+      return res.status(400).json({ error: 'Message exceeds maximum length' });
+    }
+
+    const authUser = await getUserFromToken(req.headers.authorization || '');
+    if (!authUser) {
       return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Please sign in to use the assistant' });
     }
+    const userId = authUser.id;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    const hasAccess = await canAccessTrip(supabase, userId, tripId);
+    const hasAccess = await canAccessTrip(supabase, userId, tripId, authUser.email);
     if (!hasAccess) {
       return res.status(403).json({ code: 'TRIP_ACCESS_DENIED', message: 'You do not have access to this trip' });
     }

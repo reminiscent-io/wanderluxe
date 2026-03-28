@@ -1,11 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-};
-async function fetchOpenGraphData(url) {
+import { getCorsHeaders } from '../_shared/cors.ts';
+import { requireAuth } from '../_shared/auth.ts';
+
+function isAllowedUrl(urlString: string): boolean {
   try {
-    const response = await fetch(url);
+    const parsed = new URL(urlString);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === 'localhost' ||
+      hostname === '[::1]' ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^169\.254\./.test(hostname) ||
+      /^0\./.test(hostname) ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal')
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function fetchOpenGraphData(url: string) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
     const html = await response.text();
     // Create a simple parser for meta tags
     const getMetaContent = (property)=>{
@@ -60,15 +84,27 @@ async function fetchGooglePlacesImage(url) {
   }
 }
 serve(async (req)=>{
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
       headers: corsHeaders
     });
   }
   try {
+    try { await requireAuth(req); } catch {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401,
+      });
+    }
     const { url } = await req.json();
     if (!url) {
       throw new Error('URL is required');
+    }
+    if (!isAllowedUrl(url)) {
+      return new Response(JSON.stringify({ error: 'Invalid or disallowed URL' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
     }
     // Try OpenGraph first
     const ogData = await fetchOpenGraphData(url);
@@ -89,8 +125,9 @@ serve(async (req)=>{
       status: 200
     });
   } catch (error) {
+    console.error('fetch-url-metadata error:', error);
     return new Response(JSON.stringify({
-      error: error.message
+      error: 'Failed to fetch URL metadata'
     }), {
       headers: {
         ...corsHeaders,

@@ -100,8 +100,7 @@ export function getPhotoUrl(photo: PlacePhotoMeta, maxWidth: number = 640): stri
 
 export async function searchPlaces(
   input: string,
-  types: string = "",
-  locationContext?: string // e.g., "Paris, France" - appended to bias results
+  types: string = ""
 ): Promise<AutocompleteResult[]> {
   if (!input?.trim()) return [];
 
@@ -112,13 +111,8 @@ export async function searchPlaces(
     const session = (await supabase.auth.getSession()).data.session;
     const token = session?.access_token;
 
-    // Append location context to help bias results toward the trip destination
-    const biasedInput = locationContext
-      ? `${input} ${locationContext}`
-      : input;
-
     const params = new URLSearchParams({
-      input: biasedInput,
+      input: input.trim(),
       ...(types ? { types } : {}),
       language: "en",
       // sessiontoken helps Google group keystrokes; your function accepts arbitrary query params
@@ -198,7 +192,11 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceResult | nu
     return (json.result ?? null) as PlaceResult | null;
   } catch (error) {
     console.error("getPlaceDetails error:", error);
-    toast.error("Failed to get location details");
+    // Only show toast for authenticated users (anonymous viewing should fail silently)
+    const session = (await supabase.auth.getSession()).data.session;
+    if (session) {
+      toast.error("Failed to get location details");
+    }
     return null;
   }
 }

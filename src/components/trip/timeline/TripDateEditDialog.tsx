@@ -12,7 +12,7 @@ interface TripDateEditDialogProps {
   departureDate: string;
   onArrivalChange: (date: string) => void;
   onDepartureChange: (date: string) => void;
-  onSave: (arrivalDate?: string, departureDate?: string) => void;
+  onSave: (arrivalDate?: string, departureDate?: string) => void | Promise<void>;
 }
 
 // parse "YYYY-MM-DD" as local date (no TZ offset)
@@ -43,14 +43,21 @@ export default function TripDateEditDialog({
     }
   }, [isOpen, arrivalDate, departureDate]);
 
-  const handleSave = () => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
     if (range?.from && range?.to) {
       const newArrival = format(range.from, 'yyyy-MM-dd');
       const newDeparture = format(range.to, 'yyyy-MM-dd');
       console.log('TripDateEditDialog saving dates:', { newArrival, newDeparture });
       onArrivalChange(newArrival);
       onDepartureChange(newDeparture);
-      onSave(newArrival, newDeparture);
+      setIsSaving(true);
+      try {
+        await onSave(newArrival, newDeparture);
+      } finally {
+        setIsSaving(false);
+      }
       onOpenChange(false);
     }
   };
@@ -104,9 +111,9 @@ export default function TripDateEditDialog({
             <Button
               onClick={handleSave}
               className="flex-1 bg-earth-600 hover:bg-earth-700 text-white"
-              disabled={!range?.from || !range?.to}
+              disabled={!range?.from || !range?.to || isSaving}
             >
-              Save Changes
+              {isSaving ? 'Saving…' : 'Save Changes'}
             </Button>
           </div>
         </div>

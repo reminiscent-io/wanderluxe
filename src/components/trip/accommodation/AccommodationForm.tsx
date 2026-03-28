@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import DOMPurify from 'dompurify';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
@@ -246,7 +247,7 @@ export default function AccommodationForm({
 
     (async () => {
       try {
-        const results = await searchPlaces(hotelName, '', destination);
+        const results = await searchPlaces(hotelName);
         if (cancelled || results.length === 0) return;
 
         const topMatch = results[0];
@@ -329,7 +330,6 @@ export default function AccommodationForm({
               </FormLabel>
               <HotelSearchInput
                 value={field.value}
-                locationContext={destination}
                 onChange={(val, d: any) => {
                   field.onChange(val);
                   // Basic details from picker (if present)
@@ -502,7 +502,7 @@ export default function AccommodationForm({
                       {attribution && (
                         <div
                           className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
-                          dangerouslySetInnerHTML={{ __html: attribution }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(attribution) }}
                         />
                       )}
                     </div>

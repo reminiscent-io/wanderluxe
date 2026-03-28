@@ -24,13 +24,20 @@ const BOT_UA_PATTERNS = [
   'Googlebot',
   'bingbot',
   'PetalBot',
+  // macOS Messages and Apple link-preview agents
+  'MessageMedia',
+  'com.apple.SafariViewService',
+  'dataminr',
+  'rogerbot',
+  'tumblr',
+  'vkShare',
+  'W3C_Validator',
   'bot',
   'crawler',
   'spider',
-  'preview',
 ];
 
-function isBot(userAgent: string | undefined): boolean {
+export function isBot(userAgent: string | undefined): boolean {
   if (!userAgent) return false;
   const ua = userAgent.toLowerCase();
   return BOT_UA_PATTERNS.some((pattern) => ua.includes(pattern.toLowerCase()));

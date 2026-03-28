@@ -30,19 +30,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [message]);
 
-  // Handle focus to prevent browser auto-scroll issues on mobile
+  // Handle focus - wait for iOS keyboard to settle, then ensure input is visible
   const handleFocus = useCallback(() => {
-    // On mobile, we don't want to call scrollIntoView at all because:
-    // 1. The visual viewport API already handles keyboard appearance
-    // 2. Browser scrollIntoView can cause the entire page to shift
-    // 3. The fixed positioning of the drawer keeps the input visible
-
-    // Prevent default scroll behavior by stopping propagation
-    // The drawer's fixed positioning with visual viewport height handles visibility
-    if (textareaRef.current) {
-      // Just ensure focus without scrolling
-      // The visual viewport resize will keep this in view
-    }
+    // On iOS PWA, the keyboard animation takes ~300ms. After it settles,
+    // the FullScreenModal resizes via Visual Viewport API. We then scroll
+    // the textarea into view *within the modal* (not the page) so paste
+    // and text selection work properly.
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }, 350);
   }, []);
 
   const handleSend = useCallback(() => {
@@ -84,7 +82,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = (message.trim().length > 0 || attachment) && !disabled && !isSending;
 
   return (
-    <div className="border-t border-sand-200 bg-background p-3">
+    <div className="border-t border-sand-200 bg-background px-3 py-2">
       {/* Attachment preview */}
       {attachment && (
         <div className="mb-2 relative inline-block">

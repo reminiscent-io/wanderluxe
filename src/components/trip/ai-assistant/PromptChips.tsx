@@ -60,26 +60,23 @@ const getIcon = (iconName: string) => {
 
 const PromptChips: React.FC<PromptChipsProps> = ({ onSelect, disabled = false }) => {
   return (
-    <div className="px-4 py-3 border-b border-sand-100">
-      <p className="text-xs text-sand-500 mb-2">Quick prompts:</p>
-      <div className="flex flex-wrap gap-2">
-        {DEFAULT_PROMPTS.map((chip) => {
-          const Icon = getIcon(chip.icon || 'calendar');
-          return (
-            <Button
-              key={chip.id}
-              variant="outline"
-              size="sm"
-              onClick={() => onSelect(chip.prompt)}
-              disabled={disabled}
-              className="h-7 px-2.5 text-xs bg-white border-sand-200 text-earth-600 hover:bg-sand-50 hover:border-earth-300 hover:text-earth-700 rounded-full transition-colors"
-            >
-              <Icon className="w-3 h-3 mr-1.5" />
-              {chip.label}
-            </Button>
-          );
-        })}
-      </div>
+    <div className="flex flex-wrap justify-center gap-2 w-full">
+      {DEFAULT_PROMPTS.map((chip) => {
+        const Icon = getIcon(chip.icon || 'calendar');
+        return (
+          <Button
+            key={chip.id}
+            variant="outline"
+            size="sm"
+            onClick={() => onSelect(chip.prompt)}
+            disabled={disabled}
+            className="h-8 px-3 text-xs bg-white border-sand-200 text-earth-600 hover:bg-sand-50 hover:border-earth-300 hover:text-earth-700 rounded-full transition-colors"
+          >
+            <Icon className="w-3.5 h-3.5 mr-1.5" />
+            {chip.label}
+          </Button>
+        );
+      })}
     </div>
   );
 };

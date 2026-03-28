@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import DOMPurify from 'dompurify';
 import {
   loadGoogleMapsAPI,
   getPlaceDetails,
@@ -157,7 +158,7 @@ export default function PhotoStrip({ placeId, title }: PhotoStripProps) {
                   {attribution && (
                     <div
                       className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
-                      dangerouslySetInnerHTML={{ __html: attribution }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(attribution) }}
                     />
                   )}
                 </div>

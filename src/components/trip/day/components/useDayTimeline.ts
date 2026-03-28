@@ -127,9 +127,12 @@ function getTransportDisplayInfo(
   }
 
   if (isStartDay) {
+    const isRentalCar = t.type === 'rental_car';
     return {
       displayTime: t.start_time || undefined,
-      title: `${t.departure_location || 'Departure'} →`,
+      title: isRentalCar
+        ? `Rental Car Pickup: ${t.departure_location || 'Pickup'}`
+        : `${t.departure_location || 'Departure'} →`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -137,9 +140,12 @@ function getTransportDisplayInfo(
   }
 
   if (isEndDay) {
+    const isRentalCar = t.type === 'rental_car';
     return {
       displayTime: t.end_time || undefined,
-      title: `→ ${t.arrival_location || 'Arrival'}`,
+      title: isRentalCar
+        ? `Rental Car Return: ${t.arrival_location || 'Return'}`
+        : `→ ${t.arrival_location || 'Arrival'}`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -367,13 +373,22 @@ export function useDayTimeline({
   }, [filteredHotelStays, normalizedDay]);
 
   // Filter transportations for this day
+  // Rental cars only show on pickup (start) and return (end) dates, not mid-rental days
   const filteredTransportations = useMemo(() => {
     const list = transportations || [];
     return list.filter((t) => {
       const start = t.start_date;
       const end = t.end_date ? t.end_date : start;
       const dayDate = new Date(normalizedDay);
-      return dayDate >= new Date(start) && dayDate <= new Date(end);
+      const inRange = dayDate >= new Date(start) && dayDate <= new Date(end);
+      if (!inRange) return false;
+
+      // For rental cars, only show on start and end dates
+      if (t.type === 'rental_car') {
+        return normalizedDay === start || normalizedDay === end;
+      }
+
+      return true;
     });
   }, [transportations, normalizedDay]);
 

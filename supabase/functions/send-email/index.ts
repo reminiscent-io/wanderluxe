@@ -3,16 +3,12 @@
 // WanderLuxe — Share Trip Email via Mailgun (Supabase Edge Function)
 const DEFAULT_VIEW_URL = "https://wanderluxe.io";
 // Minimal CORS (tighten the origin if you want an allowlist)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "mail.wanderluxe.io";
 if (!MAILGUN_API_KEY) throw new Error("MAILGUN_API_KEY is not set");
 // tiny helpers
-const isEmail = (s)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+const isEmail = (s)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && !/[\r\n]/.test(s);
 const esc = (s)=>s.replace(/[&<>"']/g, (m)=>({
       "&": "&amp;",
       "<": "&lt;",
@@ -21,6 +17,7 @@ const esc = (s)=>s.replace(/[&<>"']/g, (m)=>({
       "'": "&#39;"
     })[m]);
 Deno.serve(async (req)=>{
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   if (req.method === "OPTIONS") return new Response(null, {
     headers: corsHeaders
   });

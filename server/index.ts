@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 import { createServer } from 'http';
@@ -12,7 +13,44 @@ const app = express();
 // Trust first proxy (Replit, Cloudflare, etc.) for accurate rate limiting
 app.set('trust proxy', 1);
 
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:5001'];
+
+const allowedOriginPatterns = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /wanderluxe\.io$/];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, mobile apps, same-origin)
+    if (!origin) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOriginPatterns.some(pattern => pattern.test(origin))) return callback(null, true);
+    console.warn(`CORS blocked origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://plus.unsplash.com", "https://*.supabase.co", "https://maps.googleapis.com", "https://lh3.googleusercontent.com", "https://places.googleapis.com", "https://www.googletagmanager.com", "https://www.google-analytics.com", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
+      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "https://api.stripe.com", "https://maps.googleapis.com", "https://places.googleapis.com", "https://www.google-analytics.com", "https://region1.google-analytics.com", "https://www.googletagmanager.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://images.unsplash.com", "https://plus.unsplash.com", "https://lh3.googleusercontent.com", "https://ipapi.co", "https://*.replit.dev", "wss://*.replit.dev", "https://*.repl.co", "wss://*.repl.co", "https://*.replit.app", "wss://*.replit.app"],
+      frameSrc: ["'self'", "https://js.stripe.com"],
+      frameAncestors: ["'self'", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  frameguard: false,
+}));
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
@@ -27,8 +65,8 @@ const generalLimiter = rateLimit({
   message: 'Too many requests, please try again later.',
 });
 
-// Apply rate limiting to all routes
-app.use(generalLimiter);
+// Apply rate limiting to API routes only (not static files)
+app.use('/api', generalLimiter);
 
 registerRoutes(app);
 

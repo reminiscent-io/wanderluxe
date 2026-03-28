@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -299,7 +300,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <RestaurantSearchInput
                 autoFocus
                 value={field.value}
-                locationContext={destination}
                 onChange={(name, details) => {
                   field.onChange(name);
                   if (details) {
@@ -386,7 +386,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       {attribution && (
                         <div
                           className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
-                          dangerouslySetInnerHTML={{ __html: attribution }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(attribution) }}
                         />
                       )}
                     </div>

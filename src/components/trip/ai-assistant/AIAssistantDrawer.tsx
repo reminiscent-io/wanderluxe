@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, Component, ReactNode } from 'react';
 import { FullScreenModal } from '@/components/ui/fullscreen-modal';
-import { Sparkles, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
+import { useVisualViewport } from '@/hooks/useVisualViewport';
+import { Sparkles, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -14,17 +15,6 @@ import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
 import ItemStepperDialog from './ItemStepperDialog';
 import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem } from '@/types/ai-assistant';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -81,6 +71,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   onOpenChange
 }) => {
   const queryClient = useQueryClient();
+  const { isKeyboardOpen } = useVisualViewport();
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallUsage, setPaywallUsage] = useState<AIUsageInfo | undefined>();
   const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
@@ -221,15 +212,6 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     setItemsToProcess([]);
   }, []);
 
-  const handleClearChat = useCallback(async () => {
-    try {
-      await clearThread();
-    } catch (e) {
-      console.error('Failed to clear thread:', e);
-    }
-    setExtractionMessages([]);
-    clearExtraction();
-  }, [clearThread, clearExtraction]);
 
   const handleSend = useCallback(async (message: string, attachment?: ChatFileAttachment) => {
     try {
@@ -305,82 +287,32 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       <FullScreenModal open={open} onOpenChange={handleOpenChange} closeOnOverlayClick={!isStreaming}>
         {/* Header with safe area padding for PWA/notch */}
         <div
-          className="border-b border-sand-200 pb-3 px-4 flex-shrink-0"
-          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+          className="border-b border-sand-200 pb-2 px-4 flex-shrink-0"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 10px)' }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
               </div>
-              <div>
-                <h2 className="text-left text-earth-700 font-semibold text-lg leading-none tracking-tight">Trip Assistant</h2>
-                <p className="text-xs text-sand-500">AI-powered travel help</p>
-              </div>
+              <h2 className="text-left text-earth-700 font-semibold text-base leading-none tracking-tight">Trip Assistant</h2>
             </div>
 
-            <div className="flex items-center gap-1">
-              {/* Clear chat button */}
-              {allMessages.length > 0 && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-sand-400 hover:text-red-500"
-                      title="Clear chat"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Clear chat history?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently delete all messages in this conversation.
-                        This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleClearChat}
-                        className="bg-red-500 hover:bg-red-600"
-                      >
-                        Clear
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-
-              {/* Minimize button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleOpenChange(false)}
-                className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
-                disabled={isStreaming}
-                title="Minimize"
-              >
-                <ChevronDown className="w-5 h-5" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleOpenChange(false)}
+              className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
+              disabled={isStreaming}
+              title="Minimize"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </Button>
           </div>
         </div>
 
           <AIAssistantErrorBoundary key={errorBoundaryKey} onReset={handleErrorBoundaryReset}>
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              {/* Prompt chips - show when no messages */}
-              {allMessages.length === 0 && !isLoading && (
-                <div className="flex-shrink-0">
-                  <PromptChips
-                    onSelect={handlePromptSelect}
-                    disabled={isDisabled}
-                  />
-                </div>
-              )}
-
               <ChatMessageList
                 messages={allMessages}
                 isLoading={isLoading || isExtracting}
@@ -393,6 +325,12 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 onImportAll={handleImportAll}
                 onReviewEdit={handleReviewEdit}
                 isImporting={isImporting}
+                emptyStateSlot={
+                  <PromptChips
+                    onSelect={handlePromptSelect}
+                    disabled={isDisabled}
+                  />
+                }
               />
 
               {/* Error display */}
@@ -402,18 +340,20 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 </div>
               )}
 
-              {/* Usage meter */}
-              <div className="flex-shrink-0">
-                <UsageMeter
-                  usage={usage}
-                  onUpgradeClick={() => setShowPaywall(true)}
-                />
-              </div>
+              {/* Usage meter - hidden when keyboard is open to save space */}
+              {!isKeyboardOpen && (
+                <div className="flex-shrink-0">
+                  <UsageMeter
+                    usage={usage}
+                    onUpgradeClick={() => setShowPaywall(true)}
+                  />
+                </div>
+              )}
 
-              {/* Input - with safe area padding for PWA bottom inset */}
+              {/* Input - safe area padding only when keyboard is closed (keyboard covers the home indicator) */}
               <div
                 className="flex-shrink-0 bg-white"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+                style={{ paddingBottom: isKeyboardOpen ? 0 : 'env(safe-area-inset-bottom, 0px)' }}
               >
                 <ChatInput
                   onSend={handleSend}

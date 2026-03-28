@@ -98,6 +98,9 @@ export function FullScreenModal({
           height: viewport.height,
           overscrollBehavior: 'contain',
           overflow: 'hidden',
+          // Smooth keyboard open/close transitions on iOS
+          willChange: 'height, top',
+          transition: 'height 0.1s ease-out, top 0.1s ease-out',
         }}
       >
         {children}

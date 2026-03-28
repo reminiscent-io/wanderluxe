@@ -408,7 +408,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                   Add to this day
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start" className="w-48">
+                              <DropdownMenuContent align="start" className="w-48 bg-white">
                                 <DropdownMenuItem onClick={addActivityForThisDay} className="gap-2">
                                   <Star className="h-4 w-4 text-earth-600" />
                                   Activity

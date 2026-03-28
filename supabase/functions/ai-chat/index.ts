@@ -1,11 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS'
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
@@ -63,10 +59,10 @@ type SystemPromptParams = {
   serperApiKey: string | undefined;
 };
 
-function jsonResponse(body: Record<string, unknown>, status = 200): Response {
+function jsonResponse(body: Record<string, unknown>, status = 200, cors: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    headers: { ...cors, 'Content-Type': 'application/json' }
   });
 }
 
@@ -213,16 +209,16 @@ async function callOpenAI(messages: OpenAIMessage[], stream: boolean, options: O
   });
 }
 
-async function handleUsage(supabase: SupabaseClient, userId: string): Promise<Response> {
+async function handleUsage(supabase: SupabaseClient, userId: string, cors: Record<string, string> = {}): Promise<Response> {
   const today = new Date().toISOString().split('T')[0];
   const { data } = await supabase.rpc('get_ai_usage', { check_user_id: userId, check_date: today });
   const tomorrow = new Date(); tomorrow.setUTCDate(tomorrow.getUTCDate() + 1); tomorrow.setUTCHours(0,0,0,0);
-  return jsonResponse({ used: data?.[0]?.current_count || 0, limit: data?.[0]?.daily_limit || 15, tier: data?.[0]?.subscription_tier || 'free', resetAt: tomorrow.toISOString() });
+  return jsonResponse({ used: data?.[0]?.current_count || 0, limit: data?.[0]?.daily_limit || 15, tier: data?.[0]?.subscription_tier || 'free', resetAt: tomorrow.toISOString() }, 200, cors);
 }
 
-async function handleGetMessages(supabase: SupabaseClient, tripId: string, userId: string, url: URL): Promise<Response> {
+async function handleGetMessages(supabase: SupabaseClient, tripId: string, userId: string, url: URL, cors: Record<string, string> = {}): Promise<Response> {
   const { data: thread } = await supabase.from('ai_chat_threads').select('id').eq('trip_id', tripId).eq('user_id', userId).single();
-  if (!thread) return jsonResponse({ messages: [], thread_id: null, hasMore: false });
+  if (!thread) return jsonResponse({ messages: [], thread_id: null, hasMore: false }, 200, cors);
 
   const limit = Number.parseInt(url.searchParams.get('limit') || '5');
   const offset = Number.parseInt(url.searchParams.get('offset') || '0');
@@ -239,12 +235,12 @@ async function handleGetMessages(supabase: SupabaseClient, tripId: string, userI
   const orderedMessages = (messages || []).reverse();
   const hasMore = offset + limit < (totalCount || 0);
 
-  return jsonResponse({ messages: orderedMessages, thread_id: thread.id, hasMore, totalCount });
+  return jsonResponse({ messages: orderedMessages, thread_id: thread.id, hasMore, totalCount }, 200, cors);
 }
 
-async function handleDeleteMessages(supabase: SupabaseClient, tripId: string, userId: string): Promise<Response> {
+async function handleDeleteMessages(supabase: SupabaseClient, tripId: string, userId: string, cors: Record<string, string> = {}): Promise<Response> {
   await supabase.from('ai_chat_threads').delete().eq('trip_id', tripId).eq('user_id', userId);
-  return jsonResponse({ success: true });
+  return jsonResponse({ success: true }, 200, cors);
 }
 
 async function resolveThreadId(supabase: SupabaseClient, tripId: string, userId: string, threadIdInput: string | null): Promise<string | null> {
@@ -272,27 +268,29 @@ function buildLocationContext(
   const locationHints: string[] = [];
 
   accommodations?.forEach((a: any) => {
-    if (a.hotel_address) locationHints.push(a.hotel_address);
-    else if (a.hotel) locationHints.push(a.hotel);
+    if (a.hotel_address) locationHints.push(sanitizeForPrompt(a.hotel_address));
+    else if (a.hotel) locationHints.push(sanitizeForPrompt(a.hotel));
   });
 
   transportation?.forEach((t: any) => {
-    if (t.arrival_location) locationHints.push(t.arrival_location);
+    if (t.arrival_location) locationHints.push(sanitizeForPrompt(t.arrival_location));
   });
 
   reservations?.forEach((r: any) => {
-    if (r.address) locationHints.push(r.address);
+    if (r.address) locationHints.push(sanitizeForPrompt(r.address));
   });
 
   const inferredLocations = locationHints.length > 0 ? locationHints.slice(0, 3).join('; ') : null;
+  const safeTripName = sanitizeForPrompt(tripName);
+  const safeDest = sanitizeForPrompt(primaryDestination);
 
-  if (primaryDestination) {
-    return `The trip "${tripName}" is to ${primaryDestination}.`;
+  if (safeDest) {
+    return `The trip "${safeTripName}" is to ${safeDest}.`;
   }
   if (inferredLocations) {
-    return `The trip is named "${tripName}". Based on booked accommodations, transportation, and reservations, the locations include: ${inferredLocations}.`;
+    return `The trip is named "${safeTripName}". Based on booked accommodations, transportation, and reservations, the locations include: ${inferredLocations}.`;
   }
-  return `The trip destination is: ${tripName}.`;
+  return `The trip destination is: ${safeTripName}.`;
 }
 
 function buildSearchStep2WithSerper(): string {
@@ -326,7 +324,9 @@ function buildSystemPrompt(params: SystemPromptParams): string {
   const mapsUrl = 'https://www.google.com/maps/search/PLACE+NAME+' + searchLocation;
   const searchUrl = 'https://www.google.com/search?q=PLACE+NAME+' + searchLocation;
 
-  return `You are a helpful travel assistant for a trip to ${tripName}. ${locationContext}
+  const safeTripName = sanitizeForPrompt(tripName);
+
+  return `You are a helpful travel assistant for a trip to ${safeTripName}. ${locationContext}
 Trip dates: ${arrivalDate} to ${departureDate}.${partySizeContext}${itineraryContext}
 
 Accommodations:
@@ -476,11 +476,16 @@ async function fetchTripContext(supabase: SupabaseClient, tripId: string) {
   return { trip, days, accommodations, transportation, reservations };
 }
 
+function sanitizeForPrompt(input: string | null | undefined): string {
+  if (!input) return '';
+  return input.replace(/[\r\n]+/g, ' ').replace(/[`$\\]/g, '').slice(0, 200);
+}
+
 function buildItineraryContext(days: any[] | null): string {
   if (!days || days.length === 0) return '';
   const daysSummary = days.slice(0, 10).map((d: any) => {
-    const activities = d.day_activities?.map((a: any) => a.title).join(', ') || 'no activities yet';
-    const titleSuffix = d.title ? ' - ' + d.title : '';
+    const activities = d.day_activities?.map((a: any) => sanitizeForPrompt(a.title)).join(', ') || 'no activities yet';
+    const titleSuffix = d.title ? ' - ' + sanitizeForPrompt(d.title) : '';
     return d.date + titleSuffix + ':\n  ' + activities;
   }).join('\n\n');
   return '\n\nCurrent Itinerary:\n' + daysSummary;
@@ -488,8 +493,8 @@ function buildItineraryContext(days: any[] | null): string {
 
 function formatAccommodationLine(a: any): string {
   const dates = (a.hotel_checkin_date || 'TBD') + ' to ' + (a.hotel_checkout_date || 'TBD');
-  const address = a.hotel_address ? ' (' + a.hotel_address + ')' : '';
-  return '- ' + a.hotel + ': ' + dates + address;
+  const address = a.hotel_address ? ' (' + sanitizeForPrompt(a.hotel_address) + ')' : '';
+  return '- ' + sanitizeForPrompt(a.hotel) + ': ' + dates + address;
 }
 
 function formatAccommodations(accommodations: any[] | null): string {
@@ -499,11 +504,11 @@ function formatAccommodations(accommodations: any[] | null): string {
 }
 
 function formatTransportationLine(t: any): string {
-  const provider = t.provider ? ' (' + t.provider + ')' : '';
-  const departure = t.departure_location || 'TBD';
-  const arrival = t.arrival_location || 'TBD';
+  const provider = t.provider ? ' (' + sanitizeForPrompt(t.provider) + ')' : '';
+  const departure = sanitizeForPrompt(t.departure_location) || 'TBD';
+  const arrival = sanitizeForPrompt(t.arrival_location) || 'TBD';
   const time = t.start_time ? ' at ' + t.start_time : '';
-  return '- ' + t.type + provider + ': ' + departure + ' \u2192 ' + arrival + ' on ' + t.start_date + time;
+  return '- ' + sanitizeForPrompt(t.type) + provider + ': ' + departure + ' \u2192 ' + arrival + ' on ' + t.start_date + time;
 }
 
 function formatTransportation(transportation: any[] | null): string {
@@ -613,19 +618,21 @@ async function handlePostMessage(
   userId: string,
   openaiApiKey: string,
   serperApiKey: string | undefined,
-  model: string
+  model: string,
+  cors: Record<string, string> = {}
 ): Promise<Response> {
   const { message, thread_id } = await req.json();
-  if (!message?.trim()) return jsonResponse({ error: 'Message required' }, 400);
+  if (!message?.trim()) return jsonResponse({ error: 'Message required' }, 400, cors);
+  if (message.length > 4000) return jsonResponse({ error: 'Message too long' }, 400, cors);
 
   const today = new Date().toISOString().split('T')[0];
   const { data: usageData } = await supabase.rpc('increment_ai_usage', { check_user_id: userId, check_date: today });
   if (usageData?.[0] && !usageData[0].allowed) {
-    return jsonResponse({ code: 'DAILY_LIMIT_REACHED', message: 'Daily limit reached', used: usageData[0].current_count, limit: usageData[0].daily_limit }, 429);
+    return jsonResponse({ code: 'DAILY_LIMIT_REACHED', message: 'Daily limit reached', used: usageData[0].current_count, limit: usageData[0].daily_limit }, 429, cors);
   }
 
   const threadId = await resolveThreadId(supabase, tripId, userId, thread_id || null);
-  if (!threadId) return jsonResponse({ code: 'ERROR', message: 'Thread creation failed' }, 500);
+  if (!threadId) return jsonResponse({ code: 'ERROR', message: 'Thread creation failed' }, 500, cors);
 
   await supabase.from('ai_chat_messages').insert({ thread_id: threadId, role: 'user', content: message.trim() });
 
@@ -679,7 +686,7 @@ async function handlePostMessage(
     }
   });
 
-  return new Response(stream, { headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' } });
+  return new Response(stream, { headers: { ...cors, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' } });
 }
 
 async function authenticateUser(supabase: SupabaseClient, authHeader: string): Promise<{ userId: string; userEmail: string | undefined } | null> {
@@ -703,6 +710,7 @@ async function checkTripAccess(supabase: SupabaseClient, tripId: string, userId:
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -712,10 +720,10 @@ Deno.serve(async (req: Request) => {
   const tripId = pathParts[1];
   const action = pathParts[2];
 
-  if (!tripId) return jsonResponse({ error: 'Trip ID required' }, 400);
+  if (!tripId) return jsonResponse({ error: 'Trip ID required' }, 400, corsHeaders);
 
   const authHeader = req.headers.get('Authorization');
-  if (!authHeader) return jsonResponse({ code: 'UNAUTHORIZED', message: 'Missing authorization' }, 401);
+  if (!authHeader) return jsonResponse({ code: 'UNAUTHORIZED', message: 'Missing authorization' }, 401, corsHeaders);
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -726,27 +734,27 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   const user = await authenticateUser(supabase, authHeader);
-  if (!user) return jsonResponse({ code: 'UNAUTHORIZED', message: 'Invalid token' }, 401);
+  if (!user) return jsonResponse({ code: 'UNAUTHORIZED', message: 'Invalid token' }, 401, corsHeaders);
 
   const hasAccess = await checkTripAccess(supabase, tripId, user.userId, user.userEmail);
-  if (!hasAccess) return jsonResponse({ code: 'FORBIDDEN', message: 'Access denied' }, 403);
+  if (!hasAccess) return jsonResponse({ code: 'FORBIDDEN', message: 'Access denied' }, 403, corsHeaders);
 
   if (action === 'usage' && req.method === 'GET') {
-    return handleUsage(supabase, user.userId);
+    return handleUsage(supabase, user.userId, corsHeaders);
   }
 
   if (action === 'messages' && req.method === 'GET') {
-    return handleGetMessages(supabase, tripId, user.userId, url);
+    return handleGetMessages(supabase, tripId, user.userId, url, corsHeaders);
   }
 
   if (action === 'messages' && req.method === 'DELETE') {
-    return handleDeleteMessages(supabase, tripId, user.userId);
+    return handleDeleteMessages(supabase, tripId, user.userId, corsHeaders);
   }
 
   if (req.method === 'POST' && !action) {
-    if (!openaiApiKey) return jsonResponse({ code: 'CONFIG_ERROR', message: 'OpenAI not configured' }, 500);
-    return handlePostMessage(req, supabase, tripId, user.userId, openaiApiKey, serperApiKey, model);
+    if (!openaiApiKey) return jsonResponse({ code: 'CONFIG_ERROR', message: 'OpenAI not configured' }, 500, corsHeaders);
+    return handlePostMessage(req, supabase, tripId, user.userId, openaiApiKey, serperApiKey, model, corsHeaders);
   }
 
-  return jsonResponse({ error: 'Method not allowed' }, 405);
+  return jsonResponse({ error: 'Method not allowed' }, 405, corsHeaders);
 });
