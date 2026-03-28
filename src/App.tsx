@@ -9,26 +9,31 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
-import Index from "./pages/Index";
-import CreateTrip from "./pages/CreateTrip";
-import NotFound from "./pages/NotFound";
-import MyTrips from "./pages/MyTrips";
-import TripDetails from "./pages/TripDetails";
-import Auth from "./pages/Auth";
-import ForgotPassword from "./pages/Auth/ForgotPassword";
-import UpdatePassword from "./pages/Auth/UpdatePassword";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Profile from "./pages/Profile";
-import Accommodations from "./pages/Accommodations";
-import Budget from "./pages/Budget";
-import Settings from "./pages/Settings";
-import LLMTraining from "./pages/LLMTraining";
-import Explore from "./pages/Explore";
-import Admin from "./pages/Admin";
 import AdminRoute from "./components/AdminRoute";
-import InviteRedeem from "./pages/InviteRedeem";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+
+// Landing page loaded eagerly — it's the entry point
+import Index from "./pages/Index";
+
+// All other pages lazy-loaded for code splitting
+const CreateTrip = lazy(() => import("./pages/CreateTrip"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const MyTrips = lazy(() => import("./pages/MyTrips"));
+const TripDetails = lazy(() => import("./pages/TripDetails"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
+const UpdatePassword = lazy(() => import("./pages/Auth/UpdatePassword"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Accommodations = lazy(() => import("./pages/Accommodations"));
+const Budget = lazy(() => import("./pages/Budget"));
+const Settings = lazy(() => import("./pages/Settings"));
+const LLMTraining = lazy(() => import("./pages/LLMTraining"));
+const Explore = lazy(() => import("./pages/Explore"));
+const Admin = lazy(() => import("./pages/Admin"));
+const InviteRedeem = lazy(() => import("./pages/InviteRedeem"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -61,6 +66,7 @@ const App = () => {
               <ScrollToTop />
               <CookieConsentBanner />
               <AppLayout>
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-6 w-6 animate-spin text-sand-400" /></div>}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
@@ -126,6 +132,7 @@ const App = () => {
                   />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                </Suspense>
               </AppLayout>
             </BrowserRouter>
           </TooltipProvider>

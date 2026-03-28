@@ -94,16 +94,17 @@ async function checkIfUSBased(): Promise<boolean> {
 
   try {
     // Using ipapi.co - free tier allows 1000 requests/day
-    const response = await fetch("https://ipapi.co/json/", {
-      signal: AbortSignal.timeout(5000), // 5 second timeout
+    // Use /country/ endpoint for minimal response (plain text country code)
+    const response = await fetch("https://ipapi.co/country/", {
+      signal: AbortSignal.timeout(2000), // 2 second timeout (non-critical UX decision)
     });
 
     if (!response.ok) {
       throw new Error("Geo API request failed");
     }
 
-    const data = await response.json();
-    const isUSBased = data.country_code === "US";
+    const countryCode = (await response.text()).trim();
+    const isUSBased = countryCode === "US";
 
     // Cache the result
     const geoCache: GeoCache = {
@@ -140,8 +141,14 @@ export const ConsentProvider = ({ children }: { children: React.ReactNode }) => 
     }
   }, []);
 
-  // Check geo-location
+  // Check geo-location (skip entirely if user already consented — banner won't show regardless)
   useEffect(() => {
+    const stored = getStorageItem(STORAGE_KEY);
+    if (stored) {
+      setIsLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     async function checkGeo() {
