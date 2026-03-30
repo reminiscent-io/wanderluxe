@@ -5,6 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 // Global set to track active subscriptions and prevent duplicates
 const activeSubscriptions = new Set<string>();
 
+// Counter for generating unique channel names per hook instance
+let instanceCounter = 0;
+
 export interface RealtimeTableListener {
   table: string;
   filterColumn: string;
@@ -60,6 +63,11 @@ export function useRealtimeSubscription(
   const queryClient = useQueryClient();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const channelRef = useRef<any>(null);
+  // Stable unique ID per hook instance to avoid Supabase channel name collisions
+  const instanceIdRef = useRef<number | null>(null);
+  if (instanceIdRef.current === null) {
+    instanceIdRef.current = ++instanceCounter;
+  }
 
   const {
     channelKey,
@@ -68,6 +76,10 @@ export function useRealtimeSubscription(
     enabled = true,
     dedup = true,
   } = config;
+
+  // When dedup is true, use the channelKey as-is (shared across instances).
+  // When dedup is false, append a unique suffix so each hook instance gets its own channel.
+  const resolvedChannelKey = dedup ? channelKey : `${channelKey}:${instanceIdRef.current}`;
 
   // Use ref so the callback doesn't change when invalidateKeys changes by reference
   const invalidateKeysRef = useRef(invalidateKeys);
@@ -83,17 +95,17 @@ export function useRealtimeSubscription(
   const tablesKey = JSON.stringify(tables);
 
   useEffect(() => {
-    if (!enabled || !channelKey) return;
+    if (!enabled || !resolvedChannelKey) return;
 
-    if (dedup && activeSubscriptions.has(channelKey)) {
+    if (dedup && activeSubscriptions.has(resolvedChannelKey)) {
       return;
     }
 
     if (dedup) {
-      activeSubscriptions.add(channelKey);
+      activeSubscriptions.add(resolvedChannelKey);
     }
 
-    let channel = supabase.channel(channelKey);
+    let channel = supabase.channel(resolvedChannelKey);
 
     for (const listener of tables) {
       channel = channel.on(
@@ -120,12 +132,12 @@ export function useRealtimeSubscription(
         channelRef.current = null;
       }
       if (dedup) {
-        activeSubscriptions.delete(channelKey);
+        activeSubscriptions.delete(resolvedChannelKey);
       }
       setIsSubscribed(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelKey, enabled, dedup, handleChange, tablesKey]);
+  }, [resolvedChannelKey, enabled, dedup, handleChange, tablesKey]);
 
   return { isSubscribed };
 }
