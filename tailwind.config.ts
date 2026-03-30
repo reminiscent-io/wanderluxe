@@ -21,6 +21,34 @@ export default {
       fontFamily: {
         display: ['"DM Serif Display"', 'Georgia', 'serif'],
         sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+      },
+      typography: {
+        earth: {
+          css: {
+            '--tw-prose-body': 'var(--earth-700)',
+            '--tw-prose-headings': 'var(--earth-800)',
+            '--tw-prose-links': 'var(--earth-600)',
+            fontFamily: '"DM Sans", system-ui, sans-serif',
+            'h1, h2, h3': {
+              fontFamily: '"DM Serif Display", Georgia, serif',
+            },
+            code: {
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+            },
+          },
+        },
+        DEFAULT: {
+          css: {
+            fontFamily: '"DM Sans", system-ui, sans-serif',
+            'h1, h2, h3': {
+              fontFamily: '"DM Serif Display", Georgia, serif',
+            },
+            code: {
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+            },
+          },
+        },
       },
       borderRadius: {
         'card': '0.75rem',
@@ -102,5 +130,8 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+  ],
 } satisfies Config;
