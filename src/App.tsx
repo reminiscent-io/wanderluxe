@@ -11,6 +11,7 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import AdminRoute from "./components/AdminRoute";
 import { lazy, Suspense, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 // Landing page loaded eagerly — it's the entry point
 import Index from "./pages/Index";
@@ -65,7 +66,7 @@ const App = () => {
               <ScrollToTop />
               <CookieConsentBanner />
               <AppLayout>
-                <Suspense fallback={null}>
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-6 w-6 animate-spin text-sand-400" /></div>}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />

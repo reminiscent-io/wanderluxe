@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 
@@ -52,7 +53,15 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;');
 }
 
-router.get('/invite/:code', async (req: Request, res: Response) => {
+const invitePreviewLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many invite preview requests, please try again later.',
+});
+
+router.get('/invite/:code', invitePreviewLimiter, async (req: Request, res: Response) => {
   const { code } = req.params;
   const userAgent = req.get('user-agent');
 

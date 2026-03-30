@@ -40,13 +40,28 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   const userScrolledUpRef = useRef<boolean>(false);
   const lastMessageCountRef = useRef<number>(0);
 
+  // Reliable scroll-to-bottom using scrollTop on the container
+  const scrollToBottom = useCallback((smooth = true) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (smooth) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, []);
+
   // Scroll to bottom on initial load
   useEffect(() => {
-    if (messages.length > 0 && !hasInitialScrolled.current && scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: 'instant' });
-      hasInitialScrolled.current = true;
+    if (messages.length > 0 && !hasInitialScrolled.current && containerRef.current) {
+      // Use rAF to ensure DOM has laid out before scrolling
+      requestAnimationFrame(() => {
+        scrollToBottom(false);
+        hasInitialScrolled.current = true;
+      });
     }
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   // Reset initial scroll flag when messages are cleared
   useEffect(() => {
@@ -71,26 +86,24 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     if (!hasInitialScrolled.current) return;
     if (messages.length > lastMessageCountRef.current) {
       userScrolledUpRef.current = false;
-      if (scrollRef.current) {
-        scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
+      requestAnimationFrame(() => scrollToBottom(true));
     }
     lastMessageCountRef.current = messages.length;
-  }, [messages.length]);
+  }, [messages.length, scrollToBottom]);
 
   // Auto-scroll during streaming, but only if user hasn't scrolled up
   useEffect(() => {
     if (!hasInitialScrolled.current || !isStreaming) return;
     if (userScrolledUpRef.current) return;
 
-    if (scrollRef.current && containerRef.current) {
-      const container = containerRef.current;
-      const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+    const container = containerRef.current;
+    if (!container) return;
 
-      if (isNearBottom) {
-        scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+
+    if (isNearBottom) {
+      container.scrollTop = container.scrollHeight;
     }
   }, [streamingContent, isStreaming]);
 

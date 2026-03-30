@@ -47,9 +47,8 @@ app.use(helmet({
       frameAncestors: ["'self'", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
     },
   },
-  crossOriginEmbedderPolicy: false,
+  crossOriginEmbedderPolicy: { policy: "credentialless" },
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  frameguard: false,
 }));
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));

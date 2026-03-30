@@ -46,7 +46,6 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Isolate heavy vendor libraries into separate chunks
           if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
             return 'charts';
           }
