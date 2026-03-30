@@ -212,6 +212,9 @@ export default function AccommodationForm({
     }
   }, [stayRange, form]);
 
+  /* ------------------- Track place_id changes -------------------------- */
+  const [placeIdChanged, setPlaceIdChanged] = useState(false);
+
   /* ------------------------------- FX ---------------------------------- */
   useEffect(() => {
     loadGoogleMapsAPI().catch(console.error); // no-op with proxy loader
@@ -300,7 +303,7 @@ export default function AccommodationForm({
   const handleSubmit = async (data: z.infer<typeof schema>) => {
     try {
       setSaving(true);
-      const formData = { ...data };
+      const formData = { ...data, clear_image_url: placeIdChanged };
       delete (formData as any).travelers; // handled separately
       await onSubmit(formData);
 
@@ -332,10 +335,15 @@ export default function AccommodationForm({
                 value={field.value}
                 onChange={(val, d: any) => {
                   field.onChange(val);
+                  const newPlaceId = d?.place_id ?? "";
+                  const oldPlaceId = initialData?.hotel_place_id ?? "";
+                  if (newPlaceId !== oldPlaceId) {
+                    setPlaceIdChanged(true);
+                  }
                   // Basic details from picker (if present)
                   form.setValue("hotel_address", d?.formatted_address ?? "");
                   form.setValue("hotel_phone", d?.formatted_phone_number ?? "");
-                  form.setValue("hotel_place_id", d?.place_id ?? "");
+                  form.setValue("hotel_place_id", newPlaceId);
                   form.setValue("hotel_website", d?.website ?? "");
                   form.setValue("hotel_url", d?.website ?? "");
 

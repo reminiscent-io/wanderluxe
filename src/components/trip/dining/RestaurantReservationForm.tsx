@@ -161,6 +161,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     loadGoogleMapsAPI().catch(console.error);
   }, []);
 
+  /* ------------------- Track place_id changes ---------------------------------- */
+  const [placeIdChanged, setPlaceIdChanged] = useState(false);
+
   /* ------------------------------ Photos state --------------------------------- */
   const [restaurantPhotos, setRestaurantPhotos] = useState<PlacePhotoMeta[]>([]);
 
@@ -248,12 +251,16 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     // Remove reservation_date and travelers (db uses day_id and junction tables)
     const { reservation_date, travelers, ...dataWithout } = data;
 
-    const processedData = {
+    const processedData: Record<string, any> = {
       ...dataWithout,
       trip_id: effectiveTripId,
       day_id: finalDayId,
       order_index: (defaultValues as any)?.order_index ?? 0,
     };
+    // Clear the key photo when the restaurant location changed
+    if (placeIdChanged) {
+      processedData.image_url = null;
+    }
 
     try {
       const result = await onSubmit(processedData);
@@ -303,10 +310,15 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 onChange={(name, details) => {
                   field.onChange(name);
                   if (details) {
+                    const newPlaceId = details.place_id || '';
+                    const oldPlaceId = defaultValues?.place_id || '';
+                    if (newPlaceId !== oldPlaceId) {
+                      setPlaceIdChanged(true);
+                    }
                     form.setValue('address', details.formatted_address || '');
                     form.setValue('phone_number', details.formatted_phone_number || '');
                     form.setValue('website', details.website || '');
-                    form.setValue('place_id', details.place_id || '');
+                    form.setValue('place_id', newPlaceId);
                     form.setValue('rating', details.rating || undefined);
 
                     // Prefer picker-supplied photos; else fetch via Place Details
@@ -322,6 +334,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                   } else {
                     // Raw text entry (no place_id): just clear photo strip
                     setRestaurantPhotos([]);
+                    if (defaultValues?.place_id) setPlaceIdChanged(true);
                     form.setValue('place_id', null);
                     form.setValue('website', null);
                     form.setValue('address', null);

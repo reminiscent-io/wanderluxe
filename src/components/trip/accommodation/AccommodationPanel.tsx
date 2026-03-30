@@ -11,6 +11,9 @@ import Header from "../_shared/Header";
 import PhotoStrip from "../_shared/PhotoStrip";
 import { parse, format } from "date-fns";
 import { clearExpiredPlacePhotoCache } from "@/utils/placePhotoCache";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 /* ------------------------------- types -------------------------------- */
 interface Props {
@@ -24,6 +27,8 @@ interface Props {
     cost?: number | null;
     currency?: string | null;
     hotel_place_id?: string | null; // when present, enables photo strip
+    image_url?: string | null;      // key photo URL
+    trip_id?: string;
   }>;
   onAdd: () => void;
   onEdit: (a: any) => void;
@@ -42,10 +47,27 @@ export default function AccommodationPanel({
   onClose,
   onBack,
 }: Props) {
+  const queryClient = useQueryClient();
+
   // Housekeeping: sweep expired entries occasionally
   useEffect(() => {
     clearExpiredPlacePhotoCache();
   }, []);
+
+  const handleKeyPhoto = async (stayId: string | number, tripId: string | undefined, url: string | null) => {
+    const { error } = await supabase
+      .from("accommodations")
+      .update({ image_url: url })
+      .eq("stay_id", String(stayId));
+    if (error) {
+      toast.error("Failed to set key photo");
+      return;
+    }
+    toast.success(url ? "Key photo set" : "Key photo removed");
+    if (tripId) {
+      queryClient.invalidateQueries({ queryKey: ["accommodations", tripId] });
+    }
+  };
 
   // Group by check-in date
   const grouped = accommodations.reduce<Record<string, typeof accommodations>>(
@@ -104,6 +126,18 @@ export default function AccommodationPanel({
                   key={a.stay_id}
                   className="ml-2 w-full rounded-lg bg-sand-50 p-3 text-left transition-colors hover:bg-sand-100"
                 >
+                  {/* Key photo display */}
+                  {a.image_url && (
+                    <div className="-mx-3 -mt-3 mb-2">
+                      <img
+                        src={a.image_url}
+                        alt={a.hotel}
+                        className="w-full h-32 object-cover rounded-t-lg"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
+
                   {/* Clickable header block (edit-only) */}
                   <div onClick={canEdit ? () => onEdit(a) : undefined} role={canEdit ? "button" : undefined} className={`w-full text-left ${canEdit ? 'cursor-pointer' : ''}`}>
                     <h4 className="mb-1 text-sm font-medium">{a.hotel}</h4>
@@ -119,7 +153,12 @@ export default function AccommodationPanel({
                   </div>
 
                   {/* Non-clickable scroller below the header */}
-                  <PhotoStrip placeId={a.hotel_place_id} title={a.hotel} />
+                  <PhotoStrip
+                    placeId={a.hotel_place_id}
+                    title={a.hotel}
+                    keyPhotoUrl={a.image_url}
+                    onSelectKeyPhoto={canEdit ? (url) => handleKeyPhoto(a.stay_id, a.trip_id, url) : undefined}
+                  />
                 </div>
               );
             })}

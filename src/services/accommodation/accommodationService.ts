@@ -17,6 +17,8 @@ export interface AccommodationFormData {
   cost?: string | null;
   currency?: string;
   hotel_place_id?: string | null;
+  /** When true, clears the key photo (e.g. location changed) */
+  clear_image_url?: boolean;
 }
 
 // Helper function to generate and insert accommodation days
@@ -137,9 +139,7 @@ export const updateAccommodation = async (
   try {
     console.log("Updating accommodation with data:", { stayId, ...formData });
     // Update the accommodation record
-    const { data: accommodationData, error: accommodationError } = await supabase
-      .from("accommodations")
-      .update({
+    const updatePayload: Record<string, any> = {
         title: formData.hotel || "Unnamed Accommodation",
         hotel: formData.hotel,
         hotel_details: formData.hotel_details || null,
@@ -154,7 +154,14 @@ export const updateAccommodation = async (
         cost: formData.cost ? parseFloat(formData.cost) : null,
         currency: formData.currency || null,
         hotel_place_id: formData.hotel_place_id || null,
-      })
+    };
+    // Clear the key photo when the location changed
+    if (formData.clear_image_url) {
+      updatePayload.image_url = null;
+    }
+    const { data: accommodationData, error: accommodationError } = await supabase
+      .from("accommodations")
+      .update(updatePayload)
       .eq("stay_id", stayId)
       .select("*, accommodations_days(day_id, date)")
       .single();
