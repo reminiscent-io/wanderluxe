@@ -21,6 +21,7 @@ export default {
       fontFamily: {
         display: ['"DM Serif Display"', 'Georgia', 'serif'],
         sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       borderRadius: {
         'card': '0.75rem',

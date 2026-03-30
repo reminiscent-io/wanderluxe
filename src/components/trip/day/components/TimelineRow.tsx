@@ -74,7 +74,7 @@ const EventMetadata: React.FC<{ item: TimelineItem }> = ({ item }) => {
       badges.push(
         <div key="confirmation" className="flex items-center gap-1 text-xs text-earth-500">
           <ShieldCheck className="h-3 w-3 flex-shrink-0" />
-          <span className="font-mono">{item.data.confirmation_number}</span>
+          <span className="font-sans tabular-nums tracking-wide">{item.data.confirmation_number}</span>
         </div>
       );
     }
