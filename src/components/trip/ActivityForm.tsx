@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import TravelersTagMultiSelect from './travelers/TravelersTagMultiSelect';
-import { getDayActivityTravelerIds, setDayActivityTravelers } from '@/services/travelers';
+import { getJunctionTravelerIds, setJunctionTravelers } from '@/services/travelers';
 import GooglePlacesAutocomplete from './accommodation/GooglePlacesAutocomplete';
 import type { PlaceResult } from '@/utils/googleMapsLoader';
 import RestaurantContactInfo from './dining/form/RestaurantContactInfo';
@@ -92,7 +92,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   // Load existing travelers for edit mode
   useEffect(() => {
     if (activityId && tripId && (!activity.travelers || activity.travelers.length === 0)) {
-      getDayActivityTravelerIds(tripId, activityId)
+      getJunctionTravelerIds("activity", tripId, activityId)
         .then(({ data }) => {
           if (data && data.length > 0) {
             onActivityChange({ ...activity, travelers: data });
@@ -220,7 +220,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       if (travelers && travelers.length > 0) {
         const actId = (activity as any).id || (result as any)?.id;
         if (actId) {
-          await setDayActivityTravelers(tripId, actId, travelers);
+          await setJunctionTravelers("activity", tripId, actId, travelers);
         }
       }
 

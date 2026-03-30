@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { generateDateArray } from "./dateUtils";
+import { generateDateArray } from "@/utils/dateUtils";
 import { toast } from "sonner";
 
 // Type for accommodation form data

@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
-import { getReservationTravelerIds, setReservationTravelers } from '@/services/travelers';
+import { getJunctionTravelerIds, setJunctionTravelers } from '@/services/travelers';
 import CurrencySelector from '../budget/CurrencySelector';
 
 import {
@@ -205,7 +205,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   // Load existing travelers
   useEffect(() => {
     if (defaultValues?.id && tripId) {
-      getReservationTravelerIds(tripId, defaultValues.id.toString())
+      getJunctionTravelerIds("reservation", tripId, defaultValues.id.toString())
         .then(({ data }) => {
           if (data) form.setValue("travelers", data);
         })
@@ -268,7 +268,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       if (travelers && travelers.length > 0) {
         const reservationId = defaultValues?.id || (result as any)?.id;
         if (reservationId) {
-          await setReservationTravelers(effectiveTripId, reservationId.toString(), travelers);
+          await setJunctionTravelers("reservation", effectiveTripId, reservationId.toString(), travelers);
         }
       }
     } catch (err) {

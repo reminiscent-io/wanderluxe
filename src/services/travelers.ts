@@ -184,114 +184,53 @@ export async function deleteTraveler(id: string) {
 
 // ===== Junction table helpers =====
 
-// Accommodation travelers
-export async function getAccommodationTravelerIds(tripId: string, stayId: string) {
+export type JunctionType = "accommodation" | "transportation" | "activity" | "reservation";
+
+const JUNCTION_CONFIG: Record<JunctionType, { table: string; fkColumn: string }> = {
+  accommodation: { table: "accommodation_travelers", fkColumn: "stay_id" },
+  transportation: { table: "transportation_travelers", fkColumn: "transportation_id" },
+  activity: { table: "day_activity_travelers", fkColumn: "activity_id" },
+  reservation: { table: "reservation_travelers", fkColumn: "reservation_id" },
+};
+
+export async function getJunctionTravelerIds(
+  type: JunctionType,
+  tripId: string,
+  entityId: string
+): Promise<{ data: string[]; error: any }> {
   try {
+    const { table, fkColumn } = JUNCTION_CONFIG[type];
     const { data, error } = await supabase
-      .from('accommodation_travelers' as any)
-      .select('traveler_id')
-      .match({ trip_id: tripId, stay_id: stayId });
+      .from(table as any)
+      .select("traveler_id")
+      .match({ trip_id: tripId, [fkColumn]: entityId });
     if (error) return { data: [], error };
     return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
   } catch (error) {
-    console.error("Error loading accommodation travelers:", error);
+    console.error(`Error loading ${type} travelers:`, error);
     return { data: [], error: error as any };
   }
 }
 
-export async function setAccommodationTravelers(tripId: string, stayId: string, travelerIds: string[]) {
+export async function setJunctionTravelers(
+  type: JunctionType,
+  tripId: string,
+  entityId: string,
+  travelerIds: string[]
+): Promise<{ data: any[]; error: any }> {
   try {
-    await supabase.from('accommodation_travelers' as any).delete().match({ trip_id: tripId, stay_id: stayId });
+    const { table, fkColumn } = JUNCTION_CONFIG[type];
+    await supabase.from(table as any).delete().match({ trip_id: tripId, [fkColumn]: entityId });
     if (travelerIds.length === 0) return { data: [], error: null };
-    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, stay_id: stayId, traveler_id }));
-    const { data, error } = await supabase.from('accommodation_travelers' as any).insert(rows).select();
+    const rows = travelerIds.map((traveler_id) => ({
+      trip_id: tripId,
+      [fkColumn]: entityId,
+      traveler_id,
+    }));
+    const { data, error } = await supabase.from(table as any).insert(rows).select();
     return { data: data || [], error };
   } catch (error) {
-    console.error("Error saving accommodation travelers:", error);
-    return { data: [], error: error as any };
-  }
-}
-
-// Transportation travelers
-export async function getTransportationTravelerIds(tripId: string, transportationId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('transportation_travelers')
-      .select('traveler_id')
-      .match({ trip_id: tripId, transportation_id: transportationId });
-    if (error) return { data: [], error };
-    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
-  } catch (error) {
-    console.error("Error loading transportation travelers:", error);
-    return { data: [], error: error as any };
-  }
-}
-
-export async function setTransportationTravelers(tripId: string, transportationId: string, travelerIds: string[]) {
-  try {
-    await supabase.from('transportation_travelers').delete().match({ trip_id: tripId, transportation_id: transportationId });
-    if (travelerIds.length === 0) return { data: [], error: null };
-    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, transportation_id: transportationId, traveler_id }));
-    const { data, error } = await supabase.from('transportation_travelers').insert(rows).select();
-    return { data: data || [], error };
-  } catch (error) {
-    console.error("Error saving transportation travelers:", error);
-    return { data: [], error: error as any };
-  }
-}
-
-// Day activity travelers
-export async function getDayActivityTravelerIds(tripId: string, activityId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('day_activity_travelers' as any)
-      .select('traveler_id')
-      .match({ trip_id: tripId, activity_id: activityId });
-    if (error) return { data: [], error };
-    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
-  } catch (error) {
-    console.error("Error loading activity travelers:", error);
-    return { data: [], error: error as any };
-  }
-}
-
-export async function setDayActivityTravelers(tripId: string, activityId: string, travelerIds: string[]) {
-  try {
-    await supabase.from('day_activity_travelers' as any).delete().match({ trip_id: tripId, activity_id: activityId });
-    if (travelerIds.length === 0) return { data: [], error: null };
-    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, activity_id: activityId, traveler_id }));
-    const { data, error } = await supabase.from('day_activity_travelers' as any).insert(rows).select();
-    return { data: data || [], error };
-  } catch (error) {
-    console.error("Error saving activity travelers:", error);
-    return { data: [], error: error as any };
-  }
-}
-
-// Reservation travelers
-export async function getReservationTravelerIds(tripId: string, reservationId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('reservation_travelers' as any)
-      .select('traveler_id')
-      .match({ trip_id: tripId, reservation_id: reservationId });
-    if (error) return { data: [], error };
-    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
-  } catch (error) {
-    console.error("Error loading reservation travelers:", error);
-    return { data: [], error: error as any };
-  }
-}
-
-export async function setReservationTravelers(tripId: string, reservationId: string, travelerIds: string[]) {
-  try {
-    await supabase.from('reservation_travelers' as any).delete().match({ trip_id: tripId, reservation_id: reservationId });
-    if (travelerIds.length === 0) return { data: [], error: null };
-    const rows = travelerIds.map((traveler_id) => ({ trip_id: tripId, reservation_id, traveler_id }));
-    const { data, error } = await supabase.from('reservation_travelers' as any).insert(rows).select();
-    return { data: data || [], error };
-  } catch (error) {
-    console.error("Error saving reservation travelers:", error);
+    console.error(`Error saving ${type} travelers:`, error);
     return { data: [], error: error as any };
   }
 }

@@ -9,7 +9,7 @@ import RestaurantReservationDialog from '@/components/trip/dining/RestaurantRese
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { setDayActivityTravelers } from '@/services/travelers';
+import { setJunctionTravelers } from '@/services/travelers';
 import { WeatherData, getWeatherForDate, isToday } from '@/hooks/useWeather';
 
 interface TimelineContentProps {
@@ -171,7 +171,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       if (error) throw error;
 
       if (activityEdit.travelers && editingActivity.id) {
-        await setDayActivityTravelers(tripId, editingActivity.id, activityEdit.travelers);
+        await setJunctionTravelers("activity", tripId, editingActivity.id, activityEdit.travelers);
       }
 
       invalidateTripAndDayQueries();
@@ -203,7 +203,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       if (error) throw error;
 
       if (newActivity.travelers && newActivity.travelers.length > 0 && data?.id) {
-        await setDayActivityTravelers(tripId, data.id, newActivity.travelers);
+        await setJunctionTravelers("activity", tripId, data.id, newActivity.travelers);
       }
 
       setActivityOpen(false);

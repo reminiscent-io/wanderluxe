@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   formatDate,
   formatToTime,
-  getDaysBetweenDates,
+  generateDateArray,
   calculateDurationInDays,
   formatDateRange,
+  formatNightsCount,
 } from './dateUtils';
 
 describe('dateUtils', () => {
@@ -44,34 +45,42 @@ describe('dateUtils', () => {
     });
   });
 
-  describe('getDaysBetweenDates', () => {
+  describe('generateDateArray', () => {
     it('should return array of dates between start and end (inclusive)', () => {
-      const result = getDaysBetweenDates('2024-01-01', '2024-01-03');
+      const result = generateDateArray('2024-01-01', '2024-01-03');
       expect(result).toEqual(['2024-01-01', '2024-01-02', '2024-01-03']);
     });
 
     it('should return single date if start equals end', () => {
-      const result = getDaysBetweenDates('2024-01-15', '2024-01-15');
+      const result = generateDateArray('2024-01-15', '2024-01-15');
       expect(result).toEqual(['2024-01-15']);
     });
 
     it('should handle month boundaries', () => {
-      const result = getDaysBetweenDates('2024-01-30', '2024-02-02');
+      const result = generateDateArray('2024-01-30', '2024-02-02');
       expect(result).toEqual(['2024-01-30', '2024-01-31', '2024-02-01', '2024-02-02']);
     });
 
     it('should handle year boundaries', () => {
-      const result = getDaysBetweenDates('2023-12-30', '2024-01-02');
+      const result = generateDateArray('2023-12-30', '2024-01-02');
       expect(result).toEqual(['2023-12-30', '2023-12-31', '2024-01-01', '2024-01-02']);
     });
 
-    it('should throw error for invalid date format', () => {
-      expect(() => getDaysBetweenDates('invalid', '2024-01-01')).toThrow(
-        'Invalid date format'
-      );
-      expect(() => getDaysBetweenDates('2024-01-01', 'invalid')).toThrow(
-        'Invalid date format'
-      );
+    it('should return empty array for invalid dates', () => {
+      expect(generateDateArray('invalid', '2024-01-01')).toEqual([]);
+      expect(generateDateArray('2024-01-01', 'invalid')).toEqual([]);
+    });
+
+    it('should return empty array for empty strings', () => {
+      expect(generateDateArray('', '2024-01-01')).toEqual([]);
+      expect(generateDateArray('2024-01-01', '')).toEqual([]);
+    });
+  });
+
+  describe('formatNightsCount', () => {
+    it('should format nights count correctly', () => {
+      expect(formatNightsCount('2024-01-01', '2024-01-04')).toBe('3 nights');
+      expect(formatNightsCount('2024-01-01', '2024-01-02')).toBe('1 night');
     });
   });
 

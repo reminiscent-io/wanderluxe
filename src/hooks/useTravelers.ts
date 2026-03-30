@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { listTravelers } from "@/services/travelers";
+import { useRealtimeSubscription } from './useRealtimeSubscription';
 
 export interface Traveler {
   id: string;
@@ -19,22 +19,37 @@ export function useTravelers(tripId: string) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
+  const config = useMemo(() => ({
+    channelKey: `travelers:${tripId}`,
+    tables: [
+      { table: 'trip_shares', filterColumn: 'trip_id', filterValue: tripId },
+    ],
+    invalidateKeys: [
+      ['travelers', tripId],
+      ['trip-travelers:list', tripId],
+      ['trip-travelers:assigned', tripId],
+    ],
+    enabled: !!tripId,
+    dedup: false,
+  }), [tripId]);
+
+  useRealtimeSubscription(config);
+
   const { data: travelers = [], isLoading } = useQuery({
     queryKey: ['travelers', tripId],
     queryFn: async () => {
       if (!tripId) return [];
-      
+
       const { data, error } = await listTravelers(tripId);
-      
+
       if (error) {
         console.error('Error fetching travelers:', error);
         setError(error.message);
         throw error;
       }
-      
+
       setError(null);
-      
-      // Return travelers including the owner
+
       return (data || []).map(traveler => ({
         id: traveler.id,
         first_name: traveler.first_name || 'Traveler',
@@ -53,35 +68,6 @@ export function useTravelers(tripId: string) {
   const refresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['travelers', tripId] });
   }, [queryClient, tripId]);
-
-  // Set up real-time subscription for travelers
-  useEffect(() => {
-    if (!tripId) return;
-
-    const channel = supabase
-      .channel(`travelers:${tripId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'trip_shares',
-          filter: `trip_id=eq.${tripId}`,
-        },
-        () => {
-          // Invalidate travelers list
-          queryClient.invalidateQueries({ queryKey: ['travelers', tripId] });
-          // Also invalidate TravelerAvatars queries for timeline
-          queryClient.invalidateQueries({ queryKey: ['trip-travelers:list', tripId] });
-          queryClient.invalidateQueries({ queryKey: ['trip-travelers:assigned', tripId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tripId, queryClient]);
 
   return {
     travelers,
