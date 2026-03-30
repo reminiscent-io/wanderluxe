@@ -218,7 +218,11 @@ const TripDetails = () => {
                 </ErrorBoundary>
               )}
 
-              {activeTab === 'chat' && <AIAssistantPanel tripId={tripId || ''} />}
+              {activeTab === 'chat' && (
+                <div className="h-[calc(100dvh-12rem)] md:h-[calc(100dvh-10rem)]">
+                  <AIAssistantPanel tripId={tripId || ''} />
+                </div>
+              )}
               {activeTab === 'budget' && <BudgetView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'booking' && <BookingView tripId={tripId} canEdit={canEdit} />}
             </div>
