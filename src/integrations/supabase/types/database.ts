@@ -529,6 +529,7 @@ export type Database = {
           website: string | null;
           place_id: string | null;
           rating: number | null;
+          image_url: string | null;
         };
         Insert: {
           id?: string;
@@ -548,6 +549,7 @@ export type Database = {
           website?: string | null;
           place_id?: string | null;
           rating?: number | null;
+          image_url?: string | null;
         };
         Update: {
           id?: string;
@@ -567,6 +569,7 @@ export type Database = {
           website?: string | null;
           place_id?: string | null;
           rating?: number | null;
+          image_url?: string | null;
         };
         Relationships: [
           {

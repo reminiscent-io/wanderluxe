@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import DOMPurify from 'dompurify';
+import { Star } from "lucide-react";
 import {
   loadGoogleMapsAPI,
   getPlaceDetails,
@@ -56,9 +57,13 @@ export function warmImageCache(photos: PlacePhotoMeta[]) {
 interface PhotoStripProps {
   placeId?: string | null;
   title: string;
+  /** Currently selected key photo URL */
+  keyPhotoUrl?: string | null;
+  /** Callback when a photo is selected/deselected as the key photo */
+  onSelectKeyPhoto?: (url: string | null) => void;
 }
 
-export default function PhotoStrip({ placeId, title }: PhotoStripProps) {
+export default function PhotoStrip({ placeId, title, keyPhotoUrl, onSelectKeyPhoto }: PhotoStripProps) {
   const [photos, setPhotos] = useState<PlacePhotoMeta[]>([]);
   const [triggered, setTriggered] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -137,24 +142,47 @@ export default function PhotoStrip({ placeId, title }: PhotoStripProps) {
 
               const sizes = "(min-width: 768px) 384px, (min-width: 640px) 320px, 240px";
               const attribution = p.html_attributions?.[0];
+              // Use a stable URL (640w) for key photo comparison & storage
+              const stableUrl = url640 || url480 || url320 || url896;
+              const isKeyPhoto = !!keyPhotoUrl && stableUrl === keyPhotoUrl;
 
               return (
-                <div key={`${p.photo_reference || p.url || i}`} className="relative flex-none snap-start">
+                <div key={`${p.photo_reference || p.url || i}`} className="group relative flex-none snap-start">
                   <img
                     src={src}
                     srcSet={srcSet}
                     sizes={sizes}
                     alt={`${title} photo ${i + 1}`}
-                    className="
+                    className={`
                       h-28 w-44
                       sm:h-32 sm:w-56
                       md:h-32 md:w-64
-                      rounded-md object-cover border border-sand-200
-                    "
+                      rounded-md object-cover border-2 transition-colors
+                      ${isKeyPhoto ? "border-sunset-500 ring-2 ring-sunset-300" : "border-sand-200"}
+                    `}
                     loading="lazy"
                     decoding="async"
                     referrerPolicy="no-referrer"
                   />
+                  {onSelectKeyPhoto && stableUrl && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectKeyPhoto(isKeyPhoto ? null : stableUrl);
+                      }}
+                      className={`
+                        absolute top-1.5 right-1.5 rounded-full p-1 transition-all
+                        ${isKeyPhoto
+                          ? "bg-sunset-500 text-white shadow-md"
+                          : "bg-black/40 text-white/80 opacity-0 group-hover:opacity-100 hover:bg-sunset-500 hover:text-white"
+                        }
+                      `}
+                      title={isKeyPhoto ? "Remove as key photo" : "Make key photo"}
+                    >
+                      <Star size={14} className={isKeyPhoto ? "fill-current" : ""} />
+                    </button>
+                  )}
                   {attribution && (
                     <div
                       className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
