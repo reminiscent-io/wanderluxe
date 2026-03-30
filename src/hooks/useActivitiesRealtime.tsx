@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useRealtimeSubscription } from './useRealtimeSubscription';
+import { useRealtimeSubscription, RealtimeSubscriptionConfig } from './useRealtimeSubscription';
 
 export function useActivitiesRealtime(dayId: string, tripId: string | undefined) {
-  const config = useMemo(() => ({
+  const config: RealtimeSubscriptionConfig = useMemo(() => ({
     channelKey: `activities:${dayId}`,
     tables: [
       { table: 'day_activities', filterColumn: 'day_id', filterValue: dayId },

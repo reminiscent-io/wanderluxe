@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useRealtimeSubscription } from './useRealtimeSubscription';
+import { useRealtimeSubscription, RealtimeSubscriptionConfig } from './useRealtimeSubscription';
 
 export function useReservationsRealtime(dayId: string, tripId: string | undefined) {
-  const config = useMemo(() => ({
+  const config: RealtimeSubscriptionConfig = useMemo(() => ({
     channelKey: `reservations:${dayId}`,
     tables: [
       { table: 'reservations', filterColumn: 'day_id', filterValue: dayId },

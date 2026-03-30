@@ -9,7 +9,7 @@ import { ActivityFormData } from '@/types/trip';
 import { generateDatesArray } from '@/utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 import { setJunctionTravelers } from '@/services/travelers';
-import { useRealtimeSubscription } from './useRealtimeSubscription';
+import { useRealtimeSubscription, buildTripEntityConfig } from './useRealtimeSubscription';
 
 export interface SidebarState {
   isOpen: boolean;
@@ -203,53 +203,21 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Real-time subscriptions for sidebar data
   // Activity subscriptions are handled by useActivitiesRealtime at the day level
-  useRealtimeSubscription(useMemo(() => ({
-    channelKey: `sidebar-accommodations:${tripId}`,
-    tables: [
-      { table: 'accommodations', filterColumn: 'trip_id', filterValue: tripId! },
-      { table: 'accommodation_travelers', filterColumn: 'trip_id', filterValue: tripId! },
-    ],
-    invalidateKeys: [
-      ['accommodations', tripId],
-      ['trip', tripId],
-      ['trip-travelers:list', tripId],
-      ['trip-travelers:assigned', tripId],
-    ],
-    enabled: !!tripId,
-    dedup: false,
-  }), [tripId]));
-
-  useRealtimeSubscription(useMemo(() => ({
-    channelKey: `sidebar-transportation:${tripId}`,
-    tables: [
-      { table: 'transportation', filterColumn: 'trip_id', filterValue: tripId! },
-      { table: 'transportation_travelers', filterColumn: 'trip_id', filterValue: tripId! },
-    ],
-    invalidateKeys: [
-      ['transportation', tripId],
-      ['trip', tripId],
-      ['trip-travelers:list', tripId],
-      ['trip-travelers:assigned', tripId],
-    ],
-    enabled: !!tripId,
-    dedup: false,
-  }), [tripId]));
-
-  useRealtimeSubscription(useMemo(() => ({
-    channelKey: `sidebar-reservations:${tripId}`,
-    tables: [
-      { table: 'reservations', filterColumn: 'trip_id', filterValue: tripId! },
-      { table: 'reservation_travelers', filterColumn: 'trip_id', filterValue: tripId! },
-    ],
-    invalidateKeys: [
-      ['reservations', tripId],
-      ['trip', tripId],
-      ['trip-travelers:list', tripId],
-      ['trip-travelers:assigned', tripId],
-    ],
-    enabled: !!tripId,
-    dedup: false,
-  }), [tripId]));
+  const sidebarAccommodationsConfig = useMemo(
+    () => tripId ? buildTripEntityConfig('accommodations', 'accommodation_travelers', tripId, { channelPrefix: 'sidebar-accommodations', dedup: false }) : { channelKey: '', tables: [], invalidateKeys: [], enabled: false },
+    [tripId]
+  );
+  const sidebarTransportationConfig = useMemo(
+    () => tripId ? buildTripEntityConfig('transportation', 'transportation_travelers', tripId, { channelPrefix: 'sidebar-transportation', dedup: false }) : { channelKey: '', tables: [], invalidateKeys: [], enabled: false },
+    [tripId]
+  );
+  const sidebarReservationsConfig = useMemo(
+    () => tripId ? buildTripEntityConfig('reservations', 'reservation_travelers', tripId, { channelPrefix: 'sidebar-reservations', dedup: false }) : { channelKey: '', tables: [], invalidateKeys: [], enabled: false },
+    [tripId]
+  );
+  useRealtimeSubscription(sidebarAccommodationsConfig);
+  useRealtimeSubscription(sidebarTransportationConfig);
+  useRealtimeSubscription(sidebarReservationsConfig);
 
   // Fetch reservations (with trip_days date) for this trip
   const { data: reservations = [] } = useQuery({

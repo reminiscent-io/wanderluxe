@@ -25,6 +25,35 @@ export interface RealtimeSubscriptionResult {
   isSubscribed: boolean;
 }
 
+/**
+ * Build a standard subscription config for a trip-level entity table
+ * and its associated travelers junction table.
+ */
+export function buildTripEntityConfig(
+  entityTable: string,
+  travelersTable: string,
+  tripId: string,
+  options?: { channelPrefix?: string; extraInvalidateKeys?: QueryKey[]; dedup?: boolean }
+): RealtimeSubscriptionConfig {
+  const prefix = options?.channelPrefix ?? entityTable;
+  return {
+    channelKey: `${prefix}:${tripId}`,
+    tables: [
+      { table: entityTable, filterColumn: 'trip_id', filterValue: tripId },
+      { table: travelersTable, filterColumn: 'trip_id', filterValue: tripId },
+    ],
+    invalidateKeys: [
+      [entityTable, tripId],
+      ['trip', tripId],
+      ['trip-travelers:list', tripId],
+      ['trip-travelers:assigned', tripId],
+      ...(options?.extraInvalidateKeys ?? []),
+    ],
+    enabled: !!tripId,
+    dedup: options?.dedup ?? true,
+  };
+}
+
 export function useRealtimeSubscription(
   config: RealtimeSubscriptionConfig
 ): RealtimeSubscriptionResult {

@@ -1,5 +1,5 @@
 
-import { format, parse, parseISO, addDays, startOfDay, isAfter, differenceInDays } from 'date-fns';
+import { format, parse, parseISO, addDays, startOfDay, differenceInDays } from 'date-fns';
 
 // Parse a date string as local time (avoids UTC shift from `new Date()`)
 const parseLocal = (dateString: string): Date => {

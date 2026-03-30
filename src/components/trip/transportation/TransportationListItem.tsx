@@ -5,7 +5,7 @@ import { Pencil, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tables } from '@/integrations/supabase/types';
 import { formatDate } from '@/utils/dateUtils';
-import { formatTime12, formatTimeRange } from '@/components/trip/day/components/timeline-utils';
+import { formatTimeRange } from '@/components/trip/day/components/timeline-utils';
 import { formatTransportationType, getTransportationColor } from '@/utils/transportationUtils';
 
 type Transportation = Tables<'transportation'>;

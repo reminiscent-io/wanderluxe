@@ -2,25 +2,15 @@ import { useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Transportation } from '@/types/trip';
-import { useRealtimeSubscription } from './useRealtimeSubscription';
+import { useRealtimeSubscription, buildTripEntityConfig } from './useRealtimeSubscription';
 
 export function useTransportationEvents(tripId: string) {
   const queryClient = useQueryClient();
 
-  const config = useMemo(() => ({
-    channelKey: `transportation:${tripId}`,
-    tables: [
-      { table: 'transportation', filterColumn: 'trip_id', filterValue: tripId },
-      { table: 'transportation_travelers', filterColumn: 'trip_id', filterValue: tripId },
-    ],
-    invalidateKeys: [
-      ['transportation', tripId],
-      ['trip', tripId],
-      ['trip-travelers:list', tripId],
-      ['trip-travelers:assigned', tripId],
-    ],
-    enabled: !!tripId,
-  }), [tripId]);
+  const config = useMemo(
+    () => buildTripEntityConfig('transportation', 'transportation_travelers', tripId),
+    [tripId]
+  );
 
   const { isSubscribed } = useRealtimeSubscription(config);
 
