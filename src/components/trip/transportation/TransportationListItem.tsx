@@ -3,8 +3,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format, parseISO, startOfDay } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
+import { formatDate } from '@/utils/dateUtils';
+import { formatTime12, formatTimeRange } from '@/components/trip/day/components/timeline-utils';
+import { formatTransportationType, getTransportationColor } from '@/utils/transportationUtils';
 
 type Transportation = Tables<'transportation'>;
 
@@ -16,39 +18,11 @@ interface TransportationListItemProps {
   compact?: boolean;
 }
 
-const formatTime12 = (time?: string) => {
-  if (!time) return "";
-  const [hourStr, minuteStr] = time.split(":");
-  const hour = parseInt(hourStr, 10);
-  const period = hour >= 12 ? "pm" : "am";
-  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${hour12}:${minuteStr}${period}`;
-};
-
-const formatDate = (dateString: string) => {
-  try {
-    // Parse the date as ISO, normalize to start of day, then format
-    return format(startOfDay(parseISO(dateString)), 'MMM d, yyyy');
-  } catch (error) {
-    return dateString;
-  }
-};
-
 const formatCost = (cost: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD'
   }).format(cost);
-};
-
-import { formatTransportationType, getTransportationColor } from '@/utils/transportationUtils';
-
-// Helper function to format time range
-const formatTimeRange = (startTime?: string, endTime?: string) => {
-  if (!startTime) return '';
-  return endTime 
-    ? `${formatTime12(startTime)} - ${formatTime12(endTime)}`
-    : `${formatTime12(startTime)}`;
 };
 
 const TransportationListItem: React.FC<TransportationListItemProps> = ({

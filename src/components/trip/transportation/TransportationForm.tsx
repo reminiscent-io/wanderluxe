@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
-import { getTransportationTravelerIds, setTransportationTravelers } from "@/services/travelers";
+import { getJunctionTravelerIds, setJunctionTravelers } from "@/services/travelers";
 
 type Transportation = Tables<"transportation">;
 
@@ -106,7 +106,7 @@ export default function TransportationForm({
     const loadTravelers = async () => {
       if (initialData?.id) {
         try {
-          const { data: travelerIds, error } = await getTransportationTravelerIds(tripId, initialData.id);
+          const { data: travelerIds, error } = await getJunctionTravelerIds("transportation", tripId, initialData.id);
           if (!error && travelerIds) {
             form.setValue("travelers", travelerIds);
           }
@@ -151,7 +151,7 @@ export default function TransportationForm({
       if (data.travelers && data.travelers.length > 0) {
         const transportationId = initialData?.id || (result as any)?.id;
         if (transportationId) {
-          await setTransportationTravelers(tripId, transportationId, data.travelers);
+          await setJunctionTravelers("transportation", tripId, transportationId, data.travelers);
         }
       }
     } catch (err) {

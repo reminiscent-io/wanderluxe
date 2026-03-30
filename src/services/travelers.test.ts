@@ -27,14 +27,8 @@ import {
   listTravelers,
   upsertTraveler,
   deleteTraveler,
-  getAccommodationTravelerIds,
-  setAccommodationTravelers,
-  getTransportationTravelerIds,
-  setTransportationTravelers,
-  getDayActivityTravelerIds,
-  setDayActivityTravelers,
-  getReservationTravelerIds,
-  setReservationTravelers,
+  getJunctionTravelerIds,
+  setJunctionTravelers,
 } from './travelers';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -156,7 +150,7 @@ describe('travelers service', () => {
     });
   });
 
-  describe('accommodation travelers', () => {
+  describe('junction travelers (generic)', () => {
     it('should get accommodation traveler ids', async () => {
       const mockData = [
         { traveler_id: 't1' },
@@ -168,7 +162,7 @@ describe('travelers service', () => {
         match: vi.fn().mockResolvedValue({ data: mockData, error: null }),
       } as any);
 
-      const result = await getAccommodationTravelerIds('trip-1', 'stay-1');
+      const result = await getJunctionTravelerIds('accommodation', 'trip-1', 'stay-1');
 
       expect(result.data).toEqual(['t1', 't2']);
       expect(result.error).toBeNull();
@@ -182,7 +176,7 @@ describe('travelers service', () => {
         select: vi.fn().mockResolvedValue({ data: [], error: null }),
       } as any);
 
-      const result = await setAccommodationTravelers('trip-1', 'stay-1', ['t1', 't2']);
+      const result = await setJunctionTravelers('accommodation', 'trip-1', 'stay-1', ['t1', 't2']);
 
       expect(result.error).toBeNull();
     });
@@ -193,14 +187,12 @@ describe('travelers service', () => {
         match: vi.fn().mockResolvedValue({ data: null, error: null }),
       } as any);
 
-      const result = await setAccommodationTravelers('trip-1', 'stay-1', []);
+      const result = await setJunctionTravelers('accommodation', 'trip-1', 'stay-1', []);
 
       expect(result.data).toEqual([]);
       expect(result.error).toBeNull();
     });
-  });
 
-  describe('transportation travelers', () => {
     it('should get transportation traveler ids', async () => {
       const mockData = [{ traveler_id: 't1' }];
 
@@ -209,13 +201,11 @@ describe('travelers service', () => {
         match: vi.fn().mockResolvedValue({ data: mockData, error: null }),
       } as any);
 
-      const result = await getTransportationTravelerIds('trip-1', 'transport-1');
+      const result = await getJunctionTravelerIds('transportation', 'trip-1', 'transport-1');
 
       expect(result.data).toEqual(['t1']);
     });
-  });
 
-  describe('day activity travelers', () => {
     it('should get day activity traveler ids', async () => {
       const mockData = [{ traveler_id: 't1' }, { traveler_id: 't2' }];
 
@@ -224,13 +214,11 @@ describe('travelers service', () => {
         match: vi.fn().mockResolvedValue({ data: mockData, error: null }),
       } as any);
 
-      const result = await getDayActivityTravelerIds('trip-1', 'activity-1');
+      const result = await getJunctionTravelerIds('activity', 'trip-1', 'activity-1');
 
       expect(result.data).toEqual(['t1', 't2']);
     });
-  });
 
-  describe('reservation travelers', () => {
     it('should get reservation traveler ids', async () => {
       const mockData = [{ traveler_id: 't1' }];
 
@@ -239,7 +227,7 @@ describe('travelers service', () => {
         match: vi.fn().mockResolvedValue({ data: mockData, error: null }),
       } as any);
 
-      const result = await getReservationTravelerIds('trip-1', 'reservation-1');
+      const result = await getJunctionTravelerIds('reservation', 'trip-1', 'reservation-1');
 
       expect(result.data).toEqual(['t1']);
     });

@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getInviteLinkPreview, redeemInviteLink } from '@/services/inviteLinkService';
 import type { InviteLinkPreview } from '@/integrations/supabase/invite_link_types';
 import { Calendar, Loader2, AlertCircle, LogIn } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { formatDate } from '@/utils/dateUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 type PageState = 'loading' | 'preview' | 'redeeming' | 'error';
@@ -94,14 +94,6 @@ const InviteRedeem = () => {
       sessionStorage.setItem('pendingInviteCode', code);
     }
     navigate('/auth');
-  };
-
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(parseISO(dateStr), 'MMM d, yyyy');
-    } catch {
-      return dateStr;
-    }
   };
 
   if (state === 'loading' || state === 'redeeming') {

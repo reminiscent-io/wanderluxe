@@ -8,12 +8,10 @@ import {
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
-  getAccommodationTravelerIds,
-  getTransportationTravelerIds,
-  getDayActivityTravelerIds,
-  getReservationTravelerIds,
+  getJunctionTravelerIds,
   listTravelers,
 } from "@/services/travelers";
+import type { JunctionType } from "@/services/travelers";
 
 type EventType = "accommodation" | "transportation" | "activity" | "dining";
 
@@ -68,26 +66,9 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
   const { data: assignedIdsRaw } = useQuery({
     queryKey: ["trip-travelers:assigned", tripId, eventType, eventId],
     queryFn: async () => {
-      switch (eventType) {
-        case "accommodation": {
-          const res = await getAccommodationTravelerIds(tripId, eventId);
-          return res?.data ?? res ?? [];
-        }
-        case "transportation": {
-          const res = await getTransportationTravelerIds(tripId, eventId);
-          return res?.data ?? res ?? [];
-        }
-        case "activity": {
-          const res = await getDayActivityTravelerIds(tripId, eventId);
-          return res?.data ?? res ?? [];
-        }
-        case "dining": {
-          const res = await getReservationTravelerIds(tripId, eventId);
-          return res?.data ?? res ?? [];
-        }
-        default:
-          return [];
-      }
+      const junctionType: JunctionType = eventType === "dining" ? "reservation" : eventType;
+      const res = await getJunctionTravelerIds(junctionType, tripId, eventId);
+      return res?.data ?? res ?? [];
     },
     select: (raw) => asIdArray(raw),
     enabled: Boolean(tripId && eventId),

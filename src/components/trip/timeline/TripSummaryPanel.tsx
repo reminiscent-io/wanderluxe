@@ -1,7 +1,7 @@
 import React from 'react';
 import { HotelStay, Transportation } from '@/types/trip';
 import { Bed, Plane, Train, Car, MapPin, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDate, formatToTime } from '@/utils/dateUtils';
 
 interface TripSummaryPanelProps {
   accommodations: HotelStay[];
@@ -28,27 +28,6 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
     if (lowerType.includes('train')) return Train;
     if (lowerType.includes('car') || lowerType.includes('rental')) return Car;
     return MapPin;
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMM d, yyyy');
-    } catch {
-      return dateString;
-    }
-  };
-
-  const formatTime = (timeString: string | null) => {
-    if (!timeString) return '';
-    try {
-      // Handle HH:mm or HH:mm:ss format
-      const [hours, minutes] = timeString.split(':');
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes));
-      return format(date, 'h:mm a');
-    } catch {
-      return timeString;
-    }
   };
 
   return (
@@ -82,7 +61,7 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
                         {formatDate(stay.hotel_checkin_date)}
                         {stay.checkin_time && (
                           <span className="text-earth-500 ml-1">
-                            {formatTime(stay.checkin_time)}
+                            {formatToTime(stay.checkin_time)}
                           </span>
                         )}
                       </span>
@@ -93,7 +72,7 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
                         → {formatDate(stay.hotel_checkout_date)}
                         {stay.checkout_time && (
                           <span className="text-earth-500 ml-1">
-                            {formatTime(stay.checkout_time)}
+                            {formatToTime(stay.checkout_time)}
                           </span>
                         )}
                       </span>
@@ -153,7 +132,7 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
                               {formatDate(transport.start_date)}
                               {transport.start_time && (
                                 <span className="ml-1">
-                                  {formatTime(transport.start_time)}
+                                  {formatToTime(transport.start_time)}
                                 </span>
                               )}
                             </div>
@@ -177,7 +156,7 @@ const TripSummaryPanel: React.FC<TripSummaryPanelProps> = ({
                                 {formatDate(transport.end_date)}
                                 {transport.end_time && (
                                   <span className="ml-1">
-                                    {formatTime(transport.end_time)}
+                                    {formatToTime(transport.end_time)}
                                   </span>
                                 )}
                               </div>

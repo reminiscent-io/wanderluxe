@@ -38,8 +38,8 @@ import {
 import { CURRENCIES, CURRENCY_NAMES } from "@/utils/currencyConstants";
 import TravelersTagMultiSelect from "@/components/trip/travelers/TravelersTagMultiSelect";
 import {
-  getAccommodationTravelerIds,
-  setAccommodationTravelers,
+  getJunctionTravelerIds,
+  setJunctionTravelers,
 } from "@/services/travelers";
 
 /* -------------------------------------------------------------------------- */
@@ -288,7 +288,7 @@ export default function AccommodationForm({
   /* ---------------------- Load existing travelers --------------------- */
   useEffect(() => {
     if (initialData?.stay_id && tripId) {
-      getAccommodationTravelerIds(tripId, initialData.stay_id.toString())
+      getJunctionTravelerIds("accommodation", tripId, initialData.stay_id.toString())
         .then(({ data }) => {
           if (data) {
             form.setValue("travelers", data);
@@ -308,7 +308,7 @@ export default function AccommodationForm({
       await onSubmit(formData);
 
       if (initialData?.stay_id && data.travelers) {
-        await setAccommodationTravelers(tripId, initialData.stay_id.toString(), data.travelers);
+        await setJunctionTravelers("accommodation", tripId, initialData.stay_id.toString(), data.travelers);
       }
     } catch (err) {
       console.error(err);

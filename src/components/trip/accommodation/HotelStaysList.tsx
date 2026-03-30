@@ -3,9 +3,8 @@ import { HotelStay } from '@/types/trip';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
 import { CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
-import { formatDateRange } from '@/utils/formatDateRange';
+import { formatDate, formatNightsCount } from '@/utils/dateUtils';
 
 interface HotelStaysListProps {
   hotelStays: HotelStay[];
@@ -25,15 +24,6 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
       </div>
     );
   }
-
-  const formatDate = (dateString: string): string => {
-    try {
-      return format(parseISO(dateString), 'MMM d, yyyy');
-    } catch (error) {
-      console.error("Error formatting date:", dateString, error);
-      return dateString;
-    }
-  };
 
   return (
     <div className="space-y-3 p-2 sm:p-4">
@@ -88,7 +78,7 @@ const HotelStaysList: React.FC<HotelStaysListProps> = ({
               <div className="flex flex-wrap items-center gap-1">
                 <span className="font-medium text-xs text-muted-foreground">Nights:</span>
                 <span className="text-xs">
-                  {formatDateRange(stay.hotel_checkin_date, stay.hotel_checkout_date)}
+                  {formatNightsCount(stay.hotel_checkin_date, stay.hotel_checkout_date)}
                 </span>
               </div>
 

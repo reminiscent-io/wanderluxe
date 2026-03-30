@@ -5,7 +5,7 @@ import DestinationInput from "./DestinationInput";
 import PrimaryDestinationInput from "./PrimaryDestinationInput";
 import FormActions from "./FormActions";
 import { supabase } from '@/integrations/supabase/client';
-import { getDaysBetweenDates } from '../../../utils/dateUtils';
+import { generateDateArray } from '../../../utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 import { addOwnerToTripShares } from '@/services/travelers';
 import { toast } from 'sonner';
@@ -102,7 +102,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({
       if (trip) {
         await addOwnerToTripShares(trip.trip_id, user.id);
 
-        const days = getDaysBetweenDates(startDate, endDate);
+        const days = generateDateArray(startDate, endDate);
         await createTripDays(trip.trip_id, days);
 
         onSubmit(trip.trip_id);

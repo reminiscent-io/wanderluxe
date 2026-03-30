@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/currency';
+import { formatDate } from '@/utils/dateUtils';
 
 interface AccommodationItemProps {
   stay: any;
@@ -12,16 +12,6 @@ interface AccommodationItemProps {
 }
 
 const AccommodationItem: React.FC<AccommodationItemProps> = ({ stay, onEdit, onDelete }) => {
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-      return format(new Date(dateString), 'MMM d, yyyy');
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return dateString;
-    }
-  };
-
   return (
     <div className="flex items-start justify-between p-4 border rounded-lg bg-background hover:shadow-warm-sm transition-all">
       <div className="flex-1">
