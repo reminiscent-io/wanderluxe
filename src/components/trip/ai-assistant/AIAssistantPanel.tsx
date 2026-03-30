@@ -254,7 +254,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-earth-700 text-sm">Trip Assistant</h3>
+              <h3 className="font-display font-semibold text-earth-700 text-sm">Trip Assistant</h3>
               <p className="text-xs text-sand-500">AI-powered travel help & import</p>
             </div>
           </div>
