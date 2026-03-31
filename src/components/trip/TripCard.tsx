@@ -306,7 +306,6 @@ const TripCard = ({
                           variant="outline"
                           className="h-8 px-3"
                           onClick={(e) => {
-                            e.preventDefault();
                             e.stopPropagation();
                           }}
                         >
@@ -374,7 +373,6 @@ const TripCard = ({
                         size="icon"
                         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
                         onClick={(e) => {
-                          e.preventDefault();
                           e.stopPropagation();
                         }}
                         aria-label="Leave shared trip"
