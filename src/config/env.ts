@@ -54,6 +54,10 @@ const envSchema = z.object({
     .pipe(z.number().positive().optional())
     .optional(),
 
+  // PostHog analytics
+  VITE_POSTHOG_KEY: z.string().optional(),
+  VITE_POSTHOG_HOST: z.string().url().optional(),
+
   // Environment mode (automatically set by Vite)
   MODE: z.enum(['development', 'production', 'test']).optional(),
   DEV: z.boolean().optional(),
@@ -80,6 +84,8 @@ function validateEnv(): Env {
     VITE_PARSE_TRAVEL_DOC_URL: getVar('VITE_PARSE_TRAVEL_DOC_URL'),
     VITE_ADMIN_EMAIL: getVar('VITE_ADMIN_EMAIL'),
     VITE_PLACE_PHOTO_CACHE_TTL_MS: getVar('VITE_PLACE_PHOTO_CACHE_TTL_MS'),
+    VITE_POSTHOG_KEY: getVar('VITE_POSTHOG_KEY'),
+    VITE_POSTHOG_HOST: getVar('VITE_POSTHOG_HOST'),
     MODE: isServer ? process.env.NODE_ENV : import.meta.env.MODE,
     DEV: isServer ? process.env.NODE_ENV === 'development' : import.meta.env.DEV,
     PROD: isServer ? process.env.NODE_ENV === 'production' : import.meta.env.PROD,
@@ -167,4 +173,6 @@ export const {
   VITE_PARSE_TRAVEL_DOC_URL,
   VITE_ADMIN_EMAIL,
   VITE_PLACE_PHOTO_CACHE_TTL_MS,
+  VITE_POSTHOG_KEY,
+  VITE_POSTHOG_HOST,
 } = env;
