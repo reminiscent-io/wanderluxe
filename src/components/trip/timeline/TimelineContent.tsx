@@ -344,6 +344,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 index={dayIndex}
                 weather={dayWeather}
                 currentWeather={isTodayDay ? weather?.current : undefined}
+                weatherLocation={tripDestination}
+                allForecasts={weather?.daily}
               hotelStays={hotelStaysForDay(day, hotelStays)}
               onActivityAdd={() => {
                 setSelectedDayId(day.day_id);

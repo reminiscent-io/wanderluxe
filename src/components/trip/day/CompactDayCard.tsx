@@ -64,6 +64,8 @@ export interface CompactDayCardProps {
   canEdit?: boolean;
   weather?: DailyForecast;
   currentWeather?: WeatherData['current'];
+  weatherLocation?: string;
+  allForecasts?: DailyForecast[];
 }
 
 /** Map TimelineItem type to the Supabase table name */
@@ -89,6 +91,8 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   canEdit = true,
   weather,
   currentWeather,
+  weatherLocation,
+  allForecasts,
 }) => {
   // Check if day is in the past for auto-collapse
   const dayDate = new Date(date);
@@ -277,6 +281,8 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
           dateISO={date}
           weather={weather}
           currentWeather={currentWeather}
+          weatherLocation={weatherLocation}
+          allForecasts={allForecasts}
         />
 
         {/* Body */}
