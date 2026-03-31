@@ -54,11 +54,15 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", className, children, onOpenAutoFocus, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
+      onOpenAutoFocus={(e) => {
+        e.preventDefault();
+        onOpenAutoFocus?.(e);
+      }}
       className={cn(sheetVariants({ side }), className)}
       {...props}
     >
