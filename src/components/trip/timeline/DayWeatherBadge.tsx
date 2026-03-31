@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DailyForecast, WeatherData, getWeatherIcon, getWeatherEmoji } from '@/hooks/useWeather';
 import { cn } from '@/lib/utils';
 import {
@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';
 
 interface DayWeatherBadgeProps {
   forecast: DailyForecast | undefined;
@@ -14,6 +15,9 @@ interface DayWeatherBadgeProps {
   isToday?: boolean;
   className?: string;
   compact?: boolean;
+  location?: string;
+  allForecasts?: DailyForecast[];
+  date?: string;
 }
 
 function CompactTempDisplay({ showCurrent, currentWeather, forecast }: {
@@ -80,11 +84,13 @@ function WeatherTooltipBody({ showCurrent, currentWeather, forecast, includeTime
           <p>High: {forecast.tempHigh}°F / Low: {forecast.tempLow}°F</p>
         </div>
       )}
+      <p className="text-[10px] text-earth-400 mt-1">Click for details</p>
     </>
   );
 }
 
-export function DayWeatherBadge({ forecast, currentWeather, isToday, className, compact = false }: DayWeatherBadgeProps) {
+export function DayWeatherBadge({ forecast, currentWeather, isToday, className, compact = false, location, allForecasts, date }: DayWeatherBadgeProps) {
+  const [modalOpen, setModalOpen] = useState(false);
   const showCurrent = !!(isToday && currentWeather);
 
   if (!forecast && !showCurrent) return null;
@@ -96,45 +102,82 @@ export function DayWeatherBadge({ forecast, currentWeather, isToday, className, 
     icon = getWeatherIcon(forecast.condition);
   }
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setModalOpen(true);
+  };
+
   if (compact) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={cn("inline-flex items-center gap-1 text-xs text-earth-500", className)}>
-              <span>{icon}</span>
-              <CompactTempDisplay showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">
-            <WeatherTooltipBody showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleClick}
+                className={cn("inline-flex items-center gap-1 text-xs text-earth-500 cursor-pointer hover:text-earth-700 transition-colors", className)}
+              >
+                <span>{icon}</span>
+                <CompactTempDisplay showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              <WeatherTooltipBody showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <WeatherDetailModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          forecast={forecast}
+          currentWeather={showCurrent ? currentWeather : undefined}
+          isToday={isToday}
+          location={location}
+          allForecasts={allForecasts}
+          date={date || forecast?.date}
+        />
+      </>
     );
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className={cn(
-            "inline-flex items-center gap-1.5 px-2 py-1 rounded-full",
-            "text-xs font-medium",
-            isToday
-              ? "bg-emerald-100/80 text-emerald-700 border border-emerald-200/50"
-              : "bg-sand-100/80 text-earth-600 border border-sand-200/50",
-            className
-          )}>
-            <span className="text-sm">{icon}</span>
-            <FullTempDisplay showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="text-xs max-w-[200px]">
-          <WeatherTooltipBody showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} includeTime />
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={handleClick}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2 py-1 rounded-full",
+                "text-xs font-medium cursor-pointer transition-all",
+                isToday
+                  ? "bg-emerald-100/80 text-emerald-700 border border-emerald-200/50 hover:bg-emerald-200/80"
+                  : "bg-sand-100/80 text-earth-600 border border-sand-200/50 hover:bg-sand-200/80",
+                className
+              )}
+            >
+              <span className="text-sm">{icon}</span>
+              <FullTempDisplay showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs max-w-[200px]">
+            <WeatherTooltipBody showCurrent={showCurrent} currentWeather={currentWeather} forecast={forecast} includeTime />
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <WeatherDetailModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        forecast={forecast}
+        currentWeather={showCurrent ? currentWeather : undefined}
+        isToday={isToday}
+        location={location}
+        allForecasts={allForecasts}
+        date={date || forecast?.date}
+      />
+    </>
   );
 }
 

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from '@/integrations/supabase/client';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
+import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';
 
 async function resolveSupabaseSignedUrl(src: string): Promise<string | null> {
   const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
@@ -108,6 +109,7 @@ const TripCard = ({
   // Get forecast for arrival date
   const arrivalDateStr = trip.arrival_date?.split('T')[0];
   const arrivalForecast = arrivalDateStr ? getWeatherForDate(weather, arrivalDateStr) : undefined;
+  const [weatherModalOpen, setWeatherModalOpen] = useState(false);
 
   useEffect(() => {
     const loadImage = async () => {
@@ -188,13 +190,22 @@ const TripCard = ({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Badge className="bg-white/90 text-earth-800 border-0 px-2 py-1 font-medium shadow-lg backdrop-blur-sm">
-                        {getWeatherEmoji(arrivalForecast.icon)} {arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°
-                      </Badge>
+                      <button
+                        type="button"
+                        className="cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWeatherModalOpen(true);
+                        }}
+                      >
+                        <Badge className="bg-white/90 text-earth-800 border-0 px-2 py-1 font-medium shadow-lg backdrop-blur-sm hover:bg-white transition-colors">
+                          {getWeatherEmoji(arrivalForecast.icon)} {arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°
+                        </Badge>
+                      </button>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="capitalize">{arrivalForecast.description}</p>
-                      <p>Forecast for arrival day</p>
+                      <p>Click for full forecast</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -404,6 +415,16 @@ const TripCard = ({
           </div>
         </CardContent>
       </Card>
+      {arrivalForecast && (
+        <WeatherDetailModal
+          open={weatherModalOpen}
+          onOpenChange={setWeatherModalOpen}
+          forecast={arrivalForecast}
+          location={weatherLocation}
+          allForecasts={weather?.daily}
+          date={arrivalDateStr}
+        />
+      )}
     </motion.div>
   );
 };

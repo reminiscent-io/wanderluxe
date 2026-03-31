@@ -19,6 +19,8 @@ type Props = {
   weather?: DailyForecast;
   currentWeather?: WeatherData['current'];
   dateISO?: string;
+  weatherLocation?: string;
+  allForecasts?: DailyForecast[];
 };
 
 const DayHeader: React.FC<Props> = ({
@@ -34,6 +36,8 @@ const DayHeader: React.FC<Props> = ({
   weather,
   currentWeather,
   dateISO,
+  weatherLocation,
+  allForecasts,
 }) => {
   // Countdown for Day 1 in the future
   const daysUntil = React.useMemo(() => {
@@ -69,6 +73,9 @@ const DayHeader: React.FC<Props> = ({
                   forecast={weather}
                   currentWeather={currentWeather}
                   isToday={isTodayFlag}
+                  location={weatherLocation}
+                  allForecasts={allForecasts}
+                  date={dateISO?.split('T')[0]}
                 />
               )}
               {daysUntil && (

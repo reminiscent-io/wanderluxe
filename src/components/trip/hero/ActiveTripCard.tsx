@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock, CloudSun, ChevronRight } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useWeather, getWeatherEmoji } from '@/hooks/useWeather';
+import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';
 import { cn } from '@/lib/utils';
 import { DEFAULT_TRIP_IMAGE, DEFAULT_TRIP_IMAGE_PHOTOGRAPHER, DEFAULT_TRIP_IMAGE_USERNAME } from '@/constants/unsplash';
 import { format, parseISO, differenceInDays } from 'date-fns';
@@ -25,6 +26,7 @@ export function ActiveTripCard({
   // Use primary_destination for weather if available, fallback to trip name
   const weatherLocation = trip.primary_destination || trip.destination;
   const { data: weather, isLoading: weatherLoading } = useWeather(weatherLocation);
+  const [weatherModalOpen, setWeatherModalOpen] = useState(false);
 
   // Calculate trip progress
   const today = new Date();
@@ -91,7 +93,11 @@ export function ActiveTripCard({
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white"
+              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white cursor-pointer hover:bg-white/30 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setWeatherModalOpen(true);
+              }}
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">{getWeatherEmoji(weather.current.icon)}</span>
@@ -153,6 +159,18 @@ export function ActiveTripCard({
           </Button>
         </div>
       </div>
+      {weather && (
+        <WeatherDetailModal
+          open={weatherModalOpen}
+          onOpenChange={setWeatherModalOpen}
+          forecast={weather.daily?.[0]}
+          currentWeather={weather.current}
+          isToday={true}
+          location={weatherLocation}
+          allForecasts={weather.daily}
+          date={new Date().toISOString().split('T')[0]}
+        />
+      )}
     </motion.div>
   );
 }

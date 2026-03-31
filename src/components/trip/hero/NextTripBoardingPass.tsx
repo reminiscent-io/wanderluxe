@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { DEFAULT_TRIP_IMAGE, DEFAULT_TRIP_IMAGE_PHOTOGRAPHER, DEFAULT_TRIP_IMAGE_USERNAME } from '@/constants/unsplash';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
+import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +62,7 @@ export function NextTripBoardingPass({
   // Get the forecast for the arrival date
   const arrivalDateStr = trip.arrival_date?.split('T')[0];
   const arrivalForecast = arrivalDateStr ? getWeatherForDate(weather, arrivalDateStr) : undefined;
+  const [weatherModalOpen, setWeatherModalOpen] = useState(false);
 
   // Live countdown timer
   useEffect(() => {
@@ -164,7 +166,11 @@ export function NextTripBoardingPass({
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white"
+              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white cursor-pointer hover:bg-white/30 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setWeatherModalOpen(true);
+              }}
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">{getWeatherEmoji(arrivalForecast.icon)}</span>
@@ -262,6 +268,16 @@ export function NextTripBoardingPass({
           )}
         </div>
       </div>
+      {arrivalForecast && (
+        <WeatherDetailModal
+          open={weatherModalOpen}
+          onOpenChange={setWeatherModalOpen}
+          forecast={arrivalForecast}
+          location={weatherLocation}
+          allForecasts={weather?.daily}
+          date={arrivalDateStr}
+        />
+      )}
     </motion.div>
   );
 }
