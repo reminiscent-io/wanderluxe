@@ -55,6 +55,7 @@ const MyTrips = () => {
           .select(`*`)
           .eq('user_id', user.id)
           .eq('hidden', showHidden)
+          .eq('is_public', false)
           .order('arrival_date', { ascending: true });
 
         if (tripsError) {
