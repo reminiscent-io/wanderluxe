@@ -11,7 +11,7 @@ const values = [
   },
   {
     headline: "AI that handles the busywork",
-    body: "Forward a confirmation email. Get restaurant picks for where you\u2019re going. Ask anything about your trip. You stay in control \u2014 AI does the legwork.",
+    body: "Drop in a screenshot or PDF of your booking confirmation. Get restaurant picks for where you\u2019re going. Ask anything about your trip. You stay in control \u2014 AI does the legwork.",
   },
 ];
 
