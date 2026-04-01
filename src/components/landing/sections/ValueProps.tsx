@@ -2,16 +2,16 @@ import { motion } from "framer-motion";
 
 const values = [
   {
-    headline: "Travel is better together",
-    body: "Invite friends and family to view or edit your trip. Everyone stays in sync - accommodations, reservations, activities - all in one shared itinerary.",
+    headline: "Plan together, in real time",
+    body: "Share your trip with friends and family. Everyone sees the same itinerary \u2014 hotels, restaurants, activities \u2014 always up to date.",
   },
   {
-    headline: "A living scrapbook of everywhere you\u2019ve been",
-    body: "WanderLuxe isn\u2019t just for planning the next trip. It\u2019s a home for every place you\u2019ve visited, every restaurant you loved, every adventure that became a story.",
+    headline: "Every trip you\u2019ve ever taken, in one place",
+    body: "Not just a planner. WanderLuxe keeps every booking, every favorite restaurant, every adventure \u2014 so you can look back anytime.",
   },
   {
-    headline: "AI that helps, not takes over",
-    body: "This is a travel for people, not AI bots. We have designed our chat interface to make things easier. Get smart recommendations, parse booking confirmations, and let the latest models do the busywork so you can focus on the journey.",
+    headline: "AI that handles the busywork",
+    body: "Forward a confirmation email. Get restaurant picks for where you\u2019re going. Ask anything about your trip. You stay in control \u2014 AI does the legwork.",
   },
 ];
 
