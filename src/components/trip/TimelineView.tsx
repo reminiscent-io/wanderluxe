@@ -240,8 +240,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       </div>
 
       {/* AI Assistant Panel - Desktop only, right side, 40% width, sticky */}
+      {/* Bottom-anchored: sticks below nav and stretches to viewport bottom */}
       <div className="hidden md:block md:w-[40%] md:pr-4">
-        <div className="sticky top-20 h-[calc(100dvh-6rem)]">
+        <div
+          className="sticky"
+          style={{
+            top: 'calc(var(--app-nav-h, 56px) + 0.5rem)',
+            height: 'calc(100dvh - var(--app-nav-h, 56px) - 1rem)',
+          }}
+        >
           <AIAssistantPanel tripId={tripId} />
         </div>
       </div>

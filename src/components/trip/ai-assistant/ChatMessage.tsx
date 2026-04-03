@@ -9,6 +9,41 @@ import remarkGfm from 'remark-gfm';
 import ExtractionResultMessage from './ExtractionResultMessage';
 import type { AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
 
+/**
+ * Fixes common malformed markdown links from AI responses.
+ * Examples of issues fixed:
+ *  - **Name](url)** → **[Name](url)**  (missing opening bracket)
+ *  - [Name](url  → [Name](url)         (missing closing paren)
+ *  - [Name](httpexample.com) → [Name](https://example.com)  (missing protocol separator)
+ */
+function sanitizeMarkdownLinks(content: string): string {
+  let result = content;
+
+  // Fix: **Text](url)** — missing opening bracket, closing ** present
+  result = result.replaceAll(/\*\*([^[*\n]+?)\]\(([^)]+)\)\*\*/g, '**[$1]($2)**');
+
+  // Fix: **Text](url/path/ — missing [, ), and closing **
+  // Captures URL up to whitespace, em-dash, or end of line
+  result = result.replaceAll(/\*\*([^[*\n]+?)\]\((https?:\/\/[^\s)]+)\s/g, '**[$1]($2)** ');
+  result = result.replaceAll(/\*\*([^[*\n]+?)\]\((https?:\/\/[^\s)]+)$/gm, '**[$1]($2)**');
+
+  // Fix: *Text](url)* — same for single bold/italic
+  result = result.replaceAll(/(?<!\*)\*([^[*\n]+?)\]\(([^)]+)\)\*/g, '*[$1]($2)*');
+
+  // Fix: standalone Text](url) at start of line or after number+dot — missing opening bracket
+  result = result.replaceAll(/(^|\n|(?:\d+\.\s+))([^[\n*]+?)\]\(([^)]+)\)/g, '$1[$2]($3)');
+
+  // Fix: [Name](url without closing paren — add closing paren before end of line or next space
+  result = result.replaceAll(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\s/g, '[$1]($2) ');
+  result = result.replaceAll(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)$/gm, '[$1]($2)');
+
+  // Fix: URLs missing :// after http/https (e.g., httpexample.com → https://example.com)
+  result = result.replaceAll(/\]\(http([^s:])/g, '](https://$1');
+  result = result.replaceAll(/\]\(https([^:])/g, '](https://$1');
+
+  return result;
+}
+
 interface ChatMessageProps {
   message: AIChatMessage;
   isStreaming?: boolean;
@@ -189,7 +224,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                   )
                 }}
               >
-                {message.content}
+                {sanitizeMarkdownLinks(message.content)}
               </ReactMarkdown>
               {isStreaming && (
                 <span className="inline-block w-2 h-4 ml-0.5 bg-earth-500 animate-pulse" />
