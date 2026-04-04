@@ -1,66 +1,65 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 /**
- * Buffers incoming streaming content and flushes to state at a controlled rate.
- * This prevents jarring rapid text rendering by batching SSE token updates.
+ * Smoothly reveals streaming content character-by-character instead of in chunks.
+ * Creates a fluid reveal effect that feels less choppy than batch flushing.
  *
- * @param flushIntervalMs - How often to flush buffered content to state (default: 30ms)
+ * The buffer accumulates the full content from SSE tokens, while displayedContent
+ * gradually catches up at a steady per-frame rate — with dynamic acceleration
+ * when the buffer grows faster than the reveal.
+ *
+ * @param charsPerFrame - Base number of characters to reveal per animation frame (default: 3)
  */
-export function useBufferedStreaming(flushIntervalMs = 30) {
+export function useBufferedStreaming(charsPerFrame = 3) {
   const [displayedContent, setDisplayedContent] = useState('');
   const bufferRef = useRef('');
+  const displayedLengthRef = useRef(0);
   const rafRef = useRef<number | null>(null);
-  const lastFlushRef = useRef(0);
   const isActiveRef = useRef(false);
 
-  const flush = useCallback(() => {
+  const tick = useCallback(() => {
     rafRef.current = null;
-    if (bufferRef.current) {
-      setDisplayedContent(bufferRef.current);
-      lastFlushRef.current = performance.now();
+
+    const targetLength = bufferRef.current.length;
+    const currentLength = displayedLengthRef.current;
+
+    if (currentLength < targetLength) {
+      // Dynamic speed: reveal faster when buffer is building up
+      const gap = targetLength - currentLength;
+      const advance = Math.max(charsPerFrame, Math.ceil(gap * 0.15));
+      const newLength = Math.min(currentLength + advance, targetLength);
+
+      displayedLengthRef.current = newLength;
+      setDisplayedContent(bufferRef.current.substring(0, newLength));
     }
 
-    // Schedule next flush if still active and buffer may grow
+    // Keep the loop going while active
     if (isActiveRef.current) {
-      rafRef.current = requestAnimationFrame(scheduleFlush);
+      rafRef.current = requestAnimationFrame(tick);
     }
-  }, []);
-
-  const scheduleFlush = useCallback(() => {
-    const now = performance.now();
-    const elapsed = now - lastFlushRef.current;
-    if (elapsed >= flushIntervalMs) {
-      flush();
-    } else {
-      // Wait until interval has elapsed
-      rafRef.current = requestAnimationFrame(scheduleFlush);
-    }
-  }, [flushIntervalMs, flush]);
-
-  /** Call this from SSE onmessage to append new content to the buffer */
-  const appendToBuffer = useCallback((content: string) => {
-    bufferRef.current += content;
-
-    // Start the flush loop if not already running
-    if (!rafRef.current && isActiveRef.current) {
-      rafRef.current = requestAnimationFrame(scheduleFlush);
-    }
-  }, [scheduleFlush]);
+  }, [charsPerFrame]);
 
   /** Set the full buffer content (used when accumulator has the full string) */
   const setBufferContent = useCallback((content: string) => {
     bufferRef.current = content;
-
     if (!rafRef.current && isActiveRef.current) {
-      rafRef.current = requestAnimationFrame(scheduleFlush);
+      rafRef.current = requestAnimationFrame(tick);
     }
-  }, [scheduleFlush]);
+  }, [tick]);
+
+  /** Append to buffer (alternative API) */
+  const appendToBuffer = useCallback((content: string) => {
+    bufferRef.current += content;
+    if (!rafRef.current && isActiveRef.current) {
+      rafRef.current = requestAnimationFrame(tick);
+    }
+  }, [tick]);
 
   /** Start buffering (call when streaming begins) */
   const startBuffering = useCallback(() => {
     bufferRef.current = '';
+    displayedLengthRef.current = 0;
     setDisplayedContent('');
-    lastFlushRef.current = 0;
     isActiveRef.current = true;
   }, []);
 
@@ -71,8 +70,8 @@ export function useBufferedStreaming(flushIntervalMs = 30) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    // Final flush of any remaining buffered content
     if (bufferRef.current) {
+      displayedLengthRef.current = bufferRef.current.length;
       setDisplayedContent(bufferRef.current);
     }
     bufferRef.current = '';
@@ -86,8 +85,8 @@ export function useBufferedStreaming(flushIntervalMs = 30) {
       rafRef.current = null;
     }
     bufferRef.current = '';
+    displayedLengthRef.current = 0;
     setDisplayedContent('');
-    lastFlushRef.current = 0;
   }, []);
 
   // Cleanup on unmount

@@ -181,7 +181,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     setBufferContent,
     startBuffering,
     reset: resetBuffer
-  } = useBufferedStreaming(30);
+  } = useBufferedStreaming();
 
   // Adapter: setStreamingContent now goes through the buffer
   // When setting empty string, also stop the buffer flush loop

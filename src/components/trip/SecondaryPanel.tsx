@@ -74,9 +74,9 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
     onEditDates,
   } = props;
 
-  if (!activeKey) return null;
-
   const isMobile = useMediaQuery("(max-width: 767px)");
+
+  if (!activeKey) return null;
   const headerProps = { onBack };
 
   /* pick panel component */

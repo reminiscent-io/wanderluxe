@@ -1,35 +1,29 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Navigation from "../components/Navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrencyWithSymbol } from '../components/trip/budget/utils/budgetCalculations';
-import ExpenseActions from '../components/trip/budget/components/ExpenseActions';
-import { useExpenses } from '../components/trip/budget/hooks/useExpenses';
+import CurrencySelector from '../components/trip/budget/CurrencySelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import CurrencySelector from '../components/trip/budget/CurrencySelector';
-import { 
-  Search, 
-  Plus, 
-  DollarSign, 
-  TrendingUp, 
-  PieChart, 
-  Calendar,
-  MapPin,
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area
+} from 'recharts';
+import {
   Plane,
   Utensils,
   Hotel,
-  ShoppingBag,
-  Camera,
-  Filter
+  Ticket,
+  Receipt,
+  Sparkles,
+  MapPin
 } from 'lucide-react';
 
-// Interface for combined expense data across all trips
+// --- Types ---
+
 interface CombinedExpense {
   id: string;
   description: string;
@@ -37,33 +31,106 @@ interface CombinedExpense {
   category: string;
   date: string;
   location: string;
-  status: string;
   tripId: string;
   currency: string;
 }
 
+// --- Constants ---
+
+const CATEGORY_COLORS: Record<string, string> = {
+  accommodation: '#8B7355',  // earth/sand-600
+  transportation: '#FB923C', // sunset-400
+  food: '#FBBF24',          // amber-400
+  entertainment: '#F9A8D4', // rose-300
+  other: '#A8A29E',         // sand-400
+};
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  transportation: <Plane className="w-4 h-4" />,
+  accommodation: <Hotel className="w-4 h-4" />,
+  food: <Utensils className="w-4 h-4" />,
+  entertainment: <Ticket className="w-4 h-4" />,
+  other: <Receipt className="w-4 h-4" />,
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  transportation: 'Transportation',
+  accommodation: 'Accommodation',
+  food: 'Food & Dining',
+  entertainment: 'Activities',
+  other: 'Other',
+};
+
+// --- Skeleton components ---
+
+const StatSkeleton = () => (
+  <div className="rounded-card bg-card shadow-warm-sm p-5 animate-pulse">
+    <div className="h-3 bg-sand-200 rounded w-20 mb-3" />
+    <div className="h-8 bg-sand-200 rounded w-28" />
+  </div>
+);
+
+const ChartSkeleton = ({ height = 'h-64' }: { height?: string }) => (
+  <Card className="rounded-card shadow-warm-sm">
+    <CardContent className="p-5">
+      <div className="h-5 bg-sand-200 rounded w-32 mb-4 animate-pulse" />
+      <div className={`${height} bg-sand-100 rounded animate-pulse`} />
+    </CardContent>
+  </Card>
+);
+
+const ListSkeleton = () => (
+  <Card className="rounded-card shadow-warm-sm">
+    <CardContent className="p-5">
+      <div className="h-5 bg-sand-200 rounded w-36 mb-4 animate-pulse" />
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} className="flex items-center gap-3 py-3 animate-pulse">
+          <div className="w-9 h-9 rounded-full bg-sand-200" />
+          <div className="flex-1">
+            <div className="h-4 bg-sand-200 rounded w-40 mb-1" />
+            <div className="h-3 bg-sand-100 rounded w-24" />
+          </div>
+          <div className="h-5 bg-sand-200 rounded w-16" />
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+// --- Custom Recharts Tooltip ---
+
+const CustomTooltip = ({ active, payload, selectedCurrency }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white border border-sand-200 rounded-lg px-3 py-2 shadow-warm-sm text-sm">
+      <p className="text-earth-700 font-medium">{payload[0].name || payload[0].payload?.name}</p>
+      <p className="text-earth-600">{formatCurrencyWithSymbol(payload[0].value, selectedCurrency)}</p>
+    </div>
+  );
+};
+
+// --- Main Component ---
+
 const Budget = () => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
-  const [activeTab, setActiveTab] = useState("categories");
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const { user } = useAuth();
 
   // Fetch all user trips and their expenses
-  const { data: allExpenses = [], isLoading } = useQuery({
+  const { data: result, isLoading } = useQuery({
     queryKey: ['all-expenses', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return { expenses: [], tripMap: {} as Record<string, string> };
 
-      // Get all user trips
       const { data: trips, error: tripsError } = await supabase
         .from('trips')
         .select('trip_id, destination')
         .eq('user_id', user.id);
 
-      if (tripsError || !trips) return [];
+      if (tripsError || !trips) return { expenses: [], tripMap: {} as Record<string, string> };
 
-      // Get expenses for all trips
+      const tripMap: Record<string, string> = {};
+      trips.forEach(t => { tripMap[t.trip_id] = t.destination; });
+
       const allExpensesPromises = trips.map(async (trip) => {
         const [
           { data: activities },
@@ -81,24 +148,21 @@ const Budget = () => {
 
         const tripExpenses: CombinedExpense[] = [];
 
-        // Map accommodations (fix the categorization issue)
         (accommodations || []).forEach(acc => {
           if (acc.cost) {
             tripExpenses.push({
               id: acc.stay_id,
               description: acc.title || acc.hotel || 'Accommodation',
               amount: acc.cost,
-              category: 'accommodation', // Fixed: use lowercase to match UI categories
+              category: 'accommodation',
               date: acc.hotel_checkin_date || acc.created_at,
-              location: acc.hotel_address || trip.destination,
-              status: acc.is_paid ? 'confirmed' : 'pending',
+              location: trip.destination,
               tripId: trip.trip_id,
               currency: acc.currency || 'USD'
             });
           }
         });
 
-        // Map other expense types
         (activities || []).forEach(act => {
           if (act.cost) {
             tripExpenses.push({
@@ -108,7 +172,6 @@ const Budget = () => {
               category: 'entertainment',
               date: act.created_at,
               location: trip.destination,
-              status: 'pending', // activities don't have is_paid field
               tripId: trip.trip_id,
               currency: act.currency || 'USD'
             });
@@ -119,12 +182,11 @@ const Budget = () => {
           if (trans.cost) {
             tripExpenses.push({
               id: trans.id,
-              description: trans.type,
+              description: trans.type || 'Transport',
               amount: trans.cost,
               category: 'transportation',
               date: trans.start_date || trans.created_at,
               location: trip.destination,
-              status: 'pending', // transportation doesn't have is_paid field
               tripId: trip.trip_id,
               currency: trans.currency || 'USD'
             });
@@ -140,7 +202,6 @@ const Budget = () => {
               category: 'food',
               date: rest.created_at,
               location: trip.destination,
-              status: 'pending', // reservations don't have is_paid field
               tripId: trip.trip_id,
               currency: rest.currency || 'USD'
             });
@@ -154,9 +215,8 @@ const Budget = () => {
               description: expense.description,
               amount: expense.cost,
               category: 'other',
-              date: expense.expense_date || expense.created_at, // Fixed: use expense_date not date
+              date: expense.date || expense.created_at,
               location: trip.destination,
-              status: 'pending', // other_expenses don't have is_paid field
               tripId: trip.trip_id,
               currency: expense.currency || 'USD'
             });
@@ -167,400 +227,395 @@ const Budget = () => {
       });
 
       const results = await Promise.all(allExpensesPromises);
-      return results.flat();
+      return { expenses: results.flat(), tripMap };
     },
     enabled: !!user
   });
 
-  const expenses = allExpenses;
+  const expenses = result?.expenses ?? [];
+  const tripMap = result?.tripMap ?? {};
 
-  // Filter expenses based on search and category
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter(expense => {
-      const matchesSearch = expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           expense.location.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || expense.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [expenses, searchQuery, selectedCategory]);
+  // --- Derived data ---
 
-  // Calculate totals
-  const totalBudget = 5000;
-  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const remainingBudget = totalBudget - totalSpent;
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'transportation': return <Plane className="w-4 h-4" />;
-      case 'accommodation': return <Hotel className="w-4 h-4" />;
-      case 'food': return <Utensils className="w-4 h-4" />;
-      case 'entertainment': return <Camera className="w-4 h-4" />;
-      case 'other': return <ShoppingBag className="w-4 h-4" />;
-      default: return <ShoppingBag className="w-4 h-4" />;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'transportation': return 'bg-blue-100 text-blue-800';
-      case 'accommodation': return 'bg-green-100 text-green-800';
-      case 'food': return 'bg-orange-100 text-orange-800';
-      case 'entertainment': return 'bg-purple-100 text-purple-800';
-      case 'other': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-muted text-foreground';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-muted text-foreground';
-    }
-  };
-
-  const ExpenseCard = ({ expense }: { expense: any }) => (
-    <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm shadow-warm-sm hover:shadow-md transition-all duration-200">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge className={`${getCategoryColor(expense.category)} flex items-center gap-1`}>
-                  {getCategoryIcon(expense.category)}
-                  {expense.category}
-                </Badge>
-                <Badge className={getStatusColor(expense.status)}>
-                  {expense.status}
-                </Badge>
-              </div>
-              <h3 className="font-semibold text-earth-600 mb-1">{expense.description}</h3>
-              <div className="flex items-center gap-4 text-sm text-sand-600">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {expense.date}
-                </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {expense.location}
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-bold text-earth-600">
-                {formatCurrencyWithSymbol(expense.amount, selectedCurrency)}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+  const totalSpent = useMemo(() =>
+    expenses.reduce((sum, e) => sum + e.amount, 0),
+    [expenses]
   );
 
+  const tripsWithExpenses = useMemo(() => {
+    const tripIds = new Set(expenses.map(e => e.tripId));
+    return tripIds.size;
+  }, [expenses]);
+
+  const avgPerTrip = tripsWithExpenses > 0 ? totalSpent / tripsWithExpenses : 0;
+
+  // Category donut data
+  const categoryData = useMemo(() => {
+    const map: Record<string, number> = {};
+    expenses.forEach(e => {
+      map[e.category] = (map[e.category] || 0) + e.amount;
+    });
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value, label: CATEGORY_LABELS[name] || name }))
+      .sort((a, b) => b.value - a.value);
+  }, [expenses]);
+
+  const largestCategory = categoryData[0];
+
+  // Per-trip bar data
+  const tripBarData = useMemo(() => {
+    const map: Record<string, number> = {};
+    expenses.forEach(e => {
+      map[e.tripId] = (map[e.tripId] || 0) + e.amount;
+    });
+    return Object.entries(map)
+      .map(([tripId, total]) => ({
+        name: (tripMap[tripId] || 'Unknown').length > 20
+          ? (tripMap[tripId] || 'Unknown').slice(0, 18) + '…'
+          : (tripMap[tripId] || 'Unknown'),
+        total,
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 6);
+  }, [expenses, tripMap]);
+
+  // Monthly area chart data
+  const monthlyData = useMemo(() => {
+    const map: Record<string, number> = {};
+    expenses.forEach(e => {
+      if (!e.date) return;
+      const d = new Date(e.date);
+      if (isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      map[key] = (map[key] || 0) + e.amount;
+    });
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, total]) => {
+        const [year, month] = key.split('-');
+        const label = new Date(Number(year), Number(month) - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        return { name: label, total };
+      });
+  }, [expenses]);
+
+  // Top 5 biggest expenses
+  const topExpenses = useMemo(() =>
+    [...expenses].sort((a, b) => b.amount - a.amount).slice(0, 5),
+    [expenses]
+  );
+
+  const hasExpenses = expenses.length > 0;
+
+  // --- Render ---
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="container max-w-7xl mx-auto px-4 py-8">
-        
-        {/* Header Section */}
-        <div className="mb-8">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-24">
+
+        {/* Page Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center justify-between"
+        >
+          <div>
+            <h1 className="text-2xl font-display text-earth-600">Trip Spend</h1>
+            <p className="text-sm text-sand-500">All trips</p>
+          </div>
+          <CurrencySelector
+            value={selectedCurrency}
+            onValueChange={setSelectedCurrency}
+            className="w-[100px]"
+          />
+        </motion.div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              <StatSkeleton /><StatSkeleton /><StatSkeleton />
+            </div>
+            <ChartSkeleton />
+            <ChartSkeleton height="h-48" />
+            <ChartSkeleton height="h-36" />
+            <ListSkeleton />
+          </>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !hasExpenses && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <h1 className="text-4xl font-bold text-earth-600 mb-2">Budget Management</h1>
-            <p className="text-sand-600 text-lg">Track your travel expenses and stay within budget</p>
+            <Card className="rounded-card shadow-warm">
+              <CardContent className="p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-sunset-100 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-sunset-500" />
+                </div>
+                <h3 className="text-xl font-display text-earth-600 mb-2">Start tracking your spend</h3>
+                <p className="text-sand-500 mb-6 max-w-sm mx-auto">
+                  Add expenses to any trip to see your spending patterns here.
+                </p>
+                <a href="/my-trips">
+                  <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-sunset-400 to-sunset-500 text-white font-medium shadow-warm-sm hover:shadow-warm transition-shadow">
+                    <MapPin className="w-4 h-4" />
+                    View your trips
+                  </button>
+                </a>
+              </CardContent>
+            </Card>
           </motion.div>
-        </div>
+        )}
 
-        {/* Budget Header with Currency Selector */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-6"
-        >
-          <div className="flex flex-col space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-earth-500">Budget Overview</h2>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Display in:</span>
-                <CurrencySelector
-                  value={selectedCurrency}
-                  onValueChange={setSelectedCurrency}
-                  className="w-[100px]"
-                />
+        {/* Dashboard Content */}
+        {!isLoading && hasExpenses && (
+          <>
+            {/* Hero Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.05 }}
+              className="grid grid-cols-3 gap-3"
+            >
+              <div className="rounded-card bg-card shadow-warm-sm p-4 sm:p-5">
+                <p className="text-xs text-sand-500 mb-1">Total Spent</p>
+                <p className="text-lg sm:text-2xl font-display text-sunset-500 leading-tight">
+                  {formatCurrencyWithSymbol(totalSpent, selectedCurrency)}
+                </p>
               </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Exchange rates last updated: {new Date().toLocaleDateString('en-US', { 
-                month: 'numeric', 
-                day: 'numeric', 
-                year: '2-digit',
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-              })}
-            </p>
-          </div>
-        </motion.div>
+              <div className="rounded-card bg-card shadow-warm-sm p-4 sm:p-5">
+                <p className="text-xs text-sand-500 mb-1">Trips</p>
+                <p className="text-lg sm:text-2xl font-display text-earth-600 leading-tight">
+                  {tripsWithExpenses}
+                </p>
+              </div>
+              <div className="rounded-card bg-card shadow-warm-sm p-4 sm:p-5">
+                <p className="text-xs text-sand-500 mb-1">Avg / Trip</p>
+                <p className="text-lg sm:text-2xl font-display text-earth-600 leading-tight">
+                  {formatCurrencyWithSymbol(avgPerTrip, selectedCurrency)}
+                </p>
+              </div>
+            </motion.div>
 
-        {/* Budget Summary Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-        >
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Total Budget</p>
-                  <p className="text-2xl font-bold text-earth-600">{formatCurrencyWithSymbol(totalBudget, selectedCurrency)}</p>
-                </div>
-                <DollarSign className="w-8 h-8 text-earth-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Total Spent</p>
-                  <p className="text-2xl font-bold text-red-600">{formatCurrencyWithSymbol(totalSpent, selectedCurrency)}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-sand-600 mb-1">Remaining</p>
-                  <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrencyWithSymbol(remainingBudget, selectedCurrency)}
-                  </p>
-                </div>
-                <PieChart className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Tabs Navigation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-              <TabsTrigger value="categories">Categories</TabsTrigger>
-              <TabsTrigger value="overview">Recent</TabsTrigger>
-              <TabsTrigger value="expenses">Expenses</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-earth-600">Recent Expenses</CardTitle>
-                    <CardDescription>Your latest spending activity</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {expenses.slice(0, 3).map((expense) => (
-                      <div key={expense.id} className="flex items-center justify-between py-2 border-b border-sand-100 last:border-0">
-                        <div className="flex items-center gap-3">
-                          {getCategoryIcon(expense.category)}
-                          <div>
-                            <p className="font-medium text-earth-600">{expense.description}</p>
-                            <p className="text-sm text-sand-600">{expense.date}</p>
-                          </div>
+            {/* Category Donut */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+            >
+              <Card className="rounded-card shadow-warm">
+                <CardContent className="p-5">
+                  <h2 className="text-lg font-display text-earth-600 mb-4">By category</h2>
+                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                    {/* Donut Chart */}
+                    <div className="relative w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] flex-shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={categoryData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius="60%"
+                            outerRadius="90%"
+                            paddingAngle={3}
+                            dataKey="value"
+                            nameKey="label"
+                            stroke="none"
+                          >
+                            {categoryData.map((entry) => (
+                              <Cell
+                                key={entry.name}
+                                fill={CATEGORY_COLORS[entry.name] || '#A8A29E'}
+                              />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip content={<CustomTooltip selectedCurrency={selectedCurrency} />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      {/* Center label */}
+                      {largestCategory && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <p className="text-xs text-sand-500">{CATEGORY_LABELS[largestCategory.name]}</p>
+                          <p className="text-sm font-display text-earth-600">
+                            {totalSpent > 0 ? Math.round((largestCategory.value / totalSpent) * 100) : 0}%
+                          </p>
                         </div>
-                        <p className="font-semibold text-earth-600">{formatCurrencyWithSymbol(expense.amount, selectedCurrency)}</p>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-earth-600">Budget Progress</CardTitle>
-                    <CardDescription>How much you've spent vs your budget</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between text-sm">
-                        <span>Progress</span>
-                        <span>{Math.round((totalSpent / totalBudget) * 100)}%</span>
-                      </div>
-                      <div className="w-full bg-sand-200 rounded-full h-3">
-                        <div 
-                          className={`h-3 rounded-full transition-all duration-500 ${
-                            totalSpent > totalBudget ? 'bg-red-500' : 'bg-earth-500'
-                          }`}
-                          style={{ width: `${Math.min((totalSpent / totalBudget) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-sm text-sand-600">
-                        <span>{formatCurrencyWithSymbol(totalSpent, selectedCurrency)} spent</span>
-                        <span>{formatCurrencyWithSymbol(totalBudget, selectedCurrency)} budget</span>
-                      </div>
+                      )}
                     </div>
+
+                    {/* Legend */}
+                    <div className="flex-1 w-full space-y-3">
+                      {categoryData.map((cat) => {
+                        const pct = totalSpent > 0 ? ((cat.value / totalSpent) * 100).toFixed(1) : '0';
+                        return (
+                          <div key={cat.name} className="flex items-center gap-3">
+                            <div
+                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: CATEGORY_COLORS[cat.name] || '#A8A29E' }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-earth-700">{CATEGORY_LABELS[cat.name] || cat.name}</span>
+                                <span className="text-sm font-medium text-earth-600">
+                                  {formatCurrencyWithSymbol(cat.value, selectedCurrency)}
+                                </span>
+                              </div>
+                              <div className="w-full bg-sand-100 rounded-full h-1.5 mt-1">
+                                <div
+                                  className="h-1.5 rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${pct}%`,
+                                    backgroundColor: CATEGORY_COLORS[cat.name] || '#A8A29E'
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <span className="text-xs text-sand-500 w-10 text-right">{pct}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Spend by Trip - Horizontal Bars */}
+            {tripBarData.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.15 }}
+              >
+                <Card className="rounded-card shadow-warm-sm">
+                  <CardContent className="p-5">
+                    <h2 className="text-lg font-display text-earth-600 mb-4">By trip</h2>
+                    <ResponsiveContainer width="100%" height={tripBarData.length * 48 + 20}>
+                      <BarChart
+                        data={tripBarData}
+                        layout="vertical"
+                        margin={{ top: 0, right: 80, left: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#E7E5E4" />
+                        <XAxis type="number" hide />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={120}
+                          tick={{ fontSize: 13, fill: '#57534E' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <RechartsTooltip content={<CustomTooltip selectedCurrency={selectedCurrency} />} />
+                        <Bar
+                          dataKey="total"
+                          fill="#FB923C"
+                          radius={[0, 6, 6, 0]}
+                          barSize={24}
+                          label={{
+                            position: 'right',
+                            formatter: (val: number) => formatCurrencyWithSymbol(val, selectedCurrency),
+                            style: { fontSize: 12, fill: '#78716C' }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
-              </div>
-            </TabsContent>
+              </motion.div>
+            )}
 
-            <TabsContent value="expenses" className="space-y-6">
-              {/* Search and Filter Controls */}
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sand-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search expenses..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white/80 border-sand-200"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-sand-600" />
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-3 py-2 rounded-md border border-sand-200 bg-white/80 text-sm"
-                  >
-                    <option value="all">All Categories</option>
-                    <option value="transportation">Transportation</option>
-                    <option value="accommodation">Accommodation</option>
-                    <option value="food">Food & Dining</option>
-                    <option value="entertainment">Entertainment</option>
-                    <option value="other">Other</option>
-                  </select>
-                  <ExpenseActions onAddExpense={() => console.log('Add expense')} />
-                </div>
-              </div>
+            {/* Spending Over Time */}
+            {monthlyData.length > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+              >
+                <Card className="rounded-card shadow-warm-sm bg-card/60">
+                  <CardContent className="p-5">
+                    <h2 className="text-lg font-display text-earth-600 mb-3">Over time</h2>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <AreaChart data={monthlyData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#FB923C" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="#FB923C" stopOpacity={0.05} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 11, fill: '#A8A29E' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <RechartsTooltip content={<CustomTooltip selectedCurrency={selectedCurrency} />} />
+                        <Area
+                          type="monotone"
+                          dataKey="total"
+                          stroke="#FB923C"
+                          strokeWidth={2}
+                          fill="url(#areaGrad)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-              {/* Expenses Grid */}
-              <div className="space-y-4">
-                {isLoading ? (
-                  <div className="grid grid-cols-1 gap-4">
-                    {[1, 2, 3].map((i) => (
-                      <Card key={i} className="p-4">
-                        <div className="animate-pulse flex space-x-4">
-                          <div className="rounded-full bg-sand-200 h-10 w-10"></div>
-                          <div className="flex-1 space-y-2 py-1">
-                            <div className="h-4 bg-sand-200 rounded w-3/4"></div>
-                            <div className="h-3 bg-sand-200 rounded w-1/2"></div>
-                          </div>
+            {/* Top Expenses - Biggest Splurges */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
+            >
+              <Card className="rounded-card shadow-warm-sm">
+                <CardContent className="p-5">
+                  <h2 className="text-lg font-display text-earth-600 mb-3">Biggest splurges</h2>
+                  <div className="divide-y divide-sand-100">
+                    {topExpenses.map((expense, i) => (
+                      <div key={expense.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                        {/* Category icon */}
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: `${CATEGORY_COLORS[expense.category] || '#A8A29E'}20`,
+                            color: CATEGORY_COLORS[expense.category] || '#A8A29E'
+                          }}
+                        >
+                          {CATEGORY_ICONS[expense.category] || <Receipt className="w-4 h-4" />}
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : filteredExpenses.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredExpenses.map((expense) => (
-                      <ExpenseCard key={expense.id} expense={expense} />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                    <CardContent className="p-12 text-center">
-                      <ShoppingBag className="w-12 h-12 text-sand-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-earth-600 mb-2">No expenses found</h3>
-                      <p className="text-sand-600 mb-4">
-                        {searchQuery || selectedCategory !== 'all' 
-                          ? 'Try adjusting your search or filter criteria.'
-                          : 'Start by adding your first expense to track your spending.'
-                        }
-                      </p>
-                      <Button 
-                        onClick={() => console.log('Add expense')}
-                        className="bg-earth-500 hover:bg-earth-600 text-sand-50"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Your First Expense
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="categories" className="space-y-6">
-              <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-earth-600">Spending by Category</CardTitle>
-                  <CardDescription>Breakdown of your expenses by category</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {['transportation', 'accommodation', 'food', 'entertainment', 'other'].map((category) => {
-                      const categoryExpenses = expenses.filter(e => {
-                        const expenseCategory = e.category?.toLowerCase() || '';
-                        // Handle food/dining mapping
-                        if (category === 'food') {
-                          return expenseCategory === 'food' || expenseCategory === 'dining';
-                        }
-                        // Handle accommodation variations
-                        if (category === 'accommodation') {
-                          return expenseCategory === 'accommodation' || expenseCategory === 'accommodations';
-                        }
-                        return expenseCategory === category.toLowerCase();
-                      });
-                      const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-                      const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
-                      
-                      return (
-                        <div key={category} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {getCategoryIcon(category)}
-                              <span className="font-medium text-earth-600 capitalize">{category}</span>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-semibold text-earth-600">{formatCurrencyWithSymbol(categoryTotal, selectedCurrency)}</p>
-                              <p className="text-sm text-sand-600">{percentage.toFixed(1)}%</p>
-                            </div>
-                          </div>
-                          <div className="w-full bg-sand-200 rounded-full h-2">
-                            <div 
-                              className="h-2 rounded-full bg-earth-500 transition-all duration-500"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
+                        {/* Description */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-earth-700 truncate">
+                            {expense.description}
+                          </p>
+                          <p className="text-xs text-sand-500 truncate">{expense.location}</p>
                         </div>
-                      );
-                    })}
+                        {/* Amount */}
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-display text-earth-600">
+                            {formatCurrencyWithSymbol(expense.amount, selectedCurrency)}
+                          </p>
+                          {expense.date && (
+                            <p className="text-xs text-sand-400">
+                              {new Date(expense.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            <TabsContent value="analytics" className="space-y-6">
-              <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-12 text-center">
-                  <PieChart className="w-12 h-12 text-sand-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-earth-600 mb-2">Advanced Analytics</h3>
-                  <p className="text-sand-600">
-                    Detailed spending analytics and insights coming soon. This will include spending trends,
-                    budget forecasting, and personalized recommendations.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
+            </motion.div>
+          </>
+        )}
       </div>
     </div>
   );

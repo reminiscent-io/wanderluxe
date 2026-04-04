@@ -227,7 +227,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 {sanitizeMarkdownLinks(message.content)}
               </ReactMarkdown>
               {isStreaming && (
-                <span className="inline-block w-2 h-4 ml-0.5 bg-earth-500 animate-pulse" />
+                <span className="inline-block w-1 h-[1.1em] ml-0.5 rounded-full bg-earth-400/60 animate-pulse" />
               )}
             </div>
           </div>
