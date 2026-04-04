@@ -5,6 +5,7 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 const {
   mockUnsubscribe,
   mockGetSession,
+  mockGetUser,
   mockOnAuthStateChange,
   mockRefreshSession,
   mockSignOut,
@@ -12,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
   mockUnsubscribe: vi.fn(),
   mockGetSession: vi.fn(),
+  mockGetUser: vi.fn(),
   mockOnAuthStateChange: vi.fn(),
   mockRefreshSession: vi.fn(),
   mockSignOut: vi.fn(),
@@ -23,6 +25,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: {
       getSession: mockGetSession,
+      getUser: mockGetUser,
       onAuthStateChange: mockOnAuthStateChange,
       refreshSession: mockRefreshSession,
       signOut: mockSignOut,
@@ -61,6 +64,11 @@ describe('AuthContext', () => {
       error: null,
     });
 
+    mockGetUser.mockResolvedValue({
+      data: { user: null },
+      error: null,
+    });
+
     mockRefreshSession.mockResolvedValue({
       data: { session: null },
       error: null,
@@ -73,6 +81,9 @@ describe('AuthContext', () => {
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: null }),
       insert: vi.fn().mockResolvedValue({ error: null }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }),
     });
   });
 
@@ -109,6 +120,7 @@ describe('AuthContext', () => {
           data: { id: 'user-123', subscription_tier: 'pro' },
           error: null,
         }),
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       });
 
       render(
@@ -143,6 +155,7 @@ describe('AuthContext', () => {
           data: { id: 'user-123', subscription_tier: 'premium' },
           error: null,
         }),
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       });
 
       render(
@@ -173,6 +186,7 @@ describe('AuthContext', () => {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
         insert: mockInsert,
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       });
 
       render(
@@ -204,6 +218,7 @@ describe('AuthContext', () => {
           data: { id: 'user-123', subscription_tier: null },
           error: null,
         }),
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       });
 
       render(
@@ -234,6 +249,7 @@ describe('AuthContext', () => {
           data: { id: 'user-123', subscription_tier: 'free' },
           error: null,
         }),
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       });
 
       render(
@@ -286,6 +302,7 @@ describe('AuthContext', () => {
           data: { id: 'user-123', subscription_tier: 'free' },
           error: null,
         }),
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       });
 
       render(

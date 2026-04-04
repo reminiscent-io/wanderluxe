@@ -229,10 +229,6 @@ const MyTrips = () => {
     (sharedTrips || []).filter(trip => trip && getTripCategory(trip) === 'current'),
   [sharedTrips]);
 
-  if (!session) {
-    return null; // Don't render anything while redirecting
-  }
-
   // Calculate next upcoming trip and days until
   const nextTrip = useMemo(() => {
     const allUpcoming = [...upcomingMyTrips, ...upcomingSharedTrips].sort((a, b) => {
@@ -282,6 +278,10 @@ const MyTrips = () => {
     }
     return upcomingTrips;
   }, [heroState, nextTrip, upcomingTrips]);
+
+  if (!session) {
+    return null; // Don't render anything while redirecting
+  }
 
   // Calculate total trips stats
   const totalMyTrips = (myTrips || []).length;

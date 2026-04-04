@@ -94,11 +94,11 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   weatherLocation,
   allForecasts,
 }) => {
-  // Check if day is in the past for auto-collapse
-  const dayDate = new Date(date);
+  // Check if day is in the past for auto-collapse (parse as local date to avoid UTC offset issues)
+  const [year, month, day_] = (date.split('T')[0]).split('-').map(Number);
+  const dayDate = new Date(year, month - 1, day_);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  dayDate.setHours(0, 0, 0, 0);
   const isPastDay = dayDate < today;
 
   const [isExpanded, setIsExpanded] = useState(!isPastDay);

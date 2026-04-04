@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Share2, Users, Calendar, MapPin, LogOut, Check, X } from 'lucide-react';
 import { format, getYear, parseISO, differenceInDays, isToday, isTomorrow } from 'date-fns';
@@ -110,6 +110,17 @@ const TripCard = ({
   const arrivalDateStr = trip.arrival_date?.split('T')[0];
   const arrivalForecast = arrivalDateStr ? getWeatherForDate(weather, arrivalDateStr) : undefined;
   const [weatherModalOpen, setWeatherModalOpen] = useState(false);
+  const weatherModalJustClosed = useRef(false);
+
+  const handleWeatherModalChange = useCallback((open: boolean) => {
+    setWeatherModalOpen(open);
+    if (!open) {
+      weatherModalJustClosed.current = true;
+      requestAnimationFrame(() => {
+        weatherModalJustClosed.current = false;
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const loadImage = async () => {
@@ -164,6 +175,8 @@ const TripCard = ({
         onClick={(e) => {
           // Prevent navigation if the hide button is clicked
           if (e.defaultPrevented) return;
+          // Prevent navigation if weather modal is open or was just closed
+          if (weatherModalOpen || weatherModalJustClosed.current) return;
           // For pending invites, require Accept/Decline first
           if (isPendingInvite) return;
           navigate(`/trip/${trip.trip_id}`);
@@ -418,7 +431,7 @@ const TripCard = ({
       {arrivalForecast && (
         <WeatherDetailModal
           open={weatherModalOpen}
-          onOpenChange={setWeatherModalOpen}
+          onOpenChange={handleWeatherModalChange}
           forecast={arrivalForecast}
           location={weatherLocation}
           allForecasts={weather?.daily}
