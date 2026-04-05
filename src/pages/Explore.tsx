@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 // Import hero and stats components from MyTrips
 import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { TravelStatsCard, MonthlyActivityChart } from '@/components/trip/stats';
+import { useTravelStats } from '@/hooks/useTravelStats';
 import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
 
 const Explore = () => {
@@ -136,42 +137,8 @@ const Explore = () => {
     return 'default';
   }, [currentTrips, nextTrip, daysUntilNextTrip]);
 
-  // Calculate simple stats for public trips
-  const travelStats = useMemo(() => {
-    const allTrips = publicTrips || [];
-    const completed = pastTrips.length;
-    const total = allTrips.length;
-
-    // Calculate total days traveled from past trips
-    let totalDays = 0;
-    pastTrips.forEach(trip => {
-      if (trip.arrival_date && trip.departure_date) {
-        const arrival = new Date(trip.arrival_date);
-        const departure = new Date(trip.departure_date);
-        totalDays += Math.max(0, differenceInDays(departure, arrival) + 1);
-      }
-    });
-
-    // Get unique destinations
-    const destinations = new Set(allTrips.map(t => t.destination?.split(',')[0]?.trim()).filter(Boolean));
-
-    // Monthly activity (simplified)
-    const monthlyActivity = Array.from({ length: 12 }, (_, i) => ({
-      month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
-      trips: allTrips.filter(t => {
-        const date = new Date(t.arrival_date || '');
-        return date.getMonth() === i;
-      }).length
-    }));
-
-    return {
-      totalDaysTraveled: totalDays,
-      completedTrips: completed,
-      completionRate: { completed, total },
-      countriesVisited: destinations.size,
-      monthlyActivity
-    };
-  }, [publicTrips, pastTrips]);
+  // Calculate stats for public trips
+  const travelStats = useTravelStats(publicTrips || []);
 
   // Get last completed trip for background
   const lastCompletedTrip = useMemo(() => {
@@ -203,7 +170,7 @@ const Explore = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
         {/* Dynamic Hero Section - Same as MyTrips */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -229,20 +196,21 @@ const Explore = () => {
             )}
 
             {/* Mobile: Swipeable Stats Row */}
-            <div className="-mx-4 px-4 overflow-x-auto mt-4">
-              <div className="flex gap-4 py-2 snap-x snap-mandatory
+            <div className="-mx-4 px-4 overflow-x-auto mt-3">
+              <div className="flex gap-3 py-1 snap-x snap-mandatory
                             [-ms-overflow-style:none] [scrollbar-width:none]
                             [&::-webkit-scrollbar]:hidden">
-                <div className="min-w-[200px] snap-start shrink-0">
+                <div className="min-w-[160px] snap-start shrink-0">
                   <TravelStatsCard
                     title="Days Traveling"
                     value={travelStats.totalDaysTraveled}
                     subtitle="Total days explored"
                     icon={Globe}
                     gradient="blue"
+                    compact
                   />
                 </div>
-                <div className="min-w-[200px] snap-start shrink-0">
+                <div className="min-w-[160px] snap-start shrink-0">
                   <TravelStatsCard
                     title="Trip Progress"
                     value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
@@ -251,18 +219,25 @@ const Explore = () => {
                     gradient="green"
                     chart="donut"
                     chartData={travelStats.completionRate}
+                    compact
                   />
                 </div>
-                <div className="min-w-[200px] snap-start shrink-0">
+                <div className="min-w-[160px] snap-start shrink-0">
                   <TravelStatsCard
                     title="Destinations"
                     value={travelStats.countriesVisited}
                     subtitle="Places visited"
                     icon={MapPin}
                     gradient="purple"
+                    compact
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Mobile: Full-width Activity Chart */}
+            <div className="mt-3">
+              <MonthlyActivityChart data={travelStats.dailyActivity} />
             </div>
           </div>
 
@@ -285,25 +260,29 @@ const Explore = () => {
               )}
             </div>
 
-            {/* STATS AREA - Spans 1 column */}
-            <div className="md:col-span-1 space-y-4">
-              <TravelStatsCard
-                title="Life on the Road"
-                value={travelStats.totalDaysTraveled}
-                subtitle="Days spent exploring"
-                icon={Globe}
-                gradient="blue"
-              />
-              <MonthlyActivityChart data={travelStats.monthlyActivity} />
-              <TravelStatsCard
-                title="Trip Progress"
-                value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
-                subtitle="Trips completed"
-                icon={CheckCircle}
-                gradient="green"
-                chart="donut"
-                chartData={travelStats.completionRate}
-              />
+            {/* STATS AREA - Spans 1 column, stretches to match hero */}
+            <div className="md:col-span-1 flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <TravelStatsCard
+                  title="Life on the Road"
+                  value={travelStats.totalDaysTraveled}
+                  subtitle="Days spent exploring"
+                  icon={Globe}
+                  gradient="blue"
+                  noBackground
+                />
+                <TravelStatsCard
+                  title="Trip Progress"
+                  value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
+                  subtitle="Trips completed"
+                  icon={CheckCircle}
+                  gradient="green"
+                  chart="donut"
+                  chartData={travelStats.completionRate}
+                  noBackground
+                />
+              </div>
+              <MonthlyActivityChart data={travelStats.dailyActivity} className="flex-1" />
             </div>
           </div>
         </motion.div>

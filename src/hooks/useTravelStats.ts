@@ -1,10 +1,24 @@
 import { useMemo } from 'react';
-import { differenceInDays, parseISO, format, subMonths, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
+import { differenceInDays, parseISO, format, subMonths, subDays, addMonths, startOfMonth, endOfMonth, min as dateMin, max as dateMax } from 'date-fns';
 import { Trip } from '@/types/trip';
 
 interface MonthlyActivity {
   month: string;
   days: number;
+}
+
+export interface DailyTripInfo {
+  tripId: string;
+  destination: string;
+  arrivalDate: string;
+  departureDate: string;
+  coverImageUrl: string | null;
+}
+
+export interface DailyActivity {
+  date: Date;
+  traveling: boolean;
+  trips: DailyTripInfo[];
 }
 
 interface TravelStats {
@@ -13,6 +27,7 @@ interface TravelStats {
   activeTrips: number;
   upcomingTrips: number;
   monthlyActivity: MonthlyActivity[];
+  dailyActivity: DailyActivity[];
   completionRate: { completed: number; total: number };
   countriesVisited: number;
   longestTrip: { destination: string; days: number } | null;
@@ -63,6 +78,65 @@ function calculateDaysInMonth(trips: Trip[], monthDate: Date): number {
   return totalDays;
 }
 
+function buildDailyActivity(allTrips: Trip[]): DailyActivity[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const twelveMonthsAgo = subMonths(today, 12);
+  const twelveMonthsAhead = addMonths(today, 12);
+
+  // Find oldest trip start and latest trip end
+  let oldestTripDate = twelveMonthsAgo;
+  let latestTripDate = twelveMonthsAhead;
+
+  for (const trip of allTrips) {
+    if (trip.arrival_date) {
+      const d = parseISO(trip.arrival_date);
+      if (d < oldestTripDate) oldestTripDate = d;
+    }
+    if (trip.departure_date) {
+      const d = parseISO(trip.departure_date);
+      if (d > latestTripDate) latestTripDate = d;
+    }
+  }
+
+  // Min date: older of (oldest trip) or (12 months ago)
+  const minDate = dateMin([oldestTripDate, twelveMonthsAgo]);
+  // Max date: greater of (latest trip end) or (12 months ahead)
+  const maxDate = dateMax([latestTripDate, twelveMonthsAhead]);
+
+  minDate.setHours(0, 0, 0, 0);
+  maxDate.setHours(0, 0, 0, 0);
+
+  const totalDays = differenceInDays(maxDate, minDate);
+  const result: DailyActivity[] = [];
+
+  for (let i = 0; i <= totalDays; i++) {
+    const date = subDays(maxDate, totalDays - i);
+    date.setHours(0, 0, 0, 0);
+    const matchingTrips: DailyTripInfo[] = [];
+
+    for (const trip of allTrips) {
+      if (!trip.arrival_date || !trip.departure_date) continue;
+      const start = parseISO(trip.arrival_date);
+      const end = parseISO(trip.departure_date);
+      if (date >= start && date <= end) {
+        matchingTrips.push({
+          tripId: trip.trip_id,
+          destination: trip.destination,
+          arrivalDate: trip.arrival_date,
+          departureDate: trip.departure_date,
+          coverImageUrl: trip.cover_image_url,
+        });
+      }
+    }
+
+    result.push({ date, traveling: matchingTrips.length > 0, trips: matchingTrips });
+  }
+
+  return result;
+}
+
 export function useTravelStats(trips: Trip[]): TravelStats {
   return useMemo(() => {
     if (!trips || trips.length === 0) {
@@ -75,6 +149,7 @@ export function useTravelStats(trips: Trip[]): TravelStats {
           month: format(subMonths(new Date(), 11 - i), 'MMM'),
           days: 0
         })),
+        dailyActivity: buildDailyActivity([]),
         completionRate: { completed: 0, total: 0 },
         countriesVisited: 0,
         longestTrip: null
@@ -127,12 +202,16 @@ export function useTravelStats(trips: Trip[]): TravelStats {
       }
     });
 
+    // Build daily activity spanning all trips (past, current, and upcoming)
+    const dailyActivity = buildDailyActivity(trips);
+
     return {
       totalDaysTraveled,
       completedTrips: pastTrips.length,
       activeTrips: currentTrips.length,
       upcomingTrips: upcomingTrips.length,
       monthlyActivity,
+      dailyActivity,
       completionRate: {
         completed: pastTrips.length,
         total: pastTrips.length + currentTrips.length + upcomingTrips.length

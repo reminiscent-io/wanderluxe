@@ -369,6 +369,11 @@ const MyTrips = () => {
                 </div>
               </div>
             </div>
+
+            {/* Mobile: Full-width Activity Chart */}
+            <div className="mt-3">
+              <MonthlyActivityChart data={travelStats.dailyActivity} />
+            </div>
           </div>
 
           {/* Desktop: Grid Layout */}
@@ -402,25 +407,29 @@ const MyTrips = () => {
               )}
             </div>
 
-            {/* STATS AREA - Spans 1 column */}
-            <div className="md:col-span-1 space-y-4">
-              <TravelStatsCard
-                title="Life on the Road"
-                value={travelStats.totalDaysTraveled}
-                subtitle="Days spent exploring"
-                icon={Globe}
-                gradient="blue"
-              />
-              <MonthlyActivityChart data={travelStats.monthlyActivity} />
-              <TravelStatsCard
-                title="Trip Progress"
-                value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
-                subtitle="Trips completed"
-                icon={CheckCircle}
-                gradient="green"
-                chart="donut"
-                chartData={travelStats.completionRate}
-              />
+            {/* STATS AREA - Spans 1 column, stretches to match hero */}
+            <div className="md:col-span-1 flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <TravelStatsCard
+                  title="Life on the Road"
+                  value={travelStats.totalDaysTraveled}
+                  subtitle="Days spent exploring"
+                  icon={Globe}
+                  gradient="blue"
+                  noBackground
+                />
+                <TravelStatsCard
+                  title="Trip Progress"
+                  value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
+                  subtitle="Trips completed"
+                  icon={CheckCircle}
+                  gradient="green"
+                  chart="donut"
+                  chartData={travelStats.completionRate}
+                  noBackground
+                />
+              </div>
+              <MonthlyActivityChart data={travelStats.dailyActivity} className="flex-1" />
             </div>
           </div>
         </motion.div>
@@ -432,28 +441,15 @@ const MyTrips = () => {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="mb-8"
         >
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="search"
-                placeholder="Search destinations, dates..."
-                className="pl-10 pr-4 py-3 bg-white border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl shadow-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => navigate('/create-trip')} 
-                className="bg-earth-600 hover:bg-earth-700 text-white px-6 py-3 rounded-xl shadow-sm flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Plan New Trip</span>
-                <span className="sm:hidden">New Trip</span>
-              </Button>
-            </div>
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="search"
+              placeholder="Search destinations, dates..."
+              className="pl-10 pr-4 py-3 bg-white border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </motion.div>
         
@@ -611,28 +607,15 @@ const MyTrips = () => {
                   ))}
                 </div>
               ) : (
-                <Card className="p-12 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-sand-200">
-                  <div className="max-w-md mx-auto">
-                    <div className="bg-sand-200 rounded-full p-4 w-20 h-20 mx-auto mb-6">
-                      <MapPin className="h-12 w-12 text-earth-600 mx-auto" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-earth-800 mb-3">
-                      {tripFilter === 'shared' ? 'No Shared Adventures Yet' : 'Your Next Adventure Awaits'}
-                    </h3>
-                    <p className="text-earth-600 mb-6">
-                      {tripFilter === 'shared'
-                        ? 'When someone shares a trip with you, it will appear here.'
-                        : "Ready to explore somewhere new? Let's plan your perfect getaway."}
-                    </p>
-                    {tripFilter !== 'shared' && (
-                      <Button
-                        onClick={() => navigate('/create-trip')}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-medium"
-                      >
-                        Plan Your Trip
-                      </Button>
-                    )}
-                  </div>
+                <Card className="p-6 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-sand-200">
+                  <h3 className="text-lg font-semibold text-earth-800 mb-1">
+                    {tripFilter === 'shared' ? 'No Shared Adventures Yet' : 'Your Next Adventure Awaits'}
+                  </h3>
+                  <p className="text-sm text-earth-600">
+                    {tripFilter === 'shared'
+                      ? 'When someone shares a trip with you, it will appear here.'
+                      : "Ready to explore somewhere new? Let's plan your perfect getaway."}
+                  </p>
                 </Card>
               )}
             </motion.div>
