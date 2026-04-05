@@ -20,7 +20,10 @@ const AllDayHotelsSection: React.FC<Props> = ({ stays, onHotelClick, tripId }) =
         <div
           key={`allday-${stay.stay_id}`}
           className="flex items-center gap-2 cursor-pointer hover:bg-muted rounded p-2 -m-1 transition-colors"
-          onClick={() => onHotelClick && onHotelClick(stay)}
+          role="button"
+          tabIndex={0}
+          onClick={() => onHotelClick?.(stay)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onHotelClick?.(stay); } }}
         >
           <Hotel className="h-3 w-3 text-muted-foreground" />
           <div className="flex-1">

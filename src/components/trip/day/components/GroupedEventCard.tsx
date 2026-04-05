@@ -31,6 +31,18 @@ const GroupedEventCard: React.FC<Props> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const handleEventClick = (item: typeof items[0]) => {
+    if (item.type === 'activity' && onActivityClick && item.data) {
+      onActivityClick(item.data);
+    } else if (item.type === 'hotel' && onHotelClick && item.data) {
+      onHotelClick(item.data);
+    } else if (item.type === 'transportation' && onTransportationClick && item.data) {
+      onTransportationClick(item.data);
+    } else if (item.type === 'dining' && onReservationClick && item.data) {
+      onReservationClick(item.data);
+    }
+  };
+
   const firstItem = items[0];
 
   // Get icon component based on event type
@@ -66,7 +78,10 @@ const GroupedEventCard: React.FC<Props> = ({
           <div className="relative flex-1 min-w-0">
             <div
               className="bg-background rounded-lg sm:rounded-xl shadow-warm hover:shadow-warm-lg p-3 sm:p-4 cursor-pointer transition-all duration-200 border border-sand-200"
+              role="button"
+              tabIndex={0}
               onClick={() => setIsExpanded(!isExpanded)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsExpanded(!isExpanded); } }}
             >
               {/* Main Content: Icon + Title */}
               <div className="flex items-start gap-3">
@@ -115,18 +130,10 @@ const GroupedEventCard: React.FC<Props> = ({
                         {/* Individual event card - simplified version */}
                         <div
                           className="bg-sand-50 rounded-lg shadow-warm-sm hover:shadow-md p-3 cursor-pointer transition-all duration-200 border border-sand-200"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (item.type === 'activity' && onActivityClick && item.data) {
-                              onActivityClick(item.data);
-                            } else if (item.type === 'hotel' && onHotelClick && item.data) {
-                              onHotelClick(item.data);
-                            } else if (item.type === 'transportation' && onTransportationClick && item.data) {
-                              onTransportationClick(item.data);
-                            } else if (item.type === 'dining' && onReservationClick && item.data) {
-                              onReservationClick(item.data);
-                            }
-                          }}
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); handleEventClick(item); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); handleEventClick(item); } }}
                         >
                           <div>
                             {/* Time range on one row */}

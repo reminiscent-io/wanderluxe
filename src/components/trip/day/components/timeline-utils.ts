@@ -13,8 +13,7 @@ export interface TimelineItem {
   description?: string;
   icon: React.ReactNode;
   id: string;
-  data?: {
-    [key: string]: unknown;
+  data?: Record<string, unknown> & {
     __depart_time_on_this_day?: string;
     __arrive_time_on_this_day?: string;
   };

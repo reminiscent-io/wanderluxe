@@ -12,11 +12,13 @@ type Props = {
 
 const TimePeriodHeader: React.FC<Props> = ({ label, isFirst = false, isExpanded, onToggle, eventCount }) => {
   return (
-    <div className={cn(
-      "flex items-center gap-3 py-2 sm:py-3 px-0 cursor-pointer select-none group",
-      !isFirst && "mt-2 sm:mt-3 pt-3 sm:pt-4 border-t border-sand-100"
-    )}
-    onClick={onToggle}
+    <button
+      type="button"
+      className={cn(
+        "flex items-center gap-3 py-2 sm:py-3 px-0 cursor-pointer select-none group w-full text-left bg-transparent border-0",
+        !isFirst && "mt-2 sm:mt-3 pt-3 sm:pt-4 border-t border-sand-100"
+      )}
+      onClick={onToggle}
     >
       {/* Chevron Icon */}
       <div className="flex-shrink-0 text-earth-500 group-hover:text-earth-700 transition-colors">
@@ -39,7 +41,7 @@ const TimePeriodHeader: React.FC<Props> = ({ label, isFirst = false, isExpanded,
 
       {/* Divider Line */}
       <div className="flex-1 h-px bg-sand-200" />
-    </div>
+    </button>
   );
 };
 

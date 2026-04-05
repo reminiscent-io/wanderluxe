@@ -221,6 +221,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     <div className="overflow-x-auto max-w-full">
                       <table className="min-w-0" {...props} />
                     </div>
+                  ),
+                  thead: ({ ...props }) => (
+                    <thead className="border-b border-sand-200" {...props} />
+                  ),
+                  th: ({ ...props }) => (
+                    <th className="text-left text-xs font-semibold text-earth-700 px-2 py-1" {...props} />
                   )
                 }}
               >
