@@ -170,6 +170,7 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
         {/* backdrop covers only the content area right of 600 px */}
         <div
           className="hidden md:block fixed inset-y-0 right-0 left-[600px] z-30"
+          role="presentation"
           onClick={onClose}
         />
         {/* secondary sidebar */}

@@ -269,8 +269,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               disabled={uploading}
             />
             <label
-              htmlFor=""
+              role="button"
+              tabIndex={0}
               onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
               onDrop={onDrop}

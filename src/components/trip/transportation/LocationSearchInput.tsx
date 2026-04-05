@@ -91,13 +91,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
         let displayValue = details.name || details.formatted_address || '';
         
         if (transportationType === 'flight' && details.name) {
-          // Check if the name contains an airport code in parentheses
-          const airportCodeMatch = details.name.match(/\(([A-Z]{3})\)/);
-          if (airportCodeMatch) {
-            displayValue = details.name;
-          } else {
-            displayValue = details.name;
-          }
+          displayValue = details.name;
         }
 
         onChange(displayValue, details);

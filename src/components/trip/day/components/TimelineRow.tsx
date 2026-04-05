@@ -166,7 +166,10 @@ const TimelineRow: React.FC<Props> = ({
           {/* Event Card */}
           <div
             className="relative flex-1 min-w-0 bg-background rounded-lg sm:rounded-xl shadow-warm hover:shadow-warm-lg p-3 sm:p-4 cursor-pointer transition-all duration-200 border border-sand-200"
+            role="button"
+            tabIndex={0}
             onClick={handleItemClick}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(); } }}
           >
             {/* Top-right: Avatar Stack */}
             <div className="absolute top-3 right-3 sm:top-4 sm:right-4">

@@ -296,6 +296,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <h1
                 className={`text-4xl md:text-5xl lg:text-6xl font-bold drop-shadow-lg text-center tracking-tight ${canEdit ? 'cursor-pointer hover:text-white/90' : ''}`}
                 onClick={canEdit ? handleOpenDialog : undefined}
+                onKeyDown={canEdit ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenDialog(); } } : undefined}
+                role={canEdit ? 'button' : undefined}
+                tabIndex={canEdit ? 0 : undefined}
               >
                 {lastValidTitle}
               </h1>
@@ -315,6 +318,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <p
                 className={`text-lg md:text-xl font-medium drop-shadow-md text-center flex items-center gap-2 justify-center ${canEdit ? 'cursor-pointer hover:text-white/80' : ''}`}
                 onClick={canEdit ? handleOpenDialog : undefined}
+                onKeyDown={canEdit ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenDialog(); } } : undefined}
+                role={canEdit ? 'button' : undefined}
+                tabIndex={canEdit ? 0 : undefined}
               >
                 <MapPin className="h-4 w-4" />
                 {primaryDestination}
