@@ -15,6 +15,7 @@ interface TravelStatsCardProps {
   chartData?: { completed: number; total: number };
   className?: string;
   compact?: boolean;
+  noBackground?: boolean;
   onClick?: () => void;
 }
 
@@ -61,6 +62,7 @@ export function TravelStatsCard({
   chartData,
   className,
   compact,
+  noBackground,
   onClick
 }: TravelStatsCardProps) {
   const colors = gradientClasses[gradient];
@@ -141,7 +143,7 @@ export function TravelStatsCard({
       className={cn(
         "rounded-xl border backdrop-blur-sm",
         compact ? "p-3" : "p-4",
-        colors.bg,
+        noBackground ? "border-sand-200/50 bg-transparent" : colors.bg,
         onClick && "cursor-pointer hover:scale-[1.02] transition-transform",
         className
       )}
@@ -150,9 +152,11 @@ export function TravelStatsCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <div className={cn("p-1.5 rounded-lg", colors.iconBg)}>
-              <Icon className={cn("h-4 w-4", colors.icon)} />
-            </div>
+            {!noBackground && (
+              <div className={cn("p-1.5 rounded-lg", colors.iconBg)}>
+                <Icon className={cn("h-4 w-4", colors.icon)} />
+              </div>
+            )}
             <span className="text-xs font-medium text-earth-600 truncate">{title}</span>
           </div>
           <div className={cn("font-black tracking-tight", compact ? "text-2xl" : "text-3xl md:text-4xl", colors.text)}>
