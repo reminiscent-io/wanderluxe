@@ -49,7 +49,7 @@ const SortableTimelineRow: React.FC<Props> = (props) => {
         {...listeners}
         className={cn(
           "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 z-20 p-1 rounded cursor-grab active:cursor-grabbing",
-          "sm:opacity-0 sm:group-hover:opacity-100 transition-opacity",
+          "hidden sm:block sm:opacity-0 sm:group-hover:opacity-100 transition-opacity",
           "text-earth-400 hover:text-earth-600"
         )}
       >
