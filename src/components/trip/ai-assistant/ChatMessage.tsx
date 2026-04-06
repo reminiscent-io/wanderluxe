@@ -10,14 +10,24 @@ import ExtractionResultMessage from './ExtractionResultMessage';
 import type { AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
 
 /**
- * Fixes common malformed markdown links from AI responses.
- * Examples of issues fixed:
+ * Fixes common malformed markdown from AI responses.
+ * Handles:
  *  - **Name](url)** → **[Name](url)**  (missing opening bracket)
  *  - [Name](url  → [Name](url)         (missing closing paren)
  *  - [Name](httpexample.com) → [Name](https://example.com)  (missing protocol separator)
+ *  - Numbered list items not separated by newlines
+ *  - Orphaned bold markers around links
  */
 function sanitizeMarkdownLinks(content: string): string {
   let result = content;
+
+  // --- Normalize numbered lists ---
+  // Ensure each numbered item (e.g., "1.", "2.") starts on its own line.
+  // This handles AI responses that squash list items into a single paragraph.
+  // Only match digits followed by a period+space that are NOT already at line start.
+  result = result.replaceAll(/([^\n])(\s)(\d+)\.\s/g, '$1\n\n$3. ');
+
+  // --- Fix malformed markdown links ---
 
   // Fix: **Text](url)** — missing opening bracket, closing ** present
   result = result.replaceAll(/\*\*([^[*\n]+?)\]\(([^)]+)\)\*\*/g, '**[$1]($2)**');
@@ -40,6 +50,12 @@ function sanitizeMarkdownLinks(content: string): string {
   // Fix: URLs missing :// after http/https (e.g., httpexample.com → https://example.com)
   result = result.replaceAll(/\]\(http([^s:])/g, '](https://$1');
   result = result.replaceAll(/\]\(https([^:])/g, '](https://$1');
+
+  // Fix: **[Name](url) without closing ** — bold opened but never closed before line end
+  result = result.replaceAll(/\*\*(\[[^\]]+\]\([^)]+\))(?!\*)\s*(?=\n|–|—|-)/g, '**$1**');
+
+  // Fix: [Name](url)** — closing bold without opening bold
+  result = result.replaceAll(/(?<!\*)(\[[^\]]+\]\([^)]+\))\*\*/g, '**$1**');
 
   return result;
 }
