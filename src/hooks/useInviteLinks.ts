@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import {
   getInviteLinks,
   createInviteLink,
@@ -9,6 +7,7 @@ import {
   deleteInviteLink,
 } from '@/services/inviteLinkService';
 import type { InviteLink } from '@/integrations/supabase/invite_link_types';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 
 export function useInviteLinks(tripId: string) {
   const queryClient = useQueryClient();
@@ -21,29 +20,14 @@ export function useInviteLinks(tripId: string) {
   });
 
   // Real-time subscription
-  useEffect(() => {
-    if (!tripId) return;
-
-    const channel = supabase
-      .channel(`invite-links:${tripId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'trip_invite_links',
-          filter: `trip_id=eq.${tripId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tripId, queryClient]);
+  useRealtimeSubscription({
+    channelKey: `invite-links:${tripId}`,
+    tables: [
+      { table: 'trip_invite_links', filterColumn: 'trip_id', filterValue: tripId },
+    ],
+    invalidateKeys: [queryKey],
+    enabled: !!tripId,
+  });
 
   const createMutation = useMutation({
     mutationFn: ({
