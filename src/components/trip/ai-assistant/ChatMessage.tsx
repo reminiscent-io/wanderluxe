@@ -57,6 +57,18 @@ function sanitizeMarkdownLinks(content: string): string {
   // Fix: [Name](url)** — closing bold without opening bold
   result = result.replaceAll(/(?<!\*)(\[[^\]]+\]\([^)]+\))\*\*/g, '**$1**');
 
+  // --- Fix malformed bold labels ---
+  // Fix: **Label Text instead of **Label:** Text (missing closing :** for bold sub-headings)
+  // Matches lines starting with "   - **Word(s)" not followed by ** or :
+  // e.g., "**Highlights Works by Monet" → "**Highlights:** Works by Monet"
+  result = result.replaceAll(/\*\*([\w\s]{1,25}?)\s{2,}/g, '**$1:** ');
+  // Fix: **Label followed by a sentence (single space) where the label is a known heading word
+  result = result.replaceAll(/\*\*((?:Highlights|Why|What to Do|Where|When|How|Tips?|Note|Price|Cost|Address|Hours|Getting There|Best For))\s(?!\*)/g, '**$1:** ');
+
+  // --- Fix truncated bold markers ---
+  // Fix: **:  (empty bold label, e.g., "**:" where the label word was lost)
+  result = result.replaceAll(/\*\*:/g, '');
+
   return result;
 }
 

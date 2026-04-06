@@ -213,7 +213,7 @@ async function callOpenAI(messages: OpenAIMessage[], stream: boolean, options: O
     messages,
     stream,
     temperature: 0.7,
-    max_tokens: 1500
+    max_tokens: 2500
   };
   if (options.tools && !options.skipTools) {
     body.tools = options.tools;
