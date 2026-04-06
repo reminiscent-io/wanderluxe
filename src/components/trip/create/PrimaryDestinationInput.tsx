@@ -246,7 +246,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
       {showLabel && (
         <Label className="text-earth-600 flex items-center gap-2">
           <MapPin className="h-4 w-4" />
-          Primary destination (optional)
+          Primary destination<span className="text-red-500"> *</span>
         </Label>
       )}
       <div className="relative" ref={containerRef}>
