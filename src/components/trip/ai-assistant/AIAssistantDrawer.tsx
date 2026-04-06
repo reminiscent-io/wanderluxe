@@ -295,7 +295,10 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               <div className="w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center">
                 <Sparkles className="w-3.5 h-3.5 text-white" />
               </div>
-              <h2 className="text-left text-earth-700 font-display font-semibold text-base leading-none tracking-tight">Trip Assistant</h2>
+              <div>
+                <h2 className="text-left text-earth-700 font-display font-semibold text-base leading-none tracking-tight">Trip Assistant</h2>
+                <p className="text-[10px] text-sand-500 mt-0.5">Your chat history is not shared with anyone else on the trip</p>
+              </div>
             </div>
 
             <Button
