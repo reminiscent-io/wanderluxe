@@ -362,7 +362,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   placeholder={
                     isDisabled && usage?.used === usage?.limit
                       ? "Daily limit reached. Upgrade for unlimited."
-                      : "Ask about your trip or attach a booking..."
+                      : "Ask about your trip..."
                   }
                 />
               </div>
