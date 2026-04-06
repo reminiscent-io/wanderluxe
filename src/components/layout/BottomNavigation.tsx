@@ -51,27 +51,6 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }:
           }}
         </NavLink>
 
-        {/* Center FAB - AI Chat */}
-        <div className="flex items-center justify-center">
-          <Button
-            onClick={onAIClick}
-            size="icon"
-            className="h-14 w-14 rounded-full bg-earth-600 hover:bg-earth-700 shadow-warm-lg -mt-8 ring-4 ring-white"
-            aria-label="AI Chat"
-          >
-            <MessageCircle className="h-6 w-6 text-white" />
-          </Button>
-        </div>
-
-        {/* Quick Add */}
-        <button
-          onClick={onQuickAddClick}
-          className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"
-        >
-          <Plus className="h-5 w-5" />
-          <span className="text-[10px]">Add</span>
-        </button>
-
         {/* Budget */}
         <NavLink
           to={budgetItem.href}
@@ -96,6 +75,27 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }:
             );
           }}
         </NavLink>
+
+        {/* Center FAB - AI Chat */}
+        <div className="flex items-center justify-center">
+          <Button
+            onClick={onAIClick}
+            size="icon"
+            className="h-14 w-14 rounded-full bg-earth-600 hover:bg-earth-700 shadow-warm-lg -mt-8 ring-4 ring-white"
+            aria-label="AI Chat"
+          >
+            <MessageCircle className="h-6 w-6 text-white" />
+          </Button>
+        </div>
+
+        {/* Quick Add */}
+        <button
+          onClick={onQuickAddClick}
+          className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-[10px]">Add</span>
+        </button>
 
         {/* People */}
         <button
