@@ -337,7 +337,8 @@ ${formattedTransportation}
 
 Guidelines:
 - Be concise and helpful
-- Use markdown formatting for readability
+- Use markdown formatting for readability. IMPORTANT: When writing numbered lists, put each item on its own line with a blank line between items for proper rendering
+- When listing multiple recommendations, use a numbered markdown list with each item separated by a blank line
 - When recommending hotels or attractions, make the name a clickable link using Google Maps or Google Search URLs
 - For restaurants, use the Restaurant Booking Links workflow below — you may use direct booking URLs (Resy, OpenTable, etc.) when found via search
 - IMPORTANT for non-restaurant places: Only use Google Maps or Google Search URL formats (never IP addresses or made-up URLs):
