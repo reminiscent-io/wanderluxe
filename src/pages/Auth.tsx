@@ -26,9 +26,14 @@ const Auth = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         const pendingCode = sessionStorage.getItem('pendingInviteCode');
+        const pendingRedirect = sessionStorage.getItem('pendingRedirect');
         if (pendingCode && isValidInviteCode(pendingCode)) {
           sessionStorage.removeItem('pendingInviteCode');
+          sessionStorage.removeItem('pendingRedirect');
           navigate(`/invite/${pendingCode}`, { replace: true });
+        } else if (pendingRedirect && pendingRedirect.startsWith('/')) {
+          sessionStorage.removeItem('pendingRedirect');
+          navigate(pendingRedirect, { replace: true });
         } else {
           navigate("/");
         }
@@ -38,9 +43,15 @@ const Auth = () => {
 
   const navigateAfterAuth = (delay = 0) => {
     const pendingCode = sessionStorage.getItem('pendingInviteCode');
+    const pendingRedirect = sessionStorage.getItem('pendingRedirect');
     if (pendingCode && isValidInviteCode(pendingCode)) {
       sessionStorage.removeItem('pendingInviteCode');
+      sessionStorage.removeItem('pendingRedirect');
       const go = () => navigate(`/invite/${pendingCode}`, { replace: true });
+      delay ? setTimeout(go, delay) : go();
+    } else if (pendingRedirect && pendingRedirect.startsWith('/')) {
+      sessionStorage.removeItem('pendingRedirect');
+      const go = () => navigate(pendingRedirect, { replace: true });
       delay ? setTimeout(go, delay) : go();
     } else {
       const go = () => navigate("/my-trips");
@@ -113,11 +124,18 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     try {
       const pendingCode = sessionStorage.getItem('pendingInviteCode');
-      const redirectUrl = (pendingCode && isValidInviteCode(pendingCode))
-        ? `${window.location.origin}/invite/${pendingCode}`
-        : `${window.location.origin}/my-trips`;
-      // Clear code here since OAuth redirects away from the page
-      if (pendingCode) sessionStorage.removeItem('pendingInviteCode');
+      const pendingRedirect = sessionStorage.getItem('pendingRedirect');
+      let redirectUrl: string;
+      if (pendingCode && isValidInviteCode(pendingCode)) {
+        redirectUrl = `${window.location.origin}/invite/${pendingCode}`;
+      } else if (pendingRedirect && pendingRedirect.startsWith('/')) {
+        redirectUrl = `${window.location.origin}${pendingRedirect}`;
+      } else {
+        redirectUrl = `${window.location.origin}/my-trips`;
+      }
+      // Clear stored values since OAuth redirects away from the page
+      sessionStorage.removeItem('pendingInviteCode');
+      sessionStorage.removeItem('pendingRedirect');
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",

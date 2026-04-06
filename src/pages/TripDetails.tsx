@@ -128,7 +128,10 @@ const TripDetails = () => {
               Go Back
             </Button>
             {!session && (
-              <Button onClick={() => navigate('/auth')} className="bg-earth-600 hover:bg-earth-700 text-white">
+              <Button onClick={() => {
+                sessionStorage.setItem('pendingRedirect', window.location.pathname);
+                navigate('/auth');
+              }} className="bg-earth-600 hover:bg-earth-700 text-white">
                 Sign In
               </Button>
             )}
