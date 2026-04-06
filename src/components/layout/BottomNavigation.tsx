@@ -51,25 +51,25 @@ const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }:
           }}
         </NavLink>
 
-        {/* Center FAB */}
+        {/* Center FAB - AI Chat */}
         <div className="flex items-center justify-center">
           <Button
-            onClick={onQuickAddClick}
+            onClick={onAIClick}
             size="icon"
             className="h-14 w-14 rounded-full bg-earth-600 hover:bg-earth-700 shadow-warm-lg -mt-8 ring-4 ring-white"
-            aria-label="Quick add"
+            aria-label="AI Chat"
           >
-            <Plus className="h-6 w-6 text-white" />
+            <MessageCircle className="h-6 w-6 text-white" />
           </Button>
         </div>
 
-        {/* AI Chat */}
+        {/* Quick Add */}
         <button
-          onClick={onAIClick}
+          onClick={onQuickAddClick}
           className="flex flex-col items-center justify-center h-full space-y-1 rounded-lg transition-colors text-sand-600 hover:text-earth-600"
         >
-          <MessageCircle className="h-5 w-5" />
-          <span className="text-[10px]">AI Chat</span>
+          <Plus className="h-5 w-5" />
+          <span className="text-[10px]">Add</span>
         </button>
 
         {/* Budget */}
