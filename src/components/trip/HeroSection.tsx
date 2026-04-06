@@ -352,9 +352,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           }
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90dvh]">
           <DialogTitle>Edit Trip Details</DialogTitle>
-          <div className="space-y-6 pt-2">
+          <div className="space-y-6 pt-2 overflow-y-auto flex-1 min-h-0 pr-1">
             {/* Trip Name */}
             <div className="space-y-3">
               <Label htmlFor="tripName" className="text-earth-700 font-semibold">
@@ -384,24 +384,24 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               objectPosition={imagePosition}
               onPositionChange={handlePositionChange}
             />
+          </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 pt-4 border-t border-earth-100">
-              <Button
-                variant="ghost"
-                onClick={handleCloseDialog}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="bg-earth-600 hover:bg-earth-700 text-white"
-                onClick={handleSaveChanges}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
+          {/* Action Buttons — fixed at bottom, outside scroll area */}
+          <div className="flex justify-end gap-2 pt-4 border-t border-earth-100 shrink-0">
+            <Button
+              variant="ghost"
+              onClick={handleCloseDialog}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-earth-600 hover:bg-earth-700 text-white"
+              onClick={handleSaveChanges}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

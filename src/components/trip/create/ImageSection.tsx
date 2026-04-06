@@ -84,21 +84,19 @@ const ImageSection: React.FC<ImageSectionProps> = ({
     supabase.functions.invoke('fetch-unsplash-metadata', { body: { photoId: hit.id } });
   };
 
-  // Handle image removal - only update local state, don't save empty URL
+  // Handle image removal - clear local state and notify parent
   const handleLocalRemove = () => {
     setLocalImageUrl('');
-    // Switch to upload tab so user can pick a new image
-    // (Unsplash tab with hideUploader=true won't show anything when empty)
+    onImageChange('');
     setTab('upload');
   };
 
-  // Handle new image from upload - this should save
+  // Handle new image from upload
   const handleUploadChange = (url: string) => {
+    setLocalImageUrl(url);
     if (url) {
-      setLocalImageUrl(url);
       onImageChange(url);
     }
-    // If url is empty (from remove), don't call onImageChange - let handleLocalRemove handle it
   };
 
   return (
