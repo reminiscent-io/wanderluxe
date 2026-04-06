@@ -302,11 +302,11 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => handleOpenChange(false)}
-              className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
+              className="h-8 w-8 p-0 text-sand-600 hover:text-earth-600"
               disabled={isStreaming}
               title="Minimize"
             >
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="w-5 h-5 stroke-[3]" />
             </Button>
           </div>
         </div>
