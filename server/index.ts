@@ -38,11 +38,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://www.googletagmanager.com", "https://www.google-analytics.com", "https://us-assets.i.posthog.com"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://plus.unsplash.com", "https://*.supabase.co", "https://maps.googleapis.com", "https://lh3.googleusercontent.com", "https://places.googleapis.com", "https://www.googletagmanager.com", "https://www.google-analytics.com", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
-      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "https://api.stripe.com", "https://maps.googleapis.com", "https://places.googleapis.com", "https://www.google-analytics.com", "https://region1.google-analytics.com", "https://www.googletagmanager.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://images.unsplash.com", "https://plus.unsplash.com", "https://lh3.googleusercontent.com", "https://ipapi.co", "https://*.replit.dev", "wss://*.replit.dev", "https://*.repl.co", "wss://*.repl.co", "https://*.replit.app", "wss://*.replit.app"],
+      connectSrc: ["'self'", "blob:", "https://*.supabase.co", "wss://*.supabase.co", "https://api.stripe.com", "https://maps.googleapis.com", "https://places.googleapis.com", "https://www.google-analytics.com", "https://region1.google-analytics.com", "https://www.googletagmanager.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://images.unsplash.com", "https://plus.unsplash.com", "https://lh3.googleusercontent.com", "https://ipapi.co", "https://us.i.posthog.com", "https://us-assets.i.posthog.com", "https://*.replit.dev", "wss://*.replit.dev", "https://*.repl.co", "wss://*.repl.co", "https://*.replit.app", "wss://*.replit.app"],
       frameSrc: ["'self'", "https://js.stripe.com"],
       frameAncestors: ["'self'", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
     },
