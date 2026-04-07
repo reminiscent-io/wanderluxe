@@ -747,7 +747,7 @@ Deno.serve(async (req: Request) => {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
   const serperApiKey = Deno.env.get('SERPER_API_KEY');
-  const model = Deno.env.get('OPENAI_CHAT_MODEL') || 'gpt-4o-mini';
+  const model = Deno.env.get('OPENAI_CHAT_MODEL') || 'gpt-5.4-mini';
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
