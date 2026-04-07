@@ -82,7 +82,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
       created_at: new Date().toISOString(),
       extractedItems: items,
       extractionMeta: {
-        model: 'gpt-4o-mini',
         pagesUsed: 0,
         originalFileName: 'conversation'
       }
@@ -158,7 +157,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
             created_at: new Date().toISOString(),
             extractedItems: items,
             extractionMeta: {
-              model: 'gpt-4o-mini',
               pagesUsed: 1,
               originalFileName: attachment.file.name
             }

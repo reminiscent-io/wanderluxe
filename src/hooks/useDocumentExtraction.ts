@@ -90,7 +90,7 @@ export function useDocumentExtraction(): UseDocumentExtractionReturn {
         };
         setExtractedItems([singleItem]);
         setExtractionMeta({
-          model: parsed.meta?.model || 'gpt-4o-mini',
+          model: parsed.meta?.model,
           pagesUsed: parsed.meta?.pagesUsed || 1,
           totalItemsDetected: 1,
           originalFileName: attachment.file.name
