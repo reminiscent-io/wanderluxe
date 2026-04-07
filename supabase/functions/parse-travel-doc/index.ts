@@ -503,7 +503,7 @@ const buildVisionPayload = (system, user, dataUrl, maxTokens)=>({
   ],
   response_format: { type: "json_object" },
   temperature: 0,
-  max_tokens: maxTokens
+  max_completion_tokens: maxTokens
 });
 
 const callOpenAI = async (payload)=>{

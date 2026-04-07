@@ -227,7 +227,7 @@ router.post('/api/admin/insights', adminInsightsLimiter, async (req: Request, re
         ],
         stream: true,
         temperature: 0.3,
-        max_tokens: 1500
+        max_completion_tokens: 1500
       })
     });
 

@@ -431,7 +431,7 @@ async function streamOpenAIResponse(
       messages,
       stream: true,
       temperature: 0.7,
-      max_tokens: options.maxTokens
+      max_completion_tokens: options.maxTokens
     })
   });
 
