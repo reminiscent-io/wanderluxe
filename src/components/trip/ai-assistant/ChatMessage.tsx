@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { Components } from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { Copy, Check, Sparkles, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,63 @@ import remarkGfm from 'remark-gfm';
 import ExtractionResultMessage from './ExtractionResultMessage';
 import { normalizeMarkdownListSpacing, safeHref } from './chatUrlSafety';
 import type { AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
+
+// Defined at module scope so the component functions aren't recreated on
+// every ChatMessage render. safeHref() runs at render time on every link to
+// strip AI-authored URLs that don't pass validation (see chatUrlSafety.ts).
+const markdownComponents: Components = {
+  a: ({ href, children, ...props }) => (
+    <a
+      {...props}
+      href={safeHref(typeof href === 'string' ? href : '', typeof children === 'string' ? children : '')}
+      className="text-earth-600 underline hover:text-earth-800 break-all"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {children}
+    </a>
+  ),
+  code: ({ className, children, ...props }) => {
+    const isInline = !className;
+    return isInline ? (
+      <code
+        className="bg-sand-100 px-1 py-0.5 rounded text-earth-700 text-xs break-all"
+        {...props}
+      >
+        {children}
+      </code>
+    ) : (
+      <code className={cn(className, 'text-xs')} {...props}>
+        {children}
+      </code>
+    );
+  },
+  pre: ({ ...props }) => (
+    <pre className="overflow-x-auto max-w-full" {...props} />
+  ),
+  ul: ({ ...props }) => (
+    <ul className="list-disc pl-4 space-y-1" {...props} />
+  ),
+  ol: ({ ...props }) => (
+    <ol className="list-decimal pl-4 space-y-1" {...props} />
+  ),
+  p: ({ ...props }) => (
+    <p className="mb-2 last:mb-0" {...props} />
+  ),
+  table: ({ ...props }) => (
+    <div className="overflow-x-auto max-w-full">
+      <table className="min-w-0" {...props} />
+    </div>
+  ),
+  thead: ({ ...props }) => (
+    <thead className="border-b border-sand-200" {...props} />
+  ),
+  th: ({ ...props }) => (
+    <th className="text-left text-xs font-semibold text-earth-700 px-2 py-1" {...props} />
+  ),
+};
+
+const markdownRemarkPlugins = [remarkGfm];
 
 interface ChatMessageProps {
   message: AIChatMessage;
@@ -140,67 +198,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           >
             <div className="prose prose-sm prose-earth max-w-full break-words overflow-wrap-anywhere">
               <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  // Customize link styling. safeHref() validates the URL
-                  // and swaps anything that isn't trustworthy with a Google
-                  // Search fallback, so users can never click a hallucinated
-                  // booking link that 404s.
-                  a: ({ href, children, ...props }) => (
-                    <a
-                      {...props}
-                      href={safeHref(typeof href === 'string' ? href : '', typeof children === 'string' ? children : '')}
-                      className="text-earth-600 underline hover:text-earth-800 break-all"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {children}
-                    </a>
-                  ),
-                  // Customize code blocks
-                  code: ({ className, children, ...props }) => {
-                    const isInline = !className;
-                    return isInline ? (
-                      <code
-                        className="bg-sand-100 px-1 py-0.5 rounded text-earth-700 text-xs break-all"
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    ) : (
-                      <code className={cn(className, 'text-xs')} {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                  // Customize pre blocks (code blocks)
-                  pre: ({ ...props }) => (
-                    <pre className="overflow-x-auto max-w-full" {...props} />
-                  ),
-                  // Customize lists
-                  ul: ({ ...props }) => (
-                    <ul className="list-disc pl-4 space-y-1" {...props} />
-                  ),
-                  ol: ({ ...props }) => (
-                    <ol className="list-decimal pl-4 space-y-1" {...props} />
-                  ),
-                  // Customize paragraphs
-                  p: ({ ...props }) => (
-                    <p className="mb-2 last:mb-0" {...props} />
-                  ),
-                  // Customize tables
-                  table: ({ ...props }) => (
-                    <div className="overflow-x-auto max-w-full">
-                      <table className="min-w-0" {...props} />
-                    </div>
-                  ),
-                  thead: ({ ...props }) => (
-                    <thead className="border-b border-sand-200" {...props} />
-                  ),
-                  th: ({ ...props }) => (
-                    <th className="text-left text-xs font-semibold text-earth-700 px-2 py-1" {...props} />
-                  )
-                }}
+                remarkPlugins={markdownRemarkPlugins}
+                components={markdownComponents}
               >
                 {normalizeMarkdownListSpacing(message.content)}
               </ReactMarkdown>
