@@ -79,14 +79,18 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     }
   }, [messages, isLoadingMore]);
 
-  // When a new message arrives (not streaming update), scroll to bottom
+  // When a new user message arrives, scroll to bottom so they see their message sent
+  // Do NOT scroll when the assistant's completed response is added (let the user read naturally)
   useEffect(() => {
     if (!hasInitialScrolled.current) return;
     if (messages.length > lastMessageCountRef.current) {
-      requestAnimationFrame(() => scrollToBottom(true));
+      const newest = messages[messages.length - 1];
+      if (newest?.role === 'user') {
+        requestAnimationFrame(() => scrollToBottom(true));
+      }
     }
     lastMessageCountRef.current = messages.length;
-  }, [messages.length, scrollToBottom]);
+  }, [messages.length, messages, scrollToBottom]);
 
   // Throttled scroll handler to detect user scrolling up and load-more
   const handleScroll = useCallback(() => {
