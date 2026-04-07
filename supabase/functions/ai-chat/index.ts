@@ -113,10 +113,22 @@ type PlaceResult = {
   phone?: string;
 };
 
+// Hardcoded Google Places API base. All findPlaces() fetches target this host
+// and nothing else — the `query` and `place_id` values are only ever appended
+// as query-string parameters via URL.searchParams, never as path segments or
+// hosts. This bounds SSRF risk: the request destination is fixed at compile
+// time regardless of AI-supplied input.
+const GOOGLE_PLACES_BASE = 'https://maps.googleapis.com';
+
 async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]> {
+  // Guard against pathologically long model input before hitting Google.
+  const safeQuery = (query || '').slice(0, 256);
+
   // Text Search gives us candidates with place_id for a free-form query.
-  const searchParams = new URLSearchParams({ query, key: apiKey });
-  const searchRes = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?${searchParams.toString()}`);
+  const searchUrl = new URL('/maps/api/place/textsearch/json', GOOGLE_PLACES_BASE);
+  searchUrl.searchParams.set('query', safeQuery);
+  searchUrl.searchParams.set('key', apiKey);
+  const searchRes = await fetch(searchUrl);
   if (!searchRes.ok) throw new Error(`Google Places text search error: ${searchRes.status}`);
   const searchJson = await searchRes.json();
   type RawPlace = {
@@ -131,12 +143,11 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
   // Fetch Place Details for each candidate (website + phone). In parallel, but only top 3.
   const detailPromises = candidates.map(async (c) => {
     try {
-      const detailsParams = new URLSearchParams({
-        place_id: c.place_id,
-        fields: 'name,place_id,formatted_address,website,rating,formatted_phone_number',
-        key: apiKey,
-      });
-      const detailRes = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?${detailsParams.toString()}`);
+      const detailsUrl = new URL('/maps/api/place/details/json', GOOGLE_PLACES_BASE);
+      detailsUrl.searchParams.set('place_id', c.place_id);
+      detailsUrl.searchParams.set('fields', 'name,place_id,formatted_address,website,rating,formatted_phone_number');
+      detailsUrl.searchParams.set('key', apiKey);
+      const detailRes = await fetch(detailsUrl);
       const detailJson = await detailRes.json();
       const d = detailJson.result || {};
       return {
