@@ -14,8 +14,7 @@ import type {
   ExtractedItem
 } from '@/types/ai-assistant';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const EDGE_FUNCTION_BASE = `${SUPABASE_URL}/functions/v1/ai-chat`;
+const EXPRESS_BASE = '/api/trips';
 
 const ANON_STORAGE_KEY = 'anon-ai-count';
 const ANON_MESSAGE_LIMIT = 5;
@@ -232,7 +231,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
         return { messages: [], thread_id: null, hasMore: false };
       }
 
-      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/messages?limit=${PAGE_SIZE}&offset=0`, {
+      const response = await fetch(`${EXPRESS_BASE}/${tripId}/assistant/messages`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -263,7 +262,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       const offset = currentMessages.length;
 
       const response = await fetch(
-        `${EDGE_FUNCTION_BASE}/${tripId}/messages?limit=${PAGE_SIZE}&offset=${offset}`,
+        `${EXPRESS_BASE}/${tripId}/assistant/messages?limit=${PAGE_SIZE}&offset=${offset}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -308,7 +307,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
         return { used, limit: ANON_MESSAGE_LIMIT, tier: 'anon', resetAt: '' };
       }
 
-      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/usage`, {
+      const response = await fetch(`${EXPRESS_BASE}/${tripId}/assistant/usage`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -506,7 +505,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     };
 
     try {
-      await fetchEventSource(`${EDGE_FUNCTION_BASE}/${tripId}`, {
+      await fetchEventSource(`${EXPRESS_BASE}/${tripId}/assistant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -581,7 +580,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     if (!token) return;
 
     try {
-      const response = await fetch(`${EDGE_FUNCTION_BASE}/${tripId}/messages`, {
+      const response = await fetch(`${EXPRESS_BASE}/${tripId}/assistant/messages`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

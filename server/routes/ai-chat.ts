@@ -735,19 +735,31 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
       .single();
 
     if (!thread) {
-      return res.json({ messages: [], thread_id: null });
+      return res.json({ messages: [], thread_id: null, hasMore: false });
     }
 
-    // Get messages
+    // Support pagination
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    // Get total count for hasMore
+    const { count } = await supabase
+      .from('ai_chat_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('thread_id', thread.id);
+
+    // Get messages with pagination (newest first for offset, then reverse)
     const { data: messages } = await supabase
       .from('ai_chat_messages')
       .select('id, role, content, metadata, created_at')
       .eq('thread_id', thread.id)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .range(offset, offset + limit - 1);
 
     return res.json({
       messages: messages || [],
-      thread_id: thread.id
+      thread_id: thread.id,
+      hasMore: (count || 0) > offset + limit
     });
   } catch (error) {
     console.error('Error getting messages:', error);
