@@ -55,7 +55,8 @@ function googleSearchFallback(text: string): string {
 /**
  * Validate an AI-generated href. Returns either the original URL (if trusted)
  * or a Google Search fallback built from the link text. Never returns an
- * unparseable or non-http(s) URL.
+ * unparseable or non-https URL — clear-text http links are rejected so that
+ * we never render a downgrade attack vector from model output.
  */
 export function safeHref(rawHref: string, linkText: string): string {
   if (!rawHref) return googleSearchFallback(linkText);
@@ -67,7 +68,7 @@ export function safeHref(rawHref: string, linkText: string): string {
     return googleSearchFallback(linkText);
   }
 
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+  if (parsed.protocol !== 'https:') {
     return googleSearchFallback(linkText);
   }
 

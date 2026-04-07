@@ -41,10 +41,13 @@ export function normalizeCandidateUrl(raw: string): string | null {
   // Drop trailing punctuation the model sometimes glues onto URLs.
   url = url.replace(/[),.;:!?'"*_\]]+$/, '');
   if (!url) return null;
-  if (!/^https?:\/\//i.test(url)) return null;
+  // Only accept https URLs. We never want to render a clear-text link from
+  // the model — if a URL arrives as http:// we rewrite it to a Google Search
+  // for the link text instead (see rewriteMarkdownLink).
+  if (!/^https:\/\//i.test(url)) return null;
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    if (parsed.protocol !== 'https:') return null;
     return parsed.toString();
   } catch {
     return null;
