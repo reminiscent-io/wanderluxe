@@ -8,7 +8,7 @@ const isValidUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 
 // Environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
