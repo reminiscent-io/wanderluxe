@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateAndRewriteLinks } from './linkValidator.ts';
 
 // Inlined from _shared/cors.ts to support single-function deployment
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://wanderluxe.io';
@@ -49,15 +50,18 @@ type OpenAIOptions = {
   model: string;
   openaiApiKey: string;
   tools?: any[];
-  forceTool?: boolean;
+  forceToolName?: string | null;
   skipTools?: boolean;
 };
 
 type StreamContext = {
   openaiMsgs: OpenAIMessage[];
   openaiOptions: OpenAIOptions;
-  forceSearch: boolean;
+  forceToolName: string | null;
   serperApiKey: string | undefined;
+  googlePlacesApiKey: string | undefined;
+  searchLocation: string;
+  verifiedUrls: Set<string>;
   message: string;
   supabase: SupabaseClient;
   threadId: string;
@@ -72,8 +76,8 @@ type SystemPromptParams = {
   itineraryContext: string;
   formattedAccommodations: string;
   formattedTransportation: string;
-  searchLocation: string;
   serperApiKey: string | undefined;
+  googlePlacesApiKey: string | undefined;
 };
 
 function jsonResponse(body: Record<string, unknown>, status = 200, cors: Record<string, string> = {}): Response {
@@ -97,6 +101,75 @@ async function searchWeb(query: string, apiKey: string): Promise<{ organic: Arra
     throw new Error(`Serper API error: ${res.status} ${err}`);
   }
   return res.json();
+}
+
+type PlaceResult = {
+  name: string;
+  place_id: string;
+  formatted_address: string;
+  maps_url: string;
+  website?: string;
+  rating?: number;
+  phone?: string;
+};
+
+// Hardcoded Google Places API base. All findPlaces() fetches target this host
+// and nothing else — the `query` and `place_id` values are only ever appended
+// as query-string parameters via URL.searchParams, never as path segments or
+// hosts. This bounds SSRF risk: the request destination is fixed at compile
+// time regardless of AI-supplied input.
+const GOOGLE_PLACES_BASE = 'https://maps.googleapis.com';
+
+async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]> {
+  // Guard against pathologically long model input before hitting Google.
+  const safeQuery = (query || '').slice(0, 256);
+
+  // Text Search gives us candidates with place_id for a free-form query.
+  const searchUrl = new URL('/maps/api/place/textsearch/json', GOOGLE_PLACES_BASE);
+  searchUrl.searchParams.set('query', safeQuery);
+  searchUrl.searchParams.set('key', apiKey);
+  const searchRes = await fetch(searchUrl);
+  if (!searchRes.ok) throw new Error(`Google Places text search error: ${searchRes.status}`);
+  const searchJson = await searchRes.json();
+  type RawPlace = {
+    name?: string;
+    place_id: string;
+    formatted_address?: string;
+    rating?: number;
+  };
+  const candidates: RawPlace[] = (searchJson.results || []).slice(0, 3);
+  if (candidates.length === 0) return [];
+
+  // Fetch Place Details for each candidate (website + phone). In parallel, but only top 3.
+  const detailPromises = candidates.map(async (c) => {
+    try {
+      const detailsUrl = new URL('/maps/api/place/details/json', GOOGLE_PLACES_BASE);
+      detailsUrl.searchParams.set('place_id', c.place_id);
+      detailsUrl.searchParams.set('fields', 'name,place_id,formatted_address,website,rating,formatted_phone_number');
+      detailsUrl.searchParams.set('key', apiKey);
+      const detailRes = await fetch(detailsUrl);
+      const detailJson = await detailRes.json();
+      const d = detailJson.result || {};
+      return {
+        name: d.name || c.name,
+        place_id: c.place_id,
+        formatted_address: d.formatted_address || c.formatted_address || '',
+        maps_url: `https://www.google.com/maps/place/?q=place_id:${c.place_id}`,
+        website: d.website,
+        rating: d.rating ?? c.rating,
+        phone: d.formatted_phone_number,
+      } as PlaceResult;
+    } catch {
+      return {
+        name: c.name,
+        place_id: c.place_id,
+        formatted_address: c.formatted_address || '',
+        maps_url: `https://www.google.com/maps/place/?q=place_id:${c.place_id}`,
+        rating: c.rating,
+      } as PlaceResult;
+    }
+  });
+  return Promise.all(detailPromises);
 }
 
 function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: ExtractedItem[] } {
@@ -217,7 +290,9 @@ async function callOpenAI(messages: OpenAIMessage[], stream: boolean, options: O
   };
   if (options.tools && !options.skipTools) {
     body.tools = options.tools;
-    if (options.forceTool) body.tool_choice = { type: 'function' as const, function: { name: 'search_web' } };
+    if (options.forceToolName) {
+      body.tool_choice = { type: 'function' as const, function: { name: options.forceToolName } };
+    }
   }
   return fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -310,36 +385,44 @@ function buildLocationContext(
   return `The trip destination is: ${safeTripName}.`;
 }
 
-function buildSearchStep2WithSerper(): string {
-  return `Call the search_web tool with these queries in priority order until you find results:
-1. "[restaurant name] [city] site:resy.com"
-2. "[restaurant name] [city] site:opentable.com"
-3. "[restaurant name] [city] reservations" (fallback — catches Tock, Yelp, SevenRooms, direct sites)
-
-For international destinations, also try: TheFork (Europe), Tabelog/Hotpepper (Japan), TableCheck, or "[restaurant] [city] reservations" for local platforms.`;
-}
-
-function buildSearchStep2WithoutSerper(): string {
-  return 'Provide a Google Search link: https://www.google.com/search?q=RESTAURANT+NAME+PLUS+CITY+reservations (replace with actual names). Only include Resy/OpenTable URLs if confident from your knowledge; otherwise use the search link. Always add: "Verify the link before booking."';
-}
-
-function buildBookingIntro(hasSerper: boolean): string {
-  if (hasSerper) return 'Use the search_web tool to search. ';
-  return 'Provide a Google Search link for the user to find booking pages. Only include Resy/OpenTable URLs if you are confident from your knowledge; otherwise say "Search for reservations" with the link. Always add: "Verify the link before booking."';
+function buildLinkPolicy(hasFindPlace: boolean, hasSerper: boolean): string {
+  if (hasFindPlace && hasSerper) {
+    return `## Link Policy (STRICT)
+- You have two tools: \`find_place\` (Google Places — canonical names, addresses, websites, Maps URLs) and \`search_web\` (live web search for booking pages).
+- Whenever you mention a specific place (restaurant, hotel, attraction, landmark), FIRST call \`find_place\` so you can link to the verified Google Maps URL or official website.
+- Only use \`search_web\` for booking deep-links (Resy, OpenTable, Tock, etc.) or time-sensitive info (weather, opening hours, events).
+- NEVER invent a URL. NEVER retype a URL from memory. Only use URLs that appear verbatim in a tool result.
+- If neither tool returns a URL for a place, write the place name in bold with NO link. Do not make one up.`;
+  }
+  if (hasFindPlace) {
+    return `## Link Policy (STRICT)
+- You have one tool: \`find_place\` (Google Places). Call it for every specific place you mention and link to the returned website or Maps URL.
+- NEVER invent a URL. NEVER retype a URL from memory. Only use URLs that appear verbatim in a tool result.
+- For restaurant bookings (Resy, OpenTable, etc.) you have no search tool available — do not attempt to construct booking URLs. Recommend the restaurant and let the user search for bookings themselves.
+- If \`find_place\` returns no URL for a place, write the place name in bold with NO link. Do not make one up.`;
+  }
+  if (hasSerper) {
+    return `## Link Policy (STRICT)
+- You have one tool: \`search_web\`. Call it whenever you mention a specific place and want to link to it.
+- NEVER invent a URL. NEVER retype a URL from memory. Only use URLs that appear verbatim in a tool result.
+- If no result exists, write the place name in bold with NO link.`;
+  }
+  return `## Link Policy (STRICT)
+- You have no web tools available in this environment.
+- Do NOT author any URLs. Any URL you write will be stripped and replaced with a Google Search fallback.
+- Write place names in bold (\`**Place Name**\`) without links. The client will render a Google Search link automatically.`;
 }
 
 function buildSystemPrompt(params: SystemPromptParams): string {
   const {
     tripName, locationContext, arrivalDate, departureDate,
     partySizeContext, itineraryContext, formattedAccommodations,
-    formattedTransportation, searchLocation, serperApiKey
+    formattedTransportation, serperApiKey, googlePlacesApiKey
   } = params;
 
   const hasSerper = !!serperApiKey;
-  const bookingIntro = buildBookingIntro(hasSerper);
-  const searchStep2 = hasSerper ? buildSearchStep2WithSerper() : buildSearchStep2WithoutSerper();
-  const mapsUrl = 'https://www.google.com/maps/search/PLACE+NAME+' + searchLocation;
-  const searchUrl = 'https://www.google.com/search?q=PLACE+NAME+' + searchLocation;
+  const hasFindPlace = !!googlePlacesApiKey;
+  const linkPolicy = buildLinkPolicy(hasFindPlace, hasSerper);
 
   const safeTripName = sanitizeForPrompt(tripName);
 
@@ -356,45 +439,9 @@ Guidelines:
 - Be concise and helpful
 - Use markdown formatting for readability. IMPORTANT: When writing numbered lists, put each item on its own line with a blank line between items for proper rendering
 - When listing multiple recommendations, use a numbered markdown list with each item separated by a blank line
-- When recommending hotels or attractions, make the name a clickable link using Google Maps or Google Search URLs
-- For restaurants, use the Restaurant Booking Links workflow below — you may use direct booking URLs (Resy, OpenTable, etc.) when found via search
-- IMPORTANT for non-restaurant places: Only use Google Maps or Google Search URL formats (never IP addresses or made-up URLs):
-  - Google Maps: ${mapsUrl}
-  - Google Search: ${searchUrl}
-- Format: **[Place Name](url)** - Brief description
+- Format place recommendations as: **[Place Name](verified-url)** — brief description (when you have a verified URL), otherwise **Place Name** — brief description (with no link)
 
-## Restaurant Booking Links
-
-When you recommend, suggest, or discuss a specific restaurant for a user's trip, you MUST find booking links. ${bookingIntro}Follow this workflow:
-
-### Step 1: Identify the Restaurant
-Extract the restaurant name, city, and neighborhood (if known) from the conversation context or the trip destination.
-
-### Step 2: Search for Booking Links
-${searchStep2}
-
-### Step 3: Classify the Booking Platform
-From search results, identify which platform(s) the restaurant uses:
-- Resy — URLs contain resy.com/cities/
-- OpenTable — URLs contain opentable.com/r/ or opentable.com/restref/
-- Tock — URLs contain exploretock.com/
-- Yelp Reservations — URLs contain yelp.com/reservations/
-- SevenRooms — URLs contain sevenrooms.com/
-- TheFork — URLs contain thefork.com/ (Europe)
-- Direct — The restaurant's own booking page
-
-### Step 4: Present the Recommendation with Booking Action
-Always include a booking link with every restaurant recommendation. Format:
-
-**[Restaurant Name]** — [Cuisine Type], [Neighborhood]
-[1-2 sentence description of why it fits the user's needs]
-Price: [Price range if known]
-Book on [Platform Name]: [Direct URL to booking page]
-
-If multiple platforms exist, show both. If NO booking platform found, say so honestly and suggest Google Maps or the restaurant's website. NEVER fabricate or guess URLs — only use URLs from search results.
-
-### Step 5: Pre-fill When Possible
-If trip dates and party size are in context, you may append parameters to OpenTable URLs. Resy does not support deep-link pre-filling.
+${linkPolicy}
 
 CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:
 You have the ability to add items directly to the user's trip itinerary. This is a core feature.
@@ -430,59 +477,160 @@ function extractSearchQuery(args: Record<string, unknown>): string {
   return '';
 }
 
+type ToolExecutionContext = {
+  serperApiKey: string | undefined;
+  googlePlacesApiKey: string | undefined;
+  message: string;
+  verifiedUrls: Set<string>;
+};
+
+async function executeSearchWeb(
+  tc: ToolCall,
+  serperApiKey: string,
+  message: string,
+  verifiedUrls: Set<string>,
+): Promise<{ role: 'tool'; tool_call_id: string; content: string }> {
+  try {
+    const argsStr = (tc.function.arguments || '').trim();
+    const args = argsStr ? JSON.parse(argsStr) : {};
+    const q = extractSearchQuery(args);
+    const searchQuery = q || message || 'restaurant reservations';
+    const results = await searchWeb(searchQuery, serperApiKey);
+    const organic = (results.organic || []).slice(0, 6);
+    for (const r of organic) {
+      if (r.link) verifiedUrls.add(r.link);
+    }
+    const summary = organic.map((r) => `${r.title}: ${r.link}`).join('\n');
+    return { role: 'tool', tool_call_id: tc.id, content: summary || 'No results found.' };
+  } catch (error_) {
+    const errorMsg = error_ instanceof Error ? error_.message : 'Unknown';
+    return { role: 'tool', tool_call_id: tc.id, content: `Search error: ${errorMsg}. Do not fabricate a URL; tell the user to search manually.` };
+  }
+}
+
+async function executeFindPlace(
+  tc: ToolCall,
+  googlePlacesApiKey: string,
+  verifiedUrls: Set<string>,
+): Promise<{ role: 'tool'; tool_call_id: string; content: string }> {
+  try {
+    const argsStr = (tc.function.arguments || '').trim();
+    const args = argsStr ? JSON.parse(argsStr) : {};
+    const query = typeof args.query === 'string' ? args.query : '';
+    if (!query) {
+      return { role: 'tool', tool_call_id: tc.id, content: 'find_place error: missing "query" argument.' };
+    }
+    const places = await findPlaces(query, googlePlacesApiKey);
+    if (places.length === 0) {
+      return { role: 'tool', tool_call_id: tc.id, content: 'No matching places found.' };
+    }
+    for (const p of places) {
+      verifiedUrls.add(p.maps_url);
+      if (p.website) verifiedUrls.add(p.website);
+    }
+    // Give the model a compact, unambiguous structured payload so it can
+    // quote verified URLs instead of authoring new ones.
+    const payload = places.map((p) => ({
+      name: p.name,
+      address: p.formatted_address,
+      rating: p.rating,
+      phone: p.phone,
+      website: p.website || null,
+      maps_url: p.maps_url,
+    }));
+    return { role: 'tool', tool_call_id: tc.id, content: JSON.stringify(payload) };
+  } catch (error_) {
+    const errorMsg = error_ instanceof Error ? error_.message : 'Unknown';
+    return { role: 'tool', tool_call_id: tc.id, content: `find_place error: ${errorMsg}. Do not fabricate a URL.` };
+  }
+}
+
 async function executeToolCalls(
   toolCalls: ToolCall[],
-  serperApiKey: string,
-  message: string
+  ctx: ToolExecutionContext,
 ): Promise<Array<{ role: 'tool'; tool_call_id: string; content: string }>> {
   const toolResults: Array<{ role: 'tool'; tool_call_id: string; content: string }> = [];
   for (const tc of toolCalls) {
-    if (tc.function.name !== 'search_web') continue;
-    try {
-      const argsStr = (tc.function.arguments || '').trim();
-      const args = argsStr ? JSON.parse(argsStr) : {};
-      const q = extractSearchQuery(args);
-      const searchQuery = q || message || 'restaurant reservations';
-      const results = await searchWeb(searchQuery, serperApiKey);
-      const summary = (results.organic || []).slice(0, 6).map((r: any) => `${r.title}: ${r.link}`).join('\n');
-      toolResults.push({ role: 'tool', tool_call_id: tc.id, content: summary || 'No results found.' });
-    } catch (error_) {
-      const errorMsg = error_ instanceof Error ? error_.message : 'Unknown';
-      toolResults.push({ role: 'tool', tool_call_id: tc.id, content: `Search error: ${errorMsg}. You can suggest the user search Google for "[restaurant name] [city] reservations".` });
+    if (tc.function.name === 'search_web' && ctx.serperApiKey) {
+      toolResults.push(await executeSearchWeb(tc, ctx.serperApiKey, ctx.message, ctx.verifiedUrls));
+    } else if (tc.function.name === 'find_place' && ctx.googlePlacesApiKey) {
+      toolResults.push(await executeFindPlace(tc, ctx.googlePlacesApiKey, ctx.verifiedUrls));
+    } else {
+      toolResults.push({ role: 'tool', tool_call_id: tc.id, content: `Tool "${tc.function.name}" is not available in this environment.` });
     }
   }
   return toolResults;
 }
 
-function buildSearchWebTool(serperApiKey: string | undefined): any | null {
-  if (!serperApiKey) return null;
-  return {
-    type: 'function' as const,
-    function: {
-      name: 'search_web',
-      description: 'Search the web for up-to-date information. Use for: restaurant booking pages (Resy, OpenTable), weather, current events, news, opening hours, exchange rates, or any query that benefits from live web results.',
-      parameters: {
-        type: 'object',
-        properties: { query: { type: 'string', description: 'Search query, e.g. "Carbone NYC site:resy.com"' } },
-        required: ['query']
-      }
-    }
-  };
+function buildTools(serperApiKey: string | undefined, googlePlacesApiKey: string | undefined): any[] | undefined {
+  const tools: any[] = [];
+
+  if (googlePlacesApiKey) {
+    tools.push({
+      type: 'function' as const,
+      function: {
+        name: 'find_place',
+        description: 'Look up a specific place (restaurant, hotel, landmark, attraction) on Google Places. Returns verified name, address, website, phone, rating, and a canonical Google Maps URL. Use this whenever you recommend or reference a specific place so that the URL you cite is real.',
+        parameters: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Free-text place query, e.g. "Carbone restaurant NYC" or "Hotel Bel-Air Los Angeles".',
+            },
+          },
+          required: ['query'],
+        },
+      },
+    });
+  }
+
+  if (serperApiKey) {
+    tools.push({
+      type: 'function' as const,
+      function: {
+        name: 'search_web',
+        description: 'Search the web for up-to-date information. Use only for time-sensitive queries that find_place cannot answer: restaurant booking pages (Resy, OpenTable), weather, current events, opening hours, exchange rates.',
+        parameters: {
+          type: 'object',
+          properties: { query: { type: 'string', description: 'Search query, e.g. "Carbone NYC site:resy.com"' } },
+          required: ['query'],
+        },
+      },
+    });
+  }
+
+  return tools.length > 0 ? tools : undefined;
 }
 
 const DINING_KEYWORDS = /\b(restaurant|restaurants|dining|dinner|lunch|eat|food|reservation|reservations|book a table|opentable|resy|carbone)\b/i;
-const RECOMMENDATION_KEYWORDS = /\b(where should i eat|booking link|reservation link)\b/i;
+const PLACE_KEYWORDS = /\b(hotel|hotels|attraction|attractions|landmark|museum|park|bar|bars|cafe|neighborhood|things to do|visit|sightseeing|activity|activities|recommend)\b/i;
+const BOOKING_KEYWORDS = /\b(booking link|reservation link|book a table)\b/i;
 const WEATHER_KEYWORDS = /\b(weather|temperature|forecast|rainy|sunny|snow|humidity)\b/i;
-const CURRENT_INFO_KEYWORDS = /\b(news|latest|current|today|happening|events|concerts|attractions|opening hours|closed today|exchange rate|currency)\b/i;
-const WEATHER_QUESTION_KEYWORDS = /\b(what.*weather|how.*weather|recommend.*restaurant)\b/i;
+const CURRENT_INFO_KEYWORDS = /\b(news|latest|current|today|happening|events|concerts|opening hours|closed today|exchange rate|currency)\b/i;
 
-function shouldForceSearch(message: string, hasTools: boolean): boolean {
-  if (!hasTools) return false;
-  return DINING_KEYWORDS.test(message)
-    || RECOMMENDATION_KEYWORDS.test(message)
+function chooseForcedTool(
+  message: string,
+  hasFindPlace: boolean,
+  hasSearchWeb: boolean,
+): string | null {
+  // When the message is explicitly about live/web info, prefer web search.
+  if (hasSearchWeb && (
+    BOOKING_KEYWORDS.test(message)
     || WEATHER_KEYWORDS.test(message)
     || CURRENT_INFO_KEYWORDS.test(message)
-    || WEATHER_QUESTION_KEYWORDS.test(message);
+  )) {
+    return 'search_web';
+  }
+  // Otherwise for dining / place recommendations, prefer structured Google Places.
+  if (hasFindPlace && (DINING_KEYWORDS.test(message) || PLACE_KEYWORDS.test(message))) {
+    return 'find_place';
+  }
+  // Dining without find_place → fall back to search_web if available.
+  if (hasSearchWeb && DINING_KEYWORDS.test(message)) {
+    return 'search_web';
+  }
+  return null;
 }
 
 async function fetchTripContext(supabase: SupabaseClient, tripId: string) {
@@ -545,8 +693,7 @@ type ToolCallFollowUpParams = {
   fullResponse: string;
   currentMessages: OpenAIMessage[];
   openaiOptions: OpenAIOptions;
-  serperApiKey: string;
-  message: string;
+  toolCtx: ToolExecutionContext;
 };
 
 async function handleToolCallFollowUp(
@@ -554,9 +701,9 @@ async function handleToolCallFollowUp(
   controller: { enqueue: (chunk: Uint8Array) => void },
   encoder: TextEncoder
 ): Promise<string> {
-  const { toolCalls, fullResponse, currentMessages, openaiOptions, serperApiKey, message } = params;
+  const { toolCalls, fullResponse, currentMessages, openaiOptions, toolCtx } = params;
   const assistantMsg = { role: 'assistant' as const, content: fullResponse || null, tool_calls: toolCalls };
-  const toolResults = await executeToolCalls(toolCalls, serperApiKey, message);
+  const toolResults = await executeToolCalls(toolCalls, toolCtx);
   const updatedMessages = [...currentMessages, assistantMsg, ...toolResults];
   const followRes = await callOpenAI(updatedMessages, true, { ...openaiOptions, skipTools: true });
 
@@ -600,7 +747,7 @@ async function handleStreamResponse(
   ctx: StreamContext
 ): Promise<void> {
   const currentMessages = [...ctx.openaiMsgs];
-  const openaiRes = await callOpenAI(currentMessages, true, { ...ctx.openaiOptions, forceTool: ctx.forceSearch });
+  const openaiRes = await callOpenAI(currentMessages, true, { ...ctx.openaiOptions, forceToolName: ctx.forceToolName });
 
   if (!openaiRes.ok) {
     controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'AI request failed' })}\n\n`));
@@ -611,19 +758,38 @@ async function handleStreamResponse(
   const { fullResponse, toolCalls } = await processStream(openaiRes, controller, encoder);
   let lastResponse = fullResponse;
 
-  if (toolCalls && toolCalls.length > 0 && ctx.serperApiKey) {
+  const toolCtx: ToolExecutionContext = {
+    serperApiKey: ctx.serperApiKey,
+    googlePlacesApiKey: ctx.googlePlacesApiKey,
+    message: ctx.message,
+    verifiedUrls: ctx.verifiedUrls,
+  };
+
+  const hasToolSupport = !!ctx.serperApiKey || !!ctx.googlePlacesApiKey;
+  if (toolCalls && toolCalls.length > 0 && hasToolSupport) {
     lastResponse = await handleToolCallFollowUp({
       toolCalls, fullResponse, currentMessages,
       openaiOptions: ctx.openaiOptions,
-      serperApiKey: ctx.serperApiKey,
-      message: ctx.message
+      toolCtx,
     }, controller, encoder);
   }
 
   const fallbackMsg = toolCalls?.length ? 'I searched for booking options but couldn\'t format the results. Try searching for the restaurant name plus your city on Resy or OpenTable.' : '';
-  const finalContent = lastResponse.trim() || fallbackMsg;
-  const { cleanContent } = parseCreateItemsBlock(finalContent);
-  const contentToSave = cleanContent || finalContent;
+  const rawFinal = lastResponse.trim() || fallbackMsg;
+
+  // Strip any `create_items` block before URL validation so we don't touch JSON.
+  const { cleanContent, extractedItems } = parseCreateItemsBlock(rawFinal);
+  const prosePart = cleanContent || rawFinal;
+
+  // Replace any AI-authored URLs with Google Search fallbacks unless they
+  // were returned by a tool or point to a trusted host (Google, Wikipedia).
+  const validatedProse = validateAndRewriteLinks(prosePart, ctx.searchLocation, ctx.verifiedUrls);
+
+  // Re-attach the create_items block (unchanged) so the import flow still works.
+  const finalContent = extractedItems.length > 0
+    ? `${validatedProse}\n\n\`\`\`create_items\n${JSON.stringify(extractedItems.map((it) => ({ itemType: it.itemType, fields: it.fields })))}\n\`\`\``
+    : validatedProse;
+  const contentToSave = validatedProse;
 
   const { data: saved } = await ctx.supabase.from('ai_chat_messages').insert({ thread_id: ctx.threadId, role: 'assistant', content: contentToSave || '(No response)' }).select('id').single();
   emitFinalEvents(controller, encoder, finalContent, fallbackMsg, ctx.openaiOptions.model, ctx.threadId, saved?.id);
@@ -636,6 +802,7 @@ async function handlePostMessage(
   userId: string,
   openaiApiKey: string,
   serperApiKey: string | undefined,
+  googlePlacesApiKey: string | undefined,
   model: string,
   cors: Record<string, string> = {}
 ): Promise<Response> {
@@ -673,20 +840,22 @@ async function handlePostMessage(
   const systemPrompt = buildSystemPrompt({
     tripName, locationContext, arrivalDate, departureDate,
     partySizeContext, itineraryContext, formattedAccommodations,
-    formattedTransportation, searchLocation, serperApiKey
+    formattedTransportation, serperApiKey, googlePlacesApiKey
   });
 
-  const searchWebTool = buildSearchWebTool(serperApiKey);
-  const tools = searchWebTool ? [searchWebTool] : undefined;
+  const tools = buildTools(serperApiKey, googlePlacesApiKey);
   const openaiMsgs: OpenAIMessage[] = [{ role: 'system', content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
-  const forceSearch = shouldForceSearch(message, !!tools);
+  const forceToolName = chooseForcedTool(message, !!googlePlacesApiKey, !!serperApiKey);
   const encoder = new TextEncoder();
 
   const ctx: StreamContext = {
     openaiMsgs,
     openaiOptions: { model, openaiApiKey, tools },
-    forceSearch,
+    forceToolName,
     serperApiKey,
+    googlePlacesApiKey,
+    searchLocation,
+    verifiedUrls: new Set<string>(),
     message,
     supabase,
     threadId
@@ -747,6 +916,7 @@ Deno.serve(async (req: Request) => {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
   const serperApiKey = Deno.env.get('SERPER_API_KEY');
+  const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
   const model = Deno.env.get('OPENAI_CHAT_MODEL') || 'gpt-5.4-mini';
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -771,7 +941,7 @@ Deno.serve(async (req: Request) => {
 
   if (req.method === 'POST' && !action) {
     if (!openaiApiKey) return jsonResponse({ code: 'CONFIG_ERROR', message: 'OpenAI not configured' }, 500, corsHeaders);
-    return handlePostMessage(req, supabase, tripId, user.userId, openaiApiKey, serperApiKey, model, corsHeaders);
+    return handlePostMessage(req, supabase, tripId, user.userId, openaiApiKey, serperApiKey, googlePlacesApiKey, model, corsHeaders);
   }
 
   return jsonResponse({ error: 'Method not allowed' }, 405, corsHeaders);
