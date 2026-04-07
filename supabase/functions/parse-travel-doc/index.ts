@@ -4,7 +4,23 @@
 // OR { items: [...], meta } for multi-item mode (when itemType is not specified).
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.3";
-import { getCorsHeaders } from '../_shared/cors.ts';
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://wanderluxe.io';
+const ALLOWED_ORIGIN_PATTERNS = [
+  /\.replit\.dev(:\d+)?$/,
+  /\.repl\.co(:\d+)?$/,
+  /\.replit\.app(:\d+)?$/,
+];
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  let allowOrigin = ALLOWED_ORIGIN;
+  if (origin && ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin))) {
+    allowOrigin = origin;
+  }
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS',
+  };
+}
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const MODEL = Deno.env.get("OPENAI_OCR_MODEL") ?? "gpt-4o-mini";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");

@@ -1,6 +1,20 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { getCorsHeaders } from '../_shared/cors.ts';
-import { requireAuth } from '../_shared/auth.ts';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://wanderluxe.io';
+const ALLOWED_ORIGIN_PATTERNS = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /\.replit\.app(:\d+)?$/];
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowOrigin = (origin && ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin))) ? origin : ALLOWED_ORIGIN;
+  return { 'Access-Control-Allow-Origin': allowOrigin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS' };
+}
+async function requireAuth(req: Request): Promise<{ userId: string; email?: string }> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) throw new Error('Missing or invalid authorization header');
+  const token = authHeader.slice(7);
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) throw new Error('Invalid token');
+  return { userId: data.user.id, email: data.user.email?.toLowerCase() };
+}
 serve(async (req)=>{
   const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   // Handle CORS preflight requests

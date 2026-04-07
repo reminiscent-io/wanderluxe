@@ -1,6 +1,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import * as SendGrid from 'https://esm.sh/@sendgrid/mail@7.7.0';
-import { getCorsHeaders } from '../_shared/cors.ts';
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://wanderluxe.io';
+const ALLOWED_ORIGIN_PATTERNS = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /\.replit\.app(:\d+)?$/];
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowOrigin = (origin && ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin))) ? origin : ALLOWED_ORIGIN;
+  return { 'Access-Control-Allow-Origin': allowOrigin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS' };
+}
 serve(async (req)=>{
   const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   /* ----- 1. CORS pre-flight ----- */ if (req.method === 'OPTIONS') {
