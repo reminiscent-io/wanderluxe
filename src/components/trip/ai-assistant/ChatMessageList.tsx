@@ -37,7 +37,6 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   const prevScrollHeightRef = useRef<number>(0);
   const hasInitialScrolled = useRef<boolean>(false);
   const scrollThrottleRef = useRef<boolean>(false);
-  const userScrolledUpRef = useRef<boolean>(false);
   const lastMessageCountRef = useRef<number>(0);
 
   // Reliable scroll-to-bottom using scrollTop on the container
@@ -67,7 +66,6 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   useEffect(() => {
     if (messages.length === 0) {
       hasInitialScrolled.current = false;
-      userScrolledUpRef.current = false;
     }
   }, [messages.length]);
 
@@ -85,34 +83,10 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   useEffect(() => {
     if (!hasInitialScrolled.current) return;
     if (messages.length > lastMessageCountRef.current) {
-      userScrolledUpRef.current = false;
       requestAnimationFrame(() => scrollToBottom(true));
     }
     lastMessageCountRef.current = messages.length;
   }, [messages.length, scrollToBottom]);
-
-  // Auto-scroll during streaming, but only if user hasn't scrolled up
-  useEffect(() => {
-    if (!hasInitialScrolled.current || !isStreaming) return;
-    if (userScrolledUpRef.current) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 150;
-
-    if (isNearBottom) {
-      container.scrollTop = container.scrollHeight;
-    }
-  }, [streamingContent, isStreaming]);
-
-  // Reset user-scrolled-up flag when streaming ends
-  useEffect(() => {
-    if (!isStreaming) {
-      userScrolledUpRef.current = false;
-    }
-  }, [isStreaming]);
 
   // Throttled scroll handler to detect user scrolling up and load-more
   const handleScroll = useCallback(() => {
@@ -125,19 +99,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 
       const container = containerRef.current;
 
-      // Track if user scrolled away from bottom during streaming
-      if (isStreaming) {
-        const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-        userScrolledUpRef.current = distFromBottom > 200;
-      }
-
       // Load more when near top
       if (hasMore && !isLoadingMore && onLoadMore && container.scrollTop < 50) {
         prevScrollHeightRef.current = container.scrollHeight;
         onLoadMore();
       }
     });
-  }, [hasMore, isLoadingMore, onLoadMore, isStreaming]);
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   if (isLoading) {
     return (
