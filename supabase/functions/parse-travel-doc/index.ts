@@ -82,16 +82,19 @@ const toDataUrl = async (file)=>{
   const sys = [
     "You extract structured JSON from travel booking images. Output JSON only, no prose.",
     "",
-    "DATE EXTRACTION:",
-    "- Extract dates and times exactly as shown on the document.",
-    "- Use ISO format: YYYY-MM-DD for dates, HH:mm (24-hour) for times.",
-    "- If a 4-digit year is visible, include it in the date.",
-    "- If NO year is visible, output the date without a year (e.g., month and day only), or use null if uncertain.",
-    "- Extract any visible day-of-week information (e.g., 'Monday', 'Tue').",
+    "DATE EXTRACTION (critical — follow exactly):",
+    "- Dates MUST always be in full ISO format YYYY-MM-DD. Never emit a partial date.",
+    "- If a 4-digit year is visible on the document, use it verbatim.",
+    "- If NO year is visible (common on boarding passes and screenshots), use 0000 as a placeholder year — e.g., '0000-11-25'. Do NOT return null just because the year is missing; the server will infer the year.",
+    "- Only return null for a date field if the month or day cannot be read at all.",
+    "",
+    "TIME EXTRACTION (critical — follow exactly):",
+    "- Times MUST always be in 24-hour HH:mm format. Convert AM/PM to 24-hour (e.g., '8:45 PM' → '20:45', '12:30 AM' → '00:30', '12:15 PM' → '12:15').",
+    "- Pad single-digit hours with a leading zero ('9:05' → '09:05').",
+    "- Only return null if the time is not visible at all.",
     "",
     "GENERAL RULES:",
-    "- Return null for any field not clearly visible on the document.",
-    "- Do not infer, assume, or calculate dates - extract only what you see.",
+    "- Return null only for fields that are not visible on the document.",
     "- Be precise with confirmation numbers, addresses, phone numbers, and costs."
   ].join("\n");
   // Per-type extraction schemas
@@ -168,15 +171,19 @@ const multiItemPrompt = ()=>{
   const sys = [
     "You extract structured JSON from travel booking images. Output JSON only, no prose.",
     "",
-    "DATE EXTRACTION:",
-    "- Extract dates and times exactly as shown on the document.",
-    "- Use ISO format: YYYY-MM-DD for dates, HH:mm (24-hour) for times.",
-    "- If a 4-digit year is visible, include it in the date.",
-    "- If NO year is visible, output the date without a year (e.g., month and day only), or use null if uncertain.",
+    "DATE EXTRACTION (critical — follow exactly):",
+    "- Dates MUST always be in full ISO format YYYY-MM-DD. Never emit a partial date.",
+    "- If a 4-digit year is visible on the document, use it verbatim.",
+    "- If NO year is visible (common on boarding passes and screenshots), use 0000 as a placeholder year — e.g., '0000-11-25'. Do NOT return null just because the year is missing; the server will infer the year.",
+    "- Only return null for a date field if the month or day cannot be read at all.",
+    "",
+    "TIME EXTRACTION (critical — follow exactly):",
+    "- Times MUST always be in 24-hour HH:mm format. Convert AM/PM to 24-hour (e.g., '8:45 PM' → '20:45', '12:30 AM' → '00:30', '12:15 PM' → '12:15').",
+    "- Pad single-digit hours with a leading zero ('9:05' → '09:05').",
+    "- Only return null if the time is not visible at all.",
     "",
     "GENERAL RULES:",
-    "- Return null for any field not clearly visible on the document.",
-    "- Do not infer, assume, or calculate dates - extract only what you see.",
+    "- Return null only for fields that are not visible on the document.",
     "- Be precise with confirmation numbers, addresses, phone numbers, and costs.",
     "- Each flight leg (outbound vs return) should be a SEPARATE item.",
     "- Multi-night hotel stays should be ONE item (not per-night).",
@@ -300,6 +307,43 @@ const requiredByType = {
   ]
 };
 // ----------------- Normalization helpers -----------------
+// Tolerant time parser: accepts "HH:mm", "H:mm", "h:mm AM/PM", "h AM/PM", and 4-digit military.
+const fixTime = (v: unknown): string | null => {
+  if (typeof v !== "string") return null;
+  const s = v.trim();
+  if (!s) return null;
+  const to24 = (h: number, min: number) =>
+    h >= 0 && h <= 23 && min >= 0 && min <= 59 ? `${pad2(h)}:${pad2(min)}` : null;
+  const ampmTo24 = (h: number, isPm: boolean) => {
+    if (h < 1 || h > 12) return null;
+    const base = h === 12 ? 0 : h;
+    return base + (isPm ? 12 : 0);
+  };
+
+  let m = /^(\d{1,2}):(\d{2})$/.exec(s);
+  if (m) return to24(Number(m[1]), Number(m[2]));
+
+  m = /^(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?$/i.exec(s);
+  if (m) {
+    const h24 = ampmTo24(Number(m[1]), m[3].toLowerCase() === "p");
+    return h24 === null ? null : to24(h24, Number(m[2]));
+  }
+
+  m = /^(\d{1,2})\s*([ap])\.?\s*m\.?$/i.exec(s);
+  if (m) {
+    const h24 = ampmTo24(Number(m[1]), m[2].toLowerCase() === "p");
+    return h24 === null ? null : to24(h24, 0);
+  }
+
+  m = /^(\d{2})(\d{2})$/.exec(s);
+  if (m) return to24(Number(m[1]), Number(m[2]));
+
+  return null;
+};
+
+const fixDate = (v: unknown): string | null =>
+  typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+
 const normalizeFields = (type, fields)=>{
   const out = {
     ...fields
@@ -308,8 +352,6 @@ const normalizeFields = (type, fields)=>{
   for (const k of Object.keys(out)){
     if (out[k] === "") out[k] = null;
   }
-  const fixTime = (v)=>typeof v === "string" && /^\d{2}:\d{2}$/.test(v) ? v : null;
-  const fixDate = (v)=>typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
   const fix = (k, f)=>{
     if (k in out) out[k] = f(out[k]);
   };
@@ -473,6 +515,22 @@ const pickNearestFuture = (month, day, now)=>{
 };
 const correctOutOfRangeYear = (fields, key)=>{
   const current = typeof fields[key] === "string" ? fields[key] : null;
+  if (!current) return;
+  // Handle explicit "0000" placeholder the model emits when no year is visible on the document.
+  const placeholder = /^0000-(\d{2})-(\d{2})$/.exec(current);
+  if (placeholder) {
+    const m = Number(placeholder[1]);
+    const d = Number(placeholder[2]);
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+      const picked = pickNearestFuture(m, d, TODAY_UTC);
+      if (picked) {
+        fields[key] = iso(picked.getUTCFullYear(), m, d);
+        return;
+      }
+    }
+    fields[key] = null;
+    return;
+  }
   const parsed = parseIso(current);
   if (!parsed) return;
   const { y, m, d } = parsed;
