@@ -1,4 +1,8 @@
-const CACHE_NAME = 'wanderluxe-v4';
+// __APP_SHA__ is replaced at build time by the versionStampPlugin in
+// vite.config.ts so each deploy gets a unique cache name. In dev (unstamped)
+// it stays as the literal placeholder string, which is fine because the SW
+// is not registered in dev.
+const CACHE_NAME = 'wanderluxe-__APP_SHA__';
 const OFFLINE_URL = '/index.html';
 const URLS_TO_CACHE = [
   '/',
@@ -44,6 +48,12 @@ self.addEventListener('fetch', (event) => {
   // This avoids CSP connect-src violations for external resources (fonts, images, analytics)
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Never cache version.json — it's the source of truth for update detection
+  // and must always return the freshest copy from the network.
+  if (url.pathname === '/version.json') {
     return;
   }
 

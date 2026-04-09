@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useInviteLinks } from "@/hooks/useInviteLinks";
 import { useTripPermissions } from "@/hooks/use-trip-permissions";
+import { APP_VERSION_LABEL, APP_VERSION_FULL } from "@/config/version";
 
 export interface SidebarHandle {
   openAccommodationDialog: () => void;
@@ -353,6 +354,12 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
             </Button>
           </NavLink>
         </div>
+        <p
+          className="text-[10px] text-sand-400 font-mono text-center select-none"
+          title={APP_VERSION_FULL}
+        >
+          {APP_VERSION_LABEL}
+        </p>
       </div>
     </div>
   );
