@@ -12,6 +12,7 @@ import CookieConsentBanner from "@/components/CookieConsentBanner";
 import AdminRoute from "./components/AdminRoute";
 import { lazy, Suspense, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
 
 // Landing page loaded eagerly — it's the entry point
 import Index from "./pages/Index";
@@ -54,6 +55,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  useVersionCheck();
   return (
     <QueryClientProvider client={queryClient}>
       <ConsentProvider>
