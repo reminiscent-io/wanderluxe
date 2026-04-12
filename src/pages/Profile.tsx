@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Crown, Check, Camera, Calendar, AlertCircle, ChevronRight, Clock } from "lucide-react";
+import { Crown, Check, Camera, Calendar, AlertCircle, ChevronRight, Clock, Download, Trash2, ShieldAlert } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -400,6 +400,204 @@ const ContactRow: React.FC<{ contact: ContactItem; onClick: (c: ContactItem) => 
         <ChevronRight className="h-4 w-4 text-muted-foreground inline-block" />
       </TableCell>
     </TableRow>
+  );
+};
+
+const DataPrivacySection: React.FC = () => {
+  const [exportingData, setExportingData] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showFinalConfirm, setShowFinalConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+
+  const handleExportData = async () => {
+    try {
+      setExportingData(true);
+      const token = await getAuthToken();
+      if (!token) { toast.error('Please sign in'); return; }
+
+      const resp = await fetch('/api/account/export', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json();
+        toast.error(data.error || 'Failed to export data');
+        return;
+      }
+
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `wanderluxe-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Data exported successfully');
+    } catch {
+      toast.error('Failed to export data');
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setDeletingAccount(true);
+      const token = await getAuthToken();
+      if (!token) { toast.error('Please sign in'); return; }
+
+      const resp = await fetch('/api/account', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json();
+        toast.error(data.error || 'Failed to delete account');
+        return;
+      }
+
+      // Sign out and redirect
+      await supabase.auth.signOut();
+      toast.success('Your account has been permanently deleted');
+      window.location.href = '/';
+    } catch {
+      toast.error('Failed to delete account');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+  return (
+    <div className="bg-background rounded-lg shadow">
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-full bg-sand-100">
+            <ShieldAlert className="h-5 w-5 text-sand-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-medium">Data & Privacy</h2>
+            <p className="text-sm text-muted-foreground">
+              Manage your personal data and account
+            </p>
+          </div>
+        </div>
+
+        <Separator className="mb-4" />
+
+        <div className="space-y-4">
+          {/* Download My Data */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Download my data</p>
+              <p className="text-xs text-muted-foreground">
+                Get a copy of all your personal data in JSON format
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportData}
+              disabled={exportingData}
+              className="border-sand-300"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {exportingData ? 'Exporting...' : 'Export'}
+            </Button>
+          </div>
+
+          <Separator />
+
+          {/* Delete Account */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-destructive">Delete account</p>
+              <p className="text-xs text-muted-foreground">
+                Permanently delete your account and all associated data
+              </p>
+            </div>
+            <AlertDialog open={showDeleteWarning} onOpenChange={(open) => {
+              setShowDeleteWarning(open);
+              if (!open) { setShowFinalConfirm(false); setConfirmText(''); }
+            }}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-200 text-destructive hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                    <AlertCircle className="h-5 w-5" />
+                    Delete your account?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-3">
+                      <p>
+                        This action is <strong>permanent and cannot be undone</strong>. The following will be deleted:
+                      </p>
+                      <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
+                        <li>Your profile and account information</li>
+                        <li>All trips you created (including itineraries, bookings, and expenses)</li>
+                        <li>All AI chat conversations</li>
+                        <li>Your subscription (if applicable)</li>
+                        <li>All shared trip connections</li>
+                      </ul>
+                      <p className="text-sm font-medium">
+                        We recommend downloading your data first before proceeding.
+                      </p>
+
+                      {!showFinalConfirm ? (
+                        <Button
+                          variant="destructive"
+                          className="w-full mt-2"
+                          onClick={() => setShowFinalConfirm(true)}
+                        >
+                          I understand, continue
+                        </Button>
+                      ) : (
+                        <div className="space-y-3 mt-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                          <p className="text-sm font-medium text-destructive">
+                            Type <strong>DELETE</strong> to confirm:
+                          </p>
+                          <Input
+                            value={confirmText}
+                            onChange={(e) => setConfirmText(e.target.value)}
+                            placeholder="Type DELETE"
+                            className="border-red-200"
+                            autoFocus
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  {showFinalConfirm && (
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteAccount}
+                      disabled={confirmText !== 'DELETE' || deletingAccount}
+                    >
+                      {deletingAccount ? 'Deleting...' : 'Permanently delete my account'}
+                    </Button>
+                  )}
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -847,6 +1045,9 @@ const Profile = () => {
               />
             </div>
           </div>
+
+          {/* Data & Privacy Card */}
+          <DataPrivacySection />
 
           {/* Sign Out Link */}
           <div className="mt-8 text-center">

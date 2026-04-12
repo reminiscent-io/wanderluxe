@@ -24,6 +24,8 @@ interface ConsentContextType {
   acceptCustom: (preferences: Omit<ConsentPreferences, 'essential'>) => void;
   // Check if a specific category is consented
   hasConsentFor: (category: keyof ConsentPreferences) => boolean;
+  // Reset consent so the banner reappears (for "Manage Cookies")
+  resetConsent: () => void;
 }
 
 const STORAGE_KEY = "wlx:gdpr:consent";
@@ -44,6 +46,7 @@ const ConsentContext = createContext<ConsentContextType>({
   acceptEssentialOnly: () => {},
   acceptCustom: () => {},
   hasConsentFor: () => false,
+  resetConsent: () => {},
 });
 
 // Helper to safely access localStorage
@@ -126,6 +129,7 @@ export const ConsentProvider = ({ children }: { children: React.ReactNode }) => 
   const [preferences, setPreferences] = useState<ConsentPreferences>(defaultPreferences);
   const [isUSBased, setIsUSBased] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [manuallyReset, setManuallyReset] = useState(false);
 
   // Load stored consent on mount
   useEffect(() => {
@@ -176,6 +180,7 @@ export const ConsentProvider = ({ children }: { children: React.ReactNode }) => 
     setStorageItem(STORAGE_KEY, JSON.stringify(stored));
     setPreferences(newPreferences);
     setHasConsented(true);
+    setManuallyReset(false);
   }, []);
 
   const acceptAll = useCallback(() => {
@@ -206,11 +211,23 @@ export const ConsentProvider = ({ children }: { children: React.ReactNode }) => 
     return hasConsented && preferences[category];
   }, [hasConsented, preferences]);
 
+  const resetConsent = useCallback(() => {
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    setPreferences(defaultPreferences);
+    setHasConsented(false);
+    setManuallyReset(true);
+  }, []);
+
   // Determine if banner should show:
-  // - User hasn't consented yet
-  // - User is not in the US (or geo check failed)
+  // - User hasn't consented yet AND (not US-based OR user manually opened cookie settings)
   // - Geo check has completed
-  const shouldShowBanner = !isLoading && !hasConsented && !isUSBased;
+  const shouldShowBanner = !isLoading && !hasConsented && (!isUSBased || manuallyReset);
 
   const contextValue = useMemo(
     () => ({
@@ -222,8 +239,9 @@ export const ConsentProvider = ({ children }: { children: React.ReactNode }) => 
       acceptEssentialOnly,
       acceptCustom,
       hasConsentFor,
+      resetConsent,
     }),
-    [hasConsented, shouldShowBanner, preferences, isLoading, acceptAll, acceptEssentialOnly, acceptCustom, hasConsentFor]
+    [hasConsented, shouldShowBanner, preferences, isLoading, acceptAll, acceptEssentialOnly, acceptCustom, hasConsentFor, resetConsent]
   );
 
   return (
