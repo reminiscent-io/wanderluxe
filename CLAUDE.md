@@ -49,7 +49,7 @@ bun run test:coverage   # Coverage report
 ```
 src/
 ├── components/
-│   ├── trip/              # Trip feature components (14 subdirs)
+│   ├── trip/              # Trip feature components (15 subdirs)
 │   │   ├── _shared/       # Shared trip utilities
 │   │   ├── accommodation/ # Hotel management
 │   │   ├── ai-assistant/  # AI assistant components
@@ -63,12 +63,14 @@ src/
 │   │   ├── stats/         # Trip statistics
 │   │   ├── timeline/      # Itinerary display
 │   │   ├── transportation/# Flight/train/car bookings
-│   │   └── travelers/     # Collaborator management
+│   │   ├── travelers/     # Collaborator management
+│   │   └── weather/       # Weather display components
 │   ├── admin/             # Admin dashboard components
 │   ├── layout/            # Sidebar, Navigation, AppLayout
 │   ├── navigation/        # Navigation components
-│   └── ui/                # Shadcn/ui primitive components (~55)
-├── pages/                 # Route pages (MyTrips, TripDetails, Budget, Profile, etc.)
+│   ├── landing/           # Landing page sections (WhySignUp, etc.)
+│   └── ui/                # Shadcn/ui primitive components (~53)
+├── pages/                 # Route pages (MyTrips, TripDetails, Budget, Profile, Explore, Settings, InviteRedeem, etc.)
 ├── hooks/                 # Custom hooks (useSidebarState, useChat, useTripQuery, etc.)
 ├── services/              # Business logic (pdfmake-export, travelers, tripDaysService, etc.)
 ├── contexts/              # React Context (AuthContext, ConsentContext)
@@ -82,7 +84,7 @@ src/
 server/
 ├── index.ts              # Express server setup
 ├── dev-server.ts         # Development server config
-└── routes/               # API routes (PDF export, notifications, Stripe, AI chat)
+└── routes/               # API routes (PDF export, Stripe, AI chat, admin insights, invite preview, share notifications)
 
 supabase/
 ├── functions/            # Serverless Deno functions (10 functions)
@@ -171,7 +173,7 @@ PostgreSQL database
 - Mutation handling with optimistic updates via React Query
 
 #### 7. **PDF Export**
-- **File**: `/src/services/pdfmake-export.ts` (1,210 lines)
+- **File**: `/src/services/pdfmake-export.ts` (~1,460 lines)
 - **Endpoint**: `/api/export-pdf` (Express backend)
 - **Data**: Collects trips, days, activities, accommodations, transportation, budget
 - **Format**: Professional itinerary with logos, formatting, mobile-aware layout
@@ -214,6 +216,11 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useDocumentExtraction()` - Travel document parsing
 - `useTravelStats()` - Travel statistics
 - `useTripViewingStatus()` - Trip viewing analytics
+- `useInviteLinks()` - Invite link management
+- `useVersionCheck()` - App version update detection
+- `useBufferedStreaming()` - Buffered AI streaming responses
+- `useVisualViewport()` - Mobile viewport handling
+- `useRealtimeSubscription()` - Generic real-time subscription helper
 
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
@@ -226,7 +233,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - **Shadows**: Brown-tinted warm shadows (`shadow-warm-sm`, `shadow-warm`, `shadow-warm-lg`, `shadow-warm-xl`)
 - **Border Radius**: `rounded-card` (0.75rem) for cards
 - **Button Variants**: `sunset` variant for primary CTAs (gradient orange)
-- **Components**: Shadcn/ui (40+ Radix UI primitives)
+- **Components**: Shadcn/ui (~53 Radix UI primitives)
 - **Animations**: Custom fade-up, fade-down, slide-up, slide-down
 - **Responsive**: Mobile-first with Tailwind breakpoints
 - **Utilities**: `bg-grain` (subtle noise texture, parent must be positioned), `img-warm` (subtle saturation filter for photos)
