@@ -8,14 +8,18 @@ import { PostHogProvider } from 'posthog-js/react'
 import App from './App.tsx'
 import './index.css'
 
-// Initialize PostHog analytics
+// Initialize PostHog with capturing disabled by default.
+// The PostHogConsentSync component (inside the React tree) will
+// opt-in only after the user grants analytics consent.
 const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
 if (posthogKey) {
   posthog.init(posthogKey, {
     api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
     person_profiles: 'identified_only',
-    capture_pageview: true,
-    capture_pageleave: true,
+    capture_pageview: false,
+    capture_pageleave: false,
+    autocapture: false,
+    opt_out_capturing_by_default: true,
   });
 }
 
