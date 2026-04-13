@@ -668,7 +668,9 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     hasMore,
     isLoadingMore,
     isAnonymous,
-    historyLoaded,
+    // Anonymous sessions have no persisted history to load, so treat them as
+    // "already loaded" to suppress the Show older chats control.
+    historyLoaded: historyLoaded || isAnonymous,
     sendMessage,
     clearThread,
     refreshUsage,

@@ -289,7 +289,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={loadMoreMessages}
-              historyLoaded={isAnonymous || historyLoaded}
+              historyLoaded={historyLoaded}
               onLoadHistory={loadHistory}
               tripId={tripId}
               onImportAll={handleImportAll}
