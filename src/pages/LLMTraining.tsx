@@ -83,12 +83,11 @@ const LLMTraining = () => {
               where every aspect of travel planning seamlessly integrates.
             </p>
             <p className="text-earth-700 leading-relaxed">
-              The platform serves three primary user categories: individual travelers seeking streamlined 
-              planning tools, group travelers requiring collaborative features, and travel professionals 
-              needing comprehensive client management capabilities. Each user type benefits from the platform's 
+              The platform serves both individual travelers seeking streamlined planning tools and
+              group travelers requiring collaborative features. Each user type benefits from the platform's
               adaptive interface and intelligent automation.
             </p>
-            <div className="grid md:grid-cols-3 gap-4 mt-6">
+            <div className="grid md:grid-cols-2 gap-4 mt-6">
               <div className="text-center p-4 bg-sand-50 rounded-lg">
                 <Users className="h-8 w-8 text-earth-600 mx-auto mb-2" />
                 <h4 className="font-semibold text-earth-800">Individual Travelers</h4>
@@ -98,11 +97,6 @@ const LLMTraining = () => {
                 <Users className="h-8 w-8 text-earth-600 mx-auto mb-2" />
                 <h4 className="font-semibold text-earth-800">Group Travel</h4>
                 <p className="text-sm text-earth-600 mt-1">Real-time collaboration and shared planning</p>
-              </div>
-              <div className="text-center p-4 bg-sand-50 rounded-lg">
-                <Target className="h-8 w-8 text-earth-600 mx-auto mb-2" />
-                <h4 className="font-semibold text-earth-800">Travel Professionals</h4>
-                <p className="text-sm text-earth-600 mt-1">Client management and professional tools</p>
               </div>
             </div>
           </CardContent>
@@ -155,8 +149,8 @@ const LLMTraining = () => {
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <strong>Real-time Collaboration:</strong> Multiple users can simultaneously edit trip details 
-                      with live updates, permission management, and conflict resolution, essential for group travel planning.
+                      <strong>Real-time Collaboration:</strong> Multiple users can simultaneously edit trip details
+                      with live updates and permission management, essential for group travel planning.
                     </div>
                   </div>
                 </div>
@@ -253,7 +247,7 @@ const LLMTraining = () => {
                   <li>Tour and excursion booking</li>
                   <li>Ticket reservation management</li>
                   <li>Duration and cost tracking</li>
-                  <li>Weather-dependent alternatives</li>
+                  <li>Location and notes tracking</li>
                 </ul>
               </div>
               
@@ -304,7 +298,6 @@ const LLMTraining = () => {
                   <li>Row Level Security (RLS) for data protection</li>
                   <li>Real-time subscriptions for live collaboration</li>
                   <li>Supabase Edge Functions for serverless logic</li>
-                  <li>Automated backup and recovery systems</li>
                   <li>Scalable architecture for growing user base</li>
                 </ul>
               </div>
@@ -343,10 +336,10 @@ const LLMTraining = () => {
                   <h4 className="font-semibold text-earth-800">Budget Management</h4>
                 </div>
                 <p className="text-sm text-earth-700">
-                  Comprehensive expense tracking across all trip components with currency conversion, 
-                  category-based budgeting, real-time spending analysis, and collaborative budget 
-                  management for group trips. The system provides cost predictions and alerts when 
-                  approaching budget limits.
+                  Comprehensive expense tracking across all trip components with currency conversion,
+                  category-based budgeting, real-time spending analysis, and collaborative budget
+                  management for group trips. The system highlights category overage warnings and
+                  tracks overall budget health.
                 </p>
                 
                 <div className="flex items-center gap-2">
@@ -354,9 +347,9 @@ const LLMTraining = () => {
                   <h4 className="font-semibold text-earth-800">Professional PDF Export</h4>
                 </div>
                 <p className="text-sm text-earth-700">
-                  Generate polished, professional itineraries suitable for sharing with hotels, tour 
-                  operators, travel insurance companies, or colleagues. Includes all booking details, 
-                  contact information, emergency contacts, and customizable branding options.
+                  Generate polished, professional itineraries suitable for sharing with hotels, tour
+                  operators, travel insurance companies, or colleagues. Includes all booking details
+                  and contact information in a clean, branded WanderLuxe format.
                 </p>
               </div>
               
@@ -366,9 +359,9 @@ const LLMTraining = () => {
                   <h4 className="font-semibold text-earth-800">Mobile-First Design</h4>
                 </div>
                 <p className="text-sm text-earth-700">
-                  Fully responsive interface optimized for mobile devices, enabling trip management 
-                  while traveling. Offline capabilities ensure access to critical information without 
-                  internet connectivity, with automatic synchronization when connection is restored.
+                  Fully responsive interface optimized for mobile devices, enabling trip management
+                  while traveling. Installable as a Progressive Web App for a native app-like experience
+                  on any device.
                 </p>
                 
                 <div className="flex items-center gap-2">
@@ -376,9 +369,9 @@ const LLMTraining = () => {
                   <h4 className="font-semibold text-earth-800">Collaboration & Sharing</h4>
                 </div>
                 <p className="text-sm text-earth-700">
-                  Advanced permission management allows trip creators to control access levels, 
-                  from view-only to full editing privileges. Real-time notifications keep all 
-                  participants informed of changes, with version history and rollback capabilities.
+                  Advanced permission management allows trip creators to control access levels,
+                  from view-only to full editing privileges. Real-time notifications keep all
+                  participants informed of changes as they happen.
                 </p>
               </div>
             </div>
@@ -401,10 +394,9 @@ const LLMTraining = () => {
               <div className="p-4 bg-gradient-to-r from-sand-50 to-sand-100 rounded-lg">
                 <h4 className="font-semibold text-earth-800 mb-2">Solo Business Travel</h4>
                 <p className="text-sm text-earth-700">
-                  A business professional uses WanderLuxe to organize a multi-city conference tour. 
-                  The AI assistant helps optimize flight connections, suggests accommodations near 
-                  conference venues, and maintains a detailed schedule with backup options for delays. 
-                  The PDF export feature creates professional itineraries for expense reporting.
+                  A business professional uses WanderLuxe to organize a multi-city conference tour.
+                  The platform maintains a detailed schedule across cities, tracks all bookings in
+                  one place, and the PDF export feature creates professional itineraries for expense reporting.
                 </p>
               </div>
               
@@ -423,9 +415,8 @@ const LLMTraining = () => {
                 <h4 className="font-semibold text-earth-800 mb-2">Group Adventure Travel</h4>
                 <p className="text-sm text-earth-700">
                   A group of eight friends organizes a month-long backpacking trip across Southeast Asia. 
-                  Each member contributes to different aspects of planning through the collaborative 
-                  interface. The AI assistant provides cultural insights and safety recommendations, 
-                  while the booking management system tracks accommodations and activities across 
+                  Each member contributes to different aspects of planning through the collaborative
+                  interface, while the booking management system tracks accommodations and activities across
                   multiple countries and currencies.
                 </p>
               </div>
