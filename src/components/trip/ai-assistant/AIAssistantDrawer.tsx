@@ -115,9 +115,12 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     usage,
     hasMore,
     isLoadingMore,
+    isAnonymous,
+    historyLoaded,
     sendMessage,
     clearThread,
-    loadMoreMessages
+    loadMoreMessages,
+    loadHistory
   } = useAIAssistant({
     tripId,
     onLimitReached: handleLimitReached,
@@ -322,6 +325,8 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 hasMore={hasMore}
                 isLoadingMore={isLoadingMore}
                 onLoadMore={loadMoreMessages}
+                historyLoaded={isAnonymous || historyLoaded}
+                onLoadHistory={loadHistory}
                 tripId={tripId}
                 onImportAll={handleImportAll}
                 onReviewEdit={handleReviewEdit}

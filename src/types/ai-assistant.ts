@@ -158,12 +158,14 @@ export interface UseAIAssistantReturn {
   hasMore: boolean;
   isLoadingMore: boolean;
   isAnonymous: boolean;
+  historyLoaded: boolean;
 
   // Actions
   sendMessage: (content: string) => Promise<void>;
   clearThread: () => Promise<void>;
   refreshUsage: () => Promise<void>;
   loadMoreMessages: () => Promise<void>;
+  loadHistory: () => Promise<void>;
 }
 
 // Prompt chip type

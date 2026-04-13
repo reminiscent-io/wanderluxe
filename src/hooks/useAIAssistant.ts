@@ -33,7 +33,7 @@ interface UseAIAssistantOptions {
   onItemsExtracted?: (items: ExtractedItem[]) => void;
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 // Helper to read/write anonymous usage from sessionStorage
 function getAnonUsageCount(): number {
@@ -194,6 +194,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Helper to get auth token
@@ -217,52 +218,92 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     return () => subscription.unsubscribe();
   }, [getAuthToken]);
 
-  // Fetch messages (initial load - last PAGE_SIZE messages)
+  // Chat messages are not auto-fetched — users opt in via `loadHistory`. The
+  // cache still backs optimistic adds and assistant streaming responses, so we
+  // keep the query wired up but disabled.
   const {
     data: messagesData,
-    isLoading: isLoadingMessages,
-    refetch: refetchMessages
+    isLoading: isLoadingMessages
   } = useQuery({
     queryKey: ['ai-assistant-messages', tripId],
     queryFn: async (): Promise<{ messages: AIChatMessage[]; thread_id: string | null; hasMore: boolean }> => {
-      const token = await getAuthToken();
-      if (!token) {
-        // Anonymous: return empty - messages are only in local cache
-        return { messages: [], thread_id: null, hasMore: false };
-      }
-
-      const response = await fetch(`${EXPRESS_BASE}/${tripId}/assistant/messages`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load messages');
-      }
-
-      const data = await response.json();
-      setHasMore(data.hasMore || false);
-      return data;
+      // Never actually runs (enabled: false) — defensive default.
+      return { messages: [], thread_id: null, hasMore: false };
     },
-    enabled: !!tripId,
-    staleTime: 30000 // 30 seconds
+    enabled: false,
+    initialData: { messages: [], thread_id: null, hasMore: false },
+    staleTime: 30000
   });
 
-  // Load more (older) messages
-  const loadMoreMessages = useCallback(async (): Promise<void> => {
-    if (isLoadingMore || !hasMore || isAnonymous) return;
+  // Load the most recent PAGE_SIZE messages when the user opts in.
+  const loadHistory = useCallback(async (): Promise<void> => {
+    if (historyLoaded || isLoadingMore || isAnonymous) return;
 
     const token = await getAuthToken();
     if (!token) return;
 
     setIsLoadingMore(true);
     try {
-      const currentMessages = messagesData?.messages || [];
-      const offset = currentMessages.length;
-
       const response = await fetch(
-        `${EXPRESS_BASE}/${tripId}/assistant/messages?limit=${PAGE_SIZE}&offset=${offset}`,
+        `${EXPRESS_BASE}/${tripId}/assistant/messages?limit=${PAGE_SIZE}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load history');
+      }
+
+      const data = await response.json();
+      setHasMore(data.hasMore || false);
+      setHistoryLoaded(true);
+
+      // Merge server messages with any session-only optimistic messages that
+      // the server hasn't sent back (e.g. streaming in-flight).
+      queryClient.setQueryData(
+        ['ai-assistant-messages', tripId],
+        (old: { messages: AIChatMessage[]; thread_id: string | null; hasMore: boolean } | undefined) => {
+          const serverMessages: AIChatMessage[] = data.messages || [];
+          const serverIds = new Set(serverMessages.map(m => m.id));
+          const localOnly = (old?.messages || []).filter(m => !serverIds.has(m.id));
+          const merged = [...serverMessages, ...localOnly].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+          return {
+            messages: merged,
+            thread_id: data.thread_id ?? old?.thread_id ?? null,
+            hasMore: data.hasMore ?? false
+          };
+        }
+      );
+    } catch (err) {
+      console.error('Error loading history:', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [tripId, historyLoaded, isLoadingMore, isAnonymous, getAuthToken, queryClient]);
+
+  // Load older messages using cursor-based pagination anchored on the oldest
+  // message currently in the cache. Stable across new messages being sent.
+  const loadMoreMessages = useCallback(async (): Promise<void> => {
+    if (isLoadingMore || !hasMore || isAnonymous || !historyLoaded) return;
+
+    const token = await getAuthToken();
+    if (!token) return;
+
+    const currentMessages = messagesData?.messages || [];
+    if (currentMessages.length === 0) return;
+
+    // First message in cache is the oldest (messages are chronological).
+    const cursor = currentMessages[0].created_at;
+
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch(
+        `${EXPRESS_BASE}/${tripId}/assistant/messages?limit=${PAGE_SIZE}&before=${encodeURIComponent(cursor)}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -291,7 +332,7 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     } finally {
       setIsLoadingMore(false);
     }
-  }, [tripId, hasMore, isLoadingMore, isAnonymous, getAuthToken, messagesData?.messages, queryClient]);
+  }, [tripId, hasMore, isLoadingMore, isAnonymous, historyLoaded, getAuthToken, messagesData?.messages, queryClient]);
 
   // Fetch usage
   const {
@@ -627,9 +668,11 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     hasMore,
     isLoadingMore,
     isAnonymous,
+    historyLoaded,
     sendMessage,
     clearThread,
     refreshUsage,
-    loadMoreMessages
+    loadMoreMessages,
+    loadHistory
   };
 }

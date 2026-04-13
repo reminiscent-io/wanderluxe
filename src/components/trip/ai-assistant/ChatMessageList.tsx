@@ -11,6 +11,8 @@ interface ChatMessageListProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  historyLoaded?: boolean;
+  onLoadHistory?: () => void;
   tripId?: string;
   onImportAll?: (items: ExtractedItem[]) => Promise<void>;
   onReviewEdit?: (items: ExtractedItem[]) => void;
@@ -26,6 +28,8 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  historyLoaded = true,
+  onLoadHistory,
   tripId,
   onImportAll,
   onReviewEdit,
@@ -103,13 +107,15 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 
       const container = containerRef.current;
 
-      // Load more when near top
-      if (hasMore && !isLoadingMore && onLoadMore && container.scrollTop < 50) {
+      // Load more when near top — only after user has opted into history,
+      // otherwise they'd be surprised by auto-loading when the feature was
+      // supposed to be behind the "Show older chats" button.
+      if (historyLoaded && hasMore && !isLoadingMore && onLoadMore && container.scrollTop < 50) {
         prevScrollHeightRef.current = container.scrollHeight;
         onLoadMore();
       }
     });
-  }, [hasMore, isLoadingMore, onLoadMore]);
+  }, [historyLoaded, hasMore, isLoadingMore, onLoadMore]);
 
   if (isLoading) {
     return (
@@ -122,21 +128,52 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     );
   }
 
+  // "Show older chats" control — shown before history has been loaded. Once
+  // the user clicks it we fetch the newest page and hand further loading off
+  // to the scroll-to-top behavior (hasMore).
+  const showLoadHistoryButton = !historyLoaded && !!onLoadHistory;
+
+  const loadHistoryControl = showLoadHistoryButton ? (
+    <div className="flex justify-center py-2">
+      <button
+        type="button"
+        onClick={onLoadHistory}
+        disabled={isLoadingMore}
+        className="flex items-center gap-1.5 text-xs text-sand-500 hover:text-earth-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors px-3 py-1.5 rounded-full hover:bg-sand-100"
+      >
+        {isLoadingMore ? (
+          <>
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>Loading older chats...</span>
+          </>
+        ) : (
+          <>
+            <ChevronUp className="w-3 h-3" />
+            <span>Show older chats</span>
+          </>
+        )}
+      </button>
+    </div>
+  ) : null;
+
   if (messages.length === 0 && !isStreaming) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-5 py-4 gap-5">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="w-10 h-10 rounded-full bg-sand-100 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-earth-500" />
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        {loadHistoryControl}
+        <div className="flex-1 flex flex-col items-center justify-center px-5 py-4 gap-5">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 rounded-full bg-sand-100 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-earth-500" />
+            </div>
+            <p className="text-sm text-sand-500 max-w-[260px]">
+              Ask me anything about your trip — recommendations, scheduling, packing tips, and more.
+            </p>
           </div>
-          <p className="text-sm text-sand-500 max-w-[260px]">
-            Ask me anything about your trip — recommendations, scheduling, packing tips, and more.
+          {emptyStateSlot}
+          <p className="text-[11px] text-sand-400 max-w-[280px] text-center leading-relaxed">
+            Your trip details are shared with OpenAI to provide personalized recommendations. Messages are not used to train AI models.
           </p>
         </div>
-        {emptyStateSlot}
-        <p className="text-[11px] text-sand-400 max-w-[280px] text-center leading-relaxed">
-          Your trip details are shared with OpenAI to provide personalized recommendations. Messages are not used to train AI models.
-        </p>
       </div>
     );
   }
@@ -160,8 +197,11 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-2 space-y-1 touch-pan-y"
       style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
     >
-      {/* Load more indicator at top */}
-      {hasMore && (
+      {/* "Show older chats" button (before history loaded) */}
+      {loadHistoryControl}
+
+      {/* Load more indicator at top (after history loaded, more exist) */}
+      {historyLoaded && hasMore && (
         <div className="flex justify-center py-2">
           {isLoadingMore ? (
             <div className="flex items-center gap-2 text-sand-400 text-xs">
