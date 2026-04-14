@@ -100,9 +100,11 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     hasMore,
     isLoadingMore,
     isAnonymous,
+    historyLoaded,
     sendMessage,
     clearThread,
-    loadMoreMessages
+    loadMoreMessages,
+    loadHistory
   } = useAIAssistant({
     tripId,
     onLimitReached: handleLimitReached,
@@ -287,6 +289,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               onLoadMore={loadMoreMessages}
+              historyLoaded={historyLoaded}
+              onLoadHistory={loadHistory}
               tripId={tripId}
               onImportAll={handleImportAll}
               onReviewEdit={handleReviewEdit}

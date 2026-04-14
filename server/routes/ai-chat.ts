@@ -450,6 +450,13 @@ async function streamOpenAIResponse(
 
   const decoder = new TextDecoder();
   let fullResponse = '';
+  // Buffer trailing bytes that could form a "```create_items" marker so we can
+  // suppress the whole fence atomically instead of leaking partial backticks.
+  let pendingTail = '';
+  let suppressing = false;
+
+  // Matches a tail that could still grow into "```create_items".
+  const PARTIAL_MARKER_RE = /`{1,3}(c(r(e(a(t(e(_(i(t(e(m(s)?)?)?)?)?)?)?)?)?)?)?)?$/;
 
   try {
     while (true) {
@@ -462,11 +469,39 @@ async function streamOpenAIResponse(
         if (!content) continue;
 
         fullResponse += content;
-        const shouldFilter = options.filterCreateItems && fullResponse.includes('```create_items');
-        if (!shouldFilter) {
+
+        if (!options.filterCreateItems) {
           sendSSE(res, 'message', { content });
+          continue;
+        }
+
+        if (suppressing) continue;
+
+        if (fullResponse.includes('```create_items')) {
+          // Full marker landed — stop forwarding and drop any buffered tail
+          // that was leading up to it.
+          suppressing = true;
+          pendingTail = '';
+          continue;
+        }
+
+        const combined = pendingTail + content;
+        const match = combined.match(PARTIAL_MARKER_RE);
+
+        if (match) {
+          const safe = combined.slice(0, combined.length - match[0].length);
+          pendingTail = match[0];
+          if (safe) sendSSE(res, 'message', { content: safe });
+        } else {
+          if (combined) sendSSE(res, 'message', { content: combined });
+          pendingTail = '';
         }
       }
+    }
+
+    // Stream ended without a create_items block — flush buffered tail.
+    if (options.filterCreateItems && !suppressing && pendingTail) {
+      sendSSE(res, 'message', { content: pendingTail });
     }
   } catch (streamError) {
     console.error('Stream error:', streamError);
@@ -738,28 +773,34 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
       return res.json({ messages: [], thread_id: null, hasMore: false });
     }
 
-    // Support pagination
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-    const offset = parseInt(req.query.offset as string) || 0;
+    // Cursor-based pagination: "before" is an ISO timestamp; returns the newest
+    // `limit` messages created strictly before that cursor. Without a cursor,
+    // returns the newest `limit` messages overall. Responses are always in
+    // chronological (ascending) order. Fetch one extra to detect hasMore.
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
+    const before = typeof req.query.before === 'string' ? req.query.before : null;
 
-    // Get total count for hasMore
-    const { count } = await supabase
-      .from('ai_chat_messages')
-      .select('id', { count: 'exact', head: true })
-      .eq('thread_id', thread.id);
-
-    // Get messages with pagination (newest first for offset, then reverse)
-    const { data: messages } = await supabase
+    let query = supabase
       .from('ai_chat_messages')
       .select('id, role, content, metadata, created_at')
-      .eq('thread_id', thread.id)
-      .order('created_at', { ascending: true })
-      .range(offset, offset + limit - 1);
+      .eq('thread_id', thread.id);
+
+    if (before) {
+      query = query.lt('created_at', before);
+    }
+
+    const { data: messages } = await query
+      .order('created_at', { ascending: false })
+      .limit(limit + 1);
+
+    const rawMessages = messages || [];
+    const hasMore = rawMessages.length > limit;
+    const chronological = rawMessages.slice(0, limit).reverse();
 
     return res.json({
-      messages: messages || [],
+      messages: chronological,
       thread_id: thread.id,
-      hasMore: (count || 0) > offset + limit
+      hasMore
     });
   } catch (error) {
     console.error('Error getting messages:', error);
@@ -950,7 +991,7 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
 
     setupSSEHeaders(res);
 
-    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 1000 });
+    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 1000, filterCreateItems: true });
     if (!result) return;
 
     const { cleanContent, extractedItems } = parseCreateItemsBlock(result.fullResponse);
@@ -968,7 +1009,14 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
       });
     }
 
-    sendSSE(res, 'done', { thread_id: threadId, message_id: assistantMessageId });
+    // Send the sanitized content so the client displays the clean version
+    // instead of the accumulated stream (which may contain a partial
+    // ```create_items marker that slipped through before the filter engaged).
+    sendSSE(res, 'done', {
+      thread_id: threadId,
+      message_id: assistantMessageId,
+      content: cleanContent
+    });
     res.end();
   } catch (error) {
     handleStreamError(res, error, 'Chat error');
