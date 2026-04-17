@@ -166,9 +166,9 @@ const LLMTraining = () => {
                   <div className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <strong>Confirmation Importing:</strong> OpenAI GPT-4o-mini integration provides the ability 
+                      <strong>Confirmation Importing:</strong> Google Gemini 2.5 Flash integration provides the ability
                       to take an uploaded booking confirmation—like a flight, hotel, or restaurant reservation—
-                      and automatically extract relevant details to create items on your trip timeline, 
+                      and automatically extract relevant details to create items on your trip timeline,
                       streamlining the planning process.
                     </div>
                   </div>
@@ -306,7 +306,7 @@ const LLMTraining = () => {
                 <h4 className="font-semibold text-earth-800 mb-3">External Integrations</h4>
                 <ul className="text-sm text-earth-700 space-y-1">
                   <li>Google Places API for location services</li>
-                  <li>OpenAI GPT-4o-mini for AI assistance</li>
+                  <li>Google Gemini 2.5 Flash for AI assistance and travel-doc OCR</li>
                   <li>SendGrid for email notifications</li>
                   <li>Unsplash API for trip imagery</li>
                   <li>PDF generation for professional itineraries</li>

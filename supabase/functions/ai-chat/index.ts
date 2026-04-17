@@ -23,6 +23,11 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
+// Hardcoded model — locked at the function layer so no request path or env
+// override can redirect traffic to a different (potentially unvetted) model.
+const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
 type ExtractedItem = {
   id: string;
   itemType: string;
@@ -32,31 +37,35 @@ type ExtractedItem = {
   status: 'pending';
 };
 
-type ToolCall = {
-  id: string;
-  type: string;
-  function: { name: string; arguments: string };
-};
+type GeminiFunctionCall = { name: string; args: Record<string, unknown> };
 
-type OpenAIMessage = {
-  role: string;
-  content?: string | null;
-  tool_calls?: any[];
-  tool_call_id?: string;
-  name?: string;
-};
+type GeminiFunctionResponse = { name: string; response: Record<string, unknown> };
 
-type OpenAIOptions = {
-  model: string;
-  openaiApiKey: string;
-  tools?: any[];
-  forceToolName?: string | null;
+type GeminiPart =
+  | { text: string }
+  | { functionCall: GeminiFunctionCall }
+  | { functionResponse: GeminiFunctionResponse };
+
+type GeminiContent = { role: 'user' | 'model'; parts: GeminiPart[] };
+
+type GeminiTool = { functionDeclarations: any[] };
+
+type GeminiToolMode = 'AUTO' | 'ANY' | 'NONE';
+
+type GeminiOptions = {
+  apiKey: string;
+  tools?: GeminiTool[];
+  toolMode?: GeminiToolMode;
+  allowedFunctionNames?: string[];
   skipTools?: boolean;
+  temperature?: number;
+  maxOutputTokens?: number;
 };
 
 type StreamContext = {
-  openaiMsgs: OpenAIMessage[];
-  openaiOptions: OpenAIOptions;
+  systemInstruction: string;
+  contents: GeminiContent[];
+  geminiOptions: GeminiOptions;
   forceToolName: string | null;
   serperApiKey: string | undefined;
   googlePlacesApiKey: string | undefined;
@@ -365,103 +374,109 @@ function enrichPlaceCards(
   return cards;
 }
 
-function accumulateToolCall(
-  toolCallsAcc: Array<ToolCall | undefined>,
-  tcArgs: Record<number, string>,
-  tc: any
-): void {
-  const idx = tc.index ?? 0;
-  if (!toolCallsAcc[idx]) {
-    toolCallsAcc[idx] = {
-      id: tc.id || `call_${idx}`,
-      type: tc.type || 'function',
-      function: { name: tc.function?.name || '', arguments: '' }
-    };
-  }
-  if (tc.id) toolCallsAcc[idx]!.id = tc.id;
-  if (tc.function?.name) toolCallsAcc[idx]!.function.name = tc.function.name;
-  if (tc.function?.arguments) tcArgs[idx] = (tcArgs[idx] || '') + tc.function.arguments;
-}
+type GeminiStreamState = { textContent: string; functionCalls: GeminiFunctionCall[] };
 
-function processStreamLine(
+// Gemini streams SSE messages of the shape
+//   data: {"candidates":[{"content":{"role":"model","parts":[...parts]}, "finishReason":...}]}
+// Parts can be either {text} or {functionCall:{name,args}}. Unlike OpenAI,
+// functionCall arrives as a complete object in a single chunk — not as
+// incremental argument deltas — so no accumulator is needed.
+function processGeminiStreamLine(
   line: string,
-  state: { content: string },
-  toolCallsAcc: Array<ToolCall | undefined>,
-  tcArgs: Record<number, string>,
+  state: GeminiStreamState,
   controller: { enqueue: (chunk: Uint8Array) => void },
   encoder: TextEncoder
 ): void {
-  if (!line.startsWith('data: ') || line.slice(6) === '[DONE]') return;
+  if (!line.startsWith('data: ')) return;
+  const payload = line.slice(6).trim();
+  if (!payload) return;
   try {
-    const data = JSON.parse(line.slice(6));
-    const delta = data.choices?.[0]?.delta;
-    if (delta?.content) {
-      state.content += delta.content;
-      controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: delta.content })}\n\n`));
-    }
-    if (delta?.tool_calls) {
-      for (const tc of delta.tool_calls) {
-        accumulateToolCall(toolCallsAcc, tcArgs, tc);
+    const data = JSON.parse(payload);
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    for (const part of parts) {
+      if (typeof part?.text === 'string' && part.text.length > 0) {
+        state.textContent += part.text;
+        controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: part.text })}\n\n`));
+      } else if (part?.functionCall && typeof part.functionCall.name === 'string') {
+        state.functionCalls.push({
+          name: part.functionCall.name,
+          args: (part.functionCall.args as Record<string, unknown>) || {},
+        });
       }
     }
   } catch { /* ignore malformed SSE chunks */ }
 }
 
-function finalizeToolCalls(
-  toolCallsAcc: Array<ToolCall | undefined>,
-  tcArgs: Record<number, string>
-): ToolCall[] | null {
-  const withIndex = toolCallsAcc
-    .map((tc, i) => (tc ? { tc, i } : null))
-    .filter(Boolean) as Array<{ tc: ToolCall; i: number }>;
-  if (withIndex.length === 0) return null;
-  return withIndex.map(({ tc, i }) => ({
-    ...tc,
-    function: { ...tc.function, arguments: tcArgs[i] ?? tc.function?.arguments ?? '' }
-  }));
-}
-
-async function processStream(
-  openaiRes: Response,
+async function processGeminiStream(
+  geminiRes: Response,
   controller: { enqueue: (chunk: Uint8Array) => void },
   encoder: TextEncoder
-): Promise<{ fullResponse: string; toolCalls: ToolCall[] | null }> {
-  const reader = openaiRes.body!.getReader();
+): Promise<GeminiStreamState> {
+  const reader = geminiRes.body!.getReader();
   const decoder = new TextDecoder();
-  const state = { content: '' };
-  const toolCallsAcc: Array<ToolCall | undefined> = [];
-  const tcArgs: Record<number, string> = {};
+  const state: GeminiStreamState = { textContent: '', functionCalls: [] };
+  let buffer = '';
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      processStreamLine(line, state, toolCallsAcc, tcArgs, controller, encoder);
+    buffer += decoder.decode(value, { stream: true });
+    // SSE messages are \n\n delimited. Each message can contain multiple
+    // lines; we only care about `data:` lines.
+    let boundary: number;
+    while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+      const message = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      for (const line of message.split('\n')) {
+        processGeminiStreamLine(line, state, controller, encoder);
+      }
+    }
+  }
+  if (buffer.trim()) {
+    for (const line of buffer.split('\n')) {
+      processGeminiStreamLine(line, state, controller, encoder);
     }
   }
 
-  return { fullResponse: state.content, toolCalls: finalizeToolCalls(toolCallsAcc, tcArgs) };
+  return state;
 }
 
-async function callOpenAI(messages: OpenAIMessage[], stream: boolean, options: OpenAIOptions): Promise<Response> {
+async function callGemini(
+  systemInstruction: string,
+  contents: GeminiContent[],
+  stream: boolean,
+  options: GeminiOptions,
+): Promise<Response> {
+  const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
+  const url = `${GEMINI_BASE}/models/${GEMINI_MODEL}:${endpoint}${stream ? '?alt=sse' : ''}`;
+
   const body: Record<string, unknown> = {
-    model: options.model,
-    messages,
-    stream,
-    temperature: 0.7,
-    max_completion_tokens: 1500
+    contents,
+    systemInstruction: { parts: [{ text: systemInstruction }] },
+    generationConfig: {
+      temperature: options.temperature ?? 0.7,
+      maxOutputTokens: options.maxOutputTokens ?? 1500,
+    },
   };
+
   if (options.tools && !options.skipTools) {
     body.tools = options.tools;
-    if (options.forceToolName) {
-      body.tool_choice = { type: 'function' as const, function: { name: options.forceToolName } };
+    if (options.toolMode) {
+      body.toolConfig = {
+        functionCallingConfig: {
+          mode: options.toolMode,
+          ...(options.allowedFunctionNames && options.allowedFunctionNames.length > 0
+            ? { allowedFunctionNames: options.allowedFunctionNames }
+            : {}),
+        },
+      };
     }
   }
-  return fetch('https://api.openai.com/v1/chat/completions', {
+
+  return fetch(url, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${options.openaiApiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    headers: { 'x-goog-api-key': options.apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 }
 
@@ -689,45 +704,48 @@ type ToolExecutionContext = {
 };
 
 async function executeSearchWeb(
-  tc: ToolCall,
+  call: GeminiFunctionCall,
   serperApiKey: string,
   message: string,
   verifiedUrls: Set<string>,
-): Promise<{ role: 'tool'; tool_call_id: string; content: string }> {
+): Promise<GeminiFunctionResponse> {
   try {
-    const argsStr = (tc.function.arguments || '').trim();
-    const args = argsStr ? JSON.parse(argsStr) : {};
-    const q = extractSearchQuery(args);
+    const q = extractSearchQuery(call.args);
     const searchQuery = q || message || 'restaurant reservations';
     const results = await searchWeb(searchQuery, serperApiKey);
     const organic = (results.organic || []).slice(0, 6);
     for (const r of organic) {
       if (r.link) verifiedUrls.add(r.link);
     }
-    const summary = organic.map((r) => `${r.title}: ${r.link}`).join('\n');
-    return { role: 'tool', tool_call_id: tc.id, content: summary || 'No results found.' };
+    return {
+      name: 'search_web',
+      response: {
+        results: organic.map((r) => ({ title: r.title, link: r.link, snippet: r.snippet || '' })),
+      },
+    };
   } catch (error_) {
     const errorMsg = error_ instanceof Error ? error_.message : 'Unknown';
-    return { role: 'tool', tool_call_id: tc.id, content: `Search error: ${errorMsg}. Do not fabricate a URL; tell the user to search manually.` };
+    return {
+      name: 'search_web',
+      response: { error: `Search error: ${errorMsg}. Do not fabricate a URL; tell the user to search manually.` },
+    };
   }
 }
 
 async function executeFindPlace(
-  tc: ToolCall,
+  call: GeminiFunctionCall,
   googlePlacesApiKey: string,
   verifiedUrls: Set<string>,
   placesById: Map<string, PlaceResult>,
-): Promise<{ role: 'tool'; tool_call_id: string; content: string }> {
+): Promise<GeminiFunctionResponse> {
   try {
-    const argsStr = (tc.function.arguments || '').trim();
-    const args = argsStr ? JSON.parse(argsStr) : {};
-    const query = typeof args.query === 'string' ? args.query : '';
+    const query = typeof call.args.query === 'string' ? call.args.query : '';
     if (!query) {
-      return { role: 'tool', tool_call_id: tc.id, content: 'find_place error: missing "query" argument.' };
+      return { name: 'find_place', response: { error: 'missing "query" argument' } };
     }
     const places = await findPlaces(query, googlePlacesApiKey);
     if (places.length === 0) {
-      return { role: 'tool', tool_call_id: tc.id, content: 'No matching places found.' };
+      return { name: 'find_place', response: { results: [], message: 'No matching places found.' } };
     }
     for (const p of places) {
       verifiedUrls.add(p.maps_url);
@@ -737,7 +755,7 @@ async function executeFindPlace(
     // Give the model a compact, unambiguous structured payload so it can
     // quote verified URLs instead of authoring new ones. place_id is included
     // so the model can reference cards in a `place_cards` block.
-    const payload = places.map((p) => ({
+    const results = places.map((p) => ({
       place_id: p.place_id,
       name: p.name,
       address: p.formatted_address,
@@ -747,69 +765,66 @@ async function executeFindPlace(
       website: p.website || null,
       maps_url: p.maps_url,
     }));
-    return { role: 'tool', tool_call_id: tc.id, content: JSON.stringify(payload) };
+    return { name: 'find_place', response: { results } };
   } catch (error_) {
     const errorMsg = error_ instanceof Error ? error_.message : 'Unknown';
-    return { role: 'tool', tool_call_id: tc.id, content: `find_place error: ${errorMsg}. Do not fabricate a URL.` };
+    return { name: 'find_place', response: { error: `${errorMsg}. Do not fabricate a URL.` } };
   }
 }
 
 async function executeToolCalls(
-  toolCalls: ToolCall[],
+  functionCalls: GeminiFunctionCall[],
   ctx: ToolExecutionContext,
-): Promise<Array<{ role: 'tool'; tool_call_id: string; content: string }>> {
-  const toolResults: Array<{ role: 'tool'; tool_call_id: string; content: string }> = [];
-  for (const tc of toolCalls) {
-    if (tc.function.name === 'search_web' && ctx.serperApiKey) {
-      toolResults.push(await executeSearchWeb(tc, ctx.serperApiKey, ctx.message, ctx.verifiedUrls));
-    } else if (tc.function.name === 'find_place' && ctx.googlePlacesApiKey) {
-      toolResults.push(await executeFindPlace(tc, ctx.googlePlacesApiKey, ctx.verifiedUrls, ctx.placesById));
+): Promise<GeminiFunctionResponse[]> {
+  const results: GeminiFunctionResponse[] = [];
+  for (const call of functionCalls) {
+    if (call.name === 'search_web' && ctx.serperApiKey) {
+      results.push(await executeSearchWeb(call, ctx.serperApiKey, ctx.message, ctx.verifiedUrls));
+    } else if (call.name === 'find_place' && ctx.googlePlacesApiKey) {
+      results.push(await executeFindPlace(call, ctx.googlePlacesApiKey, ctx.verifiedUrls, ctx.placesById));
     } else {
-      toolResults.push({ role: 'tool', tool_call_id: tc.id, content: `Tool "${tc.function.name}" is not available in this environment.` });
+      results.push({ name: call.name, response: { error: `Tool "${call.name}" is not available in this environment.` } });
     }
   }
-  return toolResults;
+  return results;
 }
 
-function buildTools(serperApiKey: string | undefined, googlePlacesApiKey: string | undefined): any[] | undefined {
-  const tools: any[] = [];
+function buildTools(
+  serperApiKey: string | undefined,
+  googlePlacesApiKey: string | undefined,
+): GeminiTool[] | undefined {
+  const decls: any[] = [];
 
   if (googlePlacesApiKey) {
-    tools.push({
-      type: 'function' as const,
-      function: {
-        name: 'find_place',
-        description: 'Look up a specific place (restaurant, hotel, landmark, attraction) on Google Places. Returns verified name, address, website, phone, rating, and a canonical Google Maps URL. Use this whenever you recommend or reference a specific place so that the URL you cite is real.',
-        parameters: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Free-text place query, e.g. "Carbone restaurant NYC" or "Hotel Bel-Air Los Angeles".',
-            },
+    decls.push({
+      name: 'find_place',
+      description: 'Look up a specific place (restaurant, hotel, landmark, attraction) on Google Places. Returns verified name, address, website, phone, rating, and a canonical Google Maps URL. Use this whenever you recommend or reference a specific place so that the URL you cite is real.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Free-text place query, e.g. "Carbone restaurant NYC" or "Hotel Bel-Air Los Angeles".',
           },
-          required: ['query'],
         },
+        required: ['query'],
       },
     });
   }
 
   if (serperApiKey) {
-    tools.push({
-      type: 'function' as const,
-      function: {
-        name: 'search_web',
-        description: 'Search the web for up-to-date information. Use only for time-sensitive queries that find_place cannot answer: restaurant booking pages (Resy, OpenTable), weather, current events, opening hours, exchange rates.',
-        parameters: {
-          type: 'object',
-          properties: { query: { type: 'string', description: 'Search query, e.g. "Carbone NYC site:resy.com"' } },
-          required: ['query'],
-        },
+    decls.push({
+      name: 'search_web',
+      description: 'Search the web for up-to-date information. Use only for time-sensitive queries that find_place cannot answer: restaurant booking pages (Resy, OpenTable), weather, current events, opening hours, exchange rates.',
+      parameters: {
+        type: 'object',
+        properties: { query: { type: 'string', description: 'Search query, e.g. "Carbone NYC site:resy.com"' } },
+        required: ['query'],
       },
     });
   }
 
-  return tools.length > 0 ? tools : undefined;
+  return decls.length > 0 ? [{ functionDeclarations: decls }] : undefined;
 }
 
 const DINING_KEYWORDS = /\b(restaurant|restaurants|dining|dinner|lunch|eat|food|reservation|reservations|book a table|opentable|resy|carbone)\b/i;
@@ -898,10 +913,11 @@ function deriveSearchLocation(primaryDestination: string | null, accommodations:
 }
 
 type ToolCallFollowUpParams = {
-  toolCalls: ToolCall[];
-  fullResponse: string;
-  currentMessages: OpenAIMessage[];
-  openaiOptions: OpenAIOptions;
+  functionCalls: GeminiFunctionCall[];
+  textSoFar: string;
+  contents: GeminiContent[];
+  systemInstruction: string;
+  geminiOptions: GeminiOptions;
   toolCtx: ToolExecutionContext;
 };
 
@@ -910,19 +926,33 @@ async function handleToolCallFollowUp(
   controller: { enqueue: (chunk: Uint8Array) => void },
   encoder: TextEncoder
 ): Promise<string> {
-  const { toolCalls, fullResponse, currentMessages, openaiOptions, toolCtx } = params;
-  const assistantMsg = { role: 'assistant' as const, content: fullResponse || null, tool_calls: toolCalls };
-  const toolResults = await executeToolCalls(toolCalls, toolCtx);
-  const updatedMessages = [...currentMessages, assistantMsg, ...toolResults];
-  const followRes = await callOpenAI(updatedMessages, true, { ...openaiOptions, skipTools: true });
+  const { functionCalls, textSoFar, contents, systemInstruction, geminiOptions, toolCtx } = params;
 
-  if (followRes.ok) {
-    const { fullResponse: followContent } = await processStream(followRes, controller, encoder);
-    return followContent;
+  // Re-inject the model's turn (any text it produced + its function calls),
+  // then a user turn containing the matching functionResponse parts. This is
+  // Gemini's equivalent of OpenAI's tool-result messages.
+  const modelParts: GeminiPart[] = [];
+  if (textSoFar) modelParts.push({ text: textSoFar });
+  for (const call of functionCalls) modelParts.push({ functionCall: call });
+
+  const toolResponses = await executeToolCalls(functionCalls, toolCtx);
+  const responseParts: GeminiPart[] = toolResponses.map((r) => ({ functionResponse: r }));
+
+  const updatedContents: GeminiContent[] = [
+    ...contents,
+    { role: 'model', parts: modelParts },
+    { role: 'user', parts: responseParts },
+  ];
+
+  const followRes = await callGemini(systemInstruction, updatedContents, true, { ...geminiOptions, skipTools: true });
+
+  if (followRes.ok && followRes.body) {
+    const followState = await processGeminiStream(followRes, controller, encoder);
+    return followState.textContent;
   }
 
-  const errBody = await followRes.text();
-  console.error('OpenAI follow-up error:', followRes.status, errBody);
+  const errBody = await followRes.text().catch(() => '');
+  console.error('Gemini follow-up error:', followRes.status, errBody);
   const fallback = 'I found some booking options but had trouble formatting them. Try searching for the restaurant name plus your city on Resy or OpenTable.';
   controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: fallback })}\n\n`));
   return fallback;
@@ -964,17 +994,22 @@ async function handleStreamResponse(
   encoder: TextEncoder,
   ctx: StreamContext
 ): Promise<void> {
-  const currentMessages = [...ctx.openaiMsgs];
-  const openaiRes = await callOpenAI(currentMessages, true, { ...ctx.openaiOptions, forceToolName: ctx.forceToolName });
+  const geminiRes = await callGemini(ctx.systemInstruction, ctx.contents, true, {
+    ...ctx.geminiOptions,
+    toolMode: ctx.forceToolName ? 'ANY' : 'AUTO',
+    allowedFunctionNames: ctx.forceToolName ? [ctx.forceToolName] : undefined,
+  });
 
-  if (!openaiRes.ok) {
+  if (!geminiRes.ok || !geminiRes.body) {
+    const errBody = await geminiRes.text().catch(() => '');
+    console.error('Gemini error:', geminiRes.status, errBody);
     controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'AI request failed' })}\n\n`));
     controller.close();
     return;
   }
 
-  const { fullResponse, toolCalls } = await processStream(openaiRes, controller, encoder);
-  let lastResponse = fullResponse;
+  const firstPass = await processGeminiStream(geminiRes, controller, encoder);
+  let lastResponse = firstPass.textContent;
 
   const toolCtx: ToolExecutionContext = {
     serperApiKey: ctx.serperApiKey,
@@ -985,15 +1020,18 @@ async function handleStreamResponse(
   };
 
   const hasToolSupport = !!ctx.serperApiKey || !!ctx.googlePlacesApiKey;
-  if (toolCalls && toolCalls.length > 0 && hasToolSupport) {
+  if (firstPass.functionCalls.length > 0 && hasToolSupport) {
     lastResponse = await handleToolCallFollowUp({
-      toolCalls, fullResponse, currentMessages,
-      openaiOptions: ctx.openaiOptions,
+      functionCalls: firstPass.functionCalls,
+      textSoFar: firstPass.textContent,
+      contents: ctx.contents,
+      systemInstruction: ctx.systemInstruction,
+      geminiOptions: ctx.geminiOptions,
       toolCtx,
     }, controller, encoder);
   }
 
-  const fallbackMsg = toolCalls?.length ? 'I searched for booking options but couldn\'t format the results. Try searching for the restaurant name plus your city on Resy or OpenTable.' : '';
+  const fallbackMsg = firstPass.functionCalls.length > 0 ? 'I searched for booking options but couldn\'t format the results. Try searching for the restaurant name plus your city on Resy or OpenTable.' : '';
   const rawFinal = lastResponse.trim() || fallbackMsg;
 
   // Strip structured blocks before URL validation so JSON payloads aren't touched.
@@ -1029,7 +1067,7 @@ async function handleStreamResponse(
     finalContent,
     fallbackMsg,
     placeCards,
-    model: ctx.openaiOptions.model,
+    model: GEMINI_MODEL,
     threadId: ctx.threadId,
     savedId: saved?.id,
   });
@@ -1040,10 +1078,9 @@ async function handlePostMessage(
   supabase: SupabaseClient,
   tripId: string,
   userId: string,
-  openaiApiKey: string,
+  geminiApiKey: string,
   serperApiKey: string | undefined,
   googlePlacesApiKey: string | undefined,
-  model: string,
   cors: Record<string, string> = {}
 ): Promise<Response> {
   const { message, thread_id } = await req.json();
@@ -1084,15 +1121,27 @@ async function handlePostMessage(
   });
 
   const tools = buildTools(serperApiKey, googlePlacesApiKey);
-  const openaiMsgs: OpenAIMessage[] = [{ role: 'system', content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
+
+  // Convert chat history to Gemini `contents`. Gemini uses 'model' for
+  // assistant turns (not 'assistant') and has no system role — the system
+  // prompt is passed separately via systemInstruction.
+  const contents: GeminiContent[] = (msgs || [])
+    .reverse()
+    .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+    .map((m: any) => ({
+      role: m.role === 'assistant' ? 'model' as const : 'user' as const,
+      parts: [{ text: String(m.content ?? '') }],
+    }));
+
   const forceToolName = chooseForcedTool(message, !!googlePlacesApiKey, !!serperApiKey);
   const encoder = new TextEncoder();
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 
   const ctx: StreamContext = {
-    openaiMsgs,
-    openaiOptions: { model, openaiApiKey, tools },
+    systemInstruction: systemPrompt,
+    contents,
+    geminiOptions: { apiKey: geminiApiKey, tools },
     forceToolName,
     serperApiKey,
     googlePlacesApiKey,
@@ -1160,10 +1209,9 @@ Deno.serve(async (req: Request) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
   const serperApiKey = Deno.env.get('SERPER_API_KEY');
   const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
-  const model = Deno.env.get('OPENAI_CHAT_MODEL') || 'gpt-5.4-mini';
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -1186,8 +1234,8 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method === 'POST' && !action) {
-    if (!openaiApiKey) return jsonResponse({ code: 'CONFIG_ERROR', message: 'OpenAI not configured' }, 500, corsHeaders);
-    return handlePostMessage(req, supabase, tripId, user.userId, openaiApiKey, serperApiKey, googlePlacesApiKey, model, corsHeaders);
+    if (!geminiApiKey) return jsonResponse({ code: 'CONFIG_ERROR', message: 'Gemini not configured' }, 500, corsHeaders);
+    return handlePostMessage(req, supabase, tripId, user.userId, geminiApiKey, serperApiKey, googlePlacesApiKey, corsHeaders);
   }
 
   return jsonResponse({ error: 'Method not allowed' }, 405, corsHeaders);

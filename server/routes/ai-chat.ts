@@ -7,8 +7,11 @@ const router = Router();
 const isValidUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 
 // Environment variables
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+// Hardcoded model — locked in-process so the request path cannot redirect
+// chat traffic to a different (potentially unvetted) model.
+const MODEL = 'gemini-2.5-flash';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -281,19 +284,25 @@ function setupSSEHeaders(res: Response): void {
   res.flushHeaders();
 }
 
-interface OpenAIStreamResult {
+interface GeminiStreamResult {
   fullResponse: string;
 }
 
-function extractDeltaContent(line: string): string | null {
+// Extract text from a single Gemini SSE line (`data: {...}`). Gemini chunks can
+// carry multiple parts (text, functionCall); here we only handle text since
+// the anon path doesn't use tools.
+function extractGeminiTextDelta(line: string): string | null {
   if (!line.startsWith('data: ')) return null;
-
-  const data = line.slice(6);
-  if (data === '[DONE]') return null;
-
+  const payload = line.slice(6).trim();
+  if (!payload) return null;
   try {
-    const parsed = JSON.parse(data);
-    return parsed.choices?.[0]?.delta?.content || null;
+    const parsed = JSON.parse(payload);
+    const parts = parsed?.candidates?.[0]?.content?.parts || [];
+    let text = '';
+    for (const part of parts) {
+      if (typeof part?.text === 'string') text += part.text;
+    }
+    return text || null;
   } catch {
     return null;
   }
@@ -304,34 +313,37 @@ function sendSSEError(res: Response, message: string): void {
   res.end();
 }
 
-async function streamOpenAIResponse(
-  messages: Array<{ role: string; content: string }>,
+async function streamGeminiResponse(
+  systemInstruction: string,
+  contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }>,
   res: Response,
   options: { maxTokens: number; filterCreateItems?: boolean }
-): Promise<OpenAIStreamResult | null> {
-  const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+): Promise<GeminiStreamResult | null> {
+  const url = `${GEMINI_BASE}/models/${MODEL}:streamGenerateContent?alt=sse`;
+  const geminiResponse = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'x-goog-api-key': GEMINI_API_KEY,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: MODEL,
-      messages,
-      stream: true,
-      temperature: 0.7,
-      max_completion_tokens: options.maxTokens
+      contents,
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: options.maxTokens
+      }
     })
   });
 
-  if (!openaiResponse.ok) {
-    const errorText = await openaiResponse.text();
-    console.error('OpenAI error:', openaiResponse.status, errorText);
+  if (!geminiResponse.ok) {
+    const errorText = await geminiResponse.text();
+    console.error('Gemini error:', geminiResponse.status, errorText);
     sendSSEError(res, 'Failed to generate response');
     return null;
   }
 
-  const reader = openaiResponse.body?.getReader();
+  const reader = geminiResponse.body?.getReader();
   if (!reader) {
     sendSSEError(res, 'Failed to read response stream');
     return null;
@@ -343,48 +355,66 @@ async function streamOpenAIResponse(
   // suppress the whole fence atomically instead of leaking partial backticks.
   let pendingTail = '';
   let suppressing = false;
+  // SSE buffer — Gemini delimits messages with \n\n.
+  let sseBuffer = '';
 
   // Matches a tail that could still grow into "```create_items".
   const PARTIAL_MARKER_RE = /`{1,3}(c(r(e(a(t(e(_(i(t(e(m(s)?)?)?)?)?)?)?)?)?)?)?)?$/;
+
+  const forwardDelta = (content: string): void => {
+    if (!content) return;
+    fullResponse += content;
+
+    if (!options.filterCreateItems) {
+      sendSSE(res, 'message', { content });
+      return;
+    }
+
+    if (suppressing) return;
+
+    if (fullResponse.includes('```create_items')) {
+      // Full marker landed — stop forwarding and drop any buffered tail
+      // that was leading up to it.
+      suppressing = true;
+      pendingTail = '';
+      return;
+    }
+
+    const combined = pendingTail + content;
+    const match = combined.match(PARTIAL_MARKER_RE);
+
+    if (match) {
+      const safe = combined.slice(0, combined.length - match[0].length);
+      pendingTail = match[0];
+      if (safe) sendSSE(res, 'message', { content: safe });
+    } else {
+      if (combined) sendSSE(res, 'message', { content: combined });
+      pendingTail = '';
+    }
+  };
 
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      for (const line of chunk.split('\n')) {
-        const content = extractDeltaContent(line);
-        if (!content) continue;
-
-        fullResponse += content;
-
-        if (!options.filterCreateItems) {
-          sendSSE(res, 'message', { content });
-          continue;
+      sseBuffer += decoder.decode(value, { stream: true });
+      let boundary: number;
+      while ((boundary = sseBuffer.indexOf('\n\n')) !== -1) {
+        const message = sseBuffer.slice(0, boundary);
+        sseBuffer = sseBuffer.slice(boundary + 2);
+        for (const line of message.split('\n')) {
+          const delta = extractGeminiTextDelta(line);
+          if (delta) forwardDelta(delta);
         }
+      }
+    }
 
-        if (suppressing) continue;
-
-        if (fullResponse.includes('```create_items')) {
-          // Full marker landed — stop forwarding and drop any buffered tail
-          // that was leading up to it.
-          suppressing = true;
-          pendingTail = '';
-          continue;
-        }
-
-        const combined = pendingTail + content;
-        const match = combined.match(PARTIAL_MARKER_RE);
-
-        if (match) {
-          const safe = combined.slice(0, combined.length - match[0].length);
-          pendingTail = match[0];
-          if (safe) sendSSE(res, 'message', { content: safe });
-        } else {
-          if (combined) sendSSE(res, 'message', { content: combined });
-          pendingTail = '';
-        }
+    // Flush any trailing partial SSE message
+    if (sseBuffer.trim()) {
+      for (const line of sseBuffer.split('\n')) {
+        const delta = extractGeminiTextDelta(line);
+        if (delta) forwardDelta(delta);
       }
     }
 
@@ -422,19 +452,25 @@ function buildAnonSystemPrompt(basePrompt: string): string {
   );
 }
 
-function buildOpenAIMessages(
-  systemPrompt: string,
+type GeminiTextContent = { role: 'user' | 'model'; parts: Array<{ text: string }> };
+
+// Convert chat history (role: 'user' | 'assistant') into Gemini `contents`
+// (role: 'user' | 'model'). Gemini has no `system` role — the system prompt
+// ships separately in `systemInstruction`.
+function buildGeminiContents(
   history: Array<{ role: string; content: string }>,
   userMessage?: string
-): Array<{ role: string; content: string }> {
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
-    ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
-  ];
+): GeminiTextContent[] {
+  const contents: GeminiTextContent[] = history
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({
+      role: m.role === 'assistant' ? 'model' as const : 'user' as const,
+      parts: [{ text: m.content }],
+    }));
   if (userMessage) {
-    messages.push({ role: 'user', content: userMessage });
+    contents.push({ role: 'user', parts: [{ text: userMessage }] });
   }
-  return messages;
+  return contents;
 }
 
 // Health check endpoint
@@ -746,11 +782,11 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
     }
 
     const anonSystemPrompt = buildAnonSystemPrompt(buildSystemPrompt(tripContext));
-    const openaiMessages = buildOpenAIMessages(anonSystemPrompt, historyMessages, message.trim());
+    const contents = buildGeminiContents(historyMessages, message.trim());
 
     setupSSEHeaders(res);
 
-    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 800, filterCreateItems: true });
+    const result = await streamGeminiResponse(anonSystemPrompt, contents, res, { maxTokens: 800, filterCreateItems: true });
     if (!result) return;
 
     sendSSE(res, 'done', { thread_id: null, message_id: `anon-${Date.now()}` });

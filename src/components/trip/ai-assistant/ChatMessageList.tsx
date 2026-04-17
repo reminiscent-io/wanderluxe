@@ -173,7 +173,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           </div>
           {emptyStateSlot}
           <p className="text-[11px] text-sand-400 max-w-[280px] text-center leading-relaxed">
-            Your trip details are shared with OpenAI to provide personalized recommendations. Messages are not used to train AI models.
+            Your trip details are shared with Google's Gemini API to provide personalized recommendations. Messages are not used to train AI models.
           </p>
         </div>
       </div>

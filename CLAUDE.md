@@ -38,7 +38,7 @@ bun run test:coverage   # Coverage report
 - **Database**: Supabase (PostgreSQL) with Row Level Security (RLS)
 - **Real-time**: Supabase real-time subscriptions via WebSocket
 - **Backend**: Express.js + Supabase Edge Functions (Deno)
-- **AI**: OpenAI GPT-4o-mini
+- **AI**: Google Gemini 2.5 Flash (hardcoded in Edge Function + Express; no env override)
 - **Payments**: Stripe
 - **External APIs**: Google Places, SendGrid, Unsplash
 - **Testing**: Vitest
@@ -88,7 +88,7 @@ server/
 
 supabase/
 ├── functions/            # Serverless Deno functions (10 functions)
-│   ├── ai-chat/                  # AI chat via OpenAI
+│   ├── ai-chat/                  # AI chat via Gemini 2.5 Flash
 │   ├── fetch-unsplash-metadata/  # Unsplash image metadata
 │   ├── fetch-url-metadata/       # URL metadata extraction
 │   ├── generate-image/           # AI image generation
@@ -144,7 +144,7 @@ PostgreSQL database
 
 #### 5. **AI Chat Integration**
 - Chat interface: `ChatView` component in trip details
-- Backend: Calls OpenAI via `ai-chat` Edge Function
+- Backend: Calls Gemini 2.5 Flash via `ai-chat` Edge Function (with `find_place` + `search_web` function calling)
 - Data: `ai_chat_threads` + `ai_chat_messages` tables; `user_ai_usage` tracks usage
 - Real-time: Subscription to chat messages for instant updates
 - Context: Includes trip details in system prompt for location-specific recommendations
@@ -274,7 +274,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 2. Add endpoint to Express server in `server/index.ts`
 3. Handle CORS and error responses
 4. Call Supabase client for database operations
-5. Use Edge Functions for external API calls (Google Places, OpenAI, SendGrid)
+5. Use Edge Functions for external API calls (Google Places, Gemini, SendGrid)
 
 ### Adding Database Table/Migration
 1. Create SQL file in `supabase/migrations/`
@@ -336,8 +336,7 @@ Required in `.env`:
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 - `VITE_GOOGLE_MAPS_API_KEY` - Google Places API
-- `OPENAI_API_KEY` - OpenAI API for chat
-- `OPENAI_CHAT_MODEL` - OpenAI model selection
+- `GEMINI_API_KEY` - Google Gemini API key (used by both the chat Edge Function and `parse-travel-doc`). Model is hardcoded to `gemini-2.5-flash` in each function; no env override.
 - `SERPER_API_KEY` - (optional, Edge Function secret) Serper API for web search when recommending restaurants; enables direct Resy/OpenTable booking links
 - `STRIPE_SECRET_KEY` - Stripe payment processing
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification

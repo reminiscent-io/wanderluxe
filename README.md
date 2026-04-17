@@ -147,8 +147,9 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 # Google Places (Required for location search)
 VITE_GOOGLE_MAPS_API_KEY=your-google-api-key
 
-# OpenAI (Required for AI assistant)
-OPENAI_API_KEY=sk-your-openai-api-key
+# Gemini (Required for AI assistant + travel-doc OCR)
+# Model is hardcoded to gemini-2.5-flash in the Edge Function.
+GEMINI_API_KEY=your-gemini-api-key
 
 # SendGrid (Required for email notifications)
 SENDGRID_API_KEY=SG.your-sendgrid-api-key
