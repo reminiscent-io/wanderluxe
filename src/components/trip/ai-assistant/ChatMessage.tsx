@@ -8,8 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ExtractionResultMessage from './ExtractionResultMessage';
+import PlaceCardCarousel from './PlaceCardCarousel';
 import { normalizeMarkdownListSpacing, safeHref } from './chatUrlSafety';
-import type { AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
+import type { AIChatMessage, ExtractedItem, PlaceCard } from '@/types/ai-assistant';
 
 // Defined at module scope so the component functions aren't recreated on
 // every ChatMessage render. safeHref() runs at render time on every link to
@@ -73,6 +74,7 @@ interface ChatMessageProps {
   isStreaming?: boolean;
   onImportAll?: (items: ExtractedItem[]) => Promise<void>;
   onReviewEdit?: (items: ExtractedItem[]) => void;
+  onAddPlaceCard?: (card: PlaceCard) => Promise<void>;
   isImporting?: boolean;
 }
 
@@ -81,12 +83,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   isStreaming = false,
   onImportAll,
   onReviewEdit,
+  onAddPlaceCard,
   isImporting = false
 }) => {
   const [copied, setCopied] = useState(false);
   const { avatarUrl, fullName, session } = useAuth();
   const isUser = message.role === 'user';
   const hasExtractedItems = message.extractedItems && message.extractedItems.length > 0;
+  const hasPlaceCards = !isUser && Array.isArray(message.placeCards) && message.placeCards.length > 0;
   const hasAttachment = !!message.attachmentPreviewUrl;
 
   const getUserInitials = () => {
@@ -189,24 +193,34 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         ) : (
           // Regular assistant message
-          <div
-            className={cn(
-              'rounded-2xl px-4 py-2.5 text-sm overflow-hidden',
-              'bg-sand-50 text-earth-700 border border-sand-200 rounded-tl-sm',
-              isStreaming && 'transition-all duration-150 ease-out'
-            )}
-          >
-            <div className="prose prose-sm prose-earth max-w-full break-words overflow-wrap-anywhere">
-              <ReactMarkdown
-                remarkPlugins={markdownRemarkPlugins}
-                components={markdownComponents}
+          <div className="w-full">
+            {message.content.trim().length > 0 && (
+              <div
+                className={cn(
+                  'rounded-2xl px-4 py-2.5 text-sm overflow-hidden',
+                  'bg-sand-50 text-earth-700 border border-sand-200 rounded-tl-sm',
+                  isStreaming && 'transition-all duration-150 ease-out'
+                )}
               >
-                {normalizeMarkdownListSpacing(message.content)}
-              </ReactMarkdown>
-              {isStreaming && (
-                <span className="inline-block w-1 h-[1.1em] ml-0.5 rounded-full bg-earth-400/60 animate-pulse" />
-              )}
-            </div>
+                <div className="prose prose-sm prose-earth max-w-full break-words overflow-wrap-anywhere">
+                  <ReactMarkdown
+                    remarkPlugins={markdownRemarkPlugins}
+                    components={markdownComponents}
+                  >
+                    {normalizeMarkdownListSpacing(message.content)}
+                  </ReactMarkdown>
+                  {isStreaming && (
+                    <span className="inline-block w-1 h-[1.1em] ml-0.5 rounded-full bg-earth-400/60 animate-pulse" />
+                  )}
+                </div>
+              </div>
+            )}
+            {hasPlaceCards && (
+              <PlaceCardCarousel
+                cards={message.placeCards!}
+                onAdd={onAddPlaceCard}
+              />
+            )}
           </div>
         )}
 

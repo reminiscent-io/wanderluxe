@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useDocumentExtraction } from '@/hooks/useDocumentExtraction';
 import { bulkImportItems } from '@/services/bulkImportService';
+import { addPlaceCardItem, undoPlaceCardItem } from '@/services/placeCardAddService';
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
 import PromptChips from './PromptChips';
@@ -13,7 +14,7 @@ import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
 import ExtractionResultMessage from './ExtractionResultMessage';
 import ItemStepperDialog from './ItemStepperDialog';
-import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem } from '@/types/ai-assistant';
+import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem, PlaceCard } from '@/types/ai-assistant';
 
 interface AIAssistantPanelProps {
   tripId: string;
@@ -216,6 +217,41 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
     }
   }, [tripId, queryClient]);
 
+  const invalidateTripQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+  }, [queryClient, tripId]);
+
+  // One-tap add from a place card. Date/time validation already happened on
+  // the server (suggested_add is stripped when invalid), so this path should
+  // only fire for cards we know can be added. Shows an undo toast for 5s.
+  const handleAddPlaceCard = useCallback(async (card: PlaceCard): Promise<void> => {
+    try {
+      const added = await addPlaceCardItem(tripId, card);
+      invalidateTripQueries();
+      toast.success(`Added ${added.label} to your trip`, {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            undoPlaceCardItem(added)
+              .then(() => {
+                invalidateTripQueries();
+                toast.message('Removed from trip');
+              })
+              .catch((e) => toast.error(e?.message || 'Undo failed'));
+          },
+        },
+        duration: 5000,
+      });
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not add this recommendation');
+      throw e;
+    }
+  }, [tripId, invalidateTripQueries]);
+
   // Handle review & edit flow
   const handleReviewEdit = useCallback((items: ExtractedItem[]) => {
     setItemsToProcess(items);
@@ -294,6 +330,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               tripId={tripId}
               onImportAll={handleImportAll}
               onReviewEdit={handleReviewEdit}
+              onAddPlaceCard={handleAddPlaceCard}
               isImporting={isImporting}
               emptyStateSlot={
                 <PromptChips
