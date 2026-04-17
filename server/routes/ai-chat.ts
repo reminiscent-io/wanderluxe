@@ -565,26 +565,90 @@ function mapRawItemToExtracted(item: Record<string, unknown>, idx: number): Extr
 }
 
 const CREATE_ITEMS_REGEX = /```create_items\s*([\s\S]*?)```/;
+const CREATE_ITEMS_OPEN_REGEX = /```create_items\s*([\s\S]*)$/;
+
+// Extract the longest balanced JSON array/object starting at index 0 of `src`.
+// Returns null if no balanced structure is found. Handles strings and escapes
+// so braces inside strings don't throw off the depth counter.
+function extractBalancedJson(src: string): string | null {
+  const trimmed = src.trimStart();
+  if (!trimmed) return null;
+  const first = trimmed[0];
+  if (first !== '[' && first !== '{') return null;
+  const open = first;
+  const close = open === '[' ? ']' : '}';
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let lastBalanced = -1;
+
+  for (let i = 0; i < trimmed.length; i++) {
+    const ch = trimmed[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+      } else if (ch === '\\') {
+        escape = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === open) {
+      depth++;
+    } else if (ch === close) {
+      depth--;
+      if (depth === 0) {
+        lastBalanced = i;
+        break;
+      }
+    }
+  }
+
+  if (lastBalanced === -1) return null;
+  return trimmed.slice(0, lastBalanced + 1);
+}
 
 function parseCreateItemsBlock(response: string): ParsedResponse {
-  const match = response.match(CREATE_ITEMS_REGEX);
+  // First try the strict closed-fence match.
+  let jsonStr: string | null = null;
+  let matchedRange: RegExp | null = null;
 
-  if (!match) {
+  const closedMatch = response.match(CREATE_ITEMS_REGEX);
+  if (closedMatch) {
+    jsonStr = closedMatch[1].trim();
+    matchedRange = CREATE_ITEMS_REGEX;
+  } else {
+    // Fallback: the closing ``` fence may have been truncated by the token
+    // limit or dropped by the model. Try to salvage items from whatever
+    // follows the opening fence by extracting a balanced JSON structure.
+    const openMatch = response.match(CREATE_ITEMS_OPEN_REGEX);
+    if (openMatch) {
+      const balanced = extractBalancedJson(openMatch[1]);
+      if (balanced) {
+        jsonStr = balanced;
+      }
+      matchedRange = CREATE_ITEMS_OPEN_REGEX;
+    }
+  }
+
+  if (!jsonStr || !matchedRange) {
     return { cleanContent: response, extractedItems: [] };
   }
 
-  const jsonStr = match[1].trim();
   let items: ExtractedItem[] = [];
-
   try {
     const parsed = JSON.parse(jsonStr);
     const rawItems = Array.isArray(parsed) ? parsed : [parsed];
     items = rawItems.map(mapRawItemToExtracted);
   } catch (e) {
-    console.error('Failed to parse create_items JSON:', e);
+    console.error('Failed to parse create_items JSON:', e, 'raw:', jsonStr.slice(0, 500));
   }
 
-  const cleanContent = response.replace(CREATE_ITEMS_REGEX, '').trim();
+  const cleanContent = response.replace(matchedRange, '').trim();
   return { cleanContent, extractedItems: items };
 }
 
@@ -991,10 +1055,17 @@ router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) 
 
     setupSSEHeaders(res);
 
-    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 1000, filterCreateItems: true });
+    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 2000, filterCreateItems: true });
     if (!result) return;
 
     const { cleanContent, extractedItems } = parseCreateItemsBlock(result.fullResponse);
+
+    if (extractedItems.length === 0 && result.fullResponse.includes('```create_items')) {
+      console.warn(
+        '[ai-chat] create_items marker detected but no items extracted. Response length:',
+        result.fullResponse.length
+      );
+    }
 
     const assistantMessageId = await saveMessage(supabase, threadId, 'assistant', cleanContent, {
       model: MODEL,
