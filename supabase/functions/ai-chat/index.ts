@@ -62,6 +62,10 @@ type StreamContext = {
   googlePlacesApiKey: string | undefined;
   searchLocation: string;
   verifiedUrls: Set<string>;
+  placesById: Map<string, PlaceResult>;
+  supabaseUrl: string;
+  arrivalDate: string;
+  departureDate: string;
   message: string;
   supabase: SupabaseClient;
   threadId: string;
@@ -111,6 +115,30 @@ type PlaceResult = {
   website?: string;
   rating?: number;
   phone?: string;
+  price_level?: number;
+  photo_reference?: string;
+};
+
+// Enriched place card shipped to the client. All URLs are either derived from
+// Google Places (verified) or booking_url that survived the verifiedUrls gate.
+type PlaceCard = {
+  id: string;
+  place_id: string;
+  name: string;
+  address: string;
+  maps_url: string;
+  website?: string;
+  rating?: number;
+  price_level?: number;
+  phone?: string;
+  photo_url?: string;
+  booking_url?: string;
+  blurb?: string;
+  tags?: string[];
+  suggested_add?: {
+    itemType: 'reservation' | 'activity';
+    fields: Record<string, unknown>;
+  };
 };
 
 // Hardcoded Google Places API base. All findPlaces() fetches target this host
@@ -145,11 +173,12 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
     try {
       const detailsUrl = new URL('/maps/api/place/details/json', GOOGLE_PLACES_BASE);
       detailsUrl.searchParams.set('place_id', c.place_id);
-      detailsUrl.searchParams.set('fields', 'name,place_id,formatted_address,website,rating,formatted_phone_number');
+      detailsUrl.searchParams.set('fields', 'name,place_id,formatted_address,website,rating,formatted_phone_number,photos,price_level');
       detailsUrl.searchParams.set('key', apiKey);
       const detailRes = await fetch(detailsUrl);
       const detailJson = await detailRes.json();
       const d = detailJson.result || {};
+      const firstPhoto = Array.isArray(d.photos) && d.photos.length > 0 ? d.photos[0] : null;
       return {
         name: d.name || c.name,
         place_id: c.place_id,
@@ -158,6 +187,8 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
         website: d.website,
         rating: d.rating ?? c.rating,
         phone: d.formatted_phone_number,
+        price_level: typeof d.price_level === 'number' ? d.price_level : undefined,
+        photo_reference: firstPhoto?.photo_reference,
       } as PlaceResult;
     } catch {
       return {
@@ -199,6 +230,139 @@ function parseCreateItemsBlock(response: string): { cleanContent: string; extrac
 
   const cleanContent = response.replace(createItemsRegex, '').trim();
   return { cleanContent, extractedItems: items };
+}
+
+type RawPlaceCard = {
+  place_id?: unknown;
+  blurb?: unknown;
+  tags?: unknown;
+  booking_url?: unknown;
+  suggested_add?: {
+    itemType?: unknown;
+    date?: unknown;
+    time?: unknown;
+    end_time?: unknown;
+    party_size?: unknown;
+    notes?: unknown;
+  };
+};
+
+function parsePlaceCardsBlock(response: string): { cleanContent: string; rawCards: RawPlaceCard[] } {
+  const regex = /```place_cards\s*([\s\S]*?)```/;
+  const match = response.match(regex);
+  if (!match) return { cleanContent: response, rawCards: [] };
+  const jsonStr = match[1].trim();
+  let rawCards: RawPlaceCard[] = [];
+  try {
+    const parsed = JSON.parse(jsonStr);
+    rawCards = (Array.isArray(parsed) ? parsed : [parsed]) as RawPlaceCard[];
+  } catch { /* ignore parse errors */ }
+  const cleanContent = response.replace(regex, '').trim();
+  return { cleanContent, rawCards };
+}
+
+function isDateInRange(date: string, arrival: string, departure: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(arrival) || !/^\d{4}-\d{2}-\d{2}$/.test(departure)) {
+    return true; // Trip has no fixed dates — trust the model's date.
+  }
+  return date >= arrival && date <= departure;
+}
+
+function isValidTime(time: unknown): time is string {
+  return typeof time === 'string' && /^\d{2}:\d{2}$/.test(time);
+}
+
+function buildSuggestedAdd(
+  raw: RawPlaceCard['suggested_add'],
+  place: PlaceResult,
+  bookingUrl: string | undefined,
+  arrival: string,
+  departure: string,
+): PlaceCard['suggested_add'] | undefined {
+  if (!raw || typeof raw.date !== 'string') return undefined;
+  if (!isDateInRange(raw.date, arrival, departure)) return undefined;
+
+  const itemType = raw.itemType === 'activity' ? 'activity' : 'reservation';
+
+  if (itemType === 'reservation') {
+    if (!isValidTime(raw.time)) return undefined;
+    return {
+      itemType: 'reservation',
+      fields: {
+        restaurant_name: place.name,
+        date: raw.date,
+        time: raw.time,
+        party_size: typeof raw.party_size === 'number' ? raw.party_size : undefined,
+        address: place.formatted_address || undefined,
+        phone: place.phone || undefined,
+        website: bookingUrl || place.website || undefined,
+        notes: typeof raw.notes === 'string' ? raw.notes : undefined,
+      },
+    };
+  }
+
+  // activity
+  return {
+    itemType: 'activity',
+    fields: {
+      name: place.name,
+      date: raw.date,
+      start_time: isValidTime(raw.time) ? raw.time : undefined,
+      end_time: isValidTime(raw.end_time) ? raw.end_time : undefined,
+      location: place.formatted_address || undefined,
+      notes: typeof raw.notes === 'string' ? raw.notes : undefined,
+    },
+  };
+}
+
+function enrichPlaceCards(
+  rawCards: RawPlaceCard[],
+  placesById: Map<string, PlaceResult>,
+  verifiedUrls: Set<string>,
+  supabaseUrl: string,
+  arrival: string,
+  departure: string,
+): PlaceCard[] {
+  const cards: PlaceCard[] = [];
+  rawCards.forEach((raw, idx) => {
+    if (typeof raw.place_id !== 'string') return;
+    const place = placesById.get(raw.place_id);
+    if (!place) return;
+
+    const photo_url = place.photo_reference
+      ? `${supabaseUrl}/functions/v1/google-places-proxy?photo_reference=${encodeURIComponent(place.photo_reference)}&maxwidth=800`
+      : undefined;
+
+    const bookingUrlRaw = typeof raw.booking_url === 'string' ? raw.booking_url : '';
+    const booking_url = bookingUrlRaw && verifiedUrls.has(bookingUrlRaw) ? bookingUrlRaw : undefined;
+
+    const suggested_add = buildSuggestedAdd(raw.suggested_add, place, booking_url, arrival, departure);
+
+    const tags = Array.isArray(raw.tags)
+      ? raw.tags.filter((t): t is string => typeof t === 'string').slice(0, 4)
+      : undefined;
+
+    const blurb = typeof raw.blurb === 'string' ? raw.blurb.slice(0, 240) : undefined;
+
+    cards.push({
+      id: `card-${idx}-${Date.now()}`,
+      place_id: place.place_id,
+      name: place.name,
+      address: place.formatted_address,
+      maps_url: place.maps_url,
+      website: place.website,
+      rating: place.rating,
+      price_level: place.price_level,
+      phone: place.phone,
+      photo_url,
+      booking_url,
+      blurb,
+      tags,
+      suggested_add,
+    });
+  });
+  return cards;
 }
 
 function accumulateToolCall(
@@ -324,7 +488,12 @@ async function handleGetMessages(supabase: SupabaseClient, tripId: string, userI
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  const orderedMessages = (messages || []).reverse();
+  // Hydrate placeCards from metadata so the client can render them without
+  // re-streaming. Leave metadata in place for other consumers.
+  const orderedMessages = (messages || []).reverse().map((m: any) => ({
+    ...m,
+    placeCards: m.metadata && Array.isArray(m.metadata.placeCards) ? m.metadata.placeCards : undefined,
+  }));
   const hasMore = offset + limit < (totalCount || 0);
 
   return jsonResponse({ messages: orderedMessages, thread_id: thread.id, hasMore, totalCount }, 200, cors);
@@ -426,6 +595,38 @@ function buildSystemPrompt(params: SystemPromptParams): string {
 
   const safeTripName = sanitizeForPrompt(tripName);
 
+  const placeCardsPolicy = hasFindPlace
+    ? `## Rich Place Cards (PREFERRED for recommendations)
+When you recommend one or more restaurants, attractions, bars, landmarks, or activities, output a \`place_cards\` JSON block at the END of your response INSTEAD of listing them in prose. The client renders these as rich cards with photos, ratings, and one-tap "Add to trip" buttons.
+
+Rules:
+- You MUST first call \`find_place\` for each recommendation so we have a verified place_id.
+- Keep your prose to 1–2 sentences of introduction ("Here are three standout dinner spots in Montmartre:"). DO NOT list the places in the prose — the cards ARE the list.
+- Scope for phase 1: restaurants/dining AND attractions/activities only. Do NOT use place_cards for hotels yet.
+- Include a \`suggested_add\` block ONLY when the user gave a specific date (and time, for reservations) that falls between ${arrivalDate} and ${departureDate}. When in doubt, omit it — the user can still tap the card to add it.
+
+Format (one entry per place):
+\`\`\`place_cards
+[
+  {
+    "place_id": "ChIJ...",                           // REQUIRED, from find_place result
+    "blurb": "One sentence on why it's worth going.", // ≤200 chars
+    "tags": ["Italian", "Date night"],                // optional, max 4 short tags
+    "booking_url": "https://resy.com/...",            // optional, only if you have a verified booking URL from search_web
+    "suggested_add": {                                // optional
+      "itemType": "reservation",                      // "reservation" for dining, "activity" for attractions/tours
+      "date": "YYYY-MM-DD",                           // MUST be within ${arrivalDate}..${departureDate}
+      "time": "HH:mm",                                // REQUIRED for reservation, optional for activity
+      "end_time": "HH:mm",                            // optional, activity only
+      "party_size": 2,                                // optional, reservation only
+      "notes": "Short note"                           // optional
+    }
+  }
+]
+\`\`\`
+Do NOT invent place_id, name, address, website, rating, or phone — the server fills these in from Google Places. You only author blurb, tags, booking_url, and the optional suggested_add block.`
+    : '';
+
   return `You are a helpful travel assistant for a trip to ${safeTripName}. ${locationContext}
 Trip dates: ${arrivalDate} to ${departureDate}.${partySizeContext}${itineraryContext}
 
@@ -438,8 +639,10 @@ ${formattedTransportation}
 Guidelines:
 - Be concise and helpful
 - Use markdown formatting for readability. IMPORTANT: When writing numbered lists, put each item on its own line with a blank line between items for proper rendering
-- When listing multiple recommendations, use a numbered markdown list with each item separated by a blank line
-- Format place recommendations as: **[Place Name](verified-url)** — brief description (when you have a verified URL), otherwise **Place Name** — brief description (with no link)
+- When listing multiple recommendations, prefer the \`place_cards\` block (see below) over a markdown list.
+- For places that cannot be shown as cards (e.g. hotels in phase 1, or when find_place is unavailable), format as: **[Place Name](verified-url)** — brief description (when you have a verified URL), otherwise **Place Name** — brief description (with no link)
+
+${placeCardsPolicy}
 
 ${linkPolicy}
 
@@ -482,6 +685,7 @@ type ToolExecutionContext = {
   googlePlacesApiKey: string | undefined;
   message: string;
   verifiedUrls: Set<string>;
+  placesById: Map<string, PlaceResult>;
 };
 
 async function executeSearchWeb(
@@ -512,6 +716,7 @@ async function executeFindPlace(
   tc: ToolCall,
   googlePlacesApiKey: string,
   verifiedUrls: Set<string>,
+  placesById: Map<string, PlaceResult>,
 ): Promise<{ role: 'tool'; tool_call_id: string; content: string }> {
   try {
     const argsStr = (tc.function.arguments || '').trim();
@@ -527,13 +732,17 @@ async function executeFindPlace(
     for (const p of places) {
       verifiedUrls.add(p.maps_url);
       if (p.website) verifiedUrls.add(p.website);
+      placesById.set(p.place_id, p);
     }
     // Give the model a compact, unambiguous structured payload so it can
-    // quote verified URLs instead of authoring new ones.
+    // quote verified URLs instead of authoring new ones. place_id is included
+    // so the model can reference cards in a `place_cards` block.
     const payload = places.map((p) => ({
+      place_id: p.place_id,
       name: p.name,
       address: p.formatted_address,
       rating: p.rating,
+      price_level: p.price_level,
       phone: p.phone,
       website: p.website || null,
       maps_url: p.maps_url,
@@ -554,7 +763,7 @@ async function executeToolCalls(
     if (tc.function.name === 'search_web' && ctx.serperApiKey) {
       toolResults.push(await executeSearchWeb(tc, ctx.serperApiKey, ctx.message, ctx.verifiedUrls));
     } else if (tc.function.name === 'find_place' && ctx.googlePlacesApiKey) {
-      toolResults.push(await executeFindPlace(tc, ctx.googlePlacesApiKey, ctx.verifiedUrls));
+      toolResults.push(await executeFindPlace(tc, ctx.googlePlacesApiKey, ctx.verifiedUrls, ctx.placesById));
     } else {
       toolResults.push({ role: 'tool', tool_call_id: tc.id, content: `Tool "${tc.function.name}" is not available in this environment.` });
     }
@@ -719,20 +928,29 @@ async function handleToolCallFollowUp(
   return fallback;
 }
 
+type FinalEventsParams = {
+  finalContent: string;
+  fallbackMsg: string;
+  placeCards: PlaceCard[];
+  model: string;
+  threadId: string;
+  savedId: string | undefined;
+};
+
 function emitFinalEvents(
   controller: { enqueue: (chunk: Uint8Array) => void; close: () => void },
   encoder: TextEncoder,
-  finalContent: string,
-  fallbackMsg: string,
-  model: string,
-  threadId: string,
-  savedId: string | undefined
+  params: FinalEventsParams,
 ): void {
+  const { finalContent, fallbackMsg, placeCards, model, threadId, savedId } = params;
   const { cleanContent, extractedItems } = parseCreateItemsBlock(finalContent);
   const contentToSave = cleanContent || finalContent;
 
   if (extractedItems.length > 0) {
     controller.enqueue(encoder.encode(`event: extracted_items\ndata: ${JSON.stringify({ items: extractedItems, meta: { model, source: 'conversation' } })}\n\n`));
+  }
+  if (placeCards.length > 0) {
+    controller.enqueue(encoder.encode(`event: place_cards\ndata: ${JSON.stringify({ cards: placeCards })}\n\n`));
   }
   if (fallbackMsg && finalContent === fallbackMsg) {
     controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: fallbackMsg })}\n\n`));
@@ -763,6 +981,7 @@ async function handleStreamResponse(
     googlePlacesApiKey: ctx.googlePlacesApiKey,
     message: ctx.message,
     verifiedUrls: ctx.verifiedUrls,
+    placesById: ctx.placesById,
   };
 
   const hasToolSupport = !!ctx.serperApiKey || !!ctx.googlePlacesApiKey;
@@ -777,9 +996,18 @@ async function handleStreamResponse(
   const fallbackMsg = toolCalls?.length ? 'I searched for booking options but couldn\'t format the results. Try searching for the restaurant name plus your city on Resy or OpenTable.' : '';
   const rawFinal = lastResponse.trim() || fallbackMsg;
 
-  // Strip any `create_items` block before URL validation so we don't touch JSON.
-  const { cleanContent, extractedItems } = parseCreateItemsBlock(rawFinal);
-  const prosePart = cleanContent || rawFinal;
+  // Strip structured blocks before URL validation so JSON payloads aren't touched.
+  const { cleanContent: afterCreateItems, extractedItems } = parseCreateItemsBlock(rawFinal);
+  const { cleanContent: prosePart, rawCards } = parsePlaceCardsBlock(afterCreateItems);
+
+  const placeCards = enrichPlaceCards(
+    rawCards,
+    ctx.placesById,
+    ctx.verifiedUrls,
+    ctx.supabaseUrl,
+    ctx.arrivalDate,
+    ctx.departureDate,
+  );
 
   // Replace any AI-authored URLs with Google Search fallbacks unless they
   // were returned by a tool or point to a trusted host (Google, Wikipedia).
@@ -791,8 +1019,20 @@ async function handleStreamResponse(
     : validatedProse;
   const contentToSave = validatedProse;
 
-  const { data: saved } = await ctx.supabase.from('ai_chat_messages').insert({ thread_id: ctx.threadId, role: 'assistant', content: contentToSave || '(No response)' }).select('id').single();
-  emitFinalEvents(controller, encoder, finalContent, fallbackMsg, ctx.openaiOptions.model, ctx.threadId, saved?.id);
+  const metadata = placeCards.length > 0 ? { placeCards } : {};
+  const { data: saved } = await ctx.supabase
+    .from('ai_chat_messages')
+    .insert({ thread_id: ctx.threadId, role: 'assistant', content: contentToSave || '(No response)', metadata })
+    .select('id')
+    .single();
+  emitFinalEvents(controller, encoder, {
+    finalContent,
+    fallbackMsg,
+    placeCards,
+    model: ctx.openaiOptions.model,
+    threadId: ctx.threadId,
+    savedId: saved?.id,
+  });
 }
 
 async function handlePostMessage(
@@ -848,6 +1088,8 @@ async function handlePostMessage(
   const forceToolName = chooseForcedTool(message, !!googlePlacesApiKey, !!serperApiKey);
   const encoder = new TextEncoder();
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+
   const ctx: StreamContext = {
     openaiMsgs,
     openaiOptions: { model, openaiApiKey, tools },
@@ -856,6 +1098,10 @@ async function handlePostMessage(
     googlePlacesApiKey,
     searchLocation,
     verifiedUrls: new Set<string>(),
+    placesById: new Map<string, PlaceResult>(),
+    supabaseUrl,
+    arrivalDate,
+    departureDate,
     message,
     supabase,
     threadId
