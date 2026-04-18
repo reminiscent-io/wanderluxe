@@ -212,12 +212,78 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
   return Promise.all(detailPromises);
 }
 
-function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: ExtractedItem[] } {
-  const createItemsRegex = /```create_items\s*([\s\S]*?)```/;
-  const match = response.match(createItemsRegex);
-  if (!match) return { cleanContent: response, extractedItems: [] };
+const CREATE_ITEMS_REGEX = /```create_items\s*([\s\S]*?)```/;
+const CREATE_ITEMS_OPEN_REGEX = /```create_items\s*([\s\S]*)$/;
 
-  const jsonStr = match[1].trim();
+// Extract the longest balanced JSON array/object starting at index 0 of `src`.
+// Used to recover items when the model's response was truncated before the
+// closing ``` fence was emitted — see parseCreateItemsBlock.
+function extractBalancedJson(src: string): string | null {
+  const trimmed = src.trimStart();
+  if (!trimmed) return null;
+  const first = trimmed[0];
+  if (first !== '[' && first !== '{') return null;
+  const open = first;
+  const close = open === '[' ? ']' : '}';
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let lastBalanced = -1;
+
+  for (let i = 0; i < trimmed.length; i++) {
+    const ch = trimmed[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+      } else if (ch === '\\') {
+        escape = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === open) {
+      depth++;
+    } else if (ch === close) {
+      depth--;
+      if (depth === 0) {
+        lastBalanced = i;
+        break;
+      }
+    }
+  }
+
+  if (lastBalanced === -1) return null;
+  return trimmed.slice(0, lastBalanced + 1);
+}
+
+function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: ExtractedItem[] } {
+  // Try the strict closed-fence match first. Fall back to balanced-JSON
+  // recovery when only the opening fence is present (model was truncated
+  // at maxOutputTokens before it could emit the closing fence).
+  let jsonStr: string | null = null;
+  let matchedRange: RegExp | null = null;
+
+  const closedMatch = response.match(CREATE_ITEMS_REGEX);
+  if (closedMatch) {
+    jsonStr = closedMatch[1].trim();
+    matchedRange = CREATE_ITEMS_REGEX;
+  } else {
+    const openMatch = response.match(CREATE_ITEMS_OPEN_REGEX);
+    if (openMatch) {
+      const balanced = extractBalancedJson(openMatch[1]);
+      if (balanced) jsonStr = balanced;
+      matchedRange = CREATE_ITEMS_OPEN_REGEX;
+    }
+  }
+
+  if (!jsonStr || !matchedRange) {
+    return { cleanContent: response, extractedItems: [] };
+  }
+
   let items: ExtractedItem[] = [];
   try {
     const parsed = JSON.parse(jsonStr);
@@ -235,9 +301,11 @@ function parseCreateItemsBlock(response: string): { cleanContent: string; extrac
       const missingRequired = required.filter((k: string) => !fields[k]);
       return { id: `ai-item-${idx}-${Date.now()}`, itemType, fields, missingRequired, confidence: 0.85, status: 'pending' as const };
     });
-  } catch { /* ignore parse errors */ }
+  } catch (e) {
+    console.error('Failed to parse create_items JSON:', e, 'raw:', jsonStr.slice(0, 500));
+  }
 
-  const cleanContent = response.replace(createItemsRegex, '').trim();
+  const cleanContent = response.replace(matchedRange, '').trim();
   return { cleanContent, extractedItems: items };
 }
 
@@ -455,7 +523,7 @@ async function callGemini(
     systemInstruction: { parts: [{ text: systemInstruction }] },
     generationConfig: {
       temperature: options.temperature ?? 0.7,
-      maxOutputTokens: options.maxOutputTokens ?? 1500,
+      maxOutputTokens: options.maxOutputTokens ?? 2000,
     },
   };
 
@@ -1036,6 +1104,12 @@ async function handleStreamResponse(
 
   // Strip structured blocks before URL validation so JSON payloads aren't touched.
   const { cleanContent: afterCreateItems, extractedItems } = parseCreateItemsBlock(rawFinal);
+  if (extractedItems.length === 0 && rawFinal.includes('```create_items')) {
+    console.warn(
+      '[ai-chat] create_items marker detected but no items extracted. Response length:',
+      rawFinal.length
+    );
+  }
   const { cleanContent: prosePart, rawCards } = parsePlaceCardsBlock(afterCreateItems);
 
   const placeCards = enrichPlaceCards(
