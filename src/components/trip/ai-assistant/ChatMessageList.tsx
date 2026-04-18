@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import ChatMessage from './ChatMessage';
 import { Loader2, Sparkles, ChevronUp } from 'lucide-react';
-import type { AIChatMessage, ExtractedItem } from '@/types/ai-assistant';
+import type { AIChatMessage, ExtractedItem, PlaceCard } from '@/types/ai-assistant';
 
 interface ChatMessageListProps {
   messages: AIChatMessage[];
@@ -16,6 +16,7 @@ interface ChatMessageListProps {
   tripId?: string;
   onImportAll?: (items: ExtractedItem[]) => Promise<void>;
   onReviewEdit?: (items: ExtractedItem[]) => void;
+  onAddPlaceCard?: (card: PlaceCard) => Promise<void>;
   isImporting?: boolean;
   emptyStateSlot?: React.ReactNode;
 }
@@ -33,6 +34,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   tripId,
   onImportAll,
   onReviewEdit,
+  onAddPlaceCard,
   isImporting = false,
   emptyStateSlot
 }) => {
@@ -171,7 +173,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           </div>
           {emptyStateSlot}
           <p className="text-[11px] text-sand-400 max-w-[280px] text-center leading-relaxed">
-            Your trip details are shared with OpenAI to provide personalized recommendations. Messages are not used to train AI models.
+            Your trip details are shared with Google's Gemini API to provide personalized recommendations. Messages are not used to train AI models.
           </p>
         </div>
       </div>
@@ -223,6 +225,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           message={message}
           onImportAll={onImportAll}
           onReviewEdit={onReviewEdit}
+          onAddPlaceCard={onAddPlaceCard}
           isImporting={isImporting}
         />
       ))}

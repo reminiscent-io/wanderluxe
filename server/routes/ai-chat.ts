@@ -7,8 +7,11 @@ const router = Router();
 const isValidUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 
 // Environment variables
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+// Hardcoded model — locked in-process so the request path cannot redirect
+// chat traffic to a different (potentially unvetted) model.
+const MODEL = 'gemini-2.5-flash';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -268,117 +271,6 @@ async function getTripContext(supabase: ReturnType<typeof createClient>, tripId:
   };
 }
 
-// Get or create thread for user and trip
-async function getOrCreateThread(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  tripId: string,
-  providedThreadId?: string
-): Promise<string | null> {
-  // If thread ID provided, verify it belongs to user
-  if (providedThreadId) {
-    const { data: existingThread } = await supabase
-      .from('ai_chat_threads')
-      .select('id')
-      .eq('id', providedThreadId)
-      .eq('user_id', userId)
-      .single();
-
-    if (existingThread) return existingThread.id;
-  }
-
-  // Look for existing thread for this user/trip combination
-  const { data: thread } = await supabase
-    .from('ai_chat_threads')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', userId)
-    .single();
-
-  if (thread) return thread.id;
-
-  // Create new thread
-  const { data: newThread, error } = await supabase
-    .from('ai_chat_threads')
-    .insert({
-      trip_id: tripId,
-      user_id: userId
-    })
-    .select('id')
-    .single();
-
-  if (error || !newThread) return null;
-  return newThread.id;
-}
-
-// Get recent messages for context
-async function getRecentMessages(
-  supabase: ReturnType<typeof createClient>,
-  threadId: string,
-  limit: number = 10
-): Promise<Array<{ role: string; content: string }>> {
-  const { data: messages } = await supabase
-    .from('ai_chat_messages')
-    .select('role, content')
-    .eq('thread_id', threadId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  // Return in chronological order (oldest first)
-  return (messages || []).reverse();
-}
-
-// Save message to database
-async function saveMessage(
-  supabase: ReturnType<typeof createClient>,
-  threadId: string,
-  role: 'user' | 'assistant',
-  content: string,
-  metadata?: Record<string, unknown>
-): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('ai_chat_messages')
-    .insert({
-      thread_id: threadId,
-      role,
-      content,
-      metadata: metadata || {}
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    console.error('Error saving message:', error);
-    return null;
-  }
-  return data.id;
-}
-
-// Check and increment usage
-async function checkAndIncrementUsage(
-  supabase: ReturnType<typeof createClient>,
-  userId: string
-): Promise<{ allowed: boolean; used: number; limit: number }> {
-  const today = new Date().toISOString().split('T')[0];
-
-  const { data, error } = await supabase.rpc('increment_ai_usage', {
-    check_user_id: userId,
-    check_date: today
-  });
-
-  if (error || !data || data.length === 0) {
-    console.error('Error checking usage:', error);
-    // Deny on error to enforce limits
-    return { allowed: false, used: 0, limit: 10 };
-  }
-
-  return {
-    allowed: data[0].allowed,
-    used: data[0].current_count,
-    limit: data[0].daily_limit
-  };
-}
-
 // Send SSE event helper
 function sendSSE(res: Response, event: string, data: unknown): void {
   res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -392,19 +284,25 @@ function setupSSEHeaders(res: Response): void {
   res.flushHeaders();
 }
 
-interface OpenAIStreamResult {
+interface GeminiStreamResult {
   fullResponse: string;
 }
 
-function extractDeltaContent(line: string): string | null {
+// Extract text from a single Gemini SSE line (`data: {...}`). Gemini chunks can
+// carry multiple parts (text, functionCall); here we only handle text since
+// the anon path doesn't use tools.
+function extractGeminiTextDelta(line: string): string | null {
   if (!line.startsWith('data: ')) return null;
-
-  const data = line.slice(6);
-  if (data === '[DONE]') return null;
-
+  const payload = line.slice(6).trim();
+  if (!payload) return null;
   try {
-    const parsed = JSON.parse(data);
-    return parsed.choices?.[0]?.delta?.content || null;
+    const parsed = JSON.parse(payload);
+    const parts = parsed?.candidates?.[0]?.content?.parts || [];
+    let text = '';
+    for (const part of parts) {
+      if (typeof part?.text === 'string') text += part.text;
+    }
+    return text || null;
   } catch {
     return null;
   }
@@ -415,34 +313,37 @@ function sendSSEError(res: Response, message: string): void {
   res.end();
 }
 
-async function streamOpenAIResponse(
-  messages: Array<{ role: string; content: string }>,
+async function streamGeminiResponse(
+  systemInstruction: string,
+  contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }>,
   res: Response,
   options: { maxTokens: number; filterCreateItems?: boolean }
-): Promise<OpenAIStreamResult | null> {
-  const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+): Promise<GeminiStreamResult | null> {
+  const url = `${GEMINI_BASE}/models/${MODEL}:streamGenerateContent?alt=sse`;
+  const geminiResponse = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'x-goog-api-key': GEMINI_API_KEY,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: MODEL,
-      messages,
-      stream: true,
-      temperature: 0.7,
-      max_completion_tokens: options.maxTokens
+      contents,
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: options.maxTokens
+      }
     })
   });
 
-  if (!openaiResponse.ok) {
-    const errorText = await openaiResponse.text();
-    console.error('OpenAI error:', openaiResponse.status, errorText);
+  if (!geminiResponse.ok) {
+    const errorText = await geminiResponse.text();
+    console.error('Gemini error:', geminiResponse.status, errorText);
     sendSSEError(res, 'Failed to generate response');
     return null;
   }
 
-  const reader = openaiResponse.body?.getReader();
+  const reader = geminiResponse.body?.getReader();
   if (!reader) {
     sendSSEError(res, 'Failed to read response stream');
     return null;
@@ -454,48 +355,66 @@ async function streamOpenAIResponse(
   // suppress the whole fence atomically instead of leaking partial backticks.
   let pendingTail = '';
   let suppressing = false;
+  // SSE buffer — Gemini delimits messages with \n\n.
+  let sseBuffer = '';
 
   // Matches a tail that could still grow into "```create_items".
   const PARTIAL_MARKER_RE = /`{1,3}(c(r(e(a(t(e(_(i(t(e(m(s)?)?)?)?)?)?)?)?)?)?)?)?$/;
+
+  const forwardDelta = (content: string): void => {
+    if (!content) return;
+    fullResponse += content;
+
+    if (!options.filterCreateItems) {
+      sendSSE(res, 'message', { content });
+      return;
+    }
+
+    if (suppressing) return;
+
+    if (fullResponse.includes('```create_items')) {
+      // Full marker landed — stop forwarding and drop any buffered tail
+      // that was leading up to it.
+      suppressing = true;
+      pendingTail = '';
+      return;
+    }
+
+    const combined = pendingTail + content;
+    const match = combined.match(PARTIAL_MARKER_RE);
+
+    if (match) {
+      const safe = combined.slice(0, combined.length - match[0].length);
+      pendingTail = match[0];
+      if (safe) sendSSE(res, 'message', { content: safe });
+    } else {
+      if (combined) sendSSE(res, 'message', { content: combined });
+      pendingTail = '';
+    }
+  };
 
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      for (const line of chunk.split('\n')) {
-        const content = extractDeltaContent(line);
-        if (!content) continue;
-
-        fullResponse += content;
-
-        if (!options.filterCreateItems) {
-          sendSSE(res, 'message', { content });
-          continue;
+      sseBuffer += decoder.decode(value, { stream: true });
+      let boundary: number;
+      while ((boundary = sseBuffer.indexOf('\n\n')) !== -1) {
+        const message = sseBuffer.slice(0, boundary);
+        sseBuffer = sseBuffer.slice(boundary + 2);
+        for (const line of message.split('\n')) {
+          const delta = extractGeminiTextDelta(line);
+          if (delta) forwardDelta(delta);
         }
+      }
+    }
 
-        if (suppressing) continue;
-
-        if (fullResponse.includes('```create_items')) {
-          // Full marker landed — stop forwarding and drop any buffered tail
-          // that was leading up to it.
-          suppressing = true;
-          pendingTail = '';
-          continue;
-        }
-
-        const combined = pendingTail + content;
-        const match = combined.match(PARTIAL_MARKER_RE);
-
-        if (match) {
-          const safe = combined.slice(0, combined.length - match[0].length);
-          pendingTail = match[0];
-          if (safe) sendSSE(res, 'message', { content: safe });
-        } else {
-          if (combined) sendSSE(res, 'message', { content: combined });
-          pendingTail = '';
-        }
+    // Flush any trailing partial SSE message
+    if (sseBuffer.trim()) {
+      for (const line of sseBuffer.split('\n')) {
+        const delta = extractGeminiTextDelta(line);
+        if (delta) forwardDelta(delta);
       }
     }
 
@@ -526,132 +445,6 @@ function handleStreamError(res: Response, error: unknown, label: string): void {
   res.end();
 }
 
-// Parse create_items block from AI response
-interface ExtractedItem {
-  id: string;
-  itemType: 'accommodation' | 'transportation' | 'activity' | 'reservation';
-  fields: Record<string, unknown>;
-  missingRequired: string[];
-  confidence: number;
-  status: 'pending';
-}
-
-interface ParsedResponse {
-  cleanContent: string;
-  extractedItems: ExtractedItem[];
-}
-
-const REQUIRED_FIELDS_BY_TYPE: Record<string, string[]> = {
-  accommodation: ['name', 'check_in_date', 'check_out_date'],
-  transportation: ['type', 'departure_location', 'arrival_location', 'departure_date'],
-  activity: ['name', 'date'],
-  reservation: ['restaurant_name', 'date', 'time']
-};
-
-function mapRawItemToExtracted(item: Record<string, unknown>, idx: number): ExtractedItem {
-  const itemType = (item.itemType as string) || 'activity';
-  const fields = (item.fields as Record<string, unknown>) || item;
-  const required = REQUIRED_FIELDS_BY_TYPE[itemType] || [];
-  const missingRequired = required.filter(k => !fields[k]);
-
-  return {
-    id: `ai-item-${idx}-${Date.now()}`,
-    itemType: itemType as ExtractedItem['itemType'],
-    fields,
-    missingRequired,
-    confidence: 0.85,
-    status: 'pending' as const
-  };
-}
-
-const CREATE_ITEMS_REGEX = /```create_items\s*([\s\S]*?)```/;
-const CREATE_ITEMS_OPEN_REGEX = /```create_items\s*([\s\S]*)$/;
-
-// Extract the longest balanced JSON array/object starting at index 0 of `src`.
-// Returns null if no balanced structure is found. Handles strings and escapes
-// so braces inside strings don't throw off the depth counter.
-function extractBalancedJson(src: string): string | null {
-  const trimmed = src.trimStart();
-  if (!trimmed) return null;
-  const first = trimmed[0];
-  if (first !== '[' && first !== '{') return null;
-  const open = first;
-  const close = open === '[' ? ']' : '}';
-
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  let lastBalanced = -1;
-
-  for (let i = 0; i < trimmed.length; i++) {
-    const ch = trimmed[i];
-    if (inString) {
-      if (escape) {
-        escape = false;
-      } else if (ch === '\\') {
-        escape = true;
-      } else if (ch === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      inString = true;
-    } else if (ch === open) {
-      depth++;
-    } else if (ch === close) {
-      depth--;
-      if (depth === 0) {
-        lastBalanced = i;
-        break;
-      }
-    }
-  }
-
-  if (lastBalanced === -1) return null;
-  return trimmed.slice(0, lastBalanced + 1);
-}
-
-function parseCreateItemsBlock(response: string): ParsedResponse {
-  // First try the strict closed-fence match.
-  let jsonStr: string | null = null;
-  let matchedRange: RegExp | null = null;
-
-  const closedMatch = response.match(CREATE_ITEMS_REGEX);
-  if (closedMatch) {
-    jsonStr = closedMatch[1].trim();
-    matchedRange = CREATE_ITEMS_REGEX;
-  } else {
-    // Fallback: the closing ``` fence may have been truncated by the token
-    // limit or dropped by the model. Try to salvage items from whatever
-    // follows the opening fence by extracting a balanced JSON structure.
-    const openMatch = response.match(CREATE_ITEMS_OPEN_REGEX);
-    if (openMatch) {
-      const balanced = extractBalancedJson(openMatch[1]);
-      if (balanced) {
-        jsonStr = balanced;
-      }
-      matchedRange = CREATE_ITEMS_OPEN_REGEX;
-    }
-  }
-
-  if (!jsonStr || !matchedRange) {
-    return { cleanContent: response, extractedItems: [] };
-  }
-
-  let items: ExtractedItem[] = [];
-  try {
-    const parsed = JSON.parse(jsonStr);
-    const rawItems = Array.isArray(parsed) ? parsed : [parsed];
-    items = rawItems.map(mapRawItemToExtracted);
-  } catch (e) {
-    console.error('Failed to parse create_items JSON:', e, 'raw:', jsonStr.slice(0, 500));
-  }
-
-  const cleanContent = response.replace(matchedRange, '').trim();
-  return { cleanContent, extractedItems: items };
-}
-
 function buildAnonSystemPrompt(basePrompt: string): string {
   return basePrompt.replace(
     /CRITICAL - YOU CAN ADD ITEMS TO THE TRIP:[\s\S]*$/,
@@ -659,19 +452,25 @@ function buildAnonSystemPrompt(basePrompt: string): string {
   );
 }
 
-function buildOpenAIMessages(
-  systemPrompt: string,
+type GeminiTextContent = { role: 'user' | 'model'; parts: Array<{ text: string }> };
+
+// Convert chat history (role: 'user' | 'assistant') into Gemini `contents`
+// (role: 'user' | 'model'). Gemini has no `system` role — the system prompt
+// ships separately in `systemInstruction`.
+function buildGeminiContents(
   history: Array<{ role: string; content: string }>,
   userMessage?: string
-): Array<{ role: string; content: string }> {
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
-    ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
-  ];
+): GeminiTextContent[] {
+  const contents: GeminiTextContent[] = history
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({
+      role: m.role === 'assistant' ? 'model' as const : 'user' as const,
+      parts: [{ text: m.content }],
+    }));
   if (userMessage) {
-    messages.push({ role: 'user', content: userMessage });
+    contents.push({ role: 'user', parts: [{ text: userMessage }] });
   }
-  return messages;
+  return contents;
 }
 
 // Health check endpoint
@@ -859,7 +658,12 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
 
     const rawMessages = messages || [];
     const hasMore = rawMessages.length > limit;
-    const chronological = rawMessages.slice(0, limit).reverse();
+    // Hydrate placeCards from metadata so the client can rehydrate rich
+    // recommendation cards without re-streaming.
+    const chronological = rawMessages.slice(0, limit).reverse().map((m: any) => ({
+      ...m,
+      placeCards: m.metadata && Array.isArray(m.metadata.placeCards) ? m.metadata.placeCards : undefined,
+    }));
 
     return res.json({
       messages: chronological,
@@ -978,11 +782,11 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
     }
 
     const anonSystemPrompt = buildAnonSystemPrompt(buildSystemPrompt(tripContext));
-    const openaiMessages = buildOpenAIMessages(anonSystemPrompt, historyMessages, message.trim());
+    const contents = buildGeminiContents(historyMessages, message.trim());
 
     setupSSEHeaders(res);
 
-    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 800, filterCreateItems: true });
+    const result = await streamGeminiResponse(anonSystemPrompt, contents, res, { maxTokens: 800, filterCreateItems: true });
     if (!result) return;
 
     sendSSE(res, 'done', { thread_id: null, message_id: `anon-${Date.now()}` });
@@ -992,105 +796,71 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
   }
 });
 
-// Main streaming chat endpoint
+// Main streaming chat endpoint — proxies to the ai-chat Supabase Edge Function,
+// which owns auth, tool-calling (find_place / search_web), message persistence,
+// and SSE emission (including `place_cards` for rich recommendation rendering).
+// Express stays in the path so rate limiting and CORS live in one place, but
+// does not duplicate auth/usage/thread logic.
+const EDGE_CHAT_BASE = `${SUPABASE_URL}/functions/v1/ai-chat`;
+
+async function pipeSSEStream(upstream: Response, res: Response): Promise<void> {
+  if (!upstream.body) {
+    res.end();
+    return;
+  }
+  const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(decoder.decode(value, { stream: true }));
+    }
+  } catch (streamErr) {
+    console.error('Upstream chat stream error:', streamErr);
+  } finally {
+    res.end();
+  }
+}
+
 router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) => {
   try {
     const { tripId } = req.params;
     if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
-    const { message, thread_id }: SendMessageRequest = req.body;
 
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Please sign in to use the assistant' });
+    }
+
+    const { message, thread_id }: SendMessageRequest = req.body || {};
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({ error: 'Message is required' });
     }
-
     if (message.length > 4000) {
       return res.status(400).json({ error: 'Message exceeds maximum length' });
     }
 
-    const authUser = await getUserFromToken(req.headers.authorization || '');
-    if (!authUser) {
-      return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Please sign in to use the assistant' });
+    const upstream = await fetch(`${EDGE_CHAT_BASE}/${tripId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+      body: JSON.stringify({ message: message.trim(), thread_id }),
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      const text = await upstream.text().catch(() => '');
+      let parsed: unknown = { error: `Upstream ${upstream.status}` };
+      try { parsed = text ? JSON.parse(text) : parsed; } catch { parsed = { error: text || `Upstream ${upstream.status}` }; }
+      return res.status(upstream.status).json(parsed);
     }
-    const userId = authUser.id;
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    const hasAccess = await canAccessTrip(supabase, userId, tripId, authUser.email);
-    if (!hasAccess) {
-      return res.status(403).json({ code: 'TRIP_ACCESS_DENIED', message: 'You do not have access to this trip' });
-    }
-
-    const usage = await checkAndIncrementUsage(supabase, userId);
-    if (!usage.allowed) {
-      const tomorrow = new Date();
-      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-      tomorrow.setUTCHours(0, 0, 0, 0);
-
-      return res.status(429).json({
-        code: 'DAILY_LIMIT_REACHED',
-        message: 'You have reached your daily message limit',
-        limit: usage.limit,
-        used: usage.used,
-        resetAt: tomorrow.toISOString()
-      });
-    }
-
-    const threadId = await getOrCreateThread(supabase, userId, tripId, thread_id);
-    if (!threadId) {
-      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to create conversation thread' });
-    }
-
-    const userMessageId = await saveMessage(supabase, threadId, 'user', message.trim());
-    if (!userMessageId) {
-      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to save message' });
-    }
-
-    const tripContext = await getTripContext(supabase, tripId);
-    if (!tripContext) {
-      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to load trip data' });
-    }
-
-    const recentMessages = await getRecentMessages(supabase, threadId, 10);
-    const openaiMessages = buildOpenAIMessages(buildSystemPrompt(tripContext), recentMessages);
 
     setupSSEHeaders(res);
-
-    const result = await streamOpenAIResponse(openaiMessages, res, { maxTokens: 2000, filterCreateItems: true });
-    if (!result) return;
-
-    const { cleanContent, extractedItems } = parseCreateItemsBlock(result.fullResponse);
-
-    if (extractedItems.length === 0 && result.fullResponse.includes('```create_items')) {
-      console.warn(
-        '[ai-chat] create_items marker detected but no items extracted. Response length:',
-        result.fullResponse.length
-      );
-    }
-
-    const assistantMessageId = await saveMessage(supabase, threadId, 'assistant', cleanContent, {
-      model: MODEL,
-      tokens: { completion: result.fullResponse.length },
-      hasExtractedItems: extractedItems.length > 0
-    });
-
-    if (extractedItems.length > 0) {
-      sendSSE(res, 'extracted_items', {
-        items: extractedItems,
-        meta: { model: MODEL, source: 'conversation' }
-      });
-    }
-
-    // Send the sanitized content so the client displays the clean version
-    // instead of the accumulated stream (which may contain a partial
-    // ```create_items marker that slipped through before the filter engaged).
-    sendSSE(res, 'done', {
-      thread_id: threadId,
-      message_id: assistantMessageId,
-      content: cleanContent
-    });
-    res.end();
+    await pipeSSEStream(upstream, res);
   } catch (error) {
-    handleStreamError(res, error, 'Chat error');
+    handleStreamError(res, error, 'Chat proxy error');
   }
 });
 

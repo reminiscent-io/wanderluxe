@@ -54,6 +54,30 @@ export interface AIChatThread {
   updated_at: string;
 }
 
+// Rich place recommendation card. All URLs + structured fields are populated
+// server-side from verified Google Places results — the model only authors
+// blurb, tags, an optional booking_url, and an optional suggested_add payload
+// that is validated against the trip's date window before being offered.
+export interface PlaceCard {
+  id: string;
+  place_id: string;
+  name: string;
+  address: string;
+  maps_url: string;
+  website?: string;
+  rating?: number;
+  price_level?: number;
+  phone?: string;
+  photo_url?: string;
+  booking_url?: string;
+  blurb?: string;
+  tags?: string[];
+  suggested_add?: {
+    itemType: 'reservation' | 'activity';
+    fields: Record<string, unknown>;
+  };
+}
+
 export interface AIChatMessage {
   id: string;
   thread_id: string;
@@ -69,6 +93,8 @@ export interface AIChatMessage {
     pagesUsed: number;
     originalFileName: string;
   };
+  // Rich place cards streamed alongside the assistant response.
+  placeCards?: PlaceCard[];
   // For user messages with file attachments
   attachmentPreviewUrl?: string;
   attachmentFileName?: string;

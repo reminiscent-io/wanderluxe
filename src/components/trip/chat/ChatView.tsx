@@ -479,7 +479,7 @@ export default function ChatView({ tripId, canEdit = true }: Props) {
                 2. Drag & drop an image/PDF here, or use the buttons below.
               </p>
               <p className= "text-xs text-sand-500 italic">
-                All files are securely passed to OpenAI; we do not store any uploads
+                All files are securely passed to Google's Gemini API; we do not store any uploads
               </p>
 
               {/* Live preview (image or first page of PDF) */}

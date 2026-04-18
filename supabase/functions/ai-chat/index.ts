@@ -23,6 +23,11 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
+// Hardcoded model — locked at the function layer so no request path or env
+// override can redirect traffic to a different (potentially unvetted) model.
+const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
 type ExtractedItem = {
   id: string;
   itemType: string;
@@ -32,36 +37,44 @@ type ExtractedItem = {
   status: 'pending';
 };
 
-type ToolCall = {
-  id: string;
-  type: string;
-  function: { name: string; arguments: string };
-};
+type GeminiFunctionCall = { name: string; args: Record<string, unknown> };
 
-type OpenAIMessage = {
-  role: string;
-  content?: string | null;
-  tool_calls?: any[];
-  tool_call_id?: string;
-  name?: string;
-};
+type GeminiFunctionResponse = { name: string; response: Record<string, unknown> };
 
-type OpenAIOptions = {
-  model: string;
-  openaiApiKey: string;
-  tools?: any[];
-  forceToolName?: string | null;
+type GeminiPart =
+  | { text: string }
+  | { functionCall: GeminiFunctionCall }
+  | { functionResponse: GeminiFunctionResponse };
+
+type GeminiContent = { role: 'user' | 'model'; parts: GeminiPart[] };
+
+type GeminiTool = { functionDeclarations: any[] };
+
+type GeminiToolMode = 'AUTO' | 'ANY' | 'NONE';
+
+type GeminiOptions = {
+  apiKey: string;
+  tools?: GeminiTool[];
+  toolMode?: GeminiToolMode;
+  allowedFunctionNames?: string[];
   skipTools?: boolean;
+  temperature?: number;
+  maxOutputTokens?: number;
 };
 
 type StreamContext = {
-  openaiMsgs: OpenAIMessage[];
-  openaiOptions: OpenAIOptions;
+  systemInstruction: string;
+  contents: GeminiContent[];
+  geminiOptions: GeminiOptions;
   forceToolName: string | null;
   serperApiKey: string | undefined;
   googlePlacesApiKey: string | undefined;
   searchLocation: string;
   verifiedUrls: Set<string>;
+  placesById: Map<string, PlaceResult>;
+  supabaseUrl: string;
+  arrivalDate: string;
+  departureDate: string;
   message: string;
   supabase: SupabaseClient;
   threadId: string;
@@ -111,6 +124,30 @@ type PlaceResult = {
   website?: string;
   rating?: number;
   phone?: string;
+  price_level?: number;
+  photo_reference?: string;
+};
+
+// Enriched place card shipped to the client. All URLs are either derived from
+// Google Places (verified) or booking_url that survived the verifiedUrls gate.
+type PlaceCard = {
+  id: string;
+  place_id: string;
+  name: string;
+  address: string;
+  maps_url: string;
+  website?: string;
+  rating?: number;
+  price_level?: number;
+  phone?: string;
+  photo_url?: string;
+  booking_url?: string;
+  blurb?: string;
+  tags?: string[];
+  suggested_add?: {
+    itemType: 'reservation' | 'activity';
+    fields: Record<string, unknown>;
+  };
 };
 
 // Hardcoded Google Places API base. All findPlaces() fetches target this host
@@ -145,11 +182,12 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
     try {
       const detailsUrl = new URL('/maps/api/place/details/json', GOOGLE_PLACES_BASE);
       detailsUrl.searchParams.set('place_id', c.place_id);
-      detailsUrl.searchParams.set('fields', 'name,place_id,formatted_address,website,rating,formatted_phone_number');
+      detailsUrl.searchParams.set('fields', 'name,place_id,formatted_address,website,rating,formatted_phone_number,photos,price_level');
       detailsUrl.searchParams.set('key', apiKey);
       const detailRes = await fetch(detailsUrl);
       const detailJson = await detailRes.json();
       const d = detailJson.result || {};
+      const firstPhoto = Array.isArray(d.photos) && d.photos.length > 0 ? d.photos[0] : null;
       return {
         name: d.name || c.name,
         place_id: c.place_id,
@@ -158,6 +196,8 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
         website: d.website,
         rating: d.rating ?? c.rating,
         phone: d.formatted_phone_number,
+        price_level: typeof d.price_level === 'number' ? d.price_level : undefined,
+        photo_reference: firstPhoto?.photo_reference,
       } as PlaceResult;
     } catch {
       return {
@@ -172,12 +212,78 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
   return Promise.all(detailPromises);
 }
 
-function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: ExtractedItem[] } {
-  const createItemsRegex = /```create_items\s*([\s\S]*?)```/;
-  const match = response.match(createItemsRegex);
-  if (!match) return { cleanContent: response, extractedItems: [] };
+const CREATE_ITEMS_REGEX = /```create_items\s*([\s\S]*?)```/;
+const CREATE_ITEMS_OPEN_REGEX = /```create_items\s*([\s\S]*)$/;
 
-  const jsonStr = match[1].trim();
+// Extract the longest balanced JSON array/object starting at index 0 of `src`.
+// Used to recover items when the model's response was truncated before the
+// closing ``` fence was emitted — see parseCreateItemsBlock.
+function extractBalancedJson(src: string): string | null {
+  const trimmed = src.trimStart();
+  if (!trimmed) return null;
+  const first = trimmed[0];
+  if (first !== '[' && first !== '{') return null;
+  const open = first;
+  const close = open === '[' ? ']' : '}';
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let lastBalanced = -1;
+
+  for (let i = 0; i < trimmed.length; i++) {
+    const ch = trimmed[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+      } else if (ch === '\\') {
+        escape = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === open) {
+      depth++;
+    } else if (ch === close) {
+      depth--;
+      if (depth === 0) {
+        lastBalanced = i;
+        break;
+      }
+    }
+  }
+
+  if (lastBalanced === -1) return null;
+  return trimmed.slice(0, lastBalanced + 1);
+}
+
+function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: ExtractedItem[] } {
+  // Try the strict closed-fence match first. Fall back to balanced-JSON
+  // recovery when only the opening fence is present (model was truncated
+  // at maxOutputTokens before it could emit the closing fence).
+  let jsonStr: string | null = null;
+  let matchedRange: RegExp | null = null;
+
+  const closedMatch = response.match(CREATE_ITEMS_REGEX);
+  if (closedMatch) {
+    jsonStr = closedMatch[1].trim();
+    matchedRange = CREATE_ITEMS_REGEX;
+  } else {
+    const openMatch = response.match(CREATE_ITEMS_OPEN_REGEX);
+    if (openMatch) {
+      const balanced = extractBalancedJson(openMatch[1]);
+      if (balanced) jsonStr = balanced;
+      matchedRange = CREATE_ITEMS_OPEN_REGEX;
+    }
+  }
+
+  if (!jsonStr || !matchedRange) {
+    return { cleanContent: response, extractedItems: [] };
+  }
+
   let items: ExtractedItem[] = [];
   try {
     const parsed = JSON.parse(jsonStr);
@@ -195,109 +301,250 @@ function parseCreateItemsBlock(response: string): { cleanContent: string; extrac
       const missingRequired = required.filter((k: string) => !fields[k]);
       return { id: `ai-item-${idx}-${Date.now()}`, itemType, fields, missingRequired, confidence: 0.85, status: 'pending' as const };
     });
-  } catch { /* ignore parse errors */ }
+  } catch (e) {
+    console.error('Failed to parse create_items JSON:', e, 'raw:', jsonStr.slice(0, 500));
+  }
 
-  const cleanContent = response.replace(createItemsRegex, '').trim();
+  const cleanContent = response.replace(matchedRange, '').trim();
   return { cleanContent, extractedItems: items };
 }
 
-function accumulateToolCall(
-  toolCallsAcc: Array<ToolCall | undefined>,
-  tcArgs: Record<number, string>,
-  tc: any
-): void {
-  const idx = tc.index ?? 0;
-  if (!toolCallsAcc[idx]) {
-    toolCallsAcc[idx] = {
-      id: tc.id || `call_${idx}`,
-      type: tc.type || 'function',
-      function: { name: tc.function?.name || '', arguments: '' }
-    };
-  }
-  if (tc.id) toolCallsAcc[idx]!.id = tc.id;
-  if (tc.function?.name) toolCallsAcc[idx]!.function.name = tc.function.name;
-  if (tc.function?.arguments) tcArgs[idx] = (tcArgs[idx] || '') + tc.function.arguments;
+type RawPlaceCard = {
+  place_id?: unknown;
+  blurb?: unknown;
+  tags?: unknown;
+  booking_url?: unknown;
+  suggested_add?: {
+    itemType?: unknown;
+    date?: unknown;
+    time?: unknown;
+    end_time?: unknown;
+    party_size?: unknown;
+    notes?: unknown;
+  };
+};
+
+function parsePlaceCardsBlock(response: string): { cleanContent: string; rawCards: RawPlaceCard[] } {
+  const regex = /```place_cards\s*([\s\S]*?)```/;
+  const match = response.match(regex);
+  if (!match) return { cleanContent: response, rawCards: [] };
+  const jsonStr = match[1].trim();
+  let rawCards: RawPlaceCard[] = [];
+  try {
+    const parsed = JSON.parse(jsonStr);
+    rawCards = (Array.isArray(parsed) ? parsed : [parsed]) as RawPlaceCard[];
+  } catch { /* ignore parse errors */ }
+  const cleanContent = response.replace(regex, '').trim();
+  return { cleanContent, rawCards };
 }
 
-function processStreamLine(
+function isDateInRange(date: string, arrival: string, departure: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(arrival) || !/^\d{4}-\d{2}-\d{2}$/.test(departure)) {
+    return true; // Trip has no fixed dates — trust the model's date.
+  }
+  return date >= arrival && date <= departure;
+}
+
+function isValidTime(time: unknown): time is string {
+  return typeof time === 'string' && /^\d{2}:\d{2}$/.test(time);
+}
+
+function buildSuggestedAdd(
+  raw: RawPlaceCard['suggested_add'],
+  place: PlaceResult,
+  bookingUrl: string | undefined,
+  arrival: string,
+  departure: string,
+): PlaceCard['suggested_add'] | undefined {
+  if (!raw || typeof raw.date !== 'string') return undefined;
+  if (!isDateInRange(raw.date, arrival, departure)) return undefined;
+
+  const itemType = raw.itemType === 'activity' ? 'activity' : 'reservation';
+
+  if (itemType === 'reservation') {
+    if (!isValidTime(raw.time)) return undefined;
+    return {
+      itemType: 'reservation',
+      fields: {
+        restaurant_name: place.name,
+        date: raw.date,
+        time: raw.time,
+        party_size: typeof raw.party_size === 'number' ? raw.party_size : undefined,
+        address: place.formatted_address || undefined,
+        phone: place.phone || undefined,
+        website: bookingUrl || place.website || undefined,
+        notes: typeof raw.notes === 'string' ? raw.notes : undefined,
+      },
+    };
+  }
+
+  // activity
+  return {
+    itemType: 'activity',
+    fields: {
+      name: place.name,
+      date: raw.date,
+      start_time: isValidTime(raw.time) ? raw.time : undefined,
+      end_time: isValidTime(raw.end_time) ? raw.end_time : undefined,
+      location: place.formatted_address || undefined,
+      notes: typeof raw.notes === 'string' ? raw.notes : undefined,
+    },
+  };
+}
+
+function enrichPlaceCards(
+  rawCards: RawPlaceCard[],
+  placesById: Map<string, PlaceResult>,
+  verifiedUrls: Set<string>,
+  supabaseUrl: string,
+  arrival: string,
+  departure: string,
+): PlaceCard[] {
+  const cards: PlaceCard[] = [];
+  rawCards.forEach((raw, idx) => {
+    if (typeof raw.place_id !== 'string') return;
+    const place = placesById.get(raw.place_id);
+    if (!place) return;
+
+    const photo_url = place.photo_reference
+      ? `${supabaseUrl}/functions/v1/google-places-proxy?photo_reference=${encodeURIComponent(place.photo_reference)}&maxwidth=800`
+      : undefined;
+
+    const bookingUrlRaw = typeof raw.booking_url === 'string' ? raw.booking_url : '';
+    const booking_url = bookingUrlRaw && verifiedUrls.has(bookingUrlRaw) ? bookingUrlRaw : undefined;
+
+    const suggested_add = buildSuggestedAdd(raw.suggested_add, place, booking_url, arrival, departure);
+
+    const tags = Array.isArray(raw.tags)
+      ? raw.tags.filter((t): t is string => typeof t === 'string').slice(0, 4)
+      : undefined;
+
+    const blurb = typeof raw.blurb === 'string' ? raw.blurb.slice(0, 240) : undefined;
+
+    cards.push({
+      id: `card-${idx}-${Date.now()}`,
+      place_id: place.place_id,
+      name: place.name,
+      address: place.formatted_address,
+      maps_url: place.maps_url,
+      website: place.website,
+      rating: place.rating,
+      price_level: place.price_level,
+      phone: place.phone,
+      photo_url,
+      booking_url,
+      blurb,
+      tags,
+      suggested_add,
+    });
+  });
+  return cards;
+}
+
+type GeminiStreamState = { textContent: string; functionCalls: GeminiFunctionCall[] };
+
+// Gemini streams SSE messages of the shape
+//   data: {"candidates":[{"content":{"role":"model","parts":[...parts]}, "finishReason":...}]}
+// Parts can be either {text} or {functionCall:{name,args}}. Unlike OpenAI,
+// functionCall arrives as a complete object in a single chunk — not as
+// incremental argument deltas — so no accumulator is needed.
+function processGeminiStreamLine(
   line: string,
-  state: { content: string },
-  toolCallsAcc: Array<ToolCall | undefined>,
-  tcArgs: Record<number, string>,
+  state: GeminiStreamState,
   controller: { enqueue: (chunk: Uint8Array) => void },
   encoder: TextEncoder
 ): void {
-  if (!line.startsWith('data: ') || line.slice(6) === '[DONE]') return;
+  if (!line.startsWith('data: ')) return;
+  const payload = line.slice(6).trim();
+  if (!payload) return;
   try {
-    const data = JSON.parse(line.slice(6));
-    const delta = data.choices?.[0]?.delta;
-    if (delta?.content) {
-      state.content += delta.content;
-      controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: delta.content })}\n\n`));
-    }
-    if (delta?.tool_calls) {
-      for (const tc of delta.tool_calls) {
-        accumulateToolCall(toolCallsAcc, tcArgs, tc);
+    const data = JSON.parse(payload);
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    for (const part of parts) {
+      if (typeof part?.text === 'string' && part.text.length > 0) {
+        state.textContent += part.text;
+        controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: part.text })}\n\n`));
+      } else if (part?.functionCall && typeof part.functionCall.name === 'string') {
+        state.functionCalls.push({
+          name: part.functionCall.name,
+          args: (part.functionCall.args as Record<string, unknown>) || {},
+        });
       }
     }
   } catch { /* ignore malformed SSE chunks */ }
 }
 
-function finalizeToolCalls(
-  toolCallsAcc: Array<ToolCall | undefined>,
-  tcArgs: Record<number, string>
-): ToolCall[] | null {
-  const withIndex = toolCallsAcc
-    .map((tc, i) => (tc ? { tc, i } : null))
-    .filter(Boolean) as Array<{ tc: ToolCall; i: number }>;
-  if (withIndex.length === 0) return null;
-  return withIndex.map(({ tc, i }) => ({
-    ...tc,
-    function: { ...tc.function, arguments: tcArgs[i] ?? tc.function?.arguments ?? '' }
-  }));
-}
-
-async function processStream(
-  openaiRes: Response,
+async function processGeminiStream(
+  geminiRes: Response,
   controller: { enqueue: (chunk: Uint8Array) => void },
   encoder: TextEncoder
-): Promise<{ fullResponse: string; toolCalls: ToolCall[] | null }> {
-  const reader = openaiRes.body!.getReader();
+): Promise<GeminiStreamState> {
+  const reader = geminiRes.body!.getReader();
   const decoder = new TextDecoder();
-  const state = { content: '' };
-  const toolCallsAcc: Array<ToolCall | undefined> = [];
-  const tcArgs: Record<number, string> = {};
+  const state: GeminiStreamState = { textContent: '', functionCalls: [] };
+  let buffer = '';
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      processStreamLine(line, state, toolCallsAcc, tcArgs, controller, encoder);
+    buffer += decoder.decode(value, { stream: true });
+    // SSE messages are \n\n delimited. Each message can contain multiple
+    // lines; we only care about `data:` lines.
+    let boundary: number;
+    while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+      const message = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      for (const line of message.split('\n')) {
+        processGeminiStreamLine(line, state, controller, encoder);
+      }
+    }
+  }
+  if (buffer.trim()) {
+    for (const line of buffer.split('\n')) {
+      processGeminiStreamLine(line, state, controller, encoder);
     }
   }
 
-  return { fullResponse: state.content, toolCalls: finalizeToolCalls(toolCallsAcc, tcArgs) };
+  return state;
 }
 
-async function callOpenAI(messages: OpenAIMessage[], stream: boolean, options: OpenAIOptions): Promise<Response> {
+async function callGemini(
+  systemInstruction: string,
+  contents: GeminiContent[],
+  stream: boolean,
+  options: GeminiOptions,
+): Promise<Response> {
+  const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
+  const url = `${GEMINI_BASE}/models/${GEMINI_MODEL}:${endpoint}${stream ? '?alt=sse' : ''}`;
+
   const body: Record<string, unknown> = {
-    model: options.model,
-    messages,
-    stream,
-    temperature: 0.7,
-    max_completion_tokens: 1500
+    contents,
+    systemInstruction: { parts: [{ text: systemInstruction }] },
+    generationConfig: {
+      temperature: options.temperature ?? 0.7,
+      maxOutputTokens: options.maxOutputTokens ?? 2000,
+    },
   };
+
   if (options.tools && !options.skipTools) {
     body.tools = options.tools;
-    if (options.forceToolName) {
-      body.tool_choice = { type: 'function' as const, function: { name: options.forceToolName } };
+    if (options.toolMode) {
+      body.toolConfig = {
+        functionCallingConfig: {
+          mode: options.toolMode,
+          ...(options.allowedFunctionNames && options.allowedFunctionNames.length > 0
+            ? { allowedFunctionNames: options.allowedFunctionNames }
+            : {}),
+        },
+      };
     }
   }
-  return fetch('https://api.openai.com/v1/chat/completions', {
+
+  return fetch(url, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${options.openaiApiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    headers: { 'x-goog-api-key': options.apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 }
 
@@ -324,7 +571,12 @@ async function handleGetMessages(supabase: SupabaseClient, tripId: string, userI
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  const orderedMessages = (messages || []).reverse();
+  // Hydrate placeCards from metadata so the client can render them without
+  // re-streaming. Leave metadata in place for other consumers.
+  const orderedMessages = (messages || []).reverse().map((m: any) => ({
+    ...m,
+    placeCards: m.metadata && Array.isArray(m.metadata.placeCards) ? m.metadata.placeCards : undefined,
+  }));
   const hasMore = offset + limit < (totalCount || 0);
 
   return jsonResponse({ messages: orderedMessages, thread_id: thread.id, hasMore, totalCount }, 200, cors);
@@ -426,6 +678,38 @@ function buildSystemPrompt(params: SystemPromptParams): string {
 
   const safeTripName = sanitizeForPrompt(tripName);
 
+  const placeCardsPolicy = hasFindPlace
+    ? `## Rich Place Cards (PREFERRED for recommendations)
+When you recommend one or more restaurants, attractions, bars, landmarks, or activities, output a \`place_cards\` JSON block at the END of your response INSTEAD of listing them in prose. The client renders these as rich cards with photos, ratings, and one-tap "Add to trip" buttons.
+
+Rules:
+- You MUST first call \`find_place\` for each recommendation so we have a verified place_id.
+- Keep your prose to 1–2 sentences of introduction ("Here are three standout dinner spots in Montmartre:"). DO NOT list the places in the prose — the cards ARE the list.
+- Scope for phase 1: restaurants/dining AND attractions/activities only. Do NOT use place_cards for hotels yet.
+- Include a \`suggested_add\` block ONLY when the user gave a specific date (and time, for reservations) that falls between ${arrivalDate} and ${departureDate}. When in doubt, omit it — the user can still tap the card to add it.
+
+Format (one entry per place):
+\`\`\`place_cards
+[
+  {
+    "place_id": "ChIJ...",                           // REQUIRED, from find_place result
+    "blurb": "One sentence on why it's worth going.", // ≤200 chars
+    "tags": ["Italian", "Date night"],                // optional, max 4 short tags
+    "booking_url": "https://resy.com/...",            // optional, only if you have a verified booking URL from search_web
+    "suggested_add": {                                // optional
+      "itemType": "reservation",                      // "reservation" for dining, "activity" for attractions/tours
+      "date": "YYYY-MM-DD",                           // MUST be within ${arrivalDate}..${departureDate}
+      "time": "HH:mm",                                // REQUIRED for reservation, optional for activity
+      "end_time": "HH:mm",                            // optional, activity only
+      "party_size": 2,                                // optional, reservation only
+      "notes": "Short note"                           // optional
+    }
+  }
+]
+\`\`\`
+Do NOT invent place_id, name, address, website, rating, or phone — the server fills these in from Google Places. You only author blurb, tags, booking_url, and the optional suggested_add block.`
+    : '';
+
   return `You are a helpful travel assistant for a trip to ${safeTripName}. ${locationContext}
 Trip dates: ${arrivalDate} to ${departureDate}.${partySizeContext}${itineraryContext}
 
@@ -438,8 +722,10 @@ ${formattedTransportation}
 Guidelines:
 - Be concise and helpful
 - Use markdown formatting for readability. IMPORTANT: When writing numbered lists, put each item on its own line with a blank line between items for proper rendering
-- When listing multiple recommendations, use a numbered markdown list with each item separated by a blank line
-- Format place recommendations as: **[Place Name](verified-url)** — brief description (when you have a verified URL), otherwise **Place Name** — brief description (with no link)
+- When listing multiple recommendations, prefer the \`place_cards\` block (see below) over a markdown list.
+- For places that cannot be shown as cards (e.g. hotels in phase 1, or when find_place is unavailable), format as: **[Place Name](verified-url)** — brief description (when you have a verified URL), otherwise **Place Name** — brief description (with no link)
+
+${placeCardsPolicy}
 
 ${linkPolicy}
 
@@ -482,125 +768,131 @@ type ToolExecutionContext = {
   googlePlacesApiKey: string | undefined;
   message: string;
   verifiedUrls: Set<string>;
+  placesById: Map<string, PlaceResult>;
 };
 
 async function executeSearchWeb(
-  tc: ToolCall,
+  call: GeminiFunctionCall,
   serperApiKey: string,
   message: string,
   verifiedUrls: Set<string>,
-): Promise<{ role: 'tool'; tool_call_id: string; content: string }> {
+): Promise<GeminiFunctionResponse> {
   try {
-    const argsStr = (tc.function.arguments || '').trim();
-    const args = argsStr ? JSON.parse(argsStr) : {};
-    const q = extractSearchQuery(args);
+    const q = extractSearchQuery(call.args);
     const searchQuery = q || message || 'restaurant reservations';
     const results = await searchWeb(searchQuery, serperApiKey);
     const organic = (results.organic || []).slice(0, 6);
     for (const r of organic) {
       if (r.link) verifiedUrls.add(r.link);
     }
-    const summary = organic.map((r) => `${r.title}: ${r.link}`).join('\n');
-    return { role: 'tool', tool_call_id: tc.id, content: summary || 'No results found.' };
+    return {
+      name: 'search_web',
+      response: {
+        results: organic.map((r) => ({ title: r.title, link: r.link, snippet: r.snippet || '' })),
+      },
+    };
   } catch (error_) {
     const errorMsg = error_ instanceof Error ? error_.message : 'Unknown';
-    return { role: 'tool', tool_call_id: tc.id, content: `Search error: ${errorMsg}. Do not fabricate a URL; tell the user to search manually.` };
+    return {
+      name: 'search_web',
+      response: { error: `Search error: ${errorMsg}. Do not fabricate a URL; tell the user to search manually.` },
+    };
   }
 }
 
 async function executeFindPlace(
-  tc: ToolCall,
+  call: GeminiFunctionCall,
   googlePlacesApiKey: string,
   verifiedUrls: Set<string>,
-): Promise<{ role: 'tool'; tool_call_id: string; content: string }> {
+  placesById: Map<string, PlaceResult>,
+): Promise<GeminiFunctionResponse> {
   try {
-    const argsStr = (tc.function.arguments || '').trim();
-    const args = argsStr ? JSON.parse(argsStr) : {};
-    const query = typeof args.query === 'string' ? args.query : '';
+    const query = typeof call.args.query === 'string' ? call.args.query : '';
     if (!query) {
-      return { role: 'tool', tool_call_id: tc.id, content: 'find_place error: missing "query" argument.' };
+      return { name: 'find_place', response: { error: 'missing "query" argument' } };
     }
     const places = await findPlaces(query, googlePlacesApiKey);
     if (places.length === 0) {
-      return { role: 'tool', tool_call_id: tc.id, content: 'No matching places found.' };
+      return { name: 'find_place', response: { results: [], message: 'No matching places found.' } };
     }
     for (const p of places) {
       verifiedUrls.add(p.maps_url);
       if (p.website) verifiedUrls.add(p.website);
+      placesById.set(p.place_id, p);
     }
     // Give the model a compact, unambiguous structured payload so it can
-    // quote verified URLs instead of authoring new ones.
-    const payload = places.map((p) => ({
+    // quote verified URLs instead of authoring new ones. place_id is included
+    // so the model can reference cards in a `place_cards` block.
+    const results = places.map((p) => ({
+      place_id: p.place_id,
       name: p.name,
       address: p.formatted_address,
       rating: p.rating,
+      price_level: p.price_level,
       phone: p.phone,
       website: p.website || null,
       maps_url: p.maps_url,
     }));
-    return { role: 'tool', tool_call_id: tc.id, content: JSON.stringify(payload) };
+    return { name: 'find_place', response: { results } };
   } catch (error_) {
     const errorMsg = error_ instanceof Error ? error_.message : 'Unknown';
-    return { role: 'tool', tool_call_id: tc.id, content: `find_place error: ${errorMsg}. Do not fabricate a URL.` };
+    return { name: 'find_place', response: { error: `${errorMsg}. Do not fabricate a URL.` } };
   }
 }
 
 async function executeToolCalls(
-  toolCalls: ToolCall[],
+  functionCalls: GeminiFunctionCall[],
   ctx: ToolExecutionContext,
-): Promise<Array<{ role: 'tool'; tool_call_id: string; content: string }>> {
-  const toolResults: Array<{ role: 'tool'; tool_call_id: string; content: string }> = [];
-  for (const tc of toolCalls) {
-    if (tc.function.name === 'search_web' && ctx.serperApiKey) {
-      toolResults.push(await executeSearchWeb(tc, ctx.serperApiKey, ctx.message, ctx.verifiedUrls));
-    } else if (tc.function.name === 'find_place' && ctx.googlePlacesApiKey) {
-      toolResults.push(await executeFindPlace(tc, ctx.googlePlacesApiKey, ctx.verifiedUrls));
+): Promise<GeminiFunctionResponse[]> {
+  const results: GeminiFunctionResponse[] = [];
+  for (const call of functionCalls) {
+    if (call.name === 'search_web' && ctx.serperApiKey) {
+      results.push(await executeSearchWeb(call, ctx.serperApiKey, ctx.message, ctx.verifiedUrls));
+    } else if (call.name === 'find_place' && ctx.googlePlacesApiKey) {
+      results.push(await executeFindPlace(call, ctx.googlePlacesApiKey, ctx.verifiedUrls, ctx.placesById));
     } else {
-      toolResults.push({ role: 'tool', tool_call_id: tc.id, content: `Tool "${tc.function.name}" is not available in this environment.` });
+      results.push({ name: call.name, response: { error: `Tool "${call.name}" is not available in this environment.` } });
     }
   }
-  return toolResults;
+  return results;
 }
 
-function buildTools(serperApiKey: string | undefined, googlePlacesApiKey: string | undefined): any[] | undefined {
-  const tools: any[] = [];
+function buildTools(
+  serperApiKey: string | undefined,
+  googlePlacesApiKey: string | undefined,
+): GeminiTool[] | undefined {
+  const decls: any[] = [];
 
   if (googlePlacesApiKey) {
-    tools.push({
-      type: 'function' as const,
-      function: {
-        name: 'find_place',
-        description: 'Look up a specific place (restaurant, hotel, landmark, attraction) on Google Places. Returns verified name, address, website, phone, rating, and a canonical Google Maps URL. Use this whenever you recommend or reference a specific place so that the URL you cite is real.',
-        parameters: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Free-text place query, e.g. "Carbone restaurant NYC" or "Hotel Bel-Air Los Angeles".',
-            },
+    decls.push({
+      name: 'find_place',
+      description: 'Look up a specific place (restaurant, hotel, landmark, attraction) on Google Places. Returns verified name, address, website, phone, rating, and a canonical Google Maps URL. Use this whenever you recommend or reference a specific place so that the URL you cite is real.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Free-text place query, e.g. "Carbone restaurant NYC" or "Hotel Bel-Air Los Angeles".',
           },
-          required: ['query'],
         },
+        required: ['query'],
       },
     });
   }
 
   if (serperApiKey) {
-    tools.push({
-      type: 'function' as const,
-      function: {
-        name: 'search_web',
-        description: 'Search the web for up-to-date information. Use only for time-sensitive queries that find_place cannot answer: restaurant booking pages (Resy, OpenTable), weather, current events, opening hours, exchange rates.',
-        parameters: {
-          type: 'object',
-          properties: { query: { type: 'string', description: 'Search query, e.g. "Carbone NYC site:resy.com"' } },
-          required: ['query'],
-        },
+    decls.push({
+      name: 'search_web',
+      description: 'Search the web for up-to-date information. Use only for time-sensitive queries that find_place cannot answer: restaurant booking pages (Resy, OpenTable), weather, current events, opening hours, exchange rates.',
+      parameters: {
+        type: 'object',
+        properties: { query: { type: 'string', description: 'Search query, e.g. "Carbone NYC site:resy.com"' } },
+        required: ['query'],
       },
     });
   }
 
-  return tools.length > 0 ? tools : undefined;
+  return decls.length > 0 ? [{ functionDeclarations: decls }] : undefined;
 }
 
 const DINING_KEYWORDS = /\b(restaurant|restaurants|dining|dinner|lunch|eat|food|reservation|reservations|book a table|opentable|resy|carbone)\b/i;
@@ -689,10 +981,11 @@ function deriveSearchLocation(primaryDestination: string | null, accommodations:
 }
 
 type ToolCallFollowUpParams = {
-  toolCalls: ToolCall[];
-  fullResponse: string;
-  currentMessages: OpenAIMessage[];
-  openaiOptions: OpenAIOptions;
+  functionCalls: GeminiFunctionCall[];
+  textSoFar: string;
+  contents: GeminiContent[];
+  systemInstruction: string;
+  geminiOptions: GeminiOptions;
   toolCtx: ToolExecutionContext;
 };
 
@@ -701,38 +994,61 @@ async function handleToolCallFollowUp(
   controller: { enqueue: (chunk: Uint8Array) => void },
   encoder: TextEncoder
 ): Promise<string> {
-  const { toolCalls, fullResponse, currentMessages, openaiOptions, toolCtx } = params;
-  const assistantMsg = { role: 'assistant' as const, content: fullResponse || null, tool_calls: toolCalls };
-  const toolResults = await executeToolCalls(toolCalls, toolCtx);
-  const updatedMessages = [...currentMessages, assistantMsg, ...toolResults];
-  const followRes = await callOpenAI(updatedMessages, true, { ...openaiOptions, skipTools: true });
+  const { functionCalls, textSoFar, contents, systemInstruction, geminiOptions, toolCtx } = params;
 
-  if (followRes.ok) {
-    const { fullResponse: followContent } = await processStream(followRes, controller, encoder);
-    return followContent;
+  // Re-inject the model's turn (any text it produced + its function calls),
+  // then a user turn containing the matching functionResponse parts. This is
+  // Gemini's equivalent of OpenAI's tool-result messages.
+  const modelParts: GeminiPart[] = [];
+  if (textSoFar) modelParts.push({ text: textSoFar });
+  for (const call of functionCalls) modelParts.push({ functionCall: call });
+
+  const toolResponses = await executeToolCalls(functionCalls, toolCtx);
+  const responseParts: GeminiPart[] = toolResponses.map((r) => ({ functionResponse: r }));
+
+  const updatedContents: GeminiContent[] = [
+    ...contents,
+    { role: 'model', parts: modelParts },
+    { role: 'user', parts: responseParts },
+  ];
+
+  const followRes = await callGemini(systemInstruction, updatedContents, true, { ...geminiOptions, skipTools: true });
+
+  if (followRes.ok && followRes.body) {
+    const followState = await processGeminiStream(followRes, controller, encoder);
+    return followState.textContent;
   }
 
-  const errBody = await followRes.text();
-  console.error('OpenAI follow-up error:', followRes.status, errBody);
+  const errBody = await followRes.text().catch(() => '');
+  console.error('Gemini follow-up error:', followRes.status, errBody);
   const fallback = 'I found some booking options but had trouble formatting them. Try searching for the restaurant name plus your city on Resy or OpenTable.';
   controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: fallback })}\n\n`));
   return fallback;
 }
 
+type FinalEventsParams = {
+  finalContent: string;
+  fallbackMsg: string;
+  placeCards: PlaceCard[];
+  model: string;
+  threadId: string;
+  savedId: string | undefined;
+};
+
 function emitFinalEvents(
   controller: { enqueue: (chunk: Uint8Array) => void; close: () => void },
   encoder: TextEncoder,
-  finalContent: string,
-  fallbackMsg: string,
-  model: string,
-  threadId: string,
-  savedId: string | undefined
+  params: FinalEventsParams,
 ): void {
+  const { finalContent, fallbackMsg, placeCards, model, threadId, savedId } = params;
   const { cleanContent, extractedItems } = parseCreateItemsBlock(finalContent);
   const contentToSave = cleanContent || finalContent;
 
   if (extractedItems.length > 0) {
     controller.enqueue(encoder.encode(`event: extracted_items\ndata: ${JSON.stringify({ items: extractedItems, meta: { model, source: 'conversation' } })}\n\n`));
+  }
+  if (placeCards.length > 0) {
+    controller.enqueue(encoder.encode(`event: place_cards\ndata: ${JSON.stringify({ cards: placeCards })}\n\n`));
   }
   if (fallbackMsg && finalContent === fallbackMsg) {
     controller.enqueue(encoder.encode(`event: message\ndata: ${JSON.stringify({ content: fallbackMsg })}\n\n`));
@@ -746,40 +1062,64 @@ async function handleStreamResponse(
   encoder: TextEncoder,
   ctx: StreamContext
 ): Promise<void> {
-  const currentMessages = [...ctx.openaiMsgs];
-  const openaiRes = await callOpenAI(currentMessages, true, { ...ctx.openaiOptions, forceToolName: ctx.forceToolName });
+  const geminiRes = await callGemini(ctx.systemInstruction, ctx.contents, true, {
+    ...ctx.geminiOptions,
+    toolMode: ctx.forceToolName ? 'ANY' : 'AUTO',
+    allowedFunctionNames: ctx.forceToolName ? [ctx.forceToolName] : undefined,
+  });
 
-  if (!openaiRes.ok) {
+  if (!geminiRes.ok || !geminiRes.body) {
+    const errBody = await geminiRes.text().catch(() => '');
+    console.error('Gemini error:', geminiRes.status, errBody);
     controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'AI request failed' })}\n\n`));
     controller.close();
     return;
   }
 
-  const { fullResponse, toolCalls } = await processStream(openaiRes, controller, encoder);
-  let lastResponse = fullResponse;
+  const firstPass = await processGeminiStream(geminiRes, controller, encoder);
+  let lastResponse = firstPass.textContent;
 
   const toolCtx: ToolExecutionContext = {
     serperApiKey: ctx.serperApiKey,
     googlePlacesApiKey: ctx.googlePlacesApiKey,
     message: ctx.message,
     verifiedUrls: ctx.verifiedUrls,
+    placesById: ctx.placesById,
   };
 
   const hasToolSupport = !!ctx.serperApiKey || !!ctx.googlePlacesApiKey;
-  if (toolCalls && toolCalls.length > 0 && hasToolSupport) {
+  if (firstPass.functionCalls.length > 0 && hasToolSupport) {
     lastResponse = await handleToolCallFollowUp({
-      toolCalls, fullResponse, currentMessages,
-      openaiOptions: ctx.openaiOptions,
+      functionCalls: firstPass.functionCalls,
+      textSoFar: firstPass.textContent,
+      contents: ctx.contents,
+      systemInstruction: ctx.systemInstruction,
+      geminiOptions: ctx.geminiOptions,
       toolCtx,
     }, controller, encoder);
   }
 
-  const fallbackMsg = toolCalls?.length ? 'I searched for booking options but couldn\'t format the results. Try searching for the restaurant name plus your city on Resy or OpenTable.' : '';
+  const fallbackMsg = firstPass.functionCalls.length > 0 ? 'I searched for booking options but couldn\'t format the results. Try searching for the restaurant name plus your city on Resy or OpenTable.' : '';
   const rawFinal = lastResponse.trim() || fallbackMsg;
 
-  // Strip any `create_items` block before URL validation so we don't touch JSON.
-  const { cleanContent, extractedItems } = parseCreateItemsBlock(rawFinal);
-  const prosePart = cleanContent || rawFinal;
+  // Strip structured blocks before URL validation so JSON payloads aren't touched.
+  const { cleanContent: afterCreateItems, extractedItems } = parseCreateItemsBlock(rawFinal);
+  if (extractedItems.length === 0 && rawFinal.includes('```create_items')) {
+    console.warn(
+      '[ai-chat] create_items marker detected but no items extracted. Response length:',
+      rawFinal.length
+    );
+  }
+  const { cleanContent: prosePart, rawCards } = parsePlaceCardsBlock(afterCreateItems);
+
+  const placeCards = enrichPlaceCards(
+    rawCards,
+    ctx.placesById,
+    ctx.verifiedUrls,
+    ctx.supabaseUrl,
+    ctx.arrivalDate,
+    ctx.departureDate,
+  );
 
   // Replace any AI-authored URLs with Google Search fallbacks unless they
   // were returned by a tool or point to a trusted host (Google, Wikipedia).
@@ -791,8 +1131,20 @@ async function handleStreamResponse(
     : validatedProse;
   const contentToSave = validatedProse;
 
-  const { data: saved } = await ctx.supabase.from('ai_chat_messages').insert({ thread_id: ctx.threadId, role: 'assistant', content: contentToSave || '(No response)' }).select('id').single();
-  emitFinalEvents(controller, encoder, finalContent, fallbackMsg, ctx.openaiOptions.model, ctx.threadId, saved?.id);
+  const metadata = placeCards.length > 0 ? { placeCards } : {};
+  const { data: saved } = await ctx.supabase
+    .from('ai_chat_messages')
+    .insert({ thread_id: ctx.threadId, role: 'assistant', content: contentToSave || '(No response)', metadata })
+    .select('id')
+    .single();
+  emitFinalEvents(controller, encoder, {
+    finalContent,
+    fallbackMsg,
+    placeCards,
+    model: GEMINI_MODEL,
+    threadId: ctx.threadId,
+    savedId: saved?.id,
+  });
 }
 
 async function handlePostMessage(
@@ -800,10 +1152,9 @@ async function handlePostMessage(
   supabase: SupabaseClient,
   tripId: string,
   userId: string,
-  openaiApiKey: string,
+  geminiApiKey: string,
   serperApiKey: string | undefined,
   googlePlacesApiKey: string | undefined,
-  model: string,
   cors: Record<string, string> = {}
 ): Promise<Response> {
   const { message, thread_id } = await req.json();
@@ -844,18 +1195,36 @@ async function handlePostMessage(
   });
 
   const tools = buildTools(serperApiKey, googlePlacesApiKey);
-  const openaiMsgs: OpenAIMessage[] = [{ role: 'system', content: systemPrompt }, ...(msgs || []).reverse().map((m: any) => ({ role: m.role, content: m.content }))];
+
+  // Convert chat history to Gemini `contents`. Gemini uses 'model' for
+  // assistant turns (not 'assistant') and has no system role — the system
+  // prompt is passed separately via systemInstruction.
+  const contents: GeminiContent[] = (msgs || [])
+    .reverse()
+    .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+    .map((m: any) => ({
+      role: m.role === 'assistant' ? 'model' as const : 'user' as const,
+      parts: [{ text: String(m.content ?? '') }],
+    }));
+
   const forceToolName = chooseForcedTool(message, !!googlePlacesApiKey, !!serperApiKey);
   const encoder = new TextEncoder();
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+
   const ctx: StreamContext = {
-    openaiMsgs,
-    openaiOptions: { model, openaiApiKey, tools },
+    systemInstruction: systemPrompt,
+    contents,
+    geminiOptions: { apiKey: geminiApiKey, tools },
     forceToolName,
     serperApiKey,
     googlePlacesApiKey,
     searchLocation,
     verifiedUrls: new Set<string>(),
+    placesById: new Map<string, PlaceResult>(),
+    supabaseUrl,
+    arrivalDate,
+    departureDate,
     message,
     supabase,
     threadId
@@ -914,10 +1283,9 @@ Deno.serve(async (req: Request) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
   const serperApiKey = Deno.env.get('SERPER_API_KEY');
   const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
-  const model = Deno.env.get('OPENAI_CHAT_MODEL') || 'gpt-5.4-mini';
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -940,8 +1308,8 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method === 'POST' && !action) {
-    if (!openaiApiKey) return jsonResponse({ code: 'CONFIG_ERROR', message: 'OpenAI not configured' }, 500, corsHeaders);
-    return handlePostMessage(req, supabase, tripId, user.userId, openaiApiKey, serperApiKey, googlePlacesApiKey, model, corsHeaders);
+    if (!geminiApiKey) return jsonResponse({ code: 'CONFIG_ERROR', message: 'Gemini not configured' }, 500, corsHeaders);
+    return handlePostMessage(req, supabase, tripId, user.userId, geminiApiKey, serperApiKey, googlePlacesApiKey, corsHeaders);
   }
 
   return jsonResponse({ error: 'Method not allowed' }, 405, corsHeaders);

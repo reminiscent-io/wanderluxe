@@ -4,8 +4,11 @@ import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+// Hardcoded model — locked in-process so the request path cannot redirect to
+// a different (potentially unvetted) model.
+const MODEL = 'gemini-2.5-flash';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -212,35 +215,35 @@ router.post('/api/admin/insights', adminInsightsLimiter, async (req: Request, re
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
 
-    // Call OpenAI with streaming
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call Gemini with streaming
+    const geminiUrl = `${GEMINI_BASE}/models/${MODEL}:streamGenerateContent?alt=sse`;
+    const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'x-goog-api-key': GEMINI_API_KEY,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
-        stream: true,
-        temperature: 0.3,
-        max_completion_tokens: 1500
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1500
+        }
       })
     });
 
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('OpenAI error:', openaiResponse.status, errorText);
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      console.error('Gemini error:', geminiResponse.status, errorText);
       sendSSE(res, 'error', { message: 'Failed to generate insight' });
       return res.end();
     }
 
-    // Process streaming response
+    // Process streaming response — Gemini SSE messages are \n\n delimited
+    // and each `data:` line contains a JSON chunk with candidates[].content.parts[].
     let fullResponse = '';
-    const reader = openaiResponse.body?.getReader();
+    const reader = geminiResponse.body?.getReader();
     const decoder = new TextDecoder();
 
     if (!reader) {
@@ -248,32 +251,41 @@ router.post('/api/admin/insights', adminInsightsLimiter, async (req: Request, re
       return res.end();
     }
 
+    let sseBuffer = '';
+    const handleSSEMessage = (message: string): void => {
+      for (const line of message.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (!payload) continue;
+        try {
+          const parsed = JSON.parse(payload);
+          const parts = parsed?.candidates?.[0]?.content?.parts || [];
+          for (const part of parts) {
+            if (typeof part?.text === 'string' && part.text.length > 0) {
+              fullResponse += part.text;
+              sendSSE(res, 'message', { content: part.text });
+            }
+          }
+        } catch {
+          // Skip invalid JSON chunks
+        }
+      }
+    };
+
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                fullResponse += content;
-                sendSSE(res, 'message', { content });
-              }
-            } catch {
-              // Skip invalid JSON chunks
-            }
-          }
+        sseBuffer += decoder.decode(value, { stream: true });
+        let boundary: number;
+        while ((boundary = sseBuffer.indexOf('\n\n')) !== -1) {
+          const message = sseBuffer.slice(0, boundary);
+          sseBuffer = sseBuffer.slice(boundary + 2);
+          handleSSEMessage(message);
         }
       }
+      if (sseBuffer.trim()) handleSSEMessage(sseBuffer);
     } catch (streamError) {
       console.error('Stream error:', streamError);
     }

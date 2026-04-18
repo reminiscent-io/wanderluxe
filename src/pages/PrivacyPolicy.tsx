@@ -91,7 +91,7 @@ const PrivacyPolicy: React.FC = () => {
                   </thead>
                   <tbody className="divide-y">
                     <tr><td className="py-2 pr-4">Supabase</td><td className="py-2 pr-4">Database and authentication</td><td className="py-2">Account data, trip data, all stored information</td></tr>
-                    <tr><td className="py-2 pr-4">OpenAI</td><td className="py-2 pr-4">AI travel assistant</td><td className="py-2">Chat messages and trip context (destination, dates, itinerary)</td></tr>
+                    <tr><td className="py-2 pr-4">Google (Gemini API)</td><td className="py-2 pr-4">AI travel assistant + travel document OCR</td><td className="py-2">Chat messages, trip context (destination, dates, itinerary), and uploaded booking documents</td></tr>
                     <tr><td className="py-2 pr-4">Stripe</td><td className="py-2 pr-4">Payment processing</td><td className="py-2">Email, payment details</td></tr>
                     <tr><td className="py-2 pr-4">PostHog</td><td className="py-2 pr-4">Analytics (consent-gated)</td><td className="py-2">Usage events, device info</td></tr>
                     <tr><td className="py-2 pr-4">Google</td><td className="py-2 pr-4">Places API (location search)</td><td className="py-2">Search queries</td></tr>
@@ -162,7 +162,7 @@ const PrivacyPolicy: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">10. AI Data Processing</h2>
               <p>
-                When you use our AI travel assistant, your trip details (destination, dates, itinerary, accommodations, and transportation) are sent to OpenAI to generate personalized recommendations. Your messages are processed in real-time and are not used to train OpenAI's models. AI chat history is stored in your account and can be deleted at any time by deleting your account.
+                When you use our AI travel assistant, your trip details (destination, dates, itinerary, accommodations, and transportation) are sent to Google's Gemini API to generate personalized recommendations. Uploaded booking documents (images or PDFs) are also processed by Gemini for OCR-based field extraction. Your messages and documents are processed in real-time and, per Google's paid API terms, are not used to train their models. AI chat history is stored in your account and can be deleted at any time by deleting your account.
               </p>
             </div>
 

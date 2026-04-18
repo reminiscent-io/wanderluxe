@@ -50,13 +50,13 @@ const TermsOfService: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Receipt and Document Analysis</h3>
                   <p>
-                    Our platform includes receipt analysis functionality powered by <strong>OpenAI's GPT-4 Vision</strong> technology. When you upload receipts, booking confirmations, or other travel documents, they are:
+                    Our platform includes receipt analysis functionality powered by <strong>Google's Gemini 2.5 Flash</strong> vision model. When you upload receipts, booking confirmations, or other travel documents, they are:
                   </p>
                   <ul className="list-disc ml-6 mt-2 space-y-1">
                     <li>Securely stored on our servers using Supabase storage infrastructure</li>
-                    <li>Processed by OpenAI's vision AI to extract travel-related information</li>
+                    <li>Processed by Google's Gemini API to extract travel-related information</li>
                     <li>Accessible only to you and authorized WanderLuxe systems</li>
-                    <li>Subject to both our privacy practices and OpenAI's data usage policies</li>
+                    <li>Subject to both our privacy practices and Google's data usage policies for the Gemini API</li>
                   </ul>
                 </div>
                 <div>
@@ -76,7 +76,7 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Third‑Party APIs and Services</h2>
               <p>
-                Our Site integrates with various third‑party services and APIs including but not limited to Perplexity AI, OpenAI, Google services, and mapping providers. Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services and are not responsible for their availability, accuracy, or practices.
+                Our Site integrates with various third‑party services and APIs including but not limited to Google (Gemini API, Places API, and mapping providers) and other service providers. Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services and are not responsible for their availability, accuracy, or practices.
               </p>
             </div>
             <div className="pb-6 border-b">

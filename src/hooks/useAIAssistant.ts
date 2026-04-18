@@ -11,7 +11,8 @@ import type {
   SSEDoneEvent,
   SSEErrorEvent,
   StreamingErrorResponse,
-  ExtractedItem
+  ExtractedItem,
+  PlaceCard
 } from '@/types/ai-assistant';
 
 const EXPRESS_BASE = '/api/trips';
@@ -25,6 +26,10 @@ interface SSEExtractedItemsEvent {
     model: string;
     source: string;
   };
+}
+
+interface SSEPlaceCardsEvent {
+  cards: PlaceCard[];
 }
 
 interface UseAIAssistantOptions {
@@ -62,6 +67,7 @@ function handleSSEOpen(response: Response): void {
 
 interface SSEStreamAccumulator {
   fullContent: string;
+  placeCards?: PlaceCard[];
 }
 
 interface AnonSSEContext {
@@ -138,7 +144,8 @@ function handleAuthSSEMessage(event: { event: string; data: string }, ctx: AuthS
         role: 'assistant',
         content: messageContent,
         metadata: {},
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        placeCards: ctx.accumulator.placeCards
       };
 
       ctx.queryClient.setQueryData(
@@ -156,6 +163,11 @@ function handleAuthSSEMessage(event: { event: string; data: string }, ctx: AuthS
       const data = JSON.parse(event.data) as SSEExtractedItemsEvent;
       if (data.items && data.items.length > 0 && ctx.onItemsExtracted) {
         ctx.onItemsExtracted(data.items);
+      }
+    } else if (event.event === 'place_cards') {
+      const data = JSON.parse(event.data) as SSEPlaceCardsEvent;
+      if (Array.isArray(data.cards) && data.cards.length > 0) {
+        ctx.accumulator.placeCards = data.cards;
       }
     } else if (event.event === 'error') {
       const data = JSON.parse(event.data) as SSEErrorEvent;

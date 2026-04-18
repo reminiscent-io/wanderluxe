@@ -1,5 +1,5 @@
 // supabase/functions/parse-travel-doc/index.ts
-// Deno Edge Function: OCR + structured extraction via OpenAI (gpt-4o-mini by default).
+// Deno Edge Function: OCR + structured extraction via Gemini 2.5 Flash.
 // Returns a canonical response: { itemType, fields, missingRequired, meta } for single-item mode
 // OR { items: [...], meta } for multi-item mode (when itemType is not specified).
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -21,8 +21,11 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
     'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS',
   };
 }
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
-const MODEL = Deno.env.get("OPENAI_OCR_MODEL") ?? "gpt-4o-mini";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+// Hardcoded model — locked at the function layer so the request path cannot
+// redirect to a different model.
+const MODEL = "gemini-2.5-flash";
+const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
@@ -54,9 +57,10 @@ const ok = (json: unknown, status = 200)=>new Response(JSON.stringify(json), {
 const err = (msg: string, status = 400)=>ok({
     error: msg
   }, status);
-// ----------------- File → data URL -----------------
-// SAFE: chunked base64 conversion (prevents call stack overflow)
-const toDataUrl = async (file)=>{
+// ----------------- File → inline base64 -----------------
+// SAFE: chunked base64 conversion (prevents call stack overflow). Returns the
+// raw base64 string + mime, which Gemini consumes via inlineData.
+const toInlineData = async (file)=>{
   const buf = await file.arrayBuffer();
   const bytes = new Uint8Array(buf);
   let binary = "";
@@ -65,9 +69,10 @@ const toDataUrl = async (file)=>{
     const slice = bytes.subarray(i, i + CHUNK);
     binary += String.fromCharCode.apply(null, slice);
   }
-  const base64 = btoa(binary);
-  const mime = file.type || "application/octet-stream";
-  return `data:${mime};base64,${base64}`;
+  return {
+    data: btoa(binary),
+    mimeType: file.type || "application/octet-stream",
+  };
 };
 // ----------------- Prompt builder -----------------
 /**
@@ -563,39 +568,44 @@ const applyDateAssumptions = (itemType, fields)=>{
   return fields;
 };
 // ----------------- Shared helpers -----------------
-const buildVisionPayload = (system, user, dataUrl, maxTokens)=>({
-  model: MODEL,
-  messages: [
-    { role: "system", content: system },
+const buildVisionPayload = (system, user, inlineData, maxTokens)=>({
+  contents: [
     {
       role: "user",
-      content: [
-        { type: "text", text: user },
-        { type: "image_url", image_url: { url: dataUrl } }
+      parts: [
+        { text: user },
+        { inlineData }
       ]
     }
   ],
-  response_format: { type: "json_object" },
-  temperature: 0,
-  max_completion_tokens: maxTokens
+  systemInstruction: { parts: [{ text: system }] },
+  generationConfig: {
+    temperature: 0,
+    maxOutputTokens: maxTokens,
+    responseMimeType: "application/json"
+  }
 });
 
-const callOpenAI = async (payload)=>{
-  const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+const callGemini = async (payload)=>{
+  const url = `${GEMINI_BASE}/models/${MODEL}:generateContent`;
+  const aiRes = await fetch(url, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${OPENAI_API_KEY}`,
+      "x-goog-api-key": GEMINI_API_KEY,
       "content-type": "application/json"
     },
     body: JSON.stringify(payload)
   });
   if (!aiRes.ok) {
     const txt = await aiRes.text();
-    console.error("OpenAI error:", aiRes.status, txt);
-    return { error: err("OpenAI request failed", 502) };
+    console.error("Gemini error:", aiRes.status, txt);
+    return { error: err("Gemini request failed", 502) };
   }
   const json = await aiRes.json();
-  const raw = json?.choices?.[0]?.message?.content?.trim();
+  // generateContent returns candidates[0].content.parts[]; with
+  // responseMimeType=application/json the model's JSON is in the text part.
+  const parts = json?.candidates?.[0]?.content?.parts || [];
+  const raw = parts.map((p)=>typeof p?.text === "string" ? p.text : "").join("").trim();
   if (!raw) return { error: err("No content generated", 500) };
   try {
     return { data: JSON.parse(raw) };
@@ -642,10 +652,10 @@ const validateFile = (file)=>{
   return null;
 };
 
-const handleMultiItem = async (dataUrl, file)=>{
+const handleMultiItem = async (inlineData, file)=>{
   const { system, user } = multiItemPrompt();
-  const payload = buildVisionPayload(system, user, dataUrl, 4000);
-  const result = await callOpenAI(payload);
+  const payload = buildVisionPayload(system, user, inlineData, 4000);
+  const result = await callGemini(payload);
   if (result.error) return result.error;
 
   const rawItems = Array.isArray(result.data.items) ? result.data.items : [];
@@ -662,15 +672,15 @@ const handleMultiItem = async (dataUrl, file)=>{
   });
 };
 
-const handleSingleItem = async (itemType, dataUrl, file)=>{
+const handleSingleItem = async (itemType, inlineData, file)=>{
   const validTypes = ["accommodation", "transportation", "activity", "reservation"];
   if (!validTypes.includes(itemType)) {
     return err(`Invalid itemType. Must be one of: ${validTypes.join(", ")} or 'auto' for multi-item mode`);
   }
 
   const { system, user } = promptFor(itemType);
-  const payload = buildVisionPayload(system, user, dataUrl, 1200);
-  const result = await callOpenAI(payload);
+  const payload = buildVisionPayload(system, user, inlineData, 1200);
+  const result = await callGemini(payload);
   if (result.error) return result.error;
 
   const withAssumptions = applyDateAssumptions(itemType, result.data);
@@ -710,10 +720,10 @@ serve(async (req)=>{
 
     const itemType = String(form.get("itemType") ?? "").toLowerCase();
     const isMultiItemMode = !itemType || itemType === "auto";
-    const dataUrl = await toDataUrl(file);
+    const inlineData = await toInlineData(file);
 
-    if (isMultiItemMode) return await handleMultiItem(dataUrl, file);
-    return await handleSingleItem(itemType, dataUrl, file);
+    if (isMultiItemMode) return await handleMultiItem(inlineData, file);
+    return await handleSingleItem(itemType, inlineData, file);
   } catch (e) {
     console.error("parse-travel-doc error", e);
     return err("Server error", 500);
