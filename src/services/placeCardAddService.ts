@@ -107,7 +107,6 @@ export async function addPlaceCardItem(
 }
 
 export async function undoPlaceCardItem(item: AddedPlaceCardItem): Promise<void> {
-  const pk = item.table === 'reservations' ? 'id' : 'id';
-  const { error } = await supabase.from(item.table).delete().eq(pk, item.rowId);
+  const { error } = await supabase.from(item.table).delete().eq('id', item.rowId);
   if (error) throw new Error(error.message);
 }
