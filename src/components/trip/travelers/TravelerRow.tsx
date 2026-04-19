@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Share2, Shield } from "lucide-react";
+import { Clock, Share2, Shield } from "lucide-react";
 import { Traveler } from "@/hooks/useTravelers";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,7 @@ export default function TravelerRow({ traveler, onEdit }: TravelerRowProps) {
 
   const hasEmail = !!traveler.shared_with_email;
   const isOwner = !!(traveler as any).is_owner;
+  const isPending = hasEmail && !isOwner && !traveler.shared_with_user_id;
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -73,7 +74,22 @@ export default function TravelerRow({ traveler, onEdit }: TravelerRowProps) {
                 </span>
               )}
 
-              {hasEmail && (
+              {isPending ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-sunset-100 text-sunset-600"
+                    >
+                      <Clock className="h-3 w-3" />
+                      Pending
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Invited by email — hasn't signed up yet</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : hasEmail ? (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger
@@ -87,7 +103,7 @@ export default function TravelerRow({ traveler, onEdit }: TravelerRowProps) {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
+              ) : null}
             </div>
 
             {traveler.shared_with_email && (
