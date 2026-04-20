@@ -1,6 +1,14 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { validateAndRewriteLinks } from './linkValidator.ts';
+import {
+  enrichPlaceCards,
+  extractBalancedJson,
+  parsePlaceCardsBlock,
+  type PlaceCard,
+  type PlaceResult,
+} from './placeCards.ts';
+import { chooseForcedTool } from './toolForcing.ts';
 
 // Inlined from _shared/cors.ts to support single-function deployment
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://wanderluxe.io';
@@ -116,40 +124,6 @@ async function searchWeb(query: string, apiKey: string): Promise<{ organic: Arra
   return res.json();
 }
 
-type PlaceResult = {
-  name: string;
-  place_id: string;
-  formatted_address: string;
-  maps_url: string;
-  website?: string;
-  rating?: number;
-  phone?: string;
-  price_level?: number;
-  photo_reference?: string;
-};
-
-// Enriched place card shipped to the client. All URLs are either derived from
-// Google Places (verified) or booking_url that survived the verifiedUrls gate.
-type PlaceCard = {
-  id: string;
-  place_id: string;
-  name: string;
-  address: string;
-  maps_url: string;
-  website?: string;
-  rating?: number;
-  price_level?: number;
-  phone?: string;
-  photo_url?: string;
-  booking_url?: string;
-  blurb?: string;
-  tags?: string[];
-  suggested_add?: {
-    itemType: 'reservation' | 'activity';
-    fields: Record<string, unknown>;
-  };
-};
-
 // Hardcoded Google Places API base. All findPlaces() fetches target this host
 // and nothing else — the `query` and `place_id` values are only ever appended
 // as query-string parameters via URL.searchParams, never as path segments or
@@ -215,51 +189,6 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
 const CREATE_ITEMS_REGEX = /```create_items\s*([\s\S]*?)```/;
 const CREATE_ITEMS_OPEN_REGEX = /```create_items\s*([\s\S]*)$/;
 
-// Extract the longest balanced JSON array/object starting at index 0 of `src`.
-// Used to recover items when the model's response was truncated before the
-// closing ``` fence was emitted — see parseCreateItemsBlock.
-function extractBalancedJson(src: string): string | null {
-  const trimmed = src.trimStart();
-  if (!trimmed) return null;
-  const first = trimmed[0];
-  if (first !== '[' && first !== '{') return null;
-  const open = first;
-  const close = open === '[' ? ']' : '}';
-
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  let lastBalanced = -1;
-
-  for (let i = 0; i < trimmed.length; i++) {
-    const ch = trimmed[i];
-    if (inString) {
-      if (escape) {
-        escape = false;
-      } else if (ch === '\\') {
-        escape = true;
-      } else if (ch === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      inString = true;
-    } else if (ch === open) {
-      depth++;
-    } else if (ch === close) {
-      depth--;
-      if (depth === 0) {
-        lastBalanced = i;
-        break;
-      }
-    }
-  }
-
-  if (lastBalanced === -1) return null;
-  return trimmed.slice(0, lastBalanced + 1);
-}
-
 function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: ExtractedItem[] } {
   // Try the strict closed-fence match first. Fall back to balanced-JSON
   // recovery when only the opening fence is present (model was truncated
@@ -307,139 +236,6 @@ function parseCreateItemsBlock(response: string): { cleanContent: string; extrac
 
   const cleanContent = response.replace(matchedRange, '').trim();
   return { cleanContent, extractedItems: items };
-}
-
-type RawPlaceCard = {
-  place_id?: unknown;
-  blurb?: unknown;
-  tags?: unknown;
-  booking_url?: unknown;
-  suggested_add?: {
-    itemType?: unknown;
-    date?: unknown;
-    time?: unknown;
-    end_time?: unknown;
-    party_size?: unknown;
-    notes?: unknown;
-  };
-};
-
-function parsePlaceCardsBlock(response: string): { cleanContent: string; rawCards: RawPlaceCard[] } {
-  const regex = /```place_cards\s*([\s\S]*?)```/;
-  const match = response.match(regex);
-  if (!match) return { cleanContent: response, rawCards: [] };
-  const jsonStr = match[1].trim();
-  let rawCards: RawPlaceCard[] = [];
-  try {
-    const parsed = JSON.parse(jsonStr);
-    rawCards = (Array.isArray(parsed) ? parsed : [parsed]) as RawPlaceCard[];
-  } catch { /* ignore parse errors */ }
-  const cleanContent = response.replace(regex, '').trim();
-  return { cleanContent, rawCards };
-}
-
-function isDateInRange(date: string, arrival: string, departure: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(arrival) || !/^\d{4}-\d{2}-\d{2}$/.test(departure)) {
-    return true; // Trip has no fixed dates — trust the model's date.
-  }
-  return date >= arrival && date <= departure;
-}
-
-function isValidTime(time: unknown): time is string {
-  return typeof time === 'string' && /^\d{2}:\d{2}$/.test(time);
-}
-
-function buildSuggestedAdd(
-  raw: RawPlaceCard['suggested_add'],
-  place: PlaceResult,
-  bookingUrl: string | undefined,
-  arrival: string,
-  departure: string,
-): PlaceCard['suggested_add'] | undefined {
-  if (!raw || typeof raw.date !== 'string') return undefined;
-  if (!isDateInRange(raw.date, arrival, departure)) return undefined;
-
-  const itemType = raw.itemType === 'activity' ? 'activity' : 'reservation';
-
-  if (itemType === 'reservation') {
-    if (!isValidTime(raw.time)) return undefined;
-    return {
-      itemType: 'reservation',
-      fields: {
-        restaurant_name: place.name,
-        date: raw.date,
-        time: raw.time,
-        party_size: typeof raw.party_size === 'number' ? raw.party_size : undefined,
-        address: place.formatted_address || undefined,
-        phone: place.phone || undefined,
-        website: bookingUrl || place.website || undefined,
-        notes: typeof raw.notes === 'string' ? raw.notes : undefined,
-      },
-    };
-  }
-
-  // activity
-  return {
-    itemType: 'activity',
-    fields: {
-      name: place.name,
-      date: raw.date,
-      start_time: isValidTime(raw.time) ? raw.time : undefined,
-      end_time: isValidTime(raw.end_time) ? raw.end_time : undefined,
-      location: place.formatted_address || undefined,
-      notes: typeof raw.notes === 'string' ? raw.notes : undefined,
-    },
-  };
-}
-
-function enrichPlaceCards(
-  rawCards: RawPlaceCard[],
-  placesById: Map<string, PlaceResult>,
-  verifiedUrls: Set<string>,
-  supabaseUrl: string,
-  arrival: string,
-  departure: string,
-): PlaceCard[] {
-  const cards: PlaceCard[] = [];
-  rawCards.forEach((raw, idx) => {
-    if (typeof raw.place_id !== 'string') return;
-    const place = placesById.get(raw.place_id);
-    if (!place) return;
-
-    const photo_url = place.photo_reference
-      ? `${supabaseUrl}/functions/v1/google-places-proxy?photo_reference=${encodeURIComponent(place.photo_reference)}&maxwidth=800`
-      : undefined;
-
-    const bookingUrlRaw = typeof raw.booking_url === 'string' ? raw.booking_url : '';
-    const booking_url = bookingUrlRaw && verifiedUrls.has(bookingUrlRaw) ? bookingUrlRaw : undefined;
-
-    const suggested_add = buildSuggestedAdd(raw.suggested_add, place, booking_url, arrival, departure);
-
-    const tags = Array.isArray(raw.tags)
-      ? raw.tags.filter((t): t is string => typeof t === 'string').slice(0, 4)
-      : undefined;
-
-    const blurb = typeof raw.blurb === 'string' ? raw.blurb.slice(0, 240) : undefined;
-
-    cards.push({
-      id: `card-${idx}-${Date.now()}`,
-      place_id: place.place_id,
-      name: place.name,
-      address: place.formatted_address,
-      maps_url: place.maps_url,
-      website: place.website,
-      rating: place.rating,
-      price_level: place.price_level,
-      phone: place.phone,
-      photo_url,
-      booking_url,
-      blurb,
-      tags,
-      suggested_add,
-    });
-  });
-  return cards;
 }
 
 type GeminiStreamState = { textContent: string; functionCalls: GeminiFunctionCall[] };
@@ -683,10 +479,12 @@ function buildSystemPrompt(params: SystemPromptParams): string {
 When you recommend one or more restaurants, attractions, bars, landmarks, or activities, output a \`place_cards\` JSON block at the END of your response INSTEAD of listing them in prose. The client renders these as rich cards with photos, ratings, and one-tap "Add to trip" buttons.
 
 Rules:
-- You MUST first call \`find_place\` for each recommendation so we have a verified place_id.
+- You MUST call \`find_place\` for each recommendation BEFORE writing your prose response. If you have not already called it in this turn, call it now. Do NOT recommend a place from memory — the place_id you need for the card only exists in a find_place tool result.
 - Keep your prose to 1–2 sentences of introduction ("Here are three standout dinner spots in Montmartre:"). DO NOT list the places in the prose — the cards ARE the list.
 - Scope for phase 1: restaurants/dining AND attractions/activities only. Do NOT use place_cards for hotels yet.
 - Include a \`suggested_add\` block ONLY when the user gave a specific date (and time, for reservations) that falls between ${arrivalDate} and ${departureDate}. When in doubt, omit it — the user can still tap the card to add it.
+- If you cannot produce cards (e.g. \`find_place\` returned no results for the user's query), explicitly say so in prose ("I couldn't find verified results for that in ${safeTripName}") rather than silently falling back to a markdown list.
+- Before finishing your response, verify that every place you recommended has a corresponding entry in the \`place_cards\` block.
 
 Format (one entry per place):
 \`\`\`place_cards
@@ -895,36 +693,6 @@ function buildTools(
   return decls.length > 0 ? [{ functionDeclarations: decls }] : undefined;
 }
 
-const DINING_KEYWORDS = /\b(restaurant|restaurants|dining|dinner|lunch|eat|food|reservation|reservations|book a table|opentable|resy|carbone)\b/i;
-const PLACE_KEYWORDS = /\b(hotel|hotels|attraction|attractions|landmark|museum|park|bar|bars|cafe|neighborhood|things to do|visit|sightseeing|activity|activities|recommend)\b/i;
-const BOOKING_KEYWORDS = /\b(booking link|reservation link|book a table)\b/i;
-const WEATHER_KEYWORDS = /\b(weather|temperature|forecast|rainy|sunny|snow|humidity)\b/i;
-const CURRENT_INFO_KEYWORDS = /\b(news|latest|current|today|happening|events|concerts|opening hours|closed today|exchange rate|currency)\b/i;
-
-function chooseForcedTool(
-  message: string,
-  hasFindPlace: boolean,
-  hasSearchWeb: boolean,
-): string | null {
-  // When the message is explicitly about live/web info, prefer web search.
-  if (hasSearchWeb && (
-    BOOKING_KEYWORDS.test(message)
-    || WEATHER_KEYWORDS.test(message)
-    || CURRENT_INFO_KEYWORDS.test(message)
-  )) {
-    return 'search_web';
-  }
-  // Otherwise for dining / place recommendations, prefer structured Google Places.
-  if (hasFindPlace && (DINING_KEYWORDS.test(message) || PLACE_KEYWORDS.test(message))) {
-    return 'find_place';
-  }
-  // Dining without find_place → fall back to search_web if available.
-  if (hasSearchWeb && DINING_KEYWORDS.test(message)) {
-    return 'search_web';
-  }
-  return null;
-}
-
 async function fetchTripContext(supabase: SupabaseClient, tripId: string) {
   const { data: trip } = await supabase.from('trips').select('destination, arrival_date, departure_date, primary_destination, primary_destination_place_id').eq('trip_id', tripId).single();
   const { data: days } = await supabase.from('trip_days').select('date, title, day_activities(title, start_time)').eq('trip_id', tripId).order('date');
@@ -1112,7 +880,7 @@ async function handleStreamResponse(
   }
   const { cleanContent: prosePart, rawCards } = parsePlaceCardsBlock(afterCreateItems);
 
-  const placeCards = enrichPlaceCards(
+  const { cards: placeCards, drops: placeCardDrops } = enrichPlaceCards(
     rawCards,
     ctx.placesById,
     ctx.verifiedUrls,
@@ -1120,6 +888,14 @@ async function handleStreamResponse(
     ctx.arrivalDate,
     ctx.departureDate,
   );
+
+  if (rawCards.length > 0 || placeCardDrops.length > 0) {
+    console.log('[ai-chat] place_cards summary', {
+      total: rawCards.length,
+      kept: placeCards.length,
+      drops: placeCardDrops,
+    });
+  }
 
   // Replace any AI-authored URLs with Google Search fallbacks unless they
   // were returned by a tool or point to a trusted host (Google, Wikipedia).
