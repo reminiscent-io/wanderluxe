@@ -77,7 +77,9 @@
       "Bash(git -C /Users/reminiscent/wanderluxe/.claude/worktrees/hardcore-faraday log --oneline -5)",
       "Bash(git -C /Users/reminiscent/wanderluxe/.claude/worktrees/hardcore-faraday diff package.json)",
       "Bash(git -C /Users/reminiscent/wanderluxe/.claude/worktrees/hardcore-faraday add package.json package-lock.json .claude/settings.local.json)",
-      "Bash(git -C /Users/reminiscent/wanderluxe/.claude/worktrees/hardcore-faraday commit -m ':*)"
+      "Bash(git -C /Users/reminiscent/wanderluxe/.claude/worktrees/hardcore-faraday commit -m ':*)",
+      "mcp__5dd3c42b-7439-4695-be3e-bd9b1da8f0bb__get_logs",
+      "mcp__5dd3c42b-7439-4695-be3e-bd9b1da8f0bb__execute_sql"
     ],
     "deny": [],
     "ask": []
