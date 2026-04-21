@@ -35,20 +35,27 @@ export function trackExpediaClick(
   });
 }
 
-// Idempotent loader — safe to call on every BookingView mount. Resolves
-// immediately if the script tag is already in the document. The widget's
-// auto-scan runs on insertion of `.eg-widget` elements, so no explicit
-// re-init API is needed for SPA remounts.
-export function loadExpediaWidgetScript(): Promise<void> {
+const EG_WIDGETS_SRC =
+  'https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js';
+
+// Injects the Expedia widget script as a sibling AFTER the given `.eg-widget`
+// node and resolves once loaded. The upstream copy-paste embed places the
+// script directly next to the widget div, so the script reads
+// `document.currentScript` / nearby siblings to locate and initialize it —
+// injecting the script in `document.head` doesn't work in a SPA.
+//
+// Any previously-loaded copies of the script are removed first so the browser
+// re-executes it on every BookingView mount, forcing a fresh scan of the DOM.
+export function loadExpediaWidgetScript(anchor: Element): Promise<void> {
   if (typeof document === 'undefined') return Promise.resolve();
-  if (document.querySelector('script.eg-widgets-script')) return Promise.resolve();
+  document.querySelectorAll('script.eg-widgets-script').forEach((s) => s.remove());
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.className = 'eg-widgets-script';
-    s.src = 'https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js';
+    s.src = EG_WIDGETS_SRC;
     s.async = true;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error('eg-widgets load failed'));
-    document.head.appendChild(s);
+    s.onerror = () => reject(new Error('Failed to load Expedia widget script'));
+    anchor.insertAdjacentElement('afterend', s);
   });
 }

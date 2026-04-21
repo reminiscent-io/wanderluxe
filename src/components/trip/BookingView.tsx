@@ -20,7 +20,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [widgetFailed, setWidgetFailed] = useState(false);
-  const widgetContainerRef = useRef<HTMLDivElement | null>(null);
+  const widgetRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (tripId) {
@@ -29,22 +29,19 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
   }, [tripId]);
 
   useEffect(() => {
+    if (widgetFailed) return;
+    const widget = widgetRef.current;
+    if (!widget) return;
     let cancelled = false;
-    loadExpediaWidgetScript().catch(() => {
+    loadExpediaWidgetScript(widget).catch(() => {
       if (!cancelled) setWidgetFailed(true);
     });
+    const handler = () => trackExpediaClick('booking_page_widget', { trip_id: tripId });
+    widget.addEventListener('click', handler);
     return () => {
       cancelled = true;
+      widget.removeEventListener('click', handler);
     };
-  }, []);
-
-  useEffect(() => {
-    if (widgetFailed) return;
-    const el = widgetContainerRef.current;
-    if (!el) return;
-    const handler = () => trackExpediaClick('booking_page_widget', { trip_id: tripId });
-    el.addEventListener('click', handler);
-    return () => el.removeEventListener('click', handler);
   }, [widgetFailed, tripId]);
 
   const trackBookingPageView = async (tripId: string) => {
@@ -118,8 +115,9 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
             </Button>
           </div>
         ) : (
-          <div ref={widgetContainerRef} className="min-h-[200px]">
+          <div className="min-h-[200px]">
             <div
+              ref={widgetRef}
               className="eg-widget"
               data-widget="search"
               data-program="us-expedia"
