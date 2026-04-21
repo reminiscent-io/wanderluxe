@@ -79,6 +79,15 @@ app.get('/api/health', (req, res) => {
 const distPath = path.resolve(process.cwd(), 'dist');
 const indexPath = path.join(distPath, 'index.html');
 
+// Routes that may have prerendered HTML emitted by scripts/prerender.ts.
+// Using an allowlist avoids constructing filesystem paths from user input.
+const PRERENDERED_ROUTES: Record<string, string> = {
+  '/explore': path.join(distPath, 'explore', 'index.html'),
+  '/about': path.join(distPath, 'about', 'index.html'),
+  '/terms': path.join(distPath, 'terms', 'index.html'),
+  '/privacy': path.join(distPath, 'privacy', 'index.html'),
+};
+
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
@@ -87,13 +96,15 @@ if (fs.existsSync(distPath)) {
   // fall back to index.html for everything else (client-side routing).
   // Use regex pattern compatible with Express 5.x
   app.get(/^(?!\/api).*$/, (req, res) => {
-    const urlPath = (req.path || '/').replace(/\/$/, '') || '/';
-    const prerenderedPath =
-      urlPath === '/'
-        ? indexPath
-        : path.join(distPath, urlPath.replace(/^\//, ''), 'index.html');
+    const normalizedPath = (req.path || '/').replace(/\/$/, '') || '/';
+    const prerenderedPath = Object.prototype.hasOwnProperty.call(
+      PRERENDERED_ROUTES,
+      normalizedPath,
+    )
+      ? PRERENDERED_ROUTES[normalizedPath]
+      : undefined;
 
-    if (urlPath !== '/' && fs.existsSync(prerenderedPath)) {
+    if (prerenderedPath && fs.existsSync(prerenderedPath)) {
       return res.sendFile(prerenderedPath);
     }
 

@@ -31,12 +31,27 @@ function mimeTypeFor(filePath: string): string {
 function startStaticServer() {
   return new Promise<{ close: () => Promise<void> }>((resolve, reject) => {
     const server = createServer((req, res) => {
-      const urlPath = (req.url || '/').split('?')[0];
-      // Try file directly first
-      let filePath = path.join(DIST_DIR, urlPath);
-      if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-        // SPA fallback
-        filePath = path.join(DIST_DIR, 'index.html');
+      const rawUrl = (req.url || '/').split('?')[0];
+      // Decode and strip leading slashes; block any traversal before joining.
+      let decoded: string;
+      try {
+        decoded = decodeURIComponent(rawUrl);
+      } catch {
+        res.statusCode = 400;
+        res.end('Bad request');
+        return;
+      }
+      const indexFile = path.join(DIST_DIR, 'index.html');
+      let filePath = indexFile;
+      if (!decoded.includes('\0') && !decoded.split(/[\\/]+/).includes('..')) {
+        const candidate = path.resolve(DIST_DIR, `.${decoded}`);
+        if (
+          (candidate === DIST_DIR || candidate.startsWith(DIST_DIR + path.sep)) &&
+          fs.existsSync(candidate) &&
+          !fs.statSync(candidate).isDirectory()
+        ) {
+          filePath = candidate;
+        }
       }
       try {
         const contents = fs.readFileSync(filePath);
