@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Star, MapPin, ExternalLink, Plus, Loader2, Check, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { buildExpediaHotelSearchUrl, trackExpediaClick } from '@/lib/expedia';
 import type { PlaceCard as PlaceCardType } from '@/types/ai-assistant';
 
 type AddStatus = 'idle' | 'adding' | 'added';
@@ -31,6 +32,14 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
   const bookingUrl = card.booking_url || card.website;
   const ratingStr = formatRating(card.rating);
   const priceStr = priceLevelToDollars(card.price_level);
+  const isHotel = card.suggested_add?.itemType === 'accommodation';
+  const expediaUrl = isHotel
+    ? buildExpediaHotelSearchUrl({
+        name: card.name,
+        address: card.address,
+        pubref: 'ai_chat_hotel_card',
+      })
+    : null;
 
   const handleAdd = async () => {
     if (!canAdd || addStatus !== 'idle') return;
@@ -137,7 +146,25 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
               <MapPin className="h-3 w-3" />
             </a>
           </Button>
-          {bookingUrl && (
+          {expediaUrl ? (
+            <Button
+              size="sm"
+              asChild
+              className="h-8 flex-1 min-w-[96px] bg-earth-500 hover:bg-earth-600 text-white text-xs"
+              title="Book on Expedia"
+            >
+              <a
+                href={expediaUrl}
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                onClick={() =>
+                  trackExpediaClick('ai_chat_hotel_card', { place_id: card.place_id })
+                }
+              >
+                Book on Expedia
+              </a>
+            </Button>
+          ) : bookingUrl ? (
             <Button
               size="sm"
               variant="outline"
@@ -149,8 +176,8 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
                 <ExternalLink className="h-3 w-3" />
               </a>
             </Button>
-          )}
-          {card.phone && !bookingUrl && (
+          ) : null}
+          {card.phone && !bookingUrl && !expediaUrl && (
             <Button
               size="sm"
               variant="outline"
