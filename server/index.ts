@@ -48,11 +48,7 @@ app.use(helmet({
       frameAncestors: ["'self'", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
     },
   },
-  // COEP disabled: the Expedia affiliate widget loads cross-origin sub-resources
-  // from *.expediagroup.com / partnerize endpoints that don't advertise CORP or
-  // set credentialless-compatible headers. Re-enable once we've verified the
-  // widget still works under a stricter policy.
-  crossOriginEmbedderPolicy: false,
+  crossOriginEmbedderPolicy: { policy: "credentialless" },
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
