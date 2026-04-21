@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/components/ui/use-toast";
@@ -20,6 +20,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [widgetFailed, setWidgetFailed] = useState(false);
+  const widgetContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (tripId) {
@@ -37,6 +38,15 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (widgetFailed) return;
+    const el = widgetContainerRef.current;
+    if (!el) return;
+    const handler = () => trackExpediaClick('booking_page_widget', { trip_id: tripId });
+    el.addEventListener('click', handler);
+    return () => el.removeEventListener('click', handler);
+  }, [widgetFailed, tripId]);
+
   const trackBookingPageView = async (tripId: string) => {
     try {
       if (user) {
@@ -49,10 +59,6 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
     } catch (error) {
       console.error('Error tracking page view:', error);
     }
-  };
-
-  const handleWidgetContainerClick = () => {
-    trackExpediaClick('booking_page_widget', { trip_id: tripId });
   };
 
   const handleFallbackClick = () => {
@@ -112,10 +118,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
             </Button>
           </div>
         ) : (
-          <div
-            onClick={handleWidgetContainerClick}
-            className="min-h-[200px]"
-          >
+          <div ref={widgetContainerRef} className="min-h-[200px]">
             <div
               className="eg-widget"
               data-widget="search"
@@ -175,9 +178,9 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
             <div className="mb-3">
               <div className="flex flex-wrap gap-1">
-                {['Luxury Travel', 'Honeymoons', 'NYC', 'Aspen', 'Paris', 'Euro Skiing'].map((expertise, index) => (
+                {['Luxury Travel', 'Honeymoons', 'NYC', 'Aspen', 'Paris', 'Euro Skiing'].map((expertise) => (
                   <span
-                    key={index}
+                    key={expertise}
                     className="inline-block px-2 py-0.5 bg-sand-100 text-earth-600 text-xs rounded-full"
                   >
                     {expertise}
