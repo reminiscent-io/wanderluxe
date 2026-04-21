@@ -80,13 +80,22 @@ const distPath = path.resolve(process.cwd(), 'dist');
 const indexPath = path.join(distPath, 'index.html');
 
 // Routes that may have prerendered HTML emitted by scripts/prerender.ts.
-// Using an allowlist avoids constructing filesystem paths from user input.
-const PRERENDERED_ROUTES: Record<string, string> = {
-  '/explore': path.join(distPath, 'explore', 'index.html'),
-  '/about': path.join(distPath, 'about', 'index.html'),
-  '/terms': path.join(distPath, 'terms', 'index.html'),
-  '/privacy': path.join(distPath, 'privacy', 'index.html'),
-};
+// A switch statement (below) maps request paths to hardcoded filenames so
+// no user-controlled string ever reaches the filesystem.
+const prerenderedExplore = path.join(distPath, 'explore', 'index.html');
+const prerenderedAbout = path.join(distPath, 'about', 'index.html');
+const prerenderedTerms = path.join(distPath, 'terms', 'index.html');
+const prerenderedPrivacy = path.join(distPath, 'privacy', 'index.html');
+
+function prerenderedFileFor(normalizedPath: string): string | null {
+  switch (normalizedPath) {
+    case '/explore': return prerenderedExplore;
+    case '/about': return prerenderedAbout;
+    case '/terms': return prerenderedTerms;
+    case '/privacy': return prerenderedPrivacy;
+    default: return null;
+  }
+}
 
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
@@ -97,12 +106,7 @@ if (fs.existsSync(distPath)) {
   // Use regex pattern compatible with Express 5.x
   app.get(/^(?!\/api).*$/, (req, res) => {
     const normalizedPath = (req.path || '/').replace(/\/$/, '') || '/';
-    const prerenderedPath = Object.prototype.hasOwnProperty.call(
-      PRERENDERED_ROUTES,
-      normalizedPath,
-    )
-      ? PRERENDERED_ROUTES[normalizedPath]
-      : undefined;
+    const prerenderedPath = prerenderedFileFor(normalizedPath);
 
     if (prerenderedPath && fs.existsSync(prerenderedPath)) {
       return res.sendFile(prerenderedPath);
