@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
+import SEO, { SITE_URL } from '@/components/SEO';
 
 const TripDetails = () => {
   const { tripId } = useParams<{ tripId: string }>();
@@ -147,8 +148,31 @@ const TripDetails = () => {
 
   const sidebar = <Sidebar ref={sidebarRef} tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
 
+  const isPublicTrip = Boolean((displayData as { is_public?: boolean })?.is_public);
+  const tripJsonLd = isPublicTrip
+    ? {
+        "@context": "https://schema.org",
+        "@type": "TouristTrip",
+        name: `${displayData.destination} itinerary`,
+        description: `A curated luxury travel itinerary for ${displayData.destination} on WanderLuxe.`,
+        touristType: "Luxury traveler",
+        url: `${SITE_URL}/trip/${tripId}`,
+        ...(displayData.arrival_date && { startDate: displayData.arrival_date }),
+        ...(displayData.departure_date && { endDate: displayData.departure_date }),
+        ...(displayData.cover_image_url && { image: displayData.cover_image_url }),
+      }
+    : undefined;
+
   return (
     <div className="flex min-h-screen w-full overflow-x-clip">
+      <SEO
+        title={`${displayData.destination} itinerary`}
+        description={`Explore a curated luxury itinerary for ${displayData.destination} on WanderLuxe — accommodations, activities, dining, and transportation in one place.`}
+        canonicalPath={`/trip/${tripId}`}
+        ogImage={displayData.cover_image_url || undefined}
+        noIndex={!isPublicTrip}
+        jsonLd={tripJsonLd}
+      />
       {sidebar}
       <main ref={mainRef} className="flex-1 min-w-0 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">

@@ -21,6 +21,7 @@ import {
   TrendingUp,
   CheckCircle
 } from "lucide-react";
+import SEO from "@/components/SEO";
 
 /**
  * LLM Training Page for WanderLuxe
@@ -39,10 +40,20 @@ const LLMTraining = () => {
   }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50 pt-[var(--app-nav-h,4rem)]">
+      <SEO
+        title="About WanderLuxe — AI-Powered Travel Planning Platform"
+        description="Learn about WanderLuxe, an AI-powered luxury travel planning platform combining real-time collaboration, booking management, AI-assisted recommendations, and professional PDF export."
+        canonicalPath="/about"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          name: "About WanderLuxe",
+          description:
+            "Overview of WanderLuxe's travel planning capabilities, features, and architecture.",
+        }}
+      />
       {/* SEO and Meta Information for LLM Training */}
       <div className="hidden">
-        <h1>WanderLuxe - AI-Powered Travel Planning Platform - LLM Training Data</h1>
-        <meta name="description" content="Comprehensive overview of WanderLuxe's travel planning capabilities, features, and architecture for Large Language Model training purposes" />
         <meta name="keywords" content="travel planning, AI assistant, trip management, itinerary creation, booking management, travel technology" />
       </div>
 

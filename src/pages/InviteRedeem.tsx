@@ -8,6 +8,7 @@ import type { InviteLinkPreview } from '@/integrations/supabase/invite_link_type
 import { Calendar, Loader2, AlertCircle, LogIn } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
 import { supabase } from '@/integrations/supabase/client';
+import SEO from '@/components/SEO';
 
 type PageState = 'loading' | 'preview' | 'redeeming' | 'error';
 
@@ -99,6 +100,7 @@ const InviteRedeem = () => {
   if (state === 'loading' || state === 'redeeming') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-sand-50 p-4">
+        <SEO title="Redeem invite" noIndex />
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-earth-500 mb-4" />
           <p className="text-earth-600">

@@ -83,10 +83,20 @@ const indexPath = path.join(distPath, 'index.html');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
 
-  // Handle SPA routing - serve index.html for all non-API routes
+  // Handle SPA routing - prefer prerendered HTML for known public routes,
+  // fall back to index.html for everything else (client-side routing).
   // Use regex pattern compatible with Express 5.x
   app.get(/^(?!\/api).*$/, (req, res) => {
-    // Check if index.html exists before serving
+    const urlPath = (req.path || '/').replace(/\/$/, '') || '/';
+    const prerenderedPath =
+      urlPath === '/'
+        ? indexPath
+        : path.join(distPath, urlPath.replace(/^\//, ''), 'index.html');
+
+    if (urlPath !== '/' && fs.existsSync(prerenderedPath)) {
+      return res.sendFile(prerenderedPath);
+    }
+
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
