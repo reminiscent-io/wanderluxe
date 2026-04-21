@@ -476,13 +476,13 @@ function buildSystemPrompt(params: SystemPromptParams): string {
 
   const placeCardsPolicy = hasFindPlace
     ? `## Rich Place Cards (PREFERRED for recommendations)
-When you recommend one or more restaurants, attractions, bars, landmarks, or activities, output a \`place_cards\` JSON block at the END of your response INSTEAD of listing them in prose. The client renders these as rich cards with photos, ratings, and one-tap "Add to trip" buttons.
+When you recommend one or more restaurants, attractions, bars, landmarks, activities, or hotels, output a \`place_cards\` JSON block at the END of your response INSTEAD of listing them in prose. The client renders these as rich cards with photos, ratings, and one-tap "Add to trip" buttons.
 
 Rules:
 - You MUST call \`find_place\` for each recommendation BEFORE writing your prose response. If you have not already called it in this turn, call it now. Do NOT recommend a place from memory — the place_id you need for the card only exists in a find_place tool result.
 - Keep your prose to 1–2 sentences of introduction ("Here are three standout dinner spots in Montmartre:"). DO NOT list the places in the prose — the cards ARE the list.
-- Scope for phase 1: restaurants/dining AND attractions/activities only. Do NOT use place_cards for hotels yet.
-- Include a \`suggested_add\` block ONLY when the user gave a specific date (and time, for reservations) that falls between ${arrivalDate} and ${departureDate}. When in doubt, omit it — the user can still tap the card to add it.
+- Supported itemTypes for \`suggested_add\`: \`reservation\` (dining), \`activity\` (attractions/tours/landmarks/bars), \`accommodation\` (hotels/stays).
+- Include a \`suggested_add\` block ONLY when the user gave specific dates (and time, for reservations) that fall within ${arrivalDate}..${departureDate}. When in doubt, omit it — the user can still tap the card to see it on the map.
 - If you cannot produce cards (e.g. \`find_place\` returned no results for the user's query), explicitly say so in prose ("I couldn't find verified results for that in ${safeTripName}") rather than silently falling back to a markdown list.
 - Before finishing your response, verify that every place you recommended has a corresponding entry in the \`place_cards\` block.
 
@@ -495,11 +495,17 @@ Format (one entry per place):
     "tags": ["Italian", "Date night"],                // optional, max 4 short tags
     "booking_url": "https://resy.com/...",            // optional, only if you have a verified booking URL from search_web
     "suggested_add": {                                // optional
-      "itemType": "reservation",                      // "reservation" for dining, "activity" for attractions/tours
-      "date": "YYYY-MM-DD",                           // MUST be within ${arrivalDate}..${departureDate}
+      "itemType": "reservation",                      // "reservation" | "activity" | "accommodation"
+      // For reservation / activity:
+      "date": "YYYY-MM-DD",                           // within ${arrivalDate}..${departureDate}
       "time": "HH:mm",                                // REQUIRED for reservation, optional for activity
       "end_time": "HH:mm",                            // optional, activity only
       "party_size": 2,                                // optional, reservation only
+      // For accommodation (hotels):
+      "check_in_date": "YYYY-MM-DD",                  // within trip window
+      "check_out_date": "YYYY-MM-DD",                 // within trip window, after check_in_date
+      "check_in_time": "HH:mm",                       // optional
+      "check_out_time": "HH:mm",                      // optional
       "notes": "Short note"                           // optional
     }
   }

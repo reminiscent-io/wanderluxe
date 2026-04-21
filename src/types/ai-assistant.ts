@@ -73,7 +73,7 @@ export interface PlaceCard {
   blurb?: string;
   tags?: string[];
   suggested_add?: {
-    itemType: 'reservation' | 'activity';
+    itemType: 'reservation' | 'activity' | 'accommodation';
     fields: Record<string, unknown>;
   };
 }
