@@ -53,7 +53,11 @@ export function loadExpediaWidgetScript(anchor: Element): Promise<void> {
     const s = document.createElement('script');
     s.className = 'eg-widgets-script';
     s.src = EG_WIDGETS_SRC;
-    s.async = true;
+    // Match the upstream copy-paste embed (no async attribute). Dynamically
+    // inserted scripts are async-by-default; opting out keeps the execution
+    // order predictable and preserves `document.currentScript` in browsers
+    // that don't set it for async scripts.
+    s.async = false;
     s.onload = () => resolve();
     s.onerror = () => reject(new Error('Failed to load Expedia widget script'));
     anchor.insertAdjacentElement('afterend', s);
