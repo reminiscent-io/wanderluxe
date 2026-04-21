@@ -214,6 +214,133 @@ describe('buildSuggestedAdd', () => {
     );
     expect(out?.fields.website).toBe('https://resy.com/cities/ny/venues/carbone');
   });
+
+  describe('accommodation', () => {
+    const hotel = makePlace({
+      place_id: 'H1',
+      name: 'Hotel de Crillon',
+      phone: '+33 1 44',
+      website: 'https://crillon.example',
+    });
+
+    it('builds an accommodation with check-in/out dates inside the trip window', () => {
+      const out = buildSuggestedAdd(
+        {
+          itemType: 'accommodation',
+          check_in_date: '2026-05-11',
+          check_out_date: '2026-05-14',
+          check_in_time: '15:00',
+          check_out_time: '11:00',
+          notes: 'Deluxe suite',
+        },
+        hotel,
+        undefined,
+        ARRIVAL,
+        DEPARTURE,
+      );
+      expect(out?.itemType).toBe('accommodation');
+      expect(out?.fields).toEqual(expect.objectContaining({
+        name: 'Hotel de Crillon',
+        check_in_date: '2026-05-11',
+        check_out_date: '2026-05-14',
+        check_in_time: '15:00',
+        check_out_time: '11:00',
+        address: hotel.formatted_address,
+        phone: hotel.phone,
+        website: hotel.website,
+        place_id: 'H1',
+        notes: 'Deluxe suite',
+      }));
+    });
+
+    it('allows check-in and check-out on the trip boundaries', () => {
+      const out = buildSuggestedAdd(
+        { itemType: 'accommodation', check_in_date: ARRIVAL, check_out_date: DEPARTURE },
+        hotel,
+        undefined,
+        ARRIVAL,
+        DEPARTURE,
+      );
+      expect(out?.itemType).toBe('accommodation');
+      expect(out?.fields.check_in_date).toBe(ARRIVAL);
+      expect(out?.fields.check_out_date).toBe(DEPARTURE);
+    });
+
+    it('returns undefined when a date is outside the trip window', () => {
+      expect(
+        buildSuggestedAdd(
+          { itemType: 'accommodation', check_in_date: '2026-05-09', check_out_date: '2026-05-14' },
+          hotel, undefined, ARRIVAL, DEPARTURE,
+        ),
+      ).toBeUndefined();
+      expect(
+        buildSuggestedAdd(
+          { itemType: 'accommodation', check_in_date: '2026-05-11', check_out_date: '2026-05-16' },
+          hotel, undefined, ARRIVAL, DEPARTURE,
+        ),
+      ).toBeUndefined();
+    });
+
+    it('returns undefined when check-out is not strictly after check-in', () => {
+      expect(
+        buildSuggestedAdd(
+          { itemType: 'accommodation', check_in_date: '2026-05-12', check_out_date: '2026-05-12' },
+          hotel, undefined, ARRIVAL, DEPARTURE,
+        ),
+      ).toBeUndefined();
+      expect(
+        buildSuggestedAdd(
+          { itemType: 'accommodation', check_in_date: '2026-05-13', check_out_date: '2026-05-12' },
+          hotel, undefined, ARRIVAL, DEPARTURE,
+        ),
+      ).toBeUndefined();
+    });
+
+    it('returns undefined when dates are missing or malformed', () => {
+      expect(
+        buildSuggestedAdd(
+          { itemType: 'accommodation', check_in_date: '2026-05-12' },
+          hotel, undefined, ARRIVAL, DEPARTURE,
+        ),
+      ).toBeUndefined();
+      expect(
+        buildSuggestedAdd(
+          { itemType: 'accommodation', check_in_date: 'May 12', check_out_date: '2026-05-14' },
+          hotel, undefined, ARRIVAL, DEPARTURE,
+        ),
+      ).toBeUndefined();
+    });
+
+    it('drops invalid time fields without rejecting the whole card', () => {
+      const out = buildSuggestedAdd(
+        {
+          itemType: 'accommodation',
+          check_in_date: '2026-05-11',
+          check_out_date: '2026-05-14',
+          check_in_time: '3pm',
+          check_out_time: '1100',
+        },
+        hotel, undefined, ARRIVAL, DEPARTURE,
+      );
+      expect(out?.itemType).toBe('accommodation');
+      expect(out?.fields.check_in_time).toBeUndefined();
+      expect(out?.fields.check_out_time).toBeUndefined();
+    });
+
+    it('prefers verified booking_url over the hotel website', () => {
+      const out = buildSuggestedAdd(
+        {
+          itemType: 'accommodation',
+          check_in_date: '2026-05-11',
+          check_out_date: '2026-05-14',
+        },
+        hotel,
+        'https://booking.example/crillon',
+        ARRIVAL, DEPARTURE,
+      );
+      expect(out?.fields.website).toBe('https://booking.example/crillon');
+    });
+  });
 });
 
 describe('enrichPlaceCards', () => {

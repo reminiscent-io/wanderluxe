@@ -31,7 +31,7 @@ export type PlaceCard = {
   blurb?: string;
   tags?: string[];
   suggested_add?: {
-    itemType: 'reservation' | 'activity';
+    itemType: 'reservation' | 'activity' | 'accommodation';
     fields: Record<string, unknown>;
   };
 };
@@ -48,6 +48,10 @@ export type RawPlaceCard = {
     end_time?: unknown;
     party_size?: unknown;
     notes?: unknown;
+    check_in_date?: unknown;
+    check_out_date?: unknown;
+    check_in_time?: unknown;
+    check_out_time?: unknown;
   };
 };
 
@@ -172,7 +176,31 @@ export function buildSuggestedAdd(
   arrival: string,
   departure: string,
 ): PlaceCard['suggested_add'] | undefined {
-  if (!raw || typeof raw.date !== 'string') return undefined;
+  if (!raw) return undefined;
+
+  if (raw.itemType === 'accommodation') {
+    if (typeof raw.check_in_date !== 'string' || typeof raw.check_out_date !== 'string') return undefined;
+    if (!isDateInRange(raw.check_in_date, arrival, departure)) return undefined;
+    if (!isDateInRange(raw.check_out_date, arrival, departure)) return undefined;
+    if (raw.check_out_date <= raw.check_in_date) return undefined;
+    return {
+      itemType: 'accommodation',
+      fields: {
+        name: place.name,
+        check_in_date: raw.check_in_date,
+        check_out_date: raw.check_out_date,
+        check_in_time: isValidTime(raw.check_in_time) ? raw.check_in_time : undefined,
+        check_out_time: isValidTime(raw.check_out_time) ? raw.check_out_time : undefined,
+        address: place.formatted_address || undefined,
+        phone: place.phone || undefined,
+        website: bookingUrl || place.website || undefined,
+        place_id: place.place_id,
+        notes: typeof raw.notes === 'string' ? raw.notes : undefined,
+      },
+    };
+  }
+
+  if (typeof raw.date !== 'string') return undefined;
   if (!isDateInRange(raw.date, arrival, departure)) return undefined;
 
   const itemType = raw.itemType === 'activity' ? 'activity' : 'reservation';
