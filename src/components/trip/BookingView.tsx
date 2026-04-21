@@ -89,12 +89,12 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-earth-500">Book Your Trip</h2>
+      <h2 className="text-2xl font-display text-earth-600">Book Your Trip</h2>
 
       {/* Primary: Expedia self-serve booking */}
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-earth-500">Book now on Expedia</h3>
+          <h3 className="text-lg font-display text-earth-600">Book now on Expedia</h3>
           <p className="text-sm text-earth-600 mt-1">
             Search stays and flights directly. Exclusive rates, instant confirmation.
           </p>
@@ -138,7 +138,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
       {/* Secondary: Human travel advisor */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-earth-500 mb-1">Prefer a human advisor?</h3>
+        <h3 className="text-lg font-display text-earth-600 mb-1">Prefer a human advisor?</h3>
         <p className="text-sm text-earth-600 mb-4">
           For custom itineraries, luxury perks, and white-glove service.
         </p>
@@ -208,7 +208,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
       {/* Why Book with a Fora Travel Advisor */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-earth-500 mb-4">Why Book with a Fora Travel Advisor?</h3>
+        <h3 className="text-lg font-display text-earth-600 mb-4">Why Book with a Fora Travel Advisor?</h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-earth-600">Exclusive Perks &amp; Upgrades</h4>
