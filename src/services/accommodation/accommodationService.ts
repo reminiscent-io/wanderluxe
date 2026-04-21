@@ -21,6 +21,21 @@ export interface AccommodationFormData {
   clear_image_url?: boolean;
 }
 
+// Compute the next order_index for accommodations within a trip
+const getNextAccommodationOrderIndex = async (tripId: string): Promise<number> => {
+  const { data, error } = await supabase
+    .from("accommodations")
+    .select("order_index")
+    .eq("trip_id", tripId)
+    .order("order_index", { ascending: false })
+    .limit(1);
+  if (error) {
+    console.error("Error fetching max accommodation order_index:", error);
+    throw error;
+  }
+  return (data?.[0]?.order_index ?? -1) + 1;
+};
+
 // Helper function to generate and insert accommodation days
 const insertAccommodationDays = async (
   stayId: string,
@@ -87,6 +102,7 @@ export const addAccommodation = async (
 ) => {
   try {
     console.log("Adding accommodation with data:", formData);
+    const orderIndex = await getNextAccommodationOrderIndex(tripId);
     // Insert the accommodation record
     const { data: accommodationData, error: accommodationError } = await supabase
       .from("accommodations")
@@ -106,6 +122,7 @@ export const addAccommodation = async (
         cost: formData.cost ? parseFloat(formData.cost) : null,
         currency: formData.currency || null,
         hotel_place_id: formData.hotel_place_id || null,
+        order_index: orderIndex,
       })
       .select("*")
       .single();
