@@ -1,10 +1,16 @@
 import React from 'react';
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
+import SEO from "../components/SEO";
 
 const PrivacyPolicy: React.FC = () => {
   return (
     <main className="min-h-screen flex flex-col">
+      <SEO
+        title="Privacy Policy"
+        description="How WanderLuxe collects, uses, stores, and protects your personal data when you use our travel planning platform."
+        canonicalPath="/privacy"
+      />
       <Navigation />
       <div className="container mx-auto px-4 md:px-6 py-12 flex-grow">
         <div className="max-w-4xl mx-auto p-6 md:p-8">

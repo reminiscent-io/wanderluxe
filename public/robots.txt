@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /auth/
+Disallow: /my-trips
+Disallow: /create-trip
+Disallow: /budget
+Disallow: /accommodations
+Disallow: /settings
+Disallow: /admin
+Disallow: /profile
+Disallow: /invite/
+Disallow: /api/
+
+Sitemap: https://wanderluxe.io/sitemap.xml

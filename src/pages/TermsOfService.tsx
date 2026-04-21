@@ -2,10 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
+import SEO from "../components/SEO";
 
 const TermsOfService: React.FC = () => {
   return (
     <main className="min-h-screen flex flex-col">
+      <SEO
+        title="Terms of Service"
+        description="Terms of Service for WanderLuxe — the rules and guidelines for using our travel planning platform."
+        canonicalPath="/terms"
+      />
       <Navigation />
       <div className="container mx-auto px-4 md:px-6 py-12 flex-grow">
         <div className="max-w-4xl mx-auto p-6 md:p-8">

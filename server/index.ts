@@ -79,14 +79,39 @@ app.get('/api/health', (req, res) => {
 const distPath = path.resolve(process.cwd(), 'dist');
 const indexPath = path.join(distPath, 'index.html');
 
+// Routes that may have prerendered HTML emitted by scripts/prerender.ts.
+// A switch statement (below) maps request paths to hardcoded filenames so
+// no user-controlled string ever reaches the filesystem.
+const prerenderedExplore = path.join(distPath, 'explore', 'index.html');
+const prerenderedAbout = path.join(distPath, 'about', 'index.html');
+const prerenderedTerms = path.join(distPath, 'terms', 'index.html');
+const prerenderedPrivacy = path.join(distPath, 'privacy', 'index.html');
+
+function prerenderedFileFor(normalizedPath: string): string | null {
+  switch (normalizedPath) {
+    case '/explore': return prerenderedExplore;
+    case '/about': return prerenderedAbout;
+    case '/terms': return prerenderedTerms;
+    case '/privacy': return prerenderedPrivacy;
+    default: return null;
+  }
+}
+
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
 
-  // Handle SPA routing - serve index.html for all non-API routes
+  // Handle SPA routing - prefer prerendered HTML for known public routes,
+  // fall back to index.html for everything else (client-side routing).
   // Use regex pattern compatible with Express 5.x
   app.get(/^(?!\/api).*$/, (req, res) => {
-    // Check if index.html exists before serving
+    const normalizedPath = (req.path || '/').replace(/\/$/, '') || '/';
+    const prerenderedPath = prerenderedFileFor(normalizedPath);
+
+    if (prerenderedPath && fs.existsSync(prerenderedPath)) {
+      return res.sendFile(prerenderedPath);
+    }
+
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {

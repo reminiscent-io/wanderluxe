@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ConsentProvider } from "@/contexts/ConsentContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -59,6 +60,7 @@ const App = () => {
   useVersionCheck();
   return (
     <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
       <ConsentProvider>
         <PostHogConsentSync />
         <AuthProvider>
@@ -142,6 +144,7 @@ const App = () => {
           </TooltipProvider>
         </AuthProvider>
       </ConsentProvider>
+      </HelmetProvider>
     </QueryClientProvider>
   );
 };

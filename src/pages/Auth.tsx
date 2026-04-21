@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import LogoFromSupabase from "@/components/LogoFromSupabase";
+import SEO from "@/components/SEO";
 
 const isValidInviteCode = (code: string) => /^[a-zA-Z0-9_-]+$/.test(code);
 
@@ -157,6 +158,7 @@ const Auth = () => {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <SEO title="Sign in" noIndex />
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat">
         {/* Warm editorial overlay: sunset-tinted gradient for brand feel */}
         <div className="absolute inset-0 bg-gradient-to-br from-earth-900/50 via-earth-800/40 to-sunset-900/40" />

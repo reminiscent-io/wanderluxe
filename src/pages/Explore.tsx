@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Search, Calendar, MapPin, Clock, Plane, Plus, Globe, CheckCircle } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
+import SEO, { SITE_URL } from '@/components/SEO';
 
 // Import hero and stats components from MyTrips
 import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
@@ -167,10 +168,31 @@ const Explore = () => {
     }
   };
 
+  const itemListJsonLd = publicTrips && publicTrips.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Curated luxury trip itineraries",
+        itemListElement: publicTrips.slice(0, 20).map((trip, idx) => ({
+          "@type": "ListItem",
+          position: idx + 1,
+          url: `${SITE_URL}/trip/${trip.trip_id}`,
+          name: trip.destination,
+        })),
+      }
+    : undefined;
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50">
+      <SEO
+        title="Explore curated luxury trip itineraries"
+        description="Discover hand-crafted luxury travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
+        canonicalPath="/explore"
+        jsonLd={itemListJsonLd}
+      />
       <Navigation />
       <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
+        <h1 className="sr-only">Explore curated luxury trip itineraries</h1>
         {/* Dynamic Hero Section - Same as MyTrips */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
