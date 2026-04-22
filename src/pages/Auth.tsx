@@ -200,16 +200,16 @@ const Auth = () => {
           />
         </div>
 
-        <div className="relative rounded-card bg-sand-50/92 backdrop-blur-xl border border-sand-200/60 shadow-warm-xl overflow-hidden">
+        <div className="relative rounded-card bg-sand-50/98 backdrop-blur-2xl border border-sand-200/70 shadow-warm-xl overflow-hidden">
           {/* Subtle grain texture for editorial feel */}
           <div className="absolute inset-0 bg-grain opacity-[0.4] pointer-events-none" />
 
           <div className="relative px-7 pt-8 pb-7 sm:px-9 sm:pt-10 sm:pb-9">
             <div className="text-center mb-7">
-              <h1 className="font-display text-[30px] leading-tight text-earth-600">
-                Welcome <em className="not-italic text-sunset-600 font-display italic">back</em>
+              <h1 className="font-display text-[30px] leading-tight text-earth-800">
+                Welcome <em className="not-italic text-sunset-700 font-display italic">back</em>
               </h1>
-              <p className="mt-1.5 text-[14px] text-sand-600">
+              <p className="mt-1.5 text-[14px] text-earth-700">
                 Sign in to pick up where you left off.
               </p>
             </div>
@@ -218,7 +218,7 @@ const Auth = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full h-12 bg-white hover:bg-sand-50 border-sand-200 text-earth-700 font-medium shadow-warm-sm transition-colors"
+              className="w-full h-12 bg-white hover:bg-sand-50 border-sand-200 text-earth-800 font-medium shadow-warm-sm transition-colors"
               onClick={handleGoogleSignIn}
               disabled={busy}
             >
@@ -249,14 +249,14 @@ const Auth = () => {
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-6">
-              <div className="flex-1 h-px bg-sand-200" />
-              <span className="text-[12px] uppercase tracking-[0.14em] text-sand-500">or</span>
-              <div className="flex-1 h-px bg-sand-200" />
+              <div className="flex-1 h-px bg-sand-300" />
+              <span className="text-[12px] uppercase tracking-[0.14em] font-medium text-earth-700">or</span>
+              <div className="flex-1 h-px bg-sand-300" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[13px] font-medium text-earth-600">
+                <Label htmlFor="email" className="text-[13px] font-medium text-earth-800">
                   Email
                 </Label>
                 <Input
@@ -267,12 +267,12 @@ const Auth = () => {
                   onChange={(e) => { setEmail(e.target.value); setSignUpNotice(false); }}
                   required
                   autoComplete="email"
-                  className="bg-white border border-sand-200 rounded-lg h-12 px-4 text-earth-600 placeholder:text-sand-500 focus-visible:border-sunset-400 focus-visible:ring-[3px] focus-visible:ring-sunset-200/60 focus-visible:ring-offset-0 transition-colors"
+                  className="bg-white border border-sand-300 rounded-lg h-12 px-4 text-earth-800 placeholder:text-sand-500 focus-visible:border-sunset-400 focus-visible:ring-[3px] focus-visible:ring-sunset-200/60 focus-visible:ring-offset-0 transition-colors"
                 />
                 {signUpNotice && (
                   <div className="rounded-lg bg-sunset-50 border border-sunset-200 px-4 py-3 mt-2">
-                    <p className="text-[14px] font-medium text-earth-600">Account created!</p>
-                    <p className="text-[13px] text-sand-600 mt-0.5">
+                    <p className="text-[14px] font-medium text-earth-800">Account created!</p>
+                    <p className="text-[13px] text-earth-700 mt-0.5">
                       Check your email for a confirmation link, then sign in.
                     </p>
                   </div>
@@ -281,13 +281,13 @@ const Auth = () => {
 
               <div className="space-y-1.5">
                 <div className="flex items-baseline justify-between">
-                  <Label htmlFor="password" className="text-[13px] font-medium text-earth-600">
+                  <Label htmlFor="password" className="text-[13px] font-medium text-earth-800">
                     Password
                   </Label>
                   <button
                     type="button"
                     onClick={() => navigate("/auth/forgot-password")}
-                    className="text-[12px] text-sand-600 hover:text-sunset-600 transition-colors"
+                    className="text-[12px] text-earth-700 hover:text-sunset-700 transition-colors"
                   >
                     Forgot password?
                   </button>
@@ -301,7 +301,7 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="bg-white border border-sand-200 rounded-lg h-12 px-4 pr-11 text-earth-600 placeholder:text-sand-500 focus-visible:border-sunset-400 focus-visible:ring-[3px] focus-visible:ring-sunset-200/60 focus-visible:ring-offset-0 transition-colors"
+                    className="bg-white border border-sand-300 rounded-lg h-12 px-4 pr-11 text-earth-800 placeholder:text-sand-500 focus-visible:border-sunset-400 focus-visible:ring-[3px] focus-visible:ring-sunset-200/60 focus-visible:ring-offset-0 transition-colors"
                   />
                   <button
                     type="button"
@@ -331,17 +331,17 @@ const Auth = () => {
                 )}
               </Button>
 
-              <p className="text-[12px] text-center text-sand-600 pt-1">
+              <p className="text-[12px] text-center text-earth-700 pt-1">
                 New here? We'll create your account automatically.
               </p>
             </form>
           </div>
 
           {/* Footer strip: secondary exploration path */}
-          <div className="relative border-t border-sand-200/70 bg-sand-100/60 px-7 py-4 sm:px-9 text-center">
+          <div className="relative border-t border-sand-200/80 bg-sand-100/80 px-7 py-4 sm:px-9 text-center">
             <button
               type="button"
-              className="text-[13px] text-earth-600 hover:text-sunset-600 transition-colors"
+              className="text-[13px] text-earth-800 hover:text-sunset-700 transition-colors"
               onClick={() => navigate("/explore")}
             >
               Not ready to sign up?{" "}
