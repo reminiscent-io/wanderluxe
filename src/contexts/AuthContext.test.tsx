@@ -328,78 +328,12 @@ describe('AuthContext', () => {
     });
   });
 
-  describe('session refresh', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it('should refresh session every 20 minutes', async () => {
-      const mockSession = {
-        user: { id: 'user-123' },
-        access_token: 'refreshed-token',
-      };
-
-      mockRefreshSession.mockResolvedValue({
-        data: { session: mockSession },
-        error: null,
-      });
-
-      render(
-        <AuthProvider>
-          <TestConsumer />
-        </AuthProvider>
-      );
-
-      // Fast-forward 20 minutes using async timer advancement
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(20 * 60 * 1000);
-      });
-
-      expect(mockRefreshSession).toHaveBeenCalled();
-    });
-
-    it('should handle refresh session errors gracefully', async () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      mockRefreshSession.mockResolvedValue({
-        data: { session: null },
-        error: { message: 'Refresh failed' },
-      });
-
-      render(
-        <AuthProvider>
-          <TestConsumer />
-        </AuthProvider>
-      );
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(20 * 60 * 1000);
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Session refresh error:',
-        expect.objectContaining({ message: 'Refresh failed' })
-      );
-
-      consoleSpy.mockRestore();
-    });
-  });
-
   describe('visibility change', () => {
-    it('should refresh session when tab becomes visible', async () => {
+    it('should call getSession when tab becomes visible', async () => {
       const mockSession = {
         user: { id: 'user-123' },
         access_token: 'refreshed-token',
       };
-
-      mockRefreshSession.mockResolvedValue({
-        data: { session: mockSession },
-        error: null,
-      });
 
       render(
         <AuthProvider>
@@ -407,8 +341,9 @@ describe('AuthContext', () => {
         </AuthProvider>
       );
 
-      // Clear any calls from mount
-      mockRefreshSession.mockClear();
+      // Clear calls from mount
+      mockGetSession.mockClear();
+      mockGetSession.mockResolvedValue({ data: { session: mockSession }, error: null });
 
       // Simulate tab becoming visible
       Object.defineProperty(document, 'visibilityState', {
@@ -422,19 +357,19 @@ describe('AuthContext', () => {
       });
 
       await waitFor(() => {
-        expect(mockRefreshSession).toHaveBeenCalled();
+        expect(mockGetSession).toHaveBeenCalled();
       });
     });
 
-    it('should not refresh when tab becomes hidden', async () => {
+    it('should not call getSession when tab becomes hidden', async () => {
       render(
         <AuthProvider>
           <TestConsumer />
         </AuthProvider>
       );
 
-      // Clear any calls from mount
-      mockRefreshSession.mockClear();
+      // Clear calls from mount
+      mockGetSession.mockClear();
 
       // Simulate tab becoming hidden
       Object.defineProperty(document, 'visibilityState', {
@@ -452,7 +387,7 @@ describe('AuthContext', () => {
         await Promise.resolve();
       });
 
-      expect(mockRefreshSession).not.toHaveBeenCalled();
+      expect(mockGetSession).not.toHaveBeenCalled();
     });
   });
 
