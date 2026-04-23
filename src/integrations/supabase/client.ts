@@ -11,5 +11,12 @@ import { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } from '@/config/env';
 // App will fail fast at startup if required variables are missing
 export const supabase = createClient<Database>(
   VITE_SUPABASE_URL,
-  VITE_SUPABASE_ANON_KEY
+  VITE_SUPABASE_ANON_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  }
 );

@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useMemo } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,6 +35,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [fullName, setFullName] = useState<string | null>(null);
   const [lastLoginAt, setLastLoginAt] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  // Prevents concurrent visibility-change refreshes from racing the SDK's own
+  // auto-refresh timer (which already handles the common case).
+  const visibilityRefreshInFlight = useRef(false);
 
   // Add cache-busting to avatar URLs to ensure fresh images are loaded
   const addCacheBusting = (url: string | null): string | null => {
@@ -170,69 +173,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       if (!session?.user) {
         setProfileLoaded(false);
-      } else {
-        // Only update last login on actual sign in events
-        const isNewLogin = event === 'SIGNED_IN';
-        ensureProfile(session.user.id, isNewLogin);
+        return;
       }
+      // TOKEN_REFRESHED fires every time the SDK rotates the access token.
+      // We only need to (re)load the profile on sign-in / user update — not
+      // on every token refresh, which would hit the DB every ~hour.
+      if (event === 'TOKEN_REFRESHED') return;
+      const isNewLogin = event === 'SIGNED_IN';
+      ensureProfile(session.user.id, isNewLogin);
     });
 
-    // Set up a periodic session refresh to keep the token valid
-    // This will run every 20 minutes to refresh the session but without causing full page reloads
-    // Using a longer interval reduces frequency of network requests
-    const refreshInterval = setInterval(async () => {
+    // Token refresh is owned by the Supabase SDK (autoRefreshToken: true).
+    // When it succeeds, onAuthStateChange above fires TOKEN_REFRESHED and our
+    // session/user state stays in sync — no polling interval needed.
+    //
+    // When a tab is hidden the browser throttles timers, so the SDK's refresh
+    // timer can lag. On visibility change we call getSession() once, which the
+    // SDK transparently refreshes if the token is near expiry. We dedupe so
+    // this doesn't race the SDK's own wake-up refresh.
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible') return;
+      if (visibilityRefreshInFlight.current) return;
+      visibilityRefreshInFlight.current = true;
       try {
-        console.log("Refreshing session silently...");
-        // Use a more resilient approach with timeout and error handling
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-        
-        try {
-          const { data, error } = await supabase.auth.refreshSession();
-          clearTimeout(timeoutId);
-
-          if (data.session) {
-            setSession(data.session);
-            setUser(data.session.user ?? null);
-            console.log("Session refreshed successfully");
-          } else if (error) {
-            console.warn("Session refresh error:", error);
-            // Clear session if token is definitively expired/invalid
-            if (error.message?.includes('expired') || error.message?.includes('invalid') || error.status === 401) {
-              console.warn("Session expired during periodic refresh - clearing auth state");
-              setSession(null);
-              setUser(null);
-            }
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          // Transient offline / network blips are expected when a tab wakes up.
+          // The SDK will retry on its own; keep this quiet.
+          if (import.meta.env.DEV) {
+            console.debug('Visibility getSession error (will retry):', error);
           }
-        } catch (fetchErr) {
-          console.warn("Session refresh network error:", fetchErr);
+          return;
+        }
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user ?? null);
         }
       } catch (err) {
-        console.error("Session refresh failed:", err);
-      }
-    }, 20 * 60 * 1000); // 20 minutes (increased from 10)
-    
-    // Handle visibility change to refresh silently when tab becomes visible again
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        try {
-          console.log("Tab visible - refreshing session silently");
-          const { data, error } = await supabase.auth.refreshSession();
-          if (data.session) {
-            setSession(data.session);
-            setUser(data.session.user ?? null);
-          } else if (error) {
-            console.warn("Session refresh error on visibility change:", error);
-            // If token is expired or invalid, clear session to force re-login
-            if (error.message?.includes('expired') || error.message?.includes('invalid') || error.status === 401) {
-              console.warn("Session expired - clearing auth state");
-              setSession(null);
-              setUser(null);
-            }
-          }
-        } catch (err) {
-          console.error("Session refresh failed on visibility change:", err);
+        if (import.meta.env.DEV) {
+          console.debug('Visibility getSession threw (will retry):', err);
         }
+      } finally {
+        visibilityRefreshInFlight.current = false;
       }
     };
 
@@ -240,7 +222,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       subscription.unsubscribe();
-      clearInterval(refreshInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
