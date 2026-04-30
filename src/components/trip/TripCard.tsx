@@ -42,23 +42,23 @@ function computeTripStatus(arrivalDate?: string, departureDate?: string): TripSt
   }
 
   if (arrival <= today) {
-    return { status: 'past', label: 'Completed', color: 'bg-sand-400' };
+    return { status: 'past', label: 'Completed', color: 'bg-muted-foreground' };
   }
 
   if (isToday(arrival)) {
-    return { status: 'today', label: 'Departure Today!', color: 'bg-orange-500' };
+    return { status: 'today', label: 'Departure Today!', color: 'bg-sunset-500' };
   }
 
   if (isTomorrow(arrival)) {
-    return { status: 'tomorrow', label: 'Tomorrow', color: 'bg-blue-500' };
+    return { status: 'tomorrow', label: 'Tomorrow', color: 'bg-primary' };
   }
 
   const daysUntil = differenceInDays(arrival, today);
   if (daysUntil <= 7) {
-    return { status: 'soon', label: `${daysUntil} days`, color: 'bg-blue-500' };
+    return { status: 'soon', label: `${daysUntil} days`, color: 'bg-primary' };
   }
 
-  return { status: 'upcoming', label: `${daysUntil} days`, color: 'bg-earth-500' };
+  return { status: 'upcoming', label: `${daysUntil} days`, color: 'bg-muted-foreground' };
 }
 
 interface TripCardProps {
@@ -170,8 +170,8 @@ const TripCard = ({
       whileHover={{ y: -4 }}
       className="group"
     >
-      <Card 
-        className="overflow-hidden cursor-pointer border-0 shadow-warm-lg hover:shadow-warm-xl transition-all duration-300 bg-background group-hover:shadow-earth-200/25"
+      <Card
+        className="overflow-hidden cursor-pointer border-0 shadow-warm-sm hover:shadow-warm transition-shadow duration-300 bg-card"
         onClick={(e) => {
           // Prevent navigation if the hide button is clicked
           if (e.defaultPrevented) return;
@@ -183,19 +183,19 @@ const TripCard = ({
         }}
       >
         <div className="relative h-56 overflow-hidden">
-          <motion.img 
+          <motion.img
             src={imageUrl}
-            alt={trip.destination} 
+            alt={trip.destination}
             className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 img-warm"
             whileHover={{ scale: 1.05 }}
           />
-          {/* Enhanced gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          
+          {/* Editorial gradient overlay - tinted dark, not pure black */}
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/30 to-transparent" />
+
           {/* Status Badge */}
           {tripStatus && (
             <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-              <Badge className={`${tripStatus.color} text-white border-0 px-3 py-1 font-medium shadow-lg backdrop-blur-sm`}>
+              <Badge className={`${tripStatus.color} text-white border-0 px-3 py-1 font-medium`}>
                 {tripStatus.label}
               </Badge>
               {/* Weather Forecast Badge for upcoming trips */}
@@ -211,7 +211,7 @@ const TripCard = ({
                           setWeatherModalOpen(true);
                         }}
                       >
-                        <Badge className="bg-white/90 text-earth-800 border-0 px-2 py-1 font-medium shadow-lg backdrop-blur-sm hover:bg-white transition-colors">
+                        <Badge className="bg-card text-foreground border-0 px-2 py-1 font-medium hover:bg-background transition-colors">
                           {getWeatherEmoji(arrivalForecast.icon)} {arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°
                         </Badge>
                       </button>
@@ -225,12 +225,12 @@ const TripCard = ({
               )}
             </div>
           )}
-          
+
           {/* Destination Title Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <div className="flex items-end justify-between">
               <div className="flex-1">
-                <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight mb-1 drop-shadow-lg">
+                <h3 className="font-display text-3xl md:text-4xl font-normal tracking-tight text-white leading-tight mb-1 drop-shadow-md">
                   {trip.destination}
                 </h3>
                 {trip.primary_destination && (
@@ -246,7 +246,7 @@ const TripCard = ({
               </div>
             </div>
           </div>
-          
+
           {/* Display shared badge in top-right corner */}
           <div className="absolute top-4 right-4">
             {/* Show "Shared by" badge for trips shared with user */}
@@ -254,8 +254,8 @@ const TripCard = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge className="flex items-center gap-1.5 bg-white/95 text-earth-700 border-0 backdrop-blur-sm shadow-lg px-2.5 py-1">
-                      <Share2 className="h-3 w-3 text-blue-600" />
+                    <Badge className="flex items-center gap-1.5 bg-card text-foreground border-0 px-2.5 py-1">
+                      <Share2 className="h-3 w-3 text-primary" />
                       <span className="font-medium text-xs">
                         {trip.owner_name || 'Shared'}
                       </span>
@@ -273,7 +273,7 @@ const TripCard = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant="outline" className="flex items-center gap-1 bg-blue-500/90 border-blue-400 text-white backdrop-blur-sm shadow-lg">
+                    <Badge className="flex items-center gap-1 bg-primary text-primary-foreground border-0">
                       <Users className="h-3 w-3" />
                       <span>{shareCount}</span>
                     </Badge>
@@ -289,22 +289,19 @@ const TripCard = ({
           {/* Pending invite badge */}
           {isPendingInvite && (
             <div className="absolute bottom-4 right-4">
-              <Badge className="bg-amber-500 text-white border-0 px-3 py-1 font-medium shadow-lg backdrop-blur-sm">
+              <Badge className="bg-amber-500 text-white border-0 px-3 py-1 font-medium">
                 Invite pending
               </Badge>
             </div>
           )}
         </div>
         <CardContent className="p-6 pt-4">
-          {/* Trip Details - Now more compact since destination is in overlay */}
           <div className="space-y-3">
-            {/* Additional trip info can go here */}
-            
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center text-earth-600 text-sm font-medium">
+              <div className="flex items-center text-muted-foreground text-sm font-medium">
                 <MapPin className="h-4 w-4 mr-2" />
-                <span className="text-earth-800">{isPendingInvite ? 'Accept to view details' : 'View Details'}</span>
+                <span className="text-foreground">{isPendingInvite ? 'Accept to view details' : 'View details'}</span>
               </div>
               
               <div className="flex gap-2">
