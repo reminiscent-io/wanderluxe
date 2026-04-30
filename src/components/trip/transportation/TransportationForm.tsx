@@ -198,21 +198,16 @@ export default function TransportationForm({
             )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               onClick={onCancel}
               disabled={saving}
-              className="px-5 py-2 text-sm font-medium text-sand-600 hover:text-sand-700 hover:bg-sand-50"
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={saving}
-              className="px-6 py-2 text-sm font-semibold text-white bg-earth-600 hover:bg-earth-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
