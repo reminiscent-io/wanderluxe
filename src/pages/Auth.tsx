@@ -49,14 +49,14 @@ const Auth = () => {
       sessionStorage.removeItem('pendingInviteCode');
       sessionStorage.removeItem('pendingRedirect');
       const go = () => navigate(`/invite/${pendingCode}`, { replace: true });
-      delay ? setTimeout(go, delay) : go();
+      if (delay) setTimeout(go, delay); else go();
     } else if (pendingRedirect && pendingRedirect.startsWith('/')) {
       sessionStorage.removeItem('pendingRedirect');
       const go = () => navigate(pendingRedirect, { replace: true });
-      delay ? setTimeout(go, delay) : go();
+      if (delay) setTimeout(go, delay); else go();
     } else {
       const go = () => navigate("/my-trips");
-      delay ? setTimeout(go, delay) : go();
+      if (delay) setTimeout(go, delay); else go();
     }
   };
 
@@ -160,10 +160,10 @@ const Auth = () => {
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
       <SEO title="Sign in" noIndex />
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=2568&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat">
-        {/* Warm editorial overlay: sunset-tinted gradient for brand feel */}
-        <div className="absolute inset-0 bg-gradient-to-br from-earth-900/50 via-earth-800/40 to-sunset-900/40" />
-        <div className="absolute inset-0 bg-earth-950/20" />
-        <div className="absolute bottom-3 left-3 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
+        {/* Warm editorial overlay: espresso ink → smoked walnut → roasted bronze (warm-night) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#211F1B]/55 via-[#5C544A]/45 to-[#603D2E]/45" />
+        <div className="absolute inset-0 bg-[#211F1B]/15" />
+        <div className="absolute bottom-3 left-3 z-10 text-sand-50 text-xs bg-[#211F1B]/55 px-2 py-1 rounded opacity-60 hover:opacity-100 transition-opacity">
           <a
             href="https://unsplash.com/@gaddafirusli?utm_source=wanderluxe&utm_medium=referral"
             target="_blank"
@@ -194,22 +194,22 @@ const Auth = () => {
         <div className="flex justify-center mb-6">
           <LogoFromSupabase
             logoName="White Full"
-            className="h-9 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
+            className="h-9 object-contain drop-shadow-[0_2px_10px_rgba(33,31,27,0.5)]"
             fallbackText="WanderLuxe"
-            fallbackClassName="font-display text-2xl text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
+            fallbackClassName="font-display text-2xl text-sand-50 drop-shadow-[0_2px_10px_rgba(33,31,27,0.5)]"
           />
         </div>
 
-        <div className="relative rounded-card bg-sand-50/98 backdrop-blur-2xl border border-sand-200/70 shadow-warm-xl overflow-hidden">
+        <div className="relative rounded-card bg-sand-50 border border-sand-200 shadow-warm-xl overflow-hidden">
           {/* Subtle grain texture for editorial feel */}
           <div className="absolute inset-0 bg-grain opacity-[0.4] pointer-events-none" />
 
           <div className="relative px-7 pt-8 pb-7 sm:px-9 sm:pt-10 sm:pb-9">
             <div className="text-center mb-7">
-              <h1 className="font-display text-[30px] leading-tight text-earth-800">
-                Welcome <em className="not-italic text-sunset-700 font-display italic">back</em>
+              <h1 className="font-display text-[30px] leading-tight text-foreground">
+                Welcome <em className="not-italic font-display italic text-primary">back</em>
               </h1>
-              <p className="mt-1.5 text-[14px] text-earth-700">
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 Sign in to pick up where you left off.
               </p>
             </div>
@@ -218,7 +218,7 @@ const Auth = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full h-12 bg-white hover:bg-sand-50 border-sand-200 text-earth-800 font-medium shadow-warm-sm transition-colors"
+              className="w-full h-12 font-medium shadow-warm-sm"
               onClick={handleGoogleSignIn}
               disabled={busy}
             >
@@ -249,14 +249,14 @@ const Auth = () => {
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-6">
-              <div className="flex-1 h-px bg-sand-300" />
-              <span className="text-[12px] uppercase tracking-[0.14em] font-medium text-earth-700">or</span>
-              <div className="flex-1 h-px bg-sand-300" />
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[12px] uppercase tracking-[0.14em] font-medium text-muted-foreground">or</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[13px] font-medium text-earth-800">
+                <Label htmlFor="email" className="text-[13px] font-medium text-foreground">
                   Email
                 </Label>
                 <Input
@@ -267,12 +267,12 @@ const Auth = () => {
                   onChange={(e) => { setEmail(e.target.value); setSignUpNotice(false); }}
                   required
                   autoComplete="email"
-                  className="bg-white border border-sand-300 rounded-lg h-12 px-4 text-earth-800 placeholder:text-sand-500 focus-visible:border-sunset-400 focus-visible:ring-[3px] focus-visible:ring-sunset-200/60 focus-visible:ring-offset-0 transition-colors"
+                  className="h-12 px-4 text-base"
                 />
                 {signUpNotice && (
-                  <div className="rounded-lg bg-sunset-50 border border-sunset-200 px-4 py-3 mt-2">
-                    <p className="text-[14px] font-medium text-earth-800">Account created!</p>
-                    <p className="text-[13px] text-earth-700 mt-0.5">
+                  <div className="rounded-lg bg-sand-100 border border-sand-200 px-4 py-3 mt-2">
+                    <p className="text-sm font-medium text-foreground">Account created!</p>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">
                       Check your email for a confirmation link, then sign in.
                     </p>
                   </div>
@@ -281,13 +281,13 @@ const Auth = () => {
 
               <div className="space-y-1.5">
                 <div className="flex items-baseline justify-between">
-                  <Label htmlFor="password" className="text-[13px] font-medium text-earth-800">
+                  <Label htmlFor="password" className="text-[13px] font-medium text-foreground">
                     Password
                   </Label>
                   <button
                     type="button"
                     onClick={() => navigate("/auth/forgot-password")}
-                    className="text-[12px] text-earth-700 hover:text-sunset-700 transition-colors"
+                    className="text-[12px] text-muted-foreground hover:text-primary transition-colors"
                   >
                     Forgot password?
                   </button>
@@ -301,12 +301,12 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="bg-white border border-sand-300 rounded-lg h-12 px-4 pr-11 text-earth-800 placeholder:text-sand-500 focus-visible:border-sunset-400 focus-visible:ring-[3px] focus-visible:ring-sunset-200/60 focus-visible:ring-offset-0 transition-colors"
+                    className="h-12 px-4 pr-11 text-base"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sand-500 hover:text-earth-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     tabIndex={-1}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
@@ -318,7 +318,7 @@ const Auth = () => {
               <Button
                 type="submit"
                 variant="sunset"
-                className="w-full h-12 text-[15px] font-medium mt-2"
+                className="w-full h-12 mt-2"
                 disabled={busy || password.length === 0 || email.length === 0}
               >
                 {loading ? (
@@ -331,17 +331,17 @@ const Auth = () => {
                 )}
               </Button>
 
-              <p className="text-[12px] text-center text-earth-700 pt-1">
+              <p className="text-[12px] text-center text-muted-foreground pt-1">
                 New here? We'll create your account automatically.
               </p>
             </form>
           </div>
 
           {/* Footer strip: secondary exploration path */}
-          <div className="relative border-t border-sand-200/80 bg-sand-100/80 px-7 py-4 sm:px-9 text-center">
+          <div className="relative border-t border-sand-200 bg-sand-100 px-7 py-4 sm:px-9 text-center">
             <button
               type="button"
-              className="text-[13px] text-earth-800 hover:text-sunset-700 transition-colors"
+              className="text-[13px] text-foreground hover:text-primary transition-colors"
               onClick={() => navigate("/explore")}
             >
               Not ready to sign up?{" "}
