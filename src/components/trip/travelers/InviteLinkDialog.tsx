@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Copy, Check, Share2, Loader2 } from 'lucide-react';
 import { buildInviteUrl, buildShareText } from '@/services/inviteLinkService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -102,59 +103,49 @@ export default function InviteLinkDialog({
         </DialogHeader>
 
         {!generatedUrl ? (
-          <div className="space-y-5 py-2">
+          <div className="space-y-6 py-2">
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Permission Level</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={permissionLevel === 'read' ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                  onClick={() => setPermissionLevel('read')}
-                >
-                  View Only
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={permissionLevel === 'edit' ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                  onClick={() => setPermissionLevel('edit')}
-                >
-                  Can Edit
-                </Button>
-              </div>
+              <Label className="text-sm font-medium">Permission level</Label>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={permissionLevel}
+                onValueChange={(v) => v && setPermissionLevel(v as 'read' | 'edit')}
+                className="justify-start"
+              >
+                <ToggleGroupItem value="read" aria-label="View only">
+                  View only
+                </ToggleGroupItem>
+                <ToggleGroupItem value="edit" aria-label="Can edit">
+                  Can edit
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             <div className="space-y-3">
               <Label className="text-sm font-medium">Expiration</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={!neverExpires ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                  onClick={() => setNeverExpires(false)}
-                >
-                  48 Hours
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={neverExpires ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                  onClick={() => setNeverExpires(true)}
-                >
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={neverExpires ? 'never' : '48h'}
+                onValueChange={(v) => v && setNeverExpires(v === 'never')}
+                className="justify-start"
+              >
+                <ToggleGroupItem value="48h" aria-label="Expires in 48 hours">
+                  48 hours
+                </ToggleGroupItem>
+                <ToggleGroupItem value="never" aria-label="Never expires">
                   Never
-                </Button>
-              </div>
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             <Button
               onClick={handleGenerate}
               disabled={creating}
-              className="w-full bg-earth-500 text-white hover:bg-earth-600"
+              className="w-full"
             >
               {creating ? (
                 <>
@@ -168,7 +159,7 @@ export default function InviteLinkDialog({
           </div>
         ) : (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-earth-600">{preamble}</p>
+            <p className="text-sm text-muted-foreground">{preamble}</p>
             <div className="flex gap-2">
               <Input
                 readOnly
@@ -182,7 +173,7 @@ export default function InviteLinkDialog({
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleShare} className="flex-1 bg-earth-500 text-white hover:bg-earth-600">
+              <Button onClick={handleShare} className="flex-1">
                 <Share2 className="mr-2 h-4 w-4" />
                 {navigator.share ? 'Share' : 'Copy Link'}
               </Button>

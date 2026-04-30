@@ -242,7 +242,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title Field */}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-earth-700">
+        <label htmlFor="title" className="block text-sm font-medium text-foreground">
           Title <span className="text-red-500">*</span>
         </label>
         <input
@@ -250,7 +250,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
           type="text"
           value={activity.title}
           onChange={(e) => onActivityChange({ ...activity, title: e.target.value })}
-          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-[hsl(var(--border))] p-2 focus:border-earth-500 focus:ring-earth-500 ${errors.title ? 'border-red-500' : ''}`}
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm border border-[hsl(var(--border))] p-2 focus:border-ring focus:ring-ring ${errors.title ? 'border-red-500' : ''}`}
           required
         />
         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
@@ -258,7 +258,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Location Field - Google Places Search */}
       <div>
-        <label className="block text-sm font-medium text-earth-700">
+        <label className="block text-sm font-medium text-foreground">
           Location
         </label>
         <div className="mt-1">
@@ -305,14 +305,14 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Description Field */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-earth-700">
+        <label htmlFor="description" className="block text-sm font-medium text-foreground">
           Description
         </label>
         <textarea
           id="description"
           value={activity.description || ''}
           onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-[hsl(var(--border))] p-2 shadow-sm focus:border-earth-500 focus:ring-earth-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border border-[hsl(var(--border))] p-2 shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
           rows={1}
         />
       </div>
@@ -320,7 +320,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       {/* Date Selection */}
       {tripDateOptions.length > 0 && (
         <div>
-          <label htmlFor="date" className="block text-sm font-medium text-earth-700">
+          <label htmlFor="date" className="block text-sm font-medium text-foreground">
             Date <span className="text-red-500">*</span>
           </label>
           <Select onValueChange={(value) => onActivityChange({ ...activity, date: value })} value={activity.date || ''}>
@@ -347,7 +347,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       <div className="space-y-3">
         {/* Start Time - Compact */}
         <div className="flex items-center gap-3">
-          <label htmlFor="start-time" className="text-sm font-medium text-earth-700 w-16 shrink-0">
+          <label htmlFor="start-time" className="text-sm font-medium text-foreground w-16 shrink-0">
             Start
           </label>
           <Input
@@ -365,10 +365,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               if (!startTime) setStartTime(DEFAULT_START_TIME);
             }}
             step="300"
-            className="w-28 bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500 text-center"
+            className="w-28 text-center"
           />
           {startTime && endTime && !useCustomEndTime && (
-            <span className="text-sm text-sand-600">
+            <span className="text-sm text-muted-foreground">
               {formatDuration(calculateDuration(startTime, endTime) || 0)}
             </span>
           )}
@@ -376,7 +376,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
         {/* Duration Presets */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-earth-700">Duration</label>
+          <label className="text-sm font-medium text-foreground">Duration</label>
           <div className="flex flex-wrap gap-2">
             {DURATION_PRESETS.map((preset) => (
               <button
@@ -391,8 +391,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
                 }}
                 className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                   selectedDuration === preset.minutes && !useCustomEndTime
-                    ? 'bg-sand-500 text-white border-sand-500'
-                    : 'bg-white text-sand-700 border-sand-300 hover:border-sand-400 hover:bg-sand-50'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-input hover:bg-accent'
                 }`}
               >
                 {preset.label}
@@ -406,8 +406,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               }}
               className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                 useCustomEndTime
-                  ? 'bg-sand-500 text-white border-sand-500'
-                  : 'bg-white text-sand-700 border-sand-300 hover:border-sand-400 hover:bg-sand-50'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-foreground border-input hover:bg-accent'
               }`}
             >
               Custom
@@ -418,7 +418,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         {/* Custom End Time - Only shown when custom is selected */}
         {useCustomEndTime && (
           <div className="flex items-center gap-3">
-            <label htmlFor="end-time" className="text-sm font-medium text-earth-700 w-16 shrink-0">
+            <label htmlFor="end-time" className="text-sm font-medium text-foreground w-16 shrink-0">
               End
             </label>
             <Input
@@ -434,10 +434,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
                 }
               }}
               step="300"
-              className="w-28 bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500 text-center"
+              className="w-28 text-center"
             />
             {startTime && endTime && (
-              <span className="text-sm text-sand-600">
+              <span className="text-sm text-muted-foreground">
                 {formatDuration(calculateDuration(startTime, endTime) || 0)}
               </span>
             )}
@@ -451,7 +451,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Cost and Currency */}
       <div className="space-y-2">
-        <label htmlFor="cost" className="block text-sm font-medium text-earth-700">
+        <label htmlFor="cost" className="block text-sm font-medium text-foreground">
           Cost
         </label>
         <div className="flex gap-3">
@@ -466,20 +466,20 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               }
               onChange={(e) => handleCostChange(e.target.value)}
               placeholder="0"
-              className={`block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-earth-500 focus:ring-earth-500 bg-white ${errors.cost ? 'border-red-500' : 'border-[hsl(var(--border))]'}`}
+              className={`block w-full rounded-md shadow-sm sm:text-sm border p-2 focus:border-ring focus:ring-ring bg-background ${errors.cost ? 'border-red-500' : 'border-[hsl(var(--border))]'}`}
             />
             {errors.cost && <p className="mt-1 text-xs text-red-500">{errors.cost}</p>}
           </div>
           <div className="w-[110px] shrink-0">
             <Select onValueChange={(value) => onActivityChange({ ...activity, currency: value as Currency })} value={activity.currency || ''}>
-              <SelectTrigger className="bg-white">
+              <SelectTrigger>
                 <SelectValue placeholder="USD" />
               </SelectTrigger>
               <SelectContent className="z-[999] max-h-48 overflow-y-auto">
                 {CURRENCIES.map((currency) => (
                   <SelectItem key={currency} value={currency}>
                     <span className="font-medium">{currency}</span>
-                    <span className="ml-1 text-sand-600 text-sm">
+                    <span className="ml-1 text-muted-foreground text-sm">
                       {CURRENCY_SYMBOLS[currency]}
                     </span>
                   </SelectItem>
@@ -492,7 +492,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Travelers */}
       <div>
-        <label className="block text-sm font-medium text-earth-700">
+        <label className="block text-sm font-medium text-foreground">
           Travelers
         </label>
         <div className="mt-1">
@@ -505,32 +505,33 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* Buttons */}
-      <div className="sticky bottom-0 z-10 bg-background flex justify-between items-center pt-4 -mt-px border-t border-sand-200">
+      <div className="sticky bottom-0 z-10 bg-background flex justify-between items-center pt-4 -mt-px border-t border-border">
         <div>
           {onDelete && (
-            <button
+            <Button
               type="button"
               onClick={onDelete}
               disabled={isSubmitting}
-              className="flex items-center justify-center w-9 h-9 text-red-500 hover:text-red-600 hover:bg-red-50 bg-transparent border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              variant="ghost"
+              size="icon"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              aria-label="Delete activity"
             >
               <Trash2 className="w-4 h-4" />
-            </button>
+            </Button>
           )}
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Button
             type="button"
             onClick={onCancel}
-            variant="ghost"
-            className="px-5 py-2 text-sm font-medium text-sand-600 hover:text-sand-700 hover:bg-sand-50"
+            variant="outline"
             disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            className="px-6 py-2 text-sm font-semibold text-white bg-earth-600 hover:bg-earth-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-earth-500 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isSubmitting || !activity.title.trim()}
           >
             {isSubmitting ? 'Saving...' : submitLabel}

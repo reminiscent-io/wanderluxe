@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, AlertTriangle } from 'lucide-react';
@@ -38,17 +38,17 @@ function Segment({
   const hasRevision = revisedTime && revisedTime !== scheduledTime;
   return (
     <div className="space-y-1">
-      <div className="text-xs uppercase tracking-wide text-sand-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="flex items-baseline gap-2">
-        <div className="text-lg font-semibold text-sand-900">{airportIata || '—'}</div>
-        <div className="text-sm text-sand-600 truncate">{airportName}</div>
+        <div className="text-lg font-semibold text-foreground">{airportIata || '—'}</div>
+        <div className="text-sm text-muted-foreground truncate">{airportName}</div>
       </div>
-      <div className="text-sm text-sand-700">
-        <span className={hasRevision ? 'line-through text-sand-500' : ''}>
+      <div className="text-sm text-foreground/80">
+        <span className={hasRevision ? 'line-through text-muted-foreground' : ''}>
           Scheduled {scheduledTime}
         </span>
         {hasRevision && (
-          <span className="ml-2 font-medium text-sunset-600">Now {revisedTime}</span>
+          <span className="ml-2 font-semibold text-foreground">Now {revisedTime}</span>
         )}
       </div>
     </div>
@@ -88,9 +88,9 @@ export default function FlightLookupConfirmDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-sand-800">
+          <div className="flex items-center justify-between text-foreground">
             <div className="font-semibold">{result.departure.airport_iata || '—'}</div>
-            <ArrowRight className="h-4 w-4 text-sand-500" />
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
             <div className="font-semibold">{result.arrival.airport_iata || '—'}</div>
           </div>
 
@@ -121,19 +121,19 @@ export default function FlightLookupConfirmDialog({
             </div>
           )}
 
-          <p className="text-xs text-sand-500">
+          <p className="text-xs text-muted-foreground">
             All times are local to the airport. Existing form values will not be overwritten.
           </p>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button type="button" variant="sunset" onClick={onApply}>
             Apply to form
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

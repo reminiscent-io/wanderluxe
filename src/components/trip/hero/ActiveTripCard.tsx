@@ -82,7 +82,7 @@ export function ActiveTripCard({
         {/* Top Section */}
         <div className="flex items-start justify-between">
           {/* Live Badge */}
-          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white font-semibold px-3 py-1 animate-pulse shadow-lg">
+          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white font-semibold px-3 py-1 shadow-lg">
             <span className="w-2 h-2 bg-white rounded-full mr-2 animate-ping" />
             LIVE
           </Badge>

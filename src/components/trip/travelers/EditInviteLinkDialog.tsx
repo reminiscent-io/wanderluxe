@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { InviteLink } from '@/integrations/supabase/invite_link_types';
 import { toast } from 'sonner';
 
@@ -66,60 +67,47 @@ export default function EditInviteLinkDialog({
           <DialogTitle>Edit Invite Link</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
+        <div className="space-y-6 py-2">
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Permission Level</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={permissionLevel === 'read' ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                onClick={() => setPermissionLevel('read')}
-              >
-                View Only
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={permissionLevel === 'edit' ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                onClick={() => setPermissionLevel('edit')}
-              >
-                Can Edit
-              </Button>
-            </div>
+            <Label className="text-sm font-medium">Permission level</Label>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={permissionLevel}
+              onValueChange={(v) => v && setPermissionLevel(v as 'read' | 'edit')}
+              className="justify-start"
+            >
+              <ToggleGroupItem value="read" aria-label="View only">
+                View only
+              </ToggleGroupItem>
+              <ToggleGroupItem value="edit" aria-label="Can edit">
+                Can edit
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
 
           <div className="space-y-3">
             <Label className="text-sm font-medium">Expiration</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={!neverExpires ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                onClick={() => setNeverExpires(false)}
-              >
-                48 Hours
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={neverExpires ? 'bg-earth-500 text-white hover:bg-earth-600 border-earth-500' : ''}
-                onClick={() => setNeverExpires(true)}
-              >
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={neverExpires ? 'never' : '48h'}
+              onValueChange={(v) => v && setNeverExpires(v === 'never')}
+              className="justify-start"
+            >
+              <ToggleGroupItem value="48h" aria-label="Expires in 48 hours">
+                48 hours
+              </ToggleGroupItem>
+              <ToggleGroupItem value="never" aria-label="Never expires">
                 Never
-              </Button>
-            </div>
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button
-              onClick={handleSave}
-              className="flex-1 bg-earth-500 text-white hover:bg-earth-600"
-            >
+            <Button onClick={handleSave} className="flex-1">
               Save Changes
             </Button>
             <Button variant="outline" onClick={() => onOpenChange(false)}>

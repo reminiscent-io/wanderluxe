@@ -13,7 +13,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CurrencySelector from './CurrencySelector';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -110,10 +109,9 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input 
-                      {...field} 
+                    <Input
+                      {...field}
                       placeholder="Enter expense description"
-                      className="bg-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -129,13 +127,12 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
                   <FormItem className="flex-1">
                     <FormLabel>Cost</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        min="0" 
+                      <Input
+                        {...field}
+                        type="number"
+                        min="0"
                         step="0.01"
                         placeholder="0.00"
-                        className="bg-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -153,7 +150,6 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
                       <CurrencySelector
                         value={field.value}
                         onValueChange={field.onChange}
-                        className="bg-white"
                       />
                     </FormControl>
                   </FormItem>
@@ -168,10 +164,9 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input 
-                      {...field} 
+                    <Input
+                      {...field}
                       type="date"
-                      className="bg-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -184,18 +179,12 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="text-earth-500"
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit"
-                className="bg-earth-500 text-white hover:bg-earth-600"
-              >
-                Add Expense
-              </Button>
+              <Button type="submit">Add Expense</Button>
             </DialogFooter>
           </form>
         </Form>

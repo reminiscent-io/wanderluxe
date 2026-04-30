@@ -222,7 +222,7 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
       <Dialog open={open && !editDialogOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-earth-700">
+            <DialogTitle>
               Review Item {currentIndex + 1} of {items.length}
             </DialogTitle>
           </DialogHeader>
@@ -234,11 +234,11 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
                 key={item.id}
                 className={cn(
                   'h-1 flex-1 rounded-full transition-colors',
-                  idx < currentIndex ? 'bg-green-500' :
-                  idx === currentIndex ? 'bg-earth-500' :
-                  item.status === 'created' ? 'bg-green-500' :
-                  item.status === 'skipped' ? 'bg-sand-300' :
-                  'bg-sand-200'
+                  idx < currentIndex ? 'bg-emerald-500' :
+                  idx === currentIndex ? 'bg-primary' :
+                  item.status === 'created' ? 'bg-emerald-500' :
+                  item.status === 'skipped' ? 'bg-muted-foreground/40' :
+                  'bg-muted'
                 )}
               />
             ))}
@@ -275,7 +275,7 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
 
             <Button
               onClick={handleEditClick}
-              className="flex-1 bg-earth-500 hover:bg-earth-600 text-white"
+              className="flex-1"
               title="Open full form to edit and add"
             >
               <Check className="w-4 h-4 mr-1" />

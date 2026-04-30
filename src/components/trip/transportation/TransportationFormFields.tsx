@@ -172,7 +172,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
               Transportation Type <Required />
             </Label>
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="bg-white">
+              <SelectTrigger>
                 <SelectValue placeholder="Select type">
                   {field.value && (
                     <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
                   )}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="z-[300] bg-sand-50">
+              <SelectContent className="z-[300]">
                 {[
                   "flight",
                   "train",
@@ -218,7 +218,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
                   value={field.value ?? ""}
                   onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                   placeholder="e.g. DL2733"
-                  className="bg-white flex-1"
+                  className="flex-1"
                   autoComplete="off"
                 />
                 <Button
@@ -242,7 +242,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
                 </Button>
               </div>
               {!canLookup && flightNumber?.trim() && !travelRange?.start && (
-                <p className="text-xs text-sand-500">Pick a departure date to enable lookup.</p>
+                <p className="text-xs text-muted-foreground">Pick a departure date to enable lookup.</p>
               )}
             </div>
           )}
@@ -268,7 +268,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         timeStep={60} // 1-minute increments for precise flight/train times
       />
       {(showOriginalStart || showOriginalEnd) && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-sand-600 -mt-2">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground -mt-2">
           {showOriginalStart && (
             <span>Originally scheduled departure: {scheduledStartTime}</span>
           )}
@@ -322,7 +322,6 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
                     // The field value is already set by onChange, this ensures visual formatting
                   }}
                   placeholder="0"
-                  className="bg-white"
                 />
               </div>
             )}
@@ -333,14 +332,14 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
             render={({ field }) => (
               <div className="w-[110px] shrink-0">
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger>
                     <SelectValue placeholder="USD" />
                   </SelectTrigger>
-                  <SelectContent className="z-[300] bg-sand-50 max-h-48 overflow-y-auto">
+                  <SelectContent className="z-[300] max-h-48 overflow-y-auto">
                     {CURRENCIES.map((c) => (
                       <SelectItem key={c} value={c}>
                         <span className="font-medium">{c}</span>
-                        <span className="ml-1 text-sand-600 text-sm">
+                        <span className="ml-1 text-muted-foreground text-sm">
                           {CURRENCY_SYMBOLS[c]}
                         </span>
                       </SelectItem>

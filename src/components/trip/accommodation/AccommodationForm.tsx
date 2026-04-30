@@ -29,7 +29,7 @@ import {
   type PlacePhotoMeta,
 } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
-import { Trash2, ChevronDown, MapPin, Phone, Globe } from "lucide-react";
+import { Trash2, ChevronDown, MapPin } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -105,7 +105,7 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   const nextKey = typeof process !== "undefined"
     ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
     : undefined;
-  // @ts-ignore Vite env at runtime (SSR-safe check)
+  // @ts-expect-error Vite env at runtime (SSR-safe check)
   const viteKey: string | undefined =
     (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) ||
     undefined;
@@ -374,14 +374,14 @@ export default function AccommodationForm({
           <CollapsibleTrigger asChild>
             <button
               type="button"
-              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-sand-700 bg-sand-50 hover:bg-sand-100 rounded-md border border-sand-200 transition-colors"
+              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-accent rounded-md border border-border transition-colors"
             >
               <span className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-sand-500" />
+                <MapPin className="h-4 w-4 text-muted-foreground" />
                 Location Details
               </span>
               <ChevronDown
-                className={`h-4 w-4 text-sand-500 transition-transform duration-200 ${
+                className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
                   locationOpen ? "rotate-180" : ""
                 }`}
               />
@@ -394,10 +394,7 @@ export default function AccommodationForm({
               name="hotel_address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-1.5 text-sand-600">
-                    <MapPin className="h-3.5 w-3.5" />
-                    Address
-                  </FormLabel>
+                  <FormLabel>Address</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -417,10 +414,7 @@ export default function AccommodationForm({
                 name="hotel_phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1.5 text-sand-600">
-                      <Phone className="h-3.5 w-3.5" />
-                      Phone
-                    </FormLabel>
+                    <FormLabel>Phone</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -437,10 +431,7 @@ export default function AccommodationForm({
                 name="hotel_website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1.5 text-sand-600">
-                      <Globe className="h-3.5 w-3.5" />
-                      Website
-                    </FormLabel>
+                    <FormLabel>Website</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -459,7 +450,7 @@ export default function AccommodationForm({
         {/* Photo strip (side-scroll) */}
         {hotelPhotos.length > 0 && (
           <div className="mt-2 space-y-2">
-            <div className="text-xs text-sand-600">Photos</div>
+            <div className="text-xs text-muted-foreground">Photos</div>
             <div className="overflow-x-auto rounded-md">
               <div className="flex gap-2 py-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {hotelPhotos.slice(0, 12).map((p, i) => {
@@ -618,27 +609,25 @@ export default function AccommodationForm({
                 variant="ghost"
                 disabled={saving}
                 onClick={onDelete}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50 w-9 h-9 p-0 border border-red-200 rounded-lg transition-colors"
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                aria-label="Delete accommodation"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               disabled={saving}
               onClick={onCancel}
-              className="px-5 py-2 text-sm font-medium text-sand-600 hover:text-sand-700 hover:bg-sand-50"
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="px-6 py-2 text-sm font-semibold text-white bg-earth-600 hover:bg-earth-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={saving}
-            >
+            <Button type="submit" disabled={saving}>
               {saving ? "Saving..." : initialData ? "Update Stay" : "Add Stay"}
             </Button>
           </div>

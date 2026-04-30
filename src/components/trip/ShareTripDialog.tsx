@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, PlusCircle, X, Mail, Eye, Edit } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Share2, PlusCircle, X, Eye, Edit } from "lucide-react";
 import { toast } from "sonner";
 import {
   shareTrip,
@@ -22,7 +24,6 @@ import {
   PermissionLevel,
 } from "@/integrations/supabase/trip_shares_types";
 import { EmailCombobox } from "@/components/ui/email-combobox";
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectTrigger,
@@ -307,26 +308,28 @@ const ShareTripDialog = ({
     }
   };
 
-  const baseBtn = "h-8 px-3";
-  const baseBtnSmall = "h-7 px-2";
-  const selected = "bg-earth-600 text-white hover:bg-earth-700";
-  const unselected = "border";
+  const ownerLabel =
+    currentUser.fullName ||
+    currentUser.email ||
+    null;
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogContent
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90dvh] flex flex-col p-4 sm:p-6"
-        onPointerDownOutside={(e) => e.preventDefault()}
-      >
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share Trip</DialogTitle>
+          {ownerLabel && (
+            <DialogDescription>
+              Shared by {ownerLabel}
+              {currentUser.fullName && currentUser.email ? ` (${currentUser.email})` : ""}
+            </DialogDescription>
+          )}
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto scrollbar-none space-y-4">
-          {/* Contacts quick picker */}
+        <div className="flex-1 overflow-y-auto scrollbar-none space-y-8 pt-2">
           {contacts.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Pick from your contacts</p>
+            <section className="space-y-3">
+              <h3 className="text-sm font-medium">Pick from your contacts</h3>
               <Select onValueChange={handlePickContact}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a contact" />
@@ -341,174 +344,138 @@ const ShareTripDialog = ({
                     ))}
                 </SelectContent>
               </Select>
-            </div>
+            </section>
           )}
 
-          {/* Email inputs */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Email addresses</p>
-            {emails.map((email, index) => {
-              const valid = isValidEmail(email);
-              return (
-                <div key={index} className="flex items-center gap-2">
-                  <EmailCombobox
-                    value={email}
-                    onChange={(value) => handleEmailChange(index, value)}
-                    suggestions={emailSuggestions}
-                    placeholder="email@example.com"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    className={cn("flex-shrink-0", selected)}
-                    onClick={() => handleShareSingle(email)}
-                    disabled={!valid || isSubmitting}
-                  >
-                    <Share2 className="h-3 w-3 mr-1" />
-                    Share
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeEmailField(index)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              );
-            })}
+          <section className="space-y-3">
+            <h3 className="text-sm font-medium">Email addresses</h3>
+            <div className="space-y-2">
+              {emails.map((email, index) => {
+                const valid = isValidEmail(email);
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <EmailCombobox
+                      value={email}
+                      onChange={(value) => handleEmailChange(index, value)}
+                      suggestions={emailSuggestions}
+                      placeholder="email@example.com"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleShareSingle(email)}
+                      disabled={!valid || isSubmitting}
+                      className="flex-shrink-0"
+                    >
+                      <Share2 className="h-3.5 w-3.5 mr-1" />
+                      Share
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeEmailField(index)}
+                      className="h-8 w-8 p-0"
+                      aria-label="Remove email"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
               onClick={addEmailField}
             >
-              <PlusCircle className="h-4 w-4" />
-              Add Another
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add another
             </Button>
-          </div>
+          </section>
 
-          {/* New invite permission */}
-          <div className="space-y-3 border-t pt-4 mt-4">
-            <p className="text-sm font-medium">Permission for new invites</p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setPermissionLevel("read")}
-                className={cn(baseBtn, permissionLevel === "read" ? selected : unselected)}
-              >
-                <Eye className="h-4 w-4 mr-1" />
+          <section className="space-y-3">
+            <h3 className="text-sm font-medium">Permission for new invites</h3>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={permissionLevel}
+              onValueChange={(v) => v && setPermissionLevel(v as PermissionLevel)}
+              className="justify-start"
+            >
+              <ToggleGroupItem value="read" aria-label="View only">
+                <Eye className="mr-1 h-4 w-4" />
                 View
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setPermissionLevel("edit")}
-                className={cn(baseBtn, permissionLevel === "edit" ? selected : unselected)}
-              >
-                <Edit className="h-4 w-4 mr-1" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="edit" aria-label="Can edit">
+                <Edit className="mr-1 h-4 w-4" />
                 Edit
-              </Button>
-            </div>
-          </div>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </section>
 
-          {/* Existing shares (owner excluded) */}
           {filteredShares.length > 0 && (
-            <div className="space-y-2 border-t pt-4 mt-4">
-              <p className="text-sm font-medium">Currently shared with</p>
-              <div className="space-y-2">
+            <section className="space-y-3">
+              <h3 className="text-sm font-medium">Currently shared with</h3>
+              <ul className="rounded-md border divide-y divide-border">
                 {filteredShares.map((share) => {
                   const current = (share.permission_level || "edit") as PermissionLevel;
                   return (
-                    <div
+                    <li
                       key={share.id}
-                      className="flex items-center gap-2 rounded-md border p-2"
+                      className="flex items-center gap-2 px-3 py-2"
                     >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm truncate">
-                          {share.shared_with_email}
-                        </span>
-                      </div>
+                      <span className="text-sm truncate flex-1 min-w-0">
+                        {share.shared_with_email}
+                      </span>
 
-                      <Button
-                        type="button"
+                      <ToggleGroup
+                        type="single"
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleSetPermission(share.id, "read")}
-                        className={cn(baseBtnSmall, current === "read" ? selected : unselected)}
+                        value={current}
+                        onValueChange={(v) =>
+                          v && handleSetPermission(share.id, v as PermissionLevel)
+                        }
                       >
-                        <Eye className="h-3 w-3 mr-1" />
-                        View
-                      </Button>
-
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => handleSetPermission(share.id, "edit")}
-                        className={cn(baseBtnSmall, current === "edit" ? selected : unselected)}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
+                        <ToggleGroupItem value="read" aria-label="View only">
+                          <Eye className="h-3.5 w-3.5" />
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="edit" aria-label="Can edit">
+                          <Edit className="h-3.5 w-3.5" />
+                        </ToggleGroupItem>
+                      </ToggleGroup>
 
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveShare(share.id)}
-                        className="h-7 w-7 p-0"
+                        className="h-8 w-8 p-0"
+                        aria-label={`Remove ${share.shared_with_email}`}
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
-            </div>
+              </ul>
+            </section>
           )}
-
-          {/* Owner chip (show email, not in list) */}
-          <div className="border-t pt-4 mt-2">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">Trip owner:</p>
-              <div className="flex items-center gap-2 rounded-md border p-2">
-                <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
-                  {currentUser.fullName
-                    ? currentUser.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2)
-                    : currentUser.email?.[0]?.toUpperCase() ?? "U"}
-                </div>
-                <span className="text-sm">
-                  {currentUser.fullName || currentUser.email || "You"}
-                  {currentUser.fullName && currentUser.email ? (
-                    <span className="text-muted-foreground"> ({currentUser.email})</span>
-                  ) : null}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Footer: Share all */}
-        <DialogFooter className="flex sm:justify-between flex-shrink-0 border-t pt-4 mt-4">
-          <Button variant="secondary" onClick={() => setDialogOpen(false)}>
+        <DialogFooter className="flex-shrink-0 border-t pt-4 sm:justify-between gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => setDialogOpen(false)}>
             Cancel
           </Button>
           <Button
             onClick={handleSaveAll}
             disabled={isSubmitting || isLoading || !nonEmptyEmails.length}
-            className="bg-earth-600 hover:bg-earth-700 text-white"
           >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share All
+            <Share2 className="mr-2 h-4 w-4" />
+            Share all
           </Button>
         </DialogFooter>
       </DialogContent>

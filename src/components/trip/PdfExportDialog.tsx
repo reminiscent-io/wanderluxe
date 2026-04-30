@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -56,12 +57,8 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={className ?? 'bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4'}
-        >
-          <FileDown className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+        <Button variant="outline" size="sm" className={className}>
+          <FileDown className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span className="hidden sm:inline">Export PDF</span>
         </Button>
       </DialogTrigger>
@@ -73,15 +70,14 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
             Export Itinerary
           </DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-6 py-4">
-          {/* Pictures Option */}
-          <div className="flex items-center justify-between p-4 bg-sand-50 rounded-lg border border-sand-200">
+
+        <div className="divide-y divide-border">
+          <div className="flex items-center justify-between gap-4 py-4">
             <div className="flex items-center gap-3">
-              <Image className="h-5 w-5 text-earth-600" />
+              <Image className="h-5 w-5 text-muted-foreground" />
               <div>
                 <Label className="text-sm font-medium">Include Pictures</Label>
-                <p className="text-xs text-sand-600">Add photos to your itinerary</p>
+                <p className="text-xs text-muted-foreground">Add photos to your itinerary</p>
               </div>
             </div>
             <Switch
@@ -89,17 +85,15 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
               onCheckedChange={(checked) =>
                 setOptions(prev => ({ ...prev, showImages: checked }))
               }
-              className="data-[state=checked]:bg-earth-500"
             />
           </div>
 
-          {/* Prices Option */}
-          <div className="flex items-center justify-between p-4 bg-sand-50 rounded-lg border border-sand-200">
+          <div className="flex items-center justify-between gap-4 py-4">
             <div className="flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-earth-600" />
+              <DollarSign className="h-5 w-5 text-muted-foreground" />
               <div>
                 <Label className="text-sm font-medium">Include Prices</Label>
-                <p className="text-xs text-sand-600">Show costs and expenses</p>
+                <p className="text-xs text-muted-foreground">Show costs and expenses</p>
               </div>
             </div>
             <Switch
@@ -107,23 +101,22 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
               onCheckedChange={(checked) =>
                 setOptions(prev => ({ ...prev, showCosts: checked }))
               }
-              className="data-[state=checked]:bg-earth-500"
             />
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
-          <Button 
-            variant="outline" 
+        <DialogFooter className="border-t pt-4 gap-2 sm:gap-0">
+          <Button
+            variant="outline"
             onClick={() => setIsOpen(false)}
             className="w-full sm:w-auto"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleExport}
             disabled={isLoading}
-            className="bg-earth-500 hover:bg-earth-600 text-white w-full sm:w-auto"
+            className="w-full sm:w-auto"
           >
             {isLoading ? (
               <>
@@ -137,7 +130,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
               </>
             )}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

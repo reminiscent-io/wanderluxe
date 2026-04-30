@@ -30,7 +30,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   onOpenChange,
   initialData,
   onSuccess,
-  buttonClassName = "bg-earth-500 hover:bg-earth-600 text-white font-semibold",
+  buttonClassName,
 }) => {
   const queryClient = useQueryClient();
   const [tripDates, setTripDates] = useState<{
@@ -147,7 +147,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             {initialData ? 'Update your travel details' : 'Add a new flight, train, or car journey'}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
+        <div className="flex-1 overflow-y-auto scrollbar-none">
           <TransportationForm
             initialData={initialData || undefined}
             onSubmit={handleSubmit}

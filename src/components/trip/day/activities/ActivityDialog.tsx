@@ -256,10 +256,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[90dvh] p-4 sm:p-6"
-        onPointerDownOutside={(e) => e.preventDefault()}
-      >
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
           <DialogDescription className="sr-only">

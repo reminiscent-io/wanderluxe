@@ -64,7 +64,7 @@ export default function TripDateEditDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[340px] max-h-[90dvh] z-[300] p-4 sm:p-6">
+      <DialogContent className="max-w-[340px] z-[300]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Trip Dates</DialogTitle>
           <DialogDescription>
@@ -79,7 +79,7 @@ export default function TripDateEditDialog({
             onSelect={setRange}
             defaultMonth={range?.from}
             numberOfMonths={1}
-            className="rounded-md border shadow mx-auto bg-white"
+            className="rounded-md border shadow-warm-sm mx-auto bg-card"
             classNames={{
               months: "flex flex-col space-y-4",
               month: "space-y-4",
@@ -93,13 +93,13 @@ export default function TripDateEditDialog({
               head_row: "flex",
               head_cell: "text-sand-500 rounded-md w-9 font-normal text-[0.8rem]",
               row: "flex w-full mt-2",
-              cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-earth-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+              cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
               day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
-              day_selected: "bg-earth-500 text-white hover:bg-earth-600 hover:text-white focus:bg-earth-600 focus:text-white",
-              day_today: "bg-earth-100 text-earth-900",
-              day_outside: "text-sand-400 opacity-50",
-              day_disabled: "text-sand-400 opacity-50",
-              day_range_middle: "aria-selected:bg-earth-100 aria-selected:text-earth-900",
+              day_selected: "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
+              day_today: "bg-accent text-accent-foreground",
+              day_outside: "text-muted-foreground opacity-50",
+              day_disabled: "text-muted-foreground opacity-50",
+              day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
               day_hidden: "invisible",
             }}
           />
@@ -110,7 +110,7 @@ export default function TripDateEditDialog({
             </Button>
             <Button
               onClick={handleSave}
-              className="flex-1 bg-earth-600 hover:bg-earth-700 text-white"
+              className="flex-1"
               disabled={!range?.from || !range?.to || isSaving}
             >
               {isSaving ? 'Saving…' : 'Save Changes'}
