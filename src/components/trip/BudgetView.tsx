@@ -1,12 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import ExpenseTable from './budget/ExpenseTable';
 import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
 import { useCurrencyState } from './budget/hooks/useCurrencyState';
 import { useExpenses } from './budget/hooks/useExpenses';
 import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
-import BudgetSummary from './budget/components/BudgetSummary';
 import ExpenseActions from './budget/components/ExpenseActions';
 import CategoryBreakdownChart from './budget/components/CategoryBreakdownChart';
 import SpendingInsights from './budget/components/SpendingInsights';
@@ -19,15 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrencyWithSymbol } from './budget/utils/budgetCalculations';
-import { 
-  Search, 
-  Plus, 
-  DollarSign, 
-  TrendingUp, 
-  PieChart, 
-  Calendar,
-  MapPin,
+import {
+  Search,
+  Plus,
   Plane,
   Utensils,
   Hotel,
@@ -57,7 +51,7 @@ interface BudgetViewProps {
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
   const { selectedCurrency, handleCurrencyChange, lastUpdated: currencyLastUpdated } = useCurrencyState();
   const { data: expenses } = useExpenses(tripId);
-  const { addExpense, updateExpense } = useBudgetMutations(tripId);
+  const { addExpense } = useBudgetMutations(tripId);
   const { trip } = useTripQuery(tripId);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -122,12 +116,12 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
   };
   // --------------------------------------------------------------------------
 
-  // Initialize budget input when trip data loads
   useEffect(() => {
+    if (isEditingBudget) return;
     if (trip?.budget !== null && trip?.budget !== undefined) {
       setBudgetInput(formatNumber(trip.budget.toString()));
     }
-  }, [trip?.budget]);
+  }, [trip?.budget, isEditingBudget]);
 
   const handleBudgetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
@@ -141,18 +135,15 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     }
   }, [tripId]);
 
-  const trackBudgetPageView = async (tripId: string) => {
+  const trackBudgetPageView = (tripId: string) => {
+    if (!user) return;
+    if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
     try {
-      if (user) {
-        // Track in Google Analytics
-        window.gtag('event', 'budget_page_view', {
-          event_category: 'Budget',
-          event_label: tripId,
-          user_id: user.id
-        });
-
-        console.log('Budget page viewed by user:', user.id, 'for trip:', tripId);
-      }
+      window.gtag('event', 'budget_page_view', {
+        event_category: 'Budget',
+        event_label: tripId,
+        user_id: user.id,
+      });
     } catch (error) {
       console.error('Error tracking budget page view:', error);
     }
@@ -223,7 +214,31 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     });
   }, [convertedExpenses, searchQuery, selectedCategory]);
 
-  // Helper functions for modern UI
+  // Calculate totals using converted values
+  const totalSpent = useMemo(
+    () => convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0),
+    [convertedExpenses]
+  );
+
+  const categoryRows = useMemo(() => {
+    const categories = ['transportation', 'accommodation', 'food', 'activities', 'other'] as const;
+    return categories
+      .map((category) => {
+        const categoryExpenses = convertedExpenses.filter((e) => {
+          const c = e.category?.toLowerCase() || '';
+          if (category === 'food') return c === 'food' || c === 'dining';
+          if (category === 'accommodation') return c === 'accommodation' || c === 'accommodations';
+          if (category === 'activities') return c === 'activities' || c === 'entertainment';
+          return c === category;
+        });
+        const total = categoryExpenses.reduce((sum, e) => sum + e.convertedCost, 0);
+        const percentage = totalSpent > 0 ? (total / totalSpent) * 100 : 0;
+        return { category, total, percentage };
+      })
+      .filter((row) => row.total > 0)
+      .sort((a, b) => b.total - a.total);
+  }, [convertedExpenses, totalSpent]);
+
   const getCategoryIcon = (category: string) => {
     switch (category?.toLowerCase()) {
       case 'transportation': return <Plane className="w-4 h-4" />;
@@ -236,17 +251,8 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category?.toLowerCase()) {
-      case 'transportation': return 'bg-blue-100 text-blue-800';
-      case 'accommodation': return 'bg-green-100 text-green-800';
-      case 'food': return 'bg-orange-100 text-orange-800';
-      case 'activities':
-      case 'entertainment': return 'bg-purple-100 text-purple-800';
-      case 'other': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-muted text-foreground';
-    }
-  };
+  const getCategoryColor = (_category: string) =>
+    'bg-accent text-accent-foreground hover:bg-accent';
 
   // Budget update function
   const updateBudget = async () => {
@@ -297,16 +303,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
         date: data.date
       });
 
-      // Track expense addition in Google Analytics
-      if (user) {
+      if (user && typeof window !== 'undefined' && typeof window.gtag === 'function') {
         window.gtag('event', 'expense_added', {
           event_category: 'Budget',
           event_label: tripId,
           user_id: user.id,
-          value: data.cost
+          value: data.cost,
         });
-
-        console.log('Expense added by user:', user.id, 'for trip:', tripId, 'amount:', data.cost);
       }
 
       setIsAddingExpense(false);
@@ -315,50 +318,11 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     }
   };
 
-  // Remove the paid status update function since we've deprecated the is_paid feature
-
-  // Calculate totals using converted values
-  const totalSpent = convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0);
   const totalBudget = trip?.budget || 0;
   const remainingBudget = totalBudget - totalSpent;
 
-  // Modern ExpenseCard component
-  const ExpenseCard = ({ expense }: { expense: any }) => (
-    <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm shadow-warm-sm hover:shadow-md transition-all duration-200">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge className={`${getCategoryColor(expense.category)} flex items-center gap-1`}>
-                  {getCategoryIcon(expense.category)}
-                  {expense.category || 'Other'}
-                </Badge>
-              </div>
-              <h3 className="font-semibold text-earth-600 mb-1">{expense.description}</h3>
-              <div className="flex items-center gap-4 text-sm text-sand-600">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {expense.date || 'No date'}
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-bold text-earth-600">
-                {formatCurrencyWithSymbol(expense.convertedCost, selectedCurrency)}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sand-50 to-earth-50">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto px-4 py-6">
 
         {/* Header Section */}
@@ -368,8 +332,8 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h1 className="text-3xl font-bold text-earth-600 mb-2">Trip Budget</h1>
-            <p className="text-sand-600 text-lg">Track your travel expenses for {trip?.destination || 'this trip'}</p>
+            <h1 className="font-display text-4xl text-earth-600 tracking-tight mb-2">Trip budget</h1>
+            <p className="text-muted-foreground text-lg">Track your travel expenses for {trip?.destination || 'this trip'}</p>
           </motion.div>
         </div>
 
@@ -387,93 +351,113 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
           />
         </motion.div>
 
-        {/* Budget Summary Cards */}
-        <motion.div
+        {/* Budget Summary — editorial line */}
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
+          className="mb-10 border-b border-border pb-8"
+          aria-label="Budget summary"
         >
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-1 mb-2">
-                    <p className="text-xs text-sand-600 uppercase tracking-wide">Budget</p>
-                    {!isEditingBudget && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsEditingBudget(true)}
-                        className="h-5 w-5 p-0 text-sand-500 hover:text-earth-600"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </div>
-                  {isEditingBudget ? (
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="text"
-                        value={budgetInput}
-                        onChange={handleBudgetInputChange}
-                        className="h-7 text-sm font-semibold border-earth-300 focus:border-earth-500"
-                        placeholder="e.g., 5,000"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={updateBudget}
-                        className="h-7 w-7 p-0 text-green-600 hover:text-green-700"
-                      >
-                        <Check className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={cancelBudgetEdit}
-                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-3 mb-4">
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <span className="font-display text-4xl text-earth-600 tracking-tight">
+                {formatCurrencyWithSymbol(totalSpent, selectedCurrency)}
+              </span>
+
+              {!isEditingBudget && (
+                <>
+                  {totalBudget > 0 ? (
+                    <span className="text-base text-muted-foreground">
+                      of {formatCurrencyWithSymbol(totalBudget, selectedCurrency)}
+                    </span>
                   ) : (
-                    <p className="text-lg font-bold text-earth-600">
-                      {totalBudget > 0 ? formatCurrencyWithSymbol(totalBudget, selectedCurrency) : 'Not set'}
-                    </p>
+                    <span className="text-base italic text-muted-foreground">no budget set</span>
                   )}
-                </div>
-                <DollarSign className="w-6 h-6 text-earth-400 flex-shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsEditingBudget(true)}
+                      aria-label={totalBudget > 0 ? 'Edit budget' : 'Set budget'}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </>
+              )}
 
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-xs text-sand-600 uppercase tracking-wide mb-2">Spent</p>
-                  <p className="text-lg font-bold text-red-600">{formatCurrencyWithSymbol(totalSpent, selectedCurrency)}</p>
+              {isEditingBudget && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base text-muted-foreground">of</span>
+                  <Input
+                    autoFocus
+                    type="text"
+                    value={budgetInput}
+                    onChange={handleBudgetInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') updateBudget();
+                      if (e.key === 'Escape') cancelBudgetEdit();
+                    }}
+                    className="h-9 w-32 text-base"
+                    placeholder="5,000"
+                    aria-label="Budget amount"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={updateBudget}
+                    aria-label="Save budget"
+                  >
+                    <Check className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={cancelBudgetEdit}
+                    aria-label="Cancel"
+                    className="text-muted-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
-                <TrendingUp className="w-6 h-6 text-red-400 flex-shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
 
-          <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-xs text-sand-600 uppercase tracking-wide mb-2">Remaining</p>
-                  <p className={`text-lg font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrencyWithSymbol(remainingBudget, selectedCurrency)}
-                  </p>
-                </div>
-                <PieChart className="w-6 h-6 flex-shrink-0" style={{ color: remainingBudget >= 0 ? '#10b981' : '#ef4444' }} />
+            {totalBudget > 0 && !isEditingBudget && (
+              <div className="text-sm">
+                {remainingBudget >= 0 ? (
+                  <span className="text-earth-600">
+                    {formatCurrencyWithSymbol(remainingBudget, selectedCurrency)} left
+                  </span>
+                ) : (
+                  <span className="text-destructive">
+                    {formatCurrencyWithSymbol(Math.abs(remainingBudget), selectedCurrency)} over budget
+                  </span>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            )}
+          </div>
+
+          {totalBudget > 0 && (
+            <div
+              className="h-1 w-full bg-muted rounded-full overflow-hidden"
+              role="progressbar"
+              aria-label="Budget used"
+              aria-valuenow={Math.min(Math.round((totalSpent / totalBudget) * 100), 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  totalSpent > totalBudget ? 'bg-destructive' : 'bg-primary'
+                }`}
+                style={{ width: `${Math.min((totalSpent / totalBudget) * 100, 100)}%` }}
+              />
+            </div>
+          )}
+        </motion.section>
 
         {/* Tabs Navigation */}
         <motion.div
@@ -490,101 +474,89 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-earth-600">Recent Expenses</CardTitle>
-                    <CardDescription>Your latest spending activity</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {convertedExpenses.slice(0, 3).map((expense) => (
-                      <div key={expense.id} className="flex items-center justify-between py-2 border-b border-sand-100 last:border-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-display text-earth-600">Recent expenses</CardTitle>
+                  <CardDescription>Your latest spending activity</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-1">
+                  {convertedExpenses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">
+                      No expenses yet. Add one to see it here.
+                    </p>
+                  ) : (
+                    convertedExpenses.slice(0, 5).map((expense, idx, arr) => (
+                      <div
+                        key={expense.id ?? idx}
+                        className={`flex items-center justify-between py-3 ${
+                          idx === arr.length - 1 ? '' : 'border-b border-border'
+                        }`}
+                      >
                         <div className="flex items-center gap-3">
-                          {getCategoryIcon(expense.category)}
+                          <span className="text-muted-foreground">
+                            {getCategoryIcon(expense.category)}
+                          </span>
                           <div>
                             <p className="font-medium text-earth-600">{expense.description}</p>
-                            <p className="text-sm text-sand-600">{expense.date}</p>
+                            <p className="text-sm text-muted-foreground">{expense.date}</p>
                           </div>
                         </div>
-                        <p className="font-semibold text-earth-600">{formatCurrencyWithSymbol(expense.convertedCost, selectedCurrency)}</p>
+                        <p className="font-semibold text-earth-600">
+                          {formatCurrencyWithSymbol(expense.convertedCost, selectedCurrency)}
+                        </p>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-earth-600">Budget Progress</CardTitle>
-                    <CardDescription>How much you've spent vs your budget</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between text-sm">
-                        <span>Progress</span>
-                        <span>{Math.round((totalSpent / totalBudget) * 100)}%</span>
-                      </div>
-                      <div className="w-full bg-sand-200 rounded-full h-3">
-                        <div 
-                          className={`h-3 rounded-full transition-all duration-500 ${
-                            totalSpent > totalBudget ? 'bg-red-500' : 'bg-earth-500'
-                          }`}
-                          style={{ width: `${Math.min((totalSpent / totalBudget) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-sm text-sand-600">
-                        <span>{formatCurrencyWithSymbol(totalSpent, selectedCurrency)} spent</span>
-                        <span>{formatCurrencyWithSymbol(totalBudget, selectedCurrency)} budget</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="expenses" className="space-y-6">
               {/* Search and Filter Controls */}
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sand-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" aria-hidden="true" />
                   <Input
                     placeholder="Search expenses..."
+                    aria-label="Search expenses"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white/80 border-sand-200"
+                    className="pl-10"
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-sand-600" />
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-3 py-2 rounded-md border border-sand-200 bg-white/80 text-sm"
-                  >
-                    <option value="all">All Categories</option>
-                    <option value="transportation">Transportation</option>
-                    <option value="accommodation">Accommodation</option>
-                    <option value="food">Food & Dining</option>
-                    <option value="activities">Activities</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <Filter className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger aria-label="Filter by category" className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All categories</SelectItem>
+                      <SelectItem value="transportation">Transportation</SelectItem>
+                      <SelectItem value="accommodation">Accommodation</SelectItem>
+                      <SelectItem value="food">Food & dining</SelectItem>
+                      <SelectItem value="activities">Activities</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                   {canEdit && <ExpenseActions onAddExpense={() => setIsAddingExpense(true)} />}
                 </div>
               </div>
 
               {/* Expenses Table */}
-              <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
+              <Card>
                 {!expenses?.items ? (
                   <CardContent className="p-8 text-center">
                     <div className="animate-pulse space-y-3">
-                      <div className="h-10 bg-sand-200 rounded"></div>
-                      <div className="h-10 bg-sand-200 rounded"></div>
-                      <div className="h-10 bg-sand-200 rounded"></div>
+                      <div className="h-10 bg-muted rounded"></div>
+                      <div className="h-10 bg-muted rounded"></div>
+                      <div className="h-10 bg-muted rounded"></div>
                     </div>
                   </CardContent>
                 ) : filteredExpenses.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="border-b border-sand-200 bg-sand-50/50">
+                      <thead className="border-b border-border bg-muted/40">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-earth-600">Description</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-earth-600">Category</th>
@@ -594,7 +566,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
                       </thead>
                       <tbody>
                         {filteredExpenses.map((expense, idx) => (
-                          <tr key={expense.id} className={`border-b border-sand-100 hover:bg-sand-50/50 transition-colors ${idx === filteredExpenses.length - 1 ? 'border-b-0' : ''}`}>
+                          <tr key={expense.id ?? idx} className={`border-b border-border hover:bg-muted/40 transition-colors ${idx === filteredExpenses.length - 1 ? 'border-b-0' : ''}`}>
                             <td className="px-4 py-3 text-sm text-earth-700">{expense.description}</td>
                             <td className="px-4 py-3">
                               <Badge className={`${getCategoryColor(expense.category)} flex items-center gap-1 w-fit`}>
@@ -602,7 +574,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
                                 <span className="text-xs">{expense.category || 'Other'}</span>
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-sm text-sand-600">{expense.date}</td>
+                            <td className="px-4 py-3 text-sm text-muted-foreground">{expense.date}</td>
                             <td className="px-4 py-3 text-right text-sm font-semibold text-earth-600">
                               {formatCurrencyWithSymbol(expense.convertedCost, selectedCurrency)}
                             </td>
@@ -613,21 +585,18 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
                   </div>
                 ) : (
                   <CardContent className="p-12 text-center">
-                    <ShoppingBag className="w-12 h-12 text-sand-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-earth-600 mb-2">No expenses found</h3>
-                    <p className="text-sand-600 mb-4">
-                      {searchQuery || selectedCategory !== 'all' 
+                    <ShoppingBag className="w-10 h-10 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
+                    <h3 className="font-display text-2xl text-earth-600 mb-2">No expenses found</h3>
+                    <p className="text-muted-foreground mb-6">
+                      {searchQuery || selectedCategory !== 'all'
                         ? 'Try adjusting your search or filter criteria.'
                         : 'Start by adding your first expense to track your spending.'
                       }
                     </p>
-                    {canEdit && (
-                      <Button 
-                        onClick={() => setIsAddingExpense(true)}
-                        className="bg-earth-500 hover:bg-earth-600 text-sand-50"
-                      >
+                    {canEdit && !searchQuery && selectedCategory === 'all' && (
+                      <Button variant="sunset" onClick={() => setIsAddingExpense(true)}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Your First Expense
+                        Add your first expense
                       </Button>
                     )}
                   </CardContent>
@@ -643,50 +612,54 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
               />
 
               {/* Detailed Breakdown */}
-              <Card className="border border-sand-200 bg-white/80 backdrop-blur-sm">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-earth-600">Detailed Breakdown</CardTitle>
+                  <CardTitle className="font-display text-earth-600">Detailed breakdown</CardTitle>
                   <CardDescription>Spending details for each category</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {['transportation', 'accommodation', 'food', 'activities', 'other'].map((category) => {
-                      const categoryExpenses = convertedExpenses.filter(e => {
-                        const expenseCategory = e.category?.toLowerCase() || '';
-                        // Handle food/dining mapping
-                        if (category === 'food') {
-                          return expenseCategory === 'food' || expenseCategory === 'dining';
-                        }
-                        // Handle accommodation variations
-                        if (category === 'accommodation') {
-                          return expenseCategory === 'accommodation' || expenseCategory === 'accommodations';
-                        }
-                        return expenseCategory === category;
-                      });
-                      const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.convertedCost, 0);
-                      const percentage = totalSpent > 0 ? (categoryTotal / totalSpent) * 100 : 0;
-
-                      return (
-                        <div key={category} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {getCategoryIcon(category)}
-                              <span className="font-medium text-earth-600 capitalize">{category}</span>
+                  <div className="space-y-5">
+                    {categoryRows.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-2">
+                        No spending recorded yet.
+                      </p>
+                    ) : (
+                      categoryRows.map((row, idx) => {
+                        const isLeader = idx === 0;
+                        return (
+                          <div key={row.category} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">{getCategoryIcon(row.category)}</span>
+                                <span
+                                  className={`capitalize text-earth-600 ${
+                                    isLeader ? 'font-display text-xl' : 'font-medium'
+                                  }`}
+                                >
+                                  {row.category}
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                <p
+                                  className={`text-earth-600 ${
+                                    isLeader ? 'font-display text-xl' : 'font-semibold'
+                                  }`}
+                                >
+                                  {formatCurrencyWithSymbol(row.total, selectedCurrency)}
+                                </p>
+                                <p className="text-sm text-muted-foreground">{row.percentage.toFixed(1)}%</p>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="font-semibold text-earth-600">{formatCurrencyWithSymbol(categoryTotal, selectedCurrency)}</p>
-                              <p className="text-sm text-sand-600">{percentage.toFixed(1)}%</p>
+                            <div className="w-full bg-muted rounded-full h-1.5">
+                              <div
+                                className="h-1.5 rounded-full bg-primary transition-all duration-500"
+                                style={{ width: `${row.percentage}%` }}
+                              />
                             </div>
                           </div>
-                          <div className="w-full bg-sand-200 rounded-full h-2">
-                            <div 
-                              className="h-2 rounded-full bg-earth-500 transition-all duration-500"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -695,7 +668,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
             <TabsContent value="analytics" className="space-y-6">
               {/* Insights Section */}
               <div>
-                <h3 className="text-lg font-semibold text-earth-600 mb-4">Spending Insights</h3>
+                <h3 className="font-display text-2xl text-earth-600 mb-4">Spending insights</h3>
                 <SpendingInsights
                   expenses={convertedExpenses}
                   totalBudget={totalBudget}
