@@ -24,7 +24,10 @@ const DeleteReservationDialog: React.FC<DeleteReservationDialogProps> = ({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onDelete} className="bg-red-500 hover:bg-red-600">
+          <AlertDialogAction
+            onClick={onDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>

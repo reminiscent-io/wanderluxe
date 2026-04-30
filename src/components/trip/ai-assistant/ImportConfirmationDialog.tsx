@@ -78,7 +78,6 @@ const ImportConfirmationDialog: React.FC<ImportConfirmationDialogProps> = ({
               onConfirm();
             }}
             disabled={isImporting}
-            className="bg-earth-500 hover:bg-earth-600"
           >
             {isImporting ? (
               <>

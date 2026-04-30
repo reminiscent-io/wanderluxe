@@ -64,7 +64,7 @@ export default function TripDateEditDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[340px] max-h-[90dvh] z-[300] p-4 sm:p-6">
+      <DialogContent className="max-w-[340px] z-[300]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Trip Dates</DialogTitle>
           <DialogDescription>
@@ -79,7 +79,7 @@ export default function TripDateEditDialog({
             onSelect={setRange}
             defaultMonth={range?.from}
             numberOfMonths={1}
-            className="rounded-md border shadow mx-auto bg-white"
+            className="rounded-md border shadow-warm-sm mx-auto bg-card"
             classNames={{
               months: "flex flex-col space-y-4",
               month: "space-y-4",
@@ -110,7 +110,7 @@ export default function TripDateEditDialog({
             </Button>
             <Button
               onClick={handleSave}
-              className="flex-1 bg-earth-600 hover:bg-earth-700 text-white"
+              className="flex-1"
               disabled={!range?.from || !range?.to || isSaving}
             >
               {isSaving ? 'Saving…' : 'Save Changes'}

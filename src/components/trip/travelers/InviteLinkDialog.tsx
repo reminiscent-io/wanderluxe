@@ -154,7 +154,7 @@ export default function InviteLinkDialog({
             <Button
               onClick={handleGenerate}
               disabled={creating}
-              className="w-full bg-earth-500 text-white hover:bg-earth-600"
+              className="w-full"
             >
               {creating ? (
                 <>
@@ -168,7 +168,7 @@ export default function InviteLinkDialog({
           </div>
         ) : (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-earth-600">{preamble}</p>
+            <p className="text-sm text-muted-foreground">{preamble}</p>
             <div className="flex gap-2">
               <Input
                 readOnly
@@ -182,7 +182,7 @@ export default function InviteLinkDialog({
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleShare} className="flex-1 bg-earth-500 text-white hover:bg-earth-600">
+              <Button onClick={handleShare} className="flex-1">
                 <Share2 className="mr-2 h-4 w-4" />
                 {navigator.share ? 'Share' : 'Copy Link'}
               </Button>

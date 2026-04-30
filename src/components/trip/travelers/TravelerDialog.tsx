@@ -489,7 +489,7 @@ export default function TravelerDialog({
               <Button
                 type="submit"
                 disabled={upsertMutation.isPending || isOwner || !form.formState.isDirty}
-                className="flex-1 bg-earth-600 hover:bg-earth-700 text-white"
+                className="flex-1"
               >
                 {upsertMutation.isPending ? "Saving..." : "Save"}
               </Button>
@@ -497,12 +497,7 @@ export default function TravelerDialog({
                 type="button"
                 onClick={handleSaveAndSend}
                 disabled={!canShare || sending || upsertMutation.isPending || isOwner}
-                className={cn(
-                  "flex-1",
-                  canShare
-                    ? "bg-earth-600 hover:bg-earth-700 text-white"
-                    : "bg-sand-200 text-muted-foreground cursor-not-allowed"
-                )}
+                className="flex-1"
               >
                 <Send className="h-4 w-4 mr-1.5" />
                 {sending ? "Sending..." : "Save & Send"}

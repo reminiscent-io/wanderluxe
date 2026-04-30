@@ -116,10 +116,7 @@ export default function EditInviteLinkDialog({
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button
-              onClick={handleSave}
-              className="flex-1 bg-earth-500 text-white hover:bg-earth-600"
-            >
+            <Button onClick={handleSave} className="flex-1">
               Save Changes
             </Button>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
