@@ -127,7 +127,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             {finalInitialData?.id ? 'Update your restaurant booking details' : 'Add a new dining reservation'}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto scrollbar-none px-1">
+        <div className="flex-1 overflow-y-auto scrollbar-none">
           <RestaurantReservationForm
             onSubmit={handleSubmit}
             isSubmitting={legacyIsSubmitting ?? isSubmitting}
