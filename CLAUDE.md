@@ -338,6 +338,7 @@ Required in `.env`:
 - `VITE_GOOGLE_MAPS_API_KEY` - Google Places API
 - `GEMINI_API_KEY` - Google Gemini API key (used by both the chat Edge Function and `parse-travel-doc`). Model is hardcoded to `gemini-2.5-flash` in each function; no env override.
 - `SERPER_API_KEY` - (optional, Edge Function secret) Serper API for web search when recommending restaurants; enables direct Resy/OpenTable booking links
+- `AERODATABOX_API_KEY` - (Edge Function secret) RapidAPI key for AeroDataBox; consumed by the `flight-status-proxy` Edge Function. Required for the flight-number lookup button in the transportation dialog. Free tier: 600 calls/month.
 - `STRIPE_SECRET_KEY` - Stripe payment processing
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
 - `VITE_UNSPLASH_ACCESS_KEY` - Trip images (optional)

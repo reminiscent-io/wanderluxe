@@ -1,8 +1,12 @@
 // src/components/trip/transportation/TransportationFormFields.tsx
 import React, { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { UseFormReturn, Controller, useWatch } from "react-hook-form";
+import { Loader2, Search } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,11 +22,19 @@ import {
   CURRENCY_NAMES,
   CURRENCY_SYMBOLS,
 } from "@/utils/currencyConstants";
-import { 
-  formatTransportationType, 
-  getTransportationIcon 
+import {
+  formatTransportationType,
+  getTransportationIcon
 } from "@/utils/transportationUtils";
 import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
+import FlightLookupConfirmDialog from "./FlightLookupConfirmDialog";
+import {
+  lookupFlightStatus,
+  FlightNotFoundError,
+  RateLimitError,
+  UpstreamError,
+  type FlightStatusResponse,
+} from "@/services/flightStatus";
 
 interface Props {
   form: UseFormReturn<any>;
@@ -33,7 +45,7 @@ interface Props {
 const Required = () => <span className="text-red-500">*</span>;
 
 export default function TransportationFormFields({ form, tripArrivalDate, tripId }: Props) {
-  const { control, setValue } = form;
+  const { control, setValue, getValues } = form;
 
   // watch departure & arrival so UI updates properly
   const departure = useWatch({
@@ -45,12 +57,108 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
     name: "arrival_location",
   }) as string;
 
+  const transportationType = useWatch({ control, name: "type" }) as string;
+  const flightNumber = (useWatch({ control, name: "flight_number" }) as string | undefined) ?? "";
+  const travelRange = useWatch({ control, name: "travel_range" }) as
+    | { start?: Date | null; end?: Date | null; startTime?: string; endTime?: string }
+    | undefined;
+  const scheduledStartTime = useWatch({ control, name: "scheduled_start_time" }) as string | null | undefined;
+  const scheduledEndTime = useWatch({ control, name: "scheduled_end_time" }) as string | null | undefined;
+
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResult, setLookupResult] = useState<FlightStatusResponse | null>(null);
+  const [lookupDate, setLookupDate] = useState<string>("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   // watch cost for formatted display
   const cost = useWatch({ control, name: "cost" }) as number | null;
   const [costDisplay, setCostDisplay] = useState(cost?.toString() ?? "");
   useEffect(() => {
     setCostDisplay(cost?.toString() ?? "");
   }, [cost]);
+
+  const canLookup = Boolean(flightNumber?.trim()) && Boolean(travelRange?.start);
+
+  const handleLookupFlight = async () => {
+    const trimmed = flightNumber.trim().toUpperCase();
+    if (!trimmed || !travelRange?.start) return;
+
+    const date = format(travelRange.start, "yyyy-MM-dd");
+    setLookupLoading(true);
+    try {
+      const result = await lookupFlightStatus(trimmed, date);
+      setLookupResult(result);
+      setLookupDate(date);
+      setConfirmOpen(true);
+    } catch (err) {
+      if (err instanceof FlightNotFoundError) {
+        toast.error("Flight not found, please check the number and date.");
+      } else if (err instanceof RateLimitError) {
+        toast.error("Flight lookup is rate limited. Please try again in a minute.");
+      } else if (err instanceof UpstreamError) {
+        toast.error(err.message);
+      } else {
+        toast.error("Could not look up flight. Please try again.");
+      }
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const handleApplyLookup = () => {
+    if (!lookupResult) return;
+    const result = lookupResult;
+    const current = getValues();
+
+    // Only fill fields the user hasn't already populated
+    if (!current.provider && result.airline) {
+      setValue("provider", result.airline, { shouldDirty: true });
+    }
+    const depLocation = result.departure.airport_iata
+      ? `${result.departure.airport_name || result.departure.airport_iata} (${result.departure.airport_iata})`
+      : result.departure.airport_name;
+    const arrLocation = result.arrival.airport_iata
+      ? `${result.arrival.airport_name || result.arrival.airport_iata} (${result.arrival.airport_iata})`
+      : result.arrival.airport_name;
+    if (!current.departure_location && depLocation) {
+      setValue("departure_location", depLocation, { shouldDirty: true, shouldValidate: true });
+    }
+    if (!current.arrival_location && arrLocation) {
+      setValue("arrival_location", arrLocation, { shouldDirty: true, shouldValidate: true });
+    }
+
+    const depLatestTime = result.departure.revised_time_local ?? result.departure.scheduled_time_local;
+    const arrLatestTime = result.arrival.revised_time_local ?? result.arrival.scheduled_time_local;
+    const arrivalDateStr = result.arrival.revised_date_local ?? result.arrival.scheduled_date_local;
+    const arrivalDate = arrivalDateStr ? new Date(`${arrivalDateStr}T00:00:00`) : current.travel_range?.end;
+
+    setValue(
+      "travel_range",
+      {
+        ...(current.travel_range || {}),
+        start: current.travel_range?.start ?? new Date(`${result.departure.scheduled_date_local}T00:00:00`),
+        end: arrivalDate,
+        startTime: depLatestTime,
+        endTime: arrLatestTime,
+      },
+      { shouldDirty: true, shouldValidate: true },
+    );
+
+    setValue("scheduled_start_time", result.departure.scheduled_time_local, { shouldDirty: true });
+    setValue("scheduled_end_time", result.arrival.scheduled_time_local, { shouldDirty: true });
+
+    // Normalize flight number to uppercase in the form
+    setValue("flight_number", result.flight_iata, { shouldDirty: true });
+
+    setConfirmOpen(false);
+    toast.success("Flight details applied");
+  };
+
+  const isFlight = transportationType === "flight";
+  const currentStartTime = travelRange?.startTime ?? "";
+  const currentEndTime = travelRange?.endTime ?? "";
+  const showOriginalStart = isFlight && scheduledStartTime && scheduledStartTime !== currentStartTime;
+  const showOriginalEnd = isFlight && scheduledEndTime && scheduledEndTime !== currentEndTime;
 
   return (
     <div className="space-y-4 w-full max-w-full overflow-hidden">
@@ -96,6 +204,51 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         )}
       />
 
+      {/* Flight Number + Lookup (flight type only) */}
+      {isFlight && (
+        <Controller
+          control={control}
+          name="flight_number"
+          render={({ field }) => (
+            <div className="space-y-1">
+              <Label>Flight Number</Label>
+              <div className="flex gap-2">
+                <Input
+                  {...field}
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                  placeholder="e.g. DL2733"
+                  className="bg-white flex-1"
+                  autoComplete="off"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleLookupFlight}
+                  disabled={!canLookup || lookupLoading}
+                  className="shrink-0"
+                >
+                  {lookupLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Looking up…
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Look up flight
+                    </>
+                  )}
+                </Button>
+              </div>
+              {!canLookup && flightNumber?.trim() && !travelRange?.start && (
+                <p className="text-xs text-sand-500">Pick a departure date to enable lookup.</p>
+              )}
+            </div>
+          )}
+        />
+      )}
+
       {/* Departure / Arrival Locations */}
       <LocationInputPair
         fromValue={departure}
@@ -114,6 +267,16 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         control={control}
         timeStep={60} // 1-minute increments for precise flight/train times
       />
+      {(showOriginalStart || showOriginalEnd) && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-sand-600 -mt-2">
+          {showOriginalStart && (
+            <span>Originally scheduled departure: {scheduledStartTime}</span>
+          )}
+          {showOriginalEnd && (
+            <span>Originally scheduled arrival: {scheduledEndTime}</span>
+          )}
+        </div>
+      )}
 
       {/* Provider & Confirmation Number */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -216,6 +379,15 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
             />
           </div>
         )}
+      />
+
+      <FlightLookupConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        result={lookupResult}
+        requestedDate={lookupDate}
+        onApply={handleApplyLookup}
+        onCancel={() => setConfirmOpen(false)}
       />
     </div>
   );

@@ -70,6 +70,9 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
         arrival_location: data.arrival_location,
         cost: data.cost,
         currency: data.currency,
+        flight_number: data.flight_number ?? null,
+        scheduled_start_time: data.scheduled_start_time ?? null,
+        scheduled_end_time: data.scheduled_end_time ?? null,
       };
 
       let savedRecord: TransportationType;

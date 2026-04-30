@@ -47,6 +47,9 @@ export default function TransportationForm({
     provider: z.string().optional(),
     details: z.string().optional(),
     confirmation_number: z.string().optional(),
+    flight_number: z.string().optional(),
+    scheduled_start_time: z.string().nullable().optional(),
+    scheduled_end_time: z.string().nullable().optional(),
     cost: z.number().nullable(),
     currency: z.string().min(1),
     travelers: z.array(z.string()).optional(),
@@ -71,6 +74,9 @@ export default function TransportationForm({
       provider: initialData?.provider ?? "",
       details: initialData?.details ?? "",
       confirmation_number: initialData?.confirmation_number ?? "",
+      flight_number: initialData?.flight_number ?? "",
+      scheduled_start_time: initialData?.scheduled_start_time ?? null,
+      scheduled_end_time: initialData?.scheduled_end_time ?? null,
       cost: initialData?.cost ?? null,
       currency: initialData?.currency ?? CURRENCIES[0],
       travelers: [],
@@ -141,7 +147,12 @@ export default function TransportationForm({
       end_date: format(travelRange.end, "yyyy-MM-dd"),
       start_time: travelRange.startTime || null,
       end_time: travelRange.endTime || null,
-    };
+      ...(data.type === "flight" && {
+        flight_number: data.flight_number?.trim().toUpperCase() || null,
+        scheduled_start_time: data.scheduled_start_time || null,
+        scheduled_end_time: data.scheduled_end_time || null,
+      }),
+    } as Partial<Transportation>;
 
     try {
       setSaving(true);
