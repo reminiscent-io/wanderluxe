@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from "@/components/ui/form";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { travelerSchema, TravelerForm } from "./schemas";
@@ -10,7 +11,6 @@ import { upsertTraveler } from "@/services/travelers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Traveler } from "@/hooks/useTravelers";
-import { cn } from "@/lib/utils";
 import { Eye, Edit, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { shareTrip } from "@/services/tripSharingService";
@@ -416,47 +416,39 @@ export default function TravelerDialog({
               )}
             />
 
-            {/* Permission buttons */}
             <FormField
               control={form.control}
               name="permission_level"
               render={() => {
                 const disabled = !hasEmail || isOwner;
-                const baseBtn = "h-8 px-3";
-                const selected = "bg-earth-600 text-white hover:bg-earth-700";
-                const unselected = "border";
 
                 return (
                   <FormItem>
                     <FormLabel>Permission Level</FormLabel>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={disabled}
-                        onClick={() =>
-                          form.setValue("permission_level", "read", { shouldDirty: true, shouldTouch: true })
-                        }
-                        variant="ghost"
-                        className={cn(baseBtn, perm === "read" ? selected : unselected)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      size="sm"
+                      value={perm}
+                      onValueChange={(v) =>
+                        v &&
+                        form.setValue("permission_level", v as Perm, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        })
+                      }
+                      disabled={disabled}
+                      className="justify-start"
+                    >
+                      <ToggleGroupItem value="read" aria-label="View only">
+                        <Eye className="mr-1 h-4 w-4" />
                         View
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={disabled}
-                        onClick={() =>
-                          form.setValue("permission_level", "edit", { shouldDirty: true, shouldTouch: true })
-                        }
-                        variant="ghost"
-                        className={cn(baseBtn, perm === "edit" ? selected : unselected)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="edit" aria-label="Can edit">
+                        <Edit className="mr-1 h-4 w-4" />
                         Edit
-                      </Button>
-                    </div>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                     {!hasEmail && !isOwner && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Add an email address to enable permission settings.
