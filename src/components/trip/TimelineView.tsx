@@ -190,35 +190,32 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
 
   return (
-    <div className="relative md:flex md:gap-4">
+    <div className="relative lg:flex lg:gap-6">
       {isRefreshing && (
-        <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-20" />
+        <div className="absolute inset-0 bg-background/40 z-20" aria-hidden="true" />
       )}
 
-      {/* Timeline Content - Left side, 60% width on desktop, full width on mobile */}
-      <div className="w-full md:w-[60%] px-1 md:px-4 space-y-8">
-        <div className="flex justify-between items-center mb-2 pt-4 md:pt-0">
-          <h2 className="text-2xl font-display font-normal text-earth-500">Trip Timeline</h2>
-          <div className="flex gap-2">
+      {/* Timeline column: full width below lg, 58% from lg+ */}
+      <div className="w-full lg:w-[58%] px-4 md:px-6 pt-4 md:pt-6 space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div className="flex items-center gap-4 min-w-0">
+            <h2 className="font-display text-2xl tracking-tight text-foreground shrink-0">
+              Trip Timeline
+            </h2>
+            <ViewingStatusAvatars tripId={tripId} />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsShareDialogOpen(true)}
-              className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
             >
-              <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <Share2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Share</span>
             </Button>
-            <ExportPdfButton
-              tripId={tripId}
-              className="bg-earth-500 hover:bg-earth-600 text-white text-xs sm:text-sm px-2 sm:px-4"
-            />
+            <ExportPdfButton tripId={tripId} className="" />
           </div>
-        </div>
-
-        <div className="mb-4">
-          <ViewingStatusAvatars tripId={tripId} />
-        </div>
+        </header>
 
         <ShareTripDialog
           tripId={tripId}
@@ -239,9 +236,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         />
       </div>
 
-      {/* AI Assistant Panel - Desktop only, right side, 40% width, sticky */}
-      {/* Bottom-anchored: sticks below nav and stretches to viewport bottom */}
-      <div className="hidden md:block md:w-[40%] md:pr-4">
+      {/* AI Assistant column: hidden below lg; sticky bottom-anchored from lg+ */}
+      <div className="hidden lg:block lg:w-[42%] lg:pr-6 lg:pt-6">
         <div
           className="sticky"
           style={{
