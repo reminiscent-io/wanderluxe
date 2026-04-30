@@ -29,7 +29,7 @@ import {
   type PlacePhotoMeta,
 } from "@/utils/googleMapsLoader";
 import { toast } from "sonner";
-import { Trash2, ChevronDown, MapPin, Phone, Globe } from "lucide-react";
+import { Trash2, ChevronDown, MapPin } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -394,10 +394,7 @@ export default function AccommodationForm({
               name="hotel_address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" />
-                    Address
-                  </FormLabel>
+                  <FormLabel>Address</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -417,10 +414,7 @@ export default function AccommodationForm({
                 name="hotel_phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1.5 text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5" />
-                      Phone
-                    </FormLabel>
+                    <FormLabel>Phone</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -437,10 +431,7 @@ export default function AccommodationForm({
                 name="hotel_website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1.5 text-muted-foreground">
-                      <Globe className="h-3.5 w-3.5" />
-                      Website
-                    </FormLabel>
+                    <FormLabel>Website</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
