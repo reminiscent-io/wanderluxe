@@ -30,7 +30,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   onOpenChange,
   initialData,
   onSuccess,
-  buttonClassName = "bg-earth-500 hover:bg-earth-600 text-white font-semibold",
+  buttonClassName,
 }) => {
   const queryClient = useQueryClient();
   const [tripDates, setTripDates] = useState<{

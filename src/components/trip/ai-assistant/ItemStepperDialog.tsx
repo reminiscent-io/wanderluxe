@@ -234,11 +234,11 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
                 key={item.id}
                 className={cn(
                   'h-1 flex-1 rounded-full transition-colors',
-                  idx < currentIndex ? 'bg-green-500' :
-                  idx === currentIndex ? 'bg-earth-500' :
-                  item.status === 'created' ? 'bg-green-500' :
-                  item.status === 'skipped' ? 'bg-sand-300' :
-                  'bg-sand-200'
+                  idx < currentIndex ? 'bg-emerald-500' :
+                  idx === currentIndex ? 'bg-primary' :
+                  item.status === 'created' ? 'bg-emerald-500' :
+                  item.status === 'skipped' ? 'bg-muted-foreground/40' :
+                  'bg-muted'
                 )}
               />
             ))}
