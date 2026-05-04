@@ -105,7 +105,7 @@ export interface ExpediaWidgetOptions {
   onError?: (err: Error) => void;
 }
 
-const EG_WIDGETS_ORIGIN = 'https://creator.expediagroup.com';
+const EG_WIDGETS_ORIGIN = new URL(EG_WIDGETS_BASE).origin;
 
 interface EgResizeMessage {
   type: 'eg-widget/resize';
