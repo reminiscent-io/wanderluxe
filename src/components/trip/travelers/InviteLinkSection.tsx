@@ -20,7 +20,7 @@ export default function InviteLinkSection({ tripId }: InviteLinkSectionProps) {
   const { fullName } = useAuth();
 
   // Read trip destination from React Query cache (already fetched by useTripQuery)
-  const trip = queryClient.getQueryData<any>(['trip', tripId]);
+  const trip = queryClient.getQueryData<{ destination?: string }>(['trip', tripId]);
   const tripDestination = trip?.destination || '';
   const ownerName = fullName || 'Someone';
 

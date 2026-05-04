@@ -23,14 +23,14 @@ export async function createInviteLink(
     const code = generateCode();
 
     const { data, error } = await supabase
-      .from('trip_invite_links' as any)
+      .from('trip_invite_links')
       .insert({
         trip_id: tripId,
         created_by_user_id: user.id,
         invite_code: code,
         permission_level: permissionLevel,
         expires_at: expiresAt,
-      } as any)
+      })
       .select()
       .single();
 
@@ -48,7 +48,7 @@ export async function createInviteLink(
 
 export async function getInviteLinks(tripId: string): Promise<InviteLink[]> {
   const { data, error } = await supabase
-    .from('trip_invite_links' as any)
+    .from('trip_invite_links')
     .select('*')
     .eq('trip_id', tripId)
     .order('created_at', { ascending: false });
@@ -59,8 +59,8 @@ export async function getInviteLinks(tripId: string): Promise<InviteLink[]> {
 
 export async function disableInviteLink(linkId: string): Promise<void> {
   const { error } = await supabase
-    .from('trip_invite_links' as any)
-    .update({ is_active: false } as any)
+    .from('trip_invite_links')
+    .update({ is_active: false })
     .eq('id', linkId);
 
   if (error) throw error;
@@ -71,8 +71,8 @@ export async function updateInviteLink(
   updates: { permission_level?: 'read' | 'edit'; expires_at?: string | null }
 ): Promise<void> {
   const { error } = await supabase
-    .from('trip_invite_links' as any)
-    .update(updates as any)
+    .from('trip_invite_links')
+    .update(updates)
     .eq('id', linkId);
 
   if (error) throw error;
@@ -80,7 +80,7 @@ export async function updateInviteLink(
 
 export async function deleteInviteLink(linkId: string): Promise<void> {
   const { error } = await supabase
-    .from('trip_invite_links' as any)
+    .from('trip_invite_links')
     .delete()
     .eq('id', linkId);
 
@@ -88,7 +88,7 @@ export async function deleteInviteLink(linkId: string): Promise<void> {
 }
 
 export async function getInviteLinkPreview(code: string): Promise<InviteLinkPreview | null> {
-  const { data, error } = await supabase.rpc('get_invite_link_preview' as any, {
+  const { data, error } = await supabase.rpc('get_invite_link_preview', {
     p_invite_code: code,
   });
 
@@ -98,7 +98,7 @@ export async function getInviteLinkPreview(code: string): Promise<InviteLinkPrev
 }
 
 export async function redeemInviteLink(code: string): Promise<string> {
-  const { data, error } = await supabase.rpc('redeem_invite_link' as any, {
+  const { data, error } = await supabase.rpc('redeem_invite_link', {
     p_invite_code: code,
   });
 

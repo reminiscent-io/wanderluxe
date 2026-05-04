@@ -29,7 +29,7 @@ interface ItemStepperDialogProps {
 // Helper functions to map extracted fields to dialog initial data
 const toDbTime = (t?: string | null) => (t && /^\d{2}:\d{2}$/.test(t) ? t : null);
 
-const mapToTransportation = (f: Record<string, any>): Partial<Tables<'transportation'>> => {
+const mapToTransportation = (f: Record<string, unknown>): Partial<Tables<'transportation'>> => {
   const toType = (raw?: string | null): Tables<'transportation'>['type'] | undefined => {
     const v = (raw || '').toLowerCase();
     if (v.includes('flight') || v.includes('air')) return 'flight';
@@ -38,7 +38,7 @@ const mapToTransportation = (f: Record<string, any>): Partial<Tables<'transporta
     if (v.includes('shuttle') || v.includes('bus') || v.includes('coach')) return 'shuttle';
     if (v.includes('rental')) return 'rental_car';
     if (v.includes('uber') || v.includes('lyft') || v.includes('taxi') || v.includes('car')) return 'car_service';
-    return (f.type as any) || 'flight';
+    return (f.type as Tables<'transportation'>['type']) || 'flight';
   };
 
   return {
@@ -57,7 +57,7 @@ const mapToTransportation = (f: Record<string, any>): Partial<Tables<'transporta
   };
 };
 
-const mapToAccommodation = (f: Record<string, any>, tripId: string) => {
+const mapToAccommodation = (f: Record<string, unknown>, tripId: string) => {
   const parts: string[] = [];
   if (f.provider) parts.push(`Booked via ${f.provider}`);
   if (f.confirmation_number) parts.push(`Confirmation ${f.confirmation_number}`);
@@ -85,7 +85,7 @@ const mapToAccommodation = (f: Record<string, any>, tripId: string) => {
   };
 };
 
-const mapToActivity = (f: Record<string, any>, tripId: string) => ({
+const mapToActivity = (f: Record<string, unknown>, tripId: string) => ({
   title: f.name ?? '',
   description: f.notes ?? '',
   date: f.date ?? '',
@@ -98,7 +98,7 @@ const mapToActivity = (f: Record<string, any>, tripId: string) => ({
   trip_id: tripId,
 });
 
-const mapToReservation = (f: Record<string, any>, tripId: string) => ({
+const mapToReservation = (f: Record<string, unknown>, tripId: string) => ({
   restaurant_name: f.restaurant_name ?? '',
   reservation_date: f.date ?? '',
   reservation_time: toDbTime(f.time) ?? '',
@@ -222,8 +222,8 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
       <Dialog open={open && !editDialogOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              Review Item {currentIndex + 1} of {items.length}
+            <DialogTitle className="font-display text-xl leading-tight tracking-tight">
+              Review item <span className="tabular-nums">{currentIndex + 1}</span> of <span className="tabular-nums">{items.length}</span>
             </DialogTitle>
           </DialogHeader>
 
@@ -303,7 +303,7 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           tripId={tripId}
-          initialData={initialData as any}
+          initialData={initialData as unknown as Tables<'accommodations'>}
           onSuccess={handleDialogSuccess}
         />
       )}
@@ -314,7 +314,7 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           tripId={tripId}
-          initialData={initialData as any}
+          initialData={initialData as unknown as Tables<'day_activities'>}
           onSuccess={handleDialogSuccess}
         />
       )}
@@ -325,7 +325,7 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           tripId={tripId}
-          initialData={initialData as any}
+          initialData={initialData as Partial<Tables<'reservations'>>}
           onSuccess={handleDialogSuccess}
           tripArrivalDate={tripDates.arrival_date ?? undefined}
           tripDepartureDate={tripDates.departure_date ?? undefined}

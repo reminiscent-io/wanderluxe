@@ -660,7 +660,7 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
     const hasMore = rawMessages.length > limit;
     // Hydrate placeCards from metadata so the client can rehydrate rich
     // recommendation cards without re-streaming.
-    const chronological = rawMessages.slice(0, limit).reverse().map((m: any) => ({
+    const chronological = rawMessages.slice(0, limit).reverse().map((m: { metadata?: { placeCards?: unknown[] } } & Record<string, unknown>) => ({
       ...m,
       placeCards: m.metadata && Array.isArray(m.metadata.placeCards) ? m.metadata.placeCards : undefined,
     }));

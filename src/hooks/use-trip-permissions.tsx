@@ -142,7 +142,7 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
         }
 
         // Require explicit acceptance for shared trips
-        if ((shareData as any).share_status === 'pending') {
+        if (shareData.share_status === 'pending') {
           setPermissions({
             canEdit: false,
             canView: false,
@@ -207,7 +207,7 @@ export async function canEditTrip(tripId: string): Promise<boolean> {
       .eq('shared_with_email', user.email)
       .single();
 
-    if (!shareData || (shareData as any).share_status === 'pending') return false;
+    if (!shareData || shareData.share_status === 'pending') return false;
     return shareData.permission_level === 'edit';
   } catch (error) {
     console.error('Error checking edit permission:', error);

@@ -10,21 +10,23 @@ import { format, parse } from "date-fns";
 import Header from "../_shared/Header";
 import { getTransportationIcon } from "@/utils/transportationUtils";
 
+type TransportationSummary = {
+  id: string | number;
+  type?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  departure_location: string;
+  arrival_location: string;
+  cost?: number | null;
+  currency?: string | null;
+};
+
 interface Props {
-  transportation: Array<{
-    id: string | number;
-    type?: string | null;
-    start_date?: string | null;
-    end_date?: string | null;
-    start_time?: string | null;
-    end_time?: string | null;
-    departure_location: string;
-    arrival_location: string;
-    cost?: number | null;
-    currency?: string | null;
-  }>;
+  transportation: TransportationSummary[];
   onAdd: () => void;
-  onEdit: (t: any) => void;
+  onEdit: (t: TransportationSummary) => void;
   canEdit?: boolean;
   isMobile: boolean;
   onClose: () => void;

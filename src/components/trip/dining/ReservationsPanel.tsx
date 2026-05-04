@@ -11,21 +11,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 /* --------------------------------- types --------------------------------- */
+type ReservationSummary = {
+  id: string | number;
+  restaurant_name: string;
+  reservation_time?: string | null;
+  number_of_people?: number | null;
+  cost?: number | null;
+  currency?: string | null;
+  place_id?: string | null; // enables photo strip when present
+  image_url?: string | null; // key photo URL
+  trip_id?: string;
+  trip_days?: { date?: string | null } | null;
+};
+
 interface Props {
-  reservations: Array<{
-    id: string | number;
-    restaurant_name: string;
-    reservation_time?: string | null;
-    number_of_people?: number | null;
-    cost?: number | null;
-    currency?: string | null;
-    place_id?: string | null; // enables photo strip when present
-    image_url?: string | null; // key photo URL
-    trip_id?: string;
-    trip_days?: { date?: string | null } | null;
-  }>;
+  reservations: ReservationSummary[];
   onAdd: () => void;
-  onEdit: (r: any) => void;
+  onEdit: (r: ReservationSummary) => void;
   canEdit?: boolean;
   isMobile: boolean;
   onClose: () => void;
@@ -64,7 +66,7 @@ export default function ReservationsPanel({
     }
   };
 
-  const grouped = reservations.reduce((acc: Record<string, any[]>, r) => {
+  const grouped = reservations.reduce<Record<string, ReservationSummary[]>>((acc, r) => {
     const d = r.trip_days?.date || "No Date";
     (acc[d] ||= []).push(r);
     return acc;

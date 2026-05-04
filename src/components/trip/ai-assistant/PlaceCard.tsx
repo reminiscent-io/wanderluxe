@@ -55,7 +55,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
   return (
     <article
       className={cn(
-        'flex flex-col rounded-card border border-sand-200 bg-background overflow-hidden shadow-warm-sm',
+        'flex flex-col rounded-card border border-border bg-background overflow-hidden shadow-warm-sm',
         compact ? 'w-[240px]' : 'w-[280px]',
         'flex-none snap-start'
       )}
@@ -92,7 +92,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
       {/* Body */}
       <div className="flex flex-1 flex-col gap-1.5 p-3">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-display text-base font-semibold text-earth-700 leading-tight line-clamp-2">
+          <h4 className="font-display text-base text-earth-700 leading-tight tracking-tight line-clamp-2">
             {card.name}
           </h4>
         </div>
@@ -102,11 +102,11 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
             {ratingStr && (
               <span className="inline-flex items-center gap-0.5">
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                <span className="font-medium text-earth-700">{ratingStr}</span>
+                <span className="font-medium tabular-nums text-earth-700">{ratingStr}</span>
               </span>
             )}
             {ratingStr && priceStr && <span className="text-sand-300">·</span>}
-            {priceStr && <span className="font-medium text-earth-600">{priceStr}</span>}
+            {priceStr && <span className="font-medium tabular-nums text-earth-600">{priceStr}</span>}
           </div>
         )}
 
@@ -125,9 +125,10 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
           {canAdd && (
             <Button
               size="sm"
+              variant="default"
               onClick={handleAdd}
               disabled={addStatus !== 'idle'}
-              className="h-8 flex-1 min-w-[96px] bg-earth-500 hover:bg-earth-600 text-white text-xs"
+              className="h-8 flex-1 min-w-[96px] text-xs"
             >
               {addStatus === 'adding' && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
               {addStatus === 'added' && <Check className="mr-1 h-3 w-3" />}
@@ -149,8 +150,9 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
           {expediaUrl ? (
             <Button
               size="sm"
+              variant="default"
               asChild
-              className="h-8 flex-1 min-w-[96px] bg-earth-500 hover:bg-earth-600 text-white text-xs"
+              className="h-8 flex-1 min-w-[96px] text-xs"
               title="Book on Expedia"
             >
               <a

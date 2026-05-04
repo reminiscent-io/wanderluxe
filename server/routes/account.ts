@@ -1,5 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import type { Tables } from '../../src/integrations/supabase/types';
+
+type DayActivityRow = Tables<'day_activities'>;
+type AccommodationRow = Tables<'accommodations'>;
+type TransportationRow = Tables<'transportation'>;
+type ReservationRow = Tables<'reservations'>;
+type OtherExpenseRow = Tables<'other_expenses'>;
+type TripShareRow = Tables<'trip_shares'>;
+type TripDayRow = Tables<'trip_days'> & { day_activities?: DayActivityRow[] };
 
 const router = Router();
 
@@ -139,6 +148,8 @@ router.delete('/api/account', async (req: Request, res: Response) => {
 
 // ── GET /api/account/export ──────────────────────────────────────────
 // Returns all personal data for the authenticated user as JSON (GDPR Article 20).
+// Output is curated for human readability: internal IDs, telemetry, and join-table
+// plumbing are stripped; entities are nested under their natural parent.
 router.get('/api/account/export', async (req: Request, res: Response) => {
   try {
     const user = await getUserFromToken(req.headers.authorization || '');
@@ -147,72 +158,222 @@ router.get('/api/account/export', async (req: Request, res: Response) => {
     const supabase = getServiceClient();
     const userId = user.id;
 
-    // Collect all user data
-    const [
-      profileResult,
-      tripsResult,
-      sharesResult,
-      chatThreadsResult,
-      usageResult,
-      engagementResult,
-    ] = await Promise.all([
+    const [profileResult, tripsResult, sharedWithMeResult, chatThreadsResult] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).single(),
       supabase.from('trips').select('*').eq('user_id', userId),
-      supabase.from('trip_shares').select('*').eq('shared_with_user_id', userId),
-      supabase.from('ai_chat_threads').select('*').eq('user_id', userId),
-      supabase.from('user_ai_usage').select('*').eq('user_id', userId),
-      supabase.from('user_engagement_events').select('*').eq('user_id', userId),
+      supabase
+        .from('trip_shares')
+        .select('permission_level, share_status, created_at, trip_id, is_owner')
+        .eq('shared_with_user_id', userId),
+      supabase.from('ai_chat_threads').select('id, title, trip_id, created_at').eq('user_id', userId),
     ]);
 
-    // For each trip, gather sub-entities
-    const tripDetails = [];
-    for (const trip of tripsResult.data || []) {
-      const [days, accommodations, transportation, reservations, expenses] = await Promise.all([
-        supabase.from('trip_days').select('*, day_activities(*)').eq('trip_id', trip.id),
-        supabase.from('accommodations').select('*').eq('trip_id', trip.id),
-        supabase.from('transportation').select('*').eq('trip_id', trip.id),
-        supabase.from('reservations').select('*').eq('trip_id', trip.id),
-        supabase.from('other_expenses').select('*').eq('trip_id', trip.id),
-      ]);
+    const profile = profileResult.data;
 
-      tripDetails.push({
-        ...trip,
-        days: days.data || [],
-        accommodations: accommodations.data || [],
-        transportation: transportation.data || [],
-        reservations: reservations.data || [],
-        expenses: expenses.data || [],
+    // Build trips with nested days/activities/accommodations/etc.
+    const trips = [];
+    for (const trip of tripsResult.data || []) {
+      const [daysRes, accommodationsRes, transportationRes, reservationsRes, expensesRes, collaboratorsRes] =
+        await Promise.all([
+          supabase
+            .from('trip_days')
+            .select('day_id, date, title, description, image_url, day_activities(*)')
+            .eq('trip_id', trip.trip_id)
+            .order('date', { ascending: true }),
+          supabase.from('accommodations').select('*').eq('trip_id', trip.trip_id),
+          supabase.from('transportation').select('*').eq('trip_id', trip.trip_id).order('start_date'),
+          supabase.from('reservations').select('*').eq('trip_id', trip.trip_id),
+          supabase.from('other_expenses').select('*').eq('trip_id', trip.trip_id).order('date'),
+          supabase
+            .from('trip_shares')
+            .select('first_name, last_name, shared_with_email, permission_level, share_status, is_owner')
+            .eq('trip_id', trip.trip_id),
+        ]);
+
+      const days = ((daysRes.data ?? []) as TripDayRow[]).map((d) => ({
+        date: d.date,
+        title: d.title || null,
+        description: d.description || null,
+        image_url: d.image_url || null,
+        activities: (d.day_activities ?? [])
+          .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+          .map((a) => ({
+            title: a.title,
+            description: a.description || null,
+            start_time: a.start_time || null,
+            end_time: a.end_time || null,
+            cost: a.cost,
+            currency: a.currency,
+            amount_paid: a.amount_paid,
+            is_paid: a.is_paid,
+            location: a.location_address
+              ? {
+                  address: a.location_address,
+                  phone: a.location_phone || null,
+                  website: a.location_website || null,
+                  rating: a.location_rating ?? null,
+                }
+              : null,
+          })),
+      }));
+
+      const accommodations = ((accommodationsRes.data ?? []) as AccommodationRow[])
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        .map((a) => ({
+          title: a.title,
+          hotel: a.hotel || null,
+          address: a.hotel_address || null,
+          phone: a.hotel_phone || null,
+          website: a.hotel_website || a.hotel_url || null,
+          checkin_date: a.hotel_checkin_date || null,
+          checkin_time: a.checkin_time || null,
+          checkout_date: a.hotel_checkout_date || null,
+          checkout_time: a.checkout_time || null,
+          description: a.description || null,
+          notes: a.hotel_details || null,
+          cost: a.cost,
+          currency: a.currency,
+          amount_paid: a.amount_paid,
+          is_paid: a.is_paid,
+        }));
+
+      const transportation = ((transportationRes.data ?? []) as TransportationRow[]).map((t) => ({
+        type: t.type,
+        provider: t.provider || null,
+        flight_number: t.flight_number || null,
+        confirmation_number: t.confirmation_number || null,
+        from: t.departure_location || null,
+        to: t.arrival_location || null,
+        start_date: t.start_date,
+        start_time: t.start_time || null,
+        end_date: t.end_date || null,
+        end_time: t.end_time || null,
+        details: t.details || null,
+        cost: t.cost,
+        currency: t.currency,
+      }));
+
+      const dining_reservations = ((reservationsRes.data ?? []) as ReservationRow[])
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        .map((r) => ({
+          restaurant: r.restaurant_name,
+          address: r.address || null,
+          phone: r.phone_number || null,
+          website: r.website || null,
+          reservation_time: r.reservation_time || null,
+          number_of_people: r.number_of_people ?? null,
+          confirmation_number: r.confirmation_number || null,
+          notes: r.notes || null,
+          cost: r.cost,
+          currency: r.currency,
+          amount_paid: r.amount_paid,
+          is_paid: r.is_paid,
+        }));
+
+      const other_expenses = ((expensesRes.data ?? []) as OtherExpenseRow[]).map((e) => ({
+        description: e.description,
+        date: e.date,
+        cost: e.cost,
+        currency: e.currency,
+        amount_paid: e.amount_paid,
+        is_paid: e.is_paid,
+      }));
+
+      const collaborators = ((collaboratorsRes.data ?? []) as TripShareRow[]).map((c) => ({
+        first_name: c.first_name || null,
+        last_name: c.last_name || null,
+        email: c.shared_with_email || null,
+        role: c.is_owner ? 'owner' : c.permission_level,
+        status: c.share_status,
+      }));
+
+      trips.push({
+        destination: trip.destination,
+        primary_destination: trip.primary_destination || null,
+        arrival_date: trip.arrival_date,
+        departure_date: trip.departure_date,
+        budget: trip.budget,
+        visibility: trip.is_public ? 'public' : 'private',
+        cover_image: trip.cover_image_url
+          ? {
+              url: trip.cover_image_url,
+              photographer: trip.cover_image_photographer || null,
+            }
+          : null,
+        created_at: trip.created_at,
+        collaborators,
+        days,
+        accommodations,
+        transportation,
+        dining_reservations,
+        other_expenses,
       });
     }
 
-    // Gather chat messages for each thread
-    const chatData = [];
+    // AI chats — look up trip destination for context
+    const tripIdToDestination = new Map<string, string>();
+    for (const t of tripsResult.data || []) tripIdToDestination.set(t.trip_id, t.destination);
+
+    const ai_chats = [];
     for (const thread of chatThreadsResult.data || []) {
       const { data: messages } = await supabase
         .from('ai_chat_messages')
-        .select('*')
+        .select('role, content, created_at')
         .eq('thread_id', thread.id)
         .order('created_at', { ascending: true });
 
-      chatData.push({ ...thread, messages: messages || [] });
+      ai_chats.push({
+        title: thread.title || null,
+        trip_destination: tripIdToDestination.get(thread.trip_id) || null,
+        created_at: thread.created_at,
+        messages: ((messages ?? []) as Pick<Tables<'ai_chat_messages'>, 'role' | 'content' | 'created_at'>[]).map((m) => ({
+          role: m.role,
+          content: m.content,
+          timestamp: m.created_at,
+        })),
+      });
     }
 
+    const shared_with_me = ((sharedWithMeResult.data ?? []) as TripShareRow[]).map((s) => ({
+      role: s.is_owner ? 'owner' : s.permission_level,
+      status: s.share_status,
+      shared_at: s.created_at,
+    }));
+
     const exportData = {
+      _readme:
+        'This is your personal data export from WanderLuxe. It includes your profile, ' +
+        'trips you own (with all itinerary details), AI chat history, and a list of trips ' +
+        'others have shared with you. Trip data belonging to other users is not included. ' +
+        'Internal database identifiers and analytics telemetry have been omitted for clarity.',
       exported_at: new Date().toISOString(),
       account: {
         email: user.email,
-        user_id: userId,
+        member_since: profile?.created_at || null,
       },
-      profile: profileResult.data || null,
-      trips: tripDetails,
-      shared_trips: sharesResult.data || [],
-      ai_chat: chatData,
-      ai_usage: usageResult.data || [],
-      engagement_events: engagementResult.data || [],
+      profile: profile
+        ? {
+            full_name: profile.full_name || null,
+            username: profile.username || null,
+            home_location: profile.home_location || null,
+            avatar_url: profile.avatar_url || null,
+            plan: {
+              tier: profile.subscription_tier || 'free',
+              ai_messages_per_day: profile.ai_messages_limit ?? null,
+              ai_imports_per_day: profile.ai_imports_limit ?? null,
+            },
+          }
+        : null,
+      trips,
+      shared_with_me,
+      ai_chats,
     };
 
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="wanderluxe-data-export-${new Date().toISOString().split('T')[0]}.json"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="wanderluxe-data-export-${new Date().toISOString().split('T')[0]}.json"`
+    );
     return res.json(exportData);
   } catch (error) {
     console.error('Data export error:', error);

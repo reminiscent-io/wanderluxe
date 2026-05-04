@@ -4,8 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Zap, TrendingUp, Award } from 'lucide-react';
 import { formatCurrencyWithSymbol } from '../utils/budgetCalculations';
 
+type ExpenseLike = {
+  amount: number;
+  currency?: string | null;
+  category?: string | null;
+  date?: string | null;
+};
+
 interface SpendingInsightsProps {
-  expenses: any[];
+  expenses: ExpenseLike[];
   totalBudget: number;
   totalSpent: number;
   selectedCurrency: string;

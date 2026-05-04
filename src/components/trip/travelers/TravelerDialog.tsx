@@ -15,7 +15,7 @@ import { Eye, Edit, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { shareTrip } from "@/services/tripSharingService";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { getConnectedContacts, pickBestName } from "@/services/contactsService";
+import { getConnectedContacts, pickBestName, type ConnectedContact } from "@/services/contactsService";
 
 interface TravelerDialogProps {
   open: boolean;
@@ -38,7 +38,7 @@ export default function TravelerDialog({
 }: TravelerDialogProps) {
   const queryClient = useQueryClient();
   const isEditing = !!traveler;
-  const isOwner = !!(traveler as any)?.is_owner;
+  const isOwner = !!traveler?.is_owner;
 
   const form = useForm<TravelerForm>({
     resolver: zodResolver(travelerSchema),
@@ -75,10 +75,10 @@ export default function TravelerDialog({
   useEffect(() => {
     const hydrate = async () => {
       if (!open) return;
-      const id = (traveler as any)?.id;
+      const id = traveler?.id;
       if (!id || isOwner) return;
       const { data, error } = await supabase
-        .from("trip_shares" as any)
+        .from("trip_shares")
         .select("permission_level")
         .eq("id", id)
         .maybeSingle();
@@ -91,10 +91,10 @@ export default function TravelerDialog({
     };
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, (traveler as any)?.id]);
+  }, [open, traveler?.id]);
 
   // Contacts for quick prefilling
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<ConnectedContact[]>([]);
   useEffect(() => {
     const run = async () => {
       if (!open) return;
@@ -127,7 +127,7 @@ export default function TravelerDialog({
     mutationFn: async (data: TravelerForm) => {
       // Use existing id, or the id captured when Share created the row
       const idToUse =
-        ((isEditing && (traveler as any)?.id) ? (traveler as any).id : createdShareId) || undefined;
+        ((isEditing && traveler?.id) ? traveler.id : createdShareId) || undefined;
 
       const payload = {
         ...(idToUse ? { id: idToUse } : {}),
@@ -147,10 +147,10 @@ export default function TravelerDialog({
       form.reset();
       setCreatedShareId(null);
     },
-    onError: (error: any) => {
+    onError: (error: { message?: string; code?: string } | Error) => {
       console.error("Error saving traveler:", error);
-      const msg = String(error?.message || "").toLowerCase();
-      const isDup = msg.includes("duplicate key") || error?.code === "23505";
+      const msg = String((error as { message?: string }).message ?? "").toLowerCase();
+      const isDup = msg.includes("duplicate key") || (error as { code?: string }).code === "23505";
       if (isDup) {
         // already exists; treat as success for UX
         toast.success("Traveler already added");
@@ -199,7 +199,7 @@ export default function TravelerDialog({
 
       // 1) Idempotent create/update of the traveler row
       const idToUse =
-        ((isEditing && (traveler as any)?.id) ? (traveler as any).id : createdShareId) || undefined;
+        ((isEditing && traveler?.id) ? traveler.id : createdShareId) || undefined;
       const payload = {
         ...(idToUse ? { id: idToUse } : {}),
         first_name: form.getValues("first_name"),
@@ -211,7 +211,7 @@ export default function TravelerDialog({
 
       if (upsertErr) {
         const msg = String(upsertErr.message || "").toLowerCase();
-        const isDup = msg.includes("duplicate key") || (upsertErr as any)?.code === "23505";
+        const isDup = msg.includes("duplicate key") || (upsertErr as { code?: string })?.code === "23505";
         if (!isDup) {
           toast.error("Could not add traveler");
           return;
@@ -219,11 +219,11 @@ export default function TravelerDialog({
       }
 
       // 2) Capture created/located id
-      if ((upserted as any)?.id) {
-        setCreatedShareId((upserted as any).id);
+      if (upserted?.id) {
+        setCreatedShareId(upserted.id);
       } else {
         const { data: row } = await supabase
-          .from("trip_shares" as any)
+          .from("trip_shares")
           .select("id")
           .eq("trip_id", tripId)
           .eq("shared_with_email", watchedEmail.trim())
@@ -274,13 +274,13 @@ export default function TravelerDialog({
 
       // Prefer explicit id (existing traveler row or one created during Share)
       const id =
-        (traveler as any)?.id ||
+        traveler?.id ||
         createdShareId ||
         null;
 
       if (id) {
         const { error } = await supabase
-          .from("trip_shares" as any)
+          .from("trip_shares")
           .delete()
           .eq("id", id);
         if (error) throw error;
@@ -294,7 +294,7 @@ export default function TravelerDialog({
       }
 
       const { error } = await supabase
-        .from("trip_shares" as any)
+        .from("trip_shares")
         .delete()
         .eq("trip_id", tripId)
         .eq("shared_with_email", email);
@@ -306,7 +306,7 @@ export default function TravelerDialog({
       setCreatedShareId(null);
       onOpenChange(false);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       const msg = err?.message || "Failed to remove traveler";
       toast.error(msg);
     },
@@ -328,7 +328,7 @@ export default function TravelerDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md" key={(traveler as any)?.id ?? "new"}>
+      <DialogContent className="sm:max-w-md" key={traveler?.id ?? "new"}>
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Traveler" : "Add Traveler"}

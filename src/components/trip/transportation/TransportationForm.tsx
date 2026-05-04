@@ -19,7 +19,7 @@ type Transportation = Tables<"transportation">;
 
 interface Props {
   initialData?: Partial<Transportation>;
-  onSubmit: (data: Partial<Transportation>) => Promise<any> | any;
+  onSubmit: (data: Partial<Transportation>) => Promise<unknown> | unknown;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
   tripArrivalDate?: string | null;
@@ -135,7 +135,7 @@ export default function TransportationForm({
 
     const payload: Partial<Transportation> = {
       ...initialData,
-      type: data.type as any,
+      type: data.type as Transportation['type'],
       departure_location: data.departure_location,
       arrival_location: data.arrival_location,
       provider: data.provider,
@@ -160,7 +160,7 @@ export default function TransportationForm({
       
       // Save traveler assignments after successful transportation save
       if (data.travelers && data.travelers.length > 0) {
-        const transportationId = initialData?.id || (result as any)?.id;
+        const transportationId = initialData?.id || (result as { id?: string } | null | undefined)?.id;
         if (transportationId) {
           await setJunctionTravelers("transportation", tripId, transportationId, data.travelers);
         }

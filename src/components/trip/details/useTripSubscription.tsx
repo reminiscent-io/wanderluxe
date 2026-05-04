@@ -1,9 +1,6 @@
 
-import { useEffect, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-
-let globalChannelMap = new Map<string, any>();
 
 export const useTripSubscription = (tripId: string | undefined) => {
   const queryClient = useQueryClient();

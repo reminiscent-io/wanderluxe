@@ -12,7 +12,7 @@ export function usePWAInstall() {
   useEffect(() => {
     // Detect if already running as installed PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-      || (navigator as any).standalone === true;
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsInstalled(isStandalone);
   }, []);
 
@@ -64,5 +64,5 @@ export function usePWAInstall() {
     }
   };
 
-  return { canInstall: !isInstalled && (!!deferredPrompt || !!(navigator as any).share), handleInstall };
+  return { canInstall: !isInstalled && (!!deferredPrompt || !!navigator.share), handleInstall };
 }

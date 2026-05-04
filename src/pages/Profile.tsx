@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -169,48 +168,47 @@ type SubscriptionDetails = {
 };
 
 const UpgradeSection: React.FC<{ onUpgrade: () => Promise<void> }> = ({ onUpgrade }) => (
-  <>
-    <Separator className="my-4" />
-    <div className="space-y-4">
-        <h3 className="font-medium">Upgrade to Pro</h3>
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          <li className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-            Unlimited AI assistant messages
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-            Priority support
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-            Advanced trip features
-          </li>
-          <li className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-            Export trips to PDF
-          </li>
-        </ul>
-        <Button
-          className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-          onClick={async () => {
-            try {
-              await onUpgrade();
-            } catch (e: any) {
-              console.error('Checkout error:', e?.message || e);
-              if (e instanceof TypeError && (e.message.includes('Load failed') || e.message.includes('Failed to fetch'))) {
-                toast.error("Connection error - please check your internet and try again");
-              } else {
-                toast.error(e?.message || "Network error - please try again");
-              }
-            }
-          }}
-        >
-          <Crown className="h-4 w-4 mr-2" />
-          Upgrade to Pro - $3.99/month
-        </Button>
-      </div>
-  </>
+  <div className="mt-6 space-y-5">
+    <h3 className="font-display text-xl text-earth-800">Upgrade to Pro</h3>
+    <ul className="grid gap-2.5 text-sm text-earth-700 sm:grid-cols-2">
+      <li className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+        Unlimited AI assistant messages
+      </li>
+      <li className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+        Priority support
+      </li>
+      <li className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+        Advanced trip features
+      </li>
+      <li className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+        Export trips to PDF
+      </li>
+    </ul>
+    <Button
+      variant="sunset"
+      className="w-full sm:w-auto"
+      onClick={async () => {
+        try {
+          await onUpgrade();
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          console.error('Checkout error:', message);
+          if (e instanceof TypeError && (e.message.includes('Load failed') || e.message.includes('Failed to fetch'))) {
+            toast.error("Connection error - please check your internet and try again");
+          } else {
+            toast.error(message || "Network error - please try again");
+          }
+        }
+      }}
+    >
+      <Crown className="h-4 w-4 mr-2" />
+      Upgrade to Pro · $3.99/month
+    </Button>
+  </div>
 );
 
 const ProDetailsSection: React.FC<{
@@ -220,92 +218,86 @@ const ProDetailsSection: React.FC<{
   onCancel: () => Promise<void>;
   onReactivate: () => Promise<void>;
 }> = ({ loadingSubscription, subscriptionDetails, cancellingSubscription, onCancel, onReactivate }) => (
-  <>
-    <Separator className="my-4" />
-    <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Thank you for being a Pro member! You have access to all premium features.
-        </p>
+  <div className="mt-6 space-y-5">
+    <p className="text-sm text-earth-700 max-w-prose">
+      Thank you for being a Pro member. You have access to every premium feature.
+    </p>
 
-        {loadingSubscription && (
-          <p className="text-sm text-muted-foreground">Loading subscription details...</p>
-        )}
+    {loadingSubscription && (
+      <p className="text-sm text-muted-foreground">Loading subscription details...</p>
+    )}
 
-        {!loadingSubscription && subscriptionDetails && (
-          <div className="space-y-3">
-            <div className="bg-sand-50 rounded-lg p-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Member since:</span>
-                <span className="font-medium">{formatDate(subscriptionDetails.created)}</span>
-              </div>
-              {subscriptionDetails.cancelAtPeriodEnd ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <AlertCircle className="h-4 w-4 text-amber-500" />
-                  <span className="text-amber-600">Access ends:</span>
-                  <span className="font-medium text-amber-600">{formatDate(subscriptionDetails.currentPeriodEnd)}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Renews:</span>
-                  <span className="font-medium">{formatDate(subscriptionDetails.currentPeriodEnd)}</span>
-                </div>
-              )}
+    {!loadingSubscription && subscriptionDetails && (
+      <div className="space-y-5">
+        <dl className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-2">
+          <div className="flex items-baseline gap-2">
+            <dt className="text-earth-600">Member since</dt>
+            <dd className="font-medium tabular-nums text-earth-800">{formatDate(subscriptionDetails.created)}</dd>
+          </div>
+          {subscriptionDetails.cancelAtPeriodEnd ? (
+            <div className="flex items-baseline gap-2">
+              <dt className="text-amber-700">Access ends</dt>
+              <dd className="font-medium tabular-nums text-amber-800">{formatDate(subscriptionDetails.currentPeriodEnd)}</dd>
             </div>
+          ) : (
+            <div className="flex items-baseline gap-2">
+              <dt className="text-earth-600">Renews</dt>
+              <dd className="font-medium tabular-nums text-earth-800">{formatDate(subscriptionDetails.currentPeriodEnd)}</dd>
+            </div>
+          )}
+        </dl>
 
-            {subscriptionDetails.cancelAtPeriodEnd && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-sm text-amber-800">
-                  Your subscription is set to cancel. You'll continue to have Pro access until {formatDate(subscriptionDetails.currentPeriodEnd)}.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3 border-amber-300 text-amber-700 hover:bg-amber-100"
-                  onClick={onReactivate}
-                  disabled={cancellingSubscription}
-                >
-                  {cancellingSubscription ? 'Processing...' : 'Keep my subscription'}
-                </Button>
-              </div>
-            )}
-
-            {!subscriptionDetails.cancelAtPeriodEnd && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    Cancel subscription
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancel your Pro subscription?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      You'll continue to have access to all Pro features until {formatDate(subscriptionDetails.currentPeriodEnd)}. After that, you'll be switched to the free plan.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep subscription</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={onCancel}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      disabled={cancellingSubscription}
-                    >
-                      {cancellingSubscription ? 'Cancelling...' : 'Yes, cancel'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+        {subscriptionDetails.cancelAtPeriodEnd && (
+          <div className="bg-amber-50 border border-amber-200 rounded-card p-4">
+            <p className="text-sm text-amber-800">
+              Your subscription is set to cancel. You'll continue to have Pro access until {formatDate(subscriptionDetails.currentPeriodEnd)}.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 border-amber-300 bg-transparent text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+              onClick={onReactivate}
+              disabled={cancellingSubscription}
+            >
+              {cancellingSubscription ? 'Processing...' : 'Keep my subscription'}
+            </Button>
           </div>
         )}
-    </div>
-  </>
+
+        {!subscriptionDetails.cancelAtPeriodEnd && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-3 text-earth-600 hover:text-destructive"
+              >
+                Cancel subscription
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancel your Pro subscription?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You'll continue to have access to all Pro features until {formatDate(subscriptionDetails.currentPeriodEnd)}. After that, you'll be switched to the free plan.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep subscription</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onCancel}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={cancellingSubscription}
+                >
+                  {cancellingSubscription ? 'Cancelling...' : 'Yes, cancel'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
+    )}
+  </div>
 );
 
 const SKELETON_IDS = ['skeleton-a', 'skeleton-b', 'skeleton-c'] as const;
@@ -333,15 +325,13 @@ const ContactsList: React.FC<{
   if (loading) return <ContactsLoadingSkeleton />;
   if (contacts.length === 0) return <ContactsEmptyState />;
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableBody>
-          {contacts.map((c) => (
-            <ContactRow key={c.key} contact={c} onClick={onContactClick} />
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <Table>
+      <TableBody>
+        {contacts.map((c) => (
+          <ContactRow key={c.key} contact={c} onClick={onContactClick} />
+        ))}
+      </TableBody>
+    </Table>
   );
 };
 
@@ -472,25 +462,19 @@ const DataPrivacySection: React.FC = () => {
   };
 
   return (
-    <div className="bg-background rounded-lg shadow">
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-full bg-sand-100">
-            <ShieldAlert className="h-5 w-5 text-sand-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-medium">Data & Privacy</h2>
-            <p className="text-sm text-muted-foreground">
-              Manage your personal data and account
-            </p>
-          </div>
-        </div>
+    <section className="bg-card rounded-card border border-border shadow-warm-sm">
+      <div className="p-6 md:p-8">
+        <header className="flex items-baseline gap-3">
+          <ShieldAlert className="h-5 w-5 text-earth-600 self-center" />
+          <h2 className="font-display text-2xl md:text-3xl text-earth-800">Data & privacy</h2>
+        </header>
+        <p className="mt-2 text-sm text-earth-600 max-w-prose">
+          Export everything you've created, or close your account permanently.
+        </p>
 
-        <Separator className="mb-4" />
-
-        <div className="space-y-4">
+        <div className="mt-6 divide-y divide-border">
           {/* Download My Data */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 py-4 first:pt-0">
             <div>
               <p className="text-sm font-medium">Download my data</p>
               <p className="text-xs text-muted-foreground">
@@ -502,17 +486,15 @@ const DataPrivacySection: React.FC = () => {
               size="sm"
               onClick={handleExportData}
               disabled={exportingData}
-              className="border-sand-300"
+              className="shrink-0"
             >
               <Download className="h-4 w-4 mr-2" />
               {exportingData ? 'Exporting...' : 'Export'}
             </Button>
           </div>
 
-          <Separator />
-
           {/* Delete Account */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 py-4 last:pb-0">
             <div>
               <p className="text-sm font-medium text-destructive">Delete account</p>
               <p className="text-xs text-muted-foreground">
@@ -564,14 +546,14 @@ const DataPrivacySection: React.FC = () => {
                           I understand, continue
                         </Button>
                       ) : (
-                        <div className="space-y-3 mt-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <div className="space-y-3 mt-2 p-3 bg-red-50 rounded-card border border-red-200">
                           <p className="text-sm font-medium text-destructive">
                             Type <strong>DELETE</strong> to confirm:
                           </p>
                           <Input
                             value={confirmText}
                             onChange={(e) => setConfirmText(e.target.value)}
-                            placeholder="Type DELETE"
+                            placeholder="DELETE"
                             className="border-red-200"
                             autoFocus
                           />
@@ -597,7 +579,7 @@ const DataPrivacySection: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
@@ -858,7 +840,7 @@ const Profile = () => {
 
       if (originalEmail) {
         const { error: updErr } = await supabase
-          .from("trip_shares" as any)
+          .from("trip_shares")
           .update({
             first_name: editFirst || null,
             last_name: editLast || null,
@@ -871,7 +853,7 @@ const Profile = () => {
 
       setEditOpen(false);
       await fetchContacts();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Failed to update contact", e);
       toast.error("Failed to update contact");
     } finally {
@@ -890,173 +872,213 @@ const Profile = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-24 pb-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          {/* Identity Header Card */}
-          <div className="bg-background p-6 rounded-lg shadow">
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              {/* Avatar Section */}
-              <div className="flex flex-col items-center gap-3 md:w-auto w-full">
-                <div className="relative group">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  {avatarUrl ? (
-                    <Avatar
-                      className="cursor-pointer transition-all group-hover:opacity-90"
-                      style={{ width: '120px', height: '120px' }}
-                      onClick={handleAvatarClick}
-                    >
-                      <AvatarImage src={avatarUrl} alt="Profile" />
-                      <AvatarFallback className="text-3xl bg-sand-50 text-earth-500">
-                        {uploadingAvatar ? '...' : userInitials}
-                      </AvatarFallback>
-                      <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Camera className="h-8 w-8 text-white" />
+      <div className="container mx-auto px-4 pt-20 md:pt-28 pb-12">
+        <div className="max-w-4xl mx-auto">
+          {/* Page header — editorial anchor */}
+          <header className="mb-10 md:mb-14">
+            <h1 className="font-display text-4xl md:text-5xl text-earth-800 leading-[1.05] tracking-tight">
+              Your account
+            </h1>
+            <p className="mt-3 text-base text-earth-600 max-w-prose">
+              Profile, subscription, connections, and data, all in one place.
+            </p>
+          </header>
+
+          <div className="space-y-8 md:space-y-10">
+            {/* Identity Card */}
+            <section className="bg-card rounded-card border border-border shadow-warm-sm">
+              <div className="p-6 md:p-10">
+                <div className="flex flex-col md:flex-row md:items-start gap-8 md:gap-10">
+                  {/* Avatar */}
+                  <div className="flex flex-col items-center md:items-start gap-4 md:w-auto w-full shrink-0">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    {avatarUrl ? (
+                      <button
+                        type="button"
+                        onClick={handleAvatarClick}
+                        disabled={uploadingAvatar}
+                        aria-label="Change profile photo"
+                        className="group relative rounded-full ring-1 ring-border transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-earth-600 focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:opacity-50"
+                        style={{ width: '128px', height: '128px' }}
+                      >
+                        <Avatar style={{ width: '128px', height: '128px' }}>
+                          <AvatarImage src={avatarUrl} alt="" />
+                          <AvatarFallback className="text-3xl font-display bg-sand-50 text-earth-700">
+                            {uploadingAvatar ? '...' : userInitials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity flex items-center justify-center"
+                        >
+                          <Camera className="h-8 w-8 text-white" />
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleAvatarClick}
+                        disabled={uploadingAvatar}
+                        aria-label="Upload profile photo"
+                        className="rounded-full border-2 border-dashed border-earth-300 hover:border-earth-500 transition-colors flex flex-col items-center justify-center gap-2 bg-sand-50 hover:bg-sand-100 cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-earth-600 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                        style={{ width: '128px', height: '128px' }}
+                      >
+                        {uploadingAvatar ? (
+                          <div className="text-sm text-muted-foreground">Uploading...</div>
+                        ) : (
+                          <>
+                            <Camera className="h-8 w-8 text-earth-500" />
+                            <span className="text-xs text-earth-600">Upload photo</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Right column — heading, meta strip, form */}
+                  <div className="flex-1 w-full min-w-0">
+                    <header className="flex items-baseline gap-3">
+                      <h2 className="font-display text-2xl md:text-3xl text-earth-800">Profile</h2>
+                    </header>
+
+                    <dl className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm text-earth-600">
+                      <div className="flex min-w-0 items-center gap-1.5 max-w-full">
+                        <dt className="sr-only">Email</dt>
+                        <dd className="font-medium text-earth-800 truncate">{session.user.email}</dd>
                       </div>
-                    </Avatar>
-                  ) : (
-                    <button
-                      onClick={handleAvatarClick}
-                      disabled={uploadingAvatar}
-                      className="h-30 w-30 sm:h-35 sm:w-35 rounded-full border-2 border-dashed border-earth-300 hover:border-earth-500 transition-all flex flex-col items-center justify-center gap-2 bg-sand-50 hover:bg-sand-100 cursor-pointer disabled:opacity-50"
-                      style={{ width: '120px', height: '120px' }}
-                    >
-                      {uploadingAvatar ? (
-                        <div className="text-sm text-muted-foreground">Uploading...</div>
-                      ) : (
-                        <>
-                          <Camera className="h-8 w-8 text-earth-400" />
-                          <span className="text-xs text-earth-600">Upload Photo</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-                <div className="text-center text-sm text-muted-foreground">
-                  {session.user.email}
-                </div>
-                <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>Member since {formatIsoDate(createdAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>Last login: {formatRelativeTime(lastLoginAt)}</span>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                        <dt className="sr-only">Member since</dt>
+                        <dd>Member since {formatIsoDate(createdAt)}</dd>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                        <dt className="sr-only">Last login</dt>
+                        <dd>Last login {formatRelativeTime(lastLoginAt)}</dd>
+                      </div>
+                    </dl>
+
+                    <div className="mt-8 grid gap-5 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName">Full name</Label>
+                        <Input
+                          id="fullName"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Enter your full name"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="homeLocation">Home location</Label>
+                        <Input
+                          id="homeLocation"
+                          value={homeLocation}
+                          onChange={(e) => setHomeLocation(e.target.value)}
+                          placeholder="Where you start from"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                      <Button
+                        onClick={handleSave}
+                        disabled={isLoading}
+                        className="bg-earth-600 hover:bg-earth-700 text-white"
+                      >
+                        {isLoading ? 'Saving...' : 'Save changes'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
+            </section>
 
-              {/* Profile Information Fields */}
-              <div className="flex-1 w-full space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="homeLocation">Home Location</Label>
-                  <Input
-                    id="homeLocation"
-                    value={homeLocation}
-                    onChange={(e) => setHomeLocation(e.target.value)}
-                    placeholder="Enter your home location"
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleSave}
-                    disabled={isLoading}
-                    className="bg-earth-600 hover:bg-earth-700 text-white"
+            {/* Subscription Card */}
+            <section className="bg-card rounded-card border border-border shadow-warm-sm">
+              <div className="p-6 md:p-8">
+                <header className="flex flex-wrap items-baseline justify-between gap-3">
+                  <div className="flex items-baseline gap-3">
+                    <Crown
+                      className={`h-5 w-5 self-center ${isPro ? 'text-amber-600' : 'text-earth-500'}`}
+                      aria-hidden="true"
+                    />
+                    <h2 className="font-display text-2xl md:text-3xl text-earth-800">Subscription</h2>
+                  </div>
+                  <Badge
+                    className={isPro ? 'bg-amber-100 text-amber-700 hover:bg-amber-100' : 'bg-sand-100 text-earth-700 hover:bg-sand-100'}
                   >
-                    {isLoading ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </div>
+                    {isPro ? 'Pro' : 'Free'}
+                  </Badge>
+                </header>
+                <p className="mt-2 text-sm text-earth-600 max-w-prose">
+                  {isPro ? 'Every premium feature is yours.' : 'Upgrade to unlock the full experience.'}
+                </p>
+
+                {!isPro && (
+                  <UpgradeSection onUpgrade={handleCheckoutUpgrade} />
+                )}
+
+                {isPro && (
+                  <ProDetailsSection
+                    loadingSubscription={loadingSubscription}
+                    subscriptionDetails={subscriptionDetails}
+                    cancellingSubscription={cancellingSubscription}
+                    onCancel={handleCancelSubscription}
+                    onReactivate={handleReactivateSubscription}
+                  />
+                )}
               </div>
-            </div>
-          </div>
+            </section>
 
-          {/* Subscription Card */}
-          <div className="bg-background rounded-lg shadow">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`p-2 rounded-full ${isPro ? 'bg-amber-100' : 'bg-sand-100'}`}>
-                  <Crown className={`h-5 w-5 ${isPro ? 'text-amber-600' : 'text-sand-500'}`} />
+            {/* Connected People — header padded, table flush to edges */}
+            <section className="bg-card rounded-card border border-border shadow-warm-sm overflow-hidden">
+              <header className="p-6 md:p-8 pb-0 md:pb-0">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className="font-display text-2xl md:text-3xl text-earth-800">Connected people</h2>
+                  <Badge variant="secondary" className="text-sm tabular-nums">
+                    {loadingContacts ? "…" : contacts.length}
+                  </Badge>
                 </div>
-                <div>
-                  <h2 className="text-lg font-medium">Subscription</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {isPro ? 'You have Pro access' : 'You are on the Free plan'}
-                  </p>
-                </div>
-                <Badge className={`ml-auto ${isPro ? 'bg-amber-100 text-amber-700' : 'bg-sand-100 text-sand-600'}`}>
-                  {isPro ? 'Pro' : 'Free'}
-                </Badge>
-              </div>
+                <p className="mt-2 text-sm text-earth-600 max-w-prose">
+                  Anyone you've shared a trip with, and anyone who has shared a trip with you.
+                </p>
+              </header>
 
-              {!isPro && (
-                <UpgradeSection onUpgrade={handleCheckoutUpgrade} />
-              )}
-
-              {isPro && (
-                <ProDetailsSection
-                  loadingSubscription={loadingSubscription}
-                  subscriptionDetails={subscriptionDetails}
-                  cancellingSubscription={cancellingSubscription}
-                  onCancel={handleCancelSubscription}
-                  onReactivate={handleReactivateSubscription}
+              <div className="mt-6 border-t border-border">
+                <ContactsList
+                  loading={loadingContacts}
+                  contacts={contacts}
+                  onContactClick={openEditDialog}
                 />
-              )}
-            </div>
-          </div>
-
-          {/* Connected People Table */}
-          <div className="bg-background rounded-lg shadow">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-lg font-medium">Connected People</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Anyone you've shared a trip with, and anyone who has shared a trip with you.
-                  </p>
-                </div>
-                <Badge variant="secondary" className="text-sm">
-                  {loadingContacts ? "..." : contacts.length}
-                </Badge>
               </div>
+            </section>
 
-              <Separator className="mb-4" />
-
-              <ContactsList
-                loading={loadingContacts}
-                contacts={contacts}
-                onContactClick={openEditDialog}
-              />
-            </div>
+            {/* Data & Privacy Card */}
+            <DataPrivacySection />
           </div>
 
-          {/* Data & Privacy Card */}
-          <DataPrivacySection />
-
-          {/* Sign Out Link */}
-          <div className="mt-8 text-center">
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-muted-foreground hover:text-destructive transition-colors"
-            >
-              Sign out
-            </button>
+          {/* Sign-out — generous separation, proper treatment */}
+          <div className="mt-12 md:mt-16 pt-8 border-t border-border">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-earth-800">Signed in as</p>
+                <p className="text-sm text-earth-600 mt-0.5 truncate max-w-[20rem]">{session.user.email}</p>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={handleSignOut}
+                className="text-earth-700 hover:text-destructive hover:bg-sand-100"
+              >
+                Sign out
+              </Button>
+            </div>
           </div>
         </div>
       </div>

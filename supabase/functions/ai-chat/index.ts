@@ -56,7 +56,13 @@ type GeminiPart =
 
 type GeminiContent = { role: 'user' | 'model'; parts: GeminiPart[] };
 
-type GeminiTool = { functionDeclarations: any[] };
+type GeminiFunctionDeclaration = {
+  name: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
+};
+
+type GeminiTool = { functionDeclarations: GeminiFunctionDeclaration[] };
 
 type GeminiToolMode = 'AUTO' | 'ANY' | 'NONE';
 
@@ -223,7 +229,7 @@ function parseCreateItemsBlock(response: string): { cleanContent: string; extrac
       activity: ['name', 'date'],
       reservation: ['restaurant_name', 'date', 'time']
     };
-    items = rawItems.map((item: any, idx: number) => {
+    items = rawItems.map((item: { itemType?: string; fields?: Record<string, unknown> } & Record<string, unknown>, idx: number) => {
       const itemType = item.itemType || 'activity';
       const fields = item.fields || item;
       const required = requiredByType[itemType] || [];
@@ -369,7 +375,14 @@ async function handleGetMessages(supabase: SupabaseClient, tripId: string, userI
 
   // Hydrate placeCards from metadata so the client can render them without
   // re-streaming. Leave metadata in place for other consumers.
-  const orderedMessages = (messages || []).reverse().map((m: any) => ({
+  type ChatMessageWithMetadata = {
+    id: string;
+    role: string;
+    content: string;
+    metadata?: { placeCards?: unknown[] } | null;
+    created_at: string;
+  };
+  const orderedMessages = ((messages ?? []) as ChatMessageWithMetadata[]).reverse().map((m) => ({
     ...m,
     placeCards: m.metadata && Array.isArray(m.metadata.placeCards) ? m.metadata.placeCards : undefined,
   }));
@@ -398,25 +411,29 @@ async function resolveThreadId(supabase: SupabaseClient, tripId: string, userId:
   return threadId;
 }
 
+type AccommodationLite = { hotel_address?: string | null; hotel?: string | null; hotel_checkin_date?: string | null; hotel_checkout_date?: string | null };
+type TransportationLite = { type?: string | null; provider?: string | null; arrival_location?: string | null; departure_location?: string | null; start_date?: string | null; end_date?: string | null };
+type ReservationLite = { address?: string | null; restaurant_name?: string | null; reservation_time?: string | null; number_of_people?: number | null };
+
 function buildLocationContext(
   tripName: string,
   primaryDestination: string | null,
-  accommodations: any[] | null,
-  transportation: any[] | null,
-  reservations: any[] | null
+  accommodations: AccommodationLite[] | null,
+  transportation: TransportationLite[] | null,
+  reservations: ReservationLite[] | null
 ): string {
   const locationHints: string[] = [];
 
-  accommodations?.forEach((a: any) => {
+  accommodations?.forEach((a) => {
     if (a.hotel_address) locationHints.push(sanitizeForPrompt(a.hotel_address));
     else if (a.hotel) locationHints.push(sanitizeForPrompt(a.hotel));
   });
 
-  transportation?.forEach((t: any) => {
+  transportation?.forEach((t) => {
     if (t.arrival_location) locationHints.push(sanitizeForPrompt(t.arrival_location));
   });
 
-  reservations?.forEach((r: any) => {
+  reservations?.forEach((r) => {
     if (r.address) locationHints.push(sanitizeForPrompt(r.address));
   });
 
@@ -665,7 +682,7 @@ function buildTools(
   serperApiKey: string | undefined,
   googlePlacesApiKey: string | undefined,
 ): GeminiTool[] | undefined {
-  const decls: any[] = [];
+  const decls: GeminiFunctionDeclaration[] = [];
 
   if (googlePlacesApiKey) {
     decls.push({
@@ -713,29 +730,31 @@ function sanitizeForPrompt(input: string | null | undefined): string {
   return input.replace(/[\r\n]+/g, ' ').replace(/[`$\\]/g, '').slice(0, 200);
 }
 
-function buildItineraryContext(days: any[] | null): string {
+type DayWithActivities = { date: string; title?: string | null; day_activities?: { title: string; start_time?: string | null }[] | null };
+
+function buildItineraryContext(days: DayWithActivities[] | null): string {
   if (!days || days.length === 0) return '';
-  const daysSummary = days.slice(0, 10).map((d: any) => {
-    const activities = d.day_activities?.map((a: any) => sanitizeForPrompt(a.title)).join(', ') || 'no activities yet';
+  const daysSummary = days.slice(0, 10).map((d) => {
+    const activities = d.day_activities?.map((a) => sanitizeForPrompt(a.title)).join(', ') || 'no activities yet';
     const titleSuffix = d.title ? ' - ' + sanitizeForPrompt(d.title) : '';
     return d.date + titleSuffix + ':\n  ' + activities;
   }).join('\n\n');
   return '\n\nCurrent Itinerary:\n' + daysSummary;
 }
 
-function formatAccommodationLine(a: any): string {
+function formatAccommodationLine(a: AccommodationLite & { start_time?: string | null }): string {
   const dates = (a.hotel_checkin_date || 'TBD') + ' to ' + (a.hotel_checkout_date || 'TBD');
   const address = a.hotel_address ? ' (' + sanitizeForPrompt(a.hotel_address) + ')' : '';
   return '- ' + sanitizeForPrompt(a.hotel) + ': ' + dates + address;
 }
 
-function formatAccommodations(accommodations: any[] | null): string {
+function formatAccommodations(accommodations: AccommodationLite[] | null): string {
   return (accommodations || []).slice(0, 5)
     .map(formatAccommodationLine)
     .join('\n') || 'No accommodations added yet';
 }
 
-function formatTransportationLine(t: any): string {
+function formatTransportationLine(t: TransportationLite & { start_time?: string | null }): string {
   const provider = t.provider ? ' (' + sanitizeForPrompt(t.provider) + ')' : '';
   const departure = sanitizeForPrompt(t.departure_location) || 'TBD';
   const arrival = sanitizeForPrompt(t.arrival_location) || 'TBD';
@@ -743,13 +762,13 @@ function formatTransportationLine(t: any): string {
   return '- ' + sanitizeForPrompt(t.type) + provider + ': ' + departure + ' \u2192 ' + arrival + ' on ' + t.start_date + time;
 }
 
-function formatTransportation(transportation: any[] | null): string {
+function formatTransportation(transportation: TransportationLite[] | null): string {
   return (transportation || []).slice(0, 5)
     .map(formatTransportationLine)
     .join('\n') || 'No transportation added yet';
 }
 
-function deriveSearchLocation(primaryDestination: string | null, accommodations: any[] | null, transportation: any[] | null, tripName: string): string {
+function deriveSearchLocation(primaryDestination: string | null, accommodations: AccommodationLite[] | null, transportation: TransportationLite[] | null, tripName: string): string {
   const location = primaryDestination || accommodations?.[0]?.hotel_address || transportation?.[0]?.arrival_location || tripName;
   return location.replaceAll(/\s+/g, '+');
 }
@@ -961,7 +980,7 @@ async function handlePostMessage(
   const primaryDestination = trip?.primary_destination;
   const arrivalDate = trip?.arrival_date || 'TBD';
   const departureDate = trip?.departure_date || 'TBD';
-  const partySize = reservations?.find((r: any) => r.number_of_people != null)?.number_of_people;
+  const partySize = (reservations as ReservationLite[] | null)?.find((r) => r.number_of_people != null)?.number_of_people;
   const partySizeContext = partySize == null ? '' : `\nParty size (from existing reservations): ${partySize}`;
 
   const locationContext = buildLocationContext(tripName, primaryDestination, accommodations, transportation, reservations);
@@ -981,10 +1000,11 @@ async function handlePostMessage(
   // Convert chat history to Gemini `contents`. Gemini uses 'model' for
   // assistant turns (not 'assistant') and has no system role — the system
   // prompt is passed separately via systemInstruction.
-  const contents: GeminiContent[] = (msgs || [])
+  type ChatHistoryMessage = { role: string; content: string | null };
+  const contents: GeminiContent[] = ((msgs ?? []) as ChatHistoryMessage[])
     .reverse()
-    .filter((m: any) => m.role === 'user' || m.role === 'assistant')
-    .map((m: any) => ({
+    .filter((m) => m.role === 'user' || m.role === 'assistant')
+    .map((m) => ({
       role: m.role === 'assistant' ? 'model' as const : 'user' as const,
       parts: [{ text: String(m.content ?? '') }],
     }));

@@ -6,11 +6,14 @@ import { formatDateSafe, compareDatesSafe, formatTime } from "@/utils/sidebarUti
 import Header from "../../_shared/Header";
 import PhotoStrip from "../../_shared/PhotoStrip";
 import { clearExpiredPlacePhotoCache } from "@/utils/placePhotoCache";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ActivityRow = Tables<'day_activities'> & { trip_days?: { date?: string | null } | null };
 
 interface Props {
-  activities: any[];
+  activities: ActivityRow[];
   onAdd: () => void;
-  onEdit: (a: any) => void;
+  onEdit: (a: ActivityRow) => void;
   canEdit?: boolean;
   isMobile: boolean;
   onClose: () => void;
@@ -29,7 +32,7 @@ export default function ActivitiesPanel({
     clearExpiredPlacePhotoCache();
   }, []);
 
-  const grouped = activities.reduce((acc: Record<string, any[]>, a) => {
+  const grouped = activities.reduce<Record<string, ActivityRow[]>>((acc, a) => {
     const d = a.trip_days?.date || "No Date";
     (acc[d] ||= []).push(a);
     return acc;

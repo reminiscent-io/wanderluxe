@@ -1,6 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { TripShare, SharedTripWithDetails, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
+import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+
+type TripShareRow = Tables<'trip_shares'>;
+type TripRow = Tables<'trips'>;
 
 /**
  * Share a trip with a specific email address
@@ -33,7 +37,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
 
     // Check if already shared with this email
     const { data: existingShare } = await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .select('*')
       .eq('trip_id', tripId)
       .eq('shared_with_email', email.toLowerCase().trim())
@@ -76,7 +80,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
         }
       }
 
-      const shareData: any = {
+      const shareData: TablesInsert<'trip_shares'> = {
         trip_id: tripId,
         shared_by_user_id: user.id,
         shared_with_email: email.toLowerCase().trim(),
@@ -88,7 +92,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       };
 
       const { error: shareError } = await supabase
-        .from('trip_shares' as any)
+        .from('trip_shares')
         .insert(shareData);
 
       if (shareError) {
@@ -121,8 +125,8 @@ export const sendShareNotification = async (
 ): Promise<boolean> => {
   try {
     // Get the Supabase URL and anon key from environment
-    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl) {
       toast.error('Configuration error. Please contact support.');
@@ -173,8 +177,8 @@ export const updateTripSharePermission = async (shareId: string, newPermissionLe
     
     // Direct update approach with comprehensive error handling
     const { data: updateResult, error: updateError } = await supabase
-      .from('trip_shares' as any)
-      .update({ permission_level: newPermissionLevel } as any)
+      .from('trip_shares')
+      .update({ permission_level: newPermissionLevel })
       .eq('id', shareId)
       .select('*')
       .single();
@@ -207,7 +211,7 @@ export const updateTripSharePermission = async (shareId: string, newPermissionLe
 export const removeTripShare = async (shareId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .delete()
       .eq('id', shareId);
 
@@ -277,7 +281,7 @@ export const getSharedTrips = async () => {
     // Get all trips shared with the user's email
     // Use ilike for case-insensitive matching to be extra safe
     const { data, error } = await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .select(`
         *,
         trips (*)
@@ -299,15 +303,16 @@ export const getSharedTrips = async () => {
 
     console.log('Found shared trips:', data?.length || 0);
 
+    type SharedTripRow = TripShareRow & { trips: TripRow | null };
     // Filter out shares where the user is the owner (shared_by_user_id === current user)
     // These are the owner's own "share" records, not trips shared WITH them
-    const filteredData = (data || []).filter((share: any) =>
+    const filteredData = ((data ?? []) as SharedTripRow[]).filter((share) =>
       share.shared_by_user_id !== user.id
     );
 
     // Get owner information for each shared trip
     // Also fetch trip preview for pending invites where RLS blocks trip data
-    const processedData = await Promise.all(filteredData.map(async (share: any) => {
+    const processedData = await Promise.all(filteredData.map(async (share) => {
       // Fetch the owner's profile information
       const { data: ownerData } = await supabase
         .from('profiles')
@@ -318,7 +323,7 @@ export const getSharedTrips = async () => {
       // Get the owner's trip_shares record (where shared_by_user_id === shared_with_user_id)
       // This contains their email and name as fallback
       const { data: ownerShare } = await supabase
-        .from('trip_shares' as any)
+        .from('trip_shares')
         .select('first_name, last_name, shared_with_email')
         .eq('trip_id', share.trip_id)
         .eq('shared_by_user_id', share.shared_by_user_id)
@@ -327,7 +332,7 @@ export const getSharedTrips = async () => {
 
       // Get owner's name: prefer profile full_name, then trip_shares name
       let ownerName = ownerData?.full_name || '';
-      let ownerEmail = ownerShare?.shared_with_email || '';
+      const ownerEmail = ownerShare?.shared_with_email || '';
 
       // If profile has no name, use trip_shares name
       if (!ownerName && ownerShare) {
@@ -347,7 +352,7 @@ export const getSharedTrips = async () => {
 
       // For pending invites where trips is null (RLS blocks full trip data),
       // fetch basic trip preview via SECURITY DEFINER function
-      let tripData = share.trips;
+      let tripData: (Partial<TripRow> & { _is_preview?: boolean }) | null = share.trips;
       if (!tripData && share.share_status === 'pending') {
         const { data: preview } = await supabase.rpc('get_pending_trip_preview', {
           p_share_id: share.id
@@ -388,7 +393,7 @@ export const getSharedTrips = async () => {
 export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
   try {
     const { data, error } = await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .select('*')
       .eq('trip_id', tripId)
       .order('created_at', { ascending: false });
@@ -399,13 +404,13 @@ export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
     }
 
     // Ensure permission_level has a default value for backward compatibility
-    const processedData = (data || []).map((share: any) => ({
+    const processedData = ((data ?? []) as TripShareRow[]).map((share) => ({
       ...share,
       permission_level: share.permission_level || 'edit'
     }));
 
     console.log('Fetched trip shares:', processedData);
-    return processedData as any;
+    return processedData as unknown as TripShare[];
   } catch (error) {
     console.error('Error fetching trip shares:', error);
     return [];
@@ -425,7 +430,7 @@ export const getPreviouslySharedEmails = async (currentTripId: string): Promise<
 
     // Get all emails the current user has shared trips with
     const { data: allShares, error: allSharesError } = await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .select('shared_with_email, trip_id, created_at')
       .eq('shared_by_user_id', user.id)
       .order('created_at', { ascending: false });
@@ -437,7 +442,7 @@ export const getPreviouslySharedEmails = async (currentTripId: string): Promise<
 
     // Get emails already shared with current trip
     const { data: currentTripShares, error: currentSharesError } = await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .select('shared_with_email')
       .eq('trip_id', currentTripId);
 
@@ -448,14 +453,16 @@ export const getPreviouslySharedEmails = async (currentTripId: string): Promise<
 
     // Create sets for efficient filtering
     const currentTripEmails = new Set(
-      (currentTripShares || []).map((share: any) => share.shared_with_email.toLowerCase().trim())
+      ((currentTripShares ?? []) as Pick<TripShareRow, 'shared_with_email'>[])
+        .map((share) => (share.shared_with_email ?? '').toLowerCase().trim())
+        .filter(Boolean)
     );
 
     // Get unique emails, excluding current trip shares and user's own email
     const uniqueEmails = new Set<string>();
-    (allShares || []).forEach((share: any) => {
-      const email = share.shared_with_email.toLowerCase().trim();
-      if (!currentTripEmails.has(email) && email !== user.email?.toLowerCase()) {
+    ((allShares ?? []) as Pick<TripShareRow, 'shared_with_email' | 'trip_id' | 'created_at'>[]).forEach((share) => {
+      const email = (share.shared_with_email ?? '').toLowerCase().trim();
+      if (email && !currentTripEmails.has(email) && email !== user.email?.toLowerCase()) {
         uniqueEmails.add(email);
       }
     });

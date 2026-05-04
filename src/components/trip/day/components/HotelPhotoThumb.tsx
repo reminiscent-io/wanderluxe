@@ -74,7 +74,7 @@ export default function HotelPhotoThumb({
   if (!placeId) return null;
 
   const maxWidth = size === 'md' ? 240 : 160;
-  const src = photo ? (getPhotoUrl?.(photo, maxWidth) || (photo as any)?.url) : null;
+  const src = photo ? (getPhotoUrl?.(photo, maxWidth) || (photo as { url?: string }).url) : null;
 
   return (
     <div

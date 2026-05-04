@@ -51,7 +51,21 @@ export function useTimelineEvents(tripId: string) {
   }, [tripId]);
 
   const updateEvent = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: {
+      id?: string;
+      title?: string;
+      description?: string;
+      image_url?: string;
+      hotel?: string;
+      hotel_details?: string;
+      hotel_url?: string;
+      hotel_checkin_date?: string;
+      hotel_checkout_date?: string;
+      checkin_time?: string;
+      checkout_time?: string;
+      cost?: number | null;
+      currency?: string;
+    }) => {
       if (!data.id) throw new Error('No event ID provided');
       
       const { error } = await supabase

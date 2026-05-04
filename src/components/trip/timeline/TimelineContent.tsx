@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { TripDay, HotelStay, ActivityFormData, DayActivity, Transportation, RestaurantReservation } from '@/types/trip';
+import type { Tables } from '@/integrations/supabase/types';
 import CompactDayCard from '../day/CompactDayCard';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
@@ -50,7 +51,7 @@ function buildActivityFormData(activity: DayActivity, dayDate: string): Activity
   };
 }
 
-function buildActivityPayload(form: ActivityFormData): Record<string, any> {
+function buildActivityPayload(form: ActivityFormData): Record<string, unknown> {
   return {
     title: form.title,
     description: form.description || null,
@@ -249,7 +250,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     }
   };
 
-  const handleAddReservation = async (data: any): Promise<void> => {
+  const handleAddReservation = async (data: Record<string, unknown>): Promise<void> => {
     if (!selectedDayId) return;
     try {
       const { error } = await supabase
@@ -269,7 +270,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     }
   };
 
-  const handleEditReservation = async (data: any): Promise<void> => {
+  const handleEditReservation = async (data: Record<string, unknown>): Promise<void> => {
     if (!editingReservation) return;
     try {
       const { error } = await supabase
@@ -288,7 +289,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     }
   };
 
-  const handleReservationSubmit = async (data: any): Promise<void> => {
+  const handleReservationSubmit = async (data: Record<string, unknown>): Promise<void> => {
     if (editingReservation) {
       await handleEditReservation(data);
     } else {
@@ -396,7 +397,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           setAccommodationOpen(open);
           if (!open) setEditingHotel(null);
         }}
-        initialData={editingHotel as any || undefined}
+        initialData={editingHotel as unknown as Tables<'accommodations'> | undefined}
         onSuccess={handleAccommodationSuccess}
       />
 
@@ -407,7 +408,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           setTransportationOpen(open);
           if (!open) setEditingTransportation(null);
         }}
-        initialData={editingTransportation as any || undefined}
+        initialData={editingTransportation as unknown as Tables<'transportation'> | undefined}
         onSuccess={handleTransportationSuccess}
       />
 

@@ -26,6 +26,8 @@ interface Props {
   label: string;
   required?: boolean;
   defaultMonth?: Date;
+  // Generic so any react-hook-form schema can supply this picker
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- consumer supplies their own RHF schema; widening to FieldValues here would break Path<T> typing for `name`
   control?: RHFControl<any>;
   hideTimeInputs?: boolean;
   placeholder?: string;
@@ -80,7 +82,7 @@ export default function LuxuryDateTimeRangePicker({
 
   return (
     <Controller
-      name={name as any}
+      name={name}
       control={control}
       render={({ field }) => {
         const value = (field.value || {}) as LuxuryDateTimeRange;
@@ -105,7 +107,7 @@ export default function LuxuryDateTimeRangePicker({
           setIsOpen(false);
         };
 
-        const handleDateSelect = (range: any) => {
+        const handleDateSelect = (range: { from?: Date | null; to?: Date | null } | undefined) => {
           if (range?.from || range?.to) {
             update({ 
               start: range?.from ?? null, 
@@ -152,7 +154,7 @@ export default function LuxuryDateTimeRangePicker({
                     : "w-[420px] max-w-[420px] rounded-xl p-0"
                 )}
                 onPointerDownOutside={(e) => {
-                  // @ts-ignore
+                  // @ts-expect-error Radix event target type does not expose closest
                   if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
                     e.preventDefault();
                   }

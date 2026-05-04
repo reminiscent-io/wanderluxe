@@ -3,22 +3,24 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Utensils, MapPin, Phone, Link as LinkIcon, Star, Clock, Users } from "lucide-react";
 
+type ReservationLike = {
+  id: string;
+  restaurant_name: string;
+  address?: string;
+  phone_number?: string;
+  website?: string;
+  rating?: number;
+  reservation_time?: string;
+  number_of_people?: number;
+  cost?: number;
+  currency?: string;
+  notes?: string;
+};
+
 interface RestaurantCardProps {
-  reservation: {
-    id: string;
-    restaurant_name: string;
-    address?: string;
-    phone_number?: string;
-    website?: string;
-    rating?: number;
-    reservation_time?: string;
-    number_of_people?: number;
-    cost?: number;
-    currency?: string;
-    notes?: string;
-  };
+  reservation: ReservationLike;
   formatTime: (time?: string) => string;
-  onClick: (reservation: any) => void;
+  onClick: (reservation: ReservationLike) => void;
 }
 
 // Reusable component for links with icons

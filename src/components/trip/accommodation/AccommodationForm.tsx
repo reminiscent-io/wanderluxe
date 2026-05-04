@@ -105,9 +105,8 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   const nextKey = typeof process !== "undefined"
     ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
     : undefined;
-  // @ts-expect-error Vite env at runtime (SSR-safe check)
   const viteKey: string | undefined =
-    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) ||
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_MAPS_API_KEY) ||
     undefined;
   const key = nextKey || viteKey;
 
@@ -303,9 +302,9 @@ export default function AccommodationForm({
   const handleSubmit = async (data: z.infer<typeof schema>) => {
     try {
       setSaving(true);
-      const formData = { ...data, clear_image_url: placeIdChanged };
-      delete (formData as any).travelers; // handled separately
-      await onSubmit(formData);
+      const { travelers: _travelers, ...formData } = data;
+      void _travelers; // travelers handled separately via setJunctionTravelers below
+      await onSubmit({ ...formData, clear_image_url: placeIdChanged });
 
       if (initialData?.stay_id && data.travelers) {
         await setJunctionTravelers("accommodation", tripId, initialData.stay_id.toString(), data.travelers);
@@ -333,7 +332,7 @@ export default function AccommodationForm({
               </FormLabel>
               <HotelSearchInput
                 value={field.value}
-                onChange={(val, d: any) => {
+                onChange={(val, d) => {
                   field.onChange(val);
                   const newPlaceId = d?.place_id ?? "";
                   const oldPlaceId = initialData?.hotel_place_id ?? "";

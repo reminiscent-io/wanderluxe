@@ -3,8 +3,15 @@ import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recha
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatCurrencyWithSymbol } from '../utils/budgetCalculations';
 
+type ExpenseLike = {
+  amount: number;
+  currency?: string | null;
+  category?: string | null;
+  description?: string | null;
+};
+
 interface CategoryBreakdownChartProps {
-  expenses: any[];
+  expenses: ExpenseLike[];
   selectedCurrency: string;
 }
 
@@ -87,7 +94,10 @@ const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({ expense
             <Legend 
               verticalAlign="bottom" 
               height={36}
-              formatter={(value, entry: any) => `${entry.payload.name}`}
+              formatter={(_value, entry) => {
+                const payload = (entry as { payload?: { name?: string } }).payload;
+                return payload?.name ?? '';
+              }}
               wrapperStyle={{ paddingTop: '20px' }}
             />
           </PieChart>

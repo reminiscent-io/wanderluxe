@@ -14,7 +14,7 @@ router.get('/api/send-share-notification/health', (req: Request, res: Response) 
 });
 
 // Share notification endpoint - now redirects to Supabase Edge Function
-router.post('/api/send-share-notification', async (req: Request<{}, any, ShareNotificationBody>, res: Response) => {
+router.post('/api/send-share-notification', async (req: Request<Record<string, never>, unknown, ShareNotificationBody>, res: Response) => {
   // This route is maintained for backward compatibility
   // Email notifications are now handled by Supabase Edge Functions
   res.status(200).json({ 

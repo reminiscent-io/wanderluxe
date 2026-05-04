@@ -23,15 +23,15 @@ export const chatLogsKey = (tripId: string) => ['chat_logs', tripId];
 /* ------------------------------------------------------------------ */
 
 /** Transform raw DB record → typed row */
-const adaptRow = (row: any): ChatLogRow => ({
-  id: row.id,
-  role: row.role,
-  message: row.message,
-  timestamp: row.timestamp,
+const adaptRow = (row: Record<string, unknown>): ChatLogRow => ({
+  id: row.id as string,
+  role: row.role as 'user' | 'ai',
+  message: row.message as string,
+  timestamp: row.timestamp as string,
   embedding: row.embedding,
-  trip_id: row.trip_id,
-  user_id: row.user_id,
-  created_at: row.created_at,
+  trip_id: row.trip_id as string,
+  user_id: row.user_id as string,
+  created_at: row.created_at as string,
 });
 
 /** Fetch full chat log for a trip */
@@ -55,7 +55,7 @@ const byTimestamp = (a: ChatLogRow, b: ChatLogRow) =>
 
 /** Handle an incoming realtime payload */
 const handleRealtimeInsert = (
-  payload: any,
+  payload: { new: Record<string, unknown> },
   tripId: string,
   qc: ReturnType<typeof useQueryClient>,
 ) => {
@@ -105,7 +105,8 @@ export function useChat(tripId: string) {
     const channel = supabase
       .channel(`chat_logs_${tripId}`)
       .on(
-        'postgres_changes' as any,
+        // Supabase types are too strict here for the literal-string overload
+        'postgres_changes' as never,
         {
           event: 'INSERT',
           schema: 'public',

@@ -39,13 +39,21 @@ export const calculateTotalAmount = (expenses: ExpenseItem[]): number => {
   return expenses.reduce((total, expense) => total + (expense.cost || 0), 0);
 };
 
+// Loose row shapes — these are read-only views of Supabase rows that may include
+// columns not in the generated types (e.g. is_paid). Keep optional and tolerant.
+type ActivityRow = { id: string; title?: string; cost?: number | null; currency?: string | null; is_paid?: boolean | null; created_at?: string | null };
+type AccommodationRow = { stay_id: string | number; hotel?: string | null; cost?: number | null; currency?: string | null; is_paid?: boolean | null; hotel_checkin_date?: string | null };
+type TransportationRow = { id: string; type?: string | null; provider?: string | null; departure_location?: string | null; arrival_location?: string | null; cost?: number | null; currency?: string | null; is_paid?: boolean | null; start_date?: string | null };
+type ReservationRow = { id: string; restaurant_name?: string | null; cost?: number | null; currency?: string | null; is_paid?: boolean | null; created_at?: string | null };
+type OtherExpenseRow = { id: string; description?: string | null; cost?: number | null; currency?: string | null; is_paid?: boolean | null; date?: string | null; created_at?: string | null };
+
 // Map different expense types to a unified ExpenseItem format
 export const mapToExpenseItems = (
-  activities: any[],
-  accommodations: any[],
-  transportation: any[],
-  restaurants: any[],
-  otherExpenses: any[]
+  activities: ActivityRow[],
+  accommodations: AccommodationRow[],
+  transportation: TransportationRow[],
+  restaurants: ReservationRow[],
+  otherExpenses: OtherExpenseRow[]
 ): ExpenseItem[] => {
   const items: ExpenseItem[] = [];
 

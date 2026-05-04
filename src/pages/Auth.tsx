@@ -106,11 +106,11 @@ const Auth = () => {
       }
 
       throw signInError;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         className: "bg-earth-100/50 border-destructive",
       });
       setLoading(false);
@@ -143,11 +143,11 @@ const Auth = () => {
         },
       });
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         className: "bg-earth-100/50 border-destructive",
       });
       setGoogleLoading(false);

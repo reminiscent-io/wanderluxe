@@ -42,10 +42,13 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
     const ab = await pdfFile.arrayBuffer();
 
     // @ts-expect-error - pdfjs-dist types may not be fully compatible with dynamic import
-    const pdfjs = await import('pdfjs-dist/build/pdf');
-    (pdfjs as any).GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+    const pdfjs = (await import('pdfjs-dist/build/pdf')) as {
+      GlobalWorkerOptions: { workerSrc: string };
+      getDocument: (params: { data: ArrayBuffer }) => { promise: Promise<{ getPage: (n: number) => Promise<{ getViewport: (opts: { scale: number }) => { width: number; height: number }; render: (params: { canvasContext: CanvasRenderingContext2D; viewport: unknown }) => { promise: Promise<void> } }> }> };
+    };
+    pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
-    const pdf = await (pdfjs as any).getDocument({ data: ab }).promise;
+    const pdf = await pdfjs.getDocument({ data: ab }).promise;
     const page = await pdf.getPage(1);
 
     const viewport = page.getViewport({ scale: 2 });
@@ -136,7 +139,7 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
         toast.info('Paste not supported. Use the attach button instead.');
         return;
       }
-      const items = await (navigator.clipboard as any).read();
+      const items = await navigator.clipboard.read();
       for (const item of items) {
         for (const type of item.types) {
           if (type.startsWith('image/') || type === 'application/pdf') {
@@ -149,7 +152,7 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
         }
       }
       toast.info('No image or PDF found in clipboard.');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Clipboard read failed:', e);
     }
   }, [processFile]);

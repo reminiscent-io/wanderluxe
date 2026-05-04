@@ -43,14 +43,16 @@ class AIAssistantErrorBoundary extends Component<{ children: ReactNode; onReset:
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
-          <h3 className="font-medium text-earth-700 mb-2">Something went wrong</h3>
-          <p className="text-sm text-sand-500 mb-4">
-            The assistant encountered an unexpected error.
-          </p>
-          <Button onClick={this.handleReset} variant="outline" size="sm">
-            Try Again
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+          <AlertCircle className="w-10 h-10 text-red-400" />
+          <div className="space-y-1">
+            <h3 className="font-display text-lg leading-tight tracking-tight text-foreground">Something went wrong</h3>
+            <p className="text-sm leading-snug text-muted-foreground">
+              The assistant ran into an unexpected error.
+            </p>
+          </div>
+          <Button onClick={this.handleReset} variant="outline" size="sm" className="mt-1">
+            Try again
           </Button>
         </div>
       );
@@ -171,9 +173,10 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         toast.error(`Failed to import ${result.failedCount} item${result.failedCount !== 1 ? 's' : ''}`);
         throw new Error(`Failed to import ${result.failedCount} item(s)`);
       }
-    } catch (e: any) {
-      if (!e?.message?.includes('Failed to import')) {
-        toast.error(e?.message || 'Failed to import items');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (!message.includes('Failed to import')) {
+        toast.error(message || 'Failed to import items');
       }
       throw e;
     } finally {
@@ -287,29 +290,30 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       <FullScreenModal open={open} onOpenChange={handleOpenChange} closeOnOverlayClick={!isStreaming}>
         {/* Header with safe area padding for PWA/notch */}
         <div
-          className="border-b border-sand-200 pb-2 px-4 flex-shrink-0"
+          className="border-b border-border pb-2.5 px-4 flex-shrink-0 bg-background"
           style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 10px)' }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center shrink-0">
+                <Sparkles className="w-3.5 h-3.5 text-background" />
               </div>
-              <div>
-                <h2 className="text-left text-earth-700 font-display font-semibold text-base leading-none tracking-tight">Trip Assistant</h2>
-                <p className="text-[10px] text-sand-500 mt-0.5">Your chat history is not shared with anyone else on the trip</p>
+              <div className="min-w-0">
+                <h2 className="font-display text-base leading-none tracking-tight text-foreground">Trip Assistant</h2>
+                <p className="text-xs leading-snug text-muted-foreground mt-1 truncate">Private to you, not shared with co-travelers</p>
               </div>
             </div>
 
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => handleOpenChange(false)}
-              className="h-8 w-8 p-0 text-sand-600 hover:text-earth-600"
+              className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
               disabled={isStreaming}
               title="Minimize"
+              aria-label="Minimize assistant"
             >
-              <ChevronDown className="w-5 h-5 stroke-[3]" />
+              <ChevronDown className="w-5 h-5" />
             </Button>
           </div>
         </div>
@@ -357,7 +361,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
               {/* Input - safe area padding only when keyboard is closed (keyboard covers the home indicator) */}
               <div
-                className="flex-shrink-0 bg-white"
+                className="flex-shrink-0 bg-background"
                 style={{ paddingBottom: isKeyboardOpen ? 0 : 'env(safe-area-inset-bottom, 0px)' }}
               >
                 <ChatInput

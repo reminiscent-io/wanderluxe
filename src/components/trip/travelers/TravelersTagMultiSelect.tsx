@@ -25,7 +25,7 @@ export interface TravelersTagMultiSelectProps {
 function coerceTravelersArray(input: unknown): Traveler[] {
   if (Array.isArray(input)) return input as Traveler[];
   if (input && typeof input === "object") {
-    const obj = input as any;
+    const obj = input as { data?: unknown; travelers?: unknown };
     if (Array.isArray(obj.data)) return obj.data as Traveler[];
     if (Array.isArray(obj.travelers)) return obj.travelers as Traveler[];
   }
@@ -152,7 +152,7 @@ export default function TravelersTagMultiSelect({
                         <span className="flex items-center gap-2">
                           {displayName}
                           {/* Optional badge if your Traveler type includes this */}
-                          {(t as any).is_owner && (
+                          {t.is_owner && (
                             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
                               Owner
                             </span>

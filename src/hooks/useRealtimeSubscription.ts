@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { useQueryClient, QueryKey } from '@tanstack/react-query';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 // Global set to track active subscriptions and prevent duplicates
@@ -62,7 +63,7 @@ export function useRealtimeSubscription(
 ): RealtimeSubscriptionResult {
   const queryClient = useQueryClient();
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const channelRef = useRef<any>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
   // Stable unique ID per hook instance to avoid Supabase channel name collisions
   const instanceIdRef = useRef<number | null>(null);
   if (instanceIdRef.current === null) {

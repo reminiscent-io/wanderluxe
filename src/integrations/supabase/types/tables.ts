@@ -33,7 +33,7 @@ export type TablesInsert<
     ? keyof Database[SchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = ExtractRowType<
-  SchemaType<SchemaTableNameOrOptions>["Tables"][TableName<SchemaTableNameOrOptions>] & { Insert: any }
+  SchemaType<SchemaTableNameOrOptions>["Tables"][TableName<SchemaTableNameOrOptions>] & { Insert: unknown }
 >;
 
 export type TablesUpdate<
@@ -42,5 +42,5 @@ export type TablesUpdate<
     ? keyof Database[SchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = ExtractRowType<
-  SchemaType<SchemaTableNameOrOptions>["Tables"][TableName<SchemaTableNameOrOptions>] & { Update: any }
+  SchemaType<SchemaTableNameOrOptions>["Tables"][TableName<SchemaTableNameOrOptions>] & { Update: unknown }
 >;

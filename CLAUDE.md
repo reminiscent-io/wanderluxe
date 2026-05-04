@@ -54,7 +54,7 @@ src/
 │   │   ├── accommodation/ # Hotel management
 │   │   ├── ai-assistant/  # AI assistant components
 │   │   ├── budget/        # Expense tracking
-│   │   ├── chat/          # Chat interface
+│   │   ├── ai-assistant/  # AI chat + document extraction (mounted via AIAssistantDrawer)
 │   │   ├── create/        # Trip creation flow
 │   │   ├── day/           # Day-by-day components
 │   │   ├── details/       # Trip detail views
@@ -143,8 +143,8 @@ PostgreSQL database
 - Security: RLS policies enforce trip ownership and share permissions
 
 #### 5. **AI Chat Integration**
-- Chat interface: `ChatView` component in trip details
-- Backend: Calls Gemini 2.5 Flash via `ai-chat` Edge Function (with `find_place` + `search_web` function calling)
+- Chat interface: `AIAssistantPanel` (`src/components/trip/ai-assistant/`) — combined chat + document extraction surface, mounted via `AIAssistantDrawer`
+- Backend: Calls Gemini 2.5 Flash via `ai-chat` Edge Function (with `find_place` + `search_web` function calling); document extraction via `parse-travel-doc`
 - Data: `ai_chat_threads` + `ai_chat_messages` tables; `user_ai_usage` tracks usage
 - Real-time: Subscription to chat messages for instant updates
 - Context: Includes trip details in system prompt for location-specific recommendations
