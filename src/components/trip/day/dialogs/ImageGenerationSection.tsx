@@ -27,6 +27,8 @@ const ImageGenerationSection: React.FC<ImageGenerationSectionProps> = ({
     if (selectedImage && images.length === 0) {
       console.log("Using existing image for day:", dayId);
     }
+    // Logging only fires when an image arrives; intentionally omits images.length from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedImage, dayId]);
 
   const handleGenerateImages = async () => {

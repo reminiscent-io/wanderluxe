@@ -27,14 +27,14 @@ const NowIndicator: React.FC = () => {
     <div ref={ref} className="relative py-1">
       <div className="grid grid-cols-[24px_1fr] sm:grid-cols-[40px_1fr] gap-2 sm:gap-3 items-center">
         <div className="flex justify-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500 z-10 sm:w-3 sm:h-3 sm:ring-2 sm:ring-red-200" />
+          <div className="w-2.5 h-2.5 rounded-full bg-destructive z-10 sm:w-3 sm:h-3 sm:ring-2 sm:ring-destructive/25" />
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-px bg-red-500" />
-          <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap uppercase tracking-wide">
-            Now {timeStr}
+          <div className="flex-1 h-px bg-destructive/70" />
+          <span className="text-[10px] font-semibold text-destructive whitespace-nowrap uppercase tracking-[0.16em]">
+            Now · {timeStr}
           </span>
-          <div className="flex-1 h-px bg-red-500" />
+          <div className="flex-1 h-px bg-destructive/70" />
         </div>
       </div>
     </div>

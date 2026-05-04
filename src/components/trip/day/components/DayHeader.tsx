@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import { DailyForecast, WeatherData } from '@/hooks/useWeather';
 import DayWeatherBadge from '@/components/trip/timeline/DayWeatherBadge';
@@ -51,20 +50,21 @@ const DayHeader: React.FC<Props> = ({
   }, [index, dateISO]);
 
   return (
-    <motion.div 
-      className="p-3 sm:p-4 md:p-6 cursor-pointer hover:bg-sand-25 transition-colors duration-200"
+    <button
+      type="button"
       onClick={onToggle}
-      whileHover={{ backgroundColor: "rgba(250, 245, 235, 0.5)" }}
+      className="w-full text-left p-4 sm:p-5 md:p-6 cursor-pointer hover:bg-secondary/40 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
     >
-      <div className="flex items-start sm:items-center justify-between gap-2">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
+      <div className="flex items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5 sm:gap-4 flex-1 min-w-0">
           <div className="flex flex-col min-w-0">
-            <span className="text-base sm:text-lg md:text-xl font-display font-normal text-earth-800 truncate">
-              {dayTitle} {formattedDate}
-            </span>
-            <div className="text-xs sm:text-sm md:text-base text-earth-600 font-medium">
+            <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-[0.18em] mb-1">
               Day {index}
             </div>
+            <span className="text-lg sm:text-xl md:text-2xl font-display font-normal text-foreground leading-tight truncate">
+              {dayTitle}
+              <span className="text-muted-foreground/80">, {formattedDate}</span>
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -79,32 +79,36 @@ const DayHeader: React.FC<Props> = ({
                 />
               )}
               {daysUntil && (
-                <Badge className="bg-sky-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">
-                  Starts in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
+                <Badge variant="outline" className="bg-card border-border text-muted-foreground text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide">
+                  In {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
                 </Badge>
               )}
               {isTodayFlag && (
-                <Badge className="bg-emerald-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">Today</Badge>
+                <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-primary">Today</Badge>
               )}
               {isCheckInDay && (
-                <Badge className="bg-amber-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">Check-in</Badge>
+                <Badge className="bg-emerald-600/90 text-white text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-emerald-600/90">Check-in</Badge>
               )}
               {isCheckOutDay && (
-                <Badge className="bg-amber-600 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">Check-out</Badge>
+                <Badge className="bg-amber-700/90 text-white text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-amber-700/90">Check-out</Badge>
               )}
               {summary && (
-                <span className="text-[10px] sm:text-xs text-earth-500 font-medium">{summary}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{summary}</span>
               )}
             </div>
         </div>
 
-        <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-10 sm:w-10 p-0 hover:bg-earth-100 transition-colors flex-shrink-0">
-          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-earth-600" />
-          </motion.div>
-        </Button>
+        <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors group-hover:bg-accent flex-shrink-0">
+          <motion.span
+            className="inline-flex"
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.5} />
+          </motion.span>
+        </span>
       </div>
-    </motion.div>
+    </button>
   );
 };
 

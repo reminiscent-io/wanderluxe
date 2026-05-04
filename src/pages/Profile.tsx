@@ -626,6 +626,8 @@ const Profile = () => {
       fetchProfile();
       fetchContacts();
     }
+    // fetchProfile/fetchContacts are stable closures; only re-fetch when session changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   useEffect(() => {

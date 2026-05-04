@@ -13,7 +13,7 @@ import {
 } from "@/utils/placePhotoCache";
 
 /* --------------------------- photo helpers --------------------------- */
-export const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
+const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   const viaProxy = getPhotoUrl?.(p, maxWidth);
   if (viaProxy) return viaProxy;
   if (p?.url) return p.url;
@@ -37,7 +37,7 @@ export const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | nul
   return null;
 };
 
-export function warmImageCache(photos: PlacePhotoMeta[]) {
+function warmImageCache(photos: PlacePhotoMeta[]) {
   const sample = photos.slice(0, 3);
   const widths = [320, 480, 640];
   for (const ph of sample) {

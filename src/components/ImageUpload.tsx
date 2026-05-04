@@ -63,6 +63,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     };
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
+    // Listener is registered once; uploadImage is referenced via closure and
+    // remains valid since it only depends on stable props/refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- upload helpers ---

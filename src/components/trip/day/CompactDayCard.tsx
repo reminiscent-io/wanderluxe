@@ -257,14 +257,13 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="md:hover:scale-[1.02] transition-transform duration-200"
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: index * 0.05 }}
     >
       <Card
         id={`day-${index}`}
         className={cn(
-          "relative overflow-hidden transition-all duration-300 bg-background shadow-warm-sm md:hover:shadow-warm border border-sand-200 rounded-lg md:rounded-xl",
-          isTodayFlag && "border-l-4 border-l-earth-600 shadow-warm-lg"
+          "relative overflow-hidden transition-shadow duration-200 bg-card shadow-warm-sm md:hover:shadow-warm border border-border rounded-card",
+          isTodayFlag && "border-primary/60 shadow-warm"
         )}
       >
         {/* Header */}
@@ -292,10 +291,10 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="border-t border-sand-200 overflow-hidden"
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="border-t border-border overflow-hidden"
             >
-              <div className="bg-muted px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-6">
+              <div className="bg-muted/60 px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
                 {hasContent ? (
                   <DndContext
                     sensors={sensors}
@@ -311,7 +310,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
 
                         <div className="relative space-y-3">
                           {/* Continuous timeline line - responsive positioning */}
-                          <div className="absolute left-[12px] sm:left-[20px] top-4 bottom-0 w-px bg-sand-200 -translate-x-1/2" />
+                          <div className="absolute left-[12px] sm:left-[20px] top-4 bottom-0 w-px bg-border -translate-x-1/2" />
                           {periodGroups.map((group, groupIdx) => {
                             const isExpanded = isPeriodExpanded(group.period);
                             const eventCount = group.rows.filter(row => row.kind !== 'hint' && row.kind !== 'now').length;
@@ -334,7 +333,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                       initial={{ height: 0, opacity: 0 }}
                                       animate={{ height: 'auto', opacity: 1 }}
                                       exit={{ height: 0, opacity: 0 }}
-                                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                                       className="overflow-hidden space-y-3"
                                     >
                                       {group.rows.map((row, i) => {
@@ -402,33 +401,33 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                         </div>
 
                         {canEdit && (
-                          <div className="hidden md:flex pt-3 sm:pt-4 border-t border-sand-200">
+                          <div className="hidden md:flex pt-4 border-t border-border">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
-                                  variant="outline"
+                                  variant="ghost"
                                   size="sm"
-                                  className="text-xs px-3 py-2 h-8 border-dashed border-sand-300 text-earth-500 hover:text-earth-700 hover:border-sand-400 transition-all"
+                                  className="text-xs h-8 px-3 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                                 >
-                                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                                  <Plus className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.75} />
                                   Add to this day
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start" className="w-48 bg-white">
+                              <DropdownMenuContent align="start" className="w-48">
                                 <DropdownMenuItem onClick={addActivityForThisDay} className="gap-2">
-                                  <Star className="h-4 w-4 text-earth-600" />
+                                  <Star className="h-4 w-4 text-earth-600" strokeWidth={1.5} />
                                   Activity
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={onHotelAdd} className="gap-2">
-                                  <Hotel className="h-4 w-4 text-earth-600" />
+                                  <Hotel className="h-4 w-4 text-earth-600" strokeWidth={1.5} />
                                   Hotel
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={onTransportationAdd} className="gap-2">
-                                  <Plane className="h-4 w-4 text-earth-600" />
+                                  <Plane className="h-4 w-4 text-earth-600" strokeWidth={1.5} />
                                   Travel
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={onReservationAdd} className="gap-2">
-                                  <Utensils className="h-4 w-4 text-earth-600" />
+                                  <Utensils className="h-4 w-4 text-earth-600" strokeWidth={1.5} />
                                   Dining
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -439,48 +438,41 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     </SortableContext>
                   </DndContext>
                 ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-center py-8">
-                    <div className="bg-sand-50 rounded-xl p-6 border-2 border-dashed border-sand-200">
-                      <Calendar className="h-10 w-10 text-earth-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-display font-normal text-earth-800 mb-2">No plans yet</h3>
-                      <p className="text-sm text-earth-600 mb-6">{canEdit ? 'Start planning your day by adding activities, hotels, or transportation' : 'This day has no activities planned'}</p>
-                      {canEdit && (
-                        <div className="hidden md:grid grid-cols-2 gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={addActivityForThisDay}
-                            className="text-sm px-4 py-3 h-auto bg-earth-50 border-earth-200 text-earth-600 hover:bg-earth-100 hover:border-earth-300 transition-all"
-                          >
-                            <span>+ Activity</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onHotelAdd}
-                            className="text-sm px-4 py-3 h-auto bg-earth-50 border-earth-200 text-earth-600 hover:bg-earth-100 hover:border-earth-300 transition-all"
-                          >
-                            <span>+ Hotel</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onTransportationAdd}
-                            className="text-sm px-4 py-3 h-auto bg-earth-50 border-earth-200 text-earth-600 hover:bg-earth-100 hover:border-earth-300 transition-all"
-                          >
-                            <span>+ Travel</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onReservationAdd}
-                            className="text-sm px-4 py-3 h-auto bg-earth-50 border-earth-200 text-earth-600 hover:bg-earth-100 hover:border-earth-300 transition-all"
-                          >
-                            <span>+ Dining</span>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                    className="py-10 px-2 text-center"
+                  >
+                    <Calendar className="h-8 w-8 text-earth-400 mx-auto mb-5" strokeWidth={1.25} />
+                    <h3 className="text-xl font-display font-normal text-foreground mb-2 leading-tight">
+                      An empty page
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto leading-relaxed">
+                      {canEdit
+                        ? 'Add a hotel, an activity, a reservation — the day takes shape from here.'
+                        : 'This day is unplanned.'}
+                    </p>
+                    {canEdit && (
+                      <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
+                        <Button variant="outline" size="sm" onClick={addActivityForThisDay} className="font-normal">
+                          <Star className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
+                          Activity
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={onHotelAdd} className="font-normal">
+                          <Hotel className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
+                          Hotel
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={onTransportationAdd} className="font-normal">
+                          <Plane className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
+                          Travel
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={onReservationAdd} className="font-normal">
+                          <Utensils className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
+                          Dining
+                        </Button>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </div>

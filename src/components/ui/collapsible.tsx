@@ -12,15 +12,16 @@ const CollapsibleContent = React.forwardRef<
   const contentRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
+    const node = contentRef.current;
     const handleOpen = () => {
       setTimeout(() => {
-        contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        node?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }, 100); // Small delay to ensure content is rendered
     };
 
-    contentRef.current?.addEventListener('animationstart', handleOpen);
+    node?.addEventListener('animationstart', handleOpen);
     return () => {
-      contentRef.current?.removeEventListener('animationstart', handleOpen);
+      node?.removeEventListener('animationstart', handleOpen);
     };
   }, []);
 

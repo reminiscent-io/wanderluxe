@@ -251,6 +251,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signOut,
       refreshProfile,
     }),
+    // signOut/refreshProfile are stable closures over the supabase client.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [session, user, subscriptionTier, avatarUrl, fullName, lastLoginAt, profileLoaded]
   );
 

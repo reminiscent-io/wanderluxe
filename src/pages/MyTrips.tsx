@@ -114,21 +114,23 @@ const MyTrips = () => {
   });
   
   // Extract actual trip data from the shared trips result
-  const sharedTrips = sharedTripsResult?.data?.map(share => {
-    // Make sure we correctly map the trip data from the response
-    if (share && share.trips) {
-      return {
-        ...share.trips,
-        isShared: true,
-        shareId: share.id,
-        share_status: share.share_status ?? 'accepted',
-        sharedById: share.shared_by_user_id,
-        owner_name: share.owner_name || null,
-        owner_email: share.owner_email || null
-      };
-    }
-    return null;
-  }).filter(trip => trip !== null) || [];
+  const sharedTrips = useMemo(() => {
+    return sharedTripsResult?.data?.map(share => {
+      // Make sure we correctly map the trip data from the response
+      if (share && share.trips) {
+        return {
+          ...share.trips,
+          isShared: true,
+          shareId: share.id,
+          share_status: share.share_status ?? 'accepted',
+          sharedById: share.shared_by_user_id,
+          owner_name: share.owner_name || null,
+          owner_email: share.owner_email || null
+        };
+      }
+      return null;
+    }).filter(trip => trip !== null) || [];
+  }, [sharedTripsResult?.data]);
 
   const handleAcceptSharedTrip = async (shareId: string) => {
     const ok = await acceptTripShare(shareId);

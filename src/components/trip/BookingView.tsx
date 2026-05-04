@@ -26,6 +26,8 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
     if (tripId) {
       trackBookingPageView(tripId);
     }
+    // Fire-and-forget analytics; trackBookingPageView is a stable closure over component state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripId]);
 
   useEffect(() => {
