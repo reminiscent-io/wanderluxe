@@ -99,12 +99,24 @@ const ListSkeleton = () => (
 
 // --- Custom Recharts Tooltip ---
 
-const CustomTooltip = ({ active, payload, selectedCurrency }: any) => {
+type RechartsTooltipPayload = {
+  name?: string;
+  value?: number;
+  payload?: { name?: string };
+};
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: RechartsTooltipPayload[];
+  selectedCurrency: string;
+}
+
+const CustomTooltip = ({ active, payload, selectedCurrency }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-sand-200 rounded-lg px-3 py-2 shadow-warm-sm text-sm">
       <p className="text-earth-700 font-medium">{payload[0].name || payload[0].payload?.name}</p>
-      <p className="text-earth-600">{formatCurrencyWithSymbol(payload[0].value, selectedCurrency)}</p>
+      <p className="text-earth-600">{formatCurrencyWithSymbol(payload[0].value ?? 0, selectedCurrency)}</p>
     </div>
   );
 };
@@ -115,7 +127,8 @@ const Budget = () => {
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const { user } = useAuth();
 
-  // Fetch all user trips and their expenses
+  // Fetch all user trips and their expenses across 5 batched queries
+  // (instead of 5 queries per trip).
   const { data: result, isLoading } = useQuery({
     queryKey: ['all-expenses', user?.id],
     queryFn: async () => {
@@ -126,185 +139,219 @@ const Budget = () => {
         .select('trip_id, destination')
         .eq('user_id', user.id);
 
-      if (tripsError || !trips) return { expenses: [], tripMap: {} as Record<string, string> };
+      if (tripsError || !trips || trips.length === 0) {
+        return { expenses: [], tripMap: {} as Record<string, string> };
+      }
 
       const tripMap: Record<string, string> = {};
-      trips.forEach(t => { tripMap[t.trip_id] = t.destination; });
-
-      const allExpensesPromises = trips.map(async (trip) => {
-        const [
-          { data: activities },
-          { data: accommodations },
-          { data: transportation },
-          { data: restaurants },
-          { data: otherExpenses }
-        ] = await Promise.all([
-          supabase.from('day_activities').select('*').eq('trip_id', trip.trip_id),
-          supabase.from('accommodations').select('*').eq('trip_id', trip.trip_id),
-          supabase.from('transportation').select('*').eq('trip_id', trip.trip_id),
-          supabase.from('reservations').select('*').eq('trip_id', trip.trip_id),
-          supabase.from('other_expenses').select('*').eq('trip_id', trip.trip_id)
-        ]);
-
-        const tripExpenses: CombinedExpense[] = [];
-
-        (accommodations || []).forEach(acc => {
-          if (acc.cost) {
-            tripExpenses.push({
-              id: acc.stay_id,
-              description: acc.title || acc.hotel || 'Accommodation',
-              amount: acc.cost,
-              category: 'accommodation',
-              date: acc.hotel_checkin_date || acc.created_at,
-              location: trip.destination,
-              tripId: trip.trip_id,
-              currency: acc.currency || 'USD'
-            });
-          }
-        });
-
-        (activities || []).forEach(act => {
-          if (act.cost) {
-            tripExpenses.push({
-              id: act.id,
-              description: act.title,
-              amount: act.cost,
-              category: 'entertainment',
-              date: act.created_at,
-              location: trip.destination,
-              tripId: trip.trip_id,
-              currency: act.currency || 'USD'
-            });
-          }
-        });
-
-        (transportation || []).forEach(trans => {
-          if (trans.cost) {
-            tripExpenses.push({
-              id: trans.id,
-              description: trans.type || 'Transport',
-              amount: trans.cost,
-              category: 'transportation',
-              date: trans.start_date || trans.created_at,
-              location: trip.destination,
-              tripId: trip.trip_id,
-              currency: trans.currency || 'USD'
-            });
-          }
-        });
-
-        (restaurants || []).forEach(rest => {
-          if (rest.cost) {
-            tripExpenses.push({
-              id: rest.id,
-              description: rest.restaurant_name,
-              amount: rest.cost,
-              category: 'food',
-              date: rest.created_at,
-              location: trip.destination,
-              tripId: trip.trip_id,
-              currency: rest.currency || 'USD'
-            });
-          }
-        });
-
-        (otherExpenses || []).forEach(expense => {
-          if (expense.cost) {
-            tripExpenses.push({
-              id: expense.id,
-              description: expense.description,
-              amount: expense.cost,
-              category: 'other',
-              date: expense.date || expense.created_at,
-              location: trip.destination,
-              tripId: trip.trip_id,
-              currency: expense.currency || 'USD'
-            });
-          }
-        });
-
-        return tripExpenses;
+      const tripIds: string[] = [];
+      trips.forEach((t) => {
+        tripMap[t.trip_id] = t.destination;
+        tripIds.push(t.trip_id);
       });
 
-      const results = await Promise.all(allExpensesPromises);
-      return { expenses: results.flat(), tripMap };
+      const [
+        { data: activities },
+        { data: accommodations },
+        { data: transportation },
+        { data: restaurants },
+        { data: otherExpenses },
+      ] = await Promise.all([
+        supabase
+          .from('day_activities')
+          .select('id, trip_id, title, cost, currency, created_at')
+          .in('trip_id', tripIds),
+        supabase
+          .from('accommodations')
+          .select('stay_id, trip_id, title, hotel, cost, currency, hotel_checkin_date, created_at')
+          .in('trip_id', tripIds),
+        supabase
+          .from('transportation')
+          .select('id, trip_id, type, cost, currency, start_date, created_at')
+          .in('trip_id', tripIds),
+        supabase
+          .from('reservations')
+          .select('id, trip_id, restaurant_name, cost, currency, created_at')
+          .in('trip_id', tripIds),
+        supabase
+          .from('other_expenses')
+          .select('id, trip_id, description, cost, currency, date, created_at')
+          .in('trip_id', tripIds),
+      ]);
+
+      const expenses: CombinedExpense[] = [];
+
+      (accommodations ?? []).forEach((acc) => {
+        if (!acc.cost) return;
+        expenses.push({
+          id: acc.stay_id,
+          description: acc.title || acc.hotel || 'Accommodation',
+          amount: acc.cost,
+          category: 'accommodation',
+          date: acc.hotel_checkin_date || acc.created_at,
+          location: tripMap[acc.trip_id] ?? '',
+          tripId: acc.trip_id,
+          currency: acc.currency || 'USD',
+        });
+      });
+
+      (activities ?? []).forEach((act) => {
+        if (!act.cost) return;
+        expenses.push({
+          id: act.id,
+          description: act.title,
+          amount: act.cost,
+          category: 'entertainment',
+          date: act.created_at,
+          location: tripMap[act.trip_id] ?? '',
+          tripId: act.trip_id,
+          currency: act.currency || 'USD',
+        });
+      });
+
+      (transportation ?? []).forEach((trans) => {
+        if (!trans.cost) return;
+        expenses.push({
+          id: trans.id,
+          description: trans.type || 'Transport',
+          amount: trans.cost,
+          category: 'transportation',
+          date: trans.start_date || trans.created_at,
+          location: tripMap[trans.trip_id] ?? '',
+          tripId: trans.trip_id,
+          currency: trans.currency || 'USD',
+        });
+      });
+
+      (restaurants ?? []).forEach((rest) => {
+        if (!rest.cost) return;
+        expenses.push({
+          id: rest.id,
+          description: rest.restaurant_name,
+          amount: rest.cost,
+          category: 'food',
+          date: rest.created_at,
+          location: tripMap[rest.trip_id] ?? '',
+          tripId: rest.trip_id,
+          currency: rest.currency || 'USD',
+        });
+      });
+
+      (otherExpenses ?? []).forEach((expense) => {
+        if (!expense.cost) return;
+        expenses.push({
+          id: expense.id,
+          description: expense.description,
+          amount: expense.cost,
+          category: 'other',
+          date: expense.date || expense.created_at,
+          location: tripMap[expense.trip_id] ?? '',
+          tripId: expense.trip_id,
+          currency: expense.currency || 'USD',
+        });
+      });
+
+      return { expenses, tripMap };
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const expenses = result?.expenses ?? [];
-  const tripMap = result?.tripMap ?? {};
+  // --- Derived data (single-pass aggregation) ---
 
-  // --- Derived data ---
+  const aggregates = useMemo(() => {
+    const expenses = result?.expenses ?? [];
+    const tripMap = result?.tripMap ?? {};
 
-  const totalSpent = useMemo(() =>
-    expenses.reduce((sum, e) => sum + e.amount, 0),
-    [expenses]
-  );
+    let totalSpent = 0;
+    const tripIds = new Set<string>();
+    const byCategory: Record<string, number> = {};
+    const byTrip: Record<string, number> = {};
+    const byMonth: Record<string, number> = {};
 
-  const tripsWithExpenses = useMemo(() => {
-    const tripIds = new Set(expenses.map(e => e.tripId));
-    return tripIds.size;
-  }, [expenses]);
+    // Maintain top-5 with insertion sort — O(n) instead of O(n log n) full sort.
+    const topN = 5;
+    const top: CombinedExpense[] = [];
 
-  const avgPerTrip = tripsWithExpenses > 0 ? totalSpent / tripsWithExpenses : 0;
+    for (let i = 0; i < expenses.length; i++) {
+      const e = expenses[i];
+      totalSpent += e.amount;
+      tripIds.add(e.tripId);
+      byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
+      byTrip[e.tripId] = (byTrip[e.tripId] || 0) + e.amount;
 
-  // Category donut data
-  const categoryData = useMemo(() => {
-    const map: Record<string, number> = {};
-    expenses.forEach(e => {
-      map[e.category] = (map[e.category] || 0) + e.amount;
-    });
-    return Object.entries(map)
+      if (e.date) {
+        const d = new Date(e.date);
+        if (!isNaN(d.getTime())) {
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          byMonth[key] = (byMonth[key] || 0) + e.amount;
+        }
+      }
+
+      if (top.length < topN) {
+        top.push(e);
+        if (top.length === topN) top.sort((a, b) => b.amount - a.amount);
+      } else if (e.amount > top[topN - 1].amount) {
+        top[topN - 1] = e;
+        // Bubble up
+        for (let j = topN - 1; j > 0 && top[j].amount > top[j - 1].amount; j--) {
+          const tmp = top[j];
+          top[j] = top[j - 1];
+          top[j - 1] = tmp;
+        }
+      }
+    }
+
+    if (top.length < topN) top.sort((a, b) => b.amount - a.amount);
+
+    const categoryData = Object.entries(byCategory)
       .map(([name, value]) => ({ name, value, label: CATEGORY_LABELS[name] || name }))
       .sort((a, b) => b.value - a.value);
-  }, [expenses]);
 
-  const largestCategory = categoryData[0];
-
-  // Per-trip bar data
-  const tripBarData = useMemo(() => {
-    const map: Record<string, number> = {};
-    expenses.forEach(e => {
-      map[e.tripId] = (map[e.tripId] || 0) + e.amount;
-    });
-    return Object.entries(map)
-      .map(([tripId, total]) => ({
-        name: (tripMap[tripId] || 'Unknown').length > 20
-          ? (tripMap[tripId] || 'Unknown').slice(0, 18) + '…'
-          : (tripMap[tripId] || 'Unknown'),
-        total,
-      }))
+    const tripBarData = Object.entries(byTrip)
+      .map(([id, total]) => {
+        const dest = tripMap[id] || 'Unknown';
+        return {
+          name: dest.length > 20 ? dest.slice(0, 18) + '…' : dest,
+          total,
+        };
+      })
       .sort((a, b) => b.total - a.total)
       .slice(0, 6);
-  }, [expenses, tripMap]);
 
-  // Monthly area chart data
-  const monthlyData = useMemo(() => {
-    const map: Record<string, number> = {};
-    expenses.forEach(e => {
-      if (!e.date) return;
-      const d = new Date(e.date);
-      if (isNaN(d.getTime())) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      map[key] = (map[key] || 0) + e.amount;
-    });
-    return Object.entries(map)
+    const monthlyData = Object.entries(byMonth)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, total]) => {
         const [year, month] = key.split('-');
-        const label = new Date(Number(year), Number(month) - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        const label = new Date(Number(year), Number(month) - 1).toLocaleDateString('en-US', {
+          month: 'short',
+          year: '2-digit',
+        });
         return { name: label, total };
       });
-  }, [expenses]);
 
-  // Top 5 biggest expenses
-  const topExpenses = useMemo(() =>
-    [...expenses].sort((a, b) => b.amount - a.amount).slice(0, 5),
-    [expenses]
-  );
+    return {
+      totalSpent,
+      tripsWithExpenses: tripIds.size,
+      categoryData,
+      tripBarData,
+      monthlyData,
+      topExpenses: top,
+      hasExpenses: expenses.length > 0,
+    };
+  }, [result]);
 
-  const hasExpenses = expenses.length > 0;
+  const {
+    totalSpent,
+    tripsWithExpenses,
+    categoryData,
+    tripBarData,
+    monthlyData,
+    topExpenses,
+    hasExpenses,
+  } = aggregates;
+  const avgPerTrip = tripsWithExpenses > 0 ? totalSpent / tripsWithExpenses : 0;
+  const largestCategory = categoryData[0];
 
   // --- Render ---
 

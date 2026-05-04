@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useDeferredValue } from 'react';
 import { motion } from 'framer-motion';
 import BudgetHeader from './budget/BudgetHeader';
 import AddExpenseDialog from './budget/AddExpenseDialog';
@@ -180,64 +180,67 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     }));
   }, [expenses?.items, selectedCurrency, ratesObject]);
 
-  // Filter expenses based on search and category
-  const filteredExpenses = useMemo(() => {
-    return convertedExpenses.filter(expense => {
-      const matchesSearch = expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
+  // Defer search input so heavy table re-render doesn't block keystrokes.
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
-      // Handle category matching with proper mapping
-      let matchesCategory = selectedCategory === 'all';
-      if (!matchesCategory && expense.category) {
-        const expenseCategory = expense.category.toLowerCase();
-        switch (selectedCategory) {
-          case 'transportation':
-            matchesCategory = expenseCategory === 'transportation';
-            break;
-          case 'accommodation':
-            matchesCategory = expenseCategory === 'accommodations' || expenseCategory === 'accommodation';
-            break;
-          case 'food':
-            matchesCategory = expenseCategory === 'dining' || expenseCategory === 'food';
-            break;
-          case 'activities':
-            matchesCategory = expenseCategory === 'activities' || expenseCategory === 'entertainment';
-            break;
-          case 'other':
-            matchesCategory = expenseCategory === 'other';
-            break;
-          default:
-            matchesCategory = expenseCategory === selectedCategory.toLowerCase();
-        }
-      }
+  // Single-pass aggregation: total + per-category buckets in one walk.
+  const { totalSpent, categoryRows } = useMemo(() => {
+    let total = 0;
+    const buckets: Record<string, number> = {
+      transportation: 0,
+      accommodation: 0,
+      food: 0,
+      activities: 0,
+      other: 0,
+    };
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [convertedExpenses, searchQuery, selectedCategory]);
+    for (const e of convertedExpenses) {
+      const cost = e.convertedCost;
+      total += cost;
+      const c = e.category?.toLowerCase() || '';
+      if (c === 'transportation') buckets.transportation += cost;
+      else if (c === 'accommodation' || c === 'accommodations') buckets.accommodation += cost;
+      else if (c === 'food' || c === 'dining') buckets.food += cost;
+      else if (c === 'activities' || c === 'entertainment') buckets.activities += cost;
+      else buckets.other += cost;
+    }
 
-  // Calculate totals using converted values
-  const totalSpent = useMemo(
-    () => convertedExpenses.reduce((sum, item) => sum + item.convertedCost, 0),
-    [convertedExpenses]
-  );
-
-  const categoryRows = useMemo(() => {
-    const categories = ['transportation', 'accommodation', 'food', 'activities', 'other'] as const;
-    return categories
-      .map((category) => {
-        const categoryExpenses = convertedExpenses.filter((e) => {
-          const c = e.category?.toLowerCase() || '';
-          if (category === 'food') return c === 'food' || c === 'dining';
-          if (category === 'accommodation') return c === 'accommodation' || c === 'accommodations';
-          if (category === 'activities') return c === 'activities' || c === 'entertainment';
-          return c === category;
-        });
-        const total = categoryExpenses.reduce((sum, e) => sum + e.convertedCost, 0);
-        const percentage = totalSpent > 0 ? (total / totalSpent) * 100 : 0;
-        return { category, total, percentage };
-      })
-      .filter((row) => row.total > 0)
+    const rows = (Object.entries(buckets) as Array<[string, number]>)
+      .filter(([, t]) => t > 0)
+      .map(([category, t]) => ({
+        category,
+        total: t,
+        percentage: total > 0 ? (t / total) * 100 : 0,
+      }))
       .sort((a, b) => b.total - a.total);
-  }, [convertedExpenses, totalSpent]);
+
+    return { totalSpent: total, categoryRows: rows };
+  }, [convertedExpenses]);
+
+  // Filter expenses based on deferred search and category.
+  const filteredExpenses = useMemo(() => {
+    const q = deferredSearchQuery.trim().toLowerCase();
+    return convertedExpenses.filter((expense) => {
+      if (q && !(expense.description?.toLowerCase().includes(q) ?? false)) return false;
+
+      if (selectedCategory === 'all') return true;
+      const c = expense.category?.toLowerCase() || '';
+      switch (selectedCategory) {
+        case 'transportation':
+          return c === 'transportation';
+        case 'accommodation':
+          return c === 'accommodation' || c === 'accommodations';
+        case 'food':
+          return c === 'food' || c === 'dining';
+        case 'activities':
+          return c === 'activities' || c === 'entertainment';
+        case 'other':
+          return c === 'other';
+        default:
+          return c === selectedCategory.toLowerCase();
+      }
+    });
+  }, [convertedExpenses, deferredSearchQuery, selectedCategory]);
 
   const getCategoryIcon = (category: string) => {
     switch (category?.toLowerCase()) {
@@ -266,7 +269,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     try {
       const { data, error } = await supabase
         .from('trips')
-        .update({ budget: budgetValue } as any)
+        .update({ budget: budgetValue })
         .eq('trip_id', tripId)
         .select()
         .maybeSingle();
