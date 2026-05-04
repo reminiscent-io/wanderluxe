@@ -48,6 +48,17 @@ interface BudgetViewProps {
   canEdit?: boolean;
 }
 
+// Warm-palette fills for data-viz; do not swap in cool tones (DESIGN.md).
+const CATEGORY_HUES: Record<string, string> = {
+  transportation: '#603D2E', // roasted-bronze
+  accommodation: '#A86B4D',  // warm tan
+  food: '#EA580C',           // burnt orange
+  activities: '#8A7F6C',     // wet sand
+  other: '#DDD4C8',          // stitched edge
+};
+const hueFor = (category: string): string =>
+  CATEGORY_HUES[category.toLowerCase()] ?? CATEGORY_HUES.other;
+
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
   const { selectedCurrency, handleCurrencyChange, lastUpdated: currencyLastUpdated } = useCurrencyState();
   const { data: expenses } = useExpenses(tripId);
@@ -121,6 +132,8 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     if (trip?.budget !== null && trip?.budget !== undefined) {
       setBudgetInput(formatNumber(trip.budget.toString()));
     }
+    // formatNumber is a pure helper redefined per render — adding it would loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip?.budget, isEditingBudget]);
 
   const handleBudgetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,6 +146,8 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     if (tripId) {
       trackBudgetPageView(tripId);
     }
+    // Fire-and-forget analytics; trackBudgetPageView only reads `user` which is stable for this view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripId]);
 
   const trackBudgetPageView = (tripId: string) => {
@@ -607,65 +622,123 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="categories" className="space-y-6">
-              {/* Visual Chart */}
-              <CategoryBreakdownChart
-                expenses={convertedExpenses}
-                selectedCurrency={selectedCurrency}
-              />
+            <TabsContent value="categories" className="space-y-10">
+              {categoryRows.length === 0 ? (
+                <div className="text-center py-16">
+                  <ShoppingBag className="w-10 h-10 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
+                  <h3 className="font-display text-2xl text-earth-600 mb-2">No spending yet</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Add an expense to see it broken down by category.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Heading rail + segmented proportion bar */}
+                  <section className="space-y-4" aria-label="Category overview">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+                      <h2 className="font-display text-2xl text-earth-600 tracking-tight">
+                        Where it went
+                      </h2>
+                      <span className="text-sm text-muted-foreground">
+                        {convertedExpenses.length} {convertedExpenses.length === 1 ? 'expense' : 'expenses'}
+                        {' · '}
+                        {categoryRows.length} {categoryRows.length === 1 ? 'category' : 'categories'}
+                      </span>
+                    </div>
+                    <div
+                      className="flex h-2 w-full overflow-hidden rounded-full bg-muted"
+                      role="img"
+                      aria-label={`Spending split: ${categoryRows
+                        .map((r) => `${r.category} ${r.percentage.toFixed(0)} percent`)
+                        .join(', ')}`}
+                    >
+                      {categoryRows.map((row) => (
+                        <div
+                          key={row.category}
+                          className="h-full transition-all duration-500"
+                          style={{
+                            width: `${row.percentage}%`,
+                            backgroundColor: hueFor(row.category),
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </section>
 
-              {/* Detailed Breakdown */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-display text-earth-600">Detailed breakdown</CardTitle>
-                  <CardDescription>Spending details for each category</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-5">
-                    {categoryRows.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-2">
-                        No spending recorded yet.
-                      </p>
-                    ) : (
-                      categoryRows.map((row, idx) => {
-                        const isLeader = idx === 0;
-                        return (
-                          <div key={row.category} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground">{getCategoryIcon(row.category)}</span>
-                                <span
-                                  className={`capitalize text-earth-600 ${
-                                    isLeader ? 'font-display text-xl' : 'font-medium'
-                                  }`}
-                                >
-                                  {row.category}
-                                </span>
-                              </div>
-                              <div className="text-right">
-                                <p
-                                  className={`text-earth-600 ${
-                                    isLeader ? 'font-display text-xl' : 'font-semibold'
-                                  }`}
-                                >
-                                  {formatCurrencyWithSymbol(row.total, selectedCurrency)}
-                                </p>
-                                <p className="text-sm text-muted-foreground">{row.percentage.toFixed(1)}%</p>
-                              </div>
+                  {/* Leader — editorial moment, bracketed by hairline rules */}
+                  {categoryRows[0] && (
+                    <section className="border-y border-border py-7" aria-label="Top category">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
+                        <div className="flex items-start gap-4 min-w-0">
+                          <span
+                            className="flex h-10 w-10 items-center justify-center rounded-full flex-shrink-0"
+                            style={{
+                              backgroundColor: `${hueFor(categoryRows[0].category)}1A`,
+                              color: hueFor(categoryRows[0].category),
+                            }}
+                            aria-hidden="true"
+                          >
+                            {getCategoryIcon(categoryRows[0].category)}
+                          </span>
+                          <div className="space-y-1 min-w-0">
+                            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                              Top category
+                            </p>
+                            <h3 className="font-display text-3xl text-earth-600 leading-tight capitalize truncate">
+                              {categoryRows[0].category}
+                            </h3>
+                          </div>
+                        </div>
+                        <div className="space-y-1 sm:text-right flex-shrink-0">
+                          <p className="font-display text-3xl text-earth-600 leading-tight tabular-nums">
+                            {formatCurrencyWithSymbol(categoryRows[0].total, selectedCurrency)}
+                          </p>
+                          <p className="text-sm text-muted-foreground tabular-nums">
+                            {categoryRows[0].percentage.toFixed(1)}% of total
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Followers — rhythmic list, denser */}
+                  {categoryRows.length > 1 && (
+                    <section className="space-y-5" aria-label="Other categories">
+                      {categoryRows.slice(1).map((row) => (
+                        <div key={row.category} className="space-y-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-muted-foreground flex-shrink-0" aria-hidden="true">
+                                {getCategoryIcon(row.category)}
+                              </span>
+                              <span className="capitalize font-medium text-earth-600 truncate">
+                                {row.category}
+                              </span>
                             </div>
-                            <div className="w-full bg-muted rounded-full h-1.5">
-                              <div
-                                className="h-1.5 rounded-full bg-primary transition-all duration-500"
-                                style={{ width: `${row.percentage}%` }}
-                              />
+                            <div className="flex items-baseline gap-4 flex-shrink-0">
+                              <span className="text-sm text-muted-foreground tabular-nums">
+                                {row.percentage.toFixed(1)}%
+                              </span>
+                              <span className="font-semibold text-earth-600 tabular-nums">
+                                {formatCurrencyWithSymbol(row.total, selectedCurrency)}
+                              </span>
                             </div>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                          <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${row.percentage}%`,
+                                backgroundColor: hueFor(row.category),
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </section>
+                  )}
+                </>
+              )}
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6">
