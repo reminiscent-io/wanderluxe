@@ -5,10 +5,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { ExternalLink, MapPin, Star } from 'lucide-react';
 import {
-  EXPEDIA_WIDGET_CAMREF,
   EXPEDIA_FALLBACK_URL,
-  loadExpediaWidgetScript,
+  mountExpediaWidget,
   trackExpediaClick,
+  EXPEDIA_WIDGET_CAMREF,
 } from '@/lib/expedia';
 
 interface BookingViewProps {
@@ -34,15 +34,20 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
     if (widgetFailed) return;
     const widget = widgetRef.current;
     if (!widget) return;
-    let cancelled = false;
-    loadExpediaWidgetScript(widget).catch(() => {
-      if (!cancelled) setWidgetFailed(true);
+
+    const cleanup = mountExpediaWidget({
+      container: widget,
+      camref: EXPEDIA_WIDGET_CAMREF,
+      pubref: 'booking_page_widget',
+      onError: () => setWidgetFailed(true),
     });
+
     const handler = () => trackExpediaClick('booking_page_widget', { trip_id: tripId });
     widget.addEventListener('click', handler);
+
     return () => {
-      cancelled = true;
       widget.removeEventListener('click', handler);
+      cleanup();
     };
   }, [widgetFailed, tripId]);
 
@@ -118,16 +123,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
           </div>
         ) : (
           <div className="min-h-[200px]">
-            <div
-              ref={widgetRef}
-              className="eg-widget"
-              data-widget="search"
-              data-program="us-expedia"
-              data-lobs="stays,flights"
-              data-network="pz"
-              data-camref={EXPEDIA_WIDGET_CAMREF}
-              data-pubref="booking_page_widget"
-            />
+            <div ref={widgetRef} />
           </div>
         )}
 
