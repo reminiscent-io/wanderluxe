@@ -12,27 +12,27 @@ const LayoverHintRow: React.FC<Props> = ({ text, hintType = 'layover' }) => {
   const config = {
     layover: {
       icon: Plane,
-      bg: 'bg-sky-50',
-      border: 'border-sky-200',
-      iconColor: 'text-sky-500',
-      textColor: 'text-sky-700',
-      dotColor: 'bg-sky-300',
+      bg: 'bg-accent/40',
+      border: 'border-border',
+      iconColor: 'text-earth-500',
+      textColor: 'text-earth-600',
+      dotColor: 'bg-sand-400',
     },
     'free-time': {
       icon: Clock,
-      bg: 'bg-sand-50',
-      border: 'border-sand-200',
+      bg: 'bg-secondary/50',
+      border: 'border-border',
       iconColor: 'text-earth-400',
-      textColor: 'text-earth-600',
-      dotColor: 'bg-earth-300',
+      textColor: 'text-muted-foreground',
+      dotColor: 'bg-sand-300',
     },
     overlap: {
       icon: AlertTriangle,
-      bg: 'bg-red-50',
-      border: 'border-red-200',
-      iconColor: 'text-red-500',
-      textColor: 'text-red-700',
-      dotColor: 'bg-red-300',
+      bg: 'bg-destructive/10',
+      border: 'border-destructive/30',
+      iconColor: 'text-destructive',
+      textColor: 'text-destructive',
+      dotColor: 'bg-destructive/60',
     },
   }[hintType];
 
@@ -44,9 +44,9 @@ const LayoverHintRow: React.FC<Props> = ({ text, hintType = 'layover' }) => {
         <div className="relative flex flex-col items-center">
           <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full flex-shrink-0 mt-2.5 z-10", config.dotColor)} />
         </div>
-        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed", config.bg, config.border)}>
-          <Icon className={cn("h-3.5 w-3.5 flex-shrink-0", config.iconColor)} />
-          <span className={cn("text-xs font-medium", config.textColor)}>{text}</span>
+        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-md border border-dashed", config.bg, config.border)}>
+          <Icon className={cn("h-3.5 w-3.5 flex-shrink-0", config.iconColor)} strokeWidth={1.5} />
+          <span className={cn("text-xs", config.textColor)}>{text}</span>
         </div>
       </div>
     </div>

@@ -61,7 +61,7 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
     refetchOnWindowFocus: false,
   });
 
-  const allTravelers = allTravelersRaw ?? [];
+  const allTravelers = useMemo(() => allTravelersRaw ?? [], [allTravelersRaw]);
 
   const { data: assignedIdsRaw } = useQuery({
     queryKey: ["trip-travelers:assigned", tripId, eventType, eventId],
@@ -76,7 +76,7 @@ const TravelerAvatars: React.FC<TravelerAvatarsProps> = ({
     refetchOnWindowFocus: false,
   });
 
-  const assignedIds = assignedIdsRaw ?? [];
+  const assignedIds = useMemo(() => assignedIdsRaw ?? [], [assignedIdsRaw]);
 
   const assignedTravelers = useMemo(
     () => allTravelers.filter((t) => assignedIds.includes(t.id)),

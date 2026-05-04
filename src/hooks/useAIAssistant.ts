@@ -486,6 +486,8 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       setStreamingContent('');
       setIsStreaming(false);
     }
+    // removeOptimisticMessage is a stable closure; including it would loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripId, isStreaming, queryClient, onLimitReached, refetchUsage, startBuffering]);
 
   // Send message with streaming - authenticated path
@@ -607,6 +609,8 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       setStreamingContent('');
       setIsStreaming(false);
     }
+    // removeOptimisticMessage and other helpers are stable closures.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripId, isStreaming, getAuthToken, messagesData?.thread_id, queryClient, onLimitReached, onItemsExtracted, refetchUsage, startBuffering]);
 
   // Route sendMessage to the appropriate handler

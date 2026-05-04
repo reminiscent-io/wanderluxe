@@ -100,8 +100,7 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
 
   if (p.url) return p.url;
 
-  // Optional fallback: direct Google photo endpoint if you’ve exposed a browser key (not required when proxy works)
-  // eslint-disable-next-line no-undef
+  // Optional fallback: direct Google photo endpoint if you've exposed a browser key (not required when proxy works)
   const nextKey = typeof process !== "undefined"
     ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
     : undefined;

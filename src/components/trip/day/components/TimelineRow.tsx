@@ -144,28 +144,21 @@ const TimelineRow: React.FC<Props> = ({
       <div className="grid grid-cols-[24px_1fr] sm:grid-cols-[40px_1fr] gap-2 sm:gap-3">
         {/* Column 1: Timeline Rail - Node */}
         <div className="relative flex flex-col items-center">
-          <div
-            className="relative w-3 h-3 rounded-full flex-shrink-0 mt-0.5 bg-white z-10"
-            style={{
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              borderColor: '#8A7F6C',
-            }}
-          />
+          <div className="relative w-3 h-3 rounded-full flex-shrink-0 mt-1 bg-card border-2 border-sand-500 z-10" />
         </div>
 
         {/* Column 2: Time Label + Event Card */}
         <div className="flex flex-col gap-1.5 min-w-0">
           {/* Time Range Label */}
           {timeLabel && (
-            <span className="text-xs sm:text-sm font-semibold text-earth-600 tracking-tight leading-none">
+            <span className="text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-[0.12em] leading-none">
               {timeLabel}
             </span>
           )}
 
           {/* Event Card */}
           <div
-            className="relative flex-1 min-w-0 bg-background rounded-lg sm:rounded-xl shadow-warm hover:shadow-warm-lg p-3 sm:p-4 cursor-pointer transition-all duration-200 border border-sand-200"
+            className="relative flex-1 min-w-0 bg-card rounded-card shadow-warm-sm hover:shadow-warm p-3 sm:p-4 cursor-pointer transition-shadow duration-200 border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             role="button"
             tabIndex={0}
             onClick={handleItemClick}
@@ -194,13 +187,13 @@ const TimelineRow: React.FC<Props> = ({
               {/* Text Content */}
               <div className="flex-1 min-w-0 pr-8">
                 {/* Event Title */}
-                <div className="text-sm font-display font-normal text-earth-900 hover:text-earth-950 transition-colors line-clamp-2">
+                <div className="text-base font-display font-normal text-foreground leading-snug line-clamp-2">
                   {item.title}
                 </div>
 
                 {/* Subtitle/Details */}
                 {item.description && (
-                  <div className="text-xs text-earth-500 mt-1 line-clamp-2">
+                  <div className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
                     {item.description}
                   </div>
                 )}
@@ -225,30 +218,27 @@ const TimelineRow: React.FC<Props> = ({
 
             {/* Footer Section */}
             {hasFooter && (
-              <>
-                <div className="border-t border-[hsl(var(--border))] mt-3 pt-3" />
-                <div className="flex items-center justify-between">
-                  {item.data?.cost ? (
-                    <span className="text-xs font-semibold text-emerald-600">
-                      {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
-                    </span>
-                  ) : (
-                    <div />
-                  )}
-                  {footerLink && (
-                    <a
-                      href={footerLink.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-1"
-                    >
-                      {footerLink.label}
-                      <ExternalLink className="h-3 w-3" strokeWidth={2} />
-                    </a>
-                  )}
-                </div>
-              </>
+              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+                {item.data?.cost ? (
+                  <span className="text-xs font-medium text-earth-600 tabular-nums">
+                    {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}
+                  </span>
+                ) : (
+                  <div />
+                )}
+                {footerLink && (
+                  <a
+                    href={footerLink.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-xs font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                  >
+                    {footerLink.label}
+                    <ExternalLink className="h-3 w-3" strokeWidth={1.75} />
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </div>

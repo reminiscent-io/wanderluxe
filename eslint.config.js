@@ -34,4 +34,13 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
+  {
+    // Shadcn UI primitives ship variant constants (CVA) alongside components.
+    // React Context providers conventionally co-locate the consumer hook (useAuth, etc.).
+    // Both patterns are by design; relax the Fast Refresh rule for these files.
+    files: ["src/components/ui/**", "src/contexts/**Context.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );

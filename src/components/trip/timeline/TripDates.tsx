@@ -46,6 +46,8 @@ const TripDates: React.FC<TripDatesProps> = ({
     const validD = !!departureDate?.trim();
     if (validA && newArrival !== arrivalDate) setNewArrival(arrivalDate!);
     if (validD && newDeparture !== departureDate) setNewDeparture(departureDate!);
+    // Comparing newArrival/newDeparture inside the body avoids syncing on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [arrivalDate, departureDate]);
 
   // Helpers for trip-day CRUD (identical to before)…

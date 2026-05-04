@@ -45,13 +45,13 @@ export interface SidebarHandle {
   openInviteLinkDialog: () => void;
 }
 
-export const tripNavItems = [
+const tripNavItems = [
   { title: "Timeline", icon: Calendar, href: "timeline" },
   { title: "Budget", icon: BarChart2, href: "budget" },
   { title: "Booking", icon: Package, href: "booking" },
 ];
 
-export const timelineManagementItems = {
+const timelineManagementItems = {
   primary: [
     { title: "Trip Dates", icon: CalendarDays, key: "dates" },
     { title: "Travelers", icon: Users, key: "travelers" },

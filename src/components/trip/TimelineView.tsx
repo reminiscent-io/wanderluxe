@@ -89,6 +89,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       console.log('Trip dates missing on mount, fetching fresh data');
       fetchTripData();
     }
+    // Run once on mount to backfill dates if absent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = useCallback(async () => {

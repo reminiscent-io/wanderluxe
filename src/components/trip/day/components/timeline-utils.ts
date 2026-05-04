@@ -5,6 +5,12 @@ import { Plane, Train, Car, Bus, Ship, Hotel, Utensils, Star } from 'lucide-reac
 
 export type TimelineType = 'activity' | 'hotel' | 'transportation' | 'dining';
 
+export interface TimelineRowData {
+  __depart_time_on_this_day?: string;
+  __arrive_time_on_this_day?: string;
+  [key: string]: unknown;
+}
+
 export interface TimelineItem {
   type: TimelineType;
   time?: string;        // primary time (start on same-day rows; arrival on arrival-only rows)
@@ -13,10 +19,7 @@ export interface TimelineItem {
   description?: string;
   icon: React.ReactNode;
   id: string;
-  data?: Record<string, unknown> & {
-    __depart_time_on_this_day?: string;
-    __arrive_time_on_this_day?: string;
-  };
+  data?: TimelineRowData;
 }
 
 export type HintType = 'layover' | 'free-time' | 'overlap';
