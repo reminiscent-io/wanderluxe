@@ -16,22 +16,24 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 /* ------------------------------- types -------------------------------- */
+type AccommodationSummary = {
+  stay_id: string | number;
+  hotel: string;
+  hotel_checkin_date?: string | null;
+  hotel_checkout_date?: string | null;
+  checkin_time?: string | null;
+  checkout_time?: string | null;
+  cost?: number | null;
+  currency?: string | null;
+  hotel_place_id?: string | null; // when present, enables photo strip
+  image_url?: string | null;      // key photo URL
+  trip_id?: string;
+};
+
 interface Props {
-  accommodations: Array<{
-    stay_id: string | number;
-    hotel: string;
-    hotel_checkin_date?: string | null;
-    hotel_checkout_date?: string | null;
-    checkin_time?: string | null;
-    checkout_time?: string | null;
-    cost?: number | null;
-    currency?: string | null;
-    hotel_place_id?: string | null; // when present, enables photo strip
-    image_url?: string | null;      // key photo URL
-    trip_id?: string;
-  }>;
+  accommodations: AccommodationSummary[];
   onAdd: () => void;
-  onEdit: (a: any) => void;
+  onEdit: (a: AccommodationSummary) => void;
   canEdit?: boolean;
   isMobile: boolean;
   onClose: () => void;

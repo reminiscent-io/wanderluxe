@@ -9,7 +9,17 @@ import { ActivityFormData } from '@/types/trip';
 import { generateDatesArray } from '@/utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 import { setJunctionTravelers } from '@/services/travelers';
+import type { TravelerWithMeta } from '@/services/travelers';
 import { useRealtimeSubscription, buildTripEntityConfig } from './useRealtimeSubscription';
+import type { Tables } from '@/integrations/supabase/types';
+
+// Trip-scoped entity row types used by the sidebar.
+type TripRow = Tables<'trips'>;
+type AccommodationRow = Tables<'accommodations'>;
+type TransportationRow = Tables<'transportation'>;
+// Activities and reservations are joined with trip_days(date) — the join shape is added inline.
+type DayActivityRow = Tables<'day_activities'> & { trip_days?: { date: string } | null };
+type ReservationRow = Tables<'reservations'> & { trip_days?: { date: string } | null };
 
 export interface SidebarState {
   isOpen: boolean;
@@ -34,16 +44,16 @@ export interface SidebarState {
   inviteLinkOpen: boolean;
   setInviteLinkOpen: (open: boolean) => void;
   // Selected items for editing
-  selectedAccommodation: any;
-  setSelectedAccommodation: (item: any) => void;
-  selectedTransportation: any;
-  setSelectedTransportation: (item: any) => void;
-  selectedActivity: any;
-  setSelectedActivity: (item: any) => void;
-  selectedReservation: any;
-  setSelectedReservation: (item: any) => void;
-  selectedTraveler: any;
-  setSelectedTraveler: (item: any) => void;
+  selectedAccommodation: AccommodationRow | null;
+  setSelectedAccommodation: (item: AccommodationRow | null) => void;
+  selectedTransportation: TransportationRow | null;
+  setSelectedTransportation: (item: TransportationRow | null) => void;
+  selectedActivity: string | null; // activity ID (form data is held in `activityEdit`)
+  setSelectedActivity: (item: string | null) => void;
+  selectedReservation: ReservationRow | null;
+  setSelectedReservation: (item: ReservationRow | null) => void;
+  selectedTraveler: TravelerWithMeta | null;
+  setSelectedTraveler: (item: TravelerWithMeta | null) => void;
   // Activity form state
   newActivity: ActivityFormData;
   setNewActivity: (data: ActivityFormData) => void;
@@ -55,33 +65,33 @@ export interface SidebarState {
   newDeparture: string;
   setNewDeparture: (date: string) => void;
   // Data from queries
-  trip: any;
+  trip: TripRow | undefined;
   tripLoading: boolean;
-  accommodations: any[];
-  transportation: any[];
-  activities: any[];
-  reservations: any[];
+  accommodations: AccommodationRow[];
+  transportation: TransportationRow[];
+  activities: DayActivityRow[];
+  reservations: ReservationRow[];
   // Action handlers
   handleBackToTrips: () => void;
   handleSubitemClick: (key: string) => void;
   handleAccommodationAdd: () => void;
-  handleAccommodationEdit: (accommodation: any) => void;
+  handleAccommodationEdit: (accommodation: AccommodationRow) => void;
   handleAccommodationDelete: (stayId: string) => Promise<void>;
   handleTransportationAdd: () => void;
-  handleTransportationEdit: (transport: any) => void;
+  handleTransportationEdit: (transport: TransportationRow) => void;
   handleTransportationDelete: (id: string) => Promise<void>;
   handleReservationAdd: () => void;
-  handleReservationEdit: (reservation: any) => void;
+  handleReservationEdit: (reservation: ReservationRow) => void;
   handleReservationDelete: (id: string) => Promise<void>;
   handleActivityAdd: () => void;
-  handleActivityEdit: (activity: any) => void;
+  handleActivityEdit: (activity: DayActivityRow) => void;
   handleActivityDelete: (id: string) => Promise<void>;
   handleEditDates: () => void;
   handleSaveDates: () => Promise<void>;
   handleAddActivity: (activity: ActivityFormData) => Promise<void>;
   handleEditActivity: (id: string, data: ActivityFormData) => Promise<void>;
   handleTravelerAdd: () => void;
-  handleTravelerEdit: (traveler: any) => void;
+  handleTravelerEdit: (traveler: TravelerWithMeta) => void;
 }
 
 /**
@@ -111,11 +121,11 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   const [isSubmittingDates, setIsSubmittingDates] = useState(false);
 
   // Selected items for editing
-  const [selectedAccommodation, setSelectedAccommodation] = useState<any>(null);
-  const [selectedTransportation, setSelectedTransportation] = useState<any>(null);
-  const [selectedActivity, setSelectedActivity] = useState<any>(null);
-  const [selectedReservation, setSelectedReservation] = useState<any>(null);
-  const [selectedTraveler, setSelectedTraveler] = useState<any>(null);
+  const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationRow | null>(null);
+  const [selectedTransportation, setSelectedTransportation] = useState<TransportationRow | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<ReservationRow | null>(null);
+  const [selectedTraveler, setSelectedTraveler] = useState<TravelerWithMeta | null>(null);
 
   // Activity form state for adding/editing
   const initialActivityForm: ActivityFormData = {
@@ -264,7 +274,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setSelectedAccommodation(null);
     setAccommodationOpen(true);
   };
-  const handleAccommodationEdit = (accommodation: any) => {
+  const handleAccommodationEdit = (accommodation: AccommodationRow) => {
     setSelectedAccommodation(accommodation);
     setAccommodationOpen(true);
   };
@@ -289,7 +299,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setSelectedTransportation(null);
     setTransportationOpen(true);
   };
-  const handleTransportationEdit = (transport: any) => {
+  const handleTransportationEdit = (transport: TransportationRow) => {
     setSelectedTransportation(transport);
     setTransportationOpen(true);
   };
@@ -314,7 +324,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setSelectedReservation(null);
     setReservationOpen(true);
   };
-  const handleReservationEdit = (reservation: any) => {
+  const handleReservationEdit = (reservation: ReservationRow) => {
     setSelectedReservation(reservation);
     setReservationOpen(true);
   };
@@ -339,7 +349,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setNewActivity({ ...initialActivityForm });
     setActivityOpen(true);
   };
-  const handleActivityEdit = (activity: any) => {
+  const handleActivityEdit = (activity: DayActivityRow) => {
     // Prepare edit form data for the selected activity
     setSelectedActivity(activity.id);
     setActivityEdit({
@@ -618,7 +628,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     setTravelerOpen(true);
   };
 
-  const handleTravelerEdit = (traveler: any) => {
+  const handleTravelerEdit = (traveler: TravelerWithMeta) => {
     setSelectedTraveler(traveler);
     setTravelerOpen(true);
   };

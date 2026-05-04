@@ -110,7 +110,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
           is_public: false,
           primary_destination: primaryDestination || null,
           primary_destination_place_id: primaryDestinationPlaceId || null,
-        } as any])
+        }])
         .select('trip_id')
         .single();
 

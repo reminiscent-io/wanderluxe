@@ -89,7 +89,7 @@ const DaySummaryCard: React.FC<Props> = ({
   // Calculate total, converting to trip currency if mixed
   let total: number;
   let displayCurrency: string;
-  let convertedFrom: string[] = [];
+  const convertedFrom: string[] = [];
 
   if (hasMixedCurrencies && hasRates) {
     total = categoryData.reduce((sum, c) => {

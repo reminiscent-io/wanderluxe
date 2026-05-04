@@ -350,7 +350,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (dupeErr) {
           // 23505 unique_violation means we already sent today.
-          if ((dupeErr as any).code === '23505') {
+          if ((dupeErr as { code?: string }).code === '23505') {
             results.push({ trip_id: trip.trip_id, sent: 0, skipped: 'already_sent' });
             continue;
           }
@@ -390,7 +390,7 @@ Deno.serve(async (req) => {
 
         // Map stay_id -> traveler names via accommodation_travelers.
         const stayIds = accommodations.map((a) => a.stay_id);
-        let stayTravelers = new Map<string, string[]>();
+        const stayTravelers = new Map<string, string[]>();
         if (stayIds.length && travelers.length) {
           const { data: atRows, error: atErr } = await supabase
             .from('accommodation_travelers')
@@ -461,8 +461,8 @@ Deno.serve(async (req) => {
           try {
             await sendViaMailgun(userRes.user.email, subject, html, text);
             sent++;
-          } catch (e: any) {
-            errors.push(`mailgun:${t.shared_with_user_id}:${e?.message ?? 'err'}`);
+          } catch (e: unknown) {
+            errors.push(`mailgun:${t.shared_with_user_id}:${e instanceof Error ? e.message : 'err'}`);
           }
         }
 
@@ -471,9 +471,9 @@ Deno.serve(async (req) => {
           sent,
           ...(errors.length ? { error: errors.join('; ') } : {}),
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('trip-reminder error for trip', trip.trip_id, e);
-        results.push({ trip_id: trip.trip_id, sent: 0, error: e?.message ?? 'error' });
+        results.push({ trip_id: trip.trip_id, sent: 0, error: e instanceof Error ? e.message : 'error' });
       }
     }
 
@@ -481,9 +481,9 @@ Deno.serve(async (req) => {
       JSON.stringify({ ok: true, targetDate, processed: results.length, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('send-trip-reminders fatal:', err);
-    return new Response(JSON.stringify({ ok: false, error: err?.message ?? 'error' }), {
+    return new Response(JSON.stringify({ ok: false, error: err instanceof Error ? err.message : 'error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

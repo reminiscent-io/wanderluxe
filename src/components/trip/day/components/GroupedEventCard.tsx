@@ -46,7 +46,7 @@ const GroupedEventCard: React.FC<Props> = ({
   const firstItem = items[0];
 
   // Get icon component based on event type
-  const IconComponent = getEventIconComponent(groupType, firstItem?.data?.type) as React.ComponentType<any>;
+  const IconComponent = getEventIconComponent(groupType, firstItem?.data?.type) as React.ComponentType<{ className?: string; size?: number | string }>;
 
   return (
     <div className="pb-3 sm:pb-4">

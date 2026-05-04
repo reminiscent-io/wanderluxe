@@ -46,9 +46,8 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
       ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
       : undefined;
 
-  // @ts-ignore Vite env at runtime (SSR-safe check)
   const viteKey: string | undefined =
-    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) || undefined;
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_MAPS_API_KEY) || undefined;
 
   const key = nextKey || viteKey;
 
@@ -226,7 +225,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     }
 
     // Lookup correct day_id based on selected reservation_date
-    let finalDayId = (defaultValues as any)?.day_id;
+    let finalDayId = (defaultValues as { day_id?: string } | undefined)?.day_id;
 
     if (data.reservation_date && effectiveTripId) {
       const { data: tripDay, error: tripDayError } = await supabase
@@ -251,11 +250,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     // Remove reservation_date and travelers (db uses day_id and junction tables)
     const { reservation_date, travelers, ...dataWithout } = data;
 
-    const processedData: Record<string, any> = {
+    const processedData: Record<string, unknown> = {
       ...dataWithout,
       trip_id: effectiveTripId,
       day_id: finalDayId,
-      order_index: (defaultValues as any)?.order_index ?? 0,
+      order_index: (defaultValues as { order_index?: number } | undefined)?.order_index ?? 0,
     };
     // Clear the key photo when the restaurant location changed
     if (placeIdChanged) {
@@ -266,7 +265,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       const result = await onSubmit(processedData);
 
       if (travelers && travelers.length > 0) {
-        const reservationId = defaultValues?.id || (result as any)?.id;
+        const reservationId = defaultValues?.id || (result as { id?: string } | null | undefined)?.id;
         if (reservationId) {
           await setJunctionTravelers("reservation", effectiveTripId, reservationId.toString(), travelers);
         }
@@ -339,7 +338,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                     form.setValue('website', null);
                     form.setValue('address', null);
                     form.setValue('phone_number', null);
-                    form.setValue('rating', undefined as any);
+                    form.setValue('rating', undefined as unknown as number);
                   }
                 }}
               />

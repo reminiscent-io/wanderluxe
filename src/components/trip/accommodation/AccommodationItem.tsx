@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/utils/dateUtils';
+import type { Tables } from '@/integrations/supabase/types';
 
 interface AccommodationItemProps {
-  stay: any;
+  stay: Tables<'accommodations'>;
   onEdit: () => void;
   onDelete: () => void;
 }

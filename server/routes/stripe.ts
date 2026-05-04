@@ -129,7 +129,8 @@ async function handleInvoicePaymentSucceeded(
   event: Stripe.Event
 ): Promise<void> {
   const invoice = event.data.object as Stripe.Invoice;
-  const subscriptionId = (invoice as any).subscription;
+  // `subscription` exists on Invoice at runtime but isn't in Stripe v20 TS types
+  const subscriptionId = (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription }).subscription;
   if (!subscriptionId) return;
 
   const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
@@ -154,7 +155,8 @@ async function handleInvoicePaymentFailed(
   event: Stripe.Event
 ): Promise<void> {
   const invoice = event.data.object as Stripe.Invoice;
-  const subscriptionId = (invoice as any).subscription;
+  // `subscription` exists on Invoice at runtime but isn't in Stripe v20 TS types
+  const subscriptionId = (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription }).subscription;
   if (!subscriptionId) return;
 
   const subscription = await stripeClient.subscriptions.retrieve(subscriptionId as string);
@@ -239,8 +241,8 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
     try {
       customerId = await getOrCreateStripeCustomer(user.id, user.email || '');
       console.log('Created/retrieved customer:', customerId);
-    } catch (customerError: any) {
-      console.error('Failed to create/retrieve Stripe customer:', customerError?.message || customerError);
+    } catch (customerError: unknown) {
+      console.error('Failed to create/retrieve Stripe customer:', customerError instanceof Error ? customerError.message : customerError);
       return res.status(500).json({ error: 'Failed to set up payment. Please try again.' });
     }
 
@@ -283,21 +285,22 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
         },
       },
     });
-    } catch (sessionError: any) {
+    } catch (sessionError: unknown) {
+      const stripeErr = sessionError instanceof Stripe.errors.StripeError ? sessionError : null;
       console.error('Failed to create Stripe checkout session:', {
-        message: sessionError?.message,
-        type: sessionError?.type,
-        code: sessionError?.code,
-        statusCode: sessionError?.statusCode,
+        message: stripeErr?.message ?? (sessionError instanceof Error ? sessionError.message : String(sessionError)),
+        type: stripeErr?.type,
+        code: stripeErr?.code,
+        statusCode: stripeErr?.statusCode,
       });
       // Provide user-friendly error messages for common Stripe errors
-      if (sessionError?.type === 'StripeAuthenticationError') {
+      if (stripeErr?.type === 'StripeAuthenticationError') {
         return res.status(500).json({ error: 'Payment system configuration error. Please contact support.' });
       }
-      if (sessionError?.type === 'StripeConnectionError') {
+      if (stripeErr?.type === 'StripeConnectionError') {
         return res.status(503).json({ error: 'Unable to connect to payment service. Please try again.' });
       }
-      if (sessionError?.type === 'StripeInvalidRequestError') {
+      if (stripeErr?.type === 'StripeInvalidRequestError') {
         return res.status(500).json({ error: 'Payment configuration error. Please contact support.' });
       }
       return res.status(500).json({ error: 'Failed to create checkout session. Please try again.' });
@@ -310,8 +313,8 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
 
     console.log('Checkout session created:', session.id);
     return res.json({ url: session.url });
-  } catch (error: any) {
-    console.error('Unexpected error in checkout endpoint:', error?.message || error);
+  } catch (error: unknown) {
+    console.error('Unexpected error in checkout endpoint:', error instanceof Error ? error.message : error);
     return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
   }
 });
@@ -330,9 +333,10 @@ router.post('/api/stripe/webhook', async (req: Request, res: Response) => {
   try {
     const stripeClient = getStripe();
     event = await stripeClient.webhooks.constructEventAsync(req.body, sig, webhookSecret);
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
-    return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('Webhook signature verification failed:', message);
+    return res.status(400).json({ error: `Webhook Error: ${message}` });
   }
 
   console.log(`Received Stripe event: ${event.type}`);
@@ -400,9 +404,9 @@ router.post('/api/stripe/create-portal', async (req: Request, res: Response) => 
     });
 
     return res.json({ url: portalSession.url });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating portal session:', error);
-    if (error?.type === 'StripeAuthenticationError') {
+    if (error instanceof Stripe.errors.StripeError && error.type === 'StripeAuthenticationError') {
       return res.status(500).json({ error: 'Payment system configuration error. Please contact support.' });
     }
     return res.status(500).json({ error: 'Failed to create portal session' });
@@ -439,8 +443,14 @@ router.get('/api/stripe/subscription', async (req: Request, res: Response) => {
     const subscription = await stripeClient.subscriptions.retrieve(profile.stripe_subscription_id);
 
     // Get the billing cycle anchor (when billing started)
-    const billingAnchor = (subscription as any).billing_cycle_anchor || subscription.created;
-    const startDate = (subscription as any).start_date || subscription.created;
+    // `billing_cycle_anchor` and `start_date` exist at runtime but aren't in Stripe v20 TS types
+    const subWithExtras = subscription as Stripe.Subscription & {
+      billing_cycle_anchor?: number;
+      start_date?: number;
+      cancel_at?: number | null;
+    };
+    const billingAnchor = subWithExtras.billing_cycle_anchor || subscription.created;
+    const startDate = subWithExtras.start_date || subscription.created;
 
     // Calculate next renewal date based on billing anchor
     // For monthly subscriptions, find the next monthly anniversary
@@ -456,7 +466,7 @@ router.get('/api/stripe/subscription', async (req: Request, res: Response) => {
     }
 
     // If subscription has a cancel_at date, use that instead
-    const cancelAt = (subscription as any).cancel_at;
+    const cancelAt = subWithExtras.cancel_at;
 
     console.log('Subscription billing info:', {
       billingAnchor,
@@ -476,7 +486,7 @@ router.get('/api/stripe/subscription', async (req: Request, res: Response) => {
         created: subscription.created,
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching subscription:', error);
     return res.status(500).json({ error: 'Failed to fetch subscription details' });
   }
@@ -522,7 +532,7 @@ router.post('/api/stripe/cancel-subscription', async (req: Request, res: Respons
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       currentPeriodEnd: subscription.current_period_end,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error cancelling subscription:', error);
     return res.status(500).json({ error: 'Failed to cancel subscription' });
   }
@@ -567,7 +577,7 @@ router.post('/api/stripe/reactivate-subscription', async (req: Request, res: Res
       success: true,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error reactivating subscription:', error);
     return res.status(500).json({ error: 'Failed to reactivate subscription' });
   }

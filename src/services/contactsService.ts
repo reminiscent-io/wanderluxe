@@ -117,7 +117,7 @@ async function fetchOutgoingShares(myId: string): Promise<OutgoingShare[]> {
   if (!myTripIds.length) return [];
 
   const { data } = await supabase
-    .from("trip_shares" as any)
+    .from("trip_shares")
     .select("trip_id, created_at, shared_with_user_id, shared_with_email, first_name, last_name")
     .in("trip_id", myTripIds);
   return data ?? [];
@@ -125,7 +125,7 @@ async function fetchOutgoingShares(myId: string): Promise<OutgoingShare[]> {
 
 async function fetchIncomingShares(myEmail: string): Promise<IncomingShare[]> {
   const { data } = await supabase
-    .from("trip_shares" as any)
+    .from("trip_shares")
     .select("trip_id, created_at, shared_by_user_id")
     .ilike("shared_with_email", myEmail);
   return data ?? [];

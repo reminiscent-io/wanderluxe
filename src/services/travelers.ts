@@ -1,5 +1,9 @@
 // /src/services/travelers.ts
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+
+type TripShareRow = Tables<'trip_shares'>;
+type ProfileRow = Tables<'profiles'>;
 
 // Normalize DB value to 'read' | 'edit'
 const normalizePerm = (p?: string | null): "read" | "edit" =>
@@ -38,7 +42,7 @@ export async function addOwnerToTripShares(tripId: string, userId: string) {
 
     // Insert owner as a trip share record (owner always has edit)
     await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .insert({
         trip_id: tripId,
         shared_by_user_id: userId,
@@ -65,13 +69,18 @@ const addCacheBusting = (url: string | null): string | null => {
   return `${url}?t=${Date.now()}`;
 };
 
-export async function listTravelers(tripId: string) {
+export type TravelerWithMeta = TripShareRow & {
+  is_owner: boolean;
+  avatar_url: string | null;
+};
+
+export async function listTravelers(tripId: string): Promise<{ data: TravelerWithMeta[]; error: { message: string } | null }> {
   try {
     // Pull ALL travelers (including owner row) with permission_level
     const { data: sharesData, error } = await supabase
-      .from('trip_shares' as any)
+      .from('trip_shares')
       .select(
-        'id, trip_id, first_name, last_name, shared_with_email, shared_by_user_id, shared_with_user_id, permission_level, created_at'
+        'id, trip_id, first_name, last_name, shared_with_email, shared_by_user_id, shared_with_user_id, permission_level, created_at, share_status, is_owner'
       )
       .eq('trip_id', tripId)
       .order('created_at', { ascending: true });
@@ -81,16 +90,16 @@ export async function listTravelers(tripId: string) {
       return { data: [], error };
     }
 
-    const shares = sharesData ?? [];
+    const shares = (sharesData ?? []) as TripShareRow[];
 
     // Get unique user IDs that have profiles (for avatar lookup)
     const userIds = shares
-      .map((s: any) => s.shared_with_user_id)
+      .map((s) => s.shared_with_user_id)
       .filter((id: string | null): id is string => !!id);
 
     // Fetch avatar URLs and full names for users who have profiles
-    let avatarMap: Record<string, string | null> = {};
-    let fullNameMap: Record<string, string | null> = {};
+    const avatarMap: Record<string, string | null> = {};
+    const fullNameMap: Record<string, string | null> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
@@ -98,7 +107,7 @@ export async function listTravelers(tripId: string) {
         .in('id', userIds);
 
       if (profiles) {
-        profiles.forEach((p: any) => {
+        profiles.forEach((p: Pick<ProfileRow, 'id' | 'avatar_url' | 'full_name'>) => {
           avatarMap[p.id] = addCacheBusting(p.avatar_url);
           fullNameMap[p.id] = p.full_name || null;
         });
@@ -107,7 +116,7 @@ export async function listTravelers(tripId: string) {
 
     // Mark owner by user_id equality, normalize permission, attach avatar_url,
     // and use profile full_name if available, falling back to trip_shares name
-    const travelers = shares.map((share: any) => {
+    const travelers: TravelerWithMeta[] = shares.map((share) => {
       const isOwner = share.shared_by_user_id && share.shared_with_user_id
         ? share.shared_by_user_id === share.shared_with_user_id
         : false;
@@ -120,7 +129,7 @@ export async function listTravelers(tripId: string) {
 
       if (share.shared_with_user_id && fullNameMap[share.shared_with_user_id]) {
         const profileName = fullNameMap[share.shared_with_user_id];
-        const nameParts = profileName.trim().split(' ').filter(Boolean);
+        const nameParts = (profileName ?? '').trim().split(' ').filter(Boolean);
         firstName = nameParts[0] || share.first_name;
         lastName = nameParts.slice(1).join(' ') || share.last_name;
       }
@@ -138,7 +147,7 @@ export async function listTravelers(tripId: string) {
     return { data: travelers, error: null };
   } catch (err) {
     console.error("Error fetching travelers:", err);
-    return { data: [], error: err as any };
+    return { data: [], error: { message: err instanceof Error ? err.message : String(err) } };
   }
 }
 
@@ -170,15 +179,15 @@ export async function upsertTraveler(
     shared_by_user_id: user.id,
   };
 
-  return supabase.from('trip_shares' as any).upsert(rowWithUser).select().single();
+  return supabase.from('trip_shares').upsert(rowWithUser).select().single();
 }
 
 export async function deleteTraveler(id: string) {
   try {
-    return await supabase.from('trip_shares' as any).delete().eq('id', id);
+    return await supabase.from('trip_shares').delete().eq('id', id);
   } catch (error) {
     console.warn("Could not delete from trip_shares:", error);
-    return { data: null, error: error as any };
+    return { data: null, error: { message: error instanceof Error ? error.message : String(error) } };
   }
 }
 
@@ -186,7 +195,13 @@ export async function deleteTraveler(id: string) {
 
 export type JunctionType = "accommodation" | "transportation" | "activity" | "reservation";
 
-const JUNCTION_CONFIG: Record<JunctionType, { table: string; fkColumn: string }> = {
+type JunctionTableName =
+  | 'accommodation_travelers'
+  | 'transportation_travelers'
+  | 'day_activity_travelers'
+  | 'reservation_travelers';
+
+const JUNCTION_CONFIG: Record<JunctionType, { table: JunctionTableName; fkColumn: string }> = {
   accommodation: { table: "accommodation_travelers", fkColumn: "stay_id" },
   transportation: { table: "transportation_travelers", fkColumn: "transportation_id" },
   activity: { table: "day_activity_travelers", fkColumn: "activity_id" },
@@ -197,18 +212,18 @@ export async function getJunctionTravelerIds(
   type: JunctionType,
   tripId: string,
   entityId: string
-): Promise<{ data: string[]; error: any }> {
+): Promise<{ data: string[]; error: { message: string } | null }> {
   try {
     const { table, fkColumn } = JUNCTION_CONFIG[type];
     const { data, error } = await supabase
-      .from(table as any)
+      .from(table)
       .select("traveler_id")
       .match({ trip_id: tripId, [fkColumn]: entityId });
     if (error) return { data: [], error };
-    return { data: (data ?? []).map((r: any) => r.traveler_id), error: null };
+    return { data: (data ?? []).map((r: { traveler_id: string }) => r.traveler_id), error: null };
   } catch (error) {
     console.error(`Error loading ${type} travelers:`, error);
-    return { data: [], error: error as any };
+    return { data: [], error: { message: error instanceof Error ? error.message : String(error) } };
   }
 }
 
@@ -217,20 +232,21 @@ export async function setJunctionTravelers(
   tripId: string,
   entityId: string,
   travelerIds: string[]
-): Promise<{ data: any[]; error: any }> {
+): Promise<{ data: { traveler_id: string }[]; error: { message: string } | null }> {
   try {
     const { table, fkColumn } = JUNCTION_CONFIG[type];
-    await supabase.from(table as any).delete().match({ trip_id: tripId, [fkColumn]: entityId });
+    await supabase.from(table).delete().match({ trip_id: tripId, [fkColumn]: entityId });
     if (travelerIds.length === 0) return { data: [], error: null };
     const rows = travelerIds.map((traveler_id) => ({
       trip_id: tripId,
       [fkColumn]: entityId,
       traveler_id,
     }));
-    const { data, error } = await supabase.from(table as any).insert(rows).select();
-    return { data: data || [], error };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic table requires loose insert payload; runtime shape matches all four junction tables
+    const { data, error } = await supabase.from(table).insert(rows as any).select();
+    return { data: (data || []) as { traveler_id: string }[], error };
   } catch (error) {
     console.error(`Error saving ${type} travelers:`, error);
-    return { data: [], error: error as any };
+    return { data: [], error: { message: error instanceof Error ? error.message : String(error) } };
   }
 }

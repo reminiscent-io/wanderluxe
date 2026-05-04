@@ -144,11 +144,11 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
       onClick={isClickable ? onEdit : undefined}
       onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit?.(); } } : undefined}
       className={cn(
-        'rounded-lg border transition-all overflow-hidden',
+        'rounded-md border transition-all overflow-hidden',
         isProcessed ? 'opacity-60' : '',
         item.status === 'created' ? 'bg-green-50 border-green-200' :
-        item.status === 'skipped' ? 'bg-sand-50 border-sand-200' :
-        hasWarnings ? 'bg-amber-50 border-amber-200' : 'bg-background border-sand-200',
+        item.status === 'skipped' ? 'bg-sand-50 border-border' :
+        hasWarnings ? 'bg-amber-50 border-amber-200' : 'bg-background border-border',
         compact ? 'p-2' : 'p-3',
         isClickable && 'cursor-pointer hover:ring-2 hover:ring-earth-300 hover:ring-offset-1 focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-offset-1'
       )}
@@ -181,14 +181,14 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
             )}
           </div>
           <h4 className={cn(
-            'font-medium text-earth-700 truncate',
+            'font-medium text-foreground truncate',
             compact ? 'text-sm' : 'text-base'
           )}>
             {title}
           </h4>
           {subtitle && (
             <p className={cn(
-              'text-sand-600 truncate',
+              'text-muted-foreground truncate',
               compact ? 'text-xs' : 'text-sm'
             )}>
               {subtitle}
@@ -197,7 +197,7 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
 
           {/* Click to edit hint (when in stepper / edit flow) */}
           {isClickable && (
-            <p className="mt-1 text-xs text-earth-500">Click to edit details</p>
+            <p className="mt-1 text-xs text-earth-500">Tap to edit details</p>
           )}
 
           {/* Warnings */}
@@ -218,7 +218,7 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
           <div className="flex-shrink-0">
             <div
               className={cn(
-                'text-xs px-1.5 py-0.5 rounded',
+                'text-xs tabular-nums px-1.5 py-0.5 rounded',
                 item.confidence >= 0.9 ? 'bg-green-100 text-green-700' :
                 item.confidence >= 0.7 ? 'bg-sand-100 text-sand-700' :
                 'bg-amber-100 text-amber-700'

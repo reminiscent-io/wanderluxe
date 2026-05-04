@@ -11,14 +11,17 @@ import RestaurantReservationForm from './RestaurantReservationForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import type { Tables } from '@/integrations/supabase/types';
+
+type ReservationData = Partial<Tables<'reservations'>> & Record<string, unknown>;
 
 interface RestaurantReservationDialogProps {
   open?: boolean;              // NEW preferred
   isOpen?: boolean;            // legacy support
   onOpenChange: (open: boolean) => void;
   tripId: string;
-  initialData?: any;           // NEW preferred
-  editingReservation?: any;    // legacy support
+  initialData?: ReservationData;           // NEW preferred
+  editingReservation?: ReservationData;    // legacy support
   onSuccess?: () => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
@@ -26,7 +29,7 @@ interface RestaurantReservationDialogProps {
   // Legacy props from Sidebar
   title?: string;
   isSubmitting?: boolean;
-  onSubmit?: (data: any) => Promise<void>;
+  onSubmit?: (data: ReservationData) => Promise<void>;
   onDelete?: () => Promise<void>;
 }
 
@@ -51,7 +54,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ReservationData) => {
     // Use legacy onSubmit if provided (from Sidebar)
     if (legacyOnSubmit) {
       await legacyOnSubmit(data);
@@ -82,9 +85,9 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save reservation:', error);
-      toast.error(error.message || 'Failed to save reservation');
+      toast.error(error instanceof Error ? error.message : 'Failed to save reservation');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,9 +115,9 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete reservation:', error);
-      toast.error(error.message || 'Failed to delete reservation');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete reservation');
     }
   };
 

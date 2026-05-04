@@ -37,7 +37,8 @@ import {
 } from "@/services/flightStatus";
 
 interface Props {
-  form: UseFormReturn<any>;
+  // Generic form so this component can be reused; specific schema lives in TransportationForm.
+  form: UseFormReturn<Record<string, unknown>>;
   tripArrivalDate?: string | null;
   tripId: string;
 }

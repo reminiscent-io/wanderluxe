@@ -59,7 +59,7 @@ export function useDocumentExtraction(): UseDocumentExtractionReturn {
       });
 
       const responseText = await response.text();
-      let parsed: any;
+      let parsed: Record<string, unknown> | unknown[] | null = null;
       try {
         parsed = JSON.parse(responseText);
       } catch {
@@ -99,8 +99,8 @@ export function useDocumentExtraction(): UseDocumentExtractionReturn {
       }
 
       throw new Error('Invalid extraction response');
-    } catch (e: any) {
-      const errorMsg = e?.message || 'Failed to extract document';
+    } catch (e: unknown) {
+      const errorMsg = e instanceof Error ? e.message : 'Failed to extract document';
       setError(errorMsg);
       toast.error(errorMsg);
       return null;

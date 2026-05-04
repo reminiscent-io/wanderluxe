@@ -43,11 +43,11 @@ const ForgotPassword = () => {
       });
 
       navigate("/"); // or back to /auth
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Unable to send reset email",
-        description: err.message ?? "Please try again.",
+        description: err instanceof Error ? err.message : "Please try again.",
         className: "bg-earth-100/50 border-destructive",
       });
     } finally {

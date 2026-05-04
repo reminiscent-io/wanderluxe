@@ -1,9 +1,10 @@
 import React from 'react';
 import TransportationListItem from './TransportationListItem';
 import { Card } from '@/components/ui/card';
+import type { Tables } from '@/integrations/supabase/types';
 
 interface TransportationListProps {
-  transportations: any[]; // Replace with your transportation type
+  transportations: Tables<'transportation'>[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }

@@ -25,7 +25,7 @@ export default function TravelerRow({ traveler, onEdit }: TravelerRowProps) {
   }, [traveler.first_name, traveler.last_name]);
 
   const hasEmail = !!traveler.shared_with_email;
-  const isOwner = !!(traveler as any).is_owner;
+  const isOwner = !!traveler.is_owner;
   const isPending = hasEmail && !isOwner && !traveler.shared_with_user_id;
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {

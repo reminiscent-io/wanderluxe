@@ -218,7 +218,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       const result = await onSubmit(activityData);
 
       if (travelers && travelers.length > 0) {
-        const actId = (activity as any).id || (result as any)?.id;
+        const actId = (activity as { id?: string } | null | undefined)?.id || (result as { id?: string } | null | undefined)?.id;
         if (actId) {
           await setJunctionTravelers("activity", tripId, actId, travelers);
         }

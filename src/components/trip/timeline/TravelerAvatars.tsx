@@ -34,9 +34,9 @@ interface TravelerAvatarsProps {
 function asTravelerArray(input: unknown): Traveler[] {
   if (Array.isArray(input)) return input as Traveler[];
   if (input && typeof input === "object") {
-    const anyInput = input as any;
-    if (Array.isArray(anyInput.data)) return anyInput.data as Traveler[];
-    if (Array.isArray(anyInput.travelers)) return anyInput.travelers as Traveler[];
+    const obj = input as { data?: unknown; travelers?: unknown };
+    if (Array.isArray(obj.data)) return obj.data as Traveler[];
+    if (Array.isArray(obj.travelers)) return obj.travelers as Traveler[];
   }
   return [];
 }

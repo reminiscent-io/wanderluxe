@@ -156,7 +156,7 @@ export const updateAccommodation = async (
   try {
     console.log("Updating accommodation with data:", { stayId, ...formData });
     // Update the accommodation record
-    const updatePayload: Record<string, any> = {
+    const updatePayload: Record<string, unknown> = {
         title: formData.hotel || "Unnamed Accommodation",
         hotel: formData.hotel,
         hotel_details: formData.hotel_details || null,

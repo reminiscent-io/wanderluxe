@@ -25,7 +25,7 @@ const computeDuration = (startTime?: string, endTime?: string): string | null =>
   const start = parseTimeToHM(startTime);
   const end = parseTimeToHM(endTime);
   if (!start || !end) return null;
-  let mins = (end.h * 60 + end.m) - (start.h * 60 + start.m);
+  const mins = (end.h * 60 + end.m) - (start.h * 60 + start.m);
   if (mins <= 0) return null;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -186,7 +186,7 @@ const TimelineRow: React.FC<Props> = ({
               {/* Icon */}
               <div className="flex-shrink-0 mt-0.5 text-earth-600">
                 {React.createElement(
-                  getEventIconComponent(item.type as TimelineType, item.data?.type) as React.ComponentType<any>,
+                  getEventIconComponent(item.type as TimelineType, item.data?.type) as React.ComponentType<{ className?: string; strokeWidth?: number }>,
                   { className: 'h-5 w-5', strokeWidth: 1.5 }
                 )}
               </div>

@@ -3,7 +3,7 @@ import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
 
 declare global {
   interface Window {
-    google: any;
+    google: typeof google;
     initGoogleMaps?: () => void;
   }
 }

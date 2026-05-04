@@ -28,6 +28,7 @@ interface Props {
   required?: boolean;
   defaultMonth?: Date;
   /** Pass `control` if not inside a FormProvider */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- consumer supplies their own RHF schema; widening to FieldValues breaks Path<T> typing for `name`
   control?: RHFControl<any>;
   /** Hide the time input section */
   hideTimeInputs?: boolean;
@@ -67,7 +68,7 @@ export default function DateTimeRangeField({
 
   return (
     <Controller
-      name={name as any}
+      name={name}
       control={control}
       render={({ field }) => (
         <DateTimeRangeFieldInner
@@ -158,7 +159,7 @@ function DateTimeRangeFieldInner({
           className="z-[1000] w-[300px] max-w-[calc(100vw-1rem)] p-0 rounded-md border bg-background shadow-warm-lg"
           onEscapeKeyDown={(e) => e.stopPropagation()}
           onPointerDownOutside={(e) => {
-            // @ts-ignore
+            // @ts-expect-error Radix event target type does not expose closest
             if (e?.target && (e.target as HTMLElement).closest?.("[data-keep-open]")) {
               e.preventDefault();
             }

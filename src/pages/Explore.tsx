@@ -3,23 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { differenceInDays } from 'date-fns';
 import Navigation from "../components/Navigation";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from '../components/trip/TripCard';
-import { Card } from "@/components/ui/card";
-import { Search, Calendar, MapPin, Clock, Plane, Plus, Globe, CheckCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 import SEO, { SITE_URL } from '@/components/SEO';
 
-// Import hero and stats components from MyTrips
 import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
-import { TravelStatsCard, MonthlyActivityChart } from '@/components/trip/stats';
 import { useTravelStats } from '@/hooks/useTravelStats';
 import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
+import {
+  SectionHeader,
+  TripSearch,
+  TravelYearSection,
+} from '@/components/trip/dashboard';
 
 const Explore = () => {
   const navigate = useNavigate();
@@ -56,12 +56,31 @@ const Explore = () => {
     },
   });
 
+  // Search filter — matches destination, primary_destination, and date text
   const filteredTrips = useMemo(() => {
     if (!publicTrips) return [];
-
-    return publicTrips.filter(trip =>
-      trip && trip.destination && trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return publicTrips.filter(trip => trip && trip.destination);
+    }
+    return publicTrips.filter(trip => {
+      if (!trip || !trip.destination) return false;
+      const haystack: string[] = [
+        trip.destination ?? '',
+        (trip as Trip & { primary_destination?: string }).primary_destination ?? '',
+      ];
+      const arrival = trip.arrival_date ? new Date(trip.arrival_date) : null;
+      const departure = trip.departure_date ? new Date(trip.departure_date) : null;
+      for (const date of [arrival, departure]) {
+        if (date && !Number.isNaN(date.getTime())) {
+          haystack.push(
+            date.toLocaleString('en-US', { month: 'short', year: 'numeric' }),
+            date.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+          );
+        }
+      }
+      return haystack.some(field => field.toLowerCase().includes(query));
+    });
   }, [publicTrips, searchQuery]);
 
   // Track search queries
@@ -89,35 +108,26 @@ const Explore = () => {
     if (today >= arrivalDate && today <= departureDate) {
       return 'current';
     }
-
     if (arrivalDate > today) {
       return 'upcoming';
     }
-
     return 'past';
   };
 
   const { upcomingTrips, currentTrips, pastTrips } = useMemo(() => {
-    const upcoming = filteredTrips.filter(trip => getTripCategory(trip) === 'upcoming');
+    const upcoming = filteredTrips
+      .filter(trip => getTripCategory(trip) === 'upcoming')
+      .sort((a, b) => new Date(a.arrival_date || '').getTime() - new Date(b.arrival_date || '').getTime());
     const current = filteredTrips.filter(trip => getTripCategory(trip) === 'current');
-    const past = filteredTrips.filter(trip => getTripCategory(trip) === 'past');
+    const past = filteredTrips
+      .filter(trip => getTripCategory(trip) === 'past')
+      .sort((a, b) => new Date(b.departure_date || '').getTime() - new Date(a.departure_date || '').getTime());
 
-    return {
-      upcomingTrips: upcoming,
-      currentTrips: current,
-      pastTrips: past
-    };
+    return { upcomingTrips: upcoming, currentTrips: current, pastTrips: past };
   }, [filteredTrips]);
 
-  // Calculate next upcoming trip for hero
-  const nextTrip = useMemo(() => {
-    const allUpcoming = [...upcomingTrips].sort((a, b) => {
-      const dateA = new Date(a.arrival_date || '');
-      const dateB = new Date(b.arrival_date || '');
-      return dateA.getTime() - dateB.getTime();
-    });
-    return allUpcoming[0];
-  }, [upcomingTrips]);
+  // Next upcoming trip drives the hero
+  const nextTrip = useMemo(() => upcomingTrips[0], [upcomingTrips]);
 
   const daysUntilNextTrip = useMemo(() => {
     if (!nextTrip || !nextTrip.arrival_date) return null;
@@ -127,26 +137,18 @@ const Explore = () => {
     return differenceInDays(tripDateUTC, todayUTC);
   }, [nextTrip]);
 
-  // Determine hero state
   const heroState = useMemo(() => {
-    if (currentTrips.length > 0) {
-      return 'on-trip';
-    }
     if (nextTrip && daysUntilNextTrip !== null && daysUntilNextTrip >= 0) {
       return 'pre-trip';
     }
     return 'default';
-  }, [currentTrips, nextTrip, daysUntilNextTrip]);
+  }, [nextTrip, daysUntilNextTrip]);
 
-  // Calculate stats for public trips
   const travelStats = useTravelStats(publicTrips || []);
 
-  // Get last completed trip for background
-  const lastCompletedTrip = useMemo(() => {
-    return pastTrips[0] || null;
-  }, [pastTrips]);
+  const lastCompletedTrip = useMemo(() => pastTrips[0] || null, [pastTrips]);
 
-  // Filter upcoming trips to avoid showing next trip twice
+  // Avoid showing the next trip twice when it's already in the hero
   const filteredUpcomingTrips = useMemo(() => {
     if (heroState === 'pre-trip' && nextTrip) {
       return upcomingTrips.filter(trip => trip.trip_id !== nextTrip.trip_id);
@@ -154,7 +156,6 @@ const Explore = () => {
     return upcomingTrips;
   }, [heroState, nextTrip, upcomingTrips]);
 
-  // Track trip click
   const handleTripClick = (trip: Trip, category: string) => {
     if (window.gtag) {
       window.gtag('event', 'select_content', {
@@ -166,6 +167,17 @@ const Explore = () => {
         trip_category: category.toLowerCase()
       });
     }
+  };
+
+  const handleCtaClick = () => {
+    if (window.gtag) {
+      window.gtag('event', 'click', {
+        event_category: 'Conversion',
+        event_label: session ? 'Plan New Trip' : 'Get Started CTA',
+        value: 1
+      });
+    }
+    navigate(session ? '/create-trip' : '/auth');
   };
 
   const itemListJsonLd = publicTrips && publicTrips.length > 0
@@ -182,8 +194,10 @@ const Explore = () => {
       }
     : undefined;
 
+  const totalPublicTrips = (publicTrips || []).length;
+
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50">
+    <div className="flex flex-col min-h-screen bg-sand-50">
       <SEO
         title="Explore curated luxury trip itineraries"
         description="Discover hand-crafted luxury travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
@@ -193,162 +207,56 @@ const Explore = () => {
       <Navigation />
       <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
         <h1 className="sr-only">Explore curated luxury trip itineraries</h1>
-        {/* Dynamic Hero Section - Same as MyTrips */}
+
+        {/* Hero — single primary surface */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          {/* Mobile: Full-bleed hero */}
-          <div className="md:hidden">
-            {heroState === 'pre-trip' && nextTrip && (
-              <NextTripBoardingPass
-                trip={nextTrip}
-                daysUntil={daysUntilNextTrip!}
-                onViewTrip={() => navigate(`/trip/${nextTrip.trip_id}`)}
-                className="-mx-4 rounded-none"
-              />
-            )}
-            {(heroState === 'default' || heroState === 'on-trip') && (
-              <DefaultHeroCard
-                onCreateTrip={() => navigate(session ? '/create-trip' : '/auth')}
-                lastTripImage={lastCompletedTrip?.cover_image_url}
-              />
-            )}
-
-            {/* Mobile: Swipeable Stats Row */}
-            <div className="-mx-4 px-4 overflow-x-auto mt-3">
-              <div className="flex gap-3 py-1 snap-x snap-mandatory
-                            [-ms-overflow-style:none] [scrollbar-width:none]
-                            [&::-webkit-scrollbar]:hidden">
-                <div className="min-w-[160px] snap-start shrink-0">
-                  <TravelStatsCard
-                    title="Days Traveling"
-                    value={travelStats.totalDaysTraveled}
-                    subtitle="Total days explored"
-                    icon={Globe}
-                    gradient="blue"
-                    compact
-                  />
-                </div>
-                <div className="min-w-[160px] snap-start shrink-0">
-                  <TravelStatsCard
-                    title="Trip Progress"
-                    value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
-                    subtitle="Trips completed"
-                    icon={CheckCircle}
-                    gradient="green"
-                    chart="donut"
-                    chartData={travelStats.completionRate}
-                    compact
-                  />
-                </div>
-                <div className="min-w-[160px] snap-start shrink-0">
-                  <TravelStatsCard
-                    title="Destinations"
-                    value={travelStats.countriesVisited}
-                    subtitle="Places visited"
-                    icon={MapPin}
-                    gradient="purple"
-                    compact
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile: Full-width Activity Chart */}
-            <div className="mt-3">
-              <MonthlyActivityChart data={travelStats.dailyActivity} />
-            </div>
-          </div>
-
-          {/* Desktop: Grid Layout */}
-          <div className="hidden md:grid md:grid-cols-3 gap-6">
-            {/* PRIMARY ACTION AREA - Spans 2 columns */}
-            <div className="md:col-span-2">
-              {heroState === 'pre-trip' && nextTrip && (
-                <NextTripBoardingPass
-                  trip={nextTrip}
-                  daysUntil={daysUntilNextTrip!}
-                  onViewTrip={() => navigate(`/trip/${nextTrip.trip_id}`)}
-                />
-              )}
-              {(heroState === 'default' || heroState === 'on-trip') && (
-                <DefaultHeroCard
-                  onCreateTrip={() => navigate(session ? '/create-trip' : '/auth')}
-                  lastTripImage={lastCompletedTrip?.cover_image_url}
-                />
-              )}
-            </div>
-
-            {/* STATS AREA - Spans 1 column, stretches to match hero */}
-            <div className="md:col-span-1 flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                <TravelStatsCard
-                  title="Life on the Road"
-                  value={travelStats.totalDaysTraveled}
-                  subtitle="Days spent exploring"
-                  icon={Globe}
-                  gradient="blue"
-                  noBackground
-                />
-                <TravelStatsCard
-                  title="Trip Progress"
-                  value={`${travelStats.completedTrips}/${travelStats.completionRate.total}`}
-                  subtitle="Trips completed"
-                  icon={CheckCircle}
-                  gradient="green"
-                  chart="donut"
-                  chartData={travelStats.completionRate}
-                  noBackground
-                />
-              </div>
-              <MonthlyActivityChart data={travelStats.dailyActivity} className="flex-1" />
-            </div>
-          </div>
+          {heroState === 'pre-trip' && nextTrip && (
+            <NextTripBoardingPass
+              trip={nextTrip}
+              daysUntil={daysUntilNextTrip!}
+              onViewTrip={() => {
+                handleTripClick(nextTrip, 'Hero');
+                navigate(`/trip/${nextTrip.trip_id}`);
+              }}
+              className="-mx-4 rounded-none md:mx-0 md:rounded-2xl"
+            />
+          )}
+          {heroState === 'default' && (
+            <DefaultHeroCard
+              onCreateTrip={handleCtaClick}
+              lastTripImage={lastCompletedTrip?.cover_image_url}
+            />
+          )}
         </motion.div>
 
-        {/* Search and Actions - Same as MyTrips */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="mb-8"
-        >
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="search"
-                placeholder="Search destinations..."
-                className="pl-10 pr-4 py-3 bg-white border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-xl shadow-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+        {/* Travel Year — discoverable analytics, sits below the hero */}
+        {totalPublicTrips > 0 && (
+          <TravelYearSection data={travelStats.dailyActivity} />
+        )}
 
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  if (window.gtag) {
-                    window.gtag('event', 'click', {
-                      event_category: 'Conversion',
-                      event_label: session ? 'Plan New Trip' : 'Get Started CTA',
-                      value: 1
-                    });
-                  }
-                  navigate(session ? '/create-trip' : '/auth');
-                }}
-                className="px-6 py-3 rounded-xl shadow-sm flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">{session ? 'Plan New Trip' : 'Get Started'}</span>
-                <span className="sm:hidden">{session ? 'New Trip' : 'Start'}</span>
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+        {/* Search + conversion CTA */}
+        <div className="mb-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <TripSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search destinations, dates..."
+            ariaLabel="Search public trips"
+            className="flex-1"
+          />
+          <Button
+            onClick={handleCtaClick}
+            variant="sunset"
+            className="font-semibold whitespace-nowrap"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {session ? 'Plan a trip' : 'Get started'}
+          </Button>
+        </div>
 
         {/* Trip Sections */}
         {isLoading ? (
@@ -362,37 +270,21 @@ const Explore = () => {
           </div>
         ) : (
           <div className="space-y-12">
-            {/* Current Trips Section */}
+            {/* Currently Traveling */}
             {currentTrips.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.5 }}
-                className="relative"
-              >
-                <div className="flex items-center gap-3 mb-8 pb-4 border-b border-emerald-100">
-                  <div className="bg-emerald-100 rounded-xl p-3">
-                    <Plane className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                      Currently Traveling
-                      <Badge className="bg-emerald-500 text-white text-sm px-3 py-1">
-                        {currentTrips.length}
-                      </Badge>
-                    </h2>
-                    <p className="text-earth-600 text-sm mt-1">Active adventures</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <section className="relative" aria-labelledby="explore-section-current">
+                <SectionHeader
+                  id="explore-section-current"
+                  title="Currently traveling"
+                  count={currentTrips.length}
+                  countClassName="text-emerald-600"
+                />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {currentTrips.map((trip) => (
-                    <motion.div
+                    <div
                       key={trip.trip_id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
                       onClick={() => handleTripClick(trip, 'Current')}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleTripClick(trip, 'Current'); }}
                     >
                       <TripCard
                         trip={{
@@ -403,43 +295,26 @@ const Explore = () => {
                         }}
                         isExample={true}
                       />
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
-              </motion.div>
+              </section>
             )}
 
-            {/* Upcoming Trips Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="relative"
-            >
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-sand-200">
-                <div className="bg-sand-200 rounded-xl p-3">
-                  <Calendar className="h-6 w-6 text-earth-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                    Upcoming Adventures
-                    <Badge className="bg-earth-500 text-white text-sm px-3 py-1">
-                      {filteredUpcomingTrips.length}
-                    </Badge>
-                  </h2>
-                  <p className="text-earth-600 text-sm mt-1">Trips to look forward to</p>
-                </div>
-              </div>
-
+            {/* On the horizon */}
+            <section className="relative" aria-labelledby="explore-section-upcoming">
+              <SectionHeader
+                id="explore-section-upcoming"
+                title="On the horizon"
+                count={filteredUpcomingTrips.length}
+              />
               {filteredUpcomingTrips.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredUpcomingTrips.map((trip, index) => (
-                    <motion.div
+                  {filteredUpcomingTrips.map((trip) => (
+                    <div
                       key={trip.trip_id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1, duration: 0.3 }}
                       onClick={() => handleTripClick(trip, 'Upcoming')}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleTripClick(trip, 'Upcoming'); }}
                     >
                       <TripCard
                         trip={{
@@ -450,63 +325,33 @@ const Explore = () => {
                         }}
                         isExample={true}
                       />
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <Card className="p-12 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-sand-200">
-                  <div className="max-w-md mx-auto">
-                    <div className="bg-sand-200 rounded-full p-4 w-20 h-20 mx-auto mb-6">
-                      <MapPin className="h-12 w-12 text-earth-600 mx-auto" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-earth-800 mb-3">
-                      Your Next Adventure Awaits
-                    </h3>
-                    <p className="text-earth-600 mb-6">
-                      Ready to explore somewhere new? Let's plan your perfect getaway.
-                    </p>
-                    <Button
-                      onClick={() => navigate(session ? '/create-trip' : '/auth')}
-                      className="px-8 py-3 rounded-xl font-medium"
-                    >
-                      {session ? 'Plan Your Trip' : 'Get Started'}
-                    </Button>
-                  </div>
-                </Card>
+                <p className="text-earth-500 text-sm">
+                  {searchQuery
+                    ? `No upcoming trips match "${searchQuery}".`
+                    : 'New itineraries appear here as they go live.'}
+                </p>
               )}
-            </motion.div>
+            </section>
 
-            {/* Past Trips Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="relative"
-            >
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-sand-200">
-                <div className="bg-sand-100 rounded-xl p-3">
-                  <Clock className="h-6 w-6 text-earth-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-earth-800 flex items-center gap-3">
-                    Travel Memories
-                    <Badge className="bg-earth-500 text-white text-sm px-3 py-1">
-                      {pastTrips.length}
-                    </Badge>
-                  </h2>
-                  <p className="text-earth-600 text-sm mt-1">Cherished adventures from the past</p>
-                </div>
-              </div>
-
+            {/* Where they've been */}
+            <section className="relative" aria-labelledby="explore-section-past">
+              <SectionHeader
+                id="explore-section-past"
+                title="Where they've been"
+                count={pastTrips.length}
+                muted
+              />
               {pastTrips.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {pastTrips.map((trip, index) => (
-                    <motion.div
+                  {pastTrips.map((trip) => (
+                    <div
                       key={trip.trip_id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05, duration: 0.3 }}
                       onClick={() => handleTripClick(trip, 'Past')}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleTripClick(trip, 'Past'); }}
                     >
                       <TripCard
                         trip={{
@@ -517,82 +362,32 @@ const Explore = () => {
                         }}
                         isExample={true}
                       />
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <Card className="p-8 text-center bg-secondary border-sand-200">
-                  <div className="max-w-sm mx-auto">
-                    <div className="bg-sand-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
-                      <Clock className="h-10 w-10 text-earth-400 mx-auto" />
-                    </div>
-                    <p className="text-earth-500 text-lg">No past adventures yet</p>
-                    <p className="text-earth-400 text-sm mt-1">Travel memories will appear here</p>
-                  </div>
-                </Card>
+                <p className="text-earth-500 text-sm">
+                  {searchQuery
+                    ? `No past trips match "${searchQuery}".`
+                    : 'Past itineraries will appear here.'}
+                </p>
               )}
-            </motion.div>
+            </section>
 
-            {/* Empty State for No Trips and No Search */}
-            {filteredUpcomingTrips.length === 0 && currentTrips.length === 0 && pastTrips.length === 0 && !searchQuery && heroState !== 'pre-trip' && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-              >
-                <Card className="p-16 text-center bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 border-sand-200 shadow-warm-xl">
-                  <div className="max-w-lg mx-auto">
-                    <div className="bg-gradient-to-br from-sunset-500 to-sunset-600 rounded-full p-6 w-28 h-28 mx-auto mb-8 shadow-warm-lg">
-                      <MapPin className="h-16 w-16 text-white mx-auto" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-earth-800 mb-4">
-                      Your Journey Begins Here
-                    </h3>
-                    <p className="text-earth-600 text-lg mb-8 leading-relaxed">
-                      Ready to explore the world? Create your first trip and let the adventures begin.
-                      From dream destinations to detailed itineraries, we'll help you plan every step.
-                    </p>
-                    <Button
-                      onClick={() => navigate(session ? '/create-trip' : '/auth')}
-                      size="lg"
-                      className="px-10 py-4 rounded-xl text-lg font-semibold shadow-warm-lg hover:shadow-warm-xl transition-all duration-300"
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      {session ? 'Create Your First Trip' : 'Get Started Free'}
-                    </Button>
-                  </div>
-                </Card>
-              </motion.div>
-            )}
-
-            {/* Search Empty State */}
-            {filteredTrips.length === 0 && searchQuery && !isLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-              >
-                <Card className="p-16 text-center bg-gradient-to-br from-sand-50 to-earth-50 border-earth-200 shadow-warm-xl">
-                  <div className="max-w-lg mx-auto">
-                    <div className="bg-earth-100 rounded-full p-6 w-28 h-28 mx-auto mb-8">
-                      <Search className="h-16 w-16 text-earth-600 mx-auto" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-earth-800 mb-4">
-                      No Trips Found
-                    </h3>
-                    <p className="text-earth-600 text-lg mb-8 leading-relaxed">
-                      We couldn't find any trips matching "{searchQuery}". Try a different search term.
-                    </p>
-                    <Button
-                      onClick={() => setSearchQuery('')}
-                      variant="outline"
-                      className="px-8 py-3 rounded-xl font-medium"
-                    >
-                      Clear Search
-                    </Button>
-                  </div>
-                </Card>
-              </motion.div>
+            {/* Search returned nothing across all sections */}
+            {searchQuery && filteredTrips.length === 0 && (
+              <div className="flex items-center justify-between gap-3 bg-sand-100 border border-sand-200 rounded-card px-4 py-3">
+                <p className="text-earth-700 text-sm">
+                  Nothing matched <span className="font-medium">&ldquo;{searchQuery}&rdquo;</span>.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-sm font-medium text-earth-700 hover:text-earth-900 underline-offset-4 hover:underline whitespace-nowrap"
+                >
+                  Clear search
+                </button>
+              </div>
             )}
           </div>
         )}

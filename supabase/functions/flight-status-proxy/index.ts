@@ -49,6 +49,7 @@ function pickLatest(scheduled: string | undefined, revised: string | undefined, 
   return revised ?? predicted ?? scheduled;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- AeroDataBox response is a sprawling, undocumented JSON shape
 function normalizeFlight(raw: any, flightIata: string, flightDate: string): FlightStatusResponse | null {
   if (!raw || !raw.departure || !raw.arrival) return null;
 

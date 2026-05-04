@@ -18,6 +18,17 @@ import { loadPdfFonts } from './pdf-fonts';
 import { supabase } from '@/integrations/supabase/client';
 import { parseISO, format as fnsFormat, isSameDay } from 'date-fns';
 import type { PdfExportOptions } from '@/components/trip/PdfExportDialog';
+import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
+import type { Tables } from '@/integrations/supabase/types';
+
+// Supabase row types for itinerary data
+type TripRow = Tables<'trips'>;
+type TripDayRow = Tables<'trip_days'>;
+type AccommodationRow = Tables<'accommodations'>;
+type TransportationRow = Tables<'transportation'>;
+type DayActivityRow = Tables<'day_activities'>;
+type ReservationRow = Tables<'reservations'>;
+type OtherExpenseRow = Tables<'other_expenses'>;
 
 /* =========================================================================
    Constants & Types
@@ -134,7 +145,7 @@ function pagePresetSettings(preset: PagePreset) {
 }
 
 function resolveStrategy(opts: PdfExportOptions): ExportStrategy {
-  const strategy = (opts as any)?.strategy as ExportStrategy | undefined;
+  const strategy = (opts as PdfExportOptions & { strategy?: ExportStrategy })?.strategy;
   if (strategy === 'open' || strategy === 'download' || strategy === 'blob') return strategy;
   return 'auto';
 }
@@ -187,7 +198,7 @@ function minsFromTime(s: string): number {
 
 function sanitizeFilename(input?: string | null): string {
   // Linear-time sanitizer (no regex backtracking)
-  let s = (input || 'itinerary').toLowerCase();
+  const s = (input || 'itinerary').toLowerCase();
   let out = '';
   let prevUnderscore = false;
 
@@ -211,7 +222,7 @@ function sanitizeFilename(input?: string | null): string {
   return out || 'itinerary';
 }
 
-function getDensityIndicator(count: number): any {
+function getDensityIndicator(count: number): Content {
   if (count >= 5) {
     return { text: ' Busy ', fontSize: 10, bold: true, color: '#FFFFFF', background: BRAND.earth, margin: [0, 0, 4, 0] };
   }
@@ -332,18 +343,18 @@ async function buildDays(
 
   // Build budget data by category
   const catMap: Record<string, number> = {};
-  (acts ?? []).forEach((a: any) => { if (a.cost) catMap['Activities'] = (catMap['Activities'] || 0) + a.cost; });
-  (stays ?? []).forEach((s: any) => { if (s.cost) catMap['Accommodations'] = (catMap['Accommodations'] || 0) + s.cost; });
-  (trans ?? []).forEach((t: any) => { if (t.cost) catMap['Transportation'] = (catMap['Transportation'] || 0) + t.cost; });
-  (dine ?? []).forEach((r: any) => { if (r.cost) catMap['Dining'] = (catMap['Dining'] || 0) + r.cost; });
-  (otherExpenses ?? []).forEach((e: any) => { if (e.cost) catMap['Other'] = (catMap['Other'] || 0) + e.cost; });
+  ((acts ?? []) as DayActivityRow[]).forEach((a) => { if (a.cost) catMap['Activities'] = (catMap['Activities'] || 0) + a.cost; });
+  ((stays ?? []) as AccommodationRow[]).forEach((s) => { if (s.cost) catMap['Accommodations'] = (catMap['Accommodations'] || 0) + s.cost; });
+  ((trans ?? []) as TransportationRow[]).forEach((t) => { if (t.cost) catMap['Transportation'] = (catMap['Transportation'] || 0) + t.cost; });
+  ((dine ?? []) as ReservationRow[]).forEach((r) => { if (r.cost) catMap['Dining'] = (catMap['Dining'] || 0) + r.cost; });
+  ((otherExpenses ?? []) as OtherExpenseRow[]).forEach((e) => { if (e.cost) catMap['Other'] = (catMap['Other'] || 0) + e.cost; });
   const categories = Object.entries(catMap).map(([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount);
   const total = categories.reduce((sum, c) => sum + c.amount, 0);
   const budgetData: BudgetData = { budget: tripRow?.budget ?? null, categories, total };
 
   // Build accommodation summary and sort by check-in date ascending
-  const staysSummary: AccommodationSummary[] = (stays ?? [])
-    .map((s: any) => ({
+  const staysSummary: AccommodationSummary[] = ((stays ?? []) as AccommodationRow[])
+    .map((s) => ({
       hotel: s.hotel || 'Hotel',
       checkIn: fmtShort(s.hotel_checkin_date),
       checkOut: fmtShort(s.hotel_checkout_date),
@@ -360,9 +371,11 @@ async function buildDays(
     });
 
   // Build transport segments
-  const transportSegments: TransportSegment[] = (trans ?? [])
-    .filter((t: any) => t.departure_location && t.arrival_location)
-    .map((t: any) => ({
+  const transportSegments: TransportSegment[] = ((trans ?? []) as TransportationRow[])
+    .filter((t): t is TransportationRow & { departure_location: string; arrival_location: string } =>
+      !!t.departure_location && !!t.arrival_location
+    )
+    .map((t) => ({
       from: t.departure_location,
       to: t.arrival_location,
       date: fmtShort(t.start_date),
@@ -371,19 +384,19 @@ async function buildDays(
     }));
 
   // Build dining references (for confirmation numbers)
-  const diningRefs: DiningRef[] = (dine ?? [])
-    .filter((r: any) => r.confirmation_number)
-    .map((r: any) => ({
+  const diningRefs: DiningRef[] = ((dine ?? []) as ReservationRow[])
+    .filter((r): r is ReservationRow & { confirmation_number: string } => !!r.confirmation_number)
+    .map((r) => ({
       restaurant: r.restaurant_name,
       confirmationNumber: r.confirmation_number,
     }));
 
-  const processedDays: Day[] = (days ?? []).map((day: any) => {
+  const processedDays: Day[] = ((days ?? []) as TripDayRow[]).map((day) => {
     const items: Item[] = [];
 
     /* accommodation ----------------------------------------------------- */
     {
-      (stays ?? []).forEach((s: any) => {
+      ((stays ?? []) as AccommodationRow[]).forEach((s) => {
         if (!s.hotel_checkin_date || !s.hotel_checkout_date) return;
 
         const dayISO = day.date;
@@ -418,7 +431,7 @@ async function buildDays(
     /* transportation ---------------------------------------------------- */
     let hasTransport = false;
     {
-      (trans ?? []).forEach((t: any) => {
+      ((trans ?? []) as TransportationRow[]).forEach((t) => {
         if (!t.start_date) return;
         if (!sameDay(String(t.start_date), String(day.date))) return;
 
@@ -450,9 +463,9 @@ async function buildDays(
 
     /* activities -------------------------------------------------------- */
     {
-      (acts ?? [])
-        .filter((a: any) => a.day_id === day.day_id)
-        .forEach((a: any) => {
+      ((acts ?? []) as DayActivityRow[])
+        .filter((a) => a.day_id === day.day_id)
+        .forEach((a) => {
           const t = fmtTime(a.start_time);
           items.push({
             type: 'activity',
@@ -467,7 +480,7 @@ async function buildDays(
 
     /* dining ------------------------------------------------------------ */
     {
-      (dine ?? []).forEach((r: any) => {
+      ((dine ?? []) as ReservationRow[]).forEach((r) => {
         // reservation_time may be ISO datetime; compare by date component
         const reservationDate = typeof r.reservation_time === 'string' && r.reservation_time.includes('T')
           ? r.reservation_time.split('T')[0]
@@ -508,7 +521,7 @@ async function buildDays(
   });
 
   // Convert item thumbs to data URLs so pdfMake can render them reliably
-  if ((o as any).showImages) {
+  if (o.showImages) {
     const jobs: Promise<void>[] = [];
     for (const d of processedDays) {
       for (const it of d.items) {
@@ -561,7 +574,7 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
     if (it.details) combinedDetails.push(it.details);
     if (it.location) combinedDetails.push(it.location);
 
-    const stack: any[] = [titleLine];
+    const stack: Content[] = [titleLine];
 
     if (combinedDetails.length) {
       stack.push({ text: combinedDetails.join(' • '), style: 'itemDetail', margin: [0, 3, 0, 0] });
@@ -595,10 +608,10 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
    Summary sections
    ========================================================================= */
 
-function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize: number): any[] {
+function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize: number): Content[] {
   if (!stays.length) return [];
 
-  const content: any[] = [{ text: "WHERE YOU'RE STAYING", style: 'summaryTitle', margin: [0, 0, 0, 8] }];
+  const content: Content[] = [{ text: "WHERE YOU'RE STAYING", style: 'summaryTitle', margin: [0, 0, 0, 8] }];
 
   const table = {
     table: {
@@ -623,10 +636,10 @@ function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize:
   return content;
 }
 
-function renderTransportSummary(transports: TransportSegment[]): any[] {
+function renderTransportSummary(transports: TransportSegment[]): Content[] {
   if (!transports.length) return [];
 
-  const content: any[] = [{ text: '✈  TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
+  const content: Content[] = [{ text: '✈  TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
 
   transports.forEach((t, idx) => {
     content.push({
@@ -639,8 +652,8 @@ function renderTransportSummary(transports: TransportSegment[]): any[] {
   return content;
 }
 
-function renderDailySummary(days: Day[]): any[] {
-  const content: any[] = [{ text: 'DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
+function renderDailySummary(days: Day[]): Content[] {
+  const content: Content[] = [{ text: 'DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
 
   days.forEach((d, idx) => {
     const density = getDensityIndicator(d.activityCount || 0);
@@ -694,13 +707,13 @@ function calculatePageFit(days: Day[], startIdx: number): number {
 /**
  * Render compact day header with inline travel marker + divider line
  */
-function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number, contentWidth: number): any {
+function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number, contentWidth: number): Content {
   const travelMarker = d.hasTransport ? ' ✈ TRAVEL DAY' : '';
   const dayText = d.title?.trim()
     ? `${fmtShort(d.date)} • ${d.title}${travelMarker}`
     : `${fmtShort(d.date)}${travelMarker}`;
 
-  const stack: any[] = [
+  const stack: Content[] = [
     {
       text: dayText,
       fontSize,
@@ -744,8 +757,8 @@ function buildActivityLevelEntries(
   moderateDays: number,
   lightDays: number,
   baseFontSize: number
-): any[] {
-  const entries: any[] = [];
+): Content[] {
+  const entries: Content[] = [];
   const levels: Array<{ count: number; label: string; color: string }> = [
     { count: busyDays, label: 'Busy (4+ activities)', color: BRAND.earth },
     { count: moderateDays, label: 'Moderate (2-3 activities)', color: BRAND.earthLight },
@@ -783,7 +796,7 @@ function computeDayStats(days: Day[]): { totalActivities: number; busyDays: numb
  * Render combined cover page with 2-column layout
  */
 function renderCombinedCoverPage(
-  trip: any,
+  trip: TripRow | null,
   dateRange: string,
   stays: AccommodationSummary[],
   transports: TransportSegment[],
@@ -792,8 +805,8 @@ function renderCombinedCoverPage(
   contentWidth: number,
   imageHeight: number,
   baseFontSize: number
-): any[] {
-  const content: any[] = [];
+): Content[] {
+  const content: Content[] = [];
 
   // Earth-toned accent bar at the top of cover
   content.push({
@@ -860,8 +873,8 @@ function renderCombinedCoverPage(
   const { totalActivities, busyDays, moderateDays, lightDays } = computeDayStats(days);
 
   // 2-column layout
-  const leftColumn: any[] = [];
-  const rightColumn: any[] = [];
+  const leftColumn: Content[] = [];
+  const rightColumn: Content[] = [];
 
   // LEFT COLUMN: Trip details + Accommodation summary
   leftColumn.push({
@@ -969,8 +982,8 @@ function renderReferenceSection(
   transports: TransportSegment[],
   diningRefs: DiningRef[],
   baseFontSize: number
-): any[] {
-  const content: any[] = [];
+): Content[] {
+  const content: Content[] = [];
 
   // Page break before reference section
   content.push({ text: '', pageBreak: 'before' });
@@ -996,7 +1009,7 @@ function renderReferenceSection(
     });
 
     stays.forEach((stay, idx) => {
-      const details: any[] = [
+      const details: Content[] = [
         { text: stay.hotel, fontSize: baseFontSize + 1, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] },
         { text: `Check-in: ${stay.checkIn}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
         { text: `Check-out: ${stay.checkOut}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] },
@@ -1084,7 +1097,7 @@ function renderReferenceSection(
     });
 
     staysWithContact.forEach((stay, idx) => {
-      const lines: any[] = [{ text: stay.hotel, fontSize: baseFontSize, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] }];
+      const lines: Content[] = [{ text: stay.hotel, fontSize: baseFontSize, bold: true, margin: [0, 0, 0, 2] as [number, number, number, number] }];
       if (stay.phone) lines.push({ text: `Phone: ${stay.phone}`, fontSize: baseFontSize - 0.5, margin: [0, 0, 0, 2] as [number, number, number, number] });
       if (stay.website) lines.push({ text: `Website: ${stay.website}`, fontSize: baseFontSize - 0.5, color: BRAND.earthLight, margin: [0, 0, 0, 2] as [number, number, number, number] });
       content.push({
@@ -1100,10 +1113,10 @@ function renderReferenceSection(
 /**
  * Render budget summary section (2c)
  */
-function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): any[] {
+function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): Content[] {
   if (budgetData.categories.length === 0) return [];
 
-  const content: any[] = [];
+  const content: Content[] = [];
 
   content.push({
     text: 'Budget Summary',
@@ -1114,7 +1127,7 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): any[
     margin: [0, 16, 0, 8] as [number, number, number, number],
   });
 
-  const tableBody: any[][] = [
+  const tableBody: TableCell[][] = [
     [
       { text: 'Category', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
       { text: 'Amount', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF', alignment: 'right' },
@@ -1167,7 +1180,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     console.log('[PDF Export] Starting export for trip:', tripId);
     console.log('[PDF Export] Options:', o);
 
-    const preset: PagePreset = ((o as any)?.pagePreset as PagePreset) || 'auto';
+    const preset: PagePreset = ((o as PdfExportOptions & { pagePreset?: PagePreset })?.pagePreset) || 'auto';
     const {
       isMobile,
       pageSize,
@@ -1225,7 +1238,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
 
     console.log('[PDF Export] Building document definition...');
     // Build document definition
-    const content: any[] = [];
+    const content: Content[] = [];
 
     // Combined cover page with 2-column layout
     content.push(
@@ -1280,7 +1293,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     // Add reference section with full details
     content.push(...renderReferenceSection(stays, transports, diningRefs, baseFontSize));
 
-    const doc: any = {
+    const doc: TDocumentDefinitions = {
       pageSize,
       pageMargins,
       defaultStyle: { fontSize: baseFontSize, lineHeight: 1.25, font: 'DMSans' },

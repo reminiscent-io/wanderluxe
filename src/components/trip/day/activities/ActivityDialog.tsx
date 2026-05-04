@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import ActivityForm from "../../ActivityForm";
 import { ActivityFormData } from "@/types/trip";
+import type { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -35,7 +36,7 @@ interface ActivityDialogProps {
   eventId?: string;
 
   // New interface (chat system)
-  initialData?: any;
+  initialData?: Partial<Tables<'day_activities'>>;
   onSuccess?: () => void;
 
   // Common props
@@ -135,7 +136,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     if (!isEditMode && preselectedDate) {
       if ((finalActivity?.date || "") !== preselectedDate) {
         const next: ActivityFormData = {
-          ...(finalActivity || ({} as any)),
+          ...(finalActivity ?? ({} as ActivityFormData)),
           date: preselectedDate,
         };
         finalOnChange(next);
@@ -244,9 +245,9 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const { toast } = await import("sonner");
-      toast.error(error?.message || "Failed to save activity");
+      toast.error(error instanceof Error ? error.message : "Failed to save activity");
     }
   };
 

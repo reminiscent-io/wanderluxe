@@ -36,11 +36,11 @@ const LocationInputPair: React.FC<LocationInputPairProps> = ({
   fromValueRef.current = fromValue;
   toValueRef.current = toValue;
 
-  const handleFromChange = useCallback((value: string, details?: any) => {
+  const handleFromChange = useCallback((value: string, _details?: google.maps.places.PlaceResult) => {
     onFromChange(value);
   }, [onFromChange]);
 
-  const handleToChange = useCallback((value: string, details?: any) => {
+  const handleToChange = useCallback((value: string, _details?: google.maps.places.PlaceResult) => {
     onToChange(value);
   }, [onToChange]);
 

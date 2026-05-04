@@ -15,10 +15,11 @@ const DEFAULT_TTL_MS = (() => {
       if (raw) v = Number(raw);
     }
     // Vite style
-    // @ts-ignore SSR-safe
-    const vite = (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_PLACE_PHOTO_CACHE_TTL_MS) || undefined;
+    const vite = typeof import.meta !== "undefined" ? import.meta.env?.VITE_PLACE_PHOTO_CACHE_TTL_MS : undefined;
     if (!v && vite) v = Number(vite);
-  } catch {}
+  } catch {
+    // env access failed; fall through to default
+  }
   return Number.isFinite(v) && v! > 0 ? v! : 1000 * 60 * 60 * 12; // 12 hours
 })();
 
@@ -54,7 +55,9 @@ export function getCachedPlacePhotos(
           return parsed.photos as PlacePhotoMeta[];
         }
       }
-    } catch {}
+    } catch {
+      // sessionStorage read failed; fall through to null
+    }
   }
   return null;
 }
@@ -65,7 +68,9 @@ export function setCachedPlacePhotos(placeId: string, photos: PlacePhotoMeta[]) 
   if (canUseSessionStorage()) {
     try {
       window.sessionStorage.setItem(KEY_PREFIX + placeId, JSON.stringify(entry));
-    } catch {}
+    } catch {
+      // sessionStorage quota or access failure; in-memory cache still active
+    }
   }
 }
 
@@ -90,7 +95,9 @@ function clearExpiredSessionEntries(ttlMs: number): void {
       if (!parsed?.ts || now - parsed.ts >= ttlMs) toRemove.push(key);
     }
     toRemove.forEach((k) => window.sessionStorage.removeItem(k));
-  } catch {}
+  } catch {
+    // best-effort sweep; ignore failures
+  }
 }
 
 /** Best-effort sweep of expired entries (no-op if storage is unavailable). */

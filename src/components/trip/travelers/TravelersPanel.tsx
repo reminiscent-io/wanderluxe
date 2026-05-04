@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
-import { useTravelers } from "@/hooks/useTravelers";
+import { useTravelers, type Traveler } from "@/hooks/useTravelers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTripPermissions } from "@/hooks/use-trip-permissions";
 import { Separator } from "@/components/ui/separator";
@@ -12,7 +12,7 @@ interface TravelersPanelProps {
   tripId: string;
   tripDestination?: string;
   onAdd: () => void;
-  onEdit: (traveler: any) => void;
+  onEdit: (traveler: Traveler) => void;
   isMobile: boolean;
   onClose: () => void;
   onBack: () => void;

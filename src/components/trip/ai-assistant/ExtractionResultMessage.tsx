@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Download, Edit3, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import ExtractedItemCard from './ExtractedItemCard';
 import type { ExtractedItem } from '@/types/ai-assistant';
 
@@ -37,17 +36,17 @@ function pluralize(count: number, singular: string): string {
 
 function EmptyState(): React.ReactElement {
   return (
-    <div className="rounded-2xl bg-sand-50 border border-sand-200 p-4">
+    <div className="rounded-2xl bg-sand-50 border border-border p-4">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sand-100 flex items-center justify-center">
-          <AlertCircle className="w-4 h-4 text-sand-500" />
+          <AlertCircle className="w-4 h-4 text-muted-foreground" />
         </div>
         <div>
-          <p className="text-sm text-earth-700">
+          <p className="text-sm text-foreground">
             I couldn't find any bookable items in this document.
           </p>
-          <p className="text-xs text-sand-500 mt-1">
-            Try uploading a clearer image or a booking confirmation with visible details.
+          <p className="text-xs text-muted-foreground mt-1">
+            Try a clearer image, or a confirmation with visible booking details.
           </p>
         </div>
       </div>
@@ -126,19 +125,19 @@ const ExtractionResultMessage: React.FC<ExtractionResultMessageProps> = ({
     : `Found ${pluralize(items.length, 'item')} in your document`;
 
   return (
-    <div className="rounded-2xl bg-sand-50 border border-sand-200 rounded-tl-sm overflow-hidden max-w-full">
+    <div className="rounded-2xl bg-sand-50 border border-border rounded-tl-sm overflow-hidden max-w-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-sand-200 bg-white">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="px-4 py-3 border-b border-border bg-background">
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex-shrink-0 w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
+            <Sparkles className="w-3.5 h-3.5 text-background" />
           </div>
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="text-sm font-medium text-earth-700 truncate">
+            <p className="text-sm font-medium text-foreground truncate tabular-nums">
               {headerText}
             </p>
-            <p className="text-xs text-sand-500 truncate">
-              {fileName && `From ${fileName} • `}{summaryParts.join(', ')}
+            <p className="text-xs leading-snug text-muted-foreground truncate">
+              {fileName && `From ${fileName} · `}{summaryParts.join(', ')}
             </p>
           </div>
         </div>
@@ -157,14 +156,12 @@ const ExtractionResultMessage: React.FC<ExtractionResultMessageProps> = ({
 
       {/* Action buttons - only show if there are pending items */}
       {pendingItems.length > 0 && (
-        <div className="px-4 py-3 border-t border-sand-200 bg-white flex flex-wrap gap-2">
+        <div className="px-4 py-3 border-t border-border bg-background flex flex-wrap gap-2">
           <Button
+            variant="default"
             onClick={handleImportAll}
             disabled={importStatus === 'importing' || isImporting}
-            className={cn(
-              'flex-1 sm:flex-none',
-              'bg-earth-500 hover:bg-earth-600 text-white'
-            )}
+            className="flex-1 sm:flex-none"
           >
             <ImportButtonContent
               importStatus={importStatus}
@@ -180,14 +177,14 @@ const ExtractionResultMessage: React.FC<ExtractionResultMessageProps> = ({
             className="flex-1 sm:flex-none"
           >
             <Edit3 className="w-4 h-4 mr-2" />
-            Review & Edit
+            Review & edit
           </Button>
         </div>
       )}
 
       {/* Success state */}
       {allProcessed && (
-        <div className="px-4 py-3 border-t border-sand-200 bg-green-50">
+        <div className="px-4 py-3 border-t border-border bg-green-50">
           <div className="flex items-center gap-2 text-sm text-green-700">
             <Check className="w-4 h-4" />
             <span>All items have been processed</span>

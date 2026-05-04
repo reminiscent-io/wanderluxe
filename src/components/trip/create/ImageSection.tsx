@@ -103,7 +103,7 @@ const ImageSection: React.FC<ImageSectionProps> = ({
     <div className="space-y-2">
       <Label className="text-sm font-medium text-earth-700">Cover Image</Label>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'unsplash' | 'upload')} className="w-full">
         <TabsList className="grid grid-cols-2 w-full">
           <TabsTrigger value="unsplash">Unsplash</TabsTrigger>
           <TabsTrigger value="upload">Upload</TabsTrigger>

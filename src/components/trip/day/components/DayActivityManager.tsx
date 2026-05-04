@@ -76,7 +76,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         ? parseFloat(updatedActivity.cost)
         : null;
 
-      const updatedData: Record<string, any> = {
+      const updatedData: Record<string, unknown> = {
         title: updatedActivity.title.trim(),
         description: updatedActivity.description?.trim() || null,
         start_time: updatedActivity.start_time?.trim() || null,

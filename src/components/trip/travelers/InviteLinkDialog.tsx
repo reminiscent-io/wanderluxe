@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 interface InviteLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onGenerate: (params: { permissionLevel: 'read' | 'edit'; neverExpires: boolean }) => Promise<any>;
+  onGenerate: (params: { permissionLevel: 'read' | 'edit'; neverExpires: boolean }) => Promise<{ invite_code: string }>;
   creating: boolean;
   tripDestination: string;
 }
@@ -73,9 +73,9 @@ export default function InviteLinkDialog({
           text: preamble,
           url: generatedUrl,
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         // User cancelled share — ignore AbortError
-        if (err?.name !== 'AbortError') {
+        if (!(err instanceof Error) || err.name !== 'AbortError') {
           handleCopy();
         }
       }

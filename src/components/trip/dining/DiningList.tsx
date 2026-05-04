@@ -67,11 +67,11 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
 
     /* ---------- save (insert / update) ---------- */
     const handleSave = useCallback(
-      async (raw: any) => {
+      async (raw: Record<string, unknown> & { day_id?: string; order_index?: number; reservation_time?: string | null }) => {
         setIsSubmitting(true);
 
         // Use the day_id from the form data (already looked up in RestaurantReservationForm)
-        let targetDayId = raw.day_id || dayId;
+        const targetDayId = raw.day_id || dayId;
 
         const payload = {
           ...raw,

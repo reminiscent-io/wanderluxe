@@ -22,9 +22,8 @@ export const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | nul
     typeof process !== "undefined"
       ? (process.env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined)
       : undefined;
-  // @ts-ignore SSR-safe check (Vite)
   const viteKey: string | undefined =
-    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY) || undefined;
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_MAPS_API_KEY) || undefined;
   const key = nextKey || viteKey;
 
   if (key && p?.photo_reference) {

@@ -555,7 +555,7 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { isMobile, state, setOpenMobile } = useSidebar()
 
-    const handleClick = (event: React.MouseEvent<any>) => {
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
       onClick?.(event)
       // Close sidebar on mobile when clicking a menu item
       if (isMobile) {

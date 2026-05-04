@@ -39,9 +39,16 @@ export interface AutocompleteResult {
   };
 }
 
+type Prediction = {
+  place_id: string;
+  description: string;
+  structured_formatting?: { main_text?: string; secondary_text?: string };
+  terms?: { value: string; offset: number }[];
+};
+
 interface GooglePlacesResponse {
   status: string;
-  predictions?: any[];
+  predictions?: Prediction[];
   result?: PlaceResult;
 }
 
@@ -57,14 +64,11 @@ function getSupabaseBaseUrl(): string | null {
       : undefined;
 
   // Vite env (public)
-  // @ts-ignore runtime check for Vite
   const viteUrl =
-    typeof import.meta !== "undefined"
-      ? ((import.meta as any)?.env?.VITE_SUPABASE_URL as string | undefined)
-      : undefined;
+    typeof import.meta !== "undefined" ? import.meta.env?.VITE_SUPABASE_URL : undefined;
 
   // Fallback to whatever the Supabase client was initialized with (not officially typed but present)
-  const clientUrl = (supabase as any)?.supabaseUrl as string | undefined;
+  const clientUrl = (supabase as unknown as { supabaseUrl?: string })?.supabaseUrl;
 
   return nextUrl || viteUrl || clientUrl || null;
 }
@@ -128,7 +132,7 @@ export async function searchPlaces(
     if (!res.ok) throw new Error(json as unknown as string);
 
     const predictions = Array.isArray(json.predictions) ? json.predictions : [];
-    return predictions.map((p: any) => ({
+    return predictions.map((p: Prediction) => ({
       place_id: p.place_id,
       description: p.description,
       structured_formatting: {
@@ -139,7 +143,7 @@ export async function searchPlaces(
         secondary_text:
           p.structured_formatting?.secondary_text ??
           (Array.isArray(p.terms) && p.terms.length > 1
-            ? p.terms.slice(1).map((t: any) => t.value).join(", ")
+            ? p.terms.slice(1).map((t) => t.value).join(", ")
             : ""),
       },
     }));
@@ -187,7 +191,7 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceResult | nu
     });
 
     const json: GooglePlacesResponse = await res.json();
-    if (!res.ok) throw new Error((json as any)?.error || "Place details failed");
+    if (!res.ok) throw new Error((json as { error?: string })?.error || "Place details failed");
 
     return (json.result ?? null) as PlaceResult | null;
   } catch (error) {

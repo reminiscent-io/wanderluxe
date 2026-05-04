@@ -35,6 +35,7 @@ import {
   getConnectedContacts,
   contactsByEmail,
   pickBestName,
+  type ConnectedContact,
 } from "@/services/contactsService";
 
 interface ShareTripDialogProps {
@@ -73,8 +74,8 @@ const ShareTripDialog = ({
 
   // contacts + suggestions
   const [previousEmails, setPreviousEmails] = useState<string[]>([]);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [contactsMap, setContactsMap] = useState<Record<string, any>>({});
+  const [contacts, setContacts] = useState<ConnectedContact[]>([]);
+  const [contactsMap, setContactsMap] = useState<Record<string, ConnectedContact>>({});
   const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
 
   // Get the signed-in user (trip owner in this dialog’s context):contentReference[oaicite:2]{index=2}

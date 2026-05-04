@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ExtractedItem, TravelItemType } from '@/types/ai-assistant';
+import type { Database } from '@/integrations/supabase/types/database';
 
 // Helper to normalize time format
 const toDbTime = (t?: string | null): string | null =>
@@ -60,9 +61,9 @@ async function wrapImport(label: string, fn: () => Promise<void>): Promise<Impor
   try {
     await fn();
     return { success: true };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(`Failed to import ${label}:`, e);
-    return { success: false, error: e?.message || `Failed to import ${label}` };
+    return { success: false, error: e instanceof Error ? e.message : `Failed to import ${label}` };
   }
 }
 
@@ -76,7 +77,7 @@ async function importTransportation(
       .from('transportation')
       .insert({
         trip_id: tripId,
-        type: normalizeTransportType((fields.type as string) || 'flight') as any,
+        type: normalizeTransportType((fields.type as string) || 'flight') as Database['public']['Enums']['transportation_type'],
         provider: strField(fields, 'carrier') || null,
         departure_location: strField(fields, 'departure_location') || null,
         arrival_location: strField(fields, 'arrival_location') || null,

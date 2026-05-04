@@ -2,54 +2,37 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navigation from "../components/Navigation";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import TripCard from '../components/trip/TripCard';
 import { toast } from 'sonner';
 import { Trip } from '@/types/trip';
+
+// Trip annotated with sharing metadata when surfaced through getSharedTrips.
+type EnrichedTrip = Trip & {
+  isShared: boolean;
+  shareId?: string;
+  share_status?: 'pending' | 'accepted';
+  sharedById?: string;
+  owner_name?: string | null;
+  owner_email?: string | null;
+  shareCount?: number;
+};
 import { useAuth } from "@/contexts/AuthContext";
 import { acceptTripShare, getSharedTrips, removeTripShare } from '@/services/tripSharingService';
-import { Search, Share2, EyeOff } from 'lucide-react';
+import { Share2, EyeOff } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 
 import { ActiveTripCard, NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
-import { MonthlyActivityChart } from '@/components/trip/stats';
 import { useTravelStats } from '@/hooks/useTravelStats';
 import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
-import { cn } from '@/lib/utils';
-
-interface FilterChipProps {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  count: number;
-  icon?: React.ReactNode;
-}
-
-function FilterChip({ active, onClick, label, count, icon }: FilterChipProps) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors",
-        active
-          ? "bg-earth-600 text-white"
-          : "bg-white text-earth-600 border border-earth-200 hover:bg-sand-100"
-      )}
-    >
-      {icon}
-      <span>{label}</span>
-      <span className={cn("text-xs tabular-nums", active ? "opacity-70" : "text-earth-400")}>
-        {count}
-      </span>
-    </button>
-  );
-}
+import {
+  FilterChip,
+  SectionHeader,
+  TripSearch,
+  TravelYearSection,
+} from '@/components/trip/dashboard';
 
 const MyTrips = () => {
   const navigate = useNavigate();
@@ -71,38 +54,34 @@ const MyTrips = () => {
   const { data: myTrips, isLoading: isLoadingMyTrips } = useQuery({
     queryKey: ['my-trips', showHidden],
     queryFn: async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-        if (!user) {
-          throw new Error('No user found');
-        }
-
-        // First get trips
-        const { data: tripsData, error: tripsError } = await supabase
-          .from('trips')
-          .select(`*`)
-          .eq('user_id', user.id)
-          .eq('hidden', showHidden)
-          .eq('is_public', false)
-          .order('arrival_date', { ascending: true });
-
-        if (tripsError) {
-          throw tripsError;
-        }
-        
-        if (!tripsData || tripsData.length === 0) {
-          return [] as Trip[];
-        }
-
-        return tripsData.map(trip => ({
-          ...trip,
-          isShared: false,
-          shareCount: 0
-        }));
-      } catch (error) {
-        throw error;
+      if (!user) {
+        throw new Error('No user found');
       }
+
+      // First get trips
+      const { data: tripsData, error: tripsError } = await supabase
+        .from('trips')
+        .select(`*`)
+        .eq('user_id', user.id)
+        .eq('hidden', showHidden)
+        .eq('is_public', false)
+        .order('arrival_date', { ascending: true });
+
+      if (tripsError) {
+        throw tripsError;
+      }
+
+      if (!tripsData || tripsData.length === 0) {
+        return [] as Trip[];
+      }
+
+      return tripsData.map(trip => ({
+        ...trip,
+        isShared: false,
+        shareCount: 0
+      }));
     },
     enabled: !!session // Only run query if user is authenticated
   });
@@ -142,7 +121,7 @@ const MyTrips = () => {
         ...share.trips,
         isShared: true,
         shareId: share.id,
-        share_status: (share as any).share_status ?? 'accepted',
+        share_status: share.share_status ?? 'accepted',
         sharedById: share.shared_by_user_id,
         owner_name: share.owner_name || null,
         owner_email: share.owner_email || null
@@ -381,9 +360,9 @@ const MyTrips = () => {
               daysUntil={daysUntilNextTrip!}
               onViewTrip={() => navigate(`/trip/${nextTrip.trip_id}`)}
               className="-mx-4 rounded-none md:mx-0 md:rounded-2xl"
-              isPendingInvite={(nextTrip as any).isShared && (nextTrip as any).share_status === 'pending'}
-              shareId={(nextTrip as any).shareId}
-              ownerName={(nextTrip as any).owner_name}
+              isPendingInvite={(nextTrip as EnrichedTrip).isShared && (nextTrip as EnrichedTrip).share_status === 'pending'}
+              shareId={(nextTrip as EnrichedTrip).shareId}
+              ownerName={(nextTrip as EnrichedTrip).owner_name ?? undefined}
               onAcceptInvite={handleAcceptSharedTrip}
               onDeclineInvite={handleLeaveSharedTrip}
             />
@@ -398,27 +377,12 @@ const MyTrips = () => {
 
         {/* Travel Year — sits below the hero, above the action layer */}
         {(myTrips?.length || sharedTrips?.length) ? (
-          <section className="mb-10" aria-labelledby="travel-year-heading">
-            <h2 id="travel-year-heading" className="font-display text-2xl md:text-3xl text-earth-800 mb-4">
-              Your travel year
-            </h2>
-            <MonthlyActivityChart data={travelStats.dailyActivity} />
-          </section>
+          <TravelYearSection data={travelStats.dailyActivity} />
         ) : null}
 
         {/* Search */}
         <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-earth-400 h-4 w-4" />
-            <Input
-              type="search"
-              placeholder="Search destinations, dates..."
-              aria-label="Search trips"
-              className="pl-10 pr-4 py-3 bg-white border-earth-200 focus:border-earth-400 focus:ring-earth-400 rounded-card shadow-warm-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <TripSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
         
         {/* Filter Chips */}
@@ -475,10 +439,12 @@ const MyTrips = () => {
             {/* Current Trips Section */}
             {currentTrips.length > 0 && (
               <section className="relative" aria-labelledby="section-current">
-                <header className="mb-6 flex items-baseline gap-3">
-                  <h2 id="section-current" className="font-display text-3xl md:text-4xl text-earth-800">Currently traveling</h2>
-                  <span className="text-emerald-600 text-base font-medium tabular-nums">{currentTrips.length}</span>
-                </header>
+                <SectionHeader
+                  id="section-current"
+                  title="Currently traveling"
+                  count={currentTrips.length}
+                  countClassName="text-emerald-600"
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {currentTrips.map((trip) => (
@@ -502,10 +468,11 @@ const MyTrips = () => {
 
             {/* Upcoming Trips Section */}
             <section className="relative" aria-labelledby="section-upcoming">
-              <header className="mb-6 flex items-baseline gap-3">
-                <h2 id="section-upcoming" className="font-display text-3xl md:text-4xl text-earth-800">On the horizon</h2>
-                <span className="text-earth-400 text-base font-medium tabular-nums">{filteredUpcomingTrips.length}</span>
-              </header>
+              <SectionHeader
+                id="section-upcoming"
+                title="On the horizon"
+                count={filteredUpcomingTrips.length}
+              />
 
               {filteredUpcomingTrips.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -536,10 +503,12 @@ const MyTrips = () => {
 
             {/* Past Trips Section */}
             <section className="relative" aria-labelledby="section-past">
-              <header className="mb-6 flex items-baseline gap-3">
-                <h2 id="section-past" className="font-display text-3xl md:text-4xl text-earth-600">Where you've been</h2>
-                <span className="text-earth-400 text-base font-medium tabular-nums">{pastTrips.length}</span>
-              </header>
+              <SectionHeader
+                id="section-past"
+                title="Where you've been"
+                count={pastTrips.length}
+                muted
+              />
 
               {pastTrips.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

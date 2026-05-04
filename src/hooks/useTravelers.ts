@@ -55,12 +55,12 @@ export function useTravelers(tripId: string) {
         first_name: traveler.first_name || 'Traveler',
         last_name: traveler.last_name || '',
         shared_with_email: traveler.shared_with_email,
-        shared_with_user_id: (traveler as any).shared_with_user_id || null,
-        permission_level: (traveler as any).permission_level || 'read',
+        shared_with_user_id: traveler.shared_with_user_id || null,
+        permission_level: traveler.permission_level === 'edit' ? 'edit' : 'read',
         created_at: traveler.created_at,
         is_owner: traveler.is_owner || false,
-        avatar_url: (traveler as any).avatar_url || null,
-      } as Traveler));
+        avatar_url: traveler.avatar_url || null,
+      } satisfies Traveler));
     },
     enabled: !!tripId,
   });

@@ -30,7 +30,7 @@ export const useBudgetMutations = (tripId: string) => {
       const previousExpenses = queryClient.getQueryData(['expenses', tripId]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['expenses', tripId], (old: any) => {
+      queryClient.setQueryData(['expenses', tripId], (old: { items?: unknown[] } | undefined) => {
         if (!old) return old;
         
         const optimisticExpense = {

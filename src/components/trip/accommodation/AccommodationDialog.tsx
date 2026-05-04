@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Tables } from "@/integrations/supabase/types";
+import type { AccommodationFormData } from "@/services/accommodation/accommodationService";
 import AccommodationForm from "./AccommodationForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -57,7 +58,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     if (open) fetchTripDates();
   }, [tripId, open]);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: AccommodationFormData) => {
     try {
       const basePayload = {
         hotel: data.hotel,

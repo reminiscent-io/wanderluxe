@@ -8,6 +8,13 @@ import ActivitiesPanel from "@/components/trip/day/activities/ActivitiesPanel";
 import ReservationsPanel from "@/components/trip/dining/ReservationsPanel";
 import TripDatesPanel from "@/components/trip/timeline/TripDatesPanel";
 import TravelersPanel from "@/components/trip/travelers/TravelersPanel";
+import type { Tables } from "@/integrations/supabase/types";
+import type { TravelerWithMeta } from "@/services/travelers";
+
+type AccommodationRow = Tables<'accommodations'>;
+type TransportationRow = Tables<'transportation'>;
+type DayActivityRow = Tables<'day_activities'> & { trip_days?: { date: string } | null };
+type ReservationRow = Tables<'reservations'> & { trip_days?: { date: string } | null };
 
 /* --- tiny media-query hook ------------------------------------------------ */
 function useMediaQuery(q: string) {
@@ -31,22 +38,22 @@ interface SecondaryPanelProps {
   onBack: () => void;   // ←
   canEdit?: boolean;
 
-  accommodations: any[];
-  transportation: any[];
-  activities: any[];
-  reservations: any[];
+  accommodations: AccommodationRow[];
+  transportation: TransportationRow[];
+  activities: DayActivityRow[];
+  reservations: ReservationRow[];
   trip: { arrival_date: string; departure_date: string; id: string; destination?: string } | null;
 
   onAccommodationAdd: () => void;
-  onAccommodationEdit: (a: any) => void;
+  onAccommodationEdit: (a: AccommodationRow) => void;
   onTransportationAdd: () => void;
-  onTransportationEdit: (t: any) => void;
+  onTransportationEdit: (t: TransportationRow) => void;
   onActivityAdd: () => void;
-  onActivityEdit: (a: any) => void;
+  onActivityEdit: (a: DayActivityRow) => void;
   onReservationAdd: () => void;
-  onReservationEdit: (r: any) => void;
+  onReservationEdit: (r: ReservationRow) => void;
   onTravelerAdd: () => void;
-  onTravelerEdit: (t: any) => void;
+  onTravelerEdit: (t: TravelerWithMeta) => void;
   onEditDates: () => void;
 }
 

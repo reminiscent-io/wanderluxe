@@ -82,11 +82,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = (message.trim().length > 0 || attachment) && !disabled && !isSending;
 
   return (
-    <div className="border-t border-sand-200 bg-background px-3 py-2">
+    <div className="border-t border-border bg-background px-3 py-2.5">
       {/* Attachment preview */}
       {attachment && (
         <div className="mb-2 relative inline-block">
-          <div className="relative rounded-lg overflow-hidden border border-sand-200 bg-background shadow-warm-sm">
+          <div className="relative rounded-md overflow-hidden border border-border bg-background shadow-warm-sm">
             <img
               src={attachment.previewUrl}
               alt="Attachment preview"
@@ -96,7 +96,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               type="button"
               onClick={handleRemoveAttachment}
               disabled={disabled || isSending}
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-white border border-sand-200 shadow-warm-sm hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-sand-500"
+              className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-background border border-border shadow-warm-sm hover:text-red-600 flex items-center justify-center text-muted-foreground transition-colors"
             >
               <span className="sr-only">Remove</span>
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,7 +104,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               </svg>
             </button>
             {attachment.isConverted && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1.5 py-0.5 flex items-center gap-1">
+              <div className="absolute bottom-0 left-0 right-0 bg-foreground/70 text-background text-[10px] px-1.5 py-0.5 flex items-center gap-1">
                 <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -115,7 +115,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-end gap-2">
         {/* Attachment button */}
         <ChatFileAttachmentComponent
           attachment={attachment}
@@ -131,7 +131,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onFocus={handleFocus}
-            placeholder={attachment ? 'Add a message (optional)...' : placeholder}
+            placeholder={attachment ? 'Add a message (optional)…' : placeholder}
             disabled={disabled || isSending}
             rows={1}
             autoComplete="off"
@@ -139,9 +139,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
             spellCheck="true"
             enterKeyHint="send"
             className={cn(
-              'w-full resize-none rounded-xl border border-sand-200 bg-sand-50',
-              'px-4 py-2.5 text-base md:text-sm text-earth-700 placeholder:text-sand-400',
-              'focus:outline-none focus:ring-2 focus:ring-earth-500/20 focus:border-earth-500',
+              'w-full resize-none rounded-md border border-border bg-sand-50/60',
+              'px-3.5 py-2.5 text-base md:text-sm text-foreground placeholder:text-muted-foreground/70',
+              'focus:outline-none focus:ring-2 focus:ring-earth-500/30 focus:border-earth-500/60',
               'transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
               'max-h-[120px] overflow-y-auto'
             )}
@@ -151,13 +151,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
           type="button"
           onClick={handleSend}
           disabled={!canSend}
+          variant="default"
           size="icon"
-          className={cn(
-            'h-10 w-10 rounded-xl flex-shrink-0 transition-all',
-            canSend
-              ? 'bg-earth-500 hover:bg-earth-600 text-white'
-              : 'bg-sand-100 text-sand-400 cursor-not-allowed'
-          )}
+          className="h-10 w-10 rounded-md flex-shrink-0"
         >
           {isSending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -166,8 +162,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
           )}
         </Button>
       </div>
-      <p className="text-xs text-sand-400 mt-2 px-1 hidden sm:block">
-        {attachment ? 'Press Enter to extract items from document' : 'Press Enter to send, Shift+Enter for new line'}
+      <p className="text-xs text-muted-foreground mt-2 px-1 hidden sm:block">
+        {attachment ? 'Press Enter to extract items from this document' : 'Press Enter to send, Shift+Enter for a new line'}
       </p>
     </div>
   );

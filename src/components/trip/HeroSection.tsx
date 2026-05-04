@@ -137,7 +137,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           primary_destination: editedPrimaryDestination || null,
           primary_destination_place_id: editedPrimaryDestinationPlaceId || null,
           cover_image_position: imagePosition,
-        } as any)
+        })
         .eq('trip_id', tripId)
         .select()
         .maybeSingle();

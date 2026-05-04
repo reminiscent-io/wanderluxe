@@ -52,7 +52,7 @@ const ImageGenerationSection: React.FC<ImageGenerationSectionProps> = ({
       }
 
       // Add unique IDs to images
-      setImages(response.images.map((img: any) => ({
+      setImages(response.images.map((img: { url: string }) => ({
         id: crypto.randomUUID(),
         url: img.url
       })));

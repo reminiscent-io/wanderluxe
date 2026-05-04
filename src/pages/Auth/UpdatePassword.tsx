@@ -74,11 +74,11 @@ const UpdatePassword = () => {
         description: "You can now access your trips.",
       });
       navigate("/my-trips");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Unable to update password",
-        description: err.message ?? "Please try again.",
+        description: err instanceof Error ? err.message : "Please try again.",
         className: "bg-earth-100/50 border-destructive",
       });
     } finally {

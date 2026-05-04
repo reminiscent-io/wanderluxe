@@ -29,7 +29,7 @@ export function useTransportationEvents(tripId: string) {
       }
       return (data || []).map(item => ({
         ...item,
-        is_paid: (item as any).is_paid ?? false,
+        is_paid: (item as { is_paid?: boolean }).is_paid ?? false,
       })) as Transportation[];
     },
     enabled: !!tripId,

@@ -12,7 +12,6 @@ import ChatInput from './ChatInput';
 import PromptChips from './PromptChips';
 import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
-import ExtractionResultMessage from './ExtractionResultMessage';
 import ItemStepperDialog from './ItemStepperDialog';
 import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem, PlaceCard } from '@/types/ai-assistant';
 
@@ -207,9 +206,10 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
         toast.error(`Failed to import ${result.failedCount} item${result.failedCount !== 1 ? 's' : ''}`);
         throw new Error(`Failed to import ${result.failedCount} item(s)`);
       }
-    } catch (e: any) {
-      if (!e?.message?.includes('Failed to import')) {
-        toast.error(e?.message || 'Failed to import items');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (!message.includes('Failed to import')) {
+        toast.error(message || 'Failed to import items');
       }
       throw e;
     } finally {
@@ -246,8 +246,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
         },
         duration: 5000,
       });
-    } catch (e: any) {
-      toast.error(e?.message || 'Could not add this recommendation');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not add this recommendation');
       throw e;
     }
   }, [tripId, invalidateTripQueries]);
@@ -282,35 +282,33 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
 
   return (
     <>
-      <div className="flex flex-col h-full bg-background rounded-lg shadow-warm-sm border border-sand-200 overflow-hidden">
+      <div className="flex flex-col h-full bg-background rounded-card shadow-warm-sm border border-border overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-sand-200 bg-gradient-to-r from-sand-50 to-white">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-sand-50/60">
+          <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+              <Sparkles className="w-4 h-4 text-background" />
             </div>
             <div>
-              <h3 className="font-display font-semibold text-earth-700 text-sm">Trip Assistant</h3>
-              <p className="text-xs text-sand-500">AI-powered travel help & import</p>
+              <h3 className="font-display text-base leading-none tracking-tight text-foreground">Trip Assistant</h3>
+              <p className="text-xs leading-snug text-muted-foreground mt-1">Chat, plan, and lift bookings into your trip</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            {/* Collapse toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="h-8 w-8 p-0 text-sand-400 hover:text-earth-600"
-              title={isCollapsed ? 'Expand' : 'Collapse'}
-            >
-              {isCollapsed ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            title={isCollapsed ? 'Expand' : 'Collapse'}
+            aria-label={isCollapsed ? 'Expand assistant' : 'Collapse assistant'}
+          >
+            {isCollapsed ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </Button>
         </div>
 
         {/* Collapsible content */}

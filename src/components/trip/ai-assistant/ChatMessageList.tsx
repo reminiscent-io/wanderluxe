@@ -162,18 +162,23 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     return (
       <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
         {loadHistoryControl}
-        <div className="flex-1 flex flex-col items-center justify-center px-5 py-4 gap-5">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="w-10 h-10 rounded-full bg-sand-100 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center px-5 py-6 gap-6">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="w-12 h-12 rounded-full bg-sand-100 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-earth-500" />
             </div>
-            <p className="text-sm text-sand-500 max-w-[260px]">
-              Ask me anything about your trip — recommendations, scheduling, packing tips, and more.
-            </p>
+            <div className="space-y-1.5 max-w-[280px]">
+              <p className="font-display text-lg text-foreground leading-tight tracking-tight">
+                What can I help you plan?
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Recommendations, scheduling, packing tips, or paste a confirmation to add it to your trip.
+              </p>
+            </div>
           </div>
           {emptyStateSlot}
-          <p className="text-[11px] text-sand-400 max-w-[280px] text-center leading-relaxed">
-            Your trip details are shared with Google's Gemini API to provide personalized recommendations. Messages are not used to train AI models.
+          <p className="text-xs text-muted-foreground/80 max-w-[280px] text-center leading-relaxed">
+            Trip details are shared with Google Gemini to personalize recommendations. Messages are never used to train AI models.
           </p>
         </div>
       </div>
@@ -241,7 +246,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sand-100 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-earth-600" />
           </div>
-          <div className="bg-sand-50 border border-sand-200 rounded-2xl rounded-tl-sm px-4 py-3">
+          <div className="bg-sand-50 border border-border rounded-2xl rounded-tl-sm px-4 py-3">
             <div className="flex gap-1">
               <span className="w-2 h-2 bg-earth-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-2 h-2 bg-earth-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

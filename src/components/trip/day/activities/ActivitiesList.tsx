@@ -3,21 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ActivityItem from './ActivityItem';
 
+type ActivitySummary = {
+  id: string;
+  day_id: string;
+  title: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  cost?: number;
+  currency?: string;
+  order_index: number;
+  created_at: string;
+};
+
 interface ActivitiesListProps {
-  activities: Array<{
-    id: string;
-    day_id: string;
-    title: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-    cost?: number;
-    currency?: string;
-    order_index: number;
-    created_at: string;
-  }>;
+  activities: ActivitySummary[];
   onAddActivity: () => void;
-  onEditActivity: (activity: any) => void;  // Accept the full activity
+  onEditActivity: (activity: ActivitySummary) => void;
   formatTime: (time?: string) => string;
 }
 
