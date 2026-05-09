@@ -124,7 +124,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-sand-400">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span className="text-sm">Loading conversation...</span>
+          <span className="text-sm tracking-tight">Loading conversation…</span>
         </div>
       </div>
     );
@@ -167,10 +167,10 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
             <div className="w-12 h-12 rounded-full bg-sand-100 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-earth-500" />
             </div>
-            <div className="space-y-1.5 max-w-[280px]">
-              <p className="font-display text-lg text-foreground leading-tight tracking-tight">
+            <div className="space-y-2 max-w-[300px]">
+              <h2 className="font-display text-2xl text-foreground leading-[1.15] tracking-tight">
                 What can I help you plan?
-              </p>
+              </h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Recommendations, scheduling, packing tips, or paste a confirmation to add it to your trip.
               </p>

@@ -70,7 +70,7 @@ const PromptChips: React.FC<PromptChipsProps> = ({ onSelect, disabled = false })
             size="sm"
             onClick={() => onSelect(chip.prompt)}
             disabled={disabled}
-            className="h-8 px-3 text-xs bg-background border-border text-earth-600 hover:bg-sand-50 hover:border-earth-300 hover:text-foreground rounded-full transition-colors"
+            className="h-8 px-3.5 text-[13px] tracking-tight bg-background border-border text-earth-600 hover:bg-sand-50 hover:border-earth-300 hover:text-foreground rounded-full transition-colors"
           >
             <Icon className="w-3.5 h-3.5 mr-1.5" />
             {chip.label}

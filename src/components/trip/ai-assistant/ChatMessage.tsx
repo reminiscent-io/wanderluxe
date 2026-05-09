@@ -16,22 +16,23 @@ import type { AIChatMessage, ExtractedItem, PlaceCard } from '@/types/ai-assista
 // every ChatMessage render. safeHref() runs at render time on every link to
 // strip AI-authored URLs that don't pass validation (see chatUrlSafety.ts).
 //
-// Scale is tuned for chat bubbles (14px body): two-step heading rhythm
-// (serif at base, semibold sans for sub-headings), tonal warm code/quote
-// containers, and quiet links that break at word boundaries — never mid-word.
+// Scale is tuned for chat bubbles (14px body) with a real four-step ramp:
+// serif at 18 / 16 carries narrative headings, sans-semibold takes over at
+// 14 / 12 for sub-points and label-style eyebrows. Links break at word
+// boundaries, code/quote containers stay warm and tonal.
 const markdownComponents: Components = {
-  // Headings — tight bubble-aware scale, serif for h1–h3
+  // Headings — serif for h1/h2 (narrative weight), sans semibold for h3/h4
   h1: ({ ...props }) => (
-    <h1 className="font-display text-base leading-snug tracking-tight text-foreground mt-3 mb-1.5 first:mt-0" {...props} />
+    <h1 className="font-display text-lg leading-tight tracking-tight text-foreground mt-3 mb-1.5 first:mt-0" {...props} />
   ),
   h2: ({ ...props }) => (
     <h2 className="font-display text-base leading-snug tracking-tight text-foreground mt-3 mb-1.5 first:mt-0" {...props} />
   ),
   h3: ({ ...props }) => (
-    <h3 className="font-display text-sm leading-snug tracking-tight text-foreground mt-2.5 mb-1 first:mt-0" {...props} />
+    <h3 className="font-sans font-semibold text-sm leading-snug tracking-tight text-foreground mt-2.5 mb-1 first:mt-0" {...props} />
   ),
   h4: ({ ...props }) => (
-    <h4 className="font-semibold text-sm leading-snug text-foreground mt-2.5 mb-1 first:mt-0" {...props} />
+    <h4 className="font-sans font-semibold text-xs uppercase tracking-[0.06em] text-muted-foreground mt-2.5 mb-1 first:mt-0" {...props} />
   ),
 
   // Paragraphs — preserve rhythm even without prose plugin
@@ -90,10 +91,11 @@ const markdownComponents: Components = {
     </pre>
   ),
 
-  // Blockquote — tonal aside, no side stripe (DESIGN.md absolute ban)
+  // Blockquote — tonal aside, italic for editorial voice contrast,
+  // no side stripe (DESIGN.md absolute ban)
   blockquote: ({ ...props }) => (
     <blockquote
-      className="my-2 rounded-md bg-sand-100/60 px-3 py-2 text-foreground/90 [&>p]:mb-0"
+      className="my-2 rounded-md bg-sand-100/60 px-3 py-2 italic text-foreground/90 [&>p]:mb-0"
       {...props}
     />
   ),
@@ -103,17 +105,18 @@ const markdownComponents: Components = {
     <hr className="my-3 border-0 border-t border-border" {...props} />
   ),
 
-  // Tables — warm chrome, full row dividers
+  // Tables — warm chrome, full row dividers, tabular figures so numeric
+  // columns align cleanly when the AI returns prices, durations, or counts
   table: ({ ...props }) => (
     <div className="my-2 -mx-1 overflow-x-auto">
-      <table className="w-full text-xs" {...props} />
+      <table className="w-full text-xs tabular-nums" {...props} />
     </div>
   ),
   thead: ({ ...props }) => (
     <thead className="border-b border-border" {...props} />
   ),
   th: ({ ...props }) => (
-    <th className="text-left font-semibold text-foreground px-2 py-1.5" {...props} />
+    <th className="text-left font-semibold text-foreground px-2 py-1.5 tracking-tight normal-nums" {...props} />
   ),
   td: ({ ...props }) => (
     <td className="align-top px-2 py-1.5 border-b border-border/50 last:border-b-0" {...props} />
@@ -235,7 +238,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         {isUser ? (
           <div
             className={cn(
-              'rounded-2xl px-4 py-2.5 text-sm overflow-hidden',
+              'rounded-2xl px-4 py-2.5 text-sm leading-relaxed overflow-hidden',
               'bg-earth-500 text-background rounded-tr-sm'
             )}
           >

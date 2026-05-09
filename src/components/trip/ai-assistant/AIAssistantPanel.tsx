@@ -290,8 +290,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
               <Sparkles className="w-4 h-4 text-background" />
             </div>
             <div>
-              <h3 className="font-display text-base leading-none tracking-tight text-foreground">Trip Assistant</h3>
-              <p className="text-xs leading-snug text-muted-foreground mt-1">Chat, plan, and lift bookings into your trip</p>
+              <h3 className="font-display text-[17px] leading-tight tracking-tight text-foreground">Trip Assistant</h3>
+              <p className="text-[13px] leading-snug text-muted-foreground mt-0.5">Chat, plan, and lift bookings into your trip</p>
             </div>
           </div>
 
