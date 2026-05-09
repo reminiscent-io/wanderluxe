@@ -30,6 +30,9 @@ export type PlaceCard = {
   booking_url?: string;
   blurb?: string;
   tags?: string[];
+  // Marks the card as a hotel/stay. Lets the client offer Expedia booking
+  // independently of `suggested_add` (which requires explicit dates).
+  is_stay?: boolean;
   suggested_add?: {
     itemType: 'reservation' | 'activity' | 'accommodation';
     fields: Record<string, unknown>;
@@ -41,6 +44,7 @@ export type RawPlaceCard = {
   blurb?: unknown;
   tags?: unknown;
   booking_url?: unknown;
+  is_stay?: unknown;
   suggested_add?: {
     itemType?: unknown;
     date?: unknown;
@@ -281,6 +285,9 @@ export function enrichPlaceCards(
 
     const blurb = typeof raw.blurb === 'string' ? raw.blurb.slice(0, 240) : undefined;
 
+    const is_stay =
+      raw.is_stay === true || suggested_add?.itemType === 'accommodation' || undefined;
+
     cards.push({
       id: `card-${idx}-${Date.now()}`,
       place_id: place.place_id,
@@ -295,6 +302,7 @@ export function enrichPlaceCards(
       booking_url,
       blurb,
       tags,
+      is_stay,
       suggested_add,
     });
   });

@@ -32,7 +32,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
   const bookingUrl = card.booking_url || card.website;
   const ratingStr = formatRating(card.rating);
   const priceStr = priceLevelToDollars(card.price_level);
-  const isHotel = card.suggested_add?.itemType === 'accommodation';
+  const isHotel = card.is_stay === true || card.suggested_add?.itemType === 'accommodation';
   const expediaUrl = isHotel
     ? buildExpediaHotelSearchUrl({
         name: card.name,

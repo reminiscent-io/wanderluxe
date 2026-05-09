@@ -500,6 +500,7 @@ Rules:
 - Keep your prose to 1–2 sentences of introduction ("Here are three standout dinner spots in Montmartre:"). DO NOT list the places in the prose — the cards ARE the list.
 - Supported itemTypes for \`suggested_add\`: \`reservation\` (dining), \`activity\` (attractions/tours/landmarks/bars), \`accommodation\` (hotels/stays).
 - Include a \`suggested_add\` block ONLY when the user gave specific dates (and time, for reservations) that fall within ${arrivalDate}..${departureDate}. When in doubt, omit it — the user can still tap the card to see it on the map.
+- Set \`"is_stay": true\` on EVERY card that represents a hotel, resort, B&B, hostel, or other lodging — even when you can't include a \`suggested_add\` block (e.g. the user hasn't given check-in/out dates). This lets the client offer a "Book on Expedia" link.
 - If you cannot produce cards (e.g. \`find_place\` returned no results for the user's query), explicitly say so in prose ("I couldn't find verified results for that in ${safeTripName}") rather than silently falling back to a markdown list.
 - Before finishing your response, verify that every place you recommended has a corresponding entry in the \`place_cards\` block.
 
@@ -511,6 +512,7 @@ Format (one entry per place):
     "blurb": "One sentence on why it's worth going.", // ≤200 chars
     "tags": ["Italian", "Date night"],                // optional, max 4 short tags
     "booking_url": "https://resy.com/...",            // optional, only if you have a verified booking URL from search_web
+    "is_stay": true,                                  // optional; set true for hotels/lodging
     "suggested_add": {                                // optional
       "itemType": "reservation",                      // "reservation" | "activity" | "accommodation"
       // For reservation / activity:
@@ -528,7 +530,7 @@ Format (one entry per place):
   }
 ]
 \`\`\`
-Do NOT invent place_id, name, address, website, rating, or phone — the server fills these in from Google Places. You only author blurb, tags, booking_url, and the optional suggested_add block.`
+Do NOT invent place_id, name, address, website, rating, or phone — the server fills these in from Google Places. You only author blurb, tags, booking_url, is_stay, and the optional suggested_add block.`
     : '';
 
   return `You are a helpful travel assistant for a trip to ${safeTripName}. ${locationContext}

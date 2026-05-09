@@ -72,6 +72,10 @@ export interface PlaceCard {
   booking_url?: string;
   blurb?: string;
   tags?: string[];
+  // True when the card represents a hotel/stay. Set by the model (and forwarded
+  // by the server) so the client can show Expedia booking even before the user
+  // has supplied check-in/out dates.
+  is_stay?: boolean;
   suggested_add?: {
     itemType: 'reservation' | 'activity' | 'accommodation';
     fields: Record<string, unknown>;
