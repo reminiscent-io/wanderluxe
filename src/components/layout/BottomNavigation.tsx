@@ -5,22 +5,25 @@ import { Button } from "@/components/ui/button";
 
 interface BottomNavigationProps {
   tripId: string | undefined;
+  tripPath?: string;
   onQuickAddClick: () => void;
   onPeopleClick: () => void;
   onAIClick: () => void;
 }
 
-const BottomNavigation = ({ tripId, onQuickAddClick, onPeopleClick, onAIClick }: BottomNavigationProps) => {
+const BottomNavigation = ({ tripId, tripPath, onQuickAddClick, onPeopleClick, onAIClick }: BottomNavigationProps) => {
+  const base = tripPath ?? (tripId ? `/trip/${tripId}` : undefined);
+
   const timelineItem = {
     title: "Timeline",
     icon: Calendar,
-    href: tripId ? `/trip/${tripId}/timeline` : "/trips",
+    href: base ? `${base}/timeline` : "/trips",
   };
 
   const budgetItem = {
     title: "Budget",
     icon: BarChart2,
-    href: tripId ? `/trip/${tripId}/budget` : "/trips",
+    href: base ? `${base}/budget` : "/trips",
   };
 
   return (

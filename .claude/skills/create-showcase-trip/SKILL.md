@@ -67,9 +67,15 @@ Generate a single `DO $$` PL/pgSQL block that inserts everything in one transact
 **Database schema reference:**
 
 ```sql
--- trips (required: user_id, destination, arrival_date, departure_date, is_public, hidden)
-INSERT INTO trips (user_id, destination, arrival_date, departure_date, is_public, hidden)
-VALUES (v_user_id, 'Destination Name', 'YYYY-MM-DD', 'YYYY-MM-DD', true, false)
+-- trips (required: user_id, destination, arrival_date, departure_date, is_public, hidden, slug, summary)
+-- slug: kebab-case URL identifier, format `{destination}-{nights}-nights` (e.g. 'tokyo-japan-6-nights')
+--   - A BEFORE-INSERT trigger auto-appends `-2`, `-3`, … if the slug collides with another public trip.
+--   - After insert, SELECT slug FROM trips WHERE trip_id = v_trip_id and surface the final value.
+-- summary: 140-160 char meta description, keyword-rich, no boilerplate. Powers /explore/{slug} SEO and JSON-LD.
+INSERT INTO trips (user_id, destination, arrival_date, departure_date, is_public, hidden, slug, summary)
+VALUES (v_user_id, 'Destination Name', 'YYYY-MM-DD', 'YYYY-MM-DD', true, false,
+  'destination-N-nights',
+  'A keyword-rich 140-160 character description of the trip, leading with the destination and one unique angle.')
 RETURNING trip_id INTO v_trip_id;
 
 -- trip_days (required: trip_id, date, title)
@@ -144,6 +150,8 @@ END $$;
 - All times use `'HH:MM'` format
 - Costs should be in the local currency for the destination (EUR, JPY, ZAR, MAD, etc.) except international flights which use USD
 - The `is_public = true` flag is what makes trips visible on the Explore page
+- `slug` powers the SEO-friendly URL `/explore/{slug}`. The BEFORE-INSERT trigger `ensure_unique_public_slug` will auto-disambiguate collisions by appending `-2`, `-3`, … — after INSERT, read the trip back to surface the final slug to the user.
+- `summary` is the authored meta description used in `<meta name="description">`, OG/Twitter, and JSON-LD. Keep it 140–160 characters, lead with the destination and one specific angle (hotel, season, defining experience).
 
 ### Step 4: Execute
 

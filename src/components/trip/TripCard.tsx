@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
 import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';
+import { buildTripPath } from '@/utils/tripUrl';
 
 async function resolveSupabaseSignedUrl(src: string): Promise<string | null> {
   const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
@@ -179,7 +180,7 @@ const TripCard = ({
           if (weatherModalOpen || weatherModalJustClosed.current) return;
           // For pending invites, require Accept/Decline first
           if (isPendingInvite) return;
-          navigate(`/trip/${trip.trip_id}`);
+          navigate(buildTripPath(trip));
         }}
       >
         <div className="relative h-56 overflow-hidden">

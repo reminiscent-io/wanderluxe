@@ -4,7 +4,8 @@ import HeroSection from "../components/trip/HeroSection";
 import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
 import QuickAddSheet from "@/components/layout/QuickAddSheet";
-import { useTripQuery } from '@/hooks/useTripQuery';
+import { useTripQuery, useTripIdBySlug } from '@/hooks/useTripQuery';
+import { buildOgImageUrl } from '@/utils/tripUrl';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
 import TripDetailsError from '@/components/trip/details/TripDetailsError';
@@ -23,10 +24,15 @@ import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
 import SEO, { SITE_URL } from '@/components/SEO';
 
 const TripDetails = () => {
-  const { tripId } = useParams<{ tripId: string }>();
+  const { tripId: paramsTripId, slug } = useParams<{ tripId?: string; slug?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const { session } = useAuth();
+
+  const { tripId: tripIdFromSlug, isLoading: slugLookupLoading } = useTripIdBySlug(slug);
+  const tripId = paramsTripId ?? tripIdFromSlug ?? undefined;
+  const onExploreRoute = slug !== undefined;
+
   const { canView, canEdit, isLoading: permissionsLoading } = useTripPermissions(tripId);
 
   const activeTab = useMemo(() => {
@@ -39,13 +45,22 @@ const TripDetails = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (tripId && location.pathname === `/trip/${tripId}`) {
-      navigate(`/trip/${tripId}/timeline`, { replace: true });
+    if (!onExploreRoute && paramsTripId && location.pathname === `/trip/${paramsTripId}`) {
+      navigate(`/trip/${paramsTripId}/timeline`, { replace: true });
     }
-  }, [tripId, location.pathname, navigate]);
+  }, [onExploreRoute, paramsTripId, location.pathname, navigate]);
 
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
   useTripSubscription(tripId);
+
+  useEffect(() => {
+    const tripSlug = (trip as { slug?: string | null })?.slug;
+    const tripIsPublic = (trip as { is_public?: boolean | null })?.is_public;
+    if (paramsTripId && tripIsPublic && tripSlug && location.pathname.startsWith(`/trip/${paramsTripId}`)) {
+      const rest = location.pathname.slice(`/trip/${paramsTripId}`.length) || '';
+      navigate(`/explore/${tripSlug}${rest}`, { replace: true });
+    }
+  }, [paramsTripId, trip, location.pathname, navigate]);
 
   // Quick add sheet state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -103,6 +118,10 @@ const TripDetails = () => {
     }
   };
 
+  if (slug && slugLookupLoading) return <TripDetailsSkeleton />;
+  if (slug && !slugLookupLoading && !tripIdFromSlug) {
+    return <TripDetailsError message="The requested trip could not be found." />;
+  }
   if (tripLoading && !previousTrip) return <TripDetailsSkeleton />;
   if (permissionsLoading) return <TripDetailsSkeleton />;
   if (tripError) return <TripDetailsError />;
@@ -143,33 +162,101 @@ const TripDetails = () => {
   }
 
   const handleTabChange = (tab: string) => {
-    navigate(`/trip/${tripId}/${tab}`);
+    if (onExploreRoute && slug) {
+      navigate(`/explore/${slug}/${tab}`);
+    } else if (tripId) {
+      navigate(`/trip/${tripId}/${tab}`);
+    }
   };
 
-  const sidebar = <Sidebar ref={sidebarRef} tripId={tripId} activeTab={activeTab} onTabChange={handleTabChange} />;
-
   const isPublicTrip = Boolean((displayData as { is_public?: boolean })?.is_public);
+  const displaySlug = (displayData as { slug?: string | null })?.slug ?? undefined;
+  const displaySummary = (displayData as { summary?: string | null })?.summary ?? undefined;
+  const publicSlug = isPublicTrip ? displaySlug : undefined;
+
+  let tripPath: string | undefined;
+  if (onExploreRoute && slug) {
+    tripPath = `/explore/${slug}`;
+  } else if (publicSlug) {
+    tripPath = `/explore/${publicSlug}`;
+  } else if (tripId) {
+    tripPath = `/trip/${tripId}`;
+  }
+
+  const canonicalPath = publicSlug ? `/explore/${publicSlug}` : `/trip/${tripId}`;
+
+  const sidebar = <Sidebar ref={sidebarRef} tripId={tripId} tripPath={tripPath} activeTab={activeTab} onTabChange={handleTabChange} />;
+  const canonicalUrl = `${SITE_URL}${canonicalPath}`;
+  const nights = displayData.arrival_date && displayData.departure_date
+    ? Math.max(
+        1,
+        Math.round(
+          (new Date(displayData.departure_date).getTime() - new Date(displayData.arrival_date).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      )
+    : null;
+
+  const seoTitle = isPublicTrip && nights
+    ? `${displayData.destination} — ${nights}-Night Luxury Itinerary`
+    : `${displayData.destination} itinerary`;
+  const seoDescription = displaySummary
+    || `Explore a curated luxury itinerary for ${displayData.destination} on WanderLuxe — accommodations, activities, dining, and transportation in one place.`;
+
   const tripJsonLd = isPublicTrip
-    ? {
-        "@context": "https://schema.org",
-        "@type": "TouristTrip",
-        name: `${displayData.destination} itinerary`,
-        description: `A curated luxury travel itinerary for ${displayData.destination} on WanderLuxe.`,
-        touristType: "Luxury traveler",
-        url: `${SITE_URL}/trip/${tripId}`,
-        ...(displayData.arrival_date && { startDate: displayData.arrival_date }),
-        ...(displayData.departure_date && { endDate: displayData.departure_date }),
-        ...(displayData.cover_image_url && { image: displayData.cover_image_url }),
-      }
+    ? [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristTrip",
+          name: seoTitle,
+          description: seoDescription,
+          touristType: "Luxury traveler",
+          url: canonicalUrl,
+          provider: {
+            "@type": "Organization",
+            name: "WanderLuxe",
+            url: SITE_URL,
+          },
+          ...(displayData.arrival_date && { startDate: displayData.arrival_date }),
+          ...(displayData.departure_date && { endDate: displayData.departure_date }),
+          ...(displayData.cover_image_url && { image: displayData.cover_image_url }),
+          ...(displayData.primary_destination && {
+            itinerary: {
+              "@type": "ItemList",
+              name: `${displayData.destination} itinerary`,
+              itemListElement: [
+                {
+                  "@type": "ListItem",
+                  position: 1,
+                  item: {
+                    "@type": "TouristDestination",
+                    name: displayData.primary_destination,
+                  },
+                },
+              ],
+            },
+          }),
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "Explore", item: `${SITE_URL}/explore` },
+            { "@type": "ListItem", position: 3, name: displayData.destination, item: canonicalUrl },
+          ],
+        },
+      ]
     : undefined;
 
   return (
     <div className="flex min-h-screen w-full overflow-x-clip">
       <SEO
-        title={`${displayData.destination} itinerary`}
-        description={`Explore a curated luxury itinerary for ${displayData.destination} on WanderLuxe — accommodations, activities, dining, and transportation in one place.`}
-        canonicalPath={`/trip/${tripId}`}
-        ogImage={displayData.cover_image_url || undefined}
+        title={seoTitle}
+        description={seoDescription}
+        canonicalPath={canonicalPath}
+        ogImage={buildOgImageUrl(displayData.cover_image_url)}
+        ogType={isPublicTrip ? "article" : "website"}
         noIndex={!isPublicTrip}
         jsonLd={tripJsonLd}
       />
@@ -204,6 +291,23 @@ const TripDetails = () => {
           >
 
             <div className="max-w-none mx-auto px-4 pt-6 pb-24 md:pb-8">
+              {isPublicTrip && (
+                <nav aria-label="Breadcrumb" className="mb-4 text-sm">
+                  <ol className="flex items-center gap-1.5 text-earth-500">
+                    <li>
+                      <a href="/" className="hover:text-earth-700 transition-colors">Home</a>
+                    </li>
+                    <li aria-hidden="true">/</li>
+                    <li>
+                      <a href="/explore" className="hover:text-earth-700 transition-colors">Explore</a>
+                    </li>
+                    <li aria-hidden="true">/</li>
+                    <li className="text-earth-700 font-medium" aria-current="page">
+                      {displayData.destination}
+                    </li>
+                  </ol>
+                </nav>
+              )}
               {!canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                   <div className="flex items-center">
@@ -260,6 +364,7 @@ const TripDetails = () => {
       {/* Mobile Bottom Navigation */}
       <BottomNavigation
         tripId={tripId}
+        tripPath={tripPath}
         onQuickAddClick={() => setQuickAddOpen(true)}
         onPeopleClick={() => sidebarRef.current?.openTravelersPanel()}
         onAIClick={() => setAiDrawerOpen(true)}

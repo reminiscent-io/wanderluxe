@@ -11,6 +11,7 @@ import { Plus } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 import SEO, { SITE_URL } from '@/components/SEO';
+import { buildTripPath } from '@/utils/tripUrl';
 
 import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { useTravelStats } from '@/hooks/useTravelStats';
@@ -188,7 +189,7 @@ const Explore = () => {
         itemListElement: publicTrips.slice(0, 20).map((trip, idx) => ({
           "@type": "ListItem",
           position: idx + 1,
-          url: `${SITE_URL}/trip/${trip.trip_id}`,
+          url: `${SITE_URL}${buildTripPath(trip)}`,
           name: trip.destination,
         })),
       }
@@ -221,7 +222,7 @@ const Explore = () => {
               daysUntil={daysUntilNextTrip!}
               onViewTrip={() => {
                 handleTripClick(nextTrip, 'Hero');
-                navigate(`/trip/${nextTrip.trip_id}`);
+                navigate(buildTripPath(nextTrip));
               }}
               className="-mx-4 rounded-none md:mx-0 md:rounded-2xl"
             />
