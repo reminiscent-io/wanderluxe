@@ -79,6 +79,7 @@ const App = () => {
                   <Route path="/auth/forgot-password" element={<ForgotPassword />} />
                   <Route path="/auth/update-password" element={<UpdatePassword />} />
                   <Route path="/explore" element={<Explore />} />
+                  <Route path="/explore/:slug/*" element={<TripDetails />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/about" element={<LLMTraining />} />

@@ -33,20 +33,25 @@ async function fetchPublicTrips(): Promise<SitemapEntry[]> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const { data, error } = await supabase
     .from('trips')
-    .select('trip_id, updated_at')
-    .eq('is_public', true);
+    .select('slug, updated_at')
+    .eq('is_public', true)
+    .not('slug', 'is', null);
 
   if (error) {
     console.warn('[sitemap] Could not fetch public trips:', error.message);
     return [];
   }
 
-  return (data ?? []).map((row: { trip_id: string; updated_at?: string | null }) => ({
-    loc: `/trip/${row.trip_id}`,
-    lastmod: row.updated_at?.split('T')[0],
-    changefreq: 'weekly' as const,
-    priority: '0.8',
-  }));
+  return (data ?? [])
+    .filter((row: { slug: string | null }): row is { slug: string; updated_at?: string | null } =>
+      typeof row.slug === 'string' && row.slug.length > 0,
+    )
+    .map((row) => ({
+      loc: `/explore/${row.slug}`,
+      lastmod: row.updated_at?.split('T')[0],
+      changefreq: 'weekly' as const,
+      priority: '0.9',
+    }));
 }
 
 function renderXml(entries: SitemapEntry[]): string {
