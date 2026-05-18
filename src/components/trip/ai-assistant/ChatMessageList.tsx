@@ -141,16 +141,16 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         type="button"
         onClick={onLoadHistory}
         disabled={isLoadingMore}
-        className="flex items-center gap-1.5 text-xs text-sand-500 hover:text-earth-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors px-3 py-1.5 rounded-full hover:bg-sand-100"
+        className="flex items-center gap-1.5 text-[13px] text-sand-500 hover:text-earth-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors h-9 px-4 rounded-full hover:bg-sand-100"
       >
         {isLoadingMore ? (
           <>
-            <Loader2 className="w-3 h-3 animate-spin" />
-            <span>Loading older chats...</span>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Loading older chats…</span>
           </>
         ) : (
           <>
-            <ChevronUp className="w-3 h-3" />
+            <ChevronUp className="w-3.5 h-3.5" />
             <span>Show older chats</span>
           </>
         )}
