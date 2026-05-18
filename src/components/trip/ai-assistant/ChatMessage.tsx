@@ -292,24 +292,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         {!hasExtractedItems && (
           <div
             className={cn(
-              'flex items-center gap-2 mt-1 text-xs text-sand-500',
+              'flex items-center gap-2 mt-1.5 text-xs text-sand-500',
               isUser ? 'flex-row-reverse' : 'flex-row'
             )}
           >
             <span className="tabular-nums">{formatTime(message.created_at)}</span>
 
-            {/* Copy button for assistant messages */}
+            {/* Copy button for assistant messages — sized for thumb tap on mobile */}
             {!isUser && !isStreaming && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={handleCopy}
-                className="h-6 w-6 p-0 text-sand-400 hover:text-earth-600 hover:bg-sand-100"
+                aria-label={copied ? 'Copied' : 'Copy message'}
+                className="h-8 w-8 p-0 -my-1 text-sand-400 hover:text-earth-600 hover:bg-sand-100"
               >
                 {copied ? (
-                  <Check className="w-3 h-3" />
+                  <Check className="w-3.5 h-3.5" />
                 ) : (
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-3.5 h-3.5" />
                 )}
               </Button>
             )}
