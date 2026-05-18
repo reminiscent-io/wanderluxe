@@ -4,6 +4,31 @@ import { toast } from 'sonner';
 import { Trip } from '@/types/trip';
 import { useNavigate } from 'react-router-dom';
 
+export const useTripIdBySlug = (slug: string | undefined) => {
+  const { data, isLoading, error } = useQuery<string | null>({
+    queryKey: ['trip-id-by-slug', slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      const { data, error } = await supabase
+        .from('trips')
+        .select('trip_id')
+        .eq('slug', slug)
+        .eq('is_public', true)
+        .maybeSingle();
+      if (error) {
+        console.error('Error resolving slug to trip_id:', error);
+        return null;
+      }
+      return data?.trip_id ?? null;
+    },
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 24,
+    enabled: !!slug,
+    retry: 1,
+  });
+  return { tripId: data ?? undefined, isLoading, error };
+};
+
 export const useTripQuery = (tripId: string | undefined) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();

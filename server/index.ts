@@ -87,19 +87,71 @@ const prerenderedAbout = path.join(distPath, 'about', 'index.html');
 const prerenderedTerms = path.join(distPath, 'terms', 'index.html');
 const prerenderedPrivacy = path.join(distPath, 'privacy', 'index.html');
 
+// Build the allow-list of /explore/{slug} prerendered slugs by scanning dist/explore/*/index.html.
+// Membership check + strict slug regex means no user-controlled path can ever escape this set.
+const exploreSlugs = new Set<string>();
+try {
+  const exploreDir = path.join(distPath, 'explore');
+  if (fs.existsSync(exploreDir) && fs.statSync(exploreDir).isDirectory()) {
+    for (const entry of fs.readdirSync(exploreDir, { withFileTypes: true })) {
+      if (
+        entry.isDirectory() &&
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(entry.name) &&
+        fs.existsSync(path.join(exploreDir, entry.name, 'index.html'))
+      ) {
+        exploreSlugs.add(entry.name);
+      }
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to scan prerendered /explore slugs:', err);
+}
+
+// UUID → slug redirect map, emitted by scripts/prerender.ts at build time.
+// Used to issue 301 redirects from legacy /trip/{uuid} URLs to /explore/{slug}.
+let uuidToSlug: Record<string, string> = {};
+try {
+  const redirectsPath = path.join(distPath, 'redirects.json');
+  if (fs.existsSync(redirectsPath)) {
+    const parsed = JSON.parse(fs.readFileSync(redirectsPath, 'utf8'));
+    if (parsed && typeof parsed === 'object') {
+      uuidToSlug = parsed as Record<string, string>;
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to load redirects.json:', err);
+}
+
+const UUID_TRIP_PATH = /^\/trip\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/.*)?$/i;
+const EXPLORE_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)$/;
+
 function prerenderedFileFor(normalizedPath: string): string | null {
   switch (normalizedPath) {
     case '/explore': return prerenderedExplore;
     case '/about': return prerenderedAbout;
     case '/terms': return prerenderedTerms;
     case '/privacy': return prerenderedPrivacy;
-    default: return null;
   }
+  const exploreMatch = EXPLORE_SLUG_PATH.exec(normalizedPath);
+  if (exploreMatch && exploreSlugs.has(exploreMatch[1])) {
+    return path.join(distPath, 'explore', exploreMatch[1], 'index.html');
+  }
+  return null;
 }
 
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
+
+  // 301-redirect legacy /trip/{uuid} URLs for public trips to their /explore/{slug} canonical.
+  app.get(/^\/trip\/[0-9a-fA-F-]+(?:\/.*)?$/, (req, res, next) => {
+    const match = UUID_TRIP_PATH.exec(req.path);
+    if (!match) return next();
+    const slug = uuidToSlug[match[1].toLowerCase()];
+    if (!slug) return next();
+    const suffix = match[2] ?? '';
+    return res.redirect(301, `/explore/${slug}${suffix}`);
+  });
 
   // Handle SPA routing - prefer prerendered HTML for known public routes,
   // fall back to index.html for everything else (client-side routing).
