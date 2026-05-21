@@ -156,16 +156,16 @@ const TimelineRow: React.FC<Props> = ({
             </span>
           )}
 
-          {/* Event Card */}
+          {/* Event Row */}
           <div
-            className="relative flex-1 min-w-0 bg-card rounded-card shadow-warm-sm hover:shadow-warm p-3 sm:p-4 cursor-pointer transition-shadow duration-200 border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            className="group/row relative flex-1 min-w-0 -mx-2 px-2 py-1.5 sm:py-2 cursor-pointer rounded-md hover:bg-secondary/40 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             role="button"
             tabIndex={0}
             onClick={handleItemClick}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(); } }}
           >
             {/* Top-right: Avatar Stack */}
-            <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+            <div className="absolute top-1.5 right-2 sm:top-2 sm:right-2">
               <TravelerAvatars
                 tripId={tripId}
                 eventType={item.type === 'hotel' ? 'accommodation' : item.type}
@@ -218,7 +218,7 @@ const TimelineRow: React.FC<Props> = ({
 
             {/* Footer Section */}
             {hasFooter && (
-              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+              <div className="mt-2 pt-2 flex items-center justify-between">
                 {item.data?.cost ? (
                   <span className="text-xs font-medium text-earth-600 tabular-nums">
                     {formatCurrencyWithSymbol(item.data.cost, item.data.currency || 'USD')}

@@ -478,9 +478,9 @@ export function useDayTimeline({
   const summary = useMemo(() => {
     const parts: string[] = [];
     if (activityCount > 0) parts.push(`${activityCount} ${activityCount === 1 ? 'activity' : 'activities'}`);
-    if (hotelCount > 0) parts.push(`${hotelCount} hotel`);
-    if (transportCount > 0) parts.push(`${transportCount} transport`);
-    if (diningCount > 0) parts.push(`${diningCount} dining`);
+    if (hotelCount > 0) parts.push(`${hotelCount} ${hotelCount === 1 ? 'hotel' : 'hotels'}`);
+    if (transportCount > 0) parts.push(`${transportCount} ${transportCount === 1 ? 'flight' : 'flights'}`);
+    if (diningCount > 0) parts.push(`${diningCount} ${diningCount === 1 ? 'reservation' : 'reservations'}`);
     return parts.length > 0 ? parts.join(' • ') : 'No plans yet';
   }, [activityCount, hotelCount, transportCount, diningCount]);
 

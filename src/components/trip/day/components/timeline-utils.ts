@@ -151,11 +151,11 @@ export const getTimePeriod = (time?: string): TimePeriod => {
 
 export const getPeriodLabel = (period: TimePeriod): string => {
   const labels: Record<TimePeriod, string> = {
-    'early-morning': '🌅 Early Morning',
-    'morning': '☀️ Morning',
-    'afternoon': '🌤️ Afternoon',
-    'evening': '🌆 Evening',
-    'night': '🌙 Night',
+    'early-morning': 'Early Morning',
+    'morning': 'Morning',
+    'afternoon': 'Afternoon',
+    'evening': 'Evening',
+    'night': 'Night',
     'no-time': 'Unscheduled',
   };
   return labels[period];
@@ -296,13 +296,13 @@ const generateTransportGroupTitle = (items: TimelineItem[]): string => {
   const allSameArrival = firstArrival && items.every(item =>
     extractIata(item.data?.arrival_location) === firstArrival
   );
-  if (allSameArrival) return `Group Arrivals: ${firstArrival}`;
+  if (allSameArrival) return `${items.length} ${typeLabel.toLowerCase()} into ${firstArrival}`;
 
   const firstDeparture = extractIata(items[0].data?.departure_location);
   const allSameDeparture = firstDeparture && items.every(item =>
     extractIata(item.data?.departure_location) === firstDeparture
   );
-  if (allSameDeparture) return `Group Departures: ${firstDeparture}`;
+  if (allSameDeparture) return `${items.length} ${typeLabel.toLowerCase()} out of ${firstDeparture}`;
 
   return `${items.length} ${typeLabel}`;
 };

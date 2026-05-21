@@ -153,7 +153,7 @@ export function DayWeatherBadge({ forecast, currentWeather, isToday, className, 
                 "inline-flex items-center gap-1.5 px-2 py-1 rounded-full",
                 "text-xs font-medium cursor-pointer transition-all",
                 isToday
-                  ? "bg-emerald-100/80 text-emerald-700 border border-emerald-200/50 hover:bg-emerald-200/80"
+                  ? "bg-primary/15 text-primary border border-primary/20 hover:bg-primary/20"
                   : "bg-sand-100/80 text-earth-600 border border-sand-200/50 hover:bg-sand-200/80",
                 className
               )}

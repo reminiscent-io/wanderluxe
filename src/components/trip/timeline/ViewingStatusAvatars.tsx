@@ -85,11 +85,11 @@ const ViewingStatusAvatars: React.FC<ViewingStatusAvatarsProps> = ({
   const getBorderColor = (category: ViewingCategory): string => {
     switch (category) {
       case "active":
-        return "ring-green-500"; // Green for actively viewing
+        return "ring-primary"; // Strongest contrast: actively viewing
       case "viewed":
-        return "ring-sand-400"; // Grey for has viewed
+        return "ring-sand-400"; // Mid: has viewed previously
       case "never":
-        return "ring-earth-800"; // Black/dark for never viewed
+        return "ring-border"; // Faintest: not yet opened
     }
   };
 
@@ -161,11 +161,7 @@ const ViewingStatusAvatars: React.FC<ViewingStatusAvatarsProps> = ({
                       {t.is_owner ? " (Owner)" : ""}
                     </p>
                     <p className={`text-xs ${
-                      t.viewingCategory === "active"
-                        ? "text-green-600"
-                        : t.viewingCategory === "viewed"
-                        ? "text-muted-foreground"
-                        : "text-muted-foreground"
+                      t.viewingCategory === "active" ? "text-primary" : "text-muted-foreground"
                     }`}>
                       {statusText}
                     </p>
@@ -178,7 +174,7 @@ const ViewingStatusAvatars: React.FC<ViewingStatusAvatarsProps> = ({
           {overflowCount > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sand-400 text-xs font-medium text-white ring-2 ring-white hover:z-10">
+                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sand-400 text-xs font-medium text-white ring-2 ring-card hover:z-10">
                   +{overflowCount}
                 </div>
               </TooltipTrigger>
