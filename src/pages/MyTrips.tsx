@@ -329,7 +329,7 @@ const MyTrips = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
         {/* Hero — single primary surface */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -439,7 +439,7 @@ const MyTrips = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-10 md:space-y-12">
             {showHidden && (
               <div className="bg-sand-100 border border-sand-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-earth-700 text-sm">
@@ -495,7 +495,7 @@ const MyTrips = () => {
               />
 
               {filteredUpcomingTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {filteredUpcomingTrips.map((trip) => (
                     <TripCard
                       key={trip.trip_id}
@@ -531,7 +531,7 @@ const MyTrips = () => {
               />
 
               {pastTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {pastTrips.map((trip) => (
                     <TripCard
                       key={trip.trip_id}

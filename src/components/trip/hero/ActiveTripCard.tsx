@@ -80,9 +80,9 @@ export function ActiveTripCard({
       {/* Content Overlay */}
       <div className="relative h-full flex flex-col justify-between p-5 md:p-6">
         {/* Top Section */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3">
           {/* Live Badge */}
-          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white font-semibold px-3 py-1 shadow-lg">
+          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white font-semibold px-3 py-1 shadow-warm">
             <span className="w-2 h-2 bg-white rounded-full mr-2 animate-ping" />
             LIVE
           </Badge>
@@ -113,7 +113,7 @@ export function ActiveTripCard({
 
           {/* Additional trips badge */}
           {additionalTripsCount > 0 && (
-            <Badge className="bg-white/20 backdrop-blur-md text-white font-medium">
+            <Badge className="bg-foreground/75 text-white border-0 font-medium tabular-nums shadow-warm">
               +{additionalTripsCount} more
             </Badge>
           )}
@@ -123,7 +123,10 @@ export function ActiveTripCard({
         <div className="space-y-4">
           {/* Trip Progress */}
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-white/20 text-white text-xs backdrop-blur-sm">
+            <Badge
+              variant="secondary"
+              className="bg-foreground/75 text-white border-0 text-xs tabular-nums shadow-warm"
+            >
               Day {currentDay} of {totalDays}
             </Badge>
           </div>
@@ -150,7 +153,7 @@ export function ActiveTripCard({
           {/* CTA Button */}
           <Button
             size="lg"
-            className="w-full sm:w-auto bg-white text-earth-900 hover:bg-white/90 font-semibold shadow-lg"
+            className="w-full sm:w-auto bg-background text-foreground hover:bg-background/90 font-semibold shadow-warm-lg"
             onClick={(e) => {
               e.stopPropagation();
               onViewItinerary();

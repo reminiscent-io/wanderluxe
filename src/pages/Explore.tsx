@@ -206,7 +206,7 @@ const Explore = () => {
         jsonLd={itemListJsonLd}
       />
       <Navigation />
-      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
         <h1 className="sr-only">Explore curated luxury trip itineraries</h1>
 
         {/* Hero — single primary surface */}
@@ -281,7 +281,7 @@ const Explore = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-10 md:space-y-12">
             {/* Currently Traveling */}
             {currentTrips.length > 0 && (
               <section className="relative" aria-labelledby="explore-section-current">
@@ -321,7 +321,7 @@ const Explore = () => {
                 count={filteredUpcomingTrips.length}
               />
               {filteredUpcomingTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {filteredUpcomingTrips.map((trip) => (
                     <div
                       key={trip.trip_id}
@@ -358,7 +358,7 @@ const Explore = () => {
                 muted
               />
               {pastTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {pastTrips.map((trip) => (
                     <div
                       key={trip.trip_id}

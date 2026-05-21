@@ -198,7 +198,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       )}
 
       {/* Timeline column: full width below lg, 58% from lg+ */}
-      <div className="w-full lg:w-[58%] px-4 md:px-6 pt-4 md:pt-6 space-y-6">
+      <div className="w-full lg:w-[58%] px-0 sm:px-4 md:px-6 pt-4 md:pt-6 space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex items-center gap-4 min-w-0">
             <h2 className="font-display text-2xl tracking-tight text-foreground shrink-0">
