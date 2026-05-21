@@ -22,7 +22,7 @@ bun run lint            # ESLint code quality check
 
 ### Building & Testing
 ```bash
-bun run build           # Production build
+bun run build           # Full pipeline: build:sitemap → vite build → prerender (puppeteer) → build:server
 bun run build:dev       # Development build
 bun run preview         # Preview production build (port 8080)
 bun run test            # Run tests (Vitest)
@@ -54,8 +54,8 @@ src/
 │   │   ├── accommodation/ # Hotel management
 │   │   ├── ai-assistant/  # AI assistant components
 │   │   ├── budget/        # Expense tracking
-│   │   ├── ai-assistant/  # AI chat + document extraction (mounted via AIAssistantDrawer)
 │   │   ├── create/        # Trip creation flow
+│   │   ├── dashboard/     # Trip dashboard cards
 │   │   ├── day/           # Day-by-day components
 │   │   ├── details/       # Trip detail views
 │   │   ├── dining/        # Restaurant reservations
@@ -84,18 +84,20 @@ src/
 server/
 ├── index.ts              # Express server setup
 ├── dev-server.ts         # Development server config
-└── routes/               # API routes (PDF export, Stripe, AI chat, admin insights, invite preview, share notifications)
+└── routes/               # API routes (Stripe, AI chat, admin insights, invite preview, share notifications, account)
 
 supabase/
-├── functions/            # Serverless Deno functions (10 functions)
+├── functions/            # Serverless Deno functions (12 functions)
 │   ├── ai-chat/                  # AI chat via Gemini 2.5 Flash
 │   ├── fetch-unsplash-metadata/  # Unsplash image metadata
 │   ├── fetch-url-metadata/       # URL metadata extraction
+│   ├── flight-status-proxy/      # AeroDataBox flight lookup
 │   ├── generate-image/           # AI image generation
 │   ├── google-places-proxy/      # Google Places API proxy
 │   ├── parse-travel-doc/         # Travel document parsing
 │   ├── send-email/               # Email via SendGrid
 │   ├── send-share-notification/  # Trip share notifications
+│   ├── send-trip-reminders/      # Scheduled trip reminder emails
 │   ├── update-exchange-rates/    # Currency exchange updates
 │   └── weather-proxy/            # Weather data proxy
 ├── migrations/           # SQL migration files
@@ -173,8 +175,8 @@ PostgreSQL database
 - Mutation handling with optimistic updates via React Query
 
 #### 7. **PDF Export**
-- **File**: `/src/services/pdfmake-export.ts` (~1,460 lines)
-- **Endpoint**: `/api/export-pdf` (Express backend)
+- **File**: `/src/services/pdfmake-export.ts` (~1,470 lines)
+- **Trigger**: `ExportPdfButton` → `exportItineraryPdf()` (runs entirely client-side; no API endpoint)
 - **Data**: Collects trips, days, activities, accommodations, transportation, budget
 - **Format**: Professional itinerary with logos, formatting, mobile-aware layout
 - **Library**: pdfmake (no external PDF service)
@@ -253,6 +255,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `public/manifest.json` + `public/sw.js` for installable app
 - PWA icons at multiple resolutions (144, 192, 384, 512)
 - `usePWAInstall()` hook for install prompt
+- **Version stamping**: `vite.config.ts` emits `dist/version.json` and injects `__APP_SHA__` into `sw.js` at build time; `useVersionCheck()` polls `version.json` to detect updates
 
 #### 14. **Weather Integration**
 - `weather_cache` table for caching
