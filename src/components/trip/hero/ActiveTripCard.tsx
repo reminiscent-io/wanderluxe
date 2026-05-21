@@ -87,26 +87,28 @@ export function ActiveTripCard({
             LIVE
           </Badge>
 
-          {/* Weather Info */}
+          {/* Weather Info — opaque for outdoor readability */}
           {weather?.current && !weatherLoading && (
-            <motion.div
+            <motion.button
+              type="button"
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white cursor-pointer hover:bg-white/30 transition-colors"
+              className="min-h-[44px] rounded-card bg-background/95 px-3 py-2 text-foreground shadow-warm-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 setWeatherModalOpen(true);
               }}
+              aria-label="View current weather"
             >
               <div className="flex items-center gap-2">
-                <span className="text-lg">{getWeatherEmoji(weather.current.icon)}</span>
+                <span className="text-lg leading-none">{getWeatherEmoji(weather.current.icon)}</span>
                 <div className="text-right">
-                  <div className="font-bold text-lg leading-none">{weather.current.temp}°F</div>
-                  <div className="text-xs opacity-80">{weather.current.localTime}</div>
+                  <div className="font-semibold text-base leading-none tabular-nums">{weather.current.temp}°</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">{weather.current.localTime}</div>
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
           )}
 
           {/* Additional trips badge */}
@@ -128,7 +130,7 @@ export function ActiveTripCard({
 
           {/* Destination & Dates */}
           <div>
-            <h2 className="text-white text-3xl md:text-4xl font-black leading-tight mb-2 drop-shadow-lg">
+            <h2 className="font-display text-white text-[2rem] leading-[1.05] md:text-5xl md:leading-[1.04] tracking-tight mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
               {trip.destination}
             </h2>
             <div className="flex flex-col gap-1 text-white/80 text-sm">

@@ -387,26 +387,44 @@ const MyTrips = () => {
           <TripSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
         
-        {/* Filter Chips */}
-        <div className="flex flex-wrap items-center gap-2 mb-8" role="tablist" aria-label="Filter trips">
-          <FilterChip
-            active={tripFilter === 'all'}
-            onClick={() => setTripFilter('all')}
-            label="All trips"
-            count={totalMyTrips + totalSharedTrips}
+        {/* Filter Chips — scroll-rail on mobile, wrap on desktop */}
+        <div
+          className="relative -mx-4 mb-8 sm:mx-0"
+          role="tablist"
+          aria-label="Filter trips"
+        >
+          <div
+            className="flex items-center gap-2 overflow-x-auto px-4 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-0"
+            style={{ scrollSnapType: 'x proximity' }}
+          >
+            <FilterChip
+              active={tripFilter === 'all'}
+              onClick={() => setTripFilter('all')}
+              label="All trips"
+              count={totalMyTrips + totalSharedTrips}
+            />
+            <FilterChip
+              active={tripFilter === 'mine'}
+              onClick={() => setTripFilter('mine')}
+              label="My trips"
+              count={totalMyTrips}
+            />
+            <FilterChip
+              active={tripFilter === 'shared'}
+              onClick={() => setTripFilter('shared')}
+              label="Shared with me"
+              count={totalSharedTrips}
+              icon={<Share2 className="h-3.5 w-3.5" />}
+            />
+          </div>
+          {/* Edge fades only on mobile rail */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-sand-50 to-transparent sm:hidden"
           />
-          <FilterChip
-            active={tripFilter === 'mine'}
-            onClick={() => setTripFilter('mine')}
-            label="My trips"
-            count={totalMyTrips}
-          />
-          <FilterChip
-            active={tripFilter === 'shared'}
-            onClick={() => setTripFilter('shared')}
-            label="Shared with me"
-            count={totalSharedTrips}
-            icon={<Share2 className="h-3.5 w-3.5" />}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-sand-50 to-transparent sm:hidden"
           />
         </div>
 

@@ -240,22 +240,33 @@ const Explore = () => {
           <TravelYearSection data={travelStats.dailyActivity} />
         )}
 
-        {/* Search + conversion CTA */}
-        <div className="mb-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        {/* Search + secondary CTA — single row, hero already carries the sunset CTA */}
+        <div className="mb-8 flex items-center gap-2 sm:gap-3">
           <TripSearch
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search destinations, dates..."
             ariaLabel="Search public trips"
-            className="flex-1"
+            className="flex-1 max-w-none sm:max-w-md"
           />
+          {/* Full label on tablet+ */}
           <Button
             onClick={handleCtaClick}
-            variant="sunset"
-            className="font-semibold whitespace-nowrap"
+            variant="outline"
+            className="hidden sm:inline-flex shrink-0 font-medium whitespace-nowrap"
           >
             <Plus className="h-4 w-4 mr-2" />
             {session ? 'Plan a trip' : 'Get started'}
+          </Button>
+          {/* Icon-only 44×44 on mobile to keep the fold breathable */}
+          <Button
+            onClick={handleCtaClick}
+            variant="outline"
+            size="icon"
+            className="sm:hidden shrink-0 h-11 w-11 rounded-card"
+            aria-label={session ? 'Plan a trip' : 'Get started'}
+          >
+            <Plus className="h-5 w-5" />
           </Button>
         </div>
 
