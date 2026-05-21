@@ -141,11 +141,11 @@ export const getTimePeriod = (time?: string): TimePeriod => {
   const hm = parseTimeToHM(time);
   if (!hm) return 'no-time';
   const hour = hm.h;
-  
-  if (hour >= 5 && hour < 9) return 'early-morning';
-  if (hour >= 9 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
+
+  if (hour < 9) return 'early-morning';
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  if (hour < 21) return 'evening';
   return 'night';
 };
 
