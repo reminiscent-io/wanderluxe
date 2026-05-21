@@ -450,7 +450,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     </h3>
                     <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto leading-relaxed">
                       {canEdit
-                        ? 'Add a hotel, an activity, a reservation — the day takes shape from here.'
+                        ? 'Add a hotel, an activity, a reservation, and the day takes shape from here.'
                         : 'This day is unplanned.'}
                     </p>
                     {canEdit && (

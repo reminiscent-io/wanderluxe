@@ -105,7 +105,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
 
   if (!days.length) {
     return (
-      <div className="text-center py-12 border border-dashed rounded-lg">
+      <div className="text-center py-12 border border-border rounded-card bg-card">
         <p className="text-muted-foreground">No days added yet. Start by setting your trip dates above.</p>
       </div>
     );

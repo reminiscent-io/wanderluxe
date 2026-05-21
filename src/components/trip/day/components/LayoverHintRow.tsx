@@ -44,7 +44,7 @@ const LayoverHintRow: React.FC<Props> = ({ text, hintType = 'layover' }) => {
         <div className="relative flex flex-col items-center">
           <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full flex-shrink-0 mt-2.5 z-10", config.dotColor)} />
         </div>
-        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-md border border-dashed", config.bg, config.border)}>
+        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-md border", config.bg, config.border)}>
           <Icon className={cn("h-3.5 w-3.5 flex-shrink-0", config.iconColor)} strokeWidth={1.5} />
           <span className={cn("text-xs", config.textColor)}>{text}</span>
         </div>
