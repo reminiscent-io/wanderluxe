@@ -211,6 +211,7 @@ const TripDetails = () => {
           name: seoTitle,
           description: seoDescription,
           touristType: "Luxury traveler",
+          inLanguage: "en",
           url: canonicalUrl,
           provider: {
             "@type": "Organization",

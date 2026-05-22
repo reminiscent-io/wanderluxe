@@ -6,7 +6,7 @@ export const DEFAULT_OG_IMAGE =
 const DEFAULT_DESCRIPTION =
   "WanderLuxe is an AI-assisted luxury travel planning platform with real-time collaboration, curated itineraries, and professional PDF export.";
 
-interface SEOProps {ß
+interface SEOProps {
   title?: string;
   description?: string;
   canonicalPath?: string;
