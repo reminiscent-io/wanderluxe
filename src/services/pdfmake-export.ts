@@ -16,6 +16,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import { loadPdfFonts } from './pdf-fonts';
 
 import { supabase } from '@/integrations/supabase/client';
+import { track } from '@/lib/analytics';
 import { parseISO, format as fnsFormat, isSameDay } from 'date-fns';
 import type { PdfExportOptions } from '@/components/trip/PdfExportDialog';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
@@ -1179,6 +1180,10 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     await loadPdfFonts();
     console.log('[PDF Export] Starting export for trip:', tripId);
     console.log('[PDF Export] Options:', o);
+    track('pdf_exported', {
+      trip_id: tripId,
+      page_preset: (o as PdfExportOptions & { pagePreset?: string })?.pagePreset ?? 'auto',
+    });
 
     const preset: PagePreset = ((o as PdfExportOptions & { pagePreset?: PagePreset })?.pagePreset) || 'auto';
     const {
