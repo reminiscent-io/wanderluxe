@@ -11,6 +11,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import PostHogConsentSync from "@/components/PostHogConsentSync";
+import GoogleAnalyticsConsentSync from "@/components/GoogleAnalyticsConsentSync";
 import AdminRoute from "./components/AdminRoute";
 import { lazy, Suspense, useEffect } from "react";
 import { Loader2 } from "lucide-react";
@@ -63,6 +64,7 @@ const App = () => {
       <HelmetProvider>
       <ConsentProvider>
         <PostHogConsentSync />
+        <GoogleAnalyticsConsentSync />
         <AuthProvider>
           <TooltipProvider>
             <Toaster />

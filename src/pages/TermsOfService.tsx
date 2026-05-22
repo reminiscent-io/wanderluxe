@@ -1,19 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Navigation from "../components/Navigation";
-import Footer from "../components/Footer";
 import SEO from "../components/SEO";
 
 const TermsOfService: React.FC = () => {
   return (
-    <main className="min-h-screen flex flex-col">
+    <>
       <SEO
         title="Terms of Service"
         description="Terms of Service for WanderLuxe — the rules and guidelines for using our travel planning platform."
         canonicalPath="/terms"
       />
-      <Navigation />
-      <div className="container mx-auto px-4 md:px-6 py-12 flex-grow">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto p-6 md:p-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
             Terms of Service for WanderLuxe
@@ -41,7 +38,7 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">3. Privacy and Data Collection</h2>
               <p>
-                We collect only the data necessary to provide our services, including basic account details and standard analytics via Google Analytics. We do not sell your personal information. For more details, please review our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                We collect only the data necessary to provide our services, including basic account details and analytics via Google Analytics and PostHog (which also captures consent-gated session recordings). We do not sell your personal information. For full details on what is collected, how it is used, and how to manage your preferences, please review our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
               </p>
             </div>
             <div className="pb-6 border-b">
@@ -50,7 +47,7 @@ const TermsOfService: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">AI Travel Assistant</h3>
                   <p>
-                    WanderLuxe provides an AI-powered travel assistant that uses <strong>Perplexity AI</strong> to provide personalized travel recommendations, suggestions, and information. Your conversations with the AI assistant are processed through Perplexity's services and are subject to their terms of use and privacy policies.
+                    WanderLuxe provides an AI-powered travel assistant powered by <strong>Google's Gemini 2.5 Flash</strong> model to provide personalized travel recommendations, suggestions, and information. Your conversations with the AI assistant, along with trip context (destination, dates, itinerary) used to ground the responses, are sent to Google's Gemini API and are subject to Google's terms of use and privacy policies. Per Google's paid API terms, your prompts and responses are not used to train their models.
                   </p>
                 </div>
                 <div>
@@ -82,17 +79,17 @@ const TermsOfService: React.FC = () => {
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Third‑Party APIs and Services</h2>
               <p>
-                Our Site integrates with various third‑party services and APIs including but not limited to Google (Gemini API, Places API, and mapping providers) and other service providers. Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services and are not responsible for their availability, accuracy, or practices.
+                Our Site integrates with various third‑party services and APIs including but not limited to Google (Gemini API, Places API, and mapping providers), Stripe (payments), SendGrid (transactional email), PostHog and Google Analytics (analytics and session replay), and Unsplash (imagery). Your use of these services is subject to their respective terms and conditions. We do not control these third‑party services and are not responsible for their availability, accuracy, or practices.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">5. User Conduct</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">6. User Conduct</h2>
               <p>
                 You agree to use the Site in a lawful manner and not to engage in any activity that could harm the Site or other users. We reserve the right to suspend or terminate your account for violations of these Terms.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Intellectual Property</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Intellectual Property</h2>
               <p>
                 All content on the Site, excluding user‑submitted content, is owned by or licensed to Wanderluxe Travel LLC. You may not reproduce, distribute, or create derivative works without our explicit permission.
               </p>
@@ -101,43 +98,43 @@ const TermsOfService: React.FC = () => {
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Disclaimer of Warranties</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">8. Disclaimer of Warranties</h2>
               <p>
                 The Site and all its services are provided on an “AS IS” and “AS AVAILABLE” basis without warranties of any kind. We do not guarantee the accuracy, reliability, or availability of the Site.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">8. Limitation of Liability</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">9. Limitation of Liability</h2>
               <p>
                 To the fullest extent permitted by law, Wanderluxe Travel LLC shall not be liable for any direct, indirect, incidental, or consequential damages arising out of your use of the Site. Our total liability is limited to any fees paid by you in the six months preceding the claim, if any.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">9. Indemnification</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">10. Indemnification</h2>
               <p>
                 You agree to indemnify and hold harmless Wanderluxe Travel LLC and its affiliates from any claims, damages, or expenses arising from your use of the Site or breach of these Terms.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">10. Termination</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">11. Termination</h2>
               <p>
                 We reserve the right to suspend or terminate your access to the Site at any time, without notice, for any reason including violation of these Terms. Upon termination, you must immediately cease using the Site.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">11. Changes to These Terms</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">12. Changes to These Terms</h2>
               <p>
                 We may modify these Terms at any time. Changes will be posted on the Site, and your continued use of the Site after such changes constitutes your acceptance of the updated Terms.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">12. Governing Law</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">13. Governing Law</h2>
               <p>
                 These Terms shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law provisions. Any disputes arising under or in connection with these Terms shall be subject to the exclusive jurisdiction of the state and federal courts located in Albany County, New York.
               </p>
             </div>
             <div className="pb-6 border-b">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">13. Contact Us</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">14. Contact Us</h2>
               <p>
                 If you have any questions or concerns regarding these Terms, please contact us at{' '}
                 <a href="mailto:info@wanderluxe.io" className="text-primary hover:underline">
@@ -146,13 +143,12 @@ const TermsOfService: React.FC = () => {
               </p>
             </div>
             <div className="pt-8 border-t text-center text-sm text-muted-foreground">
-              Last updated: February 2025
+              Last updated: May 2026
             </div>
           </section>
         </div>
       </div>
-      <Footer />
-    </main>
+    </>
   );
 };
 
