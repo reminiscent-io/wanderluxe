@@ -4,9 +4,6 @@ import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
-import ShareTripDialog from './ShareTripDialog';
-import { Button } from '@/components/ui/button';
-import { Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
@@ -50,7 +47,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   // Fetch weather for the trip destination (only for current/upcoming trips)
   // Prefer primary_destination if available, fallback to trip name
@@ -207,24 +203,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             <ViewingStatusAvatars tripId={tripId} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsShareDialogOpen(true)}
-            >
-              <Share2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
             <ExportPdfButton tripId={tripId} className="" />
           </div>
         </header>
 
-        <ShareTripDialog
-          tripId={tripId}
-          tripDestination={tripDestination || 'Trip'}
-          open={isShareDialogOpen}
-          onOpenChange={setIsShareDialogOpen}
-        />
         <TimelineContent
           days={days}
           dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
