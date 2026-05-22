@@ -33,7 +33,7 @@ async function fetchPublicTrips(): Promise<SitemapEntry[]> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const { data, error } = await supabase
     .from('trips')
-    .select('slug, updated_at')
+    .select('slug, created_at')
     .eq('is_public', true)
     .not('slug', 'is', null);
 
@@ -43,12 +43,12 @@ async function fetchPublicTrips(): Promise<SitemapEntry[]> {
   }
 
   return (data ?? [])
-    .filter((row: { slug: string | null }): row is { slug: string; updated_at?: string | null } =>
+    .filter((row: { slug: string | null }): row is { slug: string; created_at?: string | null } =>
       typeof row.slug === 'string' && row.slug.length > 0,
     )
     .map((row) => ({
       loc: `/explore/${row.slug}`,
-      lastmod: row.updated_at?.split('T')[0],
+      lastmod: row.created_at?.split('T')[0],
       changefreq: 'weekly' as const,
       priority: '0.9',
     }));
