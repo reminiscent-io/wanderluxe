@@ -292,23 +292,26 @@ const TripDetails = () => {
           >
 
             <div className="max-w-none mx-auto px-4 pt-6 pb-24 md:pb-8">
-              {isPublicTrip && (
-                <nav aria-label="Breadcrumb" className="mb-4 text-sm">
-                  <ol className="flex items-center gap-1.5 text-earth-500">
-                    <li>
-                      <a href="/" className="hover:text-earth-700 transition-colors">Home</a>
-                    </li>
-                    <li aria-hidden="true">/</li>
-                    <li>
+              <nav aria-label="Breadcrumb" className="mb-4 text-sm">
+                <ol className="flex items-center gap-1.5 text-earth-500">
+                  <li>
+                    <a href="/" className="hover:text-earth-700 transition-colors">Home</a>
+                  </li>
+                  <li aria-hidden="true">/</li>
+                  <li>
+                    {isPublicTrip ? (
                       <a href="/explore" className="hover:text-earth-700 transition-colors">Explore</a>
-                    </li>
-                    <li aria-hidden="true">/</li>
-                    <li className="text-earth-700 font-medium" aria-current="page">
-                      {displayData.destination}
-                    </li>
-                  </ol>
-                </nav>
-              )}
+                    ) : (
+                      <a href="/my-trips" className="hover:text-earth-700 transition-colors">My Trips</a>
+                    )}
+                  </li>
+                  <li aria-hidden="true">/</li>
+                  <li className="text-earth-700 font-medium" aria-current="page">
+                    {displayData.destination}
+                  </li>
+                </ol>
+              </nav>
+
               {!canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                   <div className="flex items-center">

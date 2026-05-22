@@ -80,38 +80,40 @@ export function ActiveTripCard({
       {/* Content Overlay */}
       <div className="relative h-full flex flex-col justify-between p-5 md:p-6">
         {/* Top Section */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3">
           {/* Live Badge */}
-          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white font-semibold px-3 py-1 shadow-lg">
+          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white font-semibold px-3 py-1 shadow-warm">
             <span className="w-2 h-2 bg-white rounded-full mr-2 animate-ping" />
             LIVE
           </Badge>
 
-          {/* Weather Info */}
+          {/* Weather Info — opaque for outdoor readability */}
           {weather?.current && !weatherLoading && (
-            <motion.div
+            <motion.button
+              type="button"
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white cursor-pointer hover:bg-white/30 transition-colors"
+              className="min-h-[44px] rounded-card bg-background/95 px-3 py-2 text-foreground shadow-warm-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 setWeatherModalOpen(true);
               }}
+              aria-label="View current weather"
             >
               <div className="flex items-center gap-2">
-                <span className="text-lg">{getWeatherEmoji(weather.current.icon)}</span>
+                <span className="text-lg leading-none">{getWeatherEmoji(weather.current.icon)}</span>
                 <div className="text-right">
-                  <div className="font-bold text-lg leading-none">{weather.current.temp}°F</div>
-                  <div className="text-xs opacity-80">{weather.current.localTime}</div>
+                  <div className="font-semibold text-base leading-none tabular-nums">{weather.current.temp}°</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">{weather.current.localTime}</div>
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
           )}
 
           {/* Additional trips badge */}
           {additionalTripsCount > 0 && (
-            <Badge className="bg-white/20 backdrop-blur-md text-white font-medium">
+            <Badge className="bg-foreground/75 text-white border-0 font-medium tabular-nums shadow-warm">
               +{additionalTripsCount} more
             </Badge>
           )}
@@ -121,14 +123,17 @@ export function ActiveTripCard({
         <div className="space-y-4">
           {/* Trip Progress */}
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-white/20 text-white text-xs backdrop-blur-sm">
+            <Badge
+              variant="secondary"
+              className="bg-foreground/75 text-white border-0 text-xs tabular-nums shadow-warm"
+            >
               Day {currentDay} of {totalDays}
             </Badge>
           </div>
 
           {/* Destination & Dates */}
           <div>
-            <h2 className="text-white text-3xl md:text-4xl font-black leading-tight mb-2 drop-shadow-lg">
+            <h2 className="font-display text-white text-[2rem] leading-[1.05] md:text-5xl md:leading-[1.04] tracking-tight mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
               {trip.destination}
             </h2>
             <div className="flex flex-col gap-1 text-white/80 text-sm">
@@ -148,7 +153,7 @@ export function ActiveTripCard({
           {/* CTA Button */}
           <Button
             size="lg"
-            className="w-full sm:w-auto bg-white text-earth-900 hover:bg-white/90 font-semibold shadow-lg"
+            className="w-full sm:w-auto bg-background text-foreground hover:bg-background/90 font-semibold shadow-warm-lg"
             onClick={(e) => {
               e.stopPropagation();
               onViewItinerary();

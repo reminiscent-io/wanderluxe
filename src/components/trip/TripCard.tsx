@@ -310,7 +310,7 @@ const TripCard = ({
                   <>
                     <Button
                       size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white h-10 sm:h-9 px-3.5"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -326,7 +326,7 @@ const TripCard = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 px-3"
+                          className="h-10 sm:h-9 px-3.5"
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
@@ -362,7 +362,7 @@ const TripCard = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-11 w-11 sm:h-9 sm:w-9"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -393,7 +393,7 @@ const TripCard = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-11 w-11 sm:h-9 sm:w-9"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
