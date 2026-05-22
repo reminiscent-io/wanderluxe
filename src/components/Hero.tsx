@@ -116,7 +116,7 @@ const Hero = () => {
                 className="w-full h-full object-cover pointer-events-none select-none"
                 style={{ minHeight: "calc(var(--app-height, 1vh) * 100)" }}
                 objectPosition="center center"
-                alt={`Luxury travel destination photographed by ${current.photographer} on Unsplash`}
+                alt={`Travel destination photographed by ${current.photographer} on Unsplash`}
                 showAttribution={false}
                 draggable={false}
               />
@@ -157,10 +157,10 @@ const Hero = () => {
         className="relative flex h-full items-center justify-center text-center"
       >
         <h1 className="sr-only">
-          WanderLuxe — AI-powered luxury travel planning with real-time collaboration and curated itineraries
+          Plan your next trip together — free collaborative itinerary builder
         </h1>
         <p className="sr-only">
-          Plan luxury trips with AI-assisted recommendations, coordinate accommodations, activities, dining, and transportation in one place, and share polished itineraries with travel companions.
+          Build, share, and edit travel itineraries with friends. WanderLuxe is a free collaborative trip planner with AI-assisted search to help you find stays, flights, dining, and activities faster.
         </p>
         <div className="space-y-6 px-4">
           <motion.div

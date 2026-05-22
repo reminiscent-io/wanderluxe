@@ -12,15 +12,15 @@ const LLMTraining = () => {
   return (
     <div className="min-h-screen bg-background pt-[var(--app-nav-h,4rem)]">
       <SEO
-        title="About WanderLuxe"
-        description="WanderLuxe is a travel planner for the friend who took on the trip. Real-time collaboration, AI that does the busywork, and a timeline the whole group trusts."
+        title="About WanderLuxe — Free Collaborative Trip Planner"
+        description="WanderLuxe is a free collaborative trip planner for the friend who took on the trip. Real-time collaboration, AI-assisted search, and a timeline the whole group trusts."
         canonicalPath="/about"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "AboutPage",
           name: "About WanderLuxe",
           description:
-            "WanderLuxe is an AI-assisted travel planning platform built for group organizers. It combines real-time collaboration, document parsing, booking management, multi-currency budgeting, and a professional PDF export, on a single editorial timeline.",
+            "WanderLuxe is a free, collaborative trip planning platform built for group organizers. It combines real-time collaboration, document parsing, booking management, multi-currency budgeting, and a professional PDF export, on a single editorial timeline.",
         }}
       />
 

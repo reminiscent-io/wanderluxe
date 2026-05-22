@@ -4,7 +4,7 @@ export const SITE_URL = "https://wanderluxe.io";
 export const DEFAULT_OG_IMAGE =
   "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/Black%20Full_v2.png";
 const DEFAULT_DESCRIPTION =
-  "WanderLuxe is an AI-assisted luxury travel planning platform with real-time collaboration, curated itineraries, and professional PDF export.";
+  "WanderLuxe is a free, collaborative travel itinerary builder with AI-assisted search, real-time collaboration, and professional PDF export.";
 
 interface SEOProps {
   title?: string;
@@ -29,7 +29,7 @@ export default function SEO({
     ? title.endsWith("WanderLuxe")
       ? title
       : `${title} | WanderLuxe`
-    : "WanderLuxe — AI-assisted collaborative travel planning";
+    : "WanderLuxe: Free Collaborative Trip Planner & Itinerary Builder";
 
   const canonical = canonicalPath
     ? `${SITE_URL}${canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`}`

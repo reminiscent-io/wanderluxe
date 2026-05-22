@@ -34,15 +34,15 @@ const Index = () => {
         priceCurrency: "USD",
       },
       description:
-        "AI-powered luxury travel planning with real-time collaboration, curated itineraries, and professional PDF export.",
+        "Free, collaborative travel itinerary builder with AI-assisted search, real-time collaboration, and professional PDF export.",
     },
   ];
 
   return (
     <main className="min-h-screen flex flex-col">
       <SEO
-        title="WanderLuxe — AI-powered luxury travel planning"
-        description="Plan luxury trips with AI-assisted recommendations, real-time collaboration, and polished itineraries. WanderLuxe makes travel planning effortless."
+        title="WanderLuxe: Free Collaborative Trip Planner & Itinerary Builder"
+        description="Plan trips together, for free. WanderLuxe is a collaborative travel itinerary builder with AI-assisted search to help you discover, organize, and share your next trip."
         canonicalPath="/"
         jsonLd={jsonLd}
       />
