@@ -198,10 +198,10 @@ const TripDetails = () => {
     : null;
 
   const seoTitle = isPublicTrip && nights
-    ? `${displayData.destination} — ${nights}-Night Luxury Itinerary`
+    ? `${displayData.destination} — ${nights}-Night Itinerary`
     : `${displayData.destination} itinerary`;
   const seoDescription = displaySummary
-    || `Explore a curated luxury itinerary for ${displayData.destination} on WanderLuxe — accommodations, activities, dining, and transportation in one place.`;
+    || `Explore a curated itinerary for ${displayData.destination} on WanderLuxe — accommodations, activities, dining, and transportation in one place.`;
 
   const tripJsonLd = isPublicTrip
     ? [
@@ -210,7 +210,7 @@ const TripDetails = () => {
           "@type": "TouristTrip",
           name: seoTitle,
           description: seoDescription,
-          touristType: "Luxury traveler",
+          touristType: "Leisure traveler",
           inLanguage: "en",
           url: canonicalUrl,
           provider: {

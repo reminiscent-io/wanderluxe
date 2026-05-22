@@ -185,7 +185,7 @@ const Explore = () => {
     ? {
         "@context": "https://schema.org",
         "@type": "ItemList",
-        name: "Curated luxury trip itineraries",
+        name: "Curated trip itineraries",
         itemListElement: publicTrips.slice(0, 20).map((trip, idx) => ({
           "@type": "ListItem",
           position: idx + 1,
@@ -200,14 +200,14 @@ const Explore = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <SEO
-        title="Explore curated luxury trip itineraries"
-        description="Discover hand-crafted luxury travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
+        title="Explore curated trip itineraries"
+        description="Discover hand-crafted travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
         canonicalPath="/explore"
         jsonLd={itemListJsonLd}
       />
       <Navigation />
       <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
-        <h1 className="sr-only">Explore curated luxury trip itineraries</h1>
+        <h1 className="sr-only">Explore curated trip itineraries</h1>
 
         {/* Hero — single primary surface */}
         <motion.div
