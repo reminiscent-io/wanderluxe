@@ -434,11 +434,22 @@ export function useDayTimeline({
       groupMap.set(period as TimePeriod, []);
     });
 
+    // Period the "now" indicator belongs to, based on the current local time.
+    // Anchoring to the current time (rather than the previous row's period) keeps
+    // the marker in its correct section even when no timed item precedes it.
+    const nowDate = new Date();
+    const nowPeriod = getTimePeriod(
+      `${String(nowDate.getHours()).padStart(2, '0')}:${String(nowDate.getMinutes()).padStart(2, '0')}`,
+    );
+
     // Distribute rows to periods
     let lastItemPeriod: TimePeriod = 'no-time';
     rows.forEach(row => {
-      if (row.kind === 'hint' || row.kind === 'now') {
-        // Attach hint/now to the period of the last item
+      if (row.kind === 'now') {
+        // Anchor the now indicator to the period of the current time
+        groupMap.get(nowPeriod)?.push(row);
+      } else if (row.kind === 'hint') {
+        // Attach hint to the period of the last item
         groupMap.get(lastItemPeriod)?.push(row);
       } else if (row.kind === 'grouped') {
         // For grouped items, use the time of the first item
