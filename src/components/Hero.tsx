@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
+import LandingNav from "./landing/LandingNav";
 
 const SLIDE_MS = 2500; // time each image is shown
 const FADE_MS = 2000;  // crossfade duration
@@ -80,6 +81,8 @@ const Hero = () => {
       className="relative w-full overflow-hidden"
       style={{ height: "calc(var(--app-height, 1vh) * 100)" }}
     >
+      <LandingNav />
+
       {/* Background stack with elegant crossfade + Ken Burns */}
       <div
         ref={parallaxRef}
