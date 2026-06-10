@@ -14,6 +14,8 @@
 
 import pdfMake from 'pdfmake/build/pdfmake';
 import { loadPdfFonts } from './pdf-fonts';
+import { imageToCoverDataURI } from './pdf/images';
+import { PAGE } from './pdf/theme';
 
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/analytics';
@@ -218,74 +220,6 @@ function sanitizeFilename(input?: string | null): string {
   while (out.endsWith('_')) out = out.slice(0, -1);
 
   return out || 'itinerary';
-}
-
-
-/* =========================================================================
-   Image helpers with caching & optional downscale (better for mobile)
-   ========================================================================= */
-
-const imgCache = new Map<string, Promise<string>>();
-
-async function toDataURI(url: string, targetWidth: number): Promise<string> {
-  if (!url) return '';
-  const key = `${url}@${targetWidth}`;
-  if (imgCache.has(key)) return imgCache.get(key)!;
-
-  const job = (async () => {
-    try {
-      const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) throw new Error('Image fetch failed');
-      const blob = await resp.blob();
-
-      // Try to downscale to targetWidth if we can draw to canvas safely
-      const dataUrl = await drawToCanvas(blob, targetWidth);
-      return dataUrl ?? (await blobToDataURL(blob)); // fallback: raw to data URL
-    } catch {
-      // If anything fails (CORS/opaque responses), skip the image
-      return '';
-    }
-  })();
-
-  imgCache.set(key, job);
-  return job;
-}
-
-function blobToDataURL(blob: Blob): Promise<string> {
-  return new Promise((res, rej) => {
-    const fr = new FileReader();
-    fr.onload = () => res(fr.result as string);
-    fr.onerror = () => rej(fr.error);
-    fr.readAsDataURL(blob);
-  });
-}
-
-async function drawToCanvas(blob: Blob, targetWidth: number): Promise<string | null> {
-  // Best-effort downscale; if canvas taints due to CORS, we catch and return null
-  return new Promise<string | null>((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const scale = Math.min(1, targetWidth / (img.width || targetWidth));
-        const w = Math.max(1, Math.round((img.width || targetWidth) * scale));
-        const h = Math.max(1, Math.round((img.height || targetWidth) * scale));
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return resolve(null);
-        ctx.drawImage(img, 0, 0, w, h);
-        // Use JPEG to keep size small
-        const data = canvas.toDataURL('image/jpeg', 0.85);
-        resolve(data);
-      } catch {
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = URL.createObjectURL(blob);
-  });
 }
 
 /* =========================================================================
@@ -517,7 +451,7 @@ async function buildDays(
         if (!it.thumb) continue;
         const url = it.thumb;
         jobs.push(
-          toDataURI(url, 96).then((dataUrl) => {
+          imageToCoverDataURI(url, PAGE.thumbSize, PAGE.thumbSize, PAGE.thumbScale).then((dataUrl) => {
             it.thumb = dataUrl || '';
           })
         );
@@ -1155,7 +1089,12 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     let coverDataUrl = '';
     if (o.showImages && trip.cover_image_url) {
       console.log('[PDF Export] Loading cover image...');
-      coverDataUrl = await toDataURI(trip.cover_image_url, Math.round(contentWidth));
+      coverDataUrl = await imageToCoverDataURI(
+        trip.cover_image_url,
+        Math.round(contentWidth),
+        coverImageHeight,
+        PAGE.coverScale
+      );
       console.log('[PDF Export] Cover image loaded');
     }
 

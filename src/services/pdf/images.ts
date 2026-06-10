@@ -41,3 +41,80 @@ export function computeOutputSize(
   const h = Math.round(w * (boxH / boxW));
   return { w: Math.max(1, w), h: Math.max(1, h) };
 }
+
+// --- browser-only glue below (not unit-testable in jsdom; see render preview) ---
+
+const imgCache = new Map<string, Promise<string>>();
+
+/**
+ * Fetch a remote image and return a JPEG data URI center-cropped to exactly
+ * the boxW:boxH aspect ratio at `scale`x resolution. Returns '' on any
+ * failure (CORS, network, decode) — callers decide placeholder behavior.
+ */
+export async function imageToCoverDataURI(
+  url: string,
+  boxW: number,
+  boxH: number,
+  scale: number
+): Promise<string> {
+  if (!url) return '';
+  const key = `${url}@${boxW}x${boxH}@${scale}`;
+  const hit = imgCache.get(key);
+  if (hit) return hit;
+
+  const job = (async () => {
+    try {
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) throw new Error('Image fetch failed');
+      const blob = await resp.blob();
+      return (await drawCover(blob, boxW, boxH, scale)) ?? '';
+    } catch {
+      return '';
+    }
+  })();
+
+  imgCache.set(key, job);
+  return job;
+}
+
+function loadImage(blob: Blob): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(null);
+    };
+    img.src = objectUrl;
+  });
+}
+
+async function drawCover(
+  blob: Blob,
+  boxW: number,
+  boxH: number,
+  scale: number
+): Promise<string | null> {
+  const img = await loadImage(blob);
+  if (!img || !img.width || !img.height) return null;
+  try {
+    const crop = computeCoverCrop(img.width, img.height, boxW, boxH);
+    const { w, h } = computeOutputSize(crop, boxW, boxH, scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    // White underlay so PNG transparency doesn't go black in the JPEG.
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', 0.85);
+  } catch {
+    return null; // tainted canvas (CORS) or draw failure
+  }
+}
