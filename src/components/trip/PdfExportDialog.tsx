@@ -123,6 +123,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                   type="button"
                   size="sm"
                   variant={options.pageSize === size ? 'default' : 'outline'}
+                  aria-pressed={options.pageSize === size}
                   onClick={() => setOptions(prev => ({ ...prev, pageSize: size }))}
                 >
                   {size === 'LETTER' ? 'Letter' : 'A4'}
