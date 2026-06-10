@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { FileDown, Loader2, Image, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+import type { PdfPageSize } from '@/services/pdf/theme';
 
 interface PdfExportDialogProps {
   tripId: string;
@@ -22,6 +23,8 @@ interface PdfExportDialogProps {
 export interface PdfExportOptions {
   showImages: boolean;
   showCosts: boolean;
+  /** Paper size; defaults to locale-appropriate size when omitted. */
+  pageSize?: PdfPageSize;
 }
 
 const PdfExportDialog: React.FC<PdfExportDialogProps> = ({

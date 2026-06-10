@@ -15,7 +15,11 @@
 import pdfMake from 'pdfmake/build/pdfmake';
 import { loadPdfFonts } from './pdf-fonts';
 import { imageToCoverDataURI } from './pdf/images';
-import { PAGE, TYPE, COLORS, FONTS } from './pdf/theme';
+import {
+  PAGE, TYPE, COLORS, FONTS,
+  innerPageWidth, defaultPageSize,
+  type PdfPageSize,
+} from './pdf/theme';
 import { isOrphanedHeading } from './pdf/pagination';
 import { fmtMoney } from './pdf/format';
 
@@ -49,19 +53,12 @@ const TABLES = {
   otherExpenses: 'other_expenses',
 } as const;
 
-// Brand palette (sand/earth/sunset)
-const BRAND = {
-  earth: '#6B6354',
-  earthLight: '#8A7F6C',
-  earthMid: '#A89B8E',
-  sand: '#FAF9F7',
-  sandDark: '#7B715F',
-  accent: '#5C544A',
-  sunset: '#D97706',
-} as const;
-
-type ExportStrategy = 'auto' | 'open' | 'download' | 'blob';
-type PagePreset = 'auto' | 'mobile' | 'desktop';
+// TEMP shims — removed in Task 10 when styles/header/footer move to theme tokens
+const BRAND = COLORS;
+const baseFontSize = 9;
+const isMobile = false;
+const headerFont = 9;
+const footerFont = 8;
 
 /** Format a snake_case transport type into Title Case (e.g. "car_service" → "Car Service") */
 function formatType(raw: string | null | undefined): string {
@@ -110,54 +107,6 @@ type TransportSegment = {
   type: string;
   confirmationNumber?: string;
 };
-
-/* =========================================================================
-   Mobile/Desktop & Page helpers
-   ========================================================================= */
-
-function isProbablyMobile(): boolean {
-  if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const isSmall = typeof window.innerWidth === 'number' && window.innerWidth <= 768;
-  return /Mobi|Android|iPhone|iPad|iPod/i.test(ua) || isSmall;
-}
-
-function defaultPageSize(): 'LETTER' | 'A4' {
-  // Very lightweight heuristic: US locales → LETTER, others → A4
-  const loc = (Intl.DateTimeFormat().resolvedOptions().locale || '').toLowerCase();
-  return loc.startsWith('en-us') ? 'LETTER' : 'A4';
-}
-
-function pagePresetSettings(preset: PagePreset) {
-  // Compact for mobile, comfortable for desktop
-  const isMobile = preset === 'mobile' || (preset === 'auto' && isProbablyMobile());
-  return {
-    isMobile,
-    pageSize: defaultPageSize(), // 'LETTER' or 'A4'
-    pageMargins: isMobile
-      ? ([20, 20, 20, 24] as [number, number, number, number])
-      : ([24, 24, 24, 30] as [number, number, number, number]),
-    baseFontSize: isMobile ? 8 : 9,
-    headerFont: isMobile ? 8 : 9,
-    footerFont: isMobile ? 7.5 : 8,
-    compactDayHeader: isMobile ? 11 : 12,
-    timeWidth: isMobile ? 52 : 60,
-    coverImageHeight: isMobile ? 200 : 250,
-  };
-}
-
-function resolveStrategy(opts: PdfExportOptions): ExportStrategy {
-  const strategy = (opts as PdfExportOptions & { strategy?: ExportStrategy })?.strategy;
-  if (strategy === 'open' || strategy === 'download' || strategy === 'blob') return strategy;
-  return 'auto';
-}
-
-function innerPageWidth(pageSize: 'A4' | 'LETTER', margins: [number, number, number, number]) {
-  // pdfmake page sizes in points
-  const widths: Record<string, number> = { A4: 595.28, LETTER: 612 };
-  const total = widths[pageSize] ?? widths.LETTER;
-  return total - margins[0] - margins[2];
-}
 
 /* =========================================================================
    Safe formatting & parsing (ReDoS-free)
@@ -1019,29 +968,14 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): Cont
 export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): Promise<void> {
   try {
     await loadPdfFonts();
-    console.log('[PDF Export] Starting export for trip:', tripId);
-    console.log('[PDF Export] Options:', o);
     track('pdf_exported', {
       trip_id: tripId,
-      page_preset: (o as PdfExportOptions & { pagePreset?: string })?.pagePreset ?? 'auto',
     });
 
-    const preset: PagePreset = ((o as PdfExportOptions & { pagePreset?: PagePreset })?.pagePreset) || 'auto';
-    const {
-      isMobile,
-      pageSize,
-      pageMargins,
-      baseFontSize,
-      headerFont,
-      footerFont,
-      compactDayHeader,
-      timeWidth,
-      coverImageHeight,
-    } = pagePresetSettings(preset);
+    const pageSize: PdfPageSize = o.pageSize ?? defaultPageSize();
+    const contentWidth = innerPageWidth(pageSize, PAGE.margins);
+    const exportedAt = new Date();
 
-    const contentWidth = innerPageWidth(pageSize, pageMargins);
-
-    console.log('[PDF Export] Fetching trip data...');
     // Fetch trip info
     const { data: trip, error } = await supabase
       .from(TABLES.trip)
@@ -1053,7 +987,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       console.error('[PDF Export] Trip fetch failed:', error);
       throw error ?? new Error('Trip not found');
     }
-    console.log('[PDF Export] Trip data fetched:', trip.destination);
 
     const sameTripDay =
       trip.arrival_date && trip.departure_date
@@ -1067,24 +1000,19 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
           : `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`
         : '';
 
-    console.log('[PDF Export] Building days data...');
     const { days, stays, transports, diningRefs, budgetData } = await buildDays(tripId, o);
-    console.log('[PDF Export] Days built:', days.length, 'days');
 
     // Cover image (data URL, possibly downscaled)
     let coverDataUrl = '';
     if (o.showImages && trip.cover_image_url) {
-      console.log('[PDF Export] Loading cover image...');
       coverDataUrl = await imageToCoverDataURI(
         trip.cover_image_url,
         Math.round(contentWidth),
-        coverImageHeight,
+        PAGE.coverImageHeight,
         PAGE.coverScale
       );
-      console.log('[PDF Export] Cover image loaded');
     }
 
-    console.log('[PDF Export] Building document definition...');
     // Build document definition
     const content: Content[] = [];
 
@@ -1098,7 +1026,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         days,
         coverDataUrl,
         contentWidth,
-        coverImageHeight,
+        PAGE.coverImageHeight,
         baseFontSize
       )
     );
@@ -1106,8 +1034,8 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     // Daily itineraries — pdfmake paginates by real height; the pageBreakBefore
     // rule (isOrphanedHeading) keeps day headers attached to their tables.
     days.forEach((d, idx) => {
-      content.push(renderCompactDayHeader(d, idx === 0, compactDayHeader, contentWidth));
-      content.push(renderTable(d.items, o, timeWidth));
+      content.push(renderCompactDayHeader(d, idx === 0, TYPE.section, contentWidth));
+      content.push(renderTable(d.items, o, PAGE.timeColWidth));
     });
 
     // Add budget summary if costs are enabled (2c)
@@ -1120,7 +1048,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
 
     const doc: TDocumentDefinitions = {
       pageSize,
-      pageMargins,
+      pageMargins: PAGE.margins,
       defaultStyle: { fontSize: baseFontSize, lineHeight: 1.25, font: 'DMSans' },
       header: () => ({
         text: [trip.destination, dateRange ? ` • ${dateRange}` : ''].join(''),
@@ -1131,7 +1059,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         color: BRAND.earthLight,
       }),
       footer: (p: number, c: number) => ({
-        text: `Page ${p} of ${c} • exported ${fnsFormat(new Date(), 'PP p')}`,
+        text: `Page ${p} of ${c} • exported ${fnsFormat(exportedAt, 'PP p')}`,
         alignment: 'center',
         font: 'DMSans',
         fontSize: footerFont,
@@ -1151,136 +1079,31 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         isOrphanedHeading(currentNode, followingNodesOnPage),
     };
 
-    // Delivery strategy
-    const strategy = resolveStrategy(o);
     const fileName = `${sanitizeFilename(trip.destination)}-itinerary.pdf`;
-    console.log('[PDF Export] Creating PDF with strategy:', strategy);
-    console.log('[PDF Export] Document content items:', content.length);
     const pdf = pdfMake.createPdf(doc);
-    console.log('[PDF Export] PDF object created, generating blob...');
 
-    // Wrap all download strategies in Promises for proper error handling
     return new Promise<void>((resolve, reject) => {
-      try {
-        // On mobile, always download (window.open is blocked)
-        // On desktop, download by default
-        if (strategy === 'download' || strategy === 'auto') {
-          console.log('[PDF Export] Using download/auto strategy');
-          pdf.getBlob((blob: Blob) => {
-            console.log('[PDF Export] Blob received, size:', blob?.size);
-            try {
-              if (!blob) {
-                console.error('[PDF Export] Blob is null or undefined');
-                reject(new Error('Failed to generate PDF blob'));
-                return;
-              }
-
-              const url = URL.createObjectURL(blob);
-              console.log('[PDF Export] Blob URL created:', url);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = fileName;
-              document.body.appendChild(link);
-              link.click();
-              console.log('[PDF Export] Download triggered for:', fileName);
-              document.body.removeChild(link);
-
-              setTimeout(() => {
-                URL.revokeObjectURL(url);
-                console.log('[PDF Export] Success! PDF downloaded');
-                resolve();
-              }, 100);
-            } catch (err) {
-              console.error('[PDF Export] Error in blob callback:', err);
-              reject(err);
-            }
-          });
-          return;
-        }
-
-        if (strategy === 'open') {
-          if (!isProbablyMobile()) {
-            pdf.getBlob((blob: Blob) => {
-              try {
-                if (!blob) {
-                  reject(new Error('Failed to generate PDF blob'));
-                  return;
-                }
-
-                const url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-                setTimeout(() => {
-                  URL.revokeObjectURL(url);
-                  resolve();
-                }, 1000);
-              } catch (err) {
-                reject(err);
-              }
-            });
-          } else {
-            // Fallback to download on mobile if open was explicitly requested
-            pdf.getBlob((blob: Blob) => {
-              try {
-                if (!blob) {
-                  reject(new Error('Failed to generate PDF blob'));
-                  return;
-                }
-
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(() => {
-                  URL.revokeObjectURL(url);
-                  resolve();
-                }, 100);
-              } catch (err) {
-                reject(err);
-              }
-            });
+      pdf.getBlob((blob: Blob) => {
+        try {
+          if (!blob) {
+            reject(new Error('Failed to generate PDF blob'));
+            return;
           }
-          return;
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+            resolve();
+          }, 100);
+        } catch (err) {
+          reject(err);
         }
-
-        if (strategy === 'blob') {
-          pdf.getBlob((blob: Blob) => {
-            try {
-              if (!blob) {
-                reject(new Error('Failed to generate PDF blob'));
-                return;
-              }
-
-              const url = URL.createObjectURL(blob);
-              if (!isProbablyMobile()) {
-                window.open(url, '_blank');
-              } else {
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }
-              setTimeout(() => {
-                URL.revokeObjectURL(url);
-                resolve();
-              }, 100);
-            } catch (err) {
-              reject(err);
-            }
-          });
-          return;
-        }
-
-        console.error('[PDF Export] No valid strategy matched:', strategy);
-        reject(new Error('Invalid PDF export strategy'));
-      } catch (err) {
-        console.error('[PDF Export] Error in Promise wrapper:', err);
-        reject(err);
-      }
+      });
     });
   } catch (error) {
     console.error('[PDF Export] Top-level error:', error);
