@@ -17,6 +17,7 @@ import { loadPdfFonts } from './pdf-fonts';
 import { imageToCoverDataURI } from './pdf/images';
 import { PAGE, TYPE, COLORS, FONTS } from './pdf/theme';
 import { isOrphanedHeading } from './pdf/pagination';
+import { fmtMoney } from './pdf/format';
 
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/analytics';
@@ -345,7 +346,7 @@ async function buildDays(
           time: t || 'All-day',
           details: s.hotel_details || undefined,
           location: s.hotel_address || undefined,
-          cost: s.cost != null ? `${s.currency} ${s.cost}` : undefined,
+          cost: s.cost != null ? fmtMoney(s.cost, s.currency) : undefined,
           thumb: (o.showImages && s.image_url) ? String(s.image_url) : undefined, // will be converted to dataURL later
           sortKey: minsFromTime(t || '8:00 am'),
         });
@@ -379,7 +380,7 @@ async function buildDays(
             t.departure_location && t.arrival_location
               ? `From: ${t.departure_location} to ${t.arrival_location}`
               : t.departure_location || undefined,
-          cost: t.cost != null ? `${t.currency} ${t.cost}` : undefined,
+          cost: t.cost != null ? fmtMoney(t.cost, t.currency) : undefined,
           sortKey: minsFromTime(startStr || '8:00 am'),
         });
       });
@@ -396,7 +397,7 @@ async function buildDays(
             title: a.title || 'Activity',
             time: t || 'All-day',
             details: a.description || undefined,
-            cost: a.cost != null ? `${a.currency} ${a.cost}` : undefined,
+            cost: a.cost != null ? fmtMoney(a.cost, a.currency) : undefined,
             sortKey: minsFromTime(t || '8:00 am'),
           });
         });
@@ -427,7 +428,7 @@ async function buildDays(
           time: t || 'All-day',
           details: r.notes || undefined,
           location: meta.join(' • ') || undefined,
-          cost: r.cost != null ? `${r.currency} ${r.cost}` : undefined,
+          cost: r.cost != null ? fmtMoney(r.cost, r.currency) : undefined,
           sortKey: minsFromTime(t || '8:00 am'),
         });
       });
@@ -965,6 +966,9 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): Cont
     margin: [0, 16, 0, 8] as [number, number, number, number],
   });
 
+  // Budget categories sum raw amounts across currencies and have always been
+  // labeled USD. Honest multi-currency totals need exchange-rate conversion —
+  // out of scope here (see plan: Out of scope).
   const tableBody: TableCell[][] = [
     [
       { text: 'Category', bold: true, fontSize: baseFontSize - 0.5, fillColor: BRAND.earthLight, color: '#FFFFFF' },
@@ -972,11 +976,11 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): Cont
     ],
     ...budgetData.categories.map((c) => [
       { text: c.category, fontSize: baseFontSize - 0.5 },
-      { text: `$${c.amount.toFixed(2)}`, fontSize: baseFontSize - 0.5, alignment: 'right' },
+      { text: fmtMoney(c.amount, 'USD'), fontSize: baseFontSize - 0.5, alignment: 'right' },
     ]),
     [
       { text: 'Total', bold: true, fontSize: baseFontSize, fillColor: '#F5F3F2' },
-      { text: `$${budgetData.total.toFixed(2)}`, bold: true, fontSize: baseFontSize, alignment: 'right', fillColor: '#F5F3F2' },
+      { text: fmtMoney(budgetData.total, 'USD'), bold: true, fontSize: baseFontSize, alignment: 'right', fillColor: '#F5F3F2' },
     ],
   ];
 
@@ -991,10 +995,10 @@ function renderBudgetSummary(budgetData: BudgetData, baseFontSize: number): Cont
     const overBudget = remaining < 0;
     content.push({
       columns: [
-        { text: `Budget: $${budgetData.budget.toFixed(2)}`, fontSize: baseFontSize - 0.5, width: 'auto' },
+        { text: `Budget: ${fmtMoney(budgetData.budget, 'USD')}`, fontSize: baseFontSize - 0.5, width: 'auto' },
         { text: '  |  ', fontSize: baseFontSize - 0.5, color: BRAND.earthMid, width: 'auto' },
         {
-          text: overBudget ? `Over budget by $${Math.abs(remaining).toFixed(2)}` : `Remaining: $${remaining.toFixed(2)}`,
+          text: overBudget ? `Over budget by ${fmtMoney(Math.abs(remaining), 'USD')}` : `Remaining: ${fmtMoney(remaining, 'USD')}`,
           fontSize: baseFontSize - 0.5,
           color: overBudget ? BRAND.sunset : BRAND.earth,
           bold: true,
