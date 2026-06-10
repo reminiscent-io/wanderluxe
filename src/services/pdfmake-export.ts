@@ -10,6 +10,7 @@ import { buildDocDefinition } from './pdf/builder';
 import { sanitizeFilename } from './pdf/format';
 import { PAGE, innerPageWidth, defaultPageSize } from './pdf/theme';
 import type { PdfExportOptions, ResolvedPdfOptions } from './pdf/types';
+import { track } from '@/lib/analytics';
 
 export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): Promise<void> {
   await loadPdfFonts();
@@ -20,6 +21,10 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     pageSize: o.pageSize ?? defaultPageSize(),
     exportedAt: new Date(),
   };
+
+  // Upstream main-agent added this analytics event after the audit snapshot —
+  // preserve it (page_size replaces the old always-'auto' page_preset prop).
+  track('pdf_exported', { trip_id: tripId, page_size: opts.pageSize });
 
   const contentWidth = innerPageWidth(opts.pageSize, PAGE.margins);
   const data = await fetchPdfTripData(tripId, o, contentWidth);
