@@ -136,11 +136,8 @@ function pagePresetSettings(preset: PagePreset) {
     baseFontSize: isMobile ? 8 : 9,
     headerFont: isMobile ? 8 : 9,
     footerFont: isMobile ? 7.5 : 8,
-    heroTitle: isMobile ? 16 : 18,
-    dayHeader: isMobile ? 12 : 14,
     compactDayHeader: isMobile ? 11 : 12,
     timeWidth: isMobile ? 52 : 60,
-    imageWidth: isMobile ? 480 : 540, // used for downscale target; actual render uses page width
     coverImageHeight: isMobile ? 200 : 250,
   };
 }
@@ -223,15 +220,6 @@ function sanitizeFilename(input?: string | null): string {
   return out || 'itinerary';
 }
 
-function getDensityIndicator(count: number): Content {
-  if (count >= 5) {
-    return { text: ' Busy ', fontSize: 10, bold: true, color: '#FFFFFF', background: BRAND.earth, margin: [0, 0, 4, 0] };
-  }
-  if (count >= 3) {
-    return { text: ' Moderate ', fontSize: 10, bold: true, color: '#FFFFFF', background: BRAND.earthLight, margin: [0, 0, 4, 0] };
-  }
-  return { text: ' Light ', fontSize: 10, bold: true, color: '#FFFFFF', background: BRAND.earthMid, margin: [0, 0, 4, 0] };
-}
 
 /* =========================================================================
    Image helpers with caching & optional downscale (better for mobile)
@@ -603,73 +591,6 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
       paddingBottom: () => 4,
     },
   };
-}
-
-/* =========================================================================
-   Summary sections
-   ========================================================================= */
-
-function renderAccommodationSummary(stays: AccommodationSummary[], baseFontSize: number): Content[] {
-  if (!stays.length) return [];
-
-  const content: Content[] = [{ text: "WHERE YOU'RE STAYING", style: 'summaryTitle', margin: [0, 0, 0, 8] }];
-
-  const table = {
-    table: {
-      widths: ['*', '*', '*'],
-      body: [
-        [
-          { text: 'Hotel', style: 'summaryHeader' },
-          { text: 'Check In', style: 'summaryHeader' },
-          { text: 'Check Out', style: 'summaryHeader' },
-        ],
-        ...stays.map((s) => [
-          { text: s.hotel, style: 'summaryCell' },
-          { text: s.checkIn, style: 'summaryCell' },
-          { text: s.checkOut, style: 'summaryCell' },
-        ]),
-      ],
-    },
-    layout: 'lightHorizontalLines' as const,
-  };
-
-  content.push(table);
-  return content;
-}
-
-function renderTransportSummary(transports: TransportSegment[]): Content[] {
-  if (!transports.length) return [];
-
-  const content: Content[] = [{ text: '✈  TRAVEL SEGMENTS', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
-
-  transports.forEach((t, idx) => {
-    content.push({
-      text: `${t.type}: ${t.from} to ${t.to} (${t.date})`,
-      style: 'summaryItem',
-      margin: [0, idx === 0 ? 0 : 4, 0, 4],
-    });
-  });
-
-  return content;
-}
-
-function renderDailySummary(days: Day[]): Content[] {
-  const content: Content[] = [{ text: 'DAILY ACTIVITY OVERVIEW', style: 'summaryTitle', margin: [0, 12, 0, 8] }];
-
-  days.forEach((d, idx) => {
-    const density = getDensityIndicator(d.activityCount || 0);
-    const travelTag = d.hasTransport ? ' ✈ Travel Day' : '';
-    content.push({
-      columns: [
-        { text: `${fmtShort(d.date)}:`, style: 'summaryItem', width: 'auto' },
-        { ...density, width: 'auto' },
-        { text: travelTag, style: 'summaryItem', width: '*' },
-      ],
-      margin: [0, idx === 0 ? 0 : 4, 0, 4],
-    });
-  });
-
-  return content;
 }
 
 /* =========================================================================
@@ -1193,11 +1114,8 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       baseFontSize,
       headerFont,
       footerFont,
-      heroTitle,
-      dayHeader,
       compactDayHeader,
       timeWidth,
-      imageWidth,
       coverImageHeight,
     } = pagePresetSettings(preset);
 
@@ -1320,15 +1238,6 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       }),
       content,
       styles: {
-        heroTitle: { fontSize: heroTitle, bold: false, font: 'DMSerifDisplay', color: BRAND.earth },
-        heroSub: { fontSize: baseFontSize + 1.5, color: BRAND.earthLight },
-        summaryPageTitle: { fontSize: dayHeader, bold: false, font: 'DMSerifDisplay', color: BRAND.earth, margin: [0, 0, 0, 12] },
-        summaryTitle: { fontSize: baseFontSize + 1, bold: true, color: BRAND.earth },
-        summaryHeader: { fontSize: baseFontSize - 0.5, bold: true, color: '#fff', fillColor: BRAND.earthLight, alignment: 'center' },
-        summaryCell: { fontSize: baseFontSize - 0.5, alignment: 'center' },
-        summaryItem: { fontSize: baseFontSize - 0.5, color: BRAND.accent },
-        dayHeader: { fontSize: isMobile ? 18 : 24, bold: false, font: 'DMSerifDisplay', color: BRAND.earth },
-
         // Typography tweaks (warm palette)
         timeCell: { fontSize: isMobile ? 8.5 : 9, bold: true, color: BRAND.earthLight },
         itemTitle: { fontSize: isMobile ? 10 : 10.5, bold: true, color: BRAND.earth },
