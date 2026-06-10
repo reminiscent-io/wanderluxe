@@ -14,12 +14,12 @@ import {
   type PdfPageSize,
 } from './pdf/theme';
 import { isOrphanedHeading } from './pdf/pagination';
-import { fmtMoney } from './pdf/format';
+import { fmtMoney, fmtDate, fmtShort, fmtTime, minsFromTime, sanitizeFilename, formatType, sameDay } from './pdf/format';
+import type { Item, Day, AccommodationSummary, TransportSegment, DiningRef, BudgetData, PdfExportOptions } from './pdf/types';
 
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/analytics';
 import { parseISO, format as fnsFormat, isSameDay } from 'date-fns';
-import type { PdfExportOptions } from '@/components/trip/PdfExportDialog';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -46,130 +46,9 @@ const TABLES = {
   otherExpenses: 'other_expenses',
 } as const;
 
-/** Format a snake_case transport type into Title Case (e.g. "car_service" → "Car Service") */
-function formatType(raw: string | null | undefined): string {
-  if (!raw) return 'Transport';
-  return raw.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-}
-
-// Fixed-width, anchored time matcher: "8:05 am" (linear; no catastrophic backtracking)
-const TIME_RE = /^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])m\s*$/i;
-
-type Item = {
-  type: 'accommodation' | 'transportation' | 'activity' | 'dining';
-  title: string;
-  time: string; // may be "08:00 AM – 11:45 AM"
-  details?: string;
-  location?: string;
-  cost?: string;
-  thumb?: string; // dataURL after conversion (not remote URL)
-  sortKey: number; // minutes from midnight (start time) for sorting
-};
-
-type Day = {
-  date: string;
-  title?: string;
-  description?: string;
-  items: Item[];
-  activityCount?: number;
-  hasTransport?: boolean;
-};
-
-type AccommodationSummary = {
-  hotel: string;
-  checkIn: string;
-  checkOut: string;
-  address?: string;
-  phone?: string;
-  website?: string;
-  checkInDate: string;
-  checkOutDate: string;
-};
-
-type TransportSegment = {
-  from: string;
-  to: string;
-  date: string;
-  type: string;
-  confirmationNumber?: string;
-};
-
-/* =========================================================================
-   Safe formatting & parsing (ReDoS-free)
-   ========================================================================= */
-
-const asDate = (d: string) => parseISO(d);
-const sameDay = (a: string, b: string) => isSameDay(asDate(a), asDate(b));
-
-const fmtDate = (d: string, pat = 'EEEE, MMMM d, yyyy') => fnsFormat(parseISO(d), pat);
-const fmtShort = (d: string) => fnsFormat(parseISO(d), 'MMM d');
-
-function fmtTime(t?: string | null) {
-  if (!t) return '';
-  try {
-    // ISO string → format directly
-    if (t.includes('T')) return fnsFormat(parseISO(t), 'h:mm a');
-
-    // "HH:mm" → convert to 12-hour with am/pm
-    const parts = t.split(':');
-    const h = parseInt(parts[0] ?? '0', 10);
-    const m = parseInt(parts[1] ?? '0', 10);
-    if (isNaN(h) || isNaN(m)) return '';
-    const d = new Date();
-    d.setHours(h, m, 0, 0);
-    return fnsFormat(d, 'h:mm a');
-  } catch {
-    return '';
-  }
-}
-
-function minsFromTime(s: string): number {
-  // Accept "8:05 am" or "8 am" (minutes optional)
-  const m = TIME_RE.exec(s);
-  if (!m) return 9999;
-  const hh = parseInt(m[1], 10) % 12;
-  const mm = m[2] ? parseInt(m[2], 10) : 0;
-  const mer = (m[3] || 'a').toLowerCase();
-  return (mer === 'p' ? hh + 12 : hh) * 60 + mm;
-}
-
-function sanitizeFilename(input?: string | null): string {
-  // Linear-time sanitizer (no regex backtracking)
-  const s = (input || 'itinerary').toLowerCase();
-  let out = '';
-  let prevUnderscore = false;
-
-  for (let i = 0; i < s.length && out.length < 120; i++) {
-    const ch = s[i];
-    const code = ch.charCodeAt(0);
-    const isAlnum = (code >= 48 && code <= 57) || (code >= 97 && code <= 122);
-    if (isAlnum) {
-      out += ch;
-      prevUnderscore = false;
-    } else if (!prevUnderscore) {
-      out += '_';
-      prevUnderscore = true;
-    }
-  }
-
-  // Trim leading/trailing underscores (no regex)
-  while (out.startsWith('_')) out = out.slice(1);
-  while (out.endsWith('_')) out = out.slice(0, -1);
-
-  return out || 'itinerary';
-}
-
 /* =========================================================================
    Data build (Supabase)
    ========================================================================= */
-
-type DiningRef = { restaurant: string; confirmationNumber?: string };
-
-type BudgetData = {
-  budget: number | null;
-  categories: { category: string; amount: number }[];
-  total: number;
-};
 
 async function buildDays(
   tripId: string,

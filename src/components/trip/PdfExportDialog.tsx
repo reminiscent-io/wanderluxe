@@ -13,18 +13,13 @@ import { Label } from '@/components/ui/label';
 import { FileDown, Loader2, Image, DollarSign, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { defaultPageSize, type PdfPageSize } from '@/services/pdf/theme';
+import type { PdfExportOptions } from '@/services/pdf/types';
+export type { PdfExportOptions };
 
 interface PdfExportDialogProps {
   tripId: string;
   className?: string;
   onExport: (options: PdfExportOptions) => Promise<void>;
-}
-
-export interface PdfExportOptions {
-  showImages: boolean;
-  showCosts: boolean;
-  /** Paper size ('LETTER' for en-US locales, 'A4' otherwise — see defaultPageSize). */
-  pageSize?: PdfPageSize;
 }
 
 const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
