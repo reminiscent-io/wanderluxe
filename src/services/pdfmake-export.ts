@@ -1,15 +1,8 @@
 /*  src/services/pdfmake-export.ts
-    Mobile/desktop-aware, icon-enhanced itinerary PDF export
-    - Preserves per-day build from Supabase
-    - Transport shows start–end times
-    - Safe, linear-time parsing (no ReDoS)
-    - Enhanced with accommodation summary, travel day markers, activity density
-    - Improvements:
-      * Correct date-fns isSameDay usage (string -> Date)
-      * Reliable thumbnail rendering (remote URL -> dataURL)
-      * Page-width-aware cover sizing (no hard-coded 480)
-      * Zebra rows + subtle separators + dontBreakRows for better readability
-      * Compact day header divider line
+    Itinerary PDF export — one canonical, device-independent document.
+    - Data from Supabase (buildDays), images pre-cropped via pdf/images
+    - All sizes/colors/spacing come from pdf/theme tokens and named styles
+    - Pagination by pdfmake with the pdf/pagination orphan-heading rule
     ---------------------------------------------------------------------- */
 
 import pdfMake from 'pdfmake/build/pdfmake';
@@ -891,7 +884,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
     const doc: TDocumentDefinitions = {
       pageSize,
       pageMargins: PAGE.margins,
-      defaultStyle: { fontSize: TYPE.body, lineHeight: 1.3, font: FONTS.sans, color: COLORS.accent },
+      defaultStyle: { fontSize: TYPE.body, lineHeight: 1.3, font: FONTS.sans, color: COLORS.accent }, // 1.3 leading: 10pt body needs looser lines than the old 8-9pt/1.25
       header: () => ({
         text: dateRange ? `${trip.destination} • ${dateRange}` : (trip.destination ?? ''),
         alignment: 'center' as const,
@@ -919,7 +912,7 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         itemCost: { fontSize: TYPE.caption, color: COLORS.earthMid },
         tableHeader: { fontSize: TYPE.caption, bold: true, color: COLORS.white, fillColor: COLORS.earthLight },
         tableCell: { fontSize: TYPE.caption },
-        tableCellStrong: { fontSize: TYPE.body, bold: true },
+        tableCellStrong: { fontSize: TYPE.body, bold: true }, // emphasized cell: lightweight table headers (cover) + budget total — distinct from filled `tableHeader`
         metaText: { fontSize: TYPE.caption, color: COLORS.earthMid },
         pageChrome: { fontSize: TYPE.caption, color: COLORS.earthLight },
       },
