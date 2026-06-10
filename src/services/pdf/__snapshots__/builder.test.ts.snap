@@ -1,0 +1,2261 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildDocDefinition snapshots > matches snapshot: images + costs, LETTER 1`] = `
+{
+  "content": [
+    {
+      "canvas": [
+        {
+          "color": "#8A7F6C",
+          "h": 6,
+          "type": "rect",
+          "w": 532,
+          "x": 0,
+          "y": 0,
+        },
+      ],
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+    },
+    {
+      "height": 240,
+      "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
+      "margin": [
+        0,
+        0,
+        0,
+        16,
+      ],
+      "width": 532,
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        4,
+      ],
+      "style": "coverTitle",
+      "text": "Rome Itinerary",
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        8,
+      ],
+      "style": "coverSubtitle",
+      "text": "Jun 12 – Jun 17",
+    },
+    {
+      "canvas": [
+        {
+          "lineColor": "#8A7F6C",
+          "lineWidth": 0.75,
+          "type": "line",
+          "x1": 0,
+          "x2": 532,
+          "y1": 0,
+          "y2": 0,
+        },
+      ],
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+    },
+    {
+      "columnGap": 20,
+      "columns": [
+        {
+          "stack": [
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Trip Details",
+            },
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "body",
+              "text": "Duration: 3 days",
+            },
+            {
+              "margin": [
+                0,
+                8,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Accommodations",
+            },
+            {
+              "layout": "lightHorizontalLines",
+              "table": {
+                "body": [
+                  [
+                    {
+                      "style": "tableCellStrong",
+                      "text": "Hotel",
+                    },
+                    {
+                      "style": "tableCellStrong",
+                      "text": "Check In",
+                    },
+                    {
+                      "style": "tableCellStrong",
+                      "text": "Check Out",
+                    },
+                  ],
+                  [
+                    {
+                      "style": "tableCell",
+                      "text": "Hotel Il Pellicano",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 12",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 15",
+                    },
+                  ],
+                  [
+                    {
+                      "style": "tableCell",
+                      "text": "Hotel de Russie",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 15",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 17",
+                    },
+                  ],
+                ],
+                "dontBreakRows": true,
+                "widths": [
+                  "*",
+                  "auto",
+                  "auto",
+                ],
+              },
+            },
+          ],
+          "width": "*",
+        },
+        {
+          "stack": [
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Quick Stats",
+            },
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "body",
+              "text": "1 flight",
+            },
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                4,
+              ],
+              "style": "body",
+              "text": "5 activities",
+            },
+            {
+              "margin": [
+                0,
+                4,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Activity Level",
+            },
+            {
+              "color": "#8A7F6C",
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "tableCell",
+              "text": "• Moderate (2-3 activities): 2 days",
+            },
+            {
+              "color": "#A89B8E",
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "tableCell",
+              "text": "• Light (0-1 activities): 1 day",
+            },
+          ],
+          "width": "*",
+        },
+      ],
+    },
+    {
+      "pageBreak": "after",
+      "text": "",
+    },
+    {
+      "headlineLevel": 1,
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "sectionHeading",
+          "text": [
+            {
+              "text": "Jun 12 • Arrival in Rome",
+            },
+            {
+              "characterSpacing": 1,
+              "color": "#D97706",
+              "font": "DMSans",
+              "fontSize": 8.5,
+              "text": "   TRAVEL DAY",
+            },
+          ],
+        },
+        {
+          "canvas": [
+            {
+              "lineColor": "#8A7F6C",
+              "lineWidth": 0.5,
+              "type": "line",
+              "x1": 0,
+              "x2": 532,
+              "y1": 0,
+              "y2": 0,
+            },
+          ],
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+          "style": "dayDescription",
+          "text": "Long travel day — keep the evening flexible.",
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "layout": {
+        "hLineColor": [Function],
+        "hLineWidth": [Function],
+        "paddingBottom": [Function],
+        "paddingLeft": [Function],
+        "paddingRight": [Function],
+        "paddingTop": [Function],
+        "vLineWidth": [Function],
+      },
+      "table": {
+        "body": [
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FFFFFF",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "8:00 AM",
+            },
+            {
+              "fillColor": "#FFFFFF",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "columnGap": 8,
+                  "columns": [
+                    {
+                      "style": "itemTitle",
+                      "text": "Check-in: Hotel Il Pellicano",
+                      "width": "*",
+                    },
+                    {
+                      "alignment": "right",
+                      "style": "itemCost",
+                      "text": "€780.00",
+                      "width": "auto",
+                    },
+                  ],
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Sea-view suite • Sbarcatello, Porto Ercole",
+                },
+                {
+                  "height": 28,
+                  "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
+                  "margin": [
+                    0,
+                    4,
+                    0,
+                    0,
+                  ],
+                  "width": 28,
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FAF9F7",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "9:30 AM – 5:45 PM",
+            },
+            {
+              "fillColor": "#FAF9F7",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "columnGap": 8,
+                  "columns": [
+                    {
+                      "style": "itemTitle",
+                      "text": "Flight: ITA Airways",
+                      "width": "*",
+                    },
+                    {
+                      "alignment": "right",
+                      "style": "itemCost",
+                      "text": "$1,240.00",
+                      "width": "auto",
+                    },
+                  ],
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "AZ611 JFK–FCO • From: New York JFK to Rome FCO",
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FFFFFF",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "11:00 AM",
+            },
+            {
+              "fillColor": "#FFFFFF",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "columnGap": 8,
+                  "columns": [
+                    {
+                      "style": "itemTitle",
+                      "text": "Colosseum Underground Tour",
+                      "width": "*",
+                    },
+                    {
+                      "alignment": "right",
+                      "style": "itemCost",
+                      "text": "€110.00",
+                      "width": "auto",
+                    },
+                  ],
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Meet at Arco di Costantino",
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FAF9F7",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "1:00 PM",
+            },
+            {
+              "fillColor": "#FAF9F7",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "columnGap": 8,
+                  "columns": [
+                    {
+                      "style": "itemTitle",
+                      "text": "Dining: Roscioli",
+                      "width": "*",
+                    },
+                    {
+                      "alignment": "right",
+                      "style": "itemCost",
+                      "text": "€160.00",
+                      "width": "auto",
+                    },
+                  ],
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Ask for cellar table • 4 people • Via dei Giubbonari 21",
+                },
+              ],
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          56,
+          "*",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "stack": [
+        {
+          "margin": [
+            0,
+            12,
+            0,
+            2,
+          ],
+          "style": "sectionHeading",
+          "text": [
+            {
+              "text": "Jun 13 • Classical Rome",
+            },
+          ],
+        },
+        {
+          "canvas": [
+            {
+              "lineColor": "#8A7F6C",
+              "lineWidth": 0.5,
+              "type": "line",
+              "x1": 0,
+              "x2": 532,
+              "y1": 0,
+              "y2": 0,
+            },
+          ],
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "layout": {
+        "hLineColor": [Function],
+        "hLineWidth": [Function],
+        "paddingBottom": [Function],
+        "paddingLeft": [Function],
+        "paddingRight": [Function],
+        "paddingTop": [Function],
+        "vLineWidth": [Function],
+      },
+      "table": {
+        "body": [
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FFFFFF",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "10:00 AM",
+            },
+            {
+              "fillColor": "#FFFFFF",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "columnGap": 8,
+                  "columns": [
+                    {
+                      "style": "itemTitle",
+                      "text": "Vatican Museums",
+                      "width": "*",
+                    },
+                    {
+                      "alignment": "right",
+                      "style": "itemCost",
+                      "text": "€68.00",
+                      "width": "auto",
+                    },
+                  ],
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Pre-booked, group lane",
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FAF9F7",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "7:30 PM",
+            },
+            {
+              "fillColor": "#FAF9F7",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "columnGap": 8,
+                  "columns": [
+                    {
+                      "style": "itemTitle",
+                      "text": "Dining: Pierluigi",
+                      "width": "*",
+                    },
+                    {
+                      "alignment": "right",
+                      "style": "itemCost",
+                      "text": "€190.00",
+                      "width": "auto",
+                    },
+                  ],
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "4 people • Piazza de' Ricci 144",
+                },
+              ],
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          56,
+          "*",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "stack": [
+        {
+          "margin": [
+            0,
+            12,
+            0,
+            2,
+          ],
+          "style": "sectionHeading",
+          "text": [
+            {
+              "text": "Jun 14 • Quiet Day",
+            },
+          ],
+        },
+        {
+          "canvas": [
+            {
+              "lineColor": "#8A7F6C",
+              "lineWidth": 0.5,
+              "type": "line",
+              "x1": 0,
+              "x2": 532,
+              "y1": 0,
+              "y2": 0,
+            },
+          ],
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        8,
+      ],
+      "style": "itemMeta",
+      "text": "No activities scheduled",
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        16,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Budget Summary",
+    },
+    {
+      "layout": "lightHorizontalLines",
+      "table": {
+        "body": [
+          [
+            {
+              "style": "tableHeader",
+              "text": "Category",
+            },
+            {
+              "alignment": "right",
+              "style": "tableHeader",
+              "text": "Amount",
+            },
+          ],
+          [
+            {
+              "style": "tableCell",
+              "text": "Accommodations",
+            },
+            {
+              "alignment": "right",
+              "style": "tableCell",
+              "text": "$3,120.00",
+            },
+          ],
+          [
+            {
+              "style": "tableCell",
+              "text": "Transportation",
+            },
+            {
+              "alignment": "right",
+              "style": "tableCell",
+              "text": "$2,480.00",
+            },
+          ],
+          [
+            {
+              "style": "tableCell",
+              "text": "Dining",
+            },
+            {
+              "alignment": "right",
+              "style": "tableCell",
+              "text": "$890.00",
+            },
+          ],
+          [
+            {
+              "fillColor": "#F5F3F2",
+              "style": "tableCellStrong",
+              "text": "Total",
+            },
+            {
+              "alignment": "right",
+              "fillColor": "#F5F3F2",
+              "style": "tableCellStrong",
+              "text": "$6,490.00",
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          "*",
+          "auto",
+        ],
+      },
+    },
+    {
+      "columns": [
+        {
+          "style": "body",
+          "text": "Budget: $6,000.00",
+          "width": "auto",
+        },
+        {
+          "style": "metaText",
+          "text": "  |  ",
+          "width": "auto",
+        },
+        {
+          "bold": true,
+          "color": "#D97706",
+          "style": "body",
+          "text": "Over budget by $490.00",
+          "width": "auto",
+        },
+      ],
+      "margin": [
+        0,
+        6,
+        0,
+        0,
+      ],
+    },
+    {
+      "pageBreak": "before",
+      "text": "",
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+      "style": "pageHeading",
+      "text": "Reference Information",
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        8,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Accommodation Details",
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "itemTitle",
+          "text": "Hotel Il Pellicano",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-in: Jun 12",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-out: Jun 15",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Sbarcatello 1, Porto Ercole",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Phone: +39 0564 858111",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Website: https://hotelilpellicano.com",
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        0,
+      ],
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "itemTitle",
+          "text": "Hotel de Russie",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-in: Jun 15",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-out: Jun 17",
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        16,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Transportation Confirmations",
+    },
+    {
+      "layout": "lightHorizontalLines",
+      "table": {
+        "body": [
+          [
+            {
+              "style": "tableHeader",
+              "text": "Transport",
+            },
+            {
+              "style": "tableHeader",
+              "text": "Route",
+            },
+            {
+              "style": "tableHeader",
+              "text": "Confirmation #",
+            },
+          ],
+          [
+            {
+              "style": "tableCell",
+              "text": "Flight (Jun 12)",
+            },
+            {
+              "style": "tableCell",
+              "text": "New York JFK to Rome FCO",
+            },
+            {
+              "bold": true,
+              "style": "tableCell",
+              "text": "AZ6XK2",
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          "auto",
+          "*",
+          "auto",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        16,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Dining Confirmations",
+    },
+    {
+      "layout": "lightHorizontalLines",
+      "table": {
+        "body": [
+          [
+            {
+              "style": "tableHeader",
+              "text": "Restaurant",
+            },
+            {
+              "style": "tableHeader",
+              "text": "Confirmation #",
+            },
+          ],
+          [
+            {
+              "style": "tableCell",
+              "text": "Roscioli",
+            },
+            {
+              "bold": true,
+              "style": "tableCell",
+              "text": "RSC-4421",
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          "*",
+          "auto",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        16,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Hotel Contact Information",
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        0,
+      ],
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "itemTitle",
+          "text": "Hotel Il Pellicano",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Phone: +39 0564 858111",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Website: https://hotelilpellicano.com",
+        },
+      ],
+      "unbreakable": true,
+    },
+  ],
+  "defaultStyle": {
+    "color": "#5C544A",
+    "font": "DMSans",
+    "fontSize": 10,
+    "lineHeight": 1.3,
+  },
+  "footer": [Function],
+  "header": [Function],
+  "pageBreakBefore": [Function],
+  "pageMargins": [
+    40,
+    48,
+    40,
+    48,
+  ],
+  "pageSize": "LETTER",
+  "styles": {
+    "body": {
+      "fontSize": 10,
+    },
+    "coverSubtitle": {
+      "color": "#8A7F6C",
+      "fontSize": 12,
+    },
+    "coverTitle": {
+      "color": "#6B6354",
+      "font": "DMSerifDisplay",
+      "fontSize": 24,
+    },
+    "dayDescription": {
+      "color": "#8A7F6C",
+      "fontSize": 9,
+      "italics": true,
+    },
+    "itemCost": {
+      "color": "#A89B8E",
+      "fontSize": 8.5,
+    },
+    "itemDetail": {
+      "color": "#8A7F6C",
+      "fontSize": 9,
+    },
+    "itemMeta": {
+      "color": "#A89B8E",
+      "fontSize": 9,
+      "italics": true,
+    },
+    "itemTitle": {
+      "bold": true,
+      "color": "#6B6354",
+      "fontSize": 10,
+    },
+    "metaText": {
+      "color": "#A89B8E",
+      "fontSize": 8.5,
+    },
+    "pageChrome": {
+      "color": "#8A7F6C",
+      "fontSize": 8.5,
+    },
+    "pageHeading": {
+      "color": "#6B6354",
+      "font": "DMSerifDisplay",
+      "fontSize": 16,
+    },
+    "sectionHeading": {
+      "color": "#6B6354",
+      "font": "DMSerifDisplay",
+      "fontSize": 12,
+    },
+    "tableCell": {
+      "fontSize": 8.5,
+    },
+    "tableCellStrong": {
+      "bold": true,
+      "fontSize": 10,
+    },
+    "tableHeader": {
+      "bold": true,
+      "color": "#FFFFFF",
+      "fillColor": "#8A7F6C",
+      "fontSize": 8.5,
+    },
+    "timeCell": {
+      "bold": true,
+      "color": "#8A7F6C",
+      "fontSize": 9,
+    },
+  },
+}
+`;
+
+exports[`buildDocDefinition snapshots > matches snapshot: no images, no costs, A4 1`] = `
+{
+  "content": [
+    {
+      "canvas": [
+        {
+          "color": "#8A7F6C",
+          "h": 6,
+          "type": "rect",
+          "w": 515,
+          "x": 0,
+          "y": 0,
+        },
+      ],
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+    },
+    {
+      "height": 240,
+      "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
+      "margin": [
+        0,
+        0,
+        0,
+        16,
+      ],
+      "width": 515,
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        4,
+      ],
+      "style": "coverTitle",
+      "text": "Rome Itinerary",
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        8,
+      ],
+      "style": "coverSubtitle",
+      "text": "Jun 12 – Jun 17",
+    },
+    {
+      "canvas": [
+        {
+          "lineColor": "#8A7F6C",
+          "lineWidth": 0.75,
+          "type": "line",
+          "x1": 0,
+          "x2": 515,
+          "y1": 0,
+          "y2": 0,
+        },
+      ],
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+    },
+    {
+      "columnGap": 20,
+      "columns": [
+        {
+          "stack": [
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Trip Details",
+            },
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "body",
+              "text": "Duration: 3 days",
+            },
+            {
+              "margin": [
+                0,
+                8,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Accommodations",
+            },
+            {
+              "layout": "lightHorizontalLines",
+              "table": {
+                "body": [
+                  [
+                    {
+                      "style": "tableCellStrong",
+                      "text": "Hotel",
+                    },
+                    {
+                      "style": "tableCellStrong",
+                      "text": "Check In",
+                    },
+                    {
+                      "style": "tableCellStrong",
+                      "text": "Check Out",
+                    },
+                  ],
+                  [
+                    {
+                      "style": "tableCell",
+                      "text": "Hotel Il Pellicano",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 12",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 15",
+                    },
+                  ],
+                  [
+                    {
+                      "style": "tableCell",
+                      "text": "Hotel de Russie",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 15",
+                    },
+                    {
+                      "style": "tableCell",
+                      "text": "Jun 17",
+                    },
+                  ],
+                ],
+                "dontBreakRows": true,
+                "widths": [
+                  "*",
+                  "auto",
+                  "auto",
+                ],
+              },
+            },
+          ],
+          "width": "*",
+        },
+        {
+          "stack": [
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Quick Stats",
+            },
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "body",
+              "text": "1 flight",
+            },
+            {
+              "margin": [
+                0,
+                0,
+                0,
+                4,
+              ],
+              "style": "body",
+              "text": "5 activities",
+            },
+            {
+              "margin": [
+                0,
+                4,
+                0,
+                4,
+              ],
+              "style": "sectionHeading",
+              "text": "Activity Level",
+            },
+            {
+              "color": "#8A7F6C",
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "tableCell",
+              "text": "• Moderate (2-3 activities): 2 days",
+            },
+            {
+              "color": "#A89B8E",
+              "margin": [
+                0,
+                0,
+                0,
+                2,
+              ],
+              "style": "tableCell",
+              "text": "• Light (0-1 activities): 1 day",
+            },
+          ],
+          "width": "*",
+        },
+      ],
+    },
+    {
+      "pageBreak": "after",
+      "text": "",
+    },
+    {
+      "headlineLevel": 1,
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "sectionHeading",
+          "text": [
+            {
+              "text": "Jun 12 • Arrival in Rome",
+            },
+            {
+              "characterSpacing": 1,
+              "color": "#D97706",
+              "font": "DMSans",
+              "fontSize": 8.5,
+              "text": "   TRAVEL DAY",
+            },
+          ],
+        },
+        {
+          "canvas": [
+            {
+              "lineColor": "#8A7F6C",
+              "lineWidth": 0.5,
+              "type": "line",
+              "x1": 0,
+              "x2": 515,
+              "y1": 0,
+              "y2": 0,
+            },
+          ],
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+          "style": "dayDescription",
+          "text": "Long travel day — keep the evening flexible.",
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "layout": {
+        "hLineColor": [Function],
+        "hLineWidth": [Function],
+        "paddingBottom": [Function],
+        "paddingLeft": [Function],
+        "paddingRight": [Function],
+        "paddingTop": [Function],
+        "vLineWidth": [Function],
+      },
+      "table": {
+        "body": [
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FFFFFF",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "8:00 AM",
+            },
+            {
+              "fillColor": "#FFFFFF",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "style": "itemTitle",
+                  "text": "Check-in: Hotel Il Pellicano",
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Sea-view suite • Sbarcatello, Porto Ercole",
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FAF9F7",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "9:30 AM – 5:45 PM",
+            },
+            {
+              "fillColor": "#FAF9F7",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "style": "itemTitle",
+                  "text": "Flight: ITA Airways",
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "AZ611 JFK–FCO • From: New York JFK to Rome FCO",
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FFFFFF",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "11:00 AM",
+            },
+            {
+              "fillColor": "#FFFFFF",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "style": "itemTitle",
+                  "text": "Colosseum Underground Tour",
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Meet at Arco di Costantino",
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FAF9F7",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "1:00 PM",
+            },
+            {
+              "fillColor": "#FAF9F7",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "style": "itemTitle",
+                  "text": "Dining: Roscioli",
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Ask for cellar table • 4 people • Via dei Giubbonari 21",
+                },
+              ],
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          56,
+          "*",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "stack": [
+        {
+          "margin": [
+            0,
+            12,
+            0,
+            2,
+          ],
+          "style": "sectionHeading",
+          "text": [
+            {
+              "text": "Jun 13 • Classical Rome",
+            },
+          ],
+        },
+        {
+          "canvas": [
+            {
+              "lineColor": "#8A7F6C",
+              "lineWidth": 0.5,
+              "type": "line",
+              "x1": 0,
+              "x2": 515,
+              "y1": 0,
+              "y2": 0,
+            },
+          ],
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "layout": {
+        "hLineColor": [Function],
+        "hLineWidth": [Function],
+        "paddingBottom": [Function],
+        "paddingLeft": [Function],
+        "paddingRight": [Function],
+        "paddingTop": [Function],
+        "vLineWidth": [Function],
+      },
+      "table": {
+        "body": [
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FFFFFF",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "10:00 AM",
+            },
+            {
+              "fillColor": "#FFFFFF",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "style": "itemTitle",
+                  "text": "Vatican Museums",
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "Pre-booked, group lane",
+                },
+              ],
+            },
+          ],
+          [
+            {
+              "alignment": "right",
+              "fillColor": "#FAF9F7",
+              "margin": [
+                0,
+                4,
+                6,
+                4,
+              ],
+              "style": "timeCell",
+              "text": "7:30 PM",
+            },
+            {
+              "fillColor": "#FAF9F7",
+              "margin": [
+                6,
+                4,
+                6,
+                4,
+              ],
+              "stack": [
+                {
+                  "style": "itemTitle",
+                  "text": "Dining: Pierluigi",
+                },
+                {
+                  "margin": [
+                    0,
+                    2,
+                    0,
+                    0,
+                  ],
+                  "style": "itemDetail",
+                  "text": "4 people • Piazza de' Ricci 144",
+                },
+              ],
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          56,
+          "*",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "stack": [
+        {
+          "margin": [
+            0,
+            12,
+            0,
+            2,
+          ],
+          "style": "sectionHeading",
+          "text": [
+            {
+              "text": "Jun 14 • Quiet Day",
+            },
+          ],
+        },
+        {
+          "canvas": [
+            {
+              "lineColor": "#8A7F6C",
+              "lineWidth": 0.5,
+              "type": "line",
+              "x1": 0,
+              "x2": 515,
+              "y1": 0,
+              "y2": 0,
+            },
+          ],
+          "margin": [
+            0,
+            0,
+            0,
+            4,
+          ],
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        8,
+      ],
+      "style": "itemMeta",
+      "text": "No activities scheduled",
+    },
+    {
+      "pageBreak": "before",
+      "text": "",
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+      "style": "pageHeading",
+      "text": "Reference Information",
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        8,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Accommodation Details",
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        12,
+      ],
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "itemTitle",
+          "text": "Hotel Il Pellicano",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-in: Jun 12",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-out: Jun 15",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Sbarcatello 1, Porto Ercole",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Phone: +39 0564 858111",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Website: https://hotelilpellicano.com",
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        0,
+      ],
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "itemTitle",
+          "text": "Hotel de Russie",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-in: Jun 15",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Check-out: Jun 17",
+        },
+      ],
+      "unbreakable": true,
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        16,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Transportation Confirmations",
+    },
+    {
+      "layout": "lightHorizontalLines",
+      "table": {
+        "body": [
+          [
+            {
+              "style": "tableHeader",
+              "text": "Transport",
+            },
+            {
+              "style": "tableHeader",
+              "text": "Route",
+            },
+            {
+              "style": "tableHeader",
+              "text": "Confirmation #",
+            },
+          ],
+          [
+            {
+              "style": "tableCell",
+              "text": "Flight (Jun 12)",
+            },
+            {
+              "style": "tableCell",
+              "text": "New York JFK to Rome FCO",
+            },
+            {
+              "bold": true,
+              "style": "tableCell",
+              "text": "AZ6XK2",
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          "auto",
+          "*",
+          "auto",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        16,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Dining Confirmations",
+    },
+    {
+      "layout": "lightHorizontalLines",
+      "table": {
+        "body": [
+          [
+            {
+              "style": "tableHeader",
+              "text": "Restaurant",
+            },
+            {
+              "style": "tableHeader",
+              "text": "Confirmation #",
+            },
+          ],
+          [
+            {
+              "style": "tableCell",
+              "text": "Roscioli",
+            },
+            {
+              "bold": true,
+              "style": "tableCell",
+              "text": "RSC-4421",
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "widths": [
+          "*",
+          "auto",
+        ],
+      },
+    },
+    {
+      "headlineLevel": 1,
+      "margin": [
+        0,
+        16,
+        0,
+        8,
+      ],
+      "style": "sectionHeading",
+      "text": "Hotel Contact Information",
+    },
+    {
+      "margin": [
+        0,
+        0,
+        0,
+        0,
+      ],
+      "stack": [
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "itemTitle",
+          "text": "Hotel Il Pellicano",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "body",
+          "text": "Phone: +39 0564 858111",
+        },
+        {
+          "margin": [
+            0,
+            0,
+            0,
+            2,
+          ],
+          "style": "metaText",
+          "text": "Website: https://hotelilpellicano.com",
+        },
+      ],
+      "unbreakable": true,
+    },
+  ],
+  "defaultStyle": {
+    "color": "#5C544A",
+    "font": "DMSans",
+    "fontSize": 10,
+    "lineHeight": 1.3,
+  },
+  "footer": [Function],
+  "header": [Function],
+  "pageBreakBefore": [Function],
+  "pageMargins": [
+    40,
+    48,
+    40,
+    48,
+  ],
+  "pageSize": "A4",
+  "styles": {
+    "body": {
+      "fontSize": 10,
+    },
+    "coverSubtitle": {
+      "color": "#8A7F6C",
+      "fontSize": 12,
+    },
+    "coverTitle": {
+      "color": "#6B6354",
+      "font": "DMSerifDisplay",
+      "fontSize": 24,
+    },
+    "dayDescription": {
+      "color": "#8A7F6C",
+      "fontSize": 9,
+      "italics": true,
+    },
+    "itemCost": {
+      "color": "#A89B8E",
+      "fontSize": 8.5,
+    },
+    "itemDetail": {
+      "color": "#8A7F6C",
+      "fontSize": 9,
+    },
+    "itemMeta": {
+      "color": "#A89B8E",
+      "fontSize": 9,
+      "italics": true,
+    },
+    "itemTitle": {
+      "bold": true,
+      "color": "#6B6354",
+      "fontSize": 10,
+    },
+    "metaText": {
+      "color": "#A89B8E",
+      "fontSize": 8.5,
+    },
+    "pageChrome": {
+      "color": "#8A7F6C",
+      "fontSize": 8.5,
+    },
+    "pageHeading": {
+      "color": "#6B6354",
+      "font": "DMSerifDisplay",
+      "fontSize": 16,
+    },
+    "sectionHeading": {
+      "color": "#6B6354",
+      "font": "DMSerifDisplay",
+      "fontSize": 12,
+    },
+    "tableCell": {
+      "fontSize": 8.5,
+    },
+    "tableCellStrong": {
+      "bold": true,
+      "fontSize": 10,
+    },
+    "tableHeader": {
+      "bold": true,
+      "color": "#FFFFFF",
+      "fillColor": "#8A7F6C",
+      "fontSize": 8.5,
+    },
+    "timeCell": {
+      "bold": true,
+      "color": "#8A7F6C",
+      "fontSize": 9,
+    },
+  },
+}
+`;
