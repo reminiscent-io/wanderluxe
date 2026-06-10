@@ -1247,17 +1247,6 @@ exports[`buildDocDefinition snapshots > matches snapshot: no images, no costs, A
       ],
     },
     {
-      "height": 240,
-      "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
-      "margin": [
-        0,
-        0,
-        0,
-        16,
-      ],
-      "width": 515,
-    },
-    {
       "margin": [
         0,
         0,

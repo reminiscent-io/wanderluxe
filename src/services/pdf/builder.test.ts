@@ -62,8 +62,10 @@ describe('buildDocDefinition snapshots', () => {
   });
 
   it('matches snapshot: no images, no costs, A4', () => {
+    // Mirror the data layer: when showImages is off it never fetches a cover.
+    const data = { ...romeTrip(), coverImageDataUri: '', coverImageRequested: false };
     expect(
-      buildDocDefinition(romeTrip(), { ...FIXTURE_OPTS, showImages: false, showCosts: false, pageSize: 'A4' })
+      buildDocDefinition(data, { ...FIXTURE_OPTS, showImages: false, showCosts: false, pageSize: 'A4' })
     ).toMatchSnapshot();
   });
 });
