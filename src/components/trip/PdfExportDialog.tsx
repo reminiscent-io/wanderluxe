@@ -10,9 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { FileDown, Loader2, Image, DollarSign } from 'lucide-react';
+import { FileDown, Loader2, Image, DollarSign, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import type { PdfPageSize } from '@/services/pdf/theme';
+import { defaultPageSize, type PdfPageSize } from '@/services/pdf/theme';
 
 interface PdfExportDialogProps {
   tripId: string;
@@ -23,7 +23,7 @@ interface PdfExportDialogProps {
 export interface PdfExportOptions {
   showImages: boolean;
   showCosts: boolean;
-  /** Paper size; defaults to locale-appropriate size when omitted. */
+  /** Paper size ('LETTER' for en-US locales, 'A4' otherwise — see defaultPageSize). */
   pageSize?: PdfPageSize;
 }
 
@@ -37,6 +37,7 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
   const [options, setOptions] = useState<PdfExportOptions>({
     showImages: true,
     showCosts: true,
+    pageSize: defaultPageSize(),
   });
 
   const handleExport = async () => {
@@ -105,6 +106,29 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
                 setOptions(prev => ({ ...prev, showCosts: checked }))
               }
             />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 py-4">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <Label className="text-sm font-medium">Paper Size</Label>
+                <p className="text-xs text-muted-foreground">Letter (US) or A4</p>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {(['LETTER', 'A4'] as PdfPageSize[]).map((size) => (
+                <Button
+                  key={size}
+                  type="button"
+                  size="sm"
+                  variant={options.pageSize === size ? 'default' : 'outline'}
+                  onClick={() => setOptions(prev => ({ ...prev, pageSize: size }))}
+                >
+                  {size === 'LETTER' ? 'Letter' : 'A4'}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
