@@ -16,6 +16,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import { loadPdfFonts } from './pdf-fonts';
 import { imageToCoverDataURI } from './pdf/images';
 import { PAGE, TYPE, COLORS, FONTS } from './pdf/theme';
+import { isOrphanedHeading } from './pdf/pagination';
 
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/analytics';
@@ -532,35 +533,6 @@ function renderTable(items: Item[], o: PdfExportOptions, timeWidth: number) {
    ========================================================================= */
 
 /**
- * Calculate how many days should fit on current page based on activity density
- * Returns number of days that can fit (2-4 days per page)
- */
-function calculatePageFit(days: Day[], startIdx: number): number {
-  if (startIdx >= days.length) return 0;
-
-  const MAX_ITEMS_PER_PAGE = 20; // Approximate threshold
-  const MIN_DAYS_PER_PAGE = 2;
-  const MAX_DAYS_PER_PAGE = 4;
-
-  let totalItems = 0;
-  let daysCount = 0;
-
-  for (let i = startIdx; i < days.length && daysCount < MAX_DAYS_PER_PAGE; i++) {
-    const dayItems = days[i].items.length;
-
-    // If adding this day would exceed threshold and we already have min days, stop
-    if (totalItems + dayItems > MAX_ITEMS_PER_PAGE && daysCount >= MIN_DAYS_PER_PAGE) {
-      break;
-    }
-
-    totalItems += dayItems;
-    daysCount++;
-  }
-
-  return Math.max(MIN_DAYS_PER_PAGE, daysCount);
-}
-
-/**
  * Render compact day header with inline travel marker + divider line
  */
 function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number, contentWidth: number): Content {
@@ -615,7 +587,7 @@ function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number
     });
   }
 
-  return { stack };
+  return { stack, headlineLevel: 1, unbreakable: true };
 }
 
 function buildActivityLevelEntries(
@@ -1127,35 +1099,12 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
       )
     );
 
-    // Daily itineraries with dynamic multi-day layout
-    let currentDayIdx = 0;
-    let pageStartIdx = 0;
-
-    while (currentDayIdx < days.length) {
-      const daysOnPage = calculatePageFit(days, currentDayIdx);
-      const isFirstPage = pageStartIdx === 0;
-
-      // Add page break before each page (except first)
-      if (!isFirstPage) {
-        content.push({ text: '', pageBreak: 'before' });
-      }
-
-      // Render days for this page
-      for (let i = 0; i < daysOnPage && currentDayIdx < days.length; i++) {
-        const d = days[currentDayIdx];
-        const isFirstOnPage = i === 0;
-
-        // Compact day header with divider
-        content.push(renderCompactDayHeader(d, isFirstOnPage, compactDayHeader, contentWidth));
-
-        // Day items table
-        content.push(renderTable(d.items, o, timeWidth));
-
-        currentDayIdx++;
-      }
-
-      pageStartIdx++;
-    }
+    // Daily itineraries — pdfmake paginates by real height; the pageBreakBefore
+    // rule (isOrphanedHeading) keeps day headers attached to their tables.
+    days.forEach((d, idx) => {
+      content.push(renderCompactDayHeader(d, idx === 0, compactDayHeader, contentWidth));
+      content.push(renderTable(d.items, o, timeWidth));
+    });
 
     // Add budget summary if costs are enabled (2c)
     if (o.showCosts) {
@@ -1194,6 +1143,8 @@ export async function exportItineraryPdf(tripId: string, o: PdfExportOptions): P
         itemMeta: { fontSize: isMobile ? 8 : 9, italics: true, color: BRAND.earthMid },
         itemCost: { fontSize: isMobile ? 8 : 8.5, color: BRAND.earthMid },
       },
+      pageBreakBefore: (currentNode, followingNodesOnPage) =>
+        isOrphanedHeading(currentNode, followingNodesOnPage),
     };
 
     // Delivery strategy
