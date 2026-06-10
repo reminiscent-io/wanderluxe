@@ -7,7 +7,7 @@
 import { parseISO, format as fnsFormat, isSameDay } from 'date-fns';
 
 export function fmtMoney(amount: number, currency?: string | null): string {
-  const code = currency || 'USD';
+  const code = currency ?? 'USD';
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -43,9 +43,9 @@ export function fmtTime(t?: string | null) {
 
     // "HH:mm" → convert to 12-hour with am/pm
     const parts = t.split(':');
-    const h = parseInt(parts[0] ?? '0', 10);
-    const m = parseInt(parts[1] ?? '0', 10);
-    if (isNaN(h) || isNaN(m)) return '';
+    const h = Number.parseInt(parts[0] ?? '0', 10);
+    const m = Number.parseInt(parts[1] ?? '0', 10);
+    if (Number.isNaN(h) || Number.isNaN(m)) return '';
     const d = new Date();
     d.setHours(h, m, 0, 0);
     return fnsFormat(d, 'h:mm a');
@@ -58,8 +58,8 @@ export function minsFromTime(s: string): number {
   // Accept "8:05 am" or "8 am" (minutes optional)
   const m = TIME_RE.exec(s);
   if (!m) return 9999;
-  const hh = parseInt(m[1], 10) % 12;
-  const mm = m[2] ? parseInt(m[2], 10) : 0;
+  const hh = Number.parseInt(m[1], 10) % 12;
+  const mm = m[2] ? Number.parseInt(m[2], 10) : 0;
   const mer = (m[3] || 'a').toLowerCase();
   return (mer === 'p' ? hh + 12 : hh) * 60 + mm;
 }
@@ -72,7 +72,7 @@ export function sanitizeFilename(input?: string | null): string {
 
   for (let i = 0; i < s.length && out.length < 120; i++) {
     const ch = s[i];
-    const code = ch.charCodeAt(0);
+    const code = ch.codePointAt(0) ?? 0;
     const isAlnum = (code >= 48 && code <= 57) || (code >= 97 && code <= 122);
     if (isAlnum) {
       out += ch;

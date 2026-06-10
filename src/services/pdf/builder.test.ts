@@ -78,7 +78,7 @@ describe('consistency invariants', () => {
     const sizes: unknown[] = [];
     collect(docWithChrome(buildDocDefinition(romeTrip(), FIXTURE_OPTS)), 'fontSize', sizes);
     expect(sizes.length).toBeGreaterThan(0);
-    for (const s of sizes) expect(allowedSizes).toContain(s as number);
+    for (const s of sizes) expect(allowedSizes).toContain(s);
   });
 
   it('every color and fillColor comes from the palette', () => {
@@ -88,7 +88,7 @@ describe('consistency invariants', () => {
     collect(docWithChrome(doc), 'fillColor', colors);
     collect(docWithChrome(doc), 'lineColor', colors);
     expect(colors.length).toBeGreaterThan(0);
-    for (const c of colors) expect(allowedColors).toContain(c as string);
+    for (const c of colors) expect(allowedColors).toContain(c);
   });
 
   it('contains no airplane glyph or other non-font characters', () => {

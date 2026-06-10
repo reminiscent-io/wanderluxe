@@ -180,7 +180,7 @@ PostgreSQL database
 - **Orchestrator**: `src/services/pdfmake-export.ts` (fonts → fetch → build → download)
 - **Fonts**: DM Sans + DM Serif Display TTFs lazy-loaded by `src/services/pdf-fonts.ts`; these fonts have no glyph for emoji/dingbats (e.g. ✈) — never put such characters in doc content
 - **Layout is device-independent**: same output on mobile/desktop; Letter/A4 is a user option
-- **Tests**: `npx vitest run src/services/pdf` (snapshots + theme invariants); `PDF_PREVIEW=1 npx vitest run src/services/pdf/render.test.ts` writes `/tmp/wanderluxe-pdf-preview.pdf`
+- **Tests**: `npx vitest run src/services/pdf` (snapshots + theme invariants); `PDF_PREVIEW=1 npx vitest run src/services/pdf/render.test.ts` writes `node_modules/.cache/wanderluxe-pdf-preview.pdf`
 
 #### 8. **Database Schema** (~22 tables)
 Key tables:

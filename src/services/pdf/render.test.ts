@@ -2,7 +2,7 @@
 // Smoke test: the doc definition actually renders to a real PDF via the
 // pdfmake Node printer, using the same TTFs the browser embeds.
 // (@types/pdfmake types the root 'pdfmake' import as the Node printer.)
-// Run with PDF_PREVIEW=1 to write /tmp/wanderluxe-pdf-preview.pdf for eyeballing.
+// Run with PDF_PREVIEW=1 to write node_modules/.cache/wanderluxe-pdf-preview.pdf for eyeballing.
 import { describe, it, expect } from 'vitest';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -46,7 +46,9 @@ describe('render smoke test', () => {
     expect(buf.subarray(0, 5).toString()).toBe('%PDF-');
     expect(buf.length).toBeGreaterThan(5000);
     if (process.env.PDF_PREVIEW) {
-      fs.writeFileSync('/tmp/wanderluxe-pdf-preview.pdf', buf);
+      const outDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../node_modules/.cache');
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(path.join(outDir, 'wanderluxe-pdf-preview.pdf'), buf);
     }
   }, 20000);
 

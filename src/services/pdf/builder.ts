@@ -123,7 +123,7 @@ function buildActivityLevelEntries(busyDays: number, moderateDays: number, light
   for (const { count, label, color } of levels) {
     if (count > 0) {
       entries.push({
-        text: `• ${label}: ${count} day${count !== 1 ? 's' : ''}`,
+        text: `• ${label}: ${count} day${count === 1 ? '' : 's'}`,
         style: 'tableCell',
         color,
         margin: [0, 0, 0, SPACE.xs] as [number, number, number, number],
@@ -148,19 +148,30 @@ function computeDayStats(days: Day[]): { totalActivities: number; busyDays: numb
   return { totalActivities, busyDays, moderateDays, lightDays };
 }
 
+interface CoverPageArgs {
+  destination: string;
+  dateRange: string;
+  stays: AccommodationSummary[];
+  transports: TransportSegment[];
+  days: Day[];
+  coverDataUrl: string;
+  coverRequested: boolean;
+  contentWidth: number;
+}
+
 /**
  * Render combined cover page with 2-column layout
  */
-function renderCombinedCoverPage(
-  destination: string,
-  dateRange: string,
-  stays: AccommodationSummary[],
-  transports: TransportSegment[],
-  days: Day[],
-  coverDataUrl: string,
-  coverRequested: boolean,
-  contentWidth: number
-): Content[] {
+function renderCombinedCoverPage({
+  destination,
+  dateRange,
+  stays,
+  transports,
+  days,
+  coverDataUrl,
+  coverRequested,
+  contentWidth,
+}: CoverPageArgs): Content[] {
   const content: Content[] = [];
   const bandWidth = Math.max(200, Math.round(contentWidth));
 
@@ -205,42 +216,45 @@ function renderCombinedCoverPage(
   ];
 
   if (stays.length > 0) {
-    leftColumn.push({ text: 'Accommodations', style: 'sectionHeading', margin: [0, SPACE.md, 0, SPACE.sm] as [number, number, number, number] });
-    leftColumn.push({
-      table: {
-        widths: ['*', 'auto', 'auto'],
-        dontBreakRows: true,
-        body: [
-          [
-            { text: 'Hotel', style: 'tableCellStrong' },
-            { text: 'Check In', style: 'tableCellStrong' },
-            { text: 'Check Out', style: 'tableCellStrong' },
+    leftColumn.push(
+      { text: 'Accommodations', style: 'sectionHeading', margin: [0, SPACE.md, 0, SPACE.sm] as [number, number, number, number] },
+      {
+        table: {
+          widths: ['*', 'auto', 'auto'],
+          dontBreakRows: true,
+          body: [
+            [
+              { text: 'Hotel', style: 'tableCellStrong' },
+              { text: 'Check In', style: 'tableCellStrong' },
+              { text: 'Check Out', style: 'tableCellStrong' },
+            ],
+            ...stays.map((s) => [
+              { text: s.hotel, style: 'tableCell' },
+              { text: s.checkIn, style: 'tableCell' },
+              { text: s.checkOut, style: 'tableCell' },
+            ]),
           ],
-          ...stays.map((s) => [
-            { text: s.hotel, style: 'tableCell' },
-            { text: s.checkIn, style: 'tableCell' },
-            { text: s.checkOut, style: 'tableCell' },
-          ]),
-        ],
-      },
-      layout: 'lightHorizontalLines',
-    });
+        },
+        layout: 'lightHorizontalLines',
+      }
+    );
   }
 
   const rightColumn: Content[] = [
     { text: 'Quick Stats', style: 'sectionHeading', margin: [0, 0, 0, SPACE.sm] as [number, number, number, number] },
-    { text: `${totalFlights} flight${totalFlights !== 1 ? 's' : ''}`, style: 'body', margin: [0, 0, 0, SPACE.xs] as [number, number, number, number] },
-    { text: `${totalActivities} activit${totalActivities !== 1 ? 'ies' : 'y'}`, style: 'body', margin: [0, 0, 0, SPACE.sm] as [number, number, number, number] },
+    { text: `${totalFlights} flight${totalFlights === 1 ? '' : 's'}`, style: 'body', margin: [0, 0, 0, SPACE.xs] as [number, number, number, number] },
+    { text: `${totalActivities} activit${totalActivities === 1 ? 'y' : 'ies'}`, style: 'body', margin: [0, 0, 0, SPACE.sm] as [number, number, number, number] },
     { text: 'Activity Level', style: 'sectionHeading', margin: [0, SPACE.sm, 0, SPACE.sm] as [number, number, number, number] },
     ...buildActivityLevelEntries(busyDays, moderateDays, lightDays),
   ];
 
-  content.push({
-    columns: [{ stack: leftColumn, width: '*' }, { stack: rightColumn, width: '*' }],
-    columnGap: SPACE.xl + SPACE.sm,
-  });
-
-  content.push({ text: '', pageBreak: 'after' });
+  content.push(
+    {
+      columns: [{ stack: leftColumn, width: '*' }, { stack: rightColumn, width: '*' }],
+      columnGap: SPACE.xl + SPACE.sm,
+    },
+    { text: '', pageBreak: 'after' }
+  );
   return content;
 }
 
@@ -254,8 +268,10 @@ function renderReferenceSection(
 ): Content[] {
   const content: Content[] = [];
 
-  content.push({ text: '', pageBreak: 'before' });
-  content.push({ text: 'Reference Information', style: 'pageHeading', headlineLevel: 1, margin: [0, 0, 0, SPACE.lg] as [number, number, number, number] });
+  content.push(
+    { text: '', pageBreak: 'before' },
+    { text: 'Reference Information', style: 'pageHeading', headlineLevel: 1, margin: [0, 0, 0, SPACE.lg] as [number, number, number, number] }
+  );
 
   if (stays.length > 0) {
     content.push({ text: 'Accommodation Details', style: 'sectionHeading', headlineLevel: 1, margin: [0, SPACE.md, 0, SPACE.md] as [number, number, number, number] });
@@ -278,49 +294,56 @@ function renderReferenceSection(
     });
   }
 
-  const transWithConf = transports.filter((t) => t.confirmationNumber);
+  const transWithConf = transports.filter((t): t is TransportSegment & { confirmationNumber: string } => Boolean(t.confirmationNumber));
   if (transWithConf.length > 0) {
-    content.push({ text: 'Transportation Confirmations', style: 'sectionHeading', headlineLevel: 1, margin: [0, SPACE.xl, 0, SPACE.md] as [number, number, number, number] });
-    content.push({
-      table: {
-        widths: ['auto', '*', 'auto'],
-        dontBreakRows: true,
-        body: [
-          [
-            { text: 'Transport', style: 'tableHeader' },
-            { text: 'Route', style: 'tableHeader' },
-            { text: 'Confirmation #', style: 'tableHeader' },
+    content.push(
+      { text: 'Transportation Confirmations', style: 'sectionHeading', headlineLevel: 1, margin: [0, SPACE.xl, 0, SPACE.md] as [number, number, number, number] },
+      {
+        table: {
+          widths: ['auto', '*', 'auto'],
+          dontBreakRows: true,
+          body: [
+            [
+              { text: 'Transport', style: 'tableHeader' },
+              { text: 'Route', style: 'tableHeader' },
+              { text: 'Confirmation #', style: 'tableHeader' },
+            ],
+            ...transWithConf.map((t) => [
+              { text: `${t.type} (${t.date})`, style: 'tableCell' },
+              { text: `${t.from} to ${t.to}`, style: 'tableCell' },
+              { text: t.confirmationNumber, style: 'tableCell', bold: true },
+            ]),
           ],
-          ...transWithConf.map((t) => [
-            { text: `${t.type} (${t.date})`, style: 'tableCell' },
-            { text: `${t.from} to ${t.to}`, style: 'tableCell' },
-            { text: t.confirmationNumber!, style: 'tableCell', bold: true },
-          ]),
-        ],
-      },
-      layout: 'lightHorizontalLines',
-    });
+        },
+        layout: 'lightHorizontalLines',
+      }
+    );
   }
 
   if (diningRefs.length > 0) {
-    content.push({ text: 'Dining Confirmations', style: 'sectionHeading', headlineLevel: 1, margin: [0, SPACE.xl, 0, SPACE.md] as [number, number, number, number] });
-    content.push({
-      table: {
-        widths: ['*', 'auto'],
-        dontBreakRows: true,
-        body: [
-          [
-            { text: 'Restaurant', style: 'tableHeader' },
-            { text: 'Confirmation #', style: 'tableHeader' },
-          ],
-          ...diningRefs.map((r) => [
-            { text: r.restaurant, style: 'tableCell' },
-            { text: r.confirmationNumber!, style: 'tableCell', bold: true },
-          ]),
-        ],
-      },
-      layout: 'lightHorizontalLines',
-    });
+    const diningWithConf = diningRefs.filter((r): r is DiningRef & { confirmationNumber: string } => Boolean(r.confirmationNumber));
+    if (diningWithConf.length > 0) {
+      content.push(
+        { text: 'Dining Confirmations', style: 'sectionHeading', headlineLevel: 1, margin: [0, SPACE.xl, 0, SPACE.md] as [number, number, number, number] },
+        {
+          table: {
+            widths: ['*', 'auto'],
+            dontBreakRows: true,
+            body: [
+              [
+                { text: 'Restaurant', style: 'tableHeader' },
+                { text: 'Confirmation #', style: 'tableHeader' },
+              ],
+              ...diningWithConf.map((r) => [
+                { text: r.restaurant, style: 'tableCell' },
+                { text: r.confirmationNumber, style: 'tableCell', bold: true },
+              ]),
+            ],
+          },
+          layout: 'lightHorizontalLines',
+        }
+      );
+    }
   }
 
   const staysWithContact = stays.filter((s) => s.phone || s.website);
@@ -407,23 +430,22 @@ export function buildDocDefinition(data: PdfTripData, opts: ResolvedPdfOptions):
   const content: Content[] = [];
 
   content.push(
-    ...renderCombinedCoverPage(
-      data.destination,
-      data.dateRange,
-      data.stays,
-      data.transports,
-      data.days,
-      data.coverImageDataUri,
-      data.coverImageRequested,
-      contentWidth
-    )
+    ...renderCombinedCoverPage({
+      destination: data.destination,
+      dateRange: data.dateRange,
+      stays: data.stays,
+      transports: data.transports,
+      days: data.days,
+      coverDataUrl: data.coverImageDataUri,
+      coverRequested: data.coverImageRequested,
+      contentWidth,
+    })
   );
 
   // Daily itineraries — pdfmake paginates by real height; the pageBreakBefore
   // rule (isOrphanedHeading) keeps day headers attached to their tables.
   data.days.forEach((d, idx) => {
-    content.push(renderCompactDayHeader(d, idx === 0, contentWidth));
-    content.push(renderTable(d.items, opts, PAGE.timeColWidth));
+    content.push(renderCompactDayHeader(d, idx === 0, contentWidth), renderTable(d.items, opts, PAGE.timeColWidth));
   });
 
   if (opts.showCosts) {

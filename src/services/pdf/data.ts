@@ -90,12 +90,12 @@ async function buildDays(
       website: s.hotel_website || undefined,
       checkInDate: s.hotel_checkin_date,
       checkOutDate: s.hotel_checkout_date,
-    }))
-    .sort((a, b) => {
-      const checkInCompare = new Date(a.checkInDate).getTime() - new Date(b.checkInDate).getTime();
-      if (checkInCompare !== 0) return checkInCompare;
-      return new Date(a.checkOutDate).getTime() - new Date(b.checkOutDate).getTime();
-    });
+    }));
+  staysSummary.sort((a, b) => {
+    const checkInCompare = new Date(a.checkInDate).getTime() - new Date(b.checkInDate).getTime();
+    if (checkInCompare !== 0) return checkInCompare;
+    return new Date(a.checkOutDate).getTime() - new Date(b.checkOutDate).getTime();
+  });
 
   // Build transport segments
   const transportSegments: TransportSegment[] = ((trans ?? []) as TransportationRow[])
@@ -122,119 +122,114 @@ async function buildDays(
     const items: Item[] = [];
 
     /* accommodation ----------------------------------------------------- */
-    {
-      ((stays ?? []) as AccommodationRow[]).forEach((s) => {
-        if (!s.hotel_checkin_date || !s.hotel_checkout_date) return;
+    ((stays ?? []) as AccommodationRow[]).forEach((s) => {
+      if (!s.hotel_checkin_date || !s.hotel_checkout_date) return;
 
-        const dayISO = day.date;
-        const inRange =
-          sameDay(dayISO, s.hotel_checkin_date) ||
-          sameDay(dayISO, s.hotel_checkout_date) ||
-          (parseISO(dayISO) >= parseISO(s.hotel_checkin_date) && parseISO(dayISO) <= parseISO(s.hotel_checkout_date));
+      const dayISO = day.date;
+      const inRange =
+        sameDay(dayISO, s.hotel_checkin_date) ||
+        sameDay(dayISO, s.hotel_checkout_date) ||
+        (parseISO(dayISO) >= parseISO(s.hotel_checkin_date) && parseISO(dayISO) <= parseISO(s.hotel_checkout_date));
 
-        if (!inRange) return;
+      if (!inRange) return;
 
-        const isIn = sameDay(dayISO, s.hotel_checkin_date);
-        const isOut = sameDay(dayISO, s.hotel_checkout_date);
-        const when = isIn ? s.checkin_time : isOut ? s.checkout_time : null;
+      const isIn = sameDay(dayISO, s.hotel_checkin_date);
+      const isOut = sameDay(dayISO, s.hotel_checkout_date);
+      const checkInOutTime = isOut ? s.checkout_time : null;
+      const when = isIn ? s.checkin_time : checkInOutTime;
+      const checkInOutLabel = isIn ? 'Check-in' : 'Check-out';
 
-        // Only show check-in/check-out, skip repeated "Stay" entries
-        if (!isIn && !isOut) return;
+      // Only show check-in/check-out, skip repeated "Stay" entries
+      if (!isIn && !isOut) return;
 
-        const t = fmtTime(when);
-        items.push({
-          type: 'accommodation',
-          title: `${isIn ? 'Check-in' : 'Check-out'}: ${s.hotel}`,
-          time: t || 'All-day',
-          details: s.hotel_details || undefined,
-          location: s.hotel_address || undefined,
-          cost: s.cost != null ? fmtMoney(s.cost, s.currency) : undefined,
-          thumb: (o.showImages && s.image_url) ? String(s.image_url) : undefined, // will be converted to dataURL later
-          sortKey: minsFromTime(t || '8:00 am'),
-        });
+      const t = fmtTime(when);
+      items.push({
+        type: 'accommodation',
+        title: `${checkInOutLabel}: ${s.hotel}`,
+        time: t || 'All-day',
+        details: s.hotel_details || undefined,
+        location: s.hotel_address || undefined,
+        cost: s.cost != null ? fmtMoney(s.cost, s.currency) : undefined,
+        thumb: (o.showImages && s.image_url) ? String(s.image_url) : undefined, // will be converted to dataURL later
+        sortKey: minsFromTime(t || '8:00 am'),
       });
-    }
+    });
 
     /* transportation ---------------------------------------------------- */
     let hasTransport = false;
-    {
-      ((trans ?? []) as TransportationRow[]).forEach((t) => {
-        if (!t.start_date) return;
-        if (!sameDay(String(t.start_date), String(day.date))) return;
+    ((trans ?? []) as TransportationRow[]).forEach((t) => {
+      if (!t.start_date) return;
+      if (!sameDay(String(t.start_date), String(day.date))) return;
 
-        hasTransport = true;
+      hasTransport = true;
 
-        const formattedType = formatType(t.type);
-        const title = t.type === 'flight' && t.provider
-          ? `Flight: ${t.provider}`
-          : formattedType;
+      const formattedType = formatType(t.type);
+      const title = t.type === 'flight' && t.provider
+        ? `Flight: ${t.provider}`
+        : formattedType;
 
-        const startStr = fmtTime(t.start_time);
-        const endStr = fmtTime(t.end_time);
-        const timeStr = startStr && endStr ? `${startStr} – ${endStr}` : (startStr || endStr || 'All-day');
+      const startStr = fmtTime(t.start_time);
+      const endStr = fmtTime(t.end_time);
+      const timeStr = startStr && endStr ? `${startStr} – ${endStr}` : (startStr || endStr || 'All-day');
 
-        items.push({
-          type: 'transportation',
-          title,
-          time: timeStr,
-          details: t.details || undefined,
-          location:
-            t.departure_location && t.arrival_location
-              ? `From: ${t.departure_location} to ${t.arrival_location}`
-              : t.departure_location || undefined,
-          cost: t.cost != null ? fmtMoney(t.cost, t.currency) : undefined,
-          sortKey: minsFromTime(startStr || '8:00 am'),
-        });
+      items.push({
+        type: 'transportation',
+        title,
+        time: timeStr,
+        details: t.details || undefined,
+        location:
+          t.departure_location && t.arrival_location
+            ? `From: ${t.departure_location} to ${t.arrival_location}`
+            : t.departure_location || undefined,
+        cost: t.cost != null ? fmtMoney(t.cost, t.currency) : undefined,
+        sortKey: minsFromTime(startStr || '8:00 am'),
       });
-    }
+    });
 
     /* activities -------------------------------------------------------- */
-    {
-      ((acts ?? []) as DayActivityRow[])
-        .filter((a) => a.day_id === day.day_id)
-        .forEach((a) => {
-          const t = fmtTime(a.start_time);
-          items.push({
-            type: 'activity',
-            title: a.title || 'Activity',
-            time: t || 'All-day',
-            details: a.description || undefined,
-            cost: a.cost != null ? fmtMoney(a.cost, a.currency) : undefined,
-            sortKey: minsFromTime(t || '8:00 am'),
-          });
-        });
-    }
-
-    /* dining ------------------------------------------------------------ */
-    {
-      ((dine ?? []) as ReservationRow[]).forEach((r) => {
-        // reservation_time may be ISO datetime; compare by date component
-        const reservationDate = typeof r.reservation_time === 'string' && r.reservation_time.includes('T')
-          ? r.reservation_time.split('T')[0]
-          : (typeof r.reservation_time === 'string' ? r.reservation_time : '');
-
-        const match =
-          (r.day_id && r.day_id === day.day_id) ||
-          (reservationDate && sameDay(reservationDate, String(day.date)));
-
-        if (!match) return;
-
-        const meta: string[] = [];
-        if (r.number_of_people) meta.push(`${r.number_of_people} ${r.number_of_people === 1 ? 'person' : 'people'}`);
-        if (r.address) meta.push(r.address);
-
-        const t = fmtTime(r.reservation_time);
+    ((acts ?? []) as DayActivityRow[])
+      .filter((a) => a.day_id === day.day_id)
+      .forEach((a) => {
+        const t = fmtTime(a.start_time);
         items.push({
-          type: 'dining',
-          title: `Dining: ${r.restaurant_name}`,
+          type: 'activity',
+          title: a.title || 'Activity',
           time: t || 'All-day',
-          details: r.notes || undefined,
-          location: meta.join(' • ') || undefined,
-          cost: r.cost != null ? fmtMoney(r.cost, r.currency) : undefined,
+          details: a.description || undefined,
+          cost: a.cost != null ? fmtMoney(a.cost, a.currency) : undefined,
           sortKey: minsFromTime(t || '8:00 am'),
         });
       });
-    }
+
+    /* dining ------------------------------------------------------------ */
+    ((dine ?? []) as ReservationRow[]).forEach((r) => {
+      // reservation_time may be ISO datetime; compare by date component
+      const reservationDateFallback = typeof r.reservation_time === 'string' ? r.reservation_time : '';
+      const reservationDate = typeof r.reservation_time === 'string' && r.reservation_time.includes('T')
+        ? r.reservation_time.split('T')[0]
+        : reservationDateFallback;
+
+      const match =
+        (r.day_id && r.day_id === day.day_id) ||
+        (reservationDate && sameDay(reservationDate, String(day.date)));
+
+      if (!match) return;
+
+      const meta: string[] = [];
+      if (r.number_of_people) meta.push(`${r.number_of_people} ${r.number_of_people === 1 ? 'person' : 'people'}`);
+      if (r.address) meta.push(r.address);
+
+      const t = fmtTime(r.reservation_time);
+      items.push({
+        type: 'dining',
+        title: `Dining: ${r.restaurant_name}`,
+        time: t || 'All-day',
+        details: r.notes || undefined,
+        location: meta.join(' • ') || undefined,
+        cost: r.cost != null ? fmtMoney(r.cost, r.currency) : undefined,
+        sortKey: minsFromTime(t || '8:00 am'),
+      });
+    });
 
     // Count only activities and dining for density (not accommodation/transport)
     const activityCount = items.filter((i) => i.type === 'activity' || i.type === 'dining').length;
@@ -298,12 +293,14 @@ export async function fetchPdfTripData(
       ? isSameDay(parseISO(trip.arrival_date), parseISO(trip.departure_date))
       : false;
 
-  const dateRange =
+  const singleDayRange = sameTripDay && trip.arrival_date ? fmtDate(trip.arrival_date) : null;
+  const multiDayRange =
     trip.arrival_date && trip.departure_date
-      ? sameTripDay
-        ? fmtDate(trip.arrival_date)
-        : `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`
-      : '';
+      ? `${fmtShort(trip.arrival_date)} – ${fmtShort(trip.departure_date)}`
+      : null;
+  const dateRange = trip.arrival_date && trip.departure_date
+    ? (singleDayRange ?? multiDayRange ?? '')
+    : '';
 
   const { days, stays, transports, diningRefs, budgetData } = await buildDays(tripId, o);
 

@@ -6,7 +6,7 @@ import type { PdfTripData, ResolvedPdfOptions, Item } from './types';
 export const TINY_JPEG =
   'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==';
 
-const item = (partial: Partial<Item> & Pick<Item, 'type' | 'title' | 'time' | 'sortKey'>): Item => ({ ...partial }) as Item;
+const item = (partial: Partial<Item> & Pick<Item, 'type' | 'title' | 'time' | 'sortKey'>): Item => ({ ...partial });
 
 export const FIXTURE_OPTS: ResolvedPdfOptions = {
   showImages: true,

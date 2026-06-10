@@ -60,7 +60,7 @@ export async function imageToCoverDataURI(
   if (!url) return '';
   const key = `${url}@${boxW}x${boxH}@${scale}`;
   const hit = imgCache.get(key);
-  if (hit) return hit;
+  if (hit !== undefined) return hit;
 
   const job = (async () => {
     try {
@@ -100,7 +100,7 @@ async function drawCover(
   scale: number
 ): Promise<string | null> {
   const img = await loadImage(blob);
-  if (!img || !img.width || !img.height) return null;
+  if (!img?.width || !img?.height) return null;
   try {
     const crop = computeCoverCrop(img.width, img.height, boxW, boxH);
     const { w, h } = computeOutputSize(crop, boxW, boxH, scale);

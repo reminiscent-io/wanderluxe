@@ -27,7 +27,7 @@ describe('fmtTime', () => {
   });
   it('returns empty string for missing/garbage input', () => {
     expect(fmtTime(null)).toBe('');
-    expect(fmtTime(undefined)).toBe('');
+    expect(fmtTime()).toBe('');
     expect(fmtTime('abc')).toBe('');
   });
 });
