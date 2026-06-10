@@ -175,11 +175,12 @@ PostgreSQL database
 - Mutation handling with optimistic updates via React Query
 
 #### 7. **PDF Export**
-- **File**: `/src/services/pdfmake-export.ts` (~1,470 lines)
-- **Trigger**: `ExportPdfButton` → `exportItineraryPdf()` (runs entirely client-side; no API endpoint)
-- **Data**: Collects trips, days, activities, accommodations, transportation, budget
-- **Format**: Professional itinerary with logos, formatting, mobile-aware layout
-- **Library**: pdfmake (no external PDF service)
+- **Fully client-side** via pdfmake (no server endpoint; the old `/api/export-pdf` note was stale)
+- **Modules**: `src/services/pdf/` — `theme.ts` (type scale/spacing/colors/page tokens — all sizes and colors MUST come from here), `images.ts` (cover-crop + supersampled data URIs), `builder.ts` (pure `buildDocDefinition(data, opts)`), `data.ts` (Supabase fetch), `format.ts` (locale-pinned formatters), `pagination.ts` (orphan-heading rule)
+- **Orchestrator**: `src/services/pdfmake-export.ts` (fonts → fetch → build → download)
+- **Fonts**: DM Sans + DM Serif Display TTFs lazy-loaded by `src/services/pdf-fonts.ts`; these fonts have no glyph for emoji/dingbats (e.g. ✈) — never put such characters in doc content
+- **Layout is device-independent**: same output on mobile/desktop; Letter/A4 is a user option
+- **Tests**: `npx vitest run src/services/pdf` (snapshots + theme invariants); `PDF_PREVIEW=1 npx vitest run src/services/pdf/render.test.ts` writes `/tmp/wanderluxe-pdf-preview.pdf`
 
 #### 8. **Database Schema** (~22 tables)
 Key tables:
@@ -305,7 +306,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 | File/Pattern | Purpose |
 |---|---|
 | `hooks/useSidebarState.ts` | Sidebar UI state management (largest hook) |
-| `services/pdfmake-export.ts` | PDF itinerary generation (largest service) |
+| `services/pdfmake-export.ts` | PDF export orchestrator (see `src/services/pdf/` for builder/theme) |
 | `contexts/AuthContext.tsx` | Global authentication state |
 | `pages/TripDetails.tsx` | Trip detail page wrapper |
 | `components/trip/*/` | Feature-specific components |
