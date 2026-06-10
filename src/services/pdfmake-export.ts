@@ -15,7 +15,7 @@
 import pdfMake from 'pdfmake/build/pdfmake';
 import { loadPdfFonts } from './pdf-fonts';
 import { imageToCoverDataURI } from './pdf/images';
-import { PAGE } from './pdf/theme';
+import { PAGE, TYPE, COLORS, FONTS } from './pdf/theme';
 
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/analytics';
@@ -564,14 +564,24 @@ function calculatePageFit(days: Day[], startIdx: number): number {
  * Render compact day header with inline travel marker + divider line
  */
 function renderCompactDayHeader(d: Day, isFirstOnPage: boolean, fontSize: number, contentWidth: number): Content {
-  const travelMarker = d.hasTransport ? ' ✈ TRAVEL DAY' : '';
   const dayText = d.title?.trim()
-    ? `${fmtShort(d.date)} • ${d.title}${travelMarker}`
-    : `${fmtShort(d.date)}${travelMarker}`;
+    ? `${fmtShort(d.date)} • ${d.title}`
+    : fmtShort(d.date);
 
   const stack: Content[] = [
     {
-      text: dayText,
+      text: [
+        { text: dayText },
+        ...(d.hasTransport
+          ? [{
+              text: '   TRAVEL DAY',
+              fontSize: TYPE.caption,
+              font: FONTS.sans,
+              color: COLORS.sunset,
+              characterSpacing: 1,
+            }]
+          : []),
+      ],
       fontSize,
       bold: false,
       font: 'DMSerifDisplay',
