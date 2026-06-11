@@ -5,6 +5,7 @@ import stripeRoutes from './stripe';
 import invitePreviewRoutes from './invite-preview';
 import adminInsightsRoutes from './admin-insights';
 import accountRoutes from './account';
+import mcpRoutes from './mcp';
 
 export function registerRoutes(app: Express) {
   // Invite preview must be registered before the SPA catch-all
@@ -15,4 +16,7 @@ export function registerRoutes(app: Express) {
   app.use(stripeRoutes);
   app.use(adminInsightsRoutes);
   app.use(accountRoutes);
+  // MCP endpoint + OAuth discovery metadata (registered before the SPA
+  // catch-all so GET /.well-known/* isn't swallowed by the React app)
+  app.use(mcpRoutes);
 }

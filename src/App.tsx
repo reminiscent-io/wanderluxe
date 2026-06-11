@@ -38,6 +38,7 @@ const LLMTraining = lazy(() => import("./pages/LLMTraining"));
 const Explore = lazy(() => import("./pages/Explore"));
 const Admin = lazy(() => import("./pages/Admin"));
 const InviteRedeem = lazy(() => import("./pages/InviteRedeem"));
+const OauthConsent = lazy(() => import("./pages/OauthConsent"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -86,6 +87,7 @@ const App = () => {
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/about" element={<LLMTraining />} />
                   <Route path="/invite/:code" element={<InviteRedeem />} />
+                  <Route path="/oauth/consent" element={<OauthConsent />} />
                   <Route
                     path="/create-trip"
                     element={
