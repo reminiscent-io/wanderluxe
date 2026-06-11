@@ -41,7 +41,7 @@ function describeScope(scope: string): string {
 const OauthConsent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session } = useAuth();
+  useAuth();
 
   const [state, setState] = useState<PageState>('loading');
   const [details, setDetails] = useState<AuthorizationDetails | null>(null);
