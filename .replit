@@ -12,6 +12,7 @@ build = ["sh", "-c", "bun run build"]
 
 [[ports]]
 localPort = 5000
+externalPort = 3002
 
 [[ports]]
 localPort = 5001
