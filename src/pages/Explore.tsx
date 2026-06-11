@@ -11,6 +11,7 @@ import { Plus } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 import SEO, { SITE_URL } from '@/components/SEO';
+import { buildTripPath } from '@/utils/tripUrl';
 
 import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { useTravelStats } from '@/hooks/useTravelStats';
@@ -184,11 +185,11 @@ const Explore = () => {
     ? {
         "@context": "https://schema.org",
         "@type": "ItemList",
-        name: "Curated luxury trip itineraries",
+        name: "Curated trip itineraries",
         itemListElement: publicTrips.slice(0, 20).map((trip, idx) => ({
           "@type": "ListItem",
           position: idx + 1,
-          url: `${SITE_URL}/trip/${trip.trip_id}`,
+          url: `${SITE_URL}${buildTripPath(trip)}`,
           name: trip.destination,
         })),
       }
@@ -199,14 +200,14 @@ const Explore = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <SEO
-        title="Explore curated luxury trip itineraries"
-        description="Discover hand-crafted luxury travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
+        title="Explore curated trip itineraries"
+        description="Discover hand-crafted travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
         canonicalPath="/explore"
         jsonLd={itemListJsonLd}
       />
       <Navigation />
-      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
-        <h1 className="sr-only">Explore curated luxury trip itineraries</h1>
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
+        <h1 className="sr-only">Explore curated trip itineraries</h1>
 
         {/* Hero — single primary surface */}
         <motion.div
@@ -221,7 +222,7 @@ const Explore = () => {
               daysUntil={daysUntilNextTrip!}
               onViewTrip={() => {
                 handleTripClick(nextTrip, 'Hero');
-                navigate(`/trip/${nextTrip.trip_id}`);
+                navigate(buildTripPath(nextTrip));
               }}
               className="-mx-4 rounded-none md:mx-0 md:rounded-2xl"
             />
@@ -239,22 +240,33 @@ const Explore = () => {
           <TravelYearSection data={travelStats.dailyActivity} />
         )}
 
-        {/* Search + conversion CTA */}
-        <div className="mb-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        {/* Search + secondary CTA — single row, hero already carries the sunset CTA */}
+        <div className="mb-8 flex items-center gap-2 sm:gap-3">
           <TripSearch
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search destinations, dates..."
             ariaLabel="Search public trips"
-            className="flex-1"
+            className="flex-1 max-w-none sm:max-w-md"
           />
+          {/* Full label on tablet+ */}
           <Button
             onClick={handleCtaClick}
-            variant="sunset"
-            className="font-semibold whitespace-nowrap"
+            variant="outline"
+            className="hidden sm:inline-flex shrink-0 font-medium whitespace-nowrap"
           >
             <Plus className="h-4 w-4 mr-2" />
             {session ? 'Plan a trip' : 'Get started'}
+          </Button>
+          {/* Icon-only 44×44 on mobile to keep the fold breathable */}
+          <Button
+            onClick={handleCtaClick}
+            variant="outline"
+            size="icon"
+            className="sm:hidden shrink-0 h-11 w-11 rounded-card"
+            aria-label={session ? 'Plan a trip' : 'Get started'}
+          >
+            <Plus className="h-5 w-5" />
           </Button>
         </div>
 
@@ -269,7 +281,7 @@ const Explore = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-10 md:space-y-12">
             {/* Currently Traveling */}
             {currentTrips.length > 0 && (
               <section className="relative" aria-labelledby="explore-section-current">
@@ -309,7 +321,7 @@ const Explore = () => {
                 count={filteredUpcomingTrips.length}
               />
               {filteredUpcomingTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {filteredUpcomingTrips.map((trip) => (
                     <div
                       key={trip.trip_id}
@@ -346,7 +358,7 @@ const Explore = () => {
                 muted
               />
               {pastTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {pastTrips.map((trip) => (
                     <div
                       key={trip.trip_id}

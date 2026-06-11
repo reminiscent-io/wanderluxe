@@ -299,8 +299,8 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 <Sparkles className="w-3.5 h-3.5 text-background" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-display text-base leading-none tracking-tight text-foreground">Trip Assistant</h2>
-                <p className="text-xs leading-snug text-muted-foreground mt-1 truncate">Private to you, not shared with co-travelers</p>
+                <h2 className="font-display text-[17px] leading-tight tracking-tight text-foreground">Trip Assistant</h2>
+                <p className="text-[13px] leading-snug text-muted-foreground mt-0.5 truncate">Private to you, not shared with co-travelers</p>
               </div>
             </div>
 

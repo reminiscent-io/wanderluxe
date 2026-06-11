@@ -16,7 +16,7 @@ interface NavigationProps {
 const Navigation = ({ mobileMenuTrigger }: NavigationProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isTripPage = location.pathname.startsWith('/trip/');
+  const isTripPage = location.pathname.startsWith('/trip/') || /^\/explore\/[^/]+/.test(location.pathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleMobileNavigation = (path: string) => {

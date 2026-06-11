@@ -25,6 +25,7 @@ interface RestaurantReservationDialogProps {
   onSuccess?: () => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  preselectedDate?: string;    // Day the user clicked "Add to this day" on
   destination?: string;        // Trip destination to bias search results
   // Legacy props from Sidebar
   title?: string;
@@ -43,6 +44,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   onSuccess,
   tripArrivalDate,
   tripDepartureDate,
+  preselectedDate,
   destination,
   title,
   isSubmitting: legacyIsSubmitting,
@@ -140,6 +142,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             tripId={tripId}
             tripArrivalDate={tripArrivalDate}
             tripDepartureDate={tripDepartureDate}
+            preselectedDate={preselectedDate}
             destination={destination}
           />
         </div>

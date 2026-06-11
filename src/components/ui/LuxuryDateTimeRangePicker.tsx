@@ -149,8 +149,8 @@ export default function LuxuryDateTimeRangePicker({
               <DialogContent 
                 className={cn(
                   "bg-white border-0 shadow-warm-xl",
-                  isMobile 
-                    ? "w-[95vw] max-w-[95vw] h-[90dvh] max-h-[90dvh] rounded-2xl p-0" 
+                  isMobile
+                    ? "w-[95vw] max-w-[95vw] h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)_-_2rem)] max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)_-_2rem)] rounded-2xl p-0"
                     : "w-[420px] max-w-[420px] rounded-xl p-0"
                 )}
                 onPointerDownOutside={(e) => {

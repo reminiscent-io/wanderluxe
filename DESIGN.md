@@ -392,7 +392,93 @@ panels are not part of this system. The single permitted exception is
 the dialog overlay (`bg-black/80`), and that's because it's an
 absence, not a surface. Anywhere else, glass is forbidden.
 
-## 6. Do's and Don'ts
+## 6. Responsive & Mobile Patterns
+
+The product is used in two contexts: focused planning sessions at a
+desk and quick on-the-go phone edits in transit. The system treats
+mobile not as a scaled-down desktop but as the primary surface for many
+of its interactions. These patterns codify the reusable decisions.
+
+### Breakpoints
+
+Tailwind defaults — `sm 640`, `md 768`, `lg 1024`, `xl 1280`, `2xl 1536`.
+The `container` utility tops out at `1400px` (set in `tailwind.config.ts`),
+so even at 4K viewports the editorial composition is preserved and never
+stretches to a billboard.
+
+### Touch Targets
+
+- **Mobile (under `sm`): 44×44 px minimum** on any interactive element.
+  This is the floor — buttons, chips, icon controls, dismiss buttons,
+  list-row taps. Below 44, the interaction is broken on a phone in
+  transit, even if it works in DevTools.
+- **Desktop (`sm` and up):** density can tighten to 36 px (`h-9`) where
+  surrounding affordances justify it. Use the responsive pattern
+  `h-11 sm:h-9` / `min-h-[44px] sm:min-h-0` rather than picking one
+  height globally.
+- **Spacing between adjacent targets:** at least 8 px so the wrong one
+  doesn't get hit on a thumb tap.
+
+### Mobile Chip Rails
+
+For filter rows, tabs, and any short list of inline choices:
+
+- **Under `sm`:** horizontally scrollable rail, full-bleed (`-mx-4`),
+  hidden scrollbar, `scroll-snap-type: x proximity`, with edge fades
+  on both sides so the user knows there's more off-screen.
+- **`sm` and up:** the row wraps. No scroll needed when the container
+  is wide enough.
+- **Chips themselves:** `[scroll-snap-align: start]`, `shrink-0` so they
+  don't get crushed into the rail. The native iOS scroll feel is the
+  expected pattern; resist the urge to invent a custom carousel.
+
+### Responsive Grid Scale
+
+For card grids (trip cards, accommodation cards, anything similar):
+
+- **Default:** `grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4`
+- **Dense-vertical variants** (current / hero-adjacent rows where each
+  card is taller and more important): drop to `grid-cols-1 lg:grid-cols-2`.
+- **Gap:** `gap-6` throughout. The air is part of the brand; don't
+  tighten this for density.
+
+### iOS / PWA Safe Areas
+
+The app is installable. Phones with home indicators and notches need
+their inset respected:
+
+- Page containers that own the bottom of the viewport get `safe-pb`.
+- Sticky bottom bars (if introduced later) get `safe-pb` *in addition
+  to* their own padding, not instead of.
+- Top navigation already handles `env(safe-area-inset-top)` — don't
+  re-add it on page wrappers.
+
+### Photography-Backed Surfaces
+
+When chrome sits on top of imagery (hero cards, photo overlays):
+
+- **Tonal contrast over translucency.** Opaque chips on photography
+  read in bright outdoor light; glass chips don't. Use
+  `bg-background/95` (cream paper) for light chips with foreground
+  text, or `bg-foreground/75` (espresso ink) for dark chips with
+  white text — both carry `shadow-warm` / `shadow-warm-sm`.
+- **Photo gradient overlays** stay as gradient-to-foreground (warm
+  near-black) at 60–80% bottom, fading to transparent. Pure black at
+  100% is acceptable here only because it reads as absence-of-page,
+  same logic as the dialog overlay.
+- **CTA buttons on photography:** `bg-background` (cream) with
+  `text-foreground`, never `bg-white`. The warm cast must survive on
+  top of a colored image.
+
+### Motion Caveats
+
+- Framer Motion respects `prefers-reduced-motion` by default for
+  opacity/transform on `motion.*` elements; don't fight it.
+- Don't animate layout properties (`width`, `height`, `top`, `padding`,
+  `margin`) — animate `transform` and `opacity` only. This rule applies
+  doubly on mobile, where the GPU is doing more for less.
+
+## 7. Do's and Don'ts
 
 ### Do:
 - **Do** use Cream Paper (`#FDFCF8`) for every page background and

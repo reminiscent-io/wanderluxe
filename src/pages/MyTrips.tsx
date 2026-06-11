@@ -329,7 +329,7 @@ const MyTrips = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
         {/* Hero — single primary surface */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -387,26 +387,44 @@ const MyTrips = () => {
           <TripSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
         
-        {/* Filter Chips */}
-        <div className="flex flex-wrap items-center gap-2 mb-8" role="tablist" aria-label="Filter trips">
-          <FilterChip
-            active={tripFilter === 'all'}
-            onClick={() => setTripFilter('all')}
-            label="All trips"
-            count={totalMyTrips + totalSharedTrips}
+        {/* Filter Chips — scroll-rail on mobile, wrap on desktop */}
+        <div
+          className="relative -mx-4 mb-8 sm:mx-0"
+          role="tablist"
+          aria-label="Filter trips"
+        >
+          <div
+            className="flex items-center gap-2 overflow-x-auto px-4 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-0"
+            style={{ scrollSnapType: 'x proximity' }}
+          >
+            <FilterChip
+              active={tripFilter === 'all'}
+              onClick={() => setTripFilter('all')}
+              label="All trips"
+              count={totalMyTrips + totalSharedTrips}
+            />
+            <FilterChip
+              active={tripFilter === 'mine'}
+              onClick={() => setTripFilter('mine')}
+              label="My trips"
+              count={totalMyTrips}
+            />
+            <FilterChip
+              active={tripFilter === 'shared'}
+              onClick={() => setTripFilter('shared')}
+              label="Shared with me"
+              count={totalSharedTrips}
+              icon={<Share2 className="h-3.5 w-3.5" />}
+            />
+          </div>
+          {/* Edge fades only on mobile rail */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-sand-50 to-transparent sm:hidden"
           />
-          <FilterChip
-            active={tripFilter === 'mine'}
-            onClick={() => setTripFilter('mine')}
-            label="My trips"
-            count={totalMyTrips}
-          />
-          <FilterChip
-            active={tripFilter === 'shared'}
-            onClick={() => setTripFilter('shared')}
-            label="Shared with me"
-            count={totalSharedTrips}
-            icon={<Share2 className="h-3.5 w-3.5" />}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-sand-50 to-transparent sm:hidden"
           />
         </div>
 
@@ -421,7 +439,7 @@ const MyTrips = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-10 md:space-y-12">
             {showHidden && (
               <div className="bg-sand-100 border border-sand-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-earth-700 text-sm">
@@ -477,7 +495,7 @@ const MyTrips = () => {
               />
 
               {filteredUpcomingTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {filteredUpcomingTrips.map((trip) => (
                     <TripCard
                       key={trip.trip_id}
@@ -513,7 +531,7 @@ const MyTrips = () => {
               />
 
               {pastTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {pastTrips.map((trip) => (
                     <TripCard
                       key={trip.trip_id}

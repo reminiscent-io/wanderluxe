@@ -80,9 +80,9 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
   return (
     <>
       {/* Desktop sticky top navigation */}
-      <div 
+      <div
         className={cn(
-          "hidden md:block sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b transition-all duration-200",
+          "hidden md:block sticky top-16 z-40 bg-card/95 border-b border-border transition-all duration-200",
           isCompact ? "py-2" : "py-3",
           className
         )}
@@ -114,7 +114,7 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
                     onClick={() => scrollToDay(index)}
                     className={cn(
                       "min-w-[80px] text-xs transition-all",
-                      isTodayFlag && !isActive && "ring-1 ring-blue-500"
+                      isTodayFlag && !isActive && "ring-1 ring-primary"
                     )}
                   >
                     <div className="flex flex-col items-center">
@@ -168,7 +168,7 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
       </div>
       
       {/* Mobile View - Floating Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t shadow-warm-lg pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 border-t border-border shadow-warm-lg pb-safe">
         <div className="flex items-center justify-between gap-2 px-2 py-3">
           <Button
             variant="ghost"
@@ -194,8 +194,8 @@ const DayNavigator: React.FC<DayNavigatorProps> = ({ days, className }) => {
                   onClick={() => scrollToDay(index)}
                   className={cn(
                     "h-12 px-3 min-w-[60px] flex-shrink-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg",
-                    isActive && "bg-earth-600 hover:bg-earth-700 shadow-md",
-                    isTodayFlag && !isActive && "ring-2 ring-emerald-500"
+                    isActive && "bg-earth-600 hover:bg-earth-700 shadow-warm",
+                    isTodayFlag && !isActive && "ring-2 ring-primary"
                   )}
                 >
                   <span className="text-[10px] leading-none opacity-90">{format(parseISO(day.date), 'MMM')}</span>

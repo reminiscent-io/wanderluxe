@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { format, parse } from "date-fns";
+import { format, parse, addDays } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -81,6 +81,7 @@ interface Props {
   initialData?: AccommodationFormData;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
+  preselectedDate?: string; // Day the user clicked "Add to this day" on
   tripId: string;
   destination?: string; // Trip destination to bias search results
 }
@@ -131,10 +132,15 @@ export default function AccommodationForm({
   initialData,
   tripArrivalDate,
   tripDepartureDate,
+  preselectedDate,
   tripId,
   destination,
 }: Props) {
   /* ----------------------------- RHF init ----------------------------- */
+  // When the user clicks "Add to this day", default the stay to that day → next morning
+  const preselectedCheckout = preselectedDate
+    ? format(addDays(parse(preselectedDate, "yyyy-MM-dd", new Date()), 1), "yyyy-MM-dd")
+    : undefined;
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -142,9 +148,9 @@ export default function AccommodationForm({
       hotel_details: initialData?.hotel_details ?? "",
       hotel_url: initialData?.hotel_url ?? "",
       hotel_checkin_date:
-        initialData?.hotel_checkin_date ?? tripArrivalDate ?? "",
+        initialData?.hotel_checkin_date ?? preselectedDate ?? tripArrivalDate ?? "",
       hotel_checkout_date:
-        initialData?.hotel_checkout_date ?? tripDepartureDate ?? "",
+        initialData?.hotel_checkout_date ?? preselectedCheckout ?? tripDepartureDate ?? "",
       checkin_time: initialData?.checkin_time ?? "15:00",
       checkout_time: initialData?.checkout_time ?? "11:00",
       cost: initialData?.cost ?? null,
@@ -165,6 +171,13 @@ export default function AccommodationForm({
               startTime: initialData.checkin_time ?? "15:00",
               endTime: initialData.checkout_time ?? "11:00",
             }
+          : preselectedDate && preselectedCheckout
+          ? {
+              start: parse(preselectedDate, "yyyy-MM-dd", new Date()),
+              end: parse(preselectedCheckout, "yyyy-MM-dd", new Date()),
+              startTime: "15:00",
+              endTime: "11:00",
+            }
           : tripArrivalDate && tripDepartureDate
           ? {
               start: parse(tripArrivalDate, "yyyy-MM-dd", new Date()),
@@ -180,6 +193,7 @@ export default function AccommodationForm({
   useEffect(() => {
     if (
       !initialData &&
+      !preselectedDate &&
       tripArrivalDate &&
       tripDepartureDate &&
       !form.getValues("stay_range")
@@ -194,7 +208,7 @@ export default function AccommodationForm({
       form.setValue("hotel_checkin_date", tripArrivalDate);
       form.setValue("hotel_checkout_date", tripDepartureDate);
     }
-  }, [tripArrivalDate, tripDepartureDate, initialData, form]);
+  }, [tripArrivalDate, tripDepartureDate, initialData, preselectedDate, form]);
 
   /* --------------------- Sync picker → legacy fields ------------------ */
   const stayRange = useWatch({ control: form.control, name: "stay_range" }) as LuxuryDateTimeRange;

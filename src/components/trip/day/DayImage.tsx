@@ -69,7 +69,7 @@ const DayImage: React.FC<DayImageProps> = ({
         <div className="relative overflow-hidden rounded-lg w-full h-full">
           {title && (
             <div className="absolute top-0 left-0 z-10 p-2">
-              <h2 className="text-white text-xl font-bold drop-shadow-lg">
+              <h2 className="text-white text-xl font-bold [filter:drop-shadow(0_1px_3px_rgba(33,31,27,0.55))]">
                 {title}
               </h2>
             </div>
@@ -86,15 +86,6 @@ const DayImage: React.FC<DayImageProps> = ({
                 width: '100%',
                 height: '100%',
                 transition: 'object-position 0.2s ease-out' /* Add smooth transition */
-              }}
-              onLoad={(e) => {
-                // Force the browser to recognize the image position by briefly changing a property
-                const img = e.currentTarget;
-                const originalOpacity = img.style.opacity;
-                img.style.opacity = '0.99';
-                setTimeout(() => {
-                  img.style.opacity = originalOpacity;
-                }, 50);
               }}
               onError={(e) => {
                 console.error('Image failed to load:', displayImageUrl);

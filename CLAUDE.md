@@ -22,7 +22,7 @@ bun run lint            # ESLint code quality check
 
 ### Building & Testing
 ```bash
-bun run build           # Production build
+bun run build           # Full pipeline: build:sitemap → vite build → prerender (puppeteer) → build:server
 bun run build:dev       # Development build
 bun run preview         # Preview production build (port 8080)
 bun run test            # Run tests (Vitest)
@@ -54,8 +54,8 @@ src/
 │   │   ├── accommodation/ # Hotel management
 │   │   ├── ai-assistant/  # AI assistant components
 │   │   ├── budget/        # Expense tracking
-│   │   ├── ai-assistant/  # AI chat + document extraction (mounted via AIAssistantDrawer)
 │   │   ├── create/        # Trip creation flow
+│   │   ├── dashboard/     # Trip dashboard cards
 │   │   ├── day/           # Day-by-day components
 │   │   ├── details/       # Trip detail views
 │   │   ├── dining/        # Restaurant reservations
@@ -84,18 +84,20 @@ src/
 server/
 ├── index.ts              # Express server setup
 ├── dev-server.ts         # Development server config
-└── routes/               # API routes (PDF export, Stripe, AI chat, admin insights, invite preview, share notifications)
+└── routes/               # API routes (Stripe, AI chat, admin insights, invite preview, share notifications, account)
 
 supabase/
-├── functions/            # Serverless Deno functions (10 functions)
+├── functions/            # Serverless Deno functions (12 functions)
 │   ├── ai-chat/                  # AI chat via Gemini 2.5 Flash
 │   ├── fetch-unsplash-metadata/  # Unsplash image metadata
 │   ├── fetch-url-metadata/       # URL metadata extraction
+│   ├── flight-status-proxy/      # AeroDataBox flight lookup
 │   ├── generate-image/           # AI image generation
 │   ├── google-places-proxy/      # Google Places API proxy
 │   ├── parse-travel-doc/         # Travel document parsing
 │   ├── send-email/               # Email via SendGrid
 │   ├── send-share-notification/  # Trip share notifications
+│   ├── send-trip-reminders/      # Scheduled trip reminder emails
 │   ├── update-exchange-rates/    # Currency exchange updates
 │   └── weather-proxy/            # Weather data proxy
 ├── migrations/           # SQL migration files
@@ -173,11 +175,12 @@ PostgreSQL database
 - Mutation handling with optimistic updates via React Query
 
 #### 7. **PDF Export**
-- **File**: `/src/services/pdfmake-export.ts` (~1,460 lines)
-- **Endpoint**: `/api/export-pdf` (Express backend)
-- **Data**: Collects trips, days, activities, accommodations, transportation, budget
-- **Format**: Professional itinerary with logos, formatting, mobile-aware layout
-- **Library**: pdfmake (no external PDF service)
+- **Fully client-side** via pdfmake (no server endpoint; the old `/api/export-pdf` note was stale)
+- **Modules**: `src/services/pdf/` — `theme.ts` (type scale/spacing/colors/page tokens — all sizes and colors MUST come from here), `images.ts` (cover-crop + supersampled data URIs), `builder.ts` (pure `buildDocDefinition(data, opts)`), `data.ts` (Supabase fetch), `format.ts` (locale-pinned formatters), `pagination.ts` (orphan-heading rule)
+- **Orchestrator**: `src/services/pdfmake-export.ts` (fonts → fetch → build → download)
+- **Fonts**: DM Sans + DM Serif Display TTFs lazy-loaded by `src/services/pdf-fonts.ts`; these fonts have no glyph for emoji/dingbats (e.g. ✈) — never put such characters in doc content
+- **Layout is device-independent**: same output on mobile/desktop; Letter/A4 is a user option
+- **Tests**: `npx vitest run src/services/pdf` (snapshots + theme invariants); `PDF_PREVIEW=1 npx vitest run src/services/pdf/render.test.ts` writes `node_modules/.cache/wanderluxe-pdf-preview.pdf`
 
 #### 8. **Database Schema** (~22 tables)
 Key tables:
@@ -253,6 +256,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `public/manifest.json` + `public/sw.js` for installable app
 - PWA icons at multiple resolutions (144, 192, 384, 512)
 - `usePWAInstall()` hook for install prompt
+- **Version stamping**: `vite.config.ts` emits `dist/version.json` and injects `__APP_SHA__` into `sw.js` at build time; `useVersionCheck()` polls `version.json` to detect updates
 
 #### 14. **Weather Integration**
 - `weather_cache` table for caching
@@ -302,7 +306,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 | File/Pattern | Purpose |
 |---|---|
 | `hooks/useSidebarState.ts` | Sidebar UI state management (largest hook) |
-| `services/pdfmake-export.ts` | PDF itinerary generation (largest service) |
+| `services/pdfmake-export.ts` | PDF export orchestrator (see `src/services/pdf/` for builder/theme) |
 | `contexts/AuthContext.tsx` | Global authentication state |
 | `pages/TripDetails.tsx` | Trip detail page wrapper |
 | `components/trip/*/` | Feature-specific components |
@@ -335,6 +339,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 Required in `.env`:
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY` - Server-only service-role key used by Express routes (`server/routes/*`). Bypasses RLS, so those routes do their own authorization checks (e.g. `canAccessTrip` in `ai-chat.ts`). Never expose to the client. The server reuses `VITE_SUPABASE_URL` for the project URL.
 - `VITE_GOOGLE_MAPS_API_KEY` - Google Places API
 - `GEMINI_API_KEY` - Google Gemini API key (used by both the chat Edge Function and `parse-travel-doc`). Model is hardcoded to `gemini-2.5-flash` in each function; no env override.
 - `SERPER_API_KEY` - (optional, Edge Function secret) Serper API for web search when recommending restaurants; enables direct Resy/OpenTable booking links
@@ -356,11 +361,12 @@ Required in `.env`:
 
 ## Deployment
 
-1. `bun run build` - Creates optimized production bundle
-2. Set environment variables in deployment platform
-3. Database migrations auto-applied via Supabase
-4. Edge Functions deployed automatically
-5. Express server deployed to Node.js hosting
+Deployed via Replit Autoscale targeting Cloud Run (`deploymentTarget = "cloudrun"` in `.replit`):
+
+1. Build: `bun run build` → sitemap + Vite build + prerender + server bundle (`server/build.js` runs esbuild: `server/index.ts` → `dist/server/index.js`)
+2. Run: `bun run start` → `NODE_ENV=production node dist/server/index.js`; Cloud Run injects `PORT` (local default 5001)
+3. Set environment variables in the Replit deployment, including the server-only `SUPABASE_SERVICE_ROLE_KEY`
+4. Database migrations applied via Supabase dashboard/CLI; Edge Functions deployed via Supabase
 
 ## Browser Support
 
