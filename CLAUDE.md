@@ -339,6 +339,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 Required in `.env`:
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY` - Server-only service-role key used by Express routes (`server/routes/*`). Bypasses RLS, so those routes do their own authorization checks (e.g. `canAccessTrip` in `ai-chat.ts`). Never expose to the client. The server reuses `VITE_SUPABASE_URL` for the project URL.
 - `VITE_GOOGLE_MAPS_API_KEY` - Google Places API
 - `GEMINI_API_KEY` - Google Gemini API key (used by both the chat Edge Function and `parse-travel-doc`). Model is hardcoded to `gemini-2.5-flash` in each function; no env override.
 - `SERPER_API_KEY` - (optional, Edge Function secret) Serper API for web search when recommending restaurants; enables direct Resy/OpenTable booking links
@@ -360,11 +361,12 @@ Required in `.env`:
 
 ## Deployment
 
-1. `bun run build` - Creates optimized production bundle
-2. Set environment variables in deployment platform
-3. Database migrations auto-applied via Supabase
-4. Edge Functions deployed automatically
-5. Express server deployed to Node.js hosting
+Deployed via Replit Autoscale targeting Cloud Run (`deploymentTarget = "cloudrun"` in `.replit`):
+
+1. Build: `bun run build` → sitemap + Vite build + prerender + server bundle (`server/build.js` runs esbuild: `server/index.ts` → `dist/server/index.js`)
+2. Run: `bun run start` → `NODE_ENV=production node dist/server/index.js`; Cloud Run injects `PORT` (local default 5001)
+3. Set environment variables in the Replit deployment, including the server-only `SUPABASE_SERVICE_ROLE_KEY`
+4. Database migrations applied via Supabase dashboard/CLI; Edge Functions deployed via Supabase
 
 ## Browser Support
 
