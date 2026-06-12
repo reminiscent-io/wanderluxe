@@ -5,8 +5,9 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
 // Eval-only config. LLM suites are slow, cost money, and share one seeded
-// eval user — so: node env, generous timeouts, strictly serial, single fork
-// (lets helpers memoize auth once per run). Never wired into CI.
+// eval user — so: node env, generous timeouts, strictly serial in one process
+// (fileParallelism: false + isolate: false lets helpers memoize auth once per run).
+// Never wired into CI.
 export default defineConfig({
   test: {
     globals: true,
@@ -18,9 +19,9 @@ export default defineConfig({
     testTimeout: 120_000,
     hookTimeout: 60_000,
     fileParallelism: false,
+    isolate: false,
     sequence: { concurrent: false },
     pool: 'forks',
-    singleFork: true,
     passWithNoTests: true,
   },
   resolve: {
