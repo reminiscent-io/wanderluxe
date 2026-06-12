@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import { withRetry } from './retry';
+import { EvalInfraError } from './errors';
 
 describe('withRetry', () => {
   it('returns the result on first success without retrying', async () => {
@@ -25,5 +26,21 @@ describe('withRetry', () => {
     const fn = vi.fn().mockRejectedValue(new Error('nope'));
     await expect(withRetry(fn, 0, 0)).rejects.toThrow('nope');
     expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it('clamps negative retries to a single attempt instead of throwing undefined', async () => {
+    const fn = vi.fn().mockRejectedValue(new Error('boom'));
+    await expect(withRetry(fn, -3, 0)).rejects.toThrow('boom');
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('EvalInfraError', () => {
+  it('sets name and message and satisfies instanceof', () => {
+    const err = new EvalInfraError('infra down');
+    expect(err.name).toBe('EvalInfraError');
+    expect(err.message).toBe('infra down');
+    expect(err).toBeInstanceOf(EvalInfraError);
+    expect(err).toBeInstanceOf(Error);
   });
 });
