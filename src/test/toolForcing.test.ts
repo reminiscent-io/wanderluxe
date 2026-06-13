@@ -56,4 +56,33 @@ describe('chooseForcedTool', () => {
   it('returns null when only search_web is configured and the message has no keywords', () => {
     expect(chooseForcedTool('hi there', false, true)).toBeNull();
   });
+
+  // --- edge cases: mixed intent, non-English, empty input ---
+
+  it('prefers search_web when booking keywords appear alongside dining/place keywords', () => {
+    // BOOKING_KEYWORDS are checked before DINING/PLACE keywords.
+    expect(chooseForcedTool('book a table at a restaurant near the museum', true, true)).toBe('search_web');
+    expect(chooseForcedTool('reservation link for that restaurant please', true, true)).toBe('search_web');
+  });
+
+  it('prefers search_web when weather keywords appear alongside place keywords', () => {
+    expect(chooseForcedTool('weather near the Louvre museum this week', true, true)).toBe('search_web');
+  });
+
+  it('returns null for non-English queries (keywords are English word-bounded — documents current behavior)', () => {
+    // "restaurantes" does not match \brestaurant\b or \brestaurants\b because
+    // the word boundary fails before the trailing "es".
+    expect(chooseForcedTool('mejores restaurantes en París', true, true)).toBeNull();
+    expect(chooseForcedTool('quel temps fera-t-il demain', true, true)).toBeNull();
+  });
+
+  it('returns null for empty and whitespace-only messages', () => {
+    expect(chooseForcedTool('', true, true)).toBeNull();
+    expect(chooseForcedTool('   ', true, true)).toBeNull();
+  });
+
+  it('matches keywords case-insensitively', () => {
+    expect(chooseForcedTool('DINNER RECOMMENDATIONS PLEASE', true, true)).toBe('find_place');
+    expect(chooseForcedTool('WEATHER???', false, true)).toBe('search_web');
+  });
 });

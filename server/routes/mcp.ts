@@ -5,6 +5,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { z } from 'zod';
+import { summarizeCosts } from '../lib/budgetSummary';
 
 const router = express.Router();
 
@@ -235,20 +236,12 @@ function buildMcpServer(token: string): McpServer {
       if (tripRes.error) return toolError(`Failed to load trip: ${tripRes.error.message}`);
       if (!tripRes.data) return toolError('Trip not found, or you do not have access to it.');
 
-      type CostRow = { cost: number | null; currency: string | null; amount_paid?: number | null };
-      const summarize = (rows: CostRow[] | null) => {
-        const total = (rows ?? []).reduce((sum, r) => sum + (r.cost ?? 0), 0);
-        const paid = (rows ?? []).reduce((sum, r) => sum + (r.amount_paid ?? 0), 0);
-        const currencies = [...new Set((rows ?? []).map((r) => r.currency).filter(Boolean))];
-        return { total, paid, currencies, items: (rows ?? []).length };
-      };
-
       const categories = {
-        accommodations: summarize(staysRes.data),
-        transportation: summarize(transportRes.data),
-        activities: summarize(activitiesRes.data),
-        dining: summarize(diningRes.data),
-        other: summarize(otherRes.data),
+        accommodations: summarizeCosts(staysRes.data),
+        transportation: summarizeCosts(transportRes.data),
+        activities: summarizeCosts(activitiesRes.data),
+        dining: summarizeCosts(diningRes.data),
+        other: summarizeCosts(otherRes.data),
       };
       const totalCost = Object.values(categories).reduce((sum, c) => sum + c.total, 0);
       const totalPaid = Object.values(categories).reduce((sum, c) => sum + c.paid, 0);

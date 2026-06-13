@@ -20,7 +20,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "evals": "vitest run --config evals/vitest.config.ts",
+    "evals:chat": "vitest run --config evals/vitest.config.ts evals/chat",
+    "evals:parsing": "vitest run --config evals/vitest.config.ts evals/parsing",
+    "evals:mcp": "vitest run --config evals/vitest.config.ts evals/mcp",
+    "evals:seed": "tsx evals/fixtures/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.116",

@@ -160,3 +160,81 @@ describe('rewriteMarkdownLink direct', () => {
     expect(out).toContain('Tokyo');
   });
 });
+
+describe('safeHref adversarial URLs', () => {
+  it('rejects userinfo tricks that spoof a trusted host', () => {
+    // URL host is evil.example; "resy.com" is just the userinfo portion.
+    expect(safeHref('https://resy.com@evil.example/r/septime', 'Septime')).toBe(
+      'https://www.google.com/search?q=Septime',
+    );
+    expect(safeHref('https://www.google.com:fake@evil.example/maps', 'maps')).toBe(
+      'https://www.google.com/search?q=maps',
+    );
+  });
+
+  it('rejects lookalike domains that embed a trusted name', () => {
+    expect(safeHref('https://evilresy.com/r/septime', 'Septime')).toBe(
+      'https://www.google.com/search?q=Septime',
+    );
+    expect(safeHref('https://resy.com.evil.io/r/septime', 'Septime')).toBe(
+      'https://www.google.com/search?q=Septime',
+    );
+    expect(safeHref('https://opentable.com.attacker.net/x', 'book')).toBe(
+      'https://www.google.com/search?q=book',
+    );
+  });
+
+  it('accepts genuine subdomains of trusted hosts', () => {
+    expect(safeHref('https://widgets.resy.com/r/septime', 'Septime')).toBe(
+      'https://widgets.resy.com/r/septime',
+    );
+  });
+
+  it('rejects data: scheme URLs', () => {
+    expect(safeHref('data:text/html,<script>alert(1)</script>', 'menu')).toBe(
+      'https://www.google.com/search?q=menu',
+    );
+  });
+
+  it('rejects clear-text http downgrades even on trusted hosts', () => {
+    expect(safeHref('http://resy.com/r/septime', 'Septime')).toBe(
+      'https://www.google.com/search?q=Septime',
+    );
+  });
+
+  it('rejects redirect wrappers hosted on untrusted domains', () => {
+    expect(safeHref('https://evil.example/redirect?url=https%3A%2F%2Fresy.com', 'Septime')).toBe(
+      'https://www.google.com/search?q=Septime',
+    );
+  });
+
+  it('passes redirect-style URLs on trusted hosts as-is (documents current behavior)', () => {
+    // google.com/url?q=... is a real Google redirect endpoint; the validator
+    // trusts the host, not the destination. Documented so a future tightening
+    // shows up as an intentional test change.
+    const wrapped = 'https://www.google.com/url?q=https%3A%2F%2Fevil.example';
+    expect(safeHref(wrapped, 'x')).toBe(wrapped);
+  });
+});
+
+describe('validateAndRewriteLinks adversarial URLs (server-side)', () => {
+  it('rewrites markdown links with userinfo-spoofed hosts to Google Search', () => {
+    const out = validateAndRewriteLinks(
+      'Book at [Septime](https://www.google.com@evil.example/r/septime) tonight.',
+      'Paris',
+      new Set(),
+    );
+    expect(out).not.toContain('evil.example');
+    expect(out).toContain('google.com/search');
+  });
+
+  it('rewrites lookalike-domain markdown links to Google Search', () => {
+    const out = validateAndRewriteLinks(
+      '[Reserve](https://wikipedia.org.evil.example/wiki/Louvre)',
+      'Paris',
+      new Set(),
+    );
+    expect(out).not.toContain('evil.example');
+    expect(out).toContain('google.com/search');
+  });
+});
