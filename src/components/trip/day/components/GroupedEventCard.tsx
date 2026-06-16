@@ -28,7 +28,7 @@ const GroupedEventCard: React.FC<Props> = ({
   onTransportationClick,
   onReservationClick,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const handleEventClick = (item: typeof items[0]) => {
     if (item.type === 'activity' && onActivityClick && item.data) {
