@@ -11,6 +11,9 @@ import {
   addDining,
   updateDining,
   deleteDining,
+  addAccommodation,
+  updateAccommodation,
+  deleteAccommodation,
   WriteError,
 } from './tripWrites';
 import type { UserContext } from './tripWrites';
@@ -405,6 +408,80 @@ function registerWriteTools(
         return toolResult(await deleteDining(supabase, reservation_id));
       } catch (err) {
         return toolError(err instanceof WriteError ? err.message : `Failed to delete dining: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'add_accommodation',
+    {
+      description:
+        'Add a hotel / accommodation to a trip. Maps each night between check-in and check-out to its trip day. Returns the created stay, including its stay_id.',
+      inputSchema: {
+        trip_id: z.string().uuid().describe('Trip ID from list_trips'),
+        hotel: z.string().min(1).describe('Hotel / property name'),
+        hotel_checkin_date: dateField,
+        hotel_checkout_date: dateField,
+        hotel_address: z.string().optional(),
+        checkin_time: timeField.optional(),
+        checkout_time: timeField.optional(),
+        hotel_phone: z.string().optional(),
+        hotel_website: z.string().optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+      },
+      annotations: WRITE,
+    },
+    async (args) => {
+      try {
+        return toolResult(await addAccommodation(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to add accommodation: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'update_accommodation',
+    {
+      description:
+        'Update an accommodation by its stay_id (from get_trip). If check-in/out dates change, night mappings are recomputed. Only the fields you pass are changed.',
+      inputSchema: {
+        stay_id: z.string().uuid().describe('Accommodation stay_id from get_trip'),
+        hotel: z.string().min(1).optional(),
+        hotel_checkin_date: dateField.optional(),
+        hotel_checkout_date: dateField.optional(),
+        hotel_address: z.string().optional(),
+        checkin_time: timeField.optional(),
+        checkout_time: timeField.optional(),
+        hotel_phone: z.string().optional(),
+        hotel_website: z.string().optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+      },
+      annotations: WRITE_IDEMPOTENT,
+    },
+    async (args) => {
+      try {
+        return toolResult(await updateAccommodation(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to update accommodation: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'delete_accommodation',
+    {
+      description: 'Delete an accommodation by its stay_id (from get_trip). Also removes its night mappings.',
+      inputSchema: { stay_id: z.string().uuid().describe('Accommodation stay_id from get_trip') },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ stay_id }) => {
+      try {
+        return toolResult(await deleteAccommodation(supabase, stay_id));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to delete accommodation: ${String(err)}`);
       }
     },
   );

@@ -548,3 +548,174 @@ export async function deleteDining(supabase: SupabaseClient, reservationId: stri
   }
   return { deleted: true, id: reservationId };
 }
+
+// ---- Accommodations ----
+
+/** Fan out accommodations_days for a stay across its nights' trip days. */
+async function fanOutAccommodationDays(
+  supabase: SupabaseClient,
+  stayId: string,
+  tripId: string,
+  checkinDate: string,
+  checkoutDate: string,
+): Promise<void> {
+  const nights = dateRange(checkinDate, checkoutDate);
+  const { data: days, error } = await supabase
+    .from('trip_days')
+    .select('day_id,date')
+    .eq('trip_id', tripId);
+  if (error) throw new WriteError(`Failed to load trip days: ${error.message}`);
+
+  const dayByDate = new Map((days ?? []).map((d) => [d.date, d.day_id]));
+  const rows = nights
+    .map((date) => {
+      const dayId = dayByDate.get(date);
+      return dayId ? { stay_id: stayId, day_id: dayId, date } : null;
+    })
+    .filter((r): r is { stay_id: string; day_id: string; date: string } => r !== null);
+
+  if (rows.length > 0) {
+    const { error: insErr } = await supabase.from('accommodations_days').insert(rows);
+    if (insErr) throw new WriteError(`Failed to map accommodation nights: ${insErr.message}`);
+  }
+}
+
+export interface AddAccommodationInput {
+  trip_id: string;
+  hotel: string;
+  hotel_checkin_date: string;
+  hotel_checkout_date: string;
+  hotel_address?: string;
+  checkin_time?: string;
+  checkout_time?: string;
+  hotel_phone?: string;
+  hotel_website?: string;
+  cost?: number;
+  currency?: string;
+}
+
+export async function addAccommodation(supabase: SupabaseClient, input: AddAccommodationInput) {
+  if (input.hotel_checkout_date < input.hotel_checkin_date) {
+    throw new WriteError('hotel_checkout_date must be on or after hotel_checkin_date.');
+  }
+  const orderIndex = await nextOrderIndex(supabase, 'accommodations', 'trip_id', input.trip_id);
+  const { data, error } = await supabase
+    .from('accommodations')
+    .insert({
+      trip_id: input.trip_id,
+      order_index: orderIndex,
+      title: input.hotel,
+      hotel: input.hotel,
+      hotel_address: input.hotel_address ?? null,
+      hotel_checkin_date: input.hotel_checkin_date,
+      hotel_checkout_date: input.hotel_checkout_date,
+      checkin_time: input.checkin_time ?? null,
+      checkout_time: input.checkout_time ?? null,
+      hotel_phone: input.hotel_phone ?? null,
+      hotel_website: input.hotel_website ?? null,
+      cost: input.cost ?? null,
+      currency: input.currency ?? null,
+    })
+    .select(
+      'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,cost,currency',
+    )
+    .single();
+  if (error || !data) throw new WriteError(`Failed to add accommodation: ${error?.message ?? 'no row returned'}`);
+
+  await fanOutAccommodationDays(
+    supabase,
+    data.stay_id,
+    input.trip_id,
+    input.hotel_checkin_date,
+    input.hotel_checkout_date,
+  );
+  return data;
+}
+
+export interface UpdateAccommodationInput {
+  stay_id: string;
+  hotel?: string;
+  hotel_address?: string;
+  hotel_checkin_date?: string;
+  hotel_checkout_date?: string;
+  checkin_time?: string;
+  checkout_time?: string;
+  hotel_phone?: string;
+  hotel_website?: string;
+  cost?: number;
+  currency?: string;
+}
+
+export async function updateAccommodation(supabase: SupabaseClient, input: UpdateAccommodationInput) {
+  const updates: Record<string, unknown> = {};
+  if (input.hotel !== undefined) {
+    updates.hotel = input.hotel;
+    updates.title = input.hotel; // title tracks hotel name, matching the app
+  }
+  if (input.hotel_address !== undefined) updates.hotel_address = input.hotel_address;
+  if (input.hotel_checkin_date !== undefined) updates.hotel_checkin_date = input.hotel_checkin_date;
+  if (input.hotel_checkout_date !== undefined) updates.hotel_checkout_date = input.hotel_checkout_date;
+  if (input.checkin_time !== undefined) updates.checkin_time = input.checkin_time;
+  if (input.checkout_time !== undefined) updates.checkout_time = input.checkout_time;
+  if (input.hotel_phone !== undefined) updates.hotel_phone = input.hotel_phone;
+  if (input.hotel_website !== undefined) updates.hotel_website = input.hotel_website;
+  if (input.cost !== undefined) updates.cost = input.cost;
+  if (input.currency !== undefined) updates.currency = input.currency;
+
+  if (Object.keys(updates).length === 0) {
+    throw new WriteError('Nothing to update: provide at least one field to change.');
+  }
+
+  const { data, error } = await supabase
+    .from('accommodations')
+    .update(updates)
+    .eq('stay_id', input.stay_id)
+    .select(
+      'stay_id,trip_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,cost,currency',
+    )
+    .maybeSingle();
+  if (error) throw new WriteError(`Failed to update accommodation: ${error.message}`);
+  if (!data) throw new WriteError('Accommodation not found, or you do not have access to it.');
+
+  // If either date changed, re-fan the night mappings.
+  const datesChanged =
+    input.hotel_checkin_date !== undefined || input.hotel_checkout_date !== undefined;
+  if (datesChanged) {
+    if (data.hotel_checkin_date && data.hotel_checkout_date) {
+      const { error: delErr } = await supabase
+        .from('accommodations_days')
+        .delete()
+        .eq('stay_id', input.stay_id);
+      if (delErr) throw new WriteError(`Failed to clear accommodation nights: ${delErr.message}`);
+      await fanOutAccommodationDays(
+        supabase,
+        input.stay_id,
+        data.trip_id,
+        data.hotel_checkin_date,
+        data.hotel_checkout_date,
+      );
+    }
+  }
+  const { trip_id: _omit, ...rest } = data;
+  return rest;
+}
+
+export async function deleteAccommodation(supabase: SupabaseClient, stayId: string) {
+  // Clear night mappings first (don't rely on FK cascade config).
+  const { error: daysErr } = await supabase
+    .from('accommodations_days')
+    .delete()
+    .eq('stay_id', stayId);
+  if (daysErr) throw new WriteError(`Failed to clear accommodation nights: ${daysErr.message}`);
+
+  const { data, error } = await supabase
+    .from('accommodations')
+    .delete()
+    .eq('stay_id', stayId)
+    .select('stay_id');
+  if (error) throw new WriteError(`Failed to delete accommodation: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new WriteError('Accommodation not found, or you do not have access to it.');
+  }
+  return { deleted: true, stay_id: stayId };
+}
