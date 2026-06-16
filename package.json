@@ -159,5 +159,14 @@
     "typescript-eslint": "^8.54.0",
     "vite": "^8.0.16",
     "vitest": "^4.1.0"
+  },
+  "allowScripts": {
+    "@anthropic-ai/claude-code@2.1.178": true,
+    "@swc/core@1.15.41": true,
+    "bun@1.3.9": true,
+    "core-js@3.49.0": true,
+    "esbuild@0.25.11": true,
+    "esbuild@0.28.1": true,
+    "puppeteer@24.37.3": true
   }
 }
