@@ -10,27 +10,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 ```bash
-bun install              # Install dependencies
-bun run dev             # Start dev server (Express + Vite, http://localhost:8080)
-bun run dev:frontend    # Vite only (no Express backend)
-bun run dev:server      # Express server only
-bun run type-check      # TypeScript type checking
-bun run lint            # ESLint code quality check
+npm install              # Install dependencies
+npm run dev             # Start dev server (Express + Vite, http://localhost:8080)
+npm run dev:frontend    # Vite only (no Express backend)
+npm run dev:server      # Express server only
+npm run type-check      # TypeScript type checking
+npm run lint            # ESLint code quality check
 ```
 
-> **Note**: If `bun` is not on PATH, use `npx` equivalents: `npx tsc --noEmit` (type-check), `npx vitest run` (tests).
+> **Note**: The project uses **npm** (Node 18+, Node 24 recommended). `.npmrc` sets `legacy-peer-deps=true` so installs resolve. You can also run binaries directly via `npx` (e.g. `npx tsc --noEmit`, `npx vitest run`).
 
 ### Building & Testing
 ```bash
-bun run build           # Full pipeline: build:sitemap → vite build → prerender (puppeteer) → build:server
-bun run build:dev       # Development build
-bun run preview         # Preview production build (port 8080)
-bun run test            # Run tests (Vitest)
-bun run test:watch      # Watch mode
-bun run test:coverage   # Coverage report
-bun run evals           # Eval harness (LLM + integration; on-demand only, never CI)
-bun run evals:seed      # Create/reset eval-user fixture data (run before evals)
-bun run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
+npm run build           # Full pipeline: build:sitemap → vite build → prerender (puppeteer) → build:server
+npm run build:dev       # Development build
+npm run preview         # Preview production build (port 8080)
+npm run test            # Run tests (Vitest)
+npm run test:watch      # Watch mode
+npm run test:coverage   # Coverage report
+npm run evals           # Eval harness (LLM + integration; on-demand only, never CI)
+npm run evals:seed      # Create/reset eval-user fixture data (run before evals)
+npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
 ```
 
 ## Architecture Overview
@@ -368,14 +368,14 @@ Required in `.env`:
 - **Console Logs**: Check for real-time subscription errors
 - **Network Tab**: Verify Supabase API calls and WebSocket connections
 - **TypeScript**: Strict mode enabled; type errors catch bugs early
-- **ESLint**: Run `bun run lint` to catch code quality issues
+- **ESLint**: Run `npm run lint` to catch code quality issues
 
 ## Deployment
 
 Deployed via Replit Autoscale targeting Cloud Run (`deploymentTarget = "cloudrun"` in `.replit`):
 
-1. Build: `bun run build` → sitemap + Vite build + prerender + server bundle (`server/build.js` runs esbuild: `server/index.ts` → `dist/server/index.js`)
-2. Run: `bun run start` → `NODE_ENV=production node dist/server/index.js`; Cloud Run injects `PORT` (local default 5001)
+1. Build: `npm run build` → sitemap + Vite build + prerender + server bundle (`server/build.js` runs esbuild: `server/index.ts` → `dist/server/index.js`)
+2. Run: `npm run start` → `NODE_ENV=production node dist/server/index.js`; Cloud Run injects `PORT` (local default 5001)
 3. Set environment variables in the Replit deployment, including the server-only `SUPABASE_SERVICE_ROLE_KEY`
 4. Database migrations applied via Supabase dashboard/CLI; Edge Functions deployed via Supabase
 

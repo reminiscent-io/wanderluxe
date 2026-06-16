@@ -36,7 +36,10 @@ Say goodbye to scattered confirmations and spreadsheet chaos:
 - **🍽️ Dining** — Never miss a reservation with integrated restaurant management
 
 ### 🤖 **Your AI Assistant**
-Powered by OpenAI GPT-4o-mini, the AI assistant translates confirmation screenshots and PDFs into evnts - reducing time to input new items.
+Powered by Google Gemini 2.5 Flash, the AI assistant chats with you about your trip, recommends places (with live web search for bookable restaurant links), and turns confirmation screenshots and PDFs into structured itinerary items — slashing the time it takes to enter new bookings.
+
+### 🔌 **Bring Your Trips to Claude (MCP)**
+WanderLuxe ships a built-in **Model Context Protocol** server, so you can connect your trips to Claude and other MCP clients. Ask Claude about your upcoming itinerary, budgets, and bookings — securely, using OAuth-authenticated access to your own data.
 
 ### 👥 **Real-Time Collaboration**
 Travel planning is better together. Share trips with travel companions, assign permissions (view or edit), and watch updates sync live across all devices. No more "Did you see my email?" moments—everyone stays in the loop, in real-time.
@@ -57,7 +60,7 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 
 ### Frontend
 - ⚛️ **React 19** + **TypeScript** — Type-safe, component-driven UI
-- ⚡ **Vite 6** — Lightning-fast builds and HMR
+- ⚡ **Vite 8** — Lightning-fast builds and HMR
 - 🎨 **Tailwind CSS** — Warm editorial palette with DM Serif Display & DM Sans typography
 - 🧩 **Shadcn/ui** + **Radix UI** — Accessible, composable components
 - 🔄 **TanStack Query** — Intelligent server state management
@@ -67,17 +70,19 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 
 ### Backend & Infrastructure
 - 🗄️ **Supabase** — PostgreSQL database + Auth + Realtime
+- 🚂 **Express** — Node server (API routes + MCP server)
 - 🔒 **Row Level Security** — Database-level access control
 - ⚡ **Edge Functions** — Serverless Deno runtime
 - 🔌 **WebSocket Subscriptions** — Live collaboration magic
+- 💳 **Stripe** — Pro subscription billing
 - 📧 **SendGrid** — Transactional emails
 
 </td>
 </tr>
 </table>
 
-### 🌐 External APIs
-**Google Places** • **OpenAI GPT-4o-mini** • **Unsplash** • **Exchange Rates**
+### 🌐 External APIs & Integrations
+**Google Places** • **Google Gemini 2.5 Flash** • **Stripe** • **SendGrid** • **AeroDataBox** (flight status) • **Serper** (web search) • **Unsplash** • **Exchange Rates** • **Model Context Protocol**
 
 ---
 
@@ -98,7 +103,10 @@ React Query's optimistic updates make the UI feel instant. Mutations update the 
 - **Global Auth**: React Context with automatic token refresh
 
 ### PDF Generation 📄
-1,200+ lines of pure client-side PDF generation using `pdfmake`. No server-side rendering, no external services—just beautiful, exportable itineraries.
+Fully client-side PDF generation using `pdfmake`, organized into a modular pipeline (`src/services/pdf/` — theme tokens, image cropping, a pure doc builder, and locale-pinned formatters). No server-side rendering, no external services — and device-independent output, so a trip looks identical exported from mobile or desktop.
+
+### Model Context Protocol 🔌
+A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1. Tools include `list_trips`, `get_trip`, and `get_trip_budget`.
 
 ### Database Security 🔐
 Row Level Security (RLS) policies enforce access control at the PostgreSQL level. Users physically cannot query data they don't own—even with direct database access.
@@ -108,9 +116,9 @@ Row Level Security (RLS) policies enforce access control at the PostgreSQL level
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Bun** or **Node.js 18+** — Modern JavaScript runtime
+- **Node.js 18+** — Modern JavaScript runtime (Node 24 recommended)
 - **Supabase Account** — For database and authentication
-- **API Keys** — Google Places, OpenAI, SendGrid (see below)
+- **API Keys** — Google Places, Google Gemini, SendGrid (see below)
 
 ### Installation
 
@@ -119,21 +127,20 @@ Row Level Security (RLS) policies enforce access control at the PostgreSQL level
 git clone https://github.com/your-username/wanderluxe.git
 cd wanderluxe
 
-# Install dependencies (using Bun for blazing speed ⚡)
-bun install
+# Install dependencies
+npm install
 
 # Set up environment variables
 cp .env.example .env
 # Edit .env with your API keys (see configuration below)
 
-# Apply database migrations
-bun run db:push
-
-# Launch development server
-bun run dev
+# Launch development server (Express + Vite)
+npm run dev
 ```
 
-Visit **http://localhost:5173** and start planning your next adventure! 🌴
+Visit **http://localhost:8080** and start planning your next adventure! 🌴
+
+> Database migrations live in `supabase/migrations/` and are applied via the Supabase dashboard or CLI.
 
 ### ⚙️ Configuration
 
@@ -143,19 +150,28 @@ Create a `.env` file in the project root:
 # Supabase (Required)
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key   # Server-only; bypasses RLS — never expose to the client
 
 # Google Places (Required for location search)
 VITE_GOOGLE_MAPS_API_KEY=your-google-api-key
 
 # Gemini (Required for AI assistant + travel-doc OCR)
-# Model is hardcoded to gemini-2.5-flash in the Edge Function.
+# Model is hardcoded to gemini-2.5-flash in the Edge Functions.
 GEMINI_API_KEY=your-gemini-api-key
 
 # SendGrid (Required for email notifications)
 SENDGRID_API_KEY=SG.your-sendgrid-api-key
 
-# Unsplash (Optional - for trip imagery)
-VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key
+# Stripe (Required for Pro subscriptions)
+STRIPE_SECRET_KEY=sk_your-stripe-secret-key
+STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+
+# Optional
+SERPER_API_KEY=your-serper-key                    # Web search for restaurant booking links
+AERODATABOX_API_KEY=your-aerodatabox-key          # Flight-number status lookup
+VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key # Trip imagery (placeholders used if missing)
+VITE_ADMIN_EMAIL=you@example.com                  # Grants admin dashboard access
+MCP_PUBLIC_BASE_URL=https://wanderluxe.io         # Public base URL for the MCP server
 ```
 
 <details>
@@ -163,8 +179,11 @@ VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key
 
 - **Supabase**: Sign up at [supabase.com](https://supabase.com) and create a new project
 - **Google Places**: Enable Places API in [Google Cloud Console](https://console.cloud.google.com)
-- **OpenAI**: Get your API key from [platform.openai.com](https://platform.openai.com)
+- **Google Gemini**: Get your API key from [Google AI Studio](https://aistudio.google.com/apikey)
 - **SendGrid**: Create a free account at [sendgrid.com](https://sendgrid.com)
+- **Stripe**: Get your keys from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
+- **Serper**: Sign up at [serper.dev](https://serper.dev)
+- **AeroDataBox**: Subscribe via [RapidAPI](https://rapidapi.com/aedbx-aedbx/api/aerodatabox) (free tier: 600 calls/mo)
 - **Unsplash**: Register as a developer at [unsplash.com/developers](https://unsplash.com/developers)
 
 </details>
@@ -175,32 +194,37 @@ VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key
 wanderluxe/
 ├── 📱 src/
 │   ├── components/
-│   │   ├── trip/              # 14 trip feature modules
+│   │   ├── trip/              # 15 trip feature modules
 │   │   │   ├── accommodation/ # Hotel & lodging management
+│   │   │   ├── ai-assistant/  # AI chat + document extraction
 │   │   │   ├── budget/        # Expense tracking & currencies
-│   │   │   ├── chat/          # AI assistant interface
 │   │   │   ├── timeline/      # Visual itinerary display
 │   │   │   ├── transportation/# Flights, trains, car rentals
-│   │   │   └── ...           # Activities, dining, vision board, etc.
+│   │   │   └── ...           # Activities, dining, travelers, etc.
+│   │   ├── admin/            # Admin dashboard
 │   │   ├── layout/           # AppLayout, Sidebar, Navigation
-│   │   └── ui/               # 40+ Shadcn/ui components
+│   │   └── ui/               # 50+ Shadcn/ui components
 │   ├── pages/                # Route components (MyTrips, TripDetails, etc.)
 │   ├── hooks/                # Custom hooks (useSidebarState, useTripQuery, etc.)
-│   ├── services/             # Business logic (PDF export, travelers, etc.)
-│   ├── contexts/             # React Context (AuthContext)
+│   ├── services/             # Business logic (pdf/ export pipeline, travelers, etc.)
+│   ├── contexts/             # React Context (AuthContext, ConsentContext)
 │   ├── integrations/supabase/# Supabase client & auto-generated types
 │   └── types/                # TypeScript definitions
 ├── ⚙️ server/
 │   ├── index.ts             # Express server
-│   └── routes/              # API endpoints (PDF, notifications, etc.)
+│   └── routes/              # API endpoints (Stripe, AI chat, MCP, notifications, etc.)
 ├── 🗄️ supabase/
-│   ├── functions/           # Edge Functions (Deno runtime)
-│   │   ├── send-share-notification/
-│   │   ├── google-places-proxy/
+│   ├── functions/           # Edge Functions (Deno runtime, 12 functions)
+│   │   ├── ai-chat/         # AI assistant (Gemini + function calling)
 │   │   ├── parse-travel-doc/# AI-powered document parsing
-│   │   └── ...
+│   │   ├── google-places-proxy/
+│   │   ├── flight-status-proxy/
+│   │   ├── send-share-notification/
+│   │   └── ...             # weather, email, exchange rates, etc.
 │   ├── migrations/          # SQL schema migrations
 │   └── config.toml         # Supabase configuration
+├── 🧪 evals/                # On-demand eval harness (chat, parsing, MCP)
+├── 🔧 scripts/              # Build scripts (sitemap, prerender)
 └── 📦 Other
     ├── .env                # Environment variables
     ├── vite.config.ts      # Vite configuration
@@ -253,18 +277,25 @@ WanderLuxe is built with security at its core:
 
 ```bash
 # 🚀 Development
-bun run dev              # Start dev server (http://localhost:5173)
-bun run type-check       # TypeScript type checking
-bun run lint             # ESLint code quality checks
+npm run dev              # Start dev server — Express + Vite (http://localhost:8080)
+npm run dev:frontend     # Vite only (no Express backend)
+npm run dev:server       # Express server only
+npm run type-check       # TypeScript type checking
+npm run lint             # ESLint code quality checks
 
 # 🏗️ Building
-bun run build            # Production build
-bun run build:dev        # Development build
-bun run preview          # Preview production build (port 8080)
+npm run build            # Production build (sitemap → vite build → prerender → server bundle)
+npm run build:dev        # Development build
+npm run preview          # Preview production build (port 8080)
 
-# 🗄️ Database
-bun run db:push          # Apply Supabase migrations
-bun run db:reset         # Reset database (⚠️ development only)
+# 🧪 Testing
+npm run test             # Run tests (Vitest)
+npm run test:watch       # Watch mode
+npm run test:coverage    # Coverage report
+
+# 📊 Evals (on-demand only, never CI)
+npm run evals:seed       # Seed eval-user fixtures (run first)
+npm run evals            # Full eval harness (chat + parsing + MCP)
 ```
 
 ## 📱 User Experience Highlights
@@ -294,27 +325,24 @@ bun run db:reset         # Reset database (⚠️ development only)
 
 ## 🚀 Deployment
 
-WanderLuxe is production-ready and optimized for modern hosting platforms:
-
-### Recommended Platforms
-- **Vercel** ⚡ (Recommended) — Zero-config deployment with automatic previews
-- **Netlify** 🌐 — Simple deployment with built-in forms and redirects
-- **Railway** 🚂 — Full-stack deployment including database
-- **Fly.io** 🪰 — Global edge deployment
+WanderLuxe runs as a full-stack Express app (serving the built Vite frontend, API routes, and the MCP server) and is deployed via **Replit Autoscale** targeting **Google Cloud Run**.
 
 ### Deployment Steps
 ```bash
 # 1. Build the production bundle
-bun run build
+#    (sitemap → vite build → prerender → server bundle)
+npm run build
 
-# 2. Set environment variables in your platform
-# (Same variables as .env file)
+# 2. Set environment variables in your hosting platform
+#    (same variables as .env, including the server-only SUPABASE_SERVICE_ROLE_KEY)
 
-# 3. Deploy! 🎉
-# Most platforms auto-detect Vite and deploy seamlessly
+# 3. Start the production server
+npm run start          # NODE_ENV=production node dist/server/index.js
 ```
 
-**Note:** Supabase Edge Functions deploy automatically from your Supabase dashboard.
+Cloud Run injects `PORT` at runtime (local default 5001). Any platform that can run a Node server works — the build output is a standard Node bundle.
+
+**Note:** Supabase Edge Functions and database migrations are deployed separately via the Supabase dashboard or CLI.
 
 ## 🤝 Contributing
 
