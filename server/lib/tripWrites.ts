@@ -442,3 +442,109 @@ export async function deleteActivity(supabase: SupabaseClient, activityId: strin
   }
   return { deleted: true, id: activityId };
 }
+
+// ---- Dining (reservations) ----
+
+export interface AddDiningInput {
+  trip_id: string;
+  date: string;
+  restaurant_name: string;
+  reservation_time?: string;
+  number_of_people?: number;
+  address?: string;
+  confirmation_number?: string;
+  notes?: string;
+  cost?: number;
+  currency?: string;
+}
+
+export async function addDining(supabase: SupabaseClient, input: AddDiningInput) {
+  const dayId = await resolveDayId(supabase, input.trip_id, input.date);
+  const orderIndex = await nextOrderIndex(supabase, 'reservations', 'day_id', dayId);
+  const { data, error } = await supabase
+    .from('reservations')
+    .insert({
+      trip_id: input.trip_id,
+      day_id: dayId,
+      order_index: orderIndex,
+      restaurant_name: input.restaurant_name,
+      reservation_time: input.reservation_time ?? null,
+      number_of_people: input.number_of_people ?? null,
+      address: input.address ?? null,
+      confirmation_number: input.confirmation_number ?? null,
+      notes: input.notes ?? null,
+      cost: input.cost ?? null,
+      currency: input.currency ?? null,
+    })
+    .select(
+      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency',
+    )
+    .single();
+  if (error || !data) throw new WriteError(`Failed to add dining reservation: ${error?.message ?? 'no row returned'}`);
+  return data;
+}
+
+export interface UpdateDiningInput {
+  reservation_id: string;
+  date?: string;
+  restaurant_name?: string;
+  reservation_time?: string;
+  number_of_people?: number;
+  address?: string;
+  confirmation_number?: string;
+  notes?: string;
+  cost?: number;
+  currency?: string;
+}
+
+export async function updateDining(supabase: SupabaseClient, input: UpdateDiningInput) {
+  const updates: Record<string, unknown> = {};
+  if (input.restaurant_name !== undefined) updates.restaurant_name = input.restaurant_name;
+  if (input.reservation_time !== undefined) updates.reservation_time = input.reservation_time;
+  if (input.number_of_people !== undefined) updates.number_of_people = input.number_of_people;
+  if (input.address !== undefined) updates.address = input.address;
+  if (input.confirmation_number !== undefined) updates.confirmation_number = input.confirmation_number;
+  if (input.notes !== undefined) updates.notes = input.notes;
+  if (input.cost !== undefined) updates.cost = input.cost;
+  if (input.currency !== undefined) updates.currency = input.currency;
+
+  if (input.date !== undefined) {
+    const { data: existing, error: exErr } = await supabase
+      .from('reservations')
+      .select('trip_id')
+      .eq('id', input.reservation_id)
+      .maybeSingle();
+    if (exErr) throw new WriteError(`Failed to load reservation: ${exErr.message}`);
+    if (!existing) throw new WriteError('Reservation not found, or you do not have access to it.');
+    updates.day_id = await resolveDayId(supabase, existing.trip_id, input.date);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    throw new WriteError('Nothing to update: provide at least one field to change.');
+  }
+
+  const { data, error } = await supabase
+    .from('reservations')
+    .update(updates)
+    .eq('id', input.reservation_id)
+    .select(
+      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency',
+    )
+    .maybeSingle();
+  if (error) throw new WriteError(`Failed to update reservation: ${error.message}`);
+  if (!data) throw new WriteError('Reservation not found, or you do not have access to it.');
+  return data;
+}
+
+export async function deleteDining(supabase: SupabaseClient, reservationId: string) {
+  const { data, error } = await supabase
+    .from('reservations')
+    .delete()
+    .eq('id', reservationId)
+    .select('id');
+  if (error) throw new WriteError(`Failed to delete reservation: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new WriteError('Reservation not found, or you do not have access to it.');
+  }
+  return { deleted: true, id: reservationId };
+}

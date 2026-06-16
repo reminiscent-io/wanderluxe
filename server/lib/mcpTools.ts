@@ -8,6 +8,9 @@ import {
   addActivity,
   updateActivity,
   deleteActivity,
+  addDining,
+  updateDining,
+  deleteDining,
   WriteError,
 } from './tripWrites';
 import type { UserContext } from './tripWrites';
@@ -330,6 +333,78 @@ function registerWriteTools(
         return toolResult(await deleteActivity(supabase, activity_id));
       } catch (err) {
         return toolError(err instanceof WriteError ? err.message : `Failed to delete activity: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'add_dining',
+    {
+      description:
+        'Add a dining reservation to a trip on a given date (the server resolves the trip day). Returns the created reservation, including its id.',
+      inputSchema: {
+        trip_id: z.string().uuid().describe('Trip ID from list_trips'),
+        date: dateField.describe('Date within the trip range (YYYY-MM-DD)'),
+        restaurant_name: z.string().min(1),
+        reservation_time: timeField.optional(),
+        number_of_people: z.number().int().positive().optional(),
+        address: z.string().optional(),
+        confirmation_number: z.string().optional(),
+        notes: z.string().optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+      },
+      annotations: WRITE,
+    },
+    async (args) => {
+      try {
+        return toolResult(await addDining(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to add dining: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'update_dining',
+    {
+      description:
+        'Update an existing dining reservation by its id (from get_trip). Changing date moves it to that trip day. Only the fields you pass are changed.',
+      inputSchema: {
+        reservation_id: z.string().uuid().describe('Reservation id from get_trip'),
+        date: dateField.optional(),
+        restaurant_name: z.string().min(1).optional(),
+        reservation_time: timeField.optional(),
+        number_of_people: z.number().int().positive().optional(),
+        address: z.string().optional(),
+        confirmation_number: z.string().optional(),
+        notes: z.string().optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+      },
+      annotations: WRITE_IDEMPOTENT,
+    },
+    async (args) => {
+      try {
+        return toolResult(await updateDining(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to update dining: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'delete_dining',
+    {
+      description: 'Delete a dining reservation by its id (from get_trip).',
+      inputSchema: { reservation_id: z.string().uuid().describe('Reservation id from get_trip') },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ reservation_id }) => {
+      try {
+        return toolResult(await deleteDining(supabase, reservation_id));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to delete dining: ${String(err)}`);
       }
     },
   );
