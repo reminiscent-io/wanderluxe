@@ -28,6 +28,9 @@ bun run preview         # Preview production build (port 8080)
 bun run test            # Run tests (Vitest)
 bun run test:watch      # Watch mode
 bun run test:coverage   # Coverage report
+bun run evals           # Eval harness (LLM + integration; on-demand only, never CI)
+bun run evals:seed      # Create/reset eval-user fixture data (run before evals)
+bun run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
 ```
 
 ## Architecture Overview
@@ -181,6 +184,14 @@ PostgreSQL database
 - **Fonts**: DM Sans + DM Serif Display TTFs lazy-loaded by `src/services/pdf-fonts.ts`; these fonts have no glyph for emoji/dingbats (e.g. ✈) — never put such characters in doc content
 - **Layout is device-independent**: same output on mobile/desktop; Letter/A4 is a user option
 - **Tests**: `npx vitest run src/services/pdf` (snapshots + theme invariants); `PDF_PREVIEW=1 npx vitest run src/services/pdf/render.test.ts` writes `node_modules/.cache/wanderluxe-pdf-preview.pdf`
+
+#### 15. **Eval Harness** (`evals/`)
+- **On-demand only**: `npm run evals` (never in CI; `npm test` excludes `evals/` — eval files use the `.eval.ts` suffix, helper logic uses `.test.ts` and DOES run in CI)
+- **Suites**: `evals/mcp` (deterministic MCP tool + auth/RLS/discovery checks, no LLM cost), `evals/chat` (hybrid: deterministic asserts + Gemini-as-judge, pass ≥ 3.5/5, N=1 so judge scores vary run-to-run — the scorecard records raw scores for drift), `evals/parsing` (golden-file grading vs the **deployed** `parse-travel-doc`, pass ≥ 90% field accuracy; text fixtures are wrapped in PDFs via `evals/helpers/textToPdf.ts` since the function rejects non-image/non-PDF uploads)
+- **Fixtures**: dedicated eval user (`EVAL_USER_EMAIL`/`EVAL_USER_PASSWORD` in `.env`) in the prod Supabase project with two fixed-UUID trips (`evals/fixtures/trips.ts`); `npm run evals:seed` is idempotent (ownership-guarded) and resets chat history + AI usage
+- **Server**: `evals/globalSetup.ts` spawns Express from the working tree on port 8090 (override with `EVALS_SERVER_URL`); chat cases proxy to the **deployed** ai-chat Edge Function, so Edge Function changes need a redeploy before chat evals reflect them
+- **Results**: `evals/results/<timestamp>.json` (gitignored) + console summary table; status `error` = infra flake (retried once), distinct from `fail` = quality regression
+- **Helper unit tests** (`evals/helpers/*.test.ts`, node-env via `// @vitest-environment node`) run in the main CI suite — SSE parsing, scorecard math, field comparison, retry, text-to-PDF
 
 #### 8. **Database Schema** (~22 tables)
 Key tables:

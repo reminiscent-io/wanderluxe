@@ -38,3 +38,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Eval run outputs (timestamped JSON + working JSONL)
+evals/results/
