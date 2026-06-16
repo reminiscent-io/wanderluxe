@@ -666,6 +666,27 @@ export async function updateAccommodation(supabase: SupabaseClient, input: Updat
     throw new WriteError('Nothing to update: provide at least one field to change.');
   }
 
+  const datesChanged =
+    input.hotel_checkin_date !== undefined || input.hotel_checkout_date !== undefined;
+
+  // When changing either date, validate the EFFECTIVE range (new value or the
+  // existing one) before writing, so we never persist checkin > checkout (which
+  // would also wipe the night mappings via the re-fan with nothing to re-insert).
+  if (datesChanged) {
+    const { data: existing, error: exErr } = await supabase
+      .from('accommodations')
+      .select('hotel_checkin_date,hotel_checkout_date')
+      .eq('stay_id', input.stay_id)
+      .maybeSingle();
+    if (exErr) throw new WriteError(`Failed to load accommodation: ${exErr.message}`);
+    if (!existing) throw new WriteError('Accommodation not found, or you do not have access to it.');
+    const effectiveCheckin = input.hotel_checkin_date ?? existing.hotel_checkin_date;
+    const effectiveCheckout = input.hotel_checkout_date ?? existing.hotel_checkout_date;
+    if (effectiveCheckin && effectiveCheckout && effectiveCheckout < effectiveCheckin) {
+      throw new WriteError('hotel_checkout_date must be on or after hotel_checkin_date.');
+    }
+  }
+
   const { data, error } = await supabase
     .from('accommodations')
     .update(updates)
@@ -678,8 +699,6 @@ export async function updateAccommodation(supabase: SupabaseClient, input: Updat
   if (!data) throw new WriteError('Accommodation not found, or you do not have access to it.');
 
   // If either date changed, re-fan the night mappings.
-  const datesChanged =
-    input.hotel_checkin_date !== undefined || input.hotel_checkout_date !== undefined;
   if (datesChanged) {
     if (data.hotel_checkin_date && data.hotel_checkout_date) {
       const { error: delErr } = await supabase
