@@ -24,6 +24,7 @@ interface Props {
   onDelete?: () => Promise<void>;
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
+  preselectedDate?: string; // Day the user clicked "Add to this day" on
   buttonClassName?: string;
   tripId: string;
 }
@@ -35,6 +36,7 @@ export default function TransportationForm({
   onDelete,
   tripArrivalDate,
   tripDepartureDate,
+  preselectedDate,
   buttonClassName,
   tripId,
 }: Props) {
@@ -70,6 +72,13 @@ export default function TransportationForm({
               startTime: initialData.start_time || "",
               endTime: initialData.end_time || "",
             }
+          : preselectedDate
+          ? {
+              start: parse(preselectedDate, "yyyy-MM-dd", new Date()),
+              end: parse(preselectedDate, "yyyy-MM-dd", new Date()),
+              startTime: "",
+              endTime: "",
+            }
           : undefined,
       provider: initialData?.provider ?? "",
       details: initialData?.details ?? "",
@@ -88,10 +97,8 @@ export default function TransportationForm({
   /* ------------------- reset on trip-date change ------------------- */
   useEffect(() => {
     // Only use trip dates for completely new forms (no initialData at all)
-    // Don't override existing transportation data with trip dates
-    if (!initialData && (tripArrivalDate || tripDepartureDate)) {
-      const current = form.getValues();
-      
+    // Don't override existing transportation data, or a day preselected via "Add to this day"
+    if (!initialData && !preselectedDate && (tripArrivalDate || tripDepartureDate)) {
       form.setValue("travel_range", {
         start: tripArrivalDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
         end: tripDepartureDate ? parse(tripArrivalDate, "yyyy-MM-dd", new Date()) : null,
@@ -99,7 +106,7 @@ export default function TransportationForm({
         endTime: "",
       });
     }
-  }, [tripArrivalDate, tripDepartureDate, initialData, form]);
+  }, [tripArrivalDate, tripDepartureDate, initialData, preselectedDate, form]);
 
   /* ------------------ watch the range ------------------ */
   const travelRange = useWatch({

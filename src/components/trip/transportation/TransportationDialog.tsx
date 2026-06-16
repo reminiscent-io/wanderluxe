@@ -21,6 +21,7 @@ interface TransportationDialogProps {
   initialData?: Partial<TransportationType> | null;
   /** Now expects the saved record (optional to support different use cases) */
   onSuccess: (updated?: TransportationType) => void;
+  preselectedDate?: string; // Day the user clicked "Add to this day" on
   buttonClassName?: string;
 }
 
@@ -30,6 +31,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   onOpenChange,
   initialData,
   onSuccess,
+  preselectedDate,
   buttonClassName,
 }) => {
   const queryClient = useQueryClient();
@@ -155,6 +157,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             onDelete={initialData ? handleDelete : undefined}
             tripArrivalDate={tripDates.arrival_date}
             tripDepartureDate={tripDates.departure_date}
+            preselectedDate={preselectedDate}
             buttonClassName={buttonClassName}
             tripId={tripId}
           />

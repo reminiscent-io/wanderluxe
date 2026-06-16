@@ -138,58 +138,63 @@ export function NextTripBoardingPass({
       {/* Content Overlay */}
       <div className="relative h-full flex flex-col justify-between p-5 md:p-6">
         {/* Top Section */}
-        <div className="flex items-start justify-between">
-          {/* Badges */}
-          <div className="flex flex-wrap gap-2">
-            <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-semibold px-3 py-1 shadow-lg">
+        <div className="flex items-start justify-between gap-3">
+          {/* Badges — opaque, warm shadows */}
+          <div className="flex min-w-0 flex-wrap gap-1.5 sm:gap-2">
+            <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-semibold px-3 py-1 shadow-warm">
               <Plane className="h-3 w-3 mr-1.5" />
               UPCOMING
             </Badge>
             {/* Shared by badge */}
             {ownerName && (
-              <Badge className="flex items-center gap-1.5 bg-white/95 text-earth-700 border-0 backdrop-blur-sm shadow-lg px-2.5 py-1">
-                <Share2 className="h-3 w-3 text-blue-600" />
-                <span className="font-medium text-xs">{ownerName}</span>
+              <Badge className="flex max-w-[10rem] items-center gap-1.5 truncate bg-background text-foreground border-0 shadow-warm px-2.5 py-1">
+                <Share2 className="h-3 w-3 shrink-0 text-primary" />
+                <span className="truncate font-medium text-xs">{ownerName}</span>
               </Badge>
             )}
             {/* Pending invite badge */}
             {isPendingInvite && (
-              <Badge className="bg-amber-500 text-white border-0 px-3 py-1 font-medium shadow-lg backdrop-blur-sm">
+              <Badge className="bg-amber-500 text-white border-0 px-3 py-1 font-medium shadow-warm">
                 Invite pending
               </Badge>
             )}
           </div>
 
-          {/* Weather Forecast */}
+          {/* Weather Forecast — opaque for outdoor readability */}
           {arrivalForecast && (
-            <motion.div
+            <motion.button
+              type="button"
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-2 text-white cursor-pointer hover:bg-white/30 transition-colors"
+              className="min-h-[44px] rounded-card bg-background/95 px-3 py-2 text-foreground shadow-warm-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 setWeatherModalOpen(true);
               }}
+              aria-label="View weather forecast"
             >
               <div className="flex items-center gap-2">
-                <span className="text-lg">{getWeatherEmoji(arrivalForecast.icon)}</span>
+                <span className="text-lg leading-none">{getWeatherEmoji(arrivalForecast.icon)}</span>
                 <div className="text-right">
-                  <div className="font-bold text-lg leading-none">
-                    {arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°F
+                  <div className="font-semibold text-base leading-none tabular-nums">
+                    {arrivalForecast.tempHigh}°/{arrivalForecast.tempLow}°
                   </div>
-                  <div className="text-xs opacity-80">forecast</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">forecast</div>
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
           )}
         </div>
 
         {/* Bottom Section */}
         <div className="space-y-4">
-          {/* Countdown */}
+          {/* Countdown — opaque, tabular for stability */}
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-white/20 text-white backdrop-blur-sm px-3 py-1">
+            <Badge
+              variant="secondary"
+              className="bg-foreground/75 text-white border-0 px-3 py-1 tabular-nums shadow-warm"
+            >
               <Clock className="h-3 w-3 mr-1.5" />
               T-{countdown.days}d {countdown.hours}h {countdown.minutes}m
             </Badge>
@@ -197,7 +202,7 @@ export function NextTripBoardingPass({
 
           {/* Destination */}
           <div>
-            <h2 className="text-white text-3xl md:text-4xl font-black leading-tight mb-2 drop-shadow-lg">
+            <h2 className="font-display text-white text-[2rem] leading-[1.05] md:text-5xl md:leading-[1.04] tracking-tight mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
               {trip.destination}
             </h2>
             <div className="flex flex-col gap-1 text-white/80 text-sm">
@@ -213,7 +218,7 @@ export function NextTripBoardingPass({
             <div className="flex gap-3">
               <Button
                 size="lg"
-                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg"
+                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-warm-lg"
                 onClick={(e) => {
                   e.stopPropagation();
                   onAcceptInvite?.(shareId);
@@ -227,7 +232,7 @@ export function NextTripBoardingPass({
                   <Button
                     size="lg"
                     variant="outline"
-                    className="flex-1 sm:flex-none bg-white/90 hover:bg-white text-earth-800 font-semibold shadow-lg"
+                    className="flex-1 sm:flex-none bg-background hover:bg-background/90 text-foreground font-semibold shadow-warm-lg"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <X className="h-4 w-4 mr-2" />
@@ -256,7 +261,7 @@ export function NextTripBoardingPass({
           ) : (
             <Button
               size="lg"
-              className="w-full sm:w-auto bg-white text-earth-900 hover:bg-white/90 font-semibold shadow-lg"
+              className="w-full sm:w-auto bg-background text-foreground hover:bg-background/90 font-semibold shadow-warm-lg"
               onClick={(e) => {
                 e.stopPropagation();
                 onViewTrip();

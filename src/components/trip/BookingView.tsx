@@ -92,24 +92,37 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-display text-earth-600">Book Your Trip</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <header className="space-y-2">
+        <h2 className="font-display text-2xl md:text-3xl leading-[1.1] tracking-tight text-foreground">
+          Book your trip
+        </h2>
+        <p className="max-w-[58ch] text-sm text-muted-foreground">
+          Search Expedia for stays and flights, or work with Kevin for a curated, white-glove plan.
+        </p>
+      </header>
 
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
       {/* Primary: Expedia self-serve booking */}
-      <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-display text-earth-600">Book now on Expedia</h3>
-          <p className="text-sm text-earth-600 mt-1">
-            Search stays and flights directly. Exclusive rates, instant confirmation.
-          </p>
+      <Card className="flex flex-col p-5 sm:p-6">
+        <div className="mb-4 flex items-baseline justify-between gap-3">
+          <h3 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
+            Search Expedia
+          </h3>
+          <span className="hidden sm:inline text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            Self-serve
+          </span>
         </div>
+        <p className="text-sm text-muted-foreground max-w-[60ch] mb-5">
+          Stays and flights, instant confirmation, partner rates.
+        </p>
 
         {widgetFailed ? (
-          <div className="rounded-card border border-sand-200 bg-sand-50 p-4">
-            <p className="text-sm text-earth-700 mb-3">
-              The Expedia search widget couldn&apos;t load. You can still browse and book directly:
+          <div className="rounded-card border border-border bg-secondary/50 p-4 sm:p-5">
+            <p className="text-sm text-foreground/85 mb-4">
+              The Expedia search widget couldn&apos;t load. You can still browse and book directly.
             </p>
-            <Button asChild className="bg-earth-500 hover:bg-earth-600 text-white">
+            <Button asChild className="h-11 sm:h-10 w-full sm:w-auto">
               <a
                 href={EXPEDIA_FALLBACK_URL}
                 target="_blank"
@@ -127,117 +140,127 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
           </div>
         )}
 
-        <p className="mt-4 text-[11px] text-muted-foreground">
+        <p className="mt-auto pt-4 text-xs text-muted-foreground">
           As an Expedia Group affiliate, WanderLuxe may earn a commission from eligible bookings.
         </p>
       </Card>
 
       {/* Secondary: Human travel advisor */}
-      <Card className="p-6">
-        <h3 className="text-lg font-display text-earth-600 mb-1">Prefer a human advisor?</h3>
-        <p className="text-sm text-earth-600 mb-4">
-          For custom itineraries, luxury perks, and white-glove service.
+      <Card className="flex flex-col p-5 sm:p-6">
+        <div className="mb-5 flex items-baseline justify-between gap-3">
+          <h3 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
+            Or speak with an advisor
+          </h3>
+          <span className="hidden sm:inline text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            White-glove
+          </span>
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-full border border-border bg-secondary">
+            <img
+              src="https://res.cloudinary.com/foratravelweb/image/upload/c_fill,g_auto,h_640,w_640/f_webp/q_90/a1ade640-a52b-4571-9d4d-b17ff07d882a"
+              alt="Kevin Lowe — Fora Travel Advisor"
+              className="h-full w-full object-cover img-warm"
+              loading="lazy"
+            />
+          </div>
+
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h4 className="text-base font-semibold leading-tight text-foreground">
+              Kevin Lowe
+            </h4>
+            <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-medium text-muted-foreground">
+              <span>Fora Travel Advisor</span>
+              <span aria-hidden className="text-border">·</span>
+              <span className="inline-flex items-center gap-1">
+                <Star className="h-3 w-3 fill-current text-primary" aria-hidden />
+                Certified
+              </span>
+            </p>
+            <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5" aria-hidden />
+              Based in New York
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-4 max-w-[60ch] text-sm leading-relaxed text-foreground/85">
+          NYC-based traveler passionate about high-end US and Western Europe adventures, expertly
+          balancing luxury experiences with smart value optimization.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-shrink-0">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-sand-100 border-2 border-sand-300">
-              <img
-                src="https://res.cloudinary.com/foratravelweb/image/upload/c_fill,g_auto,h_640,w_640/f_webp/q_90/a1ade640-a52b-4571-9d4d-b17ff07d882a"
-                alt="Kevin Lowe - Fora Travel Advisor"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div>
-                <h4 className="text-base font-semibold text-earth-500">Kevin Lowe</h4>
-                <p className="text-xs font-medium text-earth-400">Fora Travel Advisor</p>
-              </div>
-              <div className="flex items-center gap-1 text-amber-500">
-                <Star className="h-3.5 w-3.5 fill-current" />
-                <span className="text-xs font-medium">Certified</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 mb-3">
-              <MapPin className="h-4 w-4 text-earth-400 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-earth-700">Based in New York</span>
-            </div>
-
-            <p className="text-sm text-earth-700 mb-3">
-              NYC-based traveler passionate about high-end US and Western Europe adventures,
-              expertly balancing luxury experiences with smart value optimization.
-            </p>
-
-            <div className="mb-3">
-              <div className="flex flex-wrap gap-1">
-                {['Luxury Travel', 'Honeymoons', 'NYC', 'Aspen', 'Paris', 'Euro Skiing'].map((expertise) => (
-                  <span
-                    key={expertise}
-                    className="inline-block px-2 py-0.5 bg-sand-100 text-earth-600 text-xs rounded-full"
-                  >
-                    {expertise}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-              <Button
-                variant="outline"
-                onClick={handleContactClick}
-                className="flex items-center gap-2"
+        {/* Expertise: mobile scroll-snap rail, wraps at sm and up */}
+        <div
+          className="mt-4 -mx-5 overflow-x-auto sm:mx-0 sm:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ scrollSnapType: 'x proximity' }}
+        >
+          <ul className="flex gap-1.5 px-5 pb-1 sm:flex-wrap sm:px-0 sm:pb-0">
+            {['Luxury Travel', 'Honeymoons', 'NYC', 'Aspen', 'Paris', 'Euro Skiing'].map((expertise) => (
+              <li
+                key={expertise}
+                className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
+                style={{ scrollSnapAlign: 'start' }}
               >
-                <ExternalLink className="h-4 w-4" />
-                Contact Kevin on Fora Travel
-              </Button>
-              <p className="text-xs text-earth-600">
-                Response time: 1–2 business days
-              </p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Why Book with a Fora Travel Advisor */}
-      <Card className="p-6">
-        <h3 className="text-lg font-display text-earth-600 mb-4">Why Book with a Fora Travel Advisor?</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-earth-600">Exclusive Perks &amp; Upgrades</h4>
-            <p className="text-sm text-earth-700">Access to room upgrades, hotel credits, complimentary breakfast, and extended check-in/out times.</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-earth-600">Keep Your Rewards</h4>
-            <p className="text-sm text-earth-700">You still earn all your credit card points and hotel loyalty points when booking through Fora.</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-earth-600">Expert Knowledge</h4>
-            <p className="text-sm text-earth-700">Insider tips and recommendations from someone who&apos;s been there and knows what works.</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-earth-600">Personalized Service</h4>
-            <p className="text-sm text-earth-700">Custom itineraries tailored to your preferences, budget, and travel style.</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-earth-600">Hotels &amp; Accommodations</h4>
-            <p className="text-sm text-earth-700">Full service booking for hotels, resorts, and vacation rentals like Vrbo with exclusive advisor rates.</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-earth-600">Support When You Need It</h4>
-            <p className="text-sm text-earth-700">Professional assistance before, during, and after your trip for peace of mind.</p>
-          </div>
+                {expertise}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-sand-100">
-          <p className="text-xs text-earth-600">
-            <strong>Current Services:</strong> Hotels, resorts, vacation rentals, ground transportation, and travel experiences.
-            Flight booking services are currently limited but may be available for select destinations.
+        <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row sm:items-center sm:gap-4">
+          <Button
+            variant="sunset"
+            onClick={handleContactClick}
+            className="h-11 sm:h-10 w-full sm:w-auto"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Contact Kevin on Fora Travel
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Responds in 1–2 business days
           </p>
         </div>
+      </Card>
+      </div>
+
+      {/* Why Book — editorial numbered list */}
+      <Card className="p-5 sm:p-6">
+        <div className="mb-5 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
+            Why book through Kevin
+          </h3>
+        </div>
+
+        <ol className="grid gap-x-10 gap-y-5 sm:gap-y-6 md:grid-cols-2">
+          {[
+            { t: 'Exclusive perks & upgrades', d: 'Room upgrades, hotel credits, complimentary breakfast, and extended check-in/out where available.' },
+            { t: 'Keep your rewards', d: 'You still earn credit-card points and hotel loyalty points when you book through Fora.' },
+            { t: 'Expert knowledge', d: 'Insider notes and recommendations from someone who has actually been there.' },
+            { t: 'Personalized service', d: 'Custom itineraries tailored to your preferences, budget, and travel style.' },
+            { t: 'Hotels & accommodations', d: 'Full booking for hotels, resorts, and vacation rentals — including Vrbo — at advisor rates.' },
+            { t: 'Support when you need it', d: 'Help before, during, and after your trip. Peace of mind on the ground.' },
+          ].map(({ t, d }, i) => (
+            <li key={t} className="flex gap-4">
+              <span
+                aria-hidden
+                className="font-display text-2xl leading-none tabular-nums text-primary/85 pt-[3px]"
+              >
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <div className="min-w-0 space-y-1.5">
+                <h4 className="text-sm font-semibold text-foreground">{t}</h4>
+                <p className="text-sm leading-relaxed text-muted-foreground">{d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        <p className="mt-6 border-t border-border pt-5 text-xs leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">Current services:</span>{' '}
+          hotels, resorts, vacation rentals, ground transportation, and travel experiences.
+          Flight booking is currently limited but may be available for select destinations.
+        </p>
       </Card>
     </div>
   );

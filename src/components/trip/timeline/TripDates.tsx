@@ -178,7 +178,7 @@ const TripDates: React.FC<TripDatesProps> = ({
   const toggleCollapse = () => setIsCollapsed(prev => !prev);
 
   return (
-    <div className="bg-sand-50 rounded-lg shadow-md overflow-hidden w-full">
+    <div className="bg-card rounded-card shadow-warm-sm border border-border overflow-hidden w-full">
       {/* HEADER */}
       <Button
         variant="ghost"

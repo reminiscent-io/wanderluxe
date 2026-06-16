@@ -14,7 +14,7 @@ import NavigationAuth from "./NavigationAuth";
 const Navigation: React.FC = () => {
   const headerRef = useRef<HTMLElement | null>(null);
   const location = useLocation();
-  const isTripPage = location.pathname.startsWith('/trip/');
+  const isTripPage = location.pathname.startsWith('/trip/') || /^\/explore\/[^/]+/.test(location.pathname);
 
   const handleOpenSidebar = () => {
     // Dispatch custom event that Sidebar listens for

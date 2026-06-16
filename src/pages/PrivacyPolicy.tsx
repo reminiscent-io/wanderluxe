@@ -1,18 +1,15 @@
 import React from 'react';
-import Navigation from "../components/Navigation";
-import Footer from "../components/Footer";
 import SEO from "../components/SEO";
 
 const PrivacyPolicy: React.FC = () => {
   return (
-    <main className="min-h-screen flex flex-col">
+    <>
       <SEO
         title="Privacy Policy"
         description="How WanderLuxe collects, uses, stores, and protects your personal data when you use our travel planning platform."
         canonicalPath="/privacy"
       />
-      <Navigation />
-      <div className="container mx-auto px-4 md:px-6 py-12 flex-grow">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto p-6 md:p-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
             Privacy Policy
@@ -53,7 +50,9 @@ const PrivacyPolicy: React.FC = () => {
 
               <h3 className="font-semibold text-foreground mt-4 mb-2">Data collected automatically</h3>
               <ul className="list-disc list-inside space-y-1">
-                <li><strong>Usage analytics:</strong> page views, feature usage, and engagement events (only with your consent for non-essential tracking)</li>
+                <li><strong>Usage analytics:</strong> page views, feature usage, and engagement events (e.g. trip created, AI message sent, PDF exported), including the trip destination, message length, and event timestamps</li>
+                <li><strong>Session recordings:</strong> via PostHog, we capture replays of how users interact with the site (mouse movement, clicks, scrolls, and DOM changes) to diagnose UX issues. Password fields are always masked. Other form inputs are masked by default; email fields are not masked, so the email address you type into a form may appear in a recording. Session recordings are only captured after you opt in to analytics cookies.</li>
+                <li><strong>Identity attributes shared with analytics:</strong> after you sign in and consent to analytics, we send your user ID, email address, sign-in provider (e.g. Google), and account creation date to PostHog so we can correlate events with your account.</li>
                 <li><strong>Device information:</strong> browser type, operating system, screen resolution</li>
                 <li><strong>Location data:</strong> approximate country (via IP address) for consent banner display only; not stored</li>
               </ul>
@@ -99,7 +98,8 @@ const PrivacyPolicy: React.FC = () => {
                     <tr><td className="py-2 pr-4">Supabase</td><td className="py-2 pr-4">Database and authentication</td><td className="py-2">Account data, trip data, all stored information</td></tr>
                     <tr><td className="py-2 pr-4">Google (Gemini API)</td><td className="py-2 pr-4">AI travel assistant + travel document OCR</td><td className="py-2">Chat messages, trip context (destination, dates, itinerary), and uploaded booking documents</td></tr>
                     <tr><td className="py-2 pr-4">Stripe</td><td className="py-2 pr-4">Payment processing</td><td className="py-2">Email, payment details</td></tr>
-                    <tr><td className="py-2 pr-4">PostHog</td><td className="py-2 pr-4">Analytics (consent-gated)</td><td className="py-2">Usage events, device info</td></tr>
+                    <tr><td className="py-2 pr-4">PostHog</td><td className="py-2 pr-4">Product analytics and session replay (consent-gated)</td><td className="py-2">User ID, email, sign-in provider, account creation date, usage events (including trip destination and event timestamps), device info, and session recordings with form inputs masked (passwords always; emails are not masked)</td></tr>
+                    <tr><td className="py-2 pr-4">Google Analytics (gtag)</td><td className="py-2 pr-4">Aggregate site analytics</td><td className="py-2">Page views, feature events, pseudonymous client identifier, device info, and IP address (used by Google for geolocation and then discarded)</td></tr>
                     <tr><td className="py-2 pr-4">Google</td><td className="py-2 pr-4">Places API (location search)</td><td className="py-2">Search queries</td></tr>
                     <tr><td className="py-2 pr-4">SendGrid</td><td className="py-2 pr-4">Transactional email</td><td className="py-2">Recipient email, message content</td></tr>
                     <tr><td className="py-2 pr-4">Unsplash</td><td className="py-2 pr-4">Trip imagery</td><td className="py-2">Search queries (no personal data)</td></tr>
@@ -154,14 +154,14 @@ const PrivacyPolicy: React.FC = () => {
 
             <div className="pb-6 border-b">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">9. Cookies and Tracking</h2>
-              <p className="mb-3">We use the following categories of cookies:</p>
+              <p className="mb-3">We use the following categories of cookies and similar tracking technologies:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li><strong>Essential cookies:</strong> required for authentication and core functionality (always active)</li>
-                <li><strong>Analytics cookies:</strong> help us understand usage patterns via PostHog (requires your consent)</li>
+                <li><strong>Analytics cookies:</strong> Google Analytics (gtag) measures aggregate page views and feature usage. PostHog provides product analytics and session replay (recordings of page interactions, with form inputs masked except email fields). PostHog tracking and session replay are gated on your consent; you can opt in or out at any time.</li>
                 <li><strong>Marketing cookies:</strong> used for personalized content (requires your consent)</li>
               </ul>
               <p className="mt-3">
-                You can manage your cookie preferences at any time using the "Manage Cookies" link in the website footer. Non-US users are prompted to set preferences before any optional cookies are activated. Analytics tracking is completely disabled until you opt in.
+                You can manage your cookie preferences at any time using the "Manage Cookies" link in the website footer. Non-US users are prompted to set preferences before optional cookies are activated.
               </p>
             </div>
 
@@ -194,13 +194,12 @@ const PrivacyPolicy: React.FC = () => {
             </div>
 
             <div className="pt-8 border-t text-center text-sm text-muted-foreground">
-              Last updated: April 2026
+              Last updated: May 2026
             </div>
           </section>
         </div>
       </div>
-      <Footer />
-    </main>
+    </>
   );
 };
 

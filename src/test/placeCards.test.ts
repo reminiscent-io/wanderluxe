@@ -434,3 +434,37 @@ describe('enrichPlaceCards', () => {
     ]);
   });
 });
+
+describe('malformed payload hardening', () => {
+  it('wraps a scalar JSON payload and lets enrichment drop it', () => {
+    const { rawCards } = parsePlaceCardsBlock('```place_cards\n"just a string"\n```');
+    // parsePlaceCardsBlock wraps any non-array parse result.
+    expect(rawCards).toEqual(['just a string']);
+    const { cards, drops } = enrichPlaceCards(
+      rawCards as unknown as RawPlaceCard[], new Map(), new Set(), 'https://x.supabase.co', '2026-09-14', '2026-09-17',
+    );
+    expect(cards).toEqual([]);
+    expect(drops).toEqual([{ index: 0, reason: 'missing_place_id' }]);
+  });
+
+  it('drops null entries without throwing', () => {
+    const { rawCards } = parsePlaceCardsBlock('```place_cards\nnull\n```');
+    expect(rawCards).toEqual([null]);
+    const { cards, drops } = enrichPlaceCards(
+      rawCards as unknown as RawPlaceCard[], new Map(), new Set(), 'https://x.supabase.co', '2026-09-14', '2026-09-17',
+    );
+    expect(cards).toEqual([]);
+    expect(drops).toEqual([{ index: 0, reason: 'missing_place_id' }]);
+  });
+
+  it('drops scalar entries inside an array payload without throwing', () => {
+    const { rawCards } = parsePlaceCardsBlock('```place_cards\n[1, null, "x"]\n```');
+    expect(rawCards).toHaveLength(3);
+    const { cards, drops } = enrichPlaceCards(
+      rawCards as unknown as RawPlaceCard[], new Map(), new Set(), 'https://x.supabase.co', '2026-09-14', '2026-09-17',
+    );
+    expect(cards).toEqual([]);
+    expect(drops).toHaveLength(3);
+    expect(drops.every((d) => d.reason === 'missing_place_id')).toBe(true);
+  });
+});

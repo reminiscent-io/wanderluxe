@@ -582,7 +582,13 @@ const buildVisionPayload = (system, user, inlineData, maxTokens)=>({
   generationConfig: {
     temperature: 0,
     maxOutputTokens: maxTokens,
-    responseMimeType: "application/json"
+    responseMimeType: "application/json",
+    // gemini-2.5-flash is a thinking model and thinking tokens count against
+    // maxOutputTokens. For deterministic structured extraction we don't need
+    // thinking, and on real document images it can consume the entire token
+    // budget — leaving the JSON output empty ("No content generated") or
+    // truncated (invalid JSON), both of which surface as a 500. Disable it.
+    thinkingConfig: { thinkingBudget: 0 }
   }
 });
 

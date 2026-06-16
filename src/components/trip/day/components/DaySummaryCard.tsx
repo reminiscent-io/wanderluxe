@@ -2,7 +2,7 @@ import React from 'react';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import { formatCurrencyWithSymbol } from '../../budget/utils/budgetCalculations';
 import { convertCurrency } from '../../budget/utils/currencyConverter';
-import { TrendingUp, Wallet } from 'lucide-react';
+import { Hotel, Plane, Star, TrendingUp, Utensils, Wallet } from 'lucide-react';
 
 type Props = {
   activities: DayActivity[];
@@ -17,8 +17,7 @@ interface CategoryCost {
   category: string;
   amount: number;
   currency: string;
-  icon: string;
-  color: string;
+  Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }
 
 const DaySummaryCard: React.FC<Props> = ({
@@ -38,8 +37,7 @@ const DaySummaryCard: React.FC<Props> = ({
       category: 'Activities',
       amount: activitiesCost,
       currency: activities[0]?.currency || 'USD',
-      icon: '🎯',
-      color: 'text-purple-600',
+      Icon: Star,
     });
   }
 
@@ -50,8 +48,7 @@ const DaySummaryCard: React.FC<Props> = ({
       category: 'Accommodations',
       amount: accCost,
       currency: hotelStays[0]?.currency || 'USD',
-      icon: '🏨',
-      color: 'text-green-600',
+      Icon: Hotel,
     });
   }
 
@@ -62,8 +59,7 @@ const DaySummaryCard: React.FC<Props> = ({
       category: 'Transportation',
       amount: transCost,
       currency: transportations[0]?.currency || 'USD',
-      icon: '✈️',
-      color: 'text-blue-600',
+      Icon: Plane,
     });
   }
 
@@ -74,8 +70,7 @@ const DaySummaryCard: React.FC<Props> = ({
       category: 'Dining',
       amount: diningCost,
       currency: reservations[0]?.currency || 'USD',
-      icon: '🍽️',
-      color: 'text-orange-600',
+      Icon: Utensils,
     });
   }
 
@@ -104,7 +99,7 @@ const DaySummaryCard: React.FC<Props> = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-sand-50 to-sand-100 rounded-lg p-4 border border-sand-200 mb-4">
+    <div className="bg-card rounded-card p-4 border border-border mb-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Wallet className="h-5 w-5 text-earth-600" />
@@ -126,10 +121,10 @@ const DaySummaryCard: React.FC<Props> = ({
         {categoryData.map((cat) => (
           <div key={cat.category} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-lg">{cat.icon}</span>
+              <cat.Icon className="h-3.5 w-3.5 text-earth-500" strokeWidth={1.5} />
               <span className="text-xs text-earth-700">{cat.category}</span>
             </div>
-            <span className={`text-xs font-semibold ${cat.color}`}>
+            <span className="text-xs font-medium text-foreground tabular-nums">
               {formatCurrencyWithSymbol(cat.amount, cat.currency)}
             </span>
           </div>
@@ -137,7 +132,7 @@ const DaySummaryCard: React.FC<Props> = ({
       </div>
 
       {total > 0 && (
-        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-sand-200 text-xs text-earth-600">
+        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border text-xs text-earth-600">
           <TrendingUp className="h-3 w-3" />
           <span>Track your spending in the Budget tab</span>
         </div>

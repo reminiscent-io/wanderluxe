@@ -87,10 +87,10 @@ const DayHeader: React.FC<Props> = ({
                 <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-primary">Today</Badge>
               )}
               {isCheckInDay && (
-                <Badge className="bg-emerald-600/90 text-white text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-emerald-600/90">Check-in</Badge>
+                <Badge className="bg-primary/15 text-primary border-transparent text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-primary/15">Check-in</Badge>
               )}
               {isCheckOutDay && (
-                <Badge className="bg-amber-700/90 text-white text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-amber-700/90">Check-out</Badge>
+                <Badge className="bg-muted text-muted-foreground border-transparent text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-muted">Check-out</Badge>
               )}
               {summary && (
                 <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{summary}</span>

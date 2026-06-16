@@ -20,6 +20,11 @@ if (posthogKey) {
     capture_pageleave: false,
     autocapture: false,
     opt_out_capturing_by_default: true,
+    disable_session_recording: false,
+    session_recording: {
+      maskAllInputs: true,
+      maskInputOptions: { password: true, email: false },
+    },
   });
 }
 

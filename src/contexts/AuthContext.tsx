@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useMemo } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { identifyUser, resetAnalytics } from "@/lib/analytics";
 
 interface AuthContextType {
   session: Session | null;
@@ -180,6 +181,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // on every token refresh, which would hit the DB every ~hour.
       if (event === 'TOKEN_REFRESHED') return;
       const isNewLogin = event === 'SIGNED_IN';
+      identifyUser(session.user.id, {
+        email: session.user.email,
+        provider: session.user.app_metadata?.provider,
+        created_at: session.user.created_at,
+      });
       ensureProfile(session.user.id, isNewLogin);
     });
 
@@ -228,6 +234,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    resetAnalytics();
   };
 
   const refreshProfile = async () => {

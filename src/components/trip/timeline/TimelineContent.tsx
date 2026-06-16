@@ -105,7 +105,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
 
   if (!days.length) {
     return (
-      <div className="text-center py-12 border border-dashed rounded-lg">
+      <div className="text-center py-12 border border-border rounded-card bg-card">
         <p className="text-muted-foreground">No days added yet. Start by setting your trip dates above.</p>
       </div>
     );
@@ -355,14 +355,17 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
               }}
               onHotelAdd={() => {
                 setSelectedDayId(day.day_id);
+                setPreselectedDate(day.date.split('T')[0]);
                 setAccommodationOpen(true);
               }}
               onTransportationAdd={() => {
                 setSelectedDayId(day.day_id);
+                setPreselectedDate(day.date.split('T')[0]);
                 setTransportationOpen(true);
               }}
               onReservationAdd={() => {
                 setSelectedDayId(day.day_id);
+                setPreselectedDate(day.date.split('T')[0]);
                 setReservationOpen(true);
               }}
               onActivityClick={(activity) => {
@@ -395,9 +398,13 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
         open={accommodationOpen}
         onOpenChange={(open) => {
           setAccommodationOpen(open);
-          if (!open) setEditingHotel(null);
+          if (!open) {
+            setEditingHotel(null);
+            setPreselectedDate(undefined);
+          }
         }}
         initialData={editingHotel as unknown as Tables<'accommodations'> | undefined}
+        preselectedDate={editingHotel ? undefined : preselectedDate}
         onSuccess={handleAccommodationSuccess}
       />
 
@@ -406,9 +413,13 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
         open={transportationOpen}
         onOpenChange={(open) => {
           setTransportationOpen(open);
-          if (!open) setEditingTransportation(null);
+          if (!open) {
+            setEditingTransportation(null);
+            setPreselectedDate(undefined);
+          }
         }}
         initialData={editingTransportation as unknown as Tables<'transportation'> | undefined}
+        preselectedDate={editingTransportation ? undefined : preselectedDate}
         onSuccess={handleTransportationSuccess}
       />
 
@@ -436,11 +447,13 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
           if (!open) {
             setEditingReservation(null);
             setSelectedDayId(null);
+            setPreselectedDate(undefined);
           }
         }}
         tripId={tripId}
         title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
         editingReservation={editingReservation || undefined}
+        preselectedDate={editingReservation ? undefined : preselectedDate}
         isSubmitting={false}
         onSubmit={handleReservationSubmit}
         onDelete={handleReservationDelete}
