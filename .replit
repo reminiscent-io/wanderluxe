@@ -1,5 +1,5 @@
 modules = ["bun", "bun-1.2", "nodejs-20", "nodejs-24", "postgresql-16", "web"]
-run = "bun run dev"
+run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"
@@ -34,7 +34,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=5000 NODE_ENV=development bun run server/index.ts"
+args = "PORT=5000 NODE_ENV=development npx tsx server/index.ts"
 waitForPort = 5000
 
 [[workflows.workflow]]
