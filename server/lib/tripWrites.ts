@@ -109,3 +109,91 @@ async function addOwnerShare(
 
 // Re-export so the fan-out helpers below can use it without re-importing.
 export { dateRange };
+
+// ---- Trip ----
+
+export interface CreateTripInput {
+  destination: string;
+  arrival_date: string;
+  departure_date: string;
+  budget?: number | null;
+}
+
+export async function createTrip(
+  supabase: SupabaseClient,
+  ctx: UserContext,
+  input: CreateTripInput,
+): Promise<{ trip_id: string; day_dates: string[] }> {
+  // 1. Insert the trip, with user_id pinned to the authenticated user.
+  const { data: trip, error } = await supabase
+    .from('trips')
+    .insert({
+      user_id: ctx.userId,
+      destination: input.destination,
+      arrival_date: input.arrival_date,
+      departure_date: input.departure_date,
+      budget: input.budget ?? null,
+      is_public: false,
+    })
+    .select('trip_id')
+    .single();
+  if (error || !trip) throw new WriteError(`Failed to create trip: ${error?.message ?? 'no row returned'}`);
+
+  // 2. Owner share BEFORE days/children — child-table RLS can depend on it.
+  await addOwnerShare(supabase, trip.trip_id, ctx);
+
+  // 3. Generate one trip_days row per date in the range.
+  const dates = dateRange(input.arrival_date, input.departure_date);
+  const rows = dates.map((date) => ({ trip_id: trip.trip_id, date }));
+  const { error: daysError } = await supabase.from('trip_days').insert(rows);
+  if (daysError) {
+    throw new WriteError(
+      `Trip created (id ${trip.trip_id}) but generating its days failed: ${daysError.message}`,
+    );
+  }
+
+  return { trip_id: trip.trip_id, day_dates: dates };
+}
+
+// ---- Date-change content pre-check (pure) ----
+
+export interface DroppedDayReportEntry {
+  date: string;
+  activities: string[];
+  dining: string[];
+  accommodation_nights: number;
+  total: number;
+}
+
+/**
+ * Pure: given the dropped days and the items currently scheduled on them,
+ * build a per-day report of what would be lost. `total` is the count of items
+ * at risk on that day.
+ */
+export function buildDroppedDayReport(
+  droppedDays: Array<{ day_id: string; date: string }>,
+  content: {
+    activities: Array<{ day_id: string; title: string }>;
+    reservations: Array<{ day_id: string; restaurant_name: string }>;
+    accommodationDays: Array<{ day_id: string }>;
+  },
+): DroppedDayReportEntry[] {
+  return droppedDays.map((day) => {
+    const activities = content.activities
+      .filter((a) => a.day_id === day.day_id)
+      .map((a) => a.title);
+    const dining = content.reservations
+      .filter((r) => r.day_id === day.day_id)
+      .map((r) => r.restaurant_name);
+    const accommodationNights = content.accommodationDays.filter(
+      (ad) => ad.day_id === day.day_id,
+    ).length;
+    return {
+      date: day.date,
+      activities,
+      dining,
+      accommodation_nights: accommodationNights,
+      total: activities.length + dining.length + accommodationNights,
+    };
+  });
+}

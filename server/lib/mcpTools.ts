@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { summarizeCosts } from './budgetSummary';
+import { createTrip, WriteError } from './tripWrites';
 import type { UserContext } from './tripWrites';
 
 export function toolResult(payload: unknown) {
@@ -13,6 +14,19 @@ export function toolError(message: string) {
 }
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false };
+const WRITE = { readOnlyHint: false, destructiveHint: false };
+const WRITE_IDEMPOTENT = { readOnlyHint: false, destructiveHint: false, idempotentHint: true };
+const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true };
+
+const dateField = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use an ISO date, YYYY-MM-DD');
+const timeField = z
+  .string()
+  .regex(/^\d{2}:\d{2}$/, 'Use a 24h time, HH:MM');
+const currencyField = z
+  .string()
+  .regex(/^[A-Z]{3}$/, 'Use a 3-letter currency code, e.g. EUR');
 
 /**
  * Register every WanderLuxe tool on the given server. `supabase` is the
@@ -25,7 +39,7 @@ export function registerWanderluxeTools(
   ctx: UserContext,
 ): void {
   registerReadTools(server, supabase);
-  // Write tools are registered by later tasks (see registerWriteTools).
+  registerWriteTools(server, supabase, ctx);
 }
 
 function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
@@ -169,6 +183,43 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
         other_expenses: otherRes.data ?? [],
         note: "Amounts are in each item's own currency; check `currencies` per category before summing across categories.",
       });
+    },
+  );
+}
+
+function registerWriteTools(
+  server: McpServer,
+  supabase: SupabaseClient,
+  ctx: UserContext,
+): void {
+  server.registerTool(
+    'create_trip',
+    {
+      description:
+        'Create a new trip. Generates one day per date from arrival to departure (inclusive) and returns the new trip_id plus the generated day_dates, so you can add items right away without a separate read.',
+      inputSchema: {
+        destination: z.string().min(1).describe('Trip name / destination, e.g. "Paris, France"'),
+        arrival_date: dateField.describe('First day of the trip (YYYY-MM-DD)'),
+        departure_date: dateField.describe('Last day of the trip (YYYY-MM-DD)'),
+        budget: z.number().positive().optional().describe('Total trip budget (optional)'),
+      },
+      annotations: WRITE,
+    },
+    async (args) => {
+      try {
+        if (args.departure_date < args.arrival_date) {
+          return toolError('departure_date must be on or after arrival_date.');
+        }
+        const result = await createTrip(supabase, ctx, {
+          destination: args.destination,
+          arrival_date: args.arrival_date,
+          departure_date: args.departure_date,
+          budget: args.budget ?? null,
+        });
+        return toolResult(result);
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to create trip: ${String(err)}`);
+      }
     },
   );
 }
