@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Standardized on npm (package-lock.json) — keep Bun lockfiles out to avoid drift
+bun.lock
+bun.lockb
+
 # Environment variables (CRITICAL - never commit!)
 .env
 .env.local
