@@ -1,9 +1,9 @@
-modules = ["bun", "bun-1.2", "nodejs-20", "nodejs-24", "postgresql-16", "web"]
+modules = ["nodejs-24", "postgresql-16", "web"]
 run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"
-packages = ["supabase-cli", "nodejs_24", "imagemagick", "bun"]
+packages = ["supabase-cli", "nodejs_24", "imagemagick"]
 
 [deployment]
 run = ["sh", "-c", "npm run start"]
