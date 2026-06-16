@@ -97,7 +97,7 @@
     "path-to-regexp": "",
     "pdfjs-dist": "^5.4.624",
     "pdfmake": "^0.2.23",
-    "posthog-js": "^1.364.2",
+    "posthog-js": "^1.386.8",
     "prismjs": "^1.30.0",
     "puppeteer": "^24.37.2",
     "react": "^19.2.4",
