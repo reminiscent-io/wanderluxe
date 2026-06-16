@@ -607,7 +607,6 @@ export default function AccommodationForm({
                 variant="ghost"
                 disabled={saving}
                 onClick={onDelete}
-                variant="ghost"
                 size="icon"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 aria-label="Delete accommodation"

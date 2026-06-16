@@ -1,7 +1,82 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import ChatMessage from './ChatMessage';
 import { Loader2, Sparkles, ChevronUp } from 'lucide-react';
 import type { AIChatMessage, ExtractedItem, PlaceCard } from '@/types/ai-assistant';
+
+// --- Chronological ordering + day anchoring -------------------------------
+// Messages can arrive from three sources (server history, optimistic sends,
+// extraction results) whose timestamps occasionally collide to the same
+// millisecond — most often a user turn and its reply. A bare time sort leaves
+// those ties to engine luck, which is how a reply can render above the
+// question it answers. We own ordering here, at the render boundary, with a
+// deterministic tiebreak so the transcript always reads top-to-bottom in send
+// order regardless of how upstream merged it.
+
+const sortTime = (m: AIChatMessage): number => {
+  const t = new Date(m.created_at).getTime();
+  return Number.isFinite(t) ? t : 0;
+};
+
+const bySendTime = (a: AIChatMessage, b: AIChatMessage): number => {
+  const ta = sortTime(a);
+  const tb = sortTime(b);
+  if (ta !== tb) return ta - tb;
+  // Same instant: the user's message leads its own turn, then fall back to a
+  // stable id comparison so the order never shuffles between renders.
+  if (a.role !== b.role) return a.role === 'user' ? -1 : 1;
+  return String(a.id).localeCompare(String(b.id));
+};
+
+const startOfDay = (d: Date): number =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+const dayKey = (iso: string): number => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? 0 : startOfDay(d);
+};
+
+// Locale-aware, relative where it helps: "Today" / "Yesterday" carry the most
+// glance value; older days get the written month and only show the year when
+// it isn't the current one. Intl keeps this correct across locales.
+const formatDayLabel = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'Earlier';
+
+  const now = new Date();
+  const today = startOfDay(now);
+  const yesterday = (() => {
+    const y = new Date(now);
+    y.setDate(now.getDate() - 1);
+    return startOfDay(y);
+  })();
+  const msgDay = startOfDay(d);
+
+  if (msgDay === today) return 'Today';
+  if (msgDay === yesterday) return 'Yesterday';
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'long',
+    day: 'numeric',
+    ...(d.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  }).format(d);
+};
+
+interface DayGroup {
+  key: number;
+  label: string;
+  items: AIChatMessage[];
+}
+
+// A floating, sticky date tab — opaque cream so messages scroll cleanly
+// beneath it (no glass), the warm border + soft lift reading as a tab clipped
+// to the top of the page rather than a banner across it.
+const DayDivider: React.FC<{ label: string }> = ({ label }) => (
+  <div className="sticky top-0 z-10 flex justify-center py-2 pointer-events-none">
+    <span className="pointer-events-auto rounded-full border border-border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-sand-600 shadow-warm-sm">
+      {label}
+    </span>
+  </div>
+);
 
 interface ChatMessageListProps {
   messages: AIChatMessage[];
@@ -40,6 +115,24 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Strictly ordered by send time, then split into per-day groups so each day
+  // gets one sticky anchor. Done at render so the cache's merge order can't
+  // leak a misordered transcript onto the screen.
+  const dayGroups = useMemo<DayGroup[]>(() => {
+    const sorted = [...messages].sort(bySendTime);
+    const groups: DayGroup[] = [];
+    for (const message of sorted) {
+      const key = dayKey(message.created_at);
+      const last = groups[groups.length - 1];
+      if (last?.key === key) {
+        last.items.push(message);
+      } else {
+        groups.push({ key, label: formatDayLabel(message.created_at), items: [message] });
+      }
+    }
+    return groups;
+  }, [messages]);
   const prevScrollHeightRef = useRef<number>(0);
   const hasInitialScrolled = useRef<boolean>(false);
   const scrollThrottleRef = useRef<boolean>(false);
@@ -224,15 +317,20 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         </div>
       )}
 
-      {messages.map((message) => (
-        <ChatMessage
-          key={message.id}
-          message={message}
-          onImportAll={onImportAll}
-          onReviewEdit={onReviewEdit}
-          onAddPlaceCard={onAddPlaceCard}
-          isImporting={isImporting}
-        />
+      {dayGroups.map((group) => (
+        <section key={group.key} className="space-y-1">
+          <DayDivider label={group.label} />
+          {group.items.map((message) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              onImportAll={onImportAll}
+              onReviewEdit={onReviewEdit}
+              onAddPlaceCard={onAddPlaceCard}
+              isImporting={isImporting}
+            />
+          ))}
+        </section>
       ))}
 
       {/* Show streaming message */}
