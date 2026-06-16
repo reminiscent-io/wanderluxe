@@ -4,8 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { z } from 'zod';
-import { summarizeCosts } from '../lib/budgetSummary';
+import { registerWanderluxeTools } from '../lib/mcpTools';
 
 const router = express.Router();
 
@@ -52,7 +51,9 @@ const mcpLimiter = rateLimit({
  * `aud: "authenticated"` (the claim on all Supabase user tokens) is the
  * strictest audience check available here.
  */
-async function authenticate(req: Request): Promise<{ token: string; userId: string } | null> {
+async function authenticate(
+  req: Request,
+): Promise<{ token: string; userId: string; email: string | null } | null> {
   const authHeader = req.headers.authorization || '';
   if (!authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.slice('Bearer '.length);
@@ -63,7 +64,8 @@ async function authenticate(req: Request): Promise<{ token: string; userId: stri
       algorithms: ['ES256'],
     });
     if (!payload.sub) return null;
-    return { token, userId: payload.sub };
+    const email = typeof payload.email === 'string' ? payload.email : null;
+    return { token, userId: payload.sub, email };
   } catch {
     return null;
   }
@@ -92,171 +94,18 @@ function createUserClient(token: string) {
   });
 }
 
-function toolResult(payload: unknown) {
-  return { content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }] };
-}
-
-function toolError(message: string) {
-  return { content: [{ type: 'text' as const, text: message }], isError: true };
-}
-
-const READ_ONLY = { readOnlyHint: true, destructiveHint: false };
-
-function buildMcpServer(token: string): McpServer {
-  const supabase = createUserClient(token);
+function buildMcpServer(auth: { token: string; userId: string; email: string | null }): McpServer {
+  const supabase = createUserClient(auth.token);
 
   const server = new McpServer(
-    { name: 'wanderluxe', version: '0.1.0' },
+    { name: 'wanderluxe', version: '0.2.0' },
     {
       instructions:
-        'Tools for reading the user\'s WanderLuxe trips. Call list_trips first to get trip IDs — they are not guessable. Dates are ISO (YYYY-MM-DD); times are 24h local to the destination.',
+        "Tools for reading and managing the user's WanderLuxe trips. Call list_trips first to get trip IDs — they are not guessable. Add items by date (YYYY-MM-DD); the server resolves the matching trip day. Times are 24h HH:MM, local to the destination. To change a trip's dates in a way that would drop days containing items, the update_trip tool will first return the at-risk days for confirmation; re-call it with confirm_remove_days: true to proceed.",
     },
   );
 
-  server.registerTool(
-    'list_trips',
-    {
-      description:
-        'List the trips the user owns or that are shared with them, newest first. Returns trip_id, destination, dates, and budget.',
-      annotations: READ_ONLY,
-    },
-    async () => {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('trip_id,destination,arrival_date,departure_date,budget,created_at')
-        .order('arrival_date', { ascending: false });
-      if (error) return toolError(`Failed to list trips: ${error.message}`);
-      return toolResult({ trips: data ?? [] });
-    },
-  );
-
-  server.registerTool(
-    'get_trip',
-    {
-      description:
-        'Get the full itinerary for one trip: day-by-day activities and dining reservations, plus accommodations and transportation. Use list_trips to find the trip_id.',
-      inputSchema: { trip_id: z.string().uuid().describe('Trip ID from list_trips') },
-      annotations: READ_ONLY,
-    },
-    async ({ trip_id }) => {
-      const [tripRes, daysRes, staysRes, transportRes, activitiesRes, diningRes] = await Promise.all([
-        supabase
-          .from('trips')
-          .select('trip_id,destination,arrival_date,departure_date,budget')
-          .eq('trip_id', trip_id)
-          .maybeSingle(),
-        supabase
-          .from('trip_days')
-          .select('day_id,date,title,description')
-          .eq('trip_id', trip_id)
-          .order('date'),
-        supabase
-          .from('accommodations')
-          .select(
-            'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,cost,currency',
-          )
-          .eq('trip_id', trip_id),
-        supabase
-          .from('transportation')
-          .select(
-            'id,type,provider,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency',
-          )
-          .eq('trip_id', trip_id)
-          .order('start_date'),
-        supabase
-          .from('day_activities')
-          .select('id,day_id,title,description,start_time,end_time,location_address,cost,currency')
-          .eq('trip_id', trip_id),
-        supabase
-          .from('reservations')
-          .select(
-            'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency',
-          )
-          .eq('trip_id', trip_id),
-      ]);
-
-      // RLS filters trips the user can't see, so "not found" and "no access" look identical.
-      if (tripRes.error) return toolError(`Failed to load trip: ${tripRes.error.message}`);
-      if (!tripRes.data) return toolError('Trip not found, or you do not have access to it.');
-
-      const activitiesByDay = new Map<string, unknown[]>();
-      for (const a of activitiesRes.data ?? []) {
-        const { day_id, ...rest } = a;
-        const list = activitiesByDay.get(day_id) ?? [];
-        list.push(rest);
-        activitiesByDay.set(day_id, list);
-      }
-      const diningByDay = new Map<string, unknown[]>();
-      for (const r of diningRes.data ?? []) {
-        const { day_id, ...rest } = r;
-        if (!day_id) continue;
-        const list = diningByDay.get(day_id) ?? [];
-        list.push(rest);
-        diningByDay.set(day_id, list);
-      }
-
-      const days = (daysRes.data ?? []).map((d) => ({
-        date: d.date,
-        title: d.title,
-        description: d.description,
-        activities: activitiesByDay.get(d.day_id) ?? [],
-        dining: diningByDay.get(d.day_id) ?? [],
-      }));
-
-      return toolResult({
-        trip: tripRes.data,
-        days,
-        accommodations: staysRes.data ?? [],
-        transportation: transportRes.data ?? [],
-      });
-    },
-  );
-
-  server.registerTool(
-    'get_trip_budget',
-    {
-      description:
-        'Get the budget breakdown for one trip: total budget, spend per category (accommodations, transportation, activities, dining, other), and paid vs unpaid amounts.',
-      inputSchema: { trip_id: z.string().uuid().describe('Trip ID from list_trips') },
-      annotations: READ_ONLY,
-    },
-    async ({ trip_id }) => {
-      const [tripRes, staysRes, transportRes, activitiesRes, diningRes, otherRes] = await Promise.all([
-        supabase.from('trips').select('budget').eq('trip_id', trip_id).maybeSingle(),
-        supabase.from('accommodations').select('cost,currency,amount_paid,is_paid').eq('trip_id', trip_id),
-        supabase.from('transportation').select('cost,currency').eq('trip_id', trip_id),
-        supabase.from('day_activities').select('cost,currency,amount_paid,is_paid').eq('trip_id', trip_id),
-        supabase.from('reservations').select('cost,currency,amount_paid,is_paid').eq('trip_id', trip_id),
-        supabase
-          .from('other_expenses')
-          .select('description,cost,currency,amount_paid,is_paid')
-          .eq('trip_id', trip_id),
-      ]);
-
-      if (tripRes.error) return toolError(`Failed to load trip: ${tripRes.error.message}`);
-      if (!tripRes.data) return toolError('Trip not found, or you do not have access to it.');
-
-      const categories = {
-        accommodations: summarizeCosts(staysRes.data),
-        transportation: summarizeCosts(transportRes.data),
-        activities: summarizeCosts(activitiesRes.data),
-        dining: summarizeCosts(diningRes.data),
-        other: summarizeCosts(otherRes.data),
-      };
-      const totalCost = Object.values(categories).reduce((sum, c) => sum + c.total, 0);
-      const totalPaid = Object.values(categories).reduce((sum, c) => sum + c.paid, 0);
-
-      return toolResult({
-        budget: tripRes.data.budget,
-        total_cost: totalCost,
-        total_paid: totalPaid,
-        categories,
-        other_expenses: otherRes.data ?? [],
-        note: 'Amounts are in each item\'s own currency; check `currencies` per category before summing across categories.',
-      });
-    },
-  );
-
+  registerWanderluxeTools(server, supabase, { userId: auth.userId, email: auth.email });
   return server;
 }
 
@@ -301,7 +150,7 @@ router.post('/mcp', mcpLimiter, async (req: Request, res: Response) => {
   try {
     // Fresh server + transport per request: no session state, nothing shared
     // across users, and the user's token is scoped to this request only.
-    const server = buildMcpServer(auth.token);
+    const server = buildMcpServer(auth);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
