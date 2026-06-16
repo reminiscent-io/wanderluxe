@@ -84,7 +84,7 @@
     "dompurify": "^3.4.10",
     "dotenv": "^17.2.4",
     "embla-carousel-react": "^8.6.0",
-    "esbuild": "0.25.11",
+    "esbuild": "0.28.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.33.0",
