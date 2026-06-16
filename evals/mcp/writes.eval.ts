@@ -19,6 +19,9 @@ describe.skipIf(missing.length > 0)('mcp writes (lifecycle)', () => {
   });
 
   afterAll(async () => {
+    // NOTE: each run leaves its "Eval Sandbox City" trip in the eval user's
+    // account — there is no whole-trip delete tool (out of scope for v1), so
+    // these 2030-dated throwaway trips accumulate across runs.
     await client?.close();
   });
 

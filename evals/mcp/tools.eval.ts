@@ -55,7 +55,8 @@ describe.skipIf(missing.length > 0)('mcp tools', () => {
       for (const name of WRITE) {
         expect(byName.get(name)?.annotations?.readOnlyHint, `${name} readOnlyHint`).toBe(false);
       }
-      // Delete tools (and only they, among writes) are destructive-hinted.
+      // delete_* tools are destructive-hinted (update_trip is too, via its
+      // cascade branch — but we only assert the delete_* tools here).
       const destructive = WRITE.filter((n) => n.startsWith('delete_'));
       for (const name of destructive) {
         expect(byName.get(name)?.annotations?.destructiveHint, `${name} destructiveHint`).toBe(true);
