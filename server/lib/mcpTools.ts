@@ -14,6 +14,9 @@ import {
   addAccommodation,
   updateAccommodation,
   deleteAccommodation,
+  addTransportation,
+  updateTransportation,
+  deleteTransportation,
   WriteError,
 } from './tripWrites';
 import type { UserContext } from './tripWrites';
@@ -31,6 +34,15 @@ const WRITE = { readOnlyHint: false, destructiveHint: false };
 const WRITE_IDEMPOTENT = { readOnlyHint: false, destructiveHint: false, idempotentHint: true };
 const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true };
 const DESTRUCTIVE_IDEMPOTENT = { readOnlyHint: false, destructiveHint: true, idempotentHint: true };
+
+const transportTypeField = z.enum([
+  'flight',
+  'train',
+  'car_service',
+  'shuttle',
+  'ferry',
+  'rental_car',
+]);
 
 const dateField = z
   .string()
@@ -482,6 +494,84 @@ function registerWriteTools(
         return toolResult(await deleteAccommodation(supabase, stay_id));
       } catch (err) {
         return toolError(err instanceof WriteError ? err.message : `Failed to delete accommodation: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'add_transportation',
+    {
+      description:
+        'Add a transportation leg (flight, train, car_service, shuttle, ferry, or rental_car) to a trip. Returns the created leg, including its id.',
+      inputSchema: {
+        trip_id: z.string().uuid().describe('Trip ID from list_trips'),
+        type: transportTypeField,
+        start_date: dateField,
+        provider: z.string().optional(),
+        flight_number: z.string().optional(),
+        confirmation_number: z.string().optional(),
+        departure_location: z.string().optional(),
+        arrival_location: z.string().optional(),
+        start_time: timeField.optional(),
+        end_date: dateField.optional(),
+        end_time: timeField.optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+      },
+      annotations: WRITE,
+    },
+    async (args) => {
+      try {
+        return toolResult(await addTransportation(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to add transportation: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'update_transportation',
+    {
+      description:
+        'Update a transportation leg by its id (from get_trip). Only the fields you pass are changed.',
+      inputSchema: {
+        id: z.string().uuid().describe('Transportation id from get_trip'),
+        type: transportTypeField.optional(),
+        start_date: dateField.optional(),
+        provider: z.string().optional(),
+        flight_number: z.string().optional(),
+        confirmation_number: z.string().optional(),
+        departure_location: z.string().optional(),
+        arrival_location: z.string().optional(),
+        start_time: timeField.optional(),
+        end_date: dateField.optional(),
+        end_time: timeField.optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+      },
+      annotations: WRITE_IDEMPOTENT,
+    },
+    async (args) => {
+      try {
+        return toolResult(await updateTransportation(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to update transportation: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'delete_transportation',
+    {
+      description: 'Delete a transportation leg by its id (from get_trip).',
+      inputSchema: { id: z.string().uuid().describe('Transportation id from get_trip') },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ id }) => {
+      try {
+        return toolResult(await deleteTransportation(supabase, id));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to delete transportation: ${String(err)}`);
       }
     },
   );

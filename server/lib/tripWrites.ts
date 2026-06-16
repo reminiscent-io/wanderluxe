@@ -738,3 +738,115 @@ export async function deleteAccommodation(supabase: SupabaseClient, stayId: stri
   }
   return { deleted: true, stay_id: stayId };
 }
+
+// ---- Transportation ----
+
+export type TransportationType =
+  | 'flight'
+  | 'train'
+  | 'car_service'
+  | 'shuttle'
+  | 'ferry'
+  | 'rental_car';
+
+export interface AddTransportationInput {
+  trip_id: string;
+  type: TransportationType;
+  start_date: string;
+  provider?: string;
+  flight_number?: string;
+  confirmation_number?: string;
+  departure_location?: string;
+  arrival_location?: string;
+  start_time?: string;
+  end_date?: string;
+  end_time?: string;
+  cost?: number;
+  currency?: string;
+}
+
+const TRANSPORT_SELECT =
+  'id,type,provider,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency';
+
+export async function addTransportation(supabase: SupabaseClient, input: AddTransportationInput) {
+  const { data, error } = await supabase
+    .from('transportation')
+    .insert({
+      trip_id: input.trip_id,
+      type: input.type,
+      start_date: input.start_date,
+      provider: input.provider ?? null,
+      flight_number: input.flight_number ?? null,
+      confirmation_number: input.confirmation_number ?? null,
+      departure_location: input.departure_location ?? null,
+      arrival_location: input.arrival_location ?? null,
+      start_time: input.start_time ?? null,
+      end_date: input.end_date ?? null,
+      end_time: input.end_time ?? null,
+      cost: input.cost ?? null,
+      currency: input.currency ?? null,
+    })
+    .select(TRANSPORT_SELECT)
+    .single();
+  if (error || !data) throw new WriteError(`Failed to add transportation: ${error?.message ?? 'no row returned'}`);
+  return data;
+}
+
+export interface UpdateTransportationInput {
+  id: string;
+  type?: TransportationType;
+  start_date?: string;
+  provider?: string;
+  flight_number?: string;
+  confirmation_number?: string;
+  departure_location?: string;
+  arrival_location?: string;
+  start_time?: string;
+  end_date?: string;
+  end_time?: string;
+  cost?: number;
+  currency?: string;
+}
+
+export async function updateTransportation(supabase: SupabaseClient, input: UpdateTransportationInput) {
+  const updates: Record<string, unknown> = {};
+  if (input.type !== undefined) updates.type = input.type;
+  if (input.start_date !== undefined) updates.start_date = input.start_date;
+  if (input.provider !== undefined) updates.provider = input.provider;
+  if (input.flight_number !== undefined) updates.flight_number = input.flight_number;
+  if (input.confirmation_number !== undefined) updates.confirmation_number = input.confirmation_number;
+  if (input.departure_location !== undefined) updates.departure_location = input.departure_location;
+  if (input.arrival_location !== undefined) updates.arrival_location = input.arrival_location;
+  if (input.start_time !== undefined) updates.start_time = input.start_time;
+  if (input.end_date !== undefined) updates.end_date = input.end_date;
+  if (input.end_time !== undefined) updates.end_time = input.end_time;
+  if (input.cost !== undefined) updates.cost = input.cost;
+  if (input.currency !== undefined) updates.currency = input.currency;
+
+  if (Object.keys(updates).length === 0) {
+    throw new WriteError('Nothing to update: provide at least one field to change.');
+  }
+
+  const { data, error } = await supabase
+    .from('transportation')
+    .update(updates)
+    .eq('id', input.id)
+    .select(TRANSPORT_SELECT)
+    .maybeSingle();
+  if (error) throw new WriteError(`Failed to update transportation: ${error.message}`);
+  if (!data) throw new WriteError('Transportation not found, or you do not have access to it.');
+  return data;
+}
+
+export async function deleteTransportation(supabase: SupabaseClient, id: string) {
+  const { data, error } = await supabase
+    .from('transportation')
+    .delete()
+    .eq('id', id)
+    .select('id');
+  if (error) throw new WriteError(`Failed to delete transportation: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new WriteError('Transportation not found, or you do not have access to it.');
+  }
+  return { deleted: true, id };
+}
