@@ -850,3 +850,78 @@ export async function deleteTransportation(supabase: SupabaseClient, id: string)
   }
   return { deleted: true, id };
 }
+
+// ---- Other expenses ----
+
+const EXPENSE_SELECT = 'id,description,cost,currency,amount_paid,is_paid';
+
+export interface AddExpenseInput {
+  trip_id: string;
+  description: string;
+  cost: number;
+  currency: string;
+  amount_paid?: number;
+  is_paid?: boolean;
+}
+
+export async function addExpense(supabase: SupabaseClient, input: AddExpenseInput) {
+  const { data, error } = await supabase
+    .from('other_expenses')
+    .insert({
+      trip_id: input.trip_id,
+      description: input.description,
+      cost: input.cost,
+      currency: input.currency,
+      amount_paid: input.amount_paid ?? null,
+      is_paid: input.is_paid ?? null,
+    })
+    .select(EXPENSE_SELECT)
+    .single();
+  if (error || !data) throw new WriteError(`Failed to add expense: ${error?.message ?? 'no row returned'}`);
+  return data;
+}
+
+export interface UpdateExpenseInput {
+  id: string;
+  description?: string;
+  cost?: number;
+  currency?: string;
+  amount_paid?: number;
+  is_paid?: boolean;
+}
+
+export async function updateExpense(supabase: SupabaseClient, input: UpdateExpenseInput) {
+  const updates: Record<string, unknown> = {};
+  if (input.description !== undefined) updates.description = input.description;
+  if (input.cost !== undefined) updates.cost = input.cost;
+  if (input.currency !== undefined) updates.currency = input.currency;
+  if (input.amount_paid !== undefined) updates.amount_paid = input.amount_paid;
+  if (input.is_paid !== undefined) updates.is_paid = input.is_paid;
+
+  if (Object.keys(updates).length === 0) {
+    throw new WriteError('Nothing to update: provide at least one field to change.');
+  }
+
+  const { data, error } = await supabase
+    .from('other_expenses')
+    .update(updates)
+    .eq('id', input.id)
+    .select(EXPENSE_SELECT)
+    .maybeSingle();
+  if (error) throw new WriteError(`Failed to update expense: ${error.message}`);
+  if (!data) throw new WriteError('Expense not found, or you do not have access to it.');
+  return data;
+}
+
+export async function deleteExpense(supabase: SupabaseClient, id: string) {
+  const { data, error } = await supabase
+    .from('other_expenses')
+    .delete()
+    .eq('id', id)
+    .select('id');
+  if (error) throw new WriteError(`Failed to delete expense: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new WriteError('Expense not found, or you do not have access to it.');
+  }
+  return { deleted: true, id };
+}

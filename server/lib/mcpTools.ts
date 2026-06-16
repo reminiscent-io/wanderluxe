@@ -17,6 +17,9 @@ import {
   addTransportation,
   updateTransportation,
   deleteTransportation,
+  addExpense,
+  updateExpense,
+  deleteExpense,
   WriteError,
 } from './tripWrites';
 import type { UserContext } from './tripWrites';
@@ -572,6 +575,70 @@ function registerWriteTools(
         return toolResult(await deleteTransportation(supabase, id));
       } catch (err) {
         return toolError(err instanceof WriteError ? err.message : `Failed to delete transportation: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'add_expense',
+    {
+      description:
+        'Add a miscellaneous (non-booking) expense to a trip — e.g. tickets, shopping, fees. Returns the created expense, including its id.',
+      inputSchema: {
+        trip_id: z.string().uuid().describe('Trip ID from list_trips'),
+        description: z.string().min(1),
+        cost: z.number().nonnegative(),
+        currency: currencyField,
+        amount_paid: z.number().nonnegative().optional(),
+        is_paid: z.boolean().optional(),
+      },
+      annotations: WRITE,
+    },
+    async (args) => {
+      try {
+        return toolResult(await addExpense(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to add expense: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'update_expense',
+    {
+      description:
+        'Update a miscellaneous expense by its id (from get_trip_budget). Only the fields you pass are changed.',
+      inputSchema: {
+        id: z.string().uuid().describe('Expense id from get_trip_budget'),
+        description: z.string().min(1).optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+        amount_paid: z.number().nonnegative().optional(),
+        is_paid: z.boolean().optional(),
+      },
+      annotations: WRITE_IDEMPOTENT,
+    },
+    async (args) => {
+      try {
+        return toolResult(await updateExpense(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to update expense: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'delete_expense',
+    {
+      description: 'Delete a miscellaneous expense by its id (from get_trip_budget).',
+      inputSchema: { id: z.string().uuid().describe('Expense id from get_trip_budget') },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ id }) => {
+      try {
+        return toolResult(await deleteExpense(supabase, id));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to delete expense: ${String(err)}`);
       }
     },
   );
