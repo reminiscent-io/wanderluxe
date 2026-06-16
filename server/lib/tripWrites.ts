@@ -343,3 +343,102 @@ export async function updateTrip(
 
   return { status: 'updated', trip_id: input.trip_id, days_added: toAdd, days_removed: toDrop };
 }
+
+// ---- Activities (day_activities) ----
+
+export interface AddActivityInput {
+  trip_id: string;
+  date: string;
+  title: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  cost?: number;
+  currency?: string;
+  location_address?: string;
+}
+
+export async function addActivity(supabase: SupabaseClient, input: AddActivityInput) {
+  const dayId = await resolveDayId(supabase, input.trip_id, input.date);
+  const orderIndex = await nextOrderIndex(supabase, 'day_activities', 'day_id', dayId);
+  const { data, error } = await supabase
+    .from('day_activities')
+    .insert({
+      trip_id: input.trip_id,
+      day_id: dayId,
+      order_index: orderIndex,
+      title: input.title,
+      description: input.description ?? null,
+      start_time: input.start_time ?? null,
+      end_time: input.end_time ?? null,
+      cost: input.cost ?? null,
+      currency: input.currency ?? null,
+      location_address: input.location_address ?? null,
+    })
+    .select('id,day_id,title,description,start_time,end_time,cost,currency,location_address')
+    .single();
+  if (error || !data) throw new WriteError(`Failed to add activity: ${error?.message ?? 'no row returned'}`);
+  return data;
+}
+
+export interface UpdateActivityInput {
+  activity_id: string;
+  date?: string;
+  title?: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  cost?: number;
+  currency?: string;
+  location_address?: string;
+}
+
+export async function updateActivity(supabase: SupabaseClient, input: UpdateActivityInput) {
+  const updates: Record<string, unknown> = {};
+  if (input.title !== undefined) updates.title = input.title;
+  if (input.description !== undefined) updates.description = input.description;
+  if (input.start_time !== undefined) updates.start_time = input.start_time;
+  if (input.end_time !== undefined) updates.end_time = input.end_time;
+  if (input.cost !== undefined) updates.cost = input.cost;
+  if (input.currency !== undefined) updates.currency = input.currency;
+  if (input.location_address !== undefined) updates.location_address = input.location_address;
+
+  // Changing the date re-resolves day_id (scoped to the activity's own trip).
+  if (input.date !== undefined) {
+    const { data: existing, error: exErr } = await supabase
+      .from('day_activities')
+      .select('trip_id')
+      .eq('id', input.activity_id)
+      .maybeSingle();
+    if (exErr) throw new WriteError(`Failed to load activity: ${exErr.message}`);
+    if (!existing) throw new WriteError('Activity not found, or you do not have access to it.');
+    updates.day_id = await resolveDayId(supabase, existing.trip_id, input.date);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    throw new WriteError('Nothing to update: provide at least one field to change.');
+  }
+
+  const { data, error } = await supabase
+    .from('day_activities')
+    .update(updates)
+    .eq('id', input.activity_id)
+    .select('id,day_id,title,description,start_time,end_time,cost,currency,location_address')
+    .maybeSingle();
+  if (error) throw new WriteError(`Failed to update activity: ${error.message}`);
+  if (!data) throw new WriteError('Activity not found, or you do not have access to it.');
+  return data;
+}
+
+export async function deleteActivity(supabase: SupabaseClient, activityId: string) {
+  const { data, error } = await supabase
+    .from('day_activities')
+    .delete()
+    .eq('id', activityId)
+    .select('id');
+  if (error) throw new WriteError(`Failed to delete activity: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new WriteError('Activity not found, or you do not have access to it.');
+  }
+  return { deleted: true, id: activityId };
+}

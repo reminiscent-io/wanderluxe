@@ -2,7 +2,14 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { summarizeCosts } from './budgetSummary';
-import { createTrip, updateTrip, WriteError } from './tripWrites';
+import {
+  createTrip,
+  updateTrip,
+  addActivity,
+  updateActivity,
+  deleteActivity,
+  WriteError,
+} from './tripWrites';
 import type { UserContext } from './tripWrites';
 
 export function toolResult(payload: unknown) {
@@ -253,6 +260,76 @@ function registerWriteTools(
         return toolResult(result);
       } catch (err) {
         return toolError(err instanceof WriteError ? err.message : `Failed to update trip: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'add_activity',
+    {
+      description:
+        'Add an activity to a trip on a given date (the server resolves the trip day). Returns the created activity, including its id.',
+      inputSchema: {
+        trip_id: z.string().uuid().describe('Trip ID from list_trips'),
+        date: dateField.describe('Date within the trip range (YYYY-MM-DD)'),
+        title: z.string().min(1),
+        description: z.string().optional(),
+        start_time: timeField.optional(),
+        end_time: timeField.optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+        location_address: z.string().optional(),
+      },
+      annotations: WRITE,
+    },
+    async (args) => {
+      try {
+        return toolResult(await addActivity(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to add activity: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'update_activity',
+    {
+      description:
+        'Update an existing activity by its id (from get_trip). Changing date moves it to that trip day. Only the fields you pass are changed.',
+      inputSchema: {
+        activity_id: z.string().uuid().describe('Activity id from get_trip'),
+        date: dateField.optional(),
+        title: z.string().min(1).optional(),
+        description: z.string().optional(),
+        start_time: timeField.optional(),
+        end_time: timeField.optional(),
+        cost: z.number().nonnegative().optional(),
+        currency: currencyField.optional(),
+        location_address: z.string().optional(),
+      },
+      annotations: WRITE_IDEMPOTENT,
+    },
+    async (args) => {
+      try {
+        return toolResult(await updateActivity(supabase, args));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to update activity: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'delete_activity',
+    {
+      description: 'Delete an activity by its id (from get_trip).',
+      inputSchema: { activity_id: z.string().uuid().describe('Activity id from get_trip') },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ activity_id }) => {
+      try {
+        return toolResult(await deleteActivity(supabase, activity_id));
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to delete activity: ${String(err)}`);
       }
     },
   );
