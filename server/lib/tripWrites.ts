@@ -107,9 +107,6 @@ async function addOwnerShare(
   }
 }
 
-// Re-export so the fan-out helpers below can use it without re-importing.
-export { dateRange };
-
 // ---- Trip ----
 
 export interface CreateTripInput {
@@ -124,6 +121,18 @@ export async function createTrip(
   ctx: UserContext,
   input: CreateTripInput,
 ): Promise<{ trip_id: string; day_dates: string[] }> {
+  // Validate the range before any insert, so an invalid range never creates an orphan trip.
+  if (input.departure_date < input.arrival_date) {
+    throw new WriteError('departure_date must be on or after arrival_date.');
+  }
+  const dates = dateRange(input.arrival_date, input.departure_date);
+  if (dates.length === 0) {
+    throw new WriteError('The trip must span at least one day.');
+  }
+  if (dates.length > 366) {
+    throw new WriteError('That date range is too long; a trip can span at most 366 days.');
+  }
+
   // 1. Insert the trip, with user_id pinned to the authenticated user.
   const { data: trip, error } = await supabase
     .from('trips')
@@ -143,13 +152,14 @@ export async function createTrip(
   await addOwnerShare(supabase, trip.trip_id, ctx);
 
   // 3. Generate one trip_days row per date in the range.
-  const dates = dateRange(input.arrival_date, input.departure_date);
   const rows = dates.map((date) => ({ trip_id: trip.trip_id, date }));
   const { error: daysError } = await supabase.from('trip_days').insert(rows);
   if (daysError) {
-    throw new WriteError(
-      `Trip created (id ${trip.trip_id}) but generating its days failed: ${daysError.message}`,
-    );
+    // Compensating cleanup so a days-insert failure doesn't leave an orphan trip
+    // (there is no whole-trip delete tool). Best-effort; ignore cleanup errors.
+    await supabase.from('trip_shares').delete().eq('trip_id', trip.trip_id);
+    await supabase.from('trips').delete().eq('trip_id', trip.trip_id);
+    throw new WriteError(`Failed to generate the trip's days, so the trip was not created: ${daysError.message}`);
   }
 
   return { trip_id: trip.trip_id, day_dates: dates };

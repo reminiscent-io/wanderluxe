@@ -20,7 +20,12 @@ const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true };
 
 const dateField = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use an ISO date, YYYY-MM-DD');
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use an ISO date, YYYY-MM-DD')
+  .refine((s) => {
+    const [y, m, d] = s.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  }, 'Not a valid calendar date');
 const timeField = z
   .string()
   .regex(/^\d{2}:\d{2}$/, 'Use a 24h time, HH:MM');
