@@ -6,7 +6,7 @@
 // because they use the browser Supabase singleton.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { dateRange } from './tripDates';
+import { dateRange, planDateChange } from './tripDates';
 
 /** A user-facing error whose message is safe to return verbatim via toolError. */
 export class WriteError extends Error {}
@@ -206,4 +206,136 @@ export function buildDroppedDayReport(
       total: activities.length + dining.length + accommodationNights,
     };
   });
+}
+
+export interface UpdateTripInput {
+  trip_id: string;
+  destination?: string;
+  budget?: number | null;
+  arrival_date?: string;
+  departure_date?: string;
+  confirm_remove_days?: boolean;
+}
+
+export type UpdateTripResult =
+  | { status: 'updated'; trip_id: string; days_added: string[]; days_removed: string[] }
+  | {
+      status: 'confirmation_required';
+      message: string;
+      at_risk_days: DroppedDayReportEntry[];
+    };
+
+export async function updateTrip(
+  supabase: SupabaseClient,
+  input: UpdateTripInput,
+): Promise<UpdateTripResult> {
+  const { data: trip, error } = await supabase
+    .from('trips')
+    .select('trip_id,arrival_date,departure_date')
+    .eq('trip_id', input.trip_id)
+    .maybeSingle();
+  if (error) throw new WriteError(`Failed to load trip: ${error.message}`);
+  if (!trip) throw new WriteError('Trip not found, or you do not have access to it.');
+
+  const newArrival = input.arrival_date ?? trip.arrival_date;
+  const newDeparture = input.departure_date ?? trip.departure_date;
+  if (newDeparture < newArrival) {
+    throw new WriteError('departure_date must be on or after arrival_date.');
+  }
+  const datesChanged = newArrival !== trip.arrival_date || newDeparture !== trip.departure_date;
+
+  // Non-date field updates always apply.
+  const fieldUpdates: Record<string, unknown> = {};
+  if (input.destination !== undefined) fieldUpdates.destination = input.destination;
+  if (input.budget !== undefined) fieldUpdates.budget = input.budget;
+
+  if (!datesChanged) {
+    if (Object.keys(fieldUpdates).length > 0) {
+      const { error: updErr } = await supabase
+        .from('trips')
+        .update(fieldUpdates)
+        .eq('trip_id', input.trip_id);
+      if (updErr) throw new WriteError(`Failed to update trip: ${updErr.message}`);
+    }
+    return { status: 'updated', trip_id: input.trip_id, days_added: [], days_removed: [] };
+  }
+
+  const newRange = dateRange(newArrival, newDeparture);
+  if (newRange.length > 366) {
+    throw new WriteError('That date range is too long; a trip can span at most 366 days.');
+  }
+
+  // Date change: diff existing days against the new range.
+  const { data: existingDays, error: daysErr } = await supabase
+    .from('trip_days')
+    .select('day_id,date')
+    .eq('trip_id', input.trip_id);
+  if (daysErr) throw new WriteError(`Failed to load trip days: ${daysErr.message}`);
+
+  const { toAdd, toDrop } = planDateChange(
+    (existingDays ?? []).map((d) => d.date),
+    newRange,
+  );
+  const dropRows = (existingDays ?? []).filter((d) => toDrop.includes(d.date));
+
+  // Content pre-check on the dropped days.
+  if (dropRows.length > 0) {
+    const dropIds = dropRows.map((d) => d.day_id);
+    const [actRes, resRes, accRes] = await Promise.all([
+      supabase.from('day_activities').select('day_id,title').in('day_id', dropIds),
+      supabase.from('reservations').select('day_id,restaurant_name').in('day_id', dropIds),
+      supabase.from('accommodations_days').select('day_id').in('day_id', dropIds),
+    ]);
+    if (actRes.error) throw new WriteError(`Failed to check activities: ${actRes.error.message}`);
+    if (resRes.error) throw new WriteError(`Failed to check dining: ${resRes.error.message}`);
+    if (accRes.error) throw new WriteError(`Failed to check accommodations: ${accRes.error.message}`);
+
+    const report = buildDroppedDayReport(dropRows, {
+      activities: actRes.data ?? [],
+      reservations: resRes.data ?? [],
+      accommodationDays: accRes.data ?? [],
+    });
+    const hasContent = report.some((r) => r.total > 0);
+
+    if (hasContent && !input.confirm_remove_days) {
+      return {
+        status: 'confirmation_required',
+        message:
+          'This date change would remove days that still have items scheduled. ' +
+          'Nothing has been changed. Show the user the at_risk_days, and if they confirm, ' +
+          'call update_trip again with the same dates plus confirm_remove_days: true.',
+        at_risk_days: report.filter((r) => r.total > 0),
+      };
+    }
+  }
+
+  // Apply: add new days first.
+  if (toAdd.length > 0) {
+    const { error: addErr } = await supabase
+      .from('trip_days')
+      .insert(toAdd.map((date) => ({ trip_id: input.trip_id, date })));
+    if (addErr) throw new WriteError(`Failed to add new days: ${addErr.message}`);
+  }
+
+  // Cascade-delete dropped days' children, then the days themselves.
+  if (dropRows.length > 0) {
+    const dropIds = dropRows.map((d) => d.day_id);
+    // Explicit cleanup (don't rely on FK cascade config). Note: this removes
+    // accommodation NIGHT mappings on dropped days, not the accommodation rows.
+    for (const table of ['day_activities', 'reservations', 'accommodations_days'] as const) {
+      const { error: delErr } = await supabase.from(table).delete().in('day_id', dropIds);
+      if (delErr) throw new WriteError(`Failed to clear ${table}: ${delErr.message}`);
+    }
+    const { error: dropErr } = await supabase.from('trip_days').delete().in('day_id', dropIds);
+    if (dropErr) throw new WriteError(`Failed to remove dropped days: ${dropErr.message}`);
+  }
+
+  // Finally, apply the date change (+ any field updates) to the trip row.
+  const { error: updErr } = await supabase
+    .from('trips')
+    .update({ ...fieldUpdates, arrival_date: newArrival, departure_date: newDeparture })
+    .eq('trip_id', input.trip_id);
+  if (updErr) throw new WriteError(`Failed to update trip dates: ${updErr.message}`);
+
+  return { status: 'updated', trip_id: input.trip_id, days_added: toAdd, days_removed: toDrop };
 }

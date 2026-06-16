@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { summarizeCosts } from './budgetSummary';
-import { createTrip, WriteError } from './tripWrites';
+import { createTrip, updateTrip, WriteError } from './tripWrites';
 import type { UserContext } from './tripWrites';
 
 export function toolResult(payload: unknown) {
@@ -224,6 +224,34 @@ function registerWriteTools(
         return toolResult(result);
       } catch (err) {
         return toolError(err instanceof WriteError ? err.message : `Failed to create trip: ${String(err)}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'update_trip',
+    {
+      description:
+        "Update a trip's destination, budget, or dates. Changing dates adds new days automatically. If shrinking the range would drop days that still have items, the tool returns status 'confirmation_required' with the at-risk days and changes nothing; re-call with confirm_remove_days: true to delete those days and their items.",
+      inputSchema: {
+        trip_id: z.string().uuid().describe('Trip ID from list_trips'),
+        destination: z.string().min(1).optional(),
+        budget: z.number().positive().optional(),
+        arrival_date: dateField.optional(),
+        departure_date: dateField.optional(),
+        confirm_remove_days: z
+          .boolean()
+          .optional()
+          .describe('Set true to confirm deleting days (and their items) that fall outside the new range'),
+      },
+      annotations: WRITE_IDEMPOTENT,
+    },
+    async (args) => {
+      try {
+        const result = await updateTrip(supabase, args);
+        return toolResult(result);
+      } catch (err) {
+        return toolError(err instanceof WriteError ? err.message : `Failed to update trip: ${String(err)}`);
       }
     },
   );
