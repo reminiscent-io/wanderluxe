@@ -33,13 +33,32 @@ describe.skipIf(missing.length > 0)('mcp tools', () => {
       expect(client.getInstructions()).toContain('list_trips');
     }));
 
-  it('tools/list: exactly the three tools, all read-only annotated', () =>
+  it('tools/list: full read+write surface with correct annotations', () =>
     runCase('mcp', 'tools-list', async () => {
       const { tools } = await client.listTools();
-      expect(tools.map((t) => t.name).sort()).toEqual(['get_trip', 'get_trip_budget', 'list_trips']);
-      for (const tool of tools) {
-        expect(tool.annotations?.readOnlyHint, `${tool.name} readOnlyHint`).toBe(true);
-        expect(tool.annotations?.destructiveHint, `${tool.name} destructiveHint`).toBe(false);
+      const names = tools.map((t) => t.name).sort();
+
+      const READ = ['get_trip', 'get_trip_budget', 'list_trips'];
+      const WRITE = [
+        'add_accommodation', 'add_activity', 'add_dining', 'add_expense', 'add_transportation',
+        'create_trip',
+        'delete_accommodation', 'delete_activity', 'delete_dining', 'delete_expense', 'delete_transportation',
+        'update_accommodation', 'update_activity', 'update_dining', 'update_expense', 'update_transportation',
+        'update_trip',
+      ];
+      expect(names).toEqual([...READ, ...WRITE].sort());
+
+      const byName = new Map(tools.map((t) => [t.name, t]));
+      for (const name of READ) {
+        expect(byName.get(name)?.annotations?.readOnlyHint, `${name} readOnlyHint`).toBe(true);
+      }
+      for (const name of WRITE) {
+        expect(byName.get(name)?.annotations?.readOnlyHint, `${name} readOnlyHint`).toBe(false);
+      }
+      // Delete tools (and only they, among writes) are destructive-hinted.
+      const destructive = WRITE.filter((n) => n.startsWith('delete_'));
+      for (const name of destructive) {
+        expect(byName.get(name)?.annotations?.destructiveHint, `${name} destructiveHint`).toBe(true);
       }
     }));
 
