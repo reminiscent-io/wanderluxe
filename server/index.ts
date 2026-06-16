@@ -17,7 +17,12 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:5001'];
 
-const allowedOriginPatterns = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /wanderluxe\.io$/];
+// The wanderluxe.io pattern must be anchored so the domain is either the apex
+// (preceded by the scheme separator `//`) or a true subdomain (preceded by `.`).
+// A bare `wanderluxe\.io$` would also match attacker domains like
+// `evilwanderluxe.io`, which combined with `credentials: true` would leak
+// authenticated responses. (The replit patterns already require a leading `.`.)
+const allowedOriginPatterns = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /(\/\/|\.)wanderluxe\.io(:\d+)?$/];
 
 app.use(cors({
   origin: (origin, callback) => {
