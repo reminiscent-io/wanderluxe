@@ -28,7 +28,8 @@
     "evals:seed": "tsx evals/fixtures/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^2.1.116",
+    "@anthropic-ai/claude-code": "^2.1.178",
+    "@anthropic-ai/sdk": "^0.104.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
