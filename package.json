@@ -9,8 +9,8 @@
     "dev:server": "NODE_ENV=development npx tsx server/index.ts",
     "build": "npm run build:sitemap && vite build && npm run prerender && npm run build:server",
     "build:server": "node server/build.js",
-    "build:sitemap": "tsx scripts/generate-sitemap.ts",
-    "prerender": "tsx scripts/prerender.ts",
+    "build:sitemap": "npx tsx scripts/generate-sitemap.ts",
+    "prerender": "npx tsx scripts/prerender.ts",
     "build:dev": "vite build --mode development",
     "claude": "claude",
     "lint": "eslint .",
@@ -25,10 +25,11 @@
     "evals:chat": "vitest run --config evals/vitest.config.ts evals/chat",
     "evals:parsing": "vitest run --config evals/vitest.config.ts evals/parsing",
     "evals:mcp": "vitest run --config evals/vitest.config.ts evals/mcp",
-    "evals:seed": "tsx evals/fixtures/seed.ts"
+    "evals:seed": "npx tsx evals/fixtures/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^2.1.116",
+    "@anthropic-ai/claude-code": "^2.1.178",
+    "@anthropic-ai/sdk": "^0.104.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -150,7 +151,6 @@
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^15.15.0",
     "jsdom": "^24.1.3",
-    "lovable-tagger": "^1.3.0",
     "postcss": "^8.5.6",
     "supabase": "^2.106.0",
     "tailwindcss": "^3.4.19",

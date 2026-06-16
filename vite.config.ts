@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import fs from "node:fs";
 import { execSync } from "node:child_process";
-import { componentTagger } from "lovable-tagger";
 import pkg from "./package.json" with { type: "json" };
 
 // --- Version stamping ------------------------------------------------------
@@ -126,9 +125,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     versionStampPlugin(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
