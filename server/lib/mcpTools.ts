@@ -17,6 +17,7 @@ const READ_ONLY = { readOnlyHint: true, destructiveHint: false };
 const WRITE = { readOnlyHint: false, destructiveHint: false };
 const WRITE_IDEMPOTENT = { readOnlyHint: false, destructiveHint: false, idempotentHint: true };
 const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true };
+const DESTRUCTIVE_IDEMPOTENT = { readOnlyHint: false, destructiveHint: true, idempotentHint: true };
 
 const dateField = z
   .string()
@@ -236,7 +237,7 @@ function registerWriteTools(
       inputSchema: {
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
         destination: z.string().min(1).optional(),
-        budget: z.number().positive().optional(),
+        budget: z.number().positive().nullable().optional().describe('Set to null to clear the budget'),
         arrival_date: dateField.optional(),
         departure_date: dateField.optional(),
         confirm_remove_days: z
@@ -244,7 +245,7 @@ function registerWriteTools(
           .optional()
           .describe('Set true to confirm deleting days (and their items) that fall outside the new range'),
       },
-      annotations: WRITE_IDEMPOTENT,
+      annotations: DESTRUCTIVE_IDEMPOTENT,
     },
     async (args) => {
       try {

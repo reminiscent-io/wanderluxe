@@ -320,8 +320,12 @@ export async function updateTrip(
   // Cascade-delete dropped days' children, then the days themselves.
   if (dropRows.length > 0) {
     const dropIds = dropRows.map((d) => d.day_id);
-    // Explicit cleanup (don't rely on FK cascade config). Note: this removes
-    // accommodation NIGHT mappings on dropped days, not the accommodation rows.
+    // Explicit cleanup. day_activities/reservations would also cascade from
+    // trip_days, and their *_travelers junctions cascade from them — but
+    // accommodations_days.day_id is ON DELETE NO ACTION, so its night mappings
+    // MUST be deleted here before trip_days, or the trip_days delete fails.
+    // (This removes accommodation NIGHT mappings on dropped days, not the
+    // accommodation rows themselves.)
     for (const table of ['day_activities', 'reservations', 'accommodations_days'] as const) {
       const { error: delErr } = await supabase.from(table).delete().in('day_id', dropIds);
       if (delErr) throw new WriteError(`Failed to clear ${table}: ${delErr.message}`);
