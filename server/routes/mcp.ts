@@ -101,7 +101,7 @@ function buildMcpServer(auth: { token: string; userId: string; email: string | n
     { name: 'wanderluxe', version: '0.2.0' },
     {
       instructions:
-        "Tools for reading and managing the user's WanderLuxe trips. Call list_trips first to get trip IDs — they are not guessable. Add items by date (YYYY-MM-DD); the server resolves the matching trip day. Times are 24h HH:MM, local to the destination. To change a trip's dates in a way that would drop days containing items, the update_trip tool will first return the at-risk days for confirmation; re-call it with confirm_remove_days: true to proceed.",
+        "Tools for reading and managing the user's WanderLuxe trips. Call list_trips first to get trip IDs — they are not guessable. Add items by date (YYYY-MM-DD); the server resolves the matching trip day. Times are 24h HH:MM, local to the destination. When a tool's required fields are not established from the conversation, ask the user rather than guessing — especially dates and names. To change a trip's dates in a way that would drop days containing items, the update_trip tool will first return the at-risk days for confirmation; re-call it with confirm_remove_days: true to proceed.",
     },
   );
 
