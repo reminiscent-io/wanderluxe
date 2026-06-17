@@ -31,7 +31,17 @@ app.use((req, res, next) => {
   const needsHttps = proto === 'http';
   const needsApex = host.startsWith('www.');
   if (needsHttps || needsApex) {
-    return res.redirect(301, `https://${CANONICAL_HOST}${req.originalUrl}`);
+    // req.originalUrl is a server-local path, but treat it as untrusted: only
+    // forward a single-slash-rooted local path. Rejecting "//" and "/\"
+    // (protocol-relative forms) guarantees the 301 Location can never be coerced
+    // to a foreign host — closing the open-redirect vector (CodeQL js/server-side
+    // -unvalidated-url-redirection). Anything else collapses to the site root.
+    const requestPath = req.originalUrl;
+    const isLocalPath =
+      requestPath.startsWith('/') &&
+      !requestPath.startsWith('//') &&
+      !requestPath.startsWith('/\\');
+    return res.redirect(301, `https://${CANONICAL_HOST}${isLocalPath ? requestPath : '/'}`);
   }
   next();
 });
