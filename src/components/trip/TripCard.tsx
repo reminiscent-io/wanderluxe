@@ -2,7 +2,7 @@ import React, { memo, useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Share2, Users, Calendar, MapPin, LogOut, Check, X } from 'lucide-react';
 import { format, getYear, parseISO, differenceInDays, isToday, isTomorrow } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -77,6 +77,14 @@ interface TripCardProps {
   onAcceptInvite?: (shareId: string) => void;
   onLeaveSharedTrip?: (shareId: string) => void;
   isShared?: boolean;
+  /**
+   * When set, the card exposes a real, crawlable <a href> (client-side routed)
+   * instead of JS-only onClick navigation — used by the public Explore and
+   * homepage grids so search engines can discover the destination pages.
+   */
+  linkTo?: string;
+  /** Optional click handler for analytics; navigation itself is handled by linkTo. */
+  onNavigate?: () => void;
 }
 
 const TripCard = ({
@@ -85,7 +93,9 @@ const TripCard = ({
   onDelete,
   onAcceptInvite,
   onLeaveSharedTrip,
-  isShared
+  isShared,
+  linkTo,
+  onNavigate
 }: TripCardProps) => {
   const navigate = useNavigate();
   const [imageUrl, setImageUrl] = useState(trip.cover_image_url);
@@ -163,25 +173,53 @@ const TripCard = ({
 
   const tripStatus = computeTripStatus(trip.arrival_date, trip.departure_date);
 
+  // When linkTo is provided (public Explore + homepage grids), the card surfaces
+  // a real, crawlable <a href> via a stretched overlay link so search engines can
+  // follow it — instead of JS-only onClick navigation, which leaves the page
+  // orphaned. Pending invites have no destination yet, so they stay non-navigable.
+  const navigable = Boolean(linkTo) && !isPendingInvite;
+  const nights =
+    trip.arrival_date && trip.departure_date
+      ? Math.max(
+          1,
+          Math.round(
+            (parseISO(trip.departure_date).getTime() - parseISO(trip.arrival_date).getTime()) /
+              86_400_000,
+          ),
+        )
+      : null;
+  const linkLabel = `${trip.destination}${nights ? ` — ${nights} ${nights === 1 ? 'night' : 'nights'}` : ''}`;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if the hide button is clicked
+    if (e.defaultPrevented) return;
+    // Prevent navigation if weather modal is open or was just closed
+    if (weatherModalOpen || weatherModalJustClosed.current) return;
+    // For pending invites, require Accept/Decline first
+    if (isPendingInvite) return;
+    navigate(buildTripPath(trip));
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       whileHover={{ y: -4 }}
-      className="group"
+      className="group relative"
     >
+      {navigable && (
+        <Link
+          to={linkTo!}
+          onClick={onNavigate}
+          className="absolute inset-0 z-10 rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sunset-400 focus-visible:ring-offset-2"
+        >
+          <span className="sr-only">{linkLabel}</span>
+        </Link>
+      )}
       <Card
         className="overflow-hidden cursor-pointer border-0 shadow-warm-sm hover:shadow-warm transition-shadow duration-300 bg-card"
-        onClick={(e) => {
-          // Prevent navigation if the hide button is clicked
-          if (e.defaultPrevented) return;
-          // Prevent navigation if weather modal is open or was just closed
-          if (weatherModalOpen || weatherModalJustClosed.current) return;
-          // For pending invites, require Accept/Decline first
-          if (isPendingInvite) return;
-          navigate(buildTripPath(trip));
-        }}
+        onClick={navigable ? undefined : handleCardClick}
       >
         <div className="relative h-56 overflow-hidden">
           <motion.img

@@ -1,5 +1,6 @@
 import Hero from "../components/Hero";
 import WhySignUp from "../components/landing/WhySignUp";
+import FeaturedDestinations from "../components/landing/FeaturedDestinations";
 import SEO, { SITE_URL, DEFAULT_OG_IMAGE } from "../components/SEO";
 
 const Index = () => {
@@ -47,6 +48,7 @@ const Index = () => {
         jsonLd={jsonLd}
       />
       <Hero />
+      <FeaturedDestinations />
       <WhySignUp />
     </main>
   );

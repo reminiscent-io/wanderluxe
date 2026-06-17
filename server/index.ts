@@ -13,6 +13,29 @@ const app = express();
 // Trust first proxy (Replit, Cloudflare, etc.) for accurate rate limiting
 app.set('trust proxy', 1);
 
+// Canonical host enforcement: collapse www → apex and http → https for the
+// production domain with a single 301, so Google sees one canonical origin
+// (https://wanderluxe.io) instead of indexing duplicate homepage variants.
+// Scoped to wanderluxe.io only, so Replit preview domains, Cloud Run health
+// checks, and localhost are untouched. GET/HEAD only — never redirect API
+// writes or CORS preflight.
+const CANONICAL_HOST = 'wanderluxe.io';
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  // Strip any port so wanderluxe.io:443 still matches the canonical apex.
+  const host = (req.headers.host || '').toLowerCase().split(':')[0];
+  if (host !== CANONICAL_HOST && host !== `www.${CANONICAL_HOST}`) return next();
+  const proto = ((req.headers['x-forwarded-proto'] as string | undefined) || req.protocol || '')
+    .split(',')[0]
+    .trim();
+  const needsHttps = proto === 'http';
+  const needsApex = host.startsWith('www.');
+  if (needsHttps || needsApex) {
+    return res.redirect(301, `https://${CANONICAL_HOST}${req.originalUrl}`);
+  }
+  next();
+});
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:5001'];
@@ -146,7 +169,12 @@ function prerenderedFileFor(normalizedPath: string): string | null {
 
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
+  // redirect:false so canonical no-trailing-slash routes (e.g. /explore/{slug},
+  // matching the sitemap + <link rel="canonical">) fall through to the
+  // SPA/prerender handler below and are served directly, instead of serve-static
+  // 301-redirecting them to a trailing-slash variant the canonical tag never
+  // points to. Static asset files (with extensions) are unaffected.
+  app.use(express.static(distPath, { redirect: false }));
 
   // 301-redirect legacy /trip/{uuid} URLs for public trips to their /explore/{slug} canonical.
   app.get(/^\/trip\/[0-9a-fA-F-]+(?:\/.*)?$/, (req, res, next) => {
