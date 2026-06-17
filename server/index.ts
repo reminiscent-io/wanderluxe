@@ -31,16 +31,14 @@ app.use((req, res, next) => {
   const needsHttps = proto === 'http';
   const needsApex = host.startsWith('www.');
   if (needsHttps || needsApex) {
-    // req.originalUrl is a server-local path, but treat it as untrusted: only
-    // forward it when it is a single-slash-rooted local path. Rejecting "//host"
-    // and "/\host" (protocol-relative forms) inside the control-flow guard means
-    // the value reaching res.redirect can never carry a foreign host — closing
-    // the open redirect (CodeQL js/server-side-unvalidated-url-redirection).
-    const path = req.originalUrl;
-    if (path.startsWith('/') && !path.startsWith('//') && !path.startsWith('/\\')) {
-      return res.redirect(301, `https://${CANONICAL_HOST}${path}`);
-    }
-    return res.redirect(301, `https://${CANONICAL_HOST}/`);
+    // Re-anchor on the hardcoded canonical origin, carrying over only the path +
+    // query parsed from the (untrusted) request URL. Reading .pathname/.search
+    // discards any host the input might smuggle in — protocol-relative ("//host")
+    // and backslash forms resolve away, and an absolute URL's host is dropped — so
+    // the redirect target's host is never user-controlled. Closes CodeQL
+    // js/server-side-unvalidated-url-redirection.
+    const { pathname, search } = new URL(req.originalUrl, `https://${CANONICAL_HOST}`);
+    return res.redirect(301, `https://${CANONICAL_HOST}${pathname}${search}`);
   }
   next();
 });
