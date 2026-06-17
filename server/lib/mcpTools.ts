@@ -117,24 +117,24 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
         supabase
           .from('accommodations')
           .select(
-            'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,cost,currency',
+            'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid',
           )
           .eq('trip_id', trip_id),
         supabase
           .from('transportation')
           .select(
-            'id,type,provider,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency',
+            'id,type,provider,details,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency',
           )
           .eq('trip_id', trip_id)
           .order('start_date'),
         supabase
           .from('day_activities')
-          .select('id,day_id,title,description,start_time,end_time,location_address,cost,currency')
+          .select('id,day_id,title,description,start_time,end_time,location_address,location_phone,location_website,cost,currency,amount_paid,is_paid')
           .eq('trip_id', trip_id),
         supabase
           .from('reservations')
           .select(
-            'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency',
+            'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,phone_number,website,cost,currency,amount_paid,is_paid',
           )
           .eq('trip_id', trip_id),
       ]);
@@ -192,7 +192,7 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
         supabase.from('reservations').select('cost,currency,amount_paid,is_paid').eq('trip_id', trip_id),
         supabase
           .from('other_expenses')
-          .select('description,cost,currency,amount_paid,is_paid')
+          .select('description,date,cost,currency,amount_paid,is_paid')
           .eq('trip_id', trip_id),
       ]);
 
@@ -230,7 +230,7 @@ function registerWriteTools(
     'create_trip',
     {
       description:
-        'Create a new trip. Generates one day per date from arrival to departure (inclusive) and returns the new trip_id plus the generated day_dates, so you can add items right away without a separate read.',
+        'Create a new trip. Generates one day per date from arrival to departure (inclusive) and returns the new trip_id plus the generated day_dates, so you can add items right away without a separate read. Required: destination, arrival_date, and departure_date — if the traveler has not given specific arrival and departure dates, ask for them rather than inventing dates.',
       inputSchema: {
         destination: z.string().min(1).describe('Trip name / destination, e.g. "Paris, France"'),
         arrival_date: dateField.describe('First day of the trip (YYYY-MM-DD)'),
@@ -299,6 +299,8 @@ function registerWriteTools(
         end_time: timeField.optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
+        is_paid: z.boolean().optional().describe('Whether this item is fully paid'),
         location_address: z.string().optional(),
       },
       annotations: WRITE,
@@ -326,6 +328,8 @@ function registerWriteTools(
         end_time: timeField.optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
+        is_paid: z.boolean().optional().describe('Whether this item is fully paid'),
         location_address: z.string().optional(),
       },
       annotations: WRITE_IDEMPOTENT,
@@ -371,6 +375,8 @@ function registerWriteTools(
         notes: z.string().optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
+        is_paid: z.boolean().optional().describe('Whether this reservation is fully paid'),
       },
       annotations: WRITE,
     },
@@ -399,6 +405,8 @@ function registerWriteTools(
         notes: z.string().optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
+        is_paid: z.boolean().optional().describe('Whether this reservation is fully paid'),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -442,8 +450,11 @@ function registerWriteTools(
         checkout_time: timeField.optional(),
         hotel_phone: z.string().optional(),
         hotel_website: z.string().optional(),
+        hotel_details: z.string().optional().describe('Free-text notes about the stay (room type, booking notes, etc.)'),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
+        is_paid: z.boolean().optional().describe('Whether this stay is fully paid'),
       },
       annotations: WRITE,
     },
@@ -471,8 +482,11 @@ function registerWriteTools(
         checkout_time: timeField.optional(),
         hotel_phone: z.string().optional(),
         hotel_website: z.string().optional(),
+        hotel_details: z.string().optional().describe('Free-text notes about the stay (room type, booking notes, etc.)'),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
+        is_paid: z.boolean().optional().describe('Whether this stay is fully paid'),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -511,6 +525,7 @@ function registerWriteTools(
         type: transportTypeField,
         start_date: dateField,
         provider: z.string().optional(),
+        details: z.string().optional().describe('Free-text notes (terminal, gate, seat, baggage, etc.)'),
         flight_number: z.string().optional(),
         confirmation_number: z.string().optional(),
         departure_location: z.string().optional(),
@@ -542,6 +557,7 @@ function registerWriteTools(
         type: transportTypeField.optional(),
         start_date: dateField.optional(),
         provider: z.string().optional(),
+        details: z.string().optional().describe('Free-text notes (terminal, gate, seat, baggage, etc.)'),
         flight_number: z.string().optional(),
         confirmation_number: z.string().optional(),
         departure_location: z.string().optional(),
@@ -589,6 +605,7 @@ function registerWriteTools(
         description: z.string().min(1),
         cost: z.number().nonnegative(),
         currency: currencyField,
+        date: dateField.optional().describe('Date the expense occurred (YYYY-MM-DD)'),
         amount_paid: z.number().nonnegative().optional(),
         is_paid: z.boolean().optional(),
       },
@@ -613,6 +630,7 @@ function registerWriteTools(
         description: z.string().min(1).optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        date: dateField.optional().describe('Date the expense occurred (YYYY-MM-DD)'),
         amount_paid: z.number().nonnegative().optional(),
         is_paid: z.boolean().optional(),
       },
