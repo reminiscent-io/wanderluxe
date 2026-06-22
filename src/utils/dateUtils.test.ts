@@ -6,9 +6,35 @@ import {
   calculateDurationInDays,
   formatDateRange,
   formatNightsCount,
+  parseLocal,
 } from './dateUtils';
 
 describe('dateUtils', () => {
+  describe('parseLocal', () => {
+    it('parses date-only strings at local midnight (not UTC midnight)', () => {
+      const d = parseLocal('2026-06-22');
+      // Local calendar fields must match the input regardless of time zone.
+      expect(d.getFullYear()).toBe(2026);
+      expect(d.getMonth()).toBe(5); // June (0-indexed)
+      expect(d.getDate()).toBe(22);
+      expect(d.getHours()).toBe(0);
+      expect(d.getMinutes()).toBe(0);
+    });
+
+    it('keeps a trip current through the end of its departure day in local time', () => {
+      // Regression: `new Date("2026-06-22")` parses as UTC midnight, which in
+      // time zones behind UTC falls before local midnight today, dropping a
+      // current trip a day early. parseLocal anchors to local midnight so the
+      // inclusive departure-day comparison holds.
+      const today = new Date('2026-06-22T15:00:00'); // some moment on departure day, local
+      today.setHours(0, 0, 0, 0);
+      const departure = parseLocal('2026-06-22');
+      departure.setHours(0, 0, 0, 0);
+      expect(today <= departure).toBe(true);
+      expect(today >= departure).toBe(true);
+    });
+  });
+
   describe('formatDate', () => {
     it('should format a date string to display format', () => {
       expect(formatDate('2024-01-15')).toBe('Jan 15, 2024');

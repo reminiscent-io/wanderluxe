@@ -2,7 +2,7 @@
 import { format, parse, parseISO, addDays, startOfDay, differenceInDays } from 'date-fns';
 
 // Parse a date string as local time (avoids UTC shift from `new Date()`)
-const parseLocal = (dateString: string): Date => {
+export const parseLocal = (dateString: string): Date => {
   // Date-only strings like "2024-01-15" → parse as local time
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     return parse(dateString, 'yyyy-MM-dd', new Date());
