@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { acceptTripShare, getSharedTrips, removeTripShare } from '@/services/tripSharingService';
 import { Share2, EyeOff } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
+import { parseLocal } from '@/utils/dateUtils';
 
 import { ActiveTripCard, NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { useTravelStats } from '@/hooks/useTravelStats';
@@ -177,21 +178,29 @@ const MyTrips = () => {
 
   // Utility functions to categorize trips
   const getTripCategory = (trip: Trip): 'upcoming' | 'current' | 'past' => {
+    // Compare date-only values in the viewer's local time zone. The stored
+    // arrival/departure values are date-only strings (YYYY-MM-DD); parsing them
+    // with `new Date()` would treat them as UTC midnight and shift the trip a
+    // day in time zones behind UTC, so a current trip would drop off a day
+    // early. parseLocal anchors them to local midnight, making this time-zone
+    // agnostic and inclusive through the end of the departure day.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const arrivalDate = new Date(trip.arrival_date || '');
-    const departureDate = new Date(trip.departure_date || '');
-    
+    const arrivalDate = parseLocal(trip.arrival_date || '');
+    arrivalDate.setHours(0, 0, 0, 0);
+    const departureDate = parseLocal(trip.departure_date || '');
+    departureDate.setHours(0, 0, 0, 0);
+
     // Current trip: today is between arrival and departure (inclusive)
     if (today >= arrivalDate && today <= departureDate) {
       return 'current';
     }
-    
+
     // Upcoming trip: arrival date is in the future
     if (arrivalDate > today) {
       return 'upcoming';
     }
-    
+
     // Past trip: departure date is in the past
     return 'past';
   };
