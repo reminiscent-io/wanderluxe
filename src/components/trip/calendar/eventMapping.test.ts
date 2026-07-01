@@ -7,6 +7,8 @@ import {
   mapAccommodationToEvent,
   mapTransportationToEvent,
   transportationTitle,
+  buildDropPatch,
+  isDateWithinTripRange,
 } from './eventMapping';
 import type { DayActivity, RestaurantReservation, HotelStay, Transportation } from '@/types/trip';
 
@@ -107,5 +109,50 @@ describe('mapTransportationToEvent', () => {
   });
   it('titles by provider when locations are absent', () => {
     expect(transportationTitle({ ...base, departure_location: null, arrival_location: null })).toBe('Flight · AF');
+  });
+});
+
+describe('buildDropPatch', () => {
+  it('retimes a timed activity and re-derives its date', () => {
+    const patch = buildDropPatch({
+      eventId: 'activity:a1',
+      newStart: new Date(2026, 6, 2, 9, 15),   // 2026-07-02 09:15 local
+      newEnd: new Date(2026, 6, 2, 10, 0),
+      allDay: false,
+    });
+    expect(patch).toEqual({ entityType: 'activity', recordId: 'a1', date: '2026-07-02', startTime: '09:15', endTime: '10:00' });
+  });
+  it('moves an untimed activity to a new date with null times', () => {
+    const patch = buildDropPatch({ eventId: 'activity:a1', newStart: new Date(2026, 6, 5), newEnd: null, allDay: true });
+    expect(patch).toEqual({ entityType: 'activity', recordId: 'a1', date: '2026-07-05', startTime: null, endTime: null });
+  });
+  it('retimes dining to a point in time', () => {
+    const patch = buildDropPatch({ eventId: 'dining:r1', newStart: new Date(2026, 6, 2, 19, 30), newEnd: null, allDay: false });
+    expect(patch).toEqual({ entityType: 'dining', recordId: 'r1', date: '2026-07-02', time: '19:30' });
+  });
+  it('converts an all-day accommodation span back to inclusive checkout (exclusive end - 1)', () => {
+    const patch = buildDropPatch({
+      eventId: 'accommodation:s1',
+      newStart: new Date(2026, 6, 1),
+      newEnd: new Date(2026, 6, 5),   // exclusive
+      allDay: true,
+    });
+    expect(patch).toEqual({ entityType: 'accommodation', recordId: 's1', checkinDate: '2026-07-01', checkoutDate: '2026-07-04' });
+  });
+  it('moves a multi-day transportation span (exclusive end - 1)', () => {
+    const patch = buildDropPatch({ eventId: 'transportation:tr1', newStart: new Date(2026, 6, 1), newEnd: new Date(2026, 6, 3), allDay: true });
+    expect(patch).toEqual({ entityType: 'transportation', recordId: 'tr1', startDate: '2026-07-01', startTime: null, endDate: '2026-07-02', endTime: null });
+  });
+});
+
+describe('isDateWithinTripRange', () => {
+  it('accepts dates on or within the inclusive range', () => {
+    expect(isDateWithinTripRange('2026-06-30', '2026-06-30', '2026-07-06')).toBe(true);
+    expect(isDateWithinTripRange('2026-07-06', '2026-06-30', '2026-07-06')).toBe(true);
+    expect(isDateWithinTripRange('2026-07-03', '2026-06-30', '2026-07-06')).toBe(true);
+  });
+  it('rejects dates before or after the range', () => {
+    expect(isDateWithinTripRange('2026-06-29', '2026-06-30', '2026-07-06')).toBe(false);
+    expect(isDateWithinTripRange('2026-07-07', '2026-06-30', '2026-07-06')).toBe(false);
   });
 });

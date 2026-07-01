@@ -112,3 +112,51 @@ export function mapTransportationToEvent(t: Transportation): EventInput | null {
     extendedProps: { entityType: 'transportation', record: t },
   };
 }
+
+export type EntityDropPatch =
+  | { entityType: 'activity'; recordId: string; date: string; startTime: string | null; endTime: string | null }
+  | { entityType: 'dining'; recordId: string; date: string; time: string | null }
+  | { entityType: 'accommodation'; recordId: string; checkinDate: string; checkoutDate: string }
+  | { entityType: 'transportation'; recordId: string; startDate: string; startTime: string | null; endDate: string; endTime: string | null };
+
+export interface DropInput {
+  eventId: string;
+  newStart: Date;
+  newEnd: Date | null;
+  allDay: boolean;
+}
+
+const fmtDate = (d: Date) => format(d, 'yyyy-MM-dd');
+const fmtTime = (d: Date) => format(d, 'HH:mm');
+
+export function buildDropPatch(input: DropInput): EntityDropPatch {
+  const { entityType, recordId } = parseEventId(input.eventId);
+  switch (entityType) {
+    case 'activity':
+      return input.allDay
+        ? { entityType, recordId, date: fmtDate(input.newStart), startTime: null, endTime: null }
+        : { entityType, recordId, date: fmtDate(input.newStart), startTime: fmtTime(input.newStart), endTime: input.newEnd ? fmtTime(input.newEnd) : null };
+    case 'dining':
+      return { entityType, recordId, date: fmtDate(input.newStart), time: input.allDay ? null : fmtTime(input.newStart) };
+    case 'accommodation': {
+      const checkoutExclusive = input.newEnd ?? addDays(input.newStart, 1);
+      return { entityType, recordId, checkinDate: fmtDate(input.newStart), checkoutDate: fmtDate(addDays(checkoutExclusive, -1)) };
+    }
+    case 'transportation': {
+      if (input.allDay) {
+        const endExclusive = input.newEnd ?? addDays(input.newStart, 1);
+        return { entityType, recordId, startDate: fmtDate(input.newStart), startTime: null, endDate: fmtDate(addDays(endExclusive, -1)), endTime: null };
+      }
+      return {
+        entityType, recordId,
+        startDate: fmtDate(input.newStart), startTime: fmtTime(input.newStart),
+        endDate: fmtDate(input.newEnd ?? input.newStart), endTime: input.newEnd ? fmtTime(input.newEnd) : null,
+      };
+    }
+  }
+}
+
+/** Inclusive range check on YYYY-MM-DD strings (lexicographic order == chronological order). */
+export function isDateWithinTripRange(date: string, startInclusive: string, endInclusive: string): boolean {
+  return date >= startInclusive && date <= endInclusive;
+}
