@@ -39,4 +39,28 @@ describe('useCalendarFeed', () => {
     expect(typeof payload.calendar_feed_token).toBe('string');
     expect(payload.calendar_feed_token.length).toBeGreaterThan(10);
   });
+
+  it('regenerates a different token on reset (revocation guarantee)', async () => {
+    single.mockResolvedValue({ data: { calendar_feed_enabled: true, calendar_feed_token: 'old-token' }, error: null });
+    const { result } = renderHook(() => useCalendarFeed('t1'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => { await result.current.reset(); });
+    expect(updateFn).toHaveBeenCalledTimes(1);
+    const payload = updateFn.mock.calls[0][0];
+    expect(payload.calendar_feed_enabled).toBe(true);
+    expect(typeof payload.calendar_feed_token).toBe('string');
+    expect(payload.calendar_feed_token).not.toBe('old-token');
+    expect(payload.calendar_feed_token.length).toBeGreaterThan(10);
+  });
+
+  it('disables the feed without clearing the token', async () => {
+    single.mockResolvedValue({ data: { calendar_feed_enabled: true, calendar_feed_token: 'tok' }, error: null });
+    const { result } = renderHook(() => useCalendarFeed('t1'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => { await result.current.disable(); });
+    expect(updateFn).toHaveBeenCalledTimes(1);
+    const payload = updateFn.mock.calls[0][0];
+    expect(payload.calendar_feed_enabled).toBe(false);
+    expect('calendar_feed_token' in payload).toBe(false);
+  });
 });

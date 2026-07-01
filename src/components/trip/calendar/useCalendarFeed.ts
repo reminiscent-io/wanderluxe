@@ -5,8 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 interface FeedRow { calendar_feed_enabled: boolean | null; calendar_feed_token: string | null; }
 
 function genToken(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID().replace(/-/g, '');
-  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID().replaceAll('-', '');
+  // Fallback for secure contexts lacking randomUUID: use the CSPRNG, never Math.random,
+  // since this token is the sole gate on the public feed.
+  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  throw new Error('No secure random source available to generate a calendar feed token');
 }
 
 export function useCalendarFeed(tripId: string) {
@@ -31,9 +38,12 @@ export function useCalendarFeed(tripId: string) {
   const token = data?.calendar_feed_token ?? null;
 
   const host = typeof window !== 'undefined' ? window.location.host : '';
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const path = token ? `/api/trips/${tripId}/calendar.ics?token=${token}` : null;
+  // Subscribe uses webcal:// (calendar apps map it to https). Download follows
+  // the current origin's scheme so it also works over http in local dev.
   const subscribeUrl = path && host ? `webcal://${host}${path}` : null;
-  const downloadUrl = path && host ? `https://${host}${path}` : null;
+  const downloadUrl = path && origin ? `${origin}${path}` : null;
 
   const patch = useCallback(async (values: Partial<FeedRow>) => {
     const { error } = await supabase.from('trips').update(values).eq('trip_id', tripId);

@@ -238,10 +238,12 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               <Share2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Share</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setIsSyncSheetOpen(true)}>
-              <CalendarPlus className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Add to calendar</span>
-            </Button>
+            {canEdit && (
+              <Button variant="outline" size="sm" onClick={() => setIsSyncSheetOpen(true)}>
+                <CalendarPlus className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Add to calendar</span>
+              </Button>
+            )}
             <ExportPdfButton tripId={tripId} className="" />
           </div>
         </header>
@@ -252,7 +254,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           open={isShareDialogOpen}
           onOpenChange={setIsShareDialogOpen}
         />
-        <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
+        {canEdit && (
+          <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
+        )}
         {itineraryView === 'calendar' ? (
           <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Loading calendar…</div>}>
             <TripCalendarView
