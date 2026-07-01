@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,7 +11,7 @@ function genToken(): string {
 
 export function useCalendarFeed(tripId: string) {
   const queryClient = useQueryClient();
-  const queryKey = ['calendar-feed', tripId];
+  const queryKey = useMemo(() => ['calendar-feed', tripId], [tripId]);
 
   const { data, isLoading } = useQuery({
     queryKey,
@@ -39,7 +39,7 @@ export function useCalendarFeed(tripId: string) {
     const { error } = await supabase.from('trips').update(values).eq('trip_id', tripId);
     if (error) throw error;
     await queryClient.invalidateQueries({ queryKey });
-  }, [tripId, queryClient]);
+  }, [tripId, queryClient, queryKey]);
 
   const enable = useCallback(async () => {
     await patch({ calendar_feed_enabled: true, calendar_feed_token: token ?? genToken() });
