@@ -1152,6 +1152,8 @@ export type Database = {
         Row: {
           arrival_date: string
           budget: number | null
+          calendar_feed_enabled: boolean
+          calendar_feed_token: string | null
           cover_image_photographer: string | null
           cover_image_photographer_username: string | null
           cover_image_position: string | null
@@ -1170,6 +1172,8 @@ export type Database = {
         Insert: {
           arrival_date: string
           budget?: number | null
+          calendar_feed_enabled?: boolean
+          calendar_feed_token?: string | null
           cover_image_photographer?: string | null
           cover_image_photographer_username?: string | null
           cover_image_position?: string | null
@@ -1188,6 +1192,8 @@ export type Database = {
         Update: {
           arrival_date?: string
           budget?: number | null
+          calendar_feed_enabled?: boolean
+          calendar_feed_token?: string | null
           cover_image_photographer?: string | null
           cover_image_photographer_username?: string | null
           cover_image_position?: string | null
