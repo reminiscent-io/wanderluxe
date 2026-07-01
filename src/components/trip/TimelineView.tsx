@@ -6,7 +6,8 @@ import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
 import ShareTripDialog from './ShareTripDialog';
 import { Button } from '@/components/ui/button';
-import { Share2, CalendarDays, ListTree } from 'lucide-react';
+import { Share2, CalendarDays, ListTree, CalendarPlus } from 'lucide-react';
+import CalendarSyncSheet from './calendar/CalendarSyncSheet';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
@@ -53,6 +54,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
   const [itineraryView, setItineraryView] = useState<'timeline' | 'calendar'>('timeline');
 
   // Fetch weather for the trip destination (only for current/upcoming trips)
@@ -236,6 +238,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               <Share2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Share</span>
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsSyncSheetOpen(true)}>
+              <CalendarPlus className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Add to calendar</span>
+            </Button>
             <ExportPdfButton tripId={tripId} className="" />
           </div>
         </header>
@@ -246,6 +252,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           open={isShareDialogOpen}
           onOpenChange={setIsShareDialogOpen}
         />
+        <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
         {itineraryView === 'calendar' ? (
           <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Loading calendar…</div>}>
             <TripCalendarView
