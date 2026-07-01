@@ -51,7 +51,9 @@ export function buildTripCalendarICS(input: FeedInput): string {
       cal.createEvent({
         id: `activity-${a.id}@wanderluxe.io`,
         start: floatingDate(a.date, a.start_time),
-        end: a.end_time ? floatingDate(a.date, a.end_time) : floatingDate(a.date, a.start_time),
+        // Omit end (rather than duplicate start) when unknown: a zero-duration
+        // DTEND==DTSTART violates RFC 5545; ical-generator emits DTSTART alone.
+        end: a.end_time ? floatingDate(a.date, a.end_time) : undefined,
         floating: true,
         summary: a.title,
         location: a.location_address ?? undefined,
@@ -65,7 +67,7 @@ export function buildTripCalendarICS(input: FeedInput): string {
   for (const r of input.reservations) {
     if (!r.date) continue;
     if (r.reservation_time) {
-      cal.createEvent({ id: `dining-${r.id}@wanderluxe.io`, start: floatingDate(r.date, r.reservation_time), end: floatingDate(r.date, r.reservation_time), floating: true, summary: r.restaurant_name, location: r.address ?? undefined, description: r.notes ?? undefined });
+      cal.createEvent({ id: `dining-${r.id}@wanderluxe.io`, start: floatingDate(r.date, r.reservation_time), floating: true, summary: r.restaurant_name, location: r.address ?? undefined, description: r.notes ?? undefined });
     } else {
       cal.createEvent({ id: `dining-${r.id}@wanderluxe.io`, start: dateOnly(r.date), end: plusOneDay(r.date), allDay: true, summary: r.restaurant_name, location: r.address ?? undefined, description: r.notes ?? undefined });
     }
@@ -79,8 +81,12 @@ export function buildTripCalendarICS(input: FeedInput): string {
   for (const t of input.transportation) {
     if (!t.start_date) continue;
     const sameDay = !t.end_date || t.end_date === t.start_date;
-    if (sameDay && t.start_time) {
-      cal.createEvent({ id: `transportation-${t.id}@wanderluxe.io`, start: floatingDate(t.start_date, t.start_time), end: t.end_time ? floatingDate(t.start_date, t.end_time) : floatingDate(t.start_date, t.start_time), floating: true, summary: transportTitle(t), location: t.departure_location ?? undefined, description: t.details ?? undefined });
+    // Emit a timed event whenever we have a start time AND a real end (an end
+    // time, possibly on a later day) or the leg is same-day. This keeps the
+    // departure/arrival times for overnight/red-eye legs instead of collapsing
+    // them into a vague all-day block.
+    if (t.start_time && (t.end_time || sameDay)) {
+      cal.createEvent({ id: `transportation-${t.id}@wanderluxe.io`, start: floatingDate(t.start_date, t.start_time), end: t.end_time ? floatingDate(t.end_date ?? t.start_date, t.end_time) : undefined, floating: true, summary: transportTitle(t), location: t.departure_location ?? undefined, description: t.details ?? undefined });
     } else {
       cal.createEvent({ id: `transportation-${t.id}@wanderluxe.io`, start: dateOnly(t.start_date), end: plusOneDay(t.end_date ?? t.start_date), allDay: true, summary: transportTitle(t), location: t.departure_location ?? undefined, description: t.details ?? undefined });
     }

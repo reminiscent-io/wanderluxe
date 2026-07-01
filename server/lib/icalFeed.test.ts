@@ -41,6 +41,30 @@ describe('buildTripCalendarICS', () => {
   });
 });
 
+describe('buildTripCalendarICS edge cases', () => {
+  it('keeps departure/arrival times for a multi-day (overnight) transport leg', () => {
+    const ics = buildTripCalendarICS({
+      trip: { destination: 'Test' },
+      activities: [], reservations: [], accommodations: [],
+      transportation: [{ id: 'tn', type: 'train', start_date: '2026-07-01', start_time: '22:00:00', end_date: '2026-07-02', end_time: '08:00:00', departure_location: 'Paris', arrival_location: 'Nice', provider: null, details: null }],
+    });
+    expect(ics).toContain('DTSTART:20260701T220000');
+    expect(ics).toContain('DTEND:20260702T080000');
+    expect(ics).not.toContain('VALUE=DATE:20260701');
+  });
+
+  it('omits DTEND for a timed event with no end time', () => {
+    const ics = buildTripCalendarICS({
+      trip: { destination: 'Test' },
+      activities: [],
+      reservations: [{ id: 'ro', restaurant_name: 'Dinner', date: '2026-07-01', reservation_time: '20:00:00', address: null, notes: null }],
+      accommodations: [], transportation: [],
+    });
+    expect(ics).toContain('DTSTART:20260701T200000');
+    expect(ics).not.toContain('DTEND');
+  });
+});
+
 describe('isFeedAuthorized', () => {
   it('allows a matching enabled token', () => {
     expect(isFeedAuthorized({ calendar_feed_enabled: true, calendar_feed_token: 'abc' }, 'abc')).toBe(true);

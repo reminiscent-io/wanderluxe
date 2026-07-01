@@ -40,6 +40,13 @@ router.get('/api/trips/:tripId/calendar.ics', async (req: Request, res: Response
       sb.from('reservations').select('id, restaurant_name, day_id, reservation_time, address, notes').eq('trip_id', tripId),
     ]);
 
+    // A PostgREST/DB error resolves (it does not reject) as { data: null, error },
+    // so surface any child-query failure as a 500 instead of silently emitting a
+    // partial feed (e.g. a failed trip_days query would drop every timed item).
+    for (const r of [daysRes, actsRes, accRes, transRes, resvRes]) {
+      if (r.error) throw r.error;
+    }
+
     const dayDate = new Map<string, string>((daysRes.data ?? []).map((d: { day_id: string; date: string }) => [d.day_id, String(d.date).slice(0, 10)]));
 
     const input: FeedInput = {
@@ -60,7 +67,9 @@ router.get('/api/trips/:tripId/calendar.ics', async (req: Request, res: Response
 
     const ics = buildTripCalendarICS(input);
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // 'private': the feed is a per-trip capability keyed by a secret token, so
+    // shared caches must not retain it (keeps token reset/revocation effective).
+    res.setHeader('Cache-Control', 'private, max-age=3600');
     res.setHeader('Content-Disposition', 'inline; filename="trip.ics"');
     return res.status(200).send(ics);
   } catch (e) {
