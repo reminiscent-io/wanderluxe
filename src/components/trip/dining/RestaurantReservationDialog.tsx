@@ -123,7 +123,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0 z-40">
           <DialogTitle>{title || (finalInitialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
           <DialogDescription className="sr-only">

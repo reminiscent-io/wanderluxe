@@ -133,6 +133,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        mobileSheet
         // Keep the dialog open on outside clicks while editing
         onPointerDownOutside={(e) => e.preventDefault()}
       >

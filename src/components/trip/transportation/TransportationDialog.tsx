@@ -138,7 +138,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {initialData ? 'Edit Transportation' : 'Add Transportation'}
