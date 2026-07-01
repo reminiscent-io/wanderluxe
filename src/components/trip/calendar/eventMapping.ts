@@ -1,5 +1,6 @@
 import type { EventInput } from '@fullcalendar/core';
-import type { DayActivity, RestaurantReservation } from '@/types/trip';
+import { addDays, format, parse } from 'date-fns';
+import type { DayActivity, RestaurantReservation, HotelStay, Transportation } from '@/types/trip';
 
 export type CalendarEntityType = 'activity' | 'dining' | 'accommodation' | 'transportation';
 
@@ -61,5 +62,53 @@ export function mapReservationToEvent(reservation: RestaurantReservation, dayDat
     start: combineDateTime(dayDate, reservation.reservation_time),
     allDay: false,
     extendedProps: { entityType: 'dining', record: reservation },
+  };
+}
+
+/** Exclusive all-day end: last inclusive date + 1 day, as YYYY-MM-DD. */
+function exclusiveEnd(lastInclusiveDate: string): string {
+  return format(addDays(parse(lastInclusiveDate, 'yyyy-MM-dd', new Date()), 1), 'yyyy-MM-dd');
+}
+
+export function transportationTitle(t: Transportation): string {
+  const label = t.type ? t.type.charAt(0).toUpperCase() + t.type.slice(1) : 'Transport';
+  if (t.departure_location && t.arrival_location) {
+    return `${label}: ${t.departure_location} to ${t.arrival_location}`;
+  }
+  return t.provider ? `${label} · ${t.provider}` : label;
+}
+
+export function mapAccommodationToEvent(stay: HotelStay): EventInput | null {
+  if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return null;
+  return {
+    id: makeEventId('accommodation', stay.stay_id),
+    title: stay.hotel,
+    start: stay.hotel_checkin_date,
+    end: exclusiveEnd(stay.hotel_checkout_date),
+    allDay: true,
+    extendedProps: { entityType: 'accommodation', record: stay },
+  };
+}
+
+export function mapTransportationToEvent(t: Transportation): EventInput | null {
+  if (!t.start_date) return null;
+  const sameDay = !t.end_date || t.end_date === t.start_date;
+  if (sameDay && t.start_time) {
+    return {
+      id: makeEventId('transportation', t.id),
+      title: transportationTitle(t),
+      start: combineDateTime(t.start_date, t.start_time),
+      end: t.end_time ? combineDateTime(t.start_date, t.end_time) : undefined,
+      allDay: false,
+      extendedProps: { entityType: 'transportation', record: t },
+    };
+  }
+  return {
+    id: makeEventId('transportation', t.id),
+    title: transportationTitle(t),
+    start: t.start_date,
+    end: exclusiveEnd(t.end_date ?? t.start_date),
+    allDay: true,
+    extendedProps: { entityType: 'transportation', record: t },
   };
 }

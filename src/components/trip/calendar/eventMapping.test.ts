@@ -4,8 +4,11 @@ import {
   parseEventId,
   mapActivityToEvent,
   mapReservationToEvent,
+  mapAccommodationToEvent,
+  mapTransportationToEvent,
+  transportationTitle,
 } from './eventMapping';
-import type { DayActivity, RestaurantReservation } from '@/types/trip';
+import type { DayActivity, RestaurantReservation, HotelStay, Transportation } from '@/types/trip';
 
 const baseActivity: DayActivity = {
   id: 'a1', day_id: 'd1', trip_id: 't1', title: 'Louvre',
@@ -59,5 +62,50 @@ describe('mapReservationToEvent', () => {
   it('maps an untimed reservation to an all-day chip', () => {
     const e = mapReservationToEvent({ ...res, reservation_time: null }, '2026-07-01');
     expect(e).toMatchObject({ id: 'dining:r1', start: '2026-07-01', allDay: true });
+  });
+});
+
+describe('mapAccommodationToEvent', () => {
+  const stay: HotelStay = {
+    stay_id: 's1', trip_id: 't1', hotel: 'Hotel Lutetia',
+    hotel_checkin_date: '2026-06-30', hotel_checkout_date: '2026-07-03',
+    checkin_time: '15:00', checkout_time: '11:00',
+    hotel_details: null, hotel_url: null, cost: null, currency: null,
+    hotel_address: null, hotel_phone: null, hotel_place_id: null, hotel_website: null, created_at: '',
+  };
+  it('spans check-in to check-out inclusive via exclusive end (+1 day)', () => {
+    const e = mapAccommodationToEvent(stay);
+    expect(e).toMatchObject({ id: 'accommodation:s1', title: 'Hotel Lutetia', allDay: true, start: '2026-06-30', end: '2026-07-04' });
+    expect(e?.extendedProps).toMatchObject({ entityType: 'accommodation', record: stay });
+  });
+  it('returns null when dates are missing', () => {
+    expect(mapAccommodationToEvent({ ...stay, hotel_checkin_date: '' })).toBeNull();
+  });
+});
+
+describe('mapTransportationToEvent', () => {
+  const base: Transportation = {
+    id: 'tr1', trip_id: 't1', type: 'flight', provider: 'AF',
+    details: null, confirmation_number: null,
+    start_date: '2026-06-30', start_time: '09:00:00',
+    end_date: '2026-06-30', end_time: '11:30:00',
+    departure_location: 'JFK', arrival_location: 'CDG',
+    cost: null, currency: null, is_paid: false, created_at: '',
+  };
+  it('renders a same-day timed flight as a time block', () => {
+    const e = mapTransportationToEvent(base);
+    expect(e).toMatchObject({ id: 'transportation:tr1', allDay: false, start: '2026-06-30T09:00:00', end: '2026-06-30T11:30:00' });
+    expect(e?.title).toBe('Flight: JFK to CDG');
+  });
+  it('renders a multi-day trip as an all-day span with exclusive end', () => {
+    const e = mapTransportationToEvent({ ...base, end_date: '2026-07-02' });
+    expect(e).toMatchObject({ allDay: true, start: '2026-06-30', end: '2026-07-03' });
+  });
+  it('renders an all-day span when a same-day item has no start time', () => {
+    const e = mapTransportationToEvent({ ...base, start_time: null, end_time: null });
+    expect(e).toMatchObject({ allDay: true, start: '2026-06-30', end: '2026-07-01' });
+  });
+  it('titles by provider when locations are absent', () => {
+    expect(transportationTitle({ ...base, departure_location: null, arrival_location: null })).toBe('Flight · AF');
   });
 });
