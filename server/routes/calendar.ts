@@ -24,7 +24,7 @@ router.get('/api/trips/:tripId/calendar.ics', async (req: Request, res: Response
 
     const { data: trip, error } = await sb
       .from('trips')
-      .select('destination, calendar_feed_token, calendar_feed_enabled')
+      .select('destination, calendar_feed_token, calendar_feed_enabled, timezone')
       .eq('trip_id', tripId)
       .maybeSingle();
     if (error) throw error;
@@ -34,10 +34,10 @@ router.get('/api/trips/:tripId/calendar.ics', async (req: Request, res: Response
 
     const [daysRes, actsRes, accRes, transRes, resvRes] = await Promise.all([
       sb.from('trip_days').select('day_id, date').eq('trip_id', tripId),
-      sb.from('day_activities').select('id, title, day_id, start_time, end_time, description, location_address').eq('trip_id', tripId),
+      sb.from('day_activities').select('id, title, day_id, start_time, end_time, description, location_address, timezone').eq('trip_id', tripId),
       sb.from('accommodations').select('stay_id, hotel, hotel_checkin_date, hotel_checkout_date, hotel_address, hotel_details').eq('trip_id', tripId),
-      sb.from('transportation').select('id, type, start_date, start_time, end_date, end_time, departure_location, arrival_location, provider, details').eq('trip_id', tripId),
-      sb.from('reservations').select('id, restaurant_name, day_id, reservation_time, address, notes').eq('trip_id', tripId),
+      sb.from('transportation').select('id, type, start_date, start_time, end_date, end_time, departure_location, arrival_location, provider, details, departure_timezone, arrival_timezone').eq('trip_id', tripId),
+      sb.from('reservations').select('id, restaurant_name, day_id, reservation_time, address, notes, timezone').eq('trip_id', tripId),
     ]);
 
     // A PostgREST/DB error resolves (it does not reject) as { data: null, error },
@@ -50,18 +50,18 @@ router.get('/api/trips/:tripId/calendar.ics', async (req: Request, res: Response
     const dayDate = new Map<string, string>((daysRes.data ?? []).map((d: { day_id: string; date: string }) => [d.day_id, String(d.date).slice(0, 10)]));
 
     const input: FeedInput = {
-      trip: { destination: trip.destination ?? 'Trip' },
+      trip: { destination: trip.destination ?? 'Trip', timezone: trip.timezone ?? null },
       activities: (actsRes.data ?? [])
-        .map((a: Tables<'day_activities'>) => ({ id: a.id, title: a.title, date: dayDate.get(a.day_id) ?? '', start_time: a.start_time, end_time: a.end_time, description: a.description, location_address: a.location_address }))
+        .map((a: Tables<'day_activities'>) => ({ id: a.id, title: a.title, date: dayDate.get(a.day_id) ?? '', start_time: a.start_time, end_time: a.end_time, description: a.description, location_address: a.location_address, timezone: a.timezone }))
         .filter((a) => a.date),
       reservations: (resvRes.data ?? [])
-        .map((r: Tables<'reservations'>) => ({ id: r.id, restaurant_name: r.restaurant_name, date: dayDate.get(r.day_id) ?? '', reservation_time: r.reservation_time, address: r.address, notes: r.notes }))
+        .map((r: Tables<'reservations'>) => ({ id: r.id, restaurant_name: r.restaurant_name, date: dayDate.get(r.day_id) ?? '', reservation_time: r.reservation_time, address: r.address, notes: r.notes, timezone: r.timezone }))
         .filter((r) => r.date),
       accommodations: (accRes.data ?? [])
         .map((s: Tables<'accommodations'>) => ({ stay_id: s.stay_id, hotel: s.hotel ?? 'Accommodation', hotel_checkin_date: s.hotel_checkin_date ?? '', hotel_checkout_date: s.hotel_checkout_date ?? '', hotel_address: s.hotel_address, hotel_details: s.hotel_details }))
         .filter((s) => s.hotel_checkin_date && s.hotel_checkout_date),
       transportation: (transRes.data ?? [])
-        .map((t: Tables<'transportation'>) => ({ id: t.id, type: t.type, start_date: t.start_date, start_time: t.start_time, end_date: t.end_date, end_time: t.end_time, departure_location: t.departure_location, arrival_location: t.arrival_location, provider: t.provider, details: t.details }))
+        .map((t: Tables<'transportation'>) => ({ id: t.id, type: t.type, start_date: t.start_date, start_time: t.start_time, end_date: t.end_date, end_time: t.end_time, departure_location: t.departure_location, arrival_location: t.arrival_location, provider: t.provider, details: t.details, departure_timezone: t.departure_timezone, arrival_timezone: t.arrival_timezone }))
         .filter((t) => t.start_date),
     };
 
