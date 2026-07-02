@@ -43,11 +43,7 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
   const { events, isLoading } = useCalendarEvents(tripId);
   useCalendarRealtime(tripId);
 
-  // Lazy initializer: read viewport width on first render so the mobile default (Day agenda)
-  // is correct at mount (useIsMobile() would return false on the first render).
-  const [activeView, setActiveView] = useState<CalendarViewName>(
-    () => (typeof window !== 'undefined' && window.innerWidth < 768 ? 'listDay' : 'timeGridWeek'),
-  );
+  const [activeView, setActiveView] = useState<CalendarViewName>('timeGridThreeDay');
   const [title, setTitle] = useState('');
   const [editing, setEditing] = useState<EditState>(null);
   const [picker, setPicker] = useState<AddState>(null);
@@ -101,6 +97,15 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
   const validRange = tripDates.arrival_date && tripDates.departure_date
     ? { start: tripDates.arrival_date, end: exclusiveRangeEnd(tripDates.departure_date) }
     : undefined;
+  // Open at today mid-trip; otherwise on trip day 1. Relying on validRange
+  // clamping alone would open a *past* trip on its last day (the clamp picks
+  // the valid date closest to today).
+  const initialDate = (() => {
+    const { arrival_date: arrival, departure_date: departure } = tripDates;
+    if (!arrival || !departure) return undefined;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return isDateWithinTripRange(today, arrival, departure) ? today : arrival;
+  })();
   const dialogTripDates = { arrival_date: tripDates.arrival_date ?? '', departure_date: tripDates.departure_date ?? '' };
   const isEmpty = !isLoading && events.length === 0;
 
@@ -134,6 +139,7 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
           initialView={activeView}
+          initialDate={initialDate}
           headerToolbar={false}
           height="auto"
           firstDay={1}
