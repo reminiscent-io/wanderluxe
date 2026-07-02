@@ -85,6 +85,7 @@ export type Database = {
           is_paid: boolean | null
           order_index: number
           stay_id: string
+          timezone: string | null
           title: string
           trip_id: string
         }
@@ -112,6 +113,7 @@ export type Database = {
           is_paid?: boolean | null
           order_index: number
           stay_id?: string
+          timezone?: string | null
           title: string
           trip_id: string
         }
@@ -139,6 +141,7 @@ export type Database = {
           is_paid?: boolean | null
           order_index?: number
           stay_id?: string
+          timezone?: string | null
           title?: string
           trip_id?: string
         }
@@ -331,6 +334,7 @@ export type Database = {
           location_website: string | null
           order_index: number
           start_time: string | null
+          timezone: string | null
           title: string
           trip_id: string
         }
@@ -351,6 +355,7 @@ export type Database = {
           location_website?: string | null
           order_index: number
           start_time?: string | null
+          timezone?: string | null
           title: string
           trip_id: string
         }
@@ -371,6 +376,7 @@ export type Database = {
           location_website?: string | null
           order_index?: number
           start_time?: string | null
+          timezone?: string | null
           title?: string
           trip_id?: string
         }
@@ -762,6 +768,7 @@ export type Database = {
           rating: number | null
           reservation_time: string | null
           restaurant_name: string
+          timezone: string | null
           trip_id: string
           website: string | null
         }
@@ -784,6 +791,7 @@ export type Database = {
           rating?: number | null
           reservation_time?: string | null
           restaurant_name: string
+          timezone?: string | null
           trip_id: string
           website?: string | null
         }
@@ -806,6 +814,7 @@ export type Database = {
           rating?: number | null
           reservation_time?: string | null
           restaurant_name?: string
+          timezone?: string | null
           trip_id?: string
           website?: string | null
         }
@@ -833,14 +842,34 @@ export type Database = {
           },
         ]
       }
+      timezone_cache: {
+        Row: {
+          fetched_at: string
+          place_id: string
+          timezone_id: string
+        }
+        Insert: {
+          fetched_at?: string
+          place_id: string
+          timezone_id: string
+        }
+        Update: {
+          fetched_at?: string
+          place_id?: string
+          timezone_id?: string
+        }
+        Relationships: []
+      }
       transportation: {
         Row: {
           arrival_location: string | null
+          arrival_timezone: string | null
           confirmation_number: string | null
           cost: number | null
           created_at: string
           currency: string | null
           departure_location: string | null
+          departure_timezone: string | null
           details: string | null
           end_date: string | null
           end_time: string | null
@@ -857,11 +886,13 @@ export type Database = {
         }
         Insert: {
           arrival_location?: string | null
+          arrival_timezone?: string | null
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
           currency?: string | null
           departure_location?: string | null
+          departure_timezone?: string | null
           details?: string | null
           end_date?: string | null
           end_time?: string | null
@@ -878,11 +909,13 @@ export type Database = {
         }
         Update: {
           arrival_location?: string | null
+          arrival_timezone?: string | null
           confirmation_number?: string | null
           cost?: number | null
           created_at?: string
           currency?: string | null
           departure_location?: string | null
+          departure_timezone?: string | null
           details?: string | null
           end_date?: string | null
           end_time?: string | null
@@ -1166,6 +1199,7 @@ export type Database = {
           is_public: boolean
           primary_destination: string | null
           primary_destination_place_id: string | null
+          timezone: string | null
           trip_id: string
           user_id: string
         }
@@ -1186,6 +1220,7 @@ export type Database = {
           is_public?: boolean
           primary_destination?: string | null
           primary_destination_place_id?: string | null
+          timezone?: string | null
           trip_id?: string
           user_id: string
         }
@@ -1206,6 +1241,7 @@ export type Database = {
           is_public?: boolean
           primary_destination?: string | null
           primary_destination_place_id?: string | null
+          timezone?: string | null
           trip_id?: string
           user_id?: string
         }
