@@ -15,6 +15,7 @@ export interface ActivityFormData {
   location_phone?: string | null;
   location_website?: string | null;
   location_rating?: number | null;
+  timezone?: string | null;
 }
 
 // Define the database types (number-based for database storage)

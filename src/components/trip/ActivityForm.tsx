@@ -3,16 +3,24 @@ import { toast } from 'sonner';
 import { isValidCost } from '@/utils/costUtils';
 import { ActivityFormData } from '@/types/trip';
 import { CURRENCIES, CURRENCY_SYMBOLS, Currency } from '@/utils/currencyConstants';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Globe, ChevronDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { format } from 'date-fns';
 import TravelersTagMultiSelect from './travelers/TravelersTagMultiSelect';
 import { getJunctionTravelerIds, setJunctionTravelers } from '@/services/travelers';
 import GooglePlacesAutocomplete from './accommodation/GooglePlacesAutocomplete';
 import type { PlaceResult } from '@/utils/googleMapsLoader';
 import RestaurantContactInfo from './dining/form/RestaurantContactInfo';
+import TimezoneSelect from './_shared/TimezoneSelect';
+import { useResolveTimezone } from '@/hooks/useResolveTimezone';
+import { useTripTimezone } from '@/hooks/useTripTimezone';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
@@ -88,6 +96,23 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   const [useCustomEndTime, setUseCustomEndTime] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [locationSearch, setLocationSearch] = useState(activity.location_address || '');
+  const [tzOpen, setTzOpen] = useState(false);
+
+  const { tripTimezone } = useTripTimezone(tripId);
+  const { timeZoneId: placeTz } = useResolveTimezone(activity.location_place_id ?? null);
+  // Existing zone on an edited activity counts as a manual choice.
+  const [tzTouched, setTzTouched] = useState(() => !!activity.timezone);
+
+  // Pre-fill order: the place's own zone, else the trip default. Auto-updates on
+  // place change unless the user has manually overridden the zone.
+  useEffect(() => {
+    if (tzTouched) return;
+    const auto = placeTz ?? tripTimezone ?? null;
+    if (auto !== (activity.timezone ?? null)) {
+      onActivityChange({ ...activity, timezone: auto });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placeTz, tripTimezone, tzTouched]);
 
   // Load existing travelers for edit mode
   useEffect(() => {
@@ -301,6 +326,30 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             />
           </div>
         )}
+
+        {/* Timezone (collapsible) */}
+        <div className="mt-2">
+          <Collapsible open={tzOpen} onOpenChange={setTzOpen}>
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-accent rounded-md border border-border transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  Timezone{activity.timezone ? `: ${activity.timezone}` : ''}
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${tzOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <TimezoneSelect
+                value={activity.timezone ?? null}
+                onChange={(tz) => { setTzTouched(true); onActivityChange({ ...activity, timezone: tz }); }}
+              />
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
       </div>
 
       {/* Description Field */}

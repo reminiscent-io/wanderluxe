@@ -203,6 +203,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
       location_phone: dataToSave.location_phone || null,
       location_website: dataToSave.location_website || null,
       location_rating: dataToSave.location_rating || null,
+      timezone: dataToSave.timezone || null,
     };
 
     if (isEditMode) {
