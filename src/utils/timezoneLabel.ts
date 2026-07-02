@@ -49,6 +49,7 @@ export function transportTzLabels(
     return { dep: tzAbbrev(effDep, onDate), arr: tzAbbrev(effArr, onDate) };
   }
   if (shouldShowBadge(depTz ?? arrTz, tripTz)) {
+    // Branch 1 ruled out differing zones, so depTz ?? arrTz is "whichever is set" — both effective zones are equal here.
     const label = tzAbbrev(effectiveTz(depTz ?? arrTz, tripTz)!, onDate);
     return { dep: label, arr: label };
   }

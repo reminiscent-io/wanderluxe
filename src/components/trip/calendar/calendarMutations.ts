@@ -60,6 +60,7 @@ export async function applyDropPatch(patch: EntityDropPatch, tripId: string, ori
         cost: stay.cost != null ? String(stay.cost) : null,
         currency: stay.currency ?? undefined,
         hotel_place_id: stay.hotel_place_id ?? undefined,
+        timezone: stay.timezone ?? null,
       };
       await updateAccommodation(stay.stay_id, formData);
       return;

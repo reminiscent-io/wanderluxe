@@ -53,7 +53,8 @@ export function useTripTimezone(tripId: string | undefined): {
         }
         queryClient.invalidateQueries({ queryKey: ['trip-timezone', tripId] });
         queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      });
+      })
+      .catch(() => { persistedFor.current = null; });
   }, [tripId, needsResolve, resolved, canEdit, queryClient]);
 
   return { tripTimezone: row?.timezone ?? resolved ?? null, isLoading };

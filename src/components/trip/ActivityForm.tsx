@@ -103,16 +103,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   // Existing zone on an edited activity counts as a manual choice.
   const [tzTouched, setTzTouched] = useState(() => !!activity.timezone);
 
-  // Pre-fill order: the place's own zone, else the trip default. Auto-updates on
-  // place change unless the user has manually overridden the zone.
+  // Pre-fill order: only the place's own zone auto-fills. No place zone means
+  // no auto-fill — leave the value as-is so NULL correctly inherits the trip
+  // default rather than materializing it onto the entity.
   useEffect(() => {
     if (tzTouched) return;
-    const auto = placeTz ?? tripTimezone ?? null;
-    if (auto !== (activity.timezone ?? null)) {
-      onActivityChange({ ...activity, timezone: auto });
+    if (!placeTz) return;
+    if (placeTz !== (activity.timezone ?? null)) {
+      onActivityChange({ ...activity, timezone: placeTz });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [placeTz, tripTimezone, tzTouched]);
+  }, [placeTz, tzTouched]);
 
   // Load existing travelers for edit mode
   useEffect(() => {
@@ -346,6 +347,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               <TimezoneSelect
                 value={activity.timezone ?? null}
                 onChange={(tz) => { setTzTouched(true); onActivityChange({ ...activity, timezone: tz }); }}
+                placeholder={tripTimezone ? `Trip default (${tripTimezone})` : 'Timezone'}
               />
             </CollapsibleContent>
           </Collapsible>

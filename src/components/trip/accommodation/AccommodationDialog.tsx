@@ -74,6 +74,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
         hotel_phone: data.hotel_phone,
         hotel_place_id: data.hotel_place_id,
         hotel_website: data.hotel_website,
+        timezone: data.timezone || null,
       };
 
       if (initialData?.stay_id) {

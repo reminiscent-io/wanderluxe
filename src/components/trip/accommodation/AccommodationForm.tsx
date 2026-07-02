@@ -226,16 +226,17 @@ export default function AccommodationForm({
   // Existing zone on an edited stay counts as a manual choice.
   const [tzTouched, setTzTouched] = useState(() => !!initialData?.timezone);
 
-  // Pre-fill order: the place's own zone, else the trip default. Auto-updates
-  // on place change unless the user has manually overridden the zone.
+  // Pre-fill order: only the place's own zone auto-fills. No place zone means
+  // no auto-fill — leave the value as-is so NULL correctly inherits the trip
+  // default rather than materializing it onto the entity.
   useEffect(() => {
     if (tzTouched) return;
-    const auto = placeTz ?? tripTimezone ?? null;
-    if (auto !== (form.getValues('timezone') ?? null)) {
-      form.setValue('timezone', auto);
+    if (!placeTz) return;
+    if (placeTz !== (form.getValues('timezone') ?? null)) {
+      form.setValue('timezone', placeTz);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [placeTz, tripTimezone, tzTouched]);
+  }, [placeTz, tzTouched]);
 
   /* ------------------------------- FX ---------------------------------- */
   useEffect(() => {
@@ -473,6 +474,7 @@ export default function AccommodationForm({
               <TimezoneSelect
                 value={form.watch('timezone') ?? null}
                 onChange={(tz) => { setTzTouched(true); form.setValue('timezone', tz); }}
+                placeholder={tripTimezone ? `Trip default (${tripTimezone})` : 'Timezone'}
               />
             </div>
           </CollapsibleContent>

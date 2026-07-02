@@ -41,7 +41,6 @@ import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useActivitiesRealtime } from '@/hooks/useActivitiesRealtime';
 import { useAccommodationsRealtime } from '@/hooks/useAccommodationsRealtime';
-import { useTripTimezone } from '@/hooks/useTripTimezone';
 import { getNormalizedDay } from './components/timeline-utils';
 import { cn } from '@/lib/utils';
 import { DailyForecast, WeatherData } from '@/hooks/useWeather';
@@ -67,6 +66,7 @@ export interface CompactDayCardProps {
   currentWeather?: WeatherData['current'];
   weatherLocation?: string;
   allForecasts?: DailyForecast[];
+  tripTimezone?: string | null;
 }
 
 /** Map TimelineItem type to the Supabase table name */
@@ -94,6 +94,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   currentWeather,
   weatherLocation,
   allForecasts,
+  tripTimezone,
 }) => {
   // Check if day is in the past for auto-collapse (parse as local date to avoid UTC offset issues)
   const [year, month, day_] = (date.split('T')[0]).split('-').map(Number);
@@ -121,7 +122,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   const { transportations = [] } = useTransportationEvents(tripId);
   useActivitiesRealtime(id, tripId);
   useAccommodationsRealtime(tripId);
-  const { tripTimezone } = useTripTimezone(tripId);
 
   // fetch activities for this day
   const { data: activities = [] } = useQuery({
