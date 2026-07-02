@@ -20,6 +20,8 @@ export interface TimelineItem {
   icon: React.ReactNode;
   id: string;
   data?: TimelineRowData;
+  tzSuffix?: string;      // zone abbrev for `time` ('' / absent = no badge)
+  endTzSuffix?: string;   // zone abbrev for `endTime`
 }
 
 export type HintType = 'layover' | 'free-time' | 'overlap';
@@ -32,12 +34,19 @@ export type TimelineRenderRow =
 
 /** ------------------------------- Utilities ------------------------------- */
 
-// "9:00 AM – 2:30 PM" or "9:20 AM → 11:45 AM" (arrow for transport)
-export const formatTimeRange = (startTime?: string, endTime?: string, useArrow?: boolean): string => {
+// "9:00 AM – 2:30 PM" or "9:20 AM → 11:45 AM" (arrow for transport).
+// Optional per-endpoint zone suffixes: "11:00 PM EDT → 11:00 AM BST".
+export const formatTimeRange = (
+  startTime?: string,
+  endTime?: string,
+  useArrow?: boolean,
+  startSuffix = '',
+  endSuffix = '',
+): string => {
   if (!startTime) return '';
-  const start = formatTime12(startTime);
+  const start = formatTime12(startTime) + (startSuffix ? ` ${startSuffix}` : '');
   if (!endTime) return start;
-  const end = formatTime12(endTime);
+  const end = formatTime12(endTime) + (endSuffix ? ` ${endSuffix}` : '');
   return useArrow ? `${start} → ${end}` : `${start} – ${end}`;
 };
 

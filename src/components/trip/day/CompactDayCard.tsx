@@ -41,6 +41,7 @@ import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useActivitiesRealtime } from '@/hooks/useActivitiesRealtime';
 import { useAccommodationsRealtime } from '@/hooks/useAccommodationsRealtime';
+import { useTripTimezone } from '@/hooks/useTripTimezone';
 import { getNormalizedDay } from './components/timeline-utils';
 import { cn } from '@/lib/utils';
 import { DailyForecast, WeatherData } from '@/hooks/useWeather';
@@ -120,6 +121,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   const { transportations = [] } = useTransportationEvents(tripId);
   useActivitiesRealtime(id, tripId);
   useAccommodationsRealtime(tripId);
+  const { tripTimezone } = useTripTimezone(tripId);
 
   // fetch activities for this day
   const { data: activities = [] } = useQuery({
@@ -176,6 +178,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     hotelStays,
     transportations,
     reservations,
+    tripTimezone,
   });
 
   const dayTitle = title || new Date(date).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long' });

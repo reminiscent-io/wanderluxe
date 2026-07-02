@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
+import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '@/utils/timezoneLabel';
 import {
   TimelineItem,
   TimelineRenderRow,
@@ -26,6 +27,7 @@ type UseDayTimelineInput = {
   hotelStays: HotelStay[];
   transportations: Transportation[];
   reservations: RestaurantReservation[];
+  tripTimezone?: string | null;
 };
 
 type UseDayTimelineOutput = {
@@ -50,10 +52,16 @@ export interface TimelinePeriodGroup {
   rows: TimelineRenderRow[];
 }
 
-function buildActivityItems(activities: DayActivity[]): TimelineItem[] {
+/** Abbrev suffix for a single-zone item; '' when it inherits the trip zone. */
+function entityTzSuffix(entityTz: string | null | undefined, tripTz: string | null | undefined, onDate: string): string {
+  return shouldShowBadge(entityTz, tripTz) ? tzAbbrev(effectiveTz(entityTz, tripTz)!, onDate) : '';
+}
+
+function buildActivityItems(activities: DayActivity[], tripTz: string | null | undefined, normalizedDay: string): TimelineItem[] {
   const items: TimelineItem[] = [];
   for (const activity of activities) {
     if (!activity.id) continue;
+    const suffix = entityTzSuffix(activity.timezone, tripTz, normalizedDay);
     items.push({
       type: 'activity',
       time: activity.start_time || undefined,
@@ -63,12 +71,14 @@ function buildActivityItems(activities: DayActivity[]): TimelineItem[] {
       icon: null,
       id: activity.id,
       data: activity,
+      tzSuffix: activity.end_time ? '' : suffix,
+      endTzSuffix: activity.end_time ? suffix : undefined,
     });
   }
   return items;
 }
 
-function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string): TimelineItem[] {
+function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string, tripTz: string | null | undefined): TimelineItem[] {
   const items: TimelineItem[] = [];
   for (const stay of hotelStays) {
     if (stay.hotel_checkin_date === normalizedDay && stay.checkin_time) {
@@ -80,6 +90,7 @@ function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string): Timeli
         icon: null,
         id: `checkin-${stay.stay_id}`,
         data: stay,
+        tzSuffix: entityTzSuffix(stay.timezone, tripTz, normalizedDay),
       });
     }
     if (stay.hotel_checkout_date === normalizedDay && stay.checkout_time) {
@@ -90,6 +101,7 @@ function buildHotelItems(hotelStays: HotelStay[], normalizedDay: string): Timeli
         icon: null,
         id: `checkout-${stay.stay_id}`,
         data: stay,
+        tzSuffix: entityTzSuffix(stay.timezone, tripTz, normalizedDay),
       });
     }
   }
@@ -162,9 +174,10 @@ function getTransportDisplayInfo(
   };
 }
 
-function buildTransportationItems(transportations: Transportation[], normalizedDay: string): TimelineItem[] {
+function buildTransportationItems(transportations: Transportation[], normalizedDay: string, tripTz: string | null | undefined): TimelineItem[] {
   const items: TimelineItem[] = [];
   for (const t of transportations) {
+    const labels = transportTzLabels(t.departure_timezone, t.arrival_timezone, tripTz, normalizedDay);
     const { displayTime, title, isStartDay, isEndDay, isMultiDay } = getTransportDisplayInfo(t, normalizedDay);
 
     const departTimeOnThisDay = isStartDay ? t.start_time : undefined;
@@ -183,12 +196,14 @@ function buildTransportationItems(transportations: Transportation[], normalizedD
         __depart_time_on_this_day: departTimeOnThisDay,
         __arrive_time_on_this_day: arriveTimeOnThisDay,
       },
+      tzSuffix: isMultiDay && isEndDay && !isStartDay ? labels.arr : labels.dep,
+      endTzSuffix: labels.arr,
     });
   }
   return items;
 }
 
-function buildDiningItems(reservations: RestaurantReservation[] | undefined | null): TimelineItem[] {
+function buildDiningItems(reservations: RestaurantReservation[] | undefined | null, tripTz: string | null | undefined, normalizedDay: string): TimelineItem[] {
   const items: TimelineItem[] = [];
   for (const r of reservations || []) {
     if (!r.reservation_time) continue;
@@ -200,6 +215,7 @@ function buildDiningItems(reservations: RestaurantReservation[] | undefined | nu
       icon: null,
       id: r.id,
       data: r,
+      tzSuffix: entityTzSuffix(r.timezone, tripTz, normalizedDay),
     });
   }
   return items;
@@ -350,6 +366,7 @@ export function useDayTimeline({
   hotelStays,
   transportations,
   reservations,
+  tripTimezone,
 }: UseDayTimelineInput): UseDayTimelineOutput {
 
   const normalizedDay = useMemo(() => getNormalizedDay(dateISO), [dateISO]);
@@ -395,14 +412,14 @@ export function useDayTimeline({
   // Build timeline items
   const timelineItems: TimelineItem[] = useMemo(() => {
     const items: TimelineItem[] = [
-      ...buildActivityItems(activities),
-      ...buildHotelItems(filteredHotelStays, normalizedDay),
-      ...buildTransportationItems(filteredTransportations, normalizedDay),
-      ...buildDiningItems(reservations),
+      ...buildActivityItems(activities, tripTimezone, normalizedDay),
+      ...buildHotelItems(filteredHotelStays, normalizedDay, tripTimezone),
+      ...buildTransportationItems(filteredTransportations, normalizedDay, tripTimezone),
+      ...buildDiningItems(reservations, tripTimezone, normalizedDay),
     ];
     sortTimelineItems(items);
     return items;
-  }, [activities, filteredHotelStays, filteredTransportations, reservations, normalizedDay]);
+  }, [activities, filteredHotelStays, filteredTransportations, reservations, normalizedDay, tripTimezone]);
 
   // Compute rows with grouping, layover hints, and gap detection
   const rows: TimelineRenderRow[] = useMemo(() => {
