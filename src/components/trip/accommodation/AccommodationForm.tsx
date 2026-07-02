@@ -41,6 +41,10 @@ import {
   getJunctionTravelerIds,
   setJunctionTravelers,
 } from "@/services/travelers";
+import { Label } from "@/components/ui/label";
+import TimezoneSelect from "@/components/trip/_shared/TimezoneSelect";
+import { useResolveTimezone } from "@/hooks/useResolveTimezone";
+import { useTripTimezone } from "@/hooks/useTripTimezone";
 
 /* -------------------------------------------------------------------------- */
 /* Schema                                                                     */
@@ -60,6 +64,7 @@ const schema = z
     hotel_phone: z.string().optional(),
     hotel_place_id: z.string().optional(),
     hotel_website: z.string().optional(),
+    timezone: z.string().optional().nullable(),
     expense_type: z.literal("accommodation"),
     expense_date: z.string().optional(),
     order_index: z.number(),
@@ -153,6 +158,7 @@ export default function AccommodationForm({
       hotel_phone: initialData?.hotel_phone ?? "",
       hotel_place_id: initialData?.hotel_place_id ?? "",
       hotel_website: initialData?.hotel_website ?? "",
+      timezone: initialData?.timezone ?? null,
       expense_type: "accommodation",
       expense_date: initialData?.expense_date ?? "",
       order_index: initialData?.order_index ?? 0,
@@ -212,6 +218,24 @@ export default function AccommodationForm({
 
   /* ------------------- Track place_id changes -------------------------- */
   const [placeIdChanged, setPlaceIdChanged] = useState(false);
+
+  /* ------------------------ Timezone auto-fill -------------------------- */
+  const { tripTimezone } = useTripTimezone(tripId);
+  const watchedPlaceId = form.watch('hotel_place_id');
+  const { timeZoneId: placeTz } = useResolveTimezone(watchedPlaceId || null);
+  // Existing zone on an edited stay counts as a manual choice.
+  const [tzTouched, setTzTouched] = useState(() => !!initialData?.timezone);
+
+  // Pre-fill order: the place's own zone, else the trip default. Auto-updates
+  // on place change unless the user has manually overridden the zone.
+  useEffect(() => {
+    if (tzTouched) return;
+    const auto = placeTz ?? tripTimezone ?? null;
+    if (auto !== (form.getValues('timezone') ?? null)) {
+      form.setValue('timezone', auto);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placeTz, tripTimezone, tzTouched]);
 
   /* ------------------------------- FX ---------------------------------- */
   useEffect(() => {
@@ -440,6 +464,15 @@ export default function AccommodationForm({
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+            </div>
+
+            {/* Timezone */}
+            <div>
+              <Label className="text-sm text-muted-foreground">Timezone</Label>
+              <TimezoneSelect
+                value={form.watch('timezone') ?? null}
+                onChange={(tz) => { setTzTouched(true); form.setValue('timezone', tz); }}
               />
             </div>
           </CollapsibleContent>
