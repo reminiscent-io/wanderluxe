@@ -145,6 +145,39 @@ describe('buildDropPatch', () => {
   });
 });
 
+describe('timezone badges', () => {
+  const tripTz = 'America/New_York';
+
+  it('sets no badge when the activity inherits the trip zone', () => {
+    const e = mapActivityToEvent({ ...baseActivity, timezone: null }, '2026-06-30', tripTz);
+    expect(e?.extendedProps).toMatchObject({ tzBadge: '' });
+  });
+
+  it('sets an abbrev badge when the activity zone diverges', () => {
+    const e = mapActivityToEvent({ ...baseActivity, timezone: 'Europe/Paris' }, '2026-06-30', tripTz);
+    expect((e?.extendedProps as { tzBadge: string }).tzBadge).not.toBe('');
+  });
+
+  it('labels both zones on a cross-zone flight', () => {
+    const t = {
+      id: 't1', trip_id: 'trip1', type: 'flight', provider: null, details: null,
+      confirmation_number: null, start_date: '2026-06-30', start_time: '23:00',
+      end_date: '2026-06-30', end_time: '11:00', departure_location: 'JFK',
+      arrival_location: 'LHR', cost: null, currency: null, is_paid: false, created_at: '',
+      departure_timezone: 'America/New_York', arrival_timezone: 'Europe/London',
+    };
+    const e = mapTransportationToEvent(t as Transportation, tripTz);
+    const badge = (e?.extendedProps as { tzBadge: string }).tzBadge;
+    expect(badge).toContain('EDT');
+    expect(badge).toContain('→');
+  });
+
+  it('keeps events floating (no zone in the datetime string)', () => {
+    const e = mapActivityToEvent({ ...baseActivity, timezone: 'Europe/Paris' }, '2026-06-30', tripTz);
+    expect(e?.start).toBe('2026-06-30T14:30:00');
+  });
+});
+
 describe('isDateWithinTripRange', () => {
   it('accepts dates on or within the inclusive range', () => {
     expect(isDateWithinTripRange('2026-06-30', '2026-06-30', '2026-07-06')).toBe(true);

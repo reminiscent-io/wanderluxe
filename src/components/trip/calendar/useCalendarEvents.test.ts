@@ -14,6 +14,12 @@ vi.mock('@/hooks/use-transportation-events', () => ({
 vi.mock('./useTripReservations', () => ({
   useTripReservations: () => ({ data: [{ id: 'r1', day_id: 'd1', trip_id: 't1', restaurant_name: 'Septime', reservation_time: '20:00:00', number_of_people: 2, notes: null, confirmation_number: null, cost: null, currency: null, is_paid: false, address: null, phone_number: null, place_id: null, rating: null, created_at: '', order_index: 0 }], isLoading: false }),
 }));
+// useCalendarEvents calls useTripTimezone internally (Task 12). It's backed by
+// useQuery/useTripPermissions which need a QueryClientProvider this test doesn't
+// set up, so mock it directly — assertions below are unaffected by tripTimezone.
+vi.mock('@/hooks/useTripTimezone', () => ({
+  useTripTimezone: () => ({ tripTimezone: null, isLoading: false }),
+}));
 
 describe('useCalendarEvents', () => {
   it('flattens all four entity sources into namespaced events', () => {
