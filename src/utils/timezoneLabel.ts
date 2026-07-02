@@ -49,7 +49,9 @@ export function transportTzLabels(
     return { dep: tzAbbrev(effDep, onDate), arr: tzAbbrev(effArr, onDate) };
   }
   if (shouldShowBadge(depTz ?? arrTz, tripTz)) {
-    // Branch 1 ruled out differing zones, so depTz ?? arrTz is "whichever is set" — both effective zones are equal here.
+    // Branch 1 ruled out the case where both effective zones are set and differ,
+    // so depTz ?? arrTz is "whichever is set": the leg sits in one zone (or only
+    // one endpoint has a zone at all), and that single label goes on both legs.
     const label = tzAbbrev(effectiveTz(depTz ?? arrTz, tripTz)!, onDate);
     return { dep: label, arr: label };
   }
