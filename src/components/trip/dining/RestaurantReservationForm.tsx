@@ -17,6 +17,15 @@ import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
 import { getJunctionTravelerIds, setJunctionTravelers } from '@/services/travelers';
 import CurrencySelector from '../budget/CurrencySelector';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Globe, ChevronDown } from 'lucide-react';
+import TimezoneSelect from '../_shared/TimezoneSelect';
+import { useResolveTimezone } from '@/hooks/useResolveTimezone';
+import { useTripTimezone } from '@/hooks/useTripTimezone';
 
 import {
   loadGoogleMapsAPI,
@@ -79,6 +88,7 @@ const formSchema = z.object({
   place_id: z.string().optional().nullable(),
   rating: z.preprocess(toNullableNumber, z.number().optional()),
   travelers: z.array(z.string()).optional(),
+  timezone: z.string().optional().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -151,6 +161,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       cost: undefined,
       currency: undefined,
       ...defaultValues,
+      timezone: defaultValues?.timezone ?? null,
       reservation_date: getPreselectedDate(), // Smart date preselection
     },
   });
@@ -159,6 +170,25 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   useEffect(() => {
     loadGoogleMapsAPI().catch(console.error);
   }, []);
+
+  /* ------------------------------ Timezone auto-fill ---------------------------- */
+  const [tzOpen, setTzOpen] = useState(false);
+  const { tripTimezone } = useTripTimezone(tripId || defaultValues?.trip_id);
+  const watchedPlaceId = form.watch('place_id');
+  const { timeZoneId: placeTz } = useResolveTimezone(watchedPlaceId ?? null);
+  // Existing zone on an edited reservation counts as a manual choice.
+  const [tzTouched, setTzTouched] = useState(() => !!defaultValues?.timezone);
+
+  // Pre-fill order: the place's own zone, else the trip default. Auto-updates on
+  // place change unless the user has manually overridden the zone.
+  useEffect(() => {
+    if (tzTouched) return;
+    const auto = placeTz ?? tripTimezone ?? null;
+    if (auto !== (form.getValues('timezone') ?? null)) {
+      form.setValue('timezone', auto);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placeTz, tripTimezone, tzTouched]);
 
   /* ------------------- Track place_id changes ---------------------------------- */
   const [placeIdChanged, setPlaceIdChanged] = useState(false);
@@ -352,6 +382,28 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           website={form.watch('website')}
           rating={form.watch('rating')}
         />
+
+        {/* Timezone (collapsible) */}
+        <Collapsible open={tzOpen} onOpenChange={setTzOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-accent rounded-md border border-border transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                Timezone{form.watch('timezone') ? `: ${form.watch('timezone')}` : ''}
+              </span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${tzOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <TimezoneSelect
+              value={form.watch('timezone') ?? null}
+              onChange={(tz) => { setTzTouched(true); form.setValue('timezone', tz); }}
+            />
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Photo strip (side-scroll) */}
         {restaurantPhotos.length > 0 && (
