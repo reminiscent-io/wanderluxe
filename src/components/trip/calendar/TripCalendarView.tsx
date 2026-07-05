@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -15,7 +15,9 @@ import CalendarToolbar, { type CalendarViewName } from './CalendarToolbar';
 import CalendarEventChip from './CalendarEventChip';
 import AddEntityPicker from './AddEntityPicker';
 import { buildDropPatch, isDateWithinTripRange, type CalendarEntityType } from './eventMapping';
+import { computeSlotMinTime, DEFAULT_SLOT_MIN_TIME } from './slotWindow';
 import { applyDropPatch } from './calendarMutations';
+import { Button } from '@/components/ui/button';
 import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
@@ -45,6 +47,8 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
 
   const [activeView, setActiveView] = useState<CalendarViewName>('timeGridThreeDay');
   const [title, setTitle] = useState('');
+  const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null);
+  const [showFullDay, setShowFullDay] = useState(false);
   const [editing, setEditing] = useState<EditState>(null);
   const [picker, setPicker] = useState<AddState>(null);
   const [adding, setAdding] = useState<{ type: CalendarEntityType; date: string; time?: string } | null>(null);
@@ -109,6 +113,14 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
   const dialogTripDates = { arrival_date: tripDates.arrival_date ?? '', departure_date: tripDates.departure_date ?? '' };
   const isEmpty = !isLoading && events.length === 0;
 
+  // Grid starts at 7am (earlier if an event demands it); "Show full day" reveals the hidden early hours.
+  const collapsedSlotMin = useMemo(
+    () => (visibleRange ? computeSlotMinTime(events, visibleRange.start, visibleRange.end) : DEFAULT_SLOT_MIN_TIME),
+    [events, visibleRange],
+  );
+  const slotMinTime = showFullDay ? '00:00:00' : collapsedSlotMin;
+  const showDayWindowToggle = activeView.startsWith('timeGrid') && collapsedSlotMin !== '00:00:00';
+
   const closeAndRefresh = () => { setEditing(null); setAdding(null); invalidateAll(); };
 
   // Build ActivityFormData-shaped initialData for the activity edit dialog.
@@ -134,6 +146,18 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           <p className="mt-1 text-sm text-muted-foreground">Tap a day to add your first stop.</p>
         </div>
       )}
+      {showDayWindowToggle && (
+        <div className="-mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground"
+            onClick={() => setShowFullDay((v) => !v)}
+          >
+            {showFullDay ? 'Hide early morning' : 'Show full day'}
+          </Button>
+        </div>
+      )}
       <div className={isEmpty ? 'opacity-40' : ''}>
         <FullCalendar
           ref={calendarRef}
@@ -152,8 +176,16 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           selectMirror
           validRange={validRange}
           events={events}
+          slotMinTime={slotMinTime}
           eventContent={(arg) => <CalendarEventChip arg={arg} />}
-          datesSet={(arg) => setTitle(arg.view.title)}
+          datesSet={(arg) => {
+            setTitle(arg.view.title);
+            const start = format(arg.start, 'yyyy-MM-dd');
+            const end = format(arg.end, 'yyyy-MM-dd');
+            // Keep the previous reference when unchanged so React bails out; a fresh
+            // object every datesSet loops render → dateProfile → datesSet forever.
+            setVisibleRange((prev) => (prev && prev.start === start && prev.end === end ? prev : { start, end }));
+          }}
           eventClick={handleEventClick}
           eventDrop={handleDrop}
           eventResize={handleDrop}
